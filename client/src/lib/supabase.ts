@@ -5,6 +5,8 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.tr
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabasePublishableKey);
 
+let client: SupabaseClient | null = null;
+
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseUrl || !supabasePublishableKey) {
     throw new Error(
@@ -12,7 +14,11 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
 
-  return createClient(supabaseUrl, supabasePublishableKey);
+  if (!client) {
+    client = createClient(supabaseUrl, supabasePublishableKey);
+  }
+
+  return client;
 }
 
 export const supabaseConfigStatus = {
