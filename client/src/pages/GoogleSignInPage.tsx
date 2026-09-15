@@ -1,120 +1,81 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { LogOut, ShieldCheck } from "lucide-react";
-
-const AUTH_STORAGE_KEY = "tallybook.google-auth.v1";
-const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
-
-type GoogleIdentity = {
-  sub: string;
-  email?: string;
-  name?: string;
-  picture?: string;
-  exp?: number;
-  iss?: string;
-  aud?: string;
-};
-
-type GoogleCredentialResponse = { credential: string };
-
-type GoogleAccountsId = {
-  initialize: (options: { client_id: string; callback: (response: GoogleCredentialResponse) => void; auto_select?: boolean }) => void;
-  renderButton: (parent: HTMLElement, options: { theme: string; size: string; text: string; shape: string; width?: number }) => void;
-  disableAutoSelect?: () => void;
-};
-
-declare global {
-  interface Window { google?: { accounts?: { id?: GoogleAccountsId } } }
-}
-
-function decodeJwtPayload(token: string): GoogleIdentity {
-  const part = token.split(".")[1];
-  if (!part) throw new Error("Google returned an invalid credential.");
-  const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
-  const json = decodeURIComponent(
-    atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="))
-      .split("")
-      .map((char) => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
-      .join(""),
-  );
-  return JSON.parse(json) as GoogleIdentity;
-}
-
-function loadGoogleScript(): Promise<void> {
-  if (window.google?.accounts?.id) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT_SRC}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("Google Sign-In could not load.")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = GOOGLE_SCRIPT_SRC;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Sign-In could not load."));
-    document.head.appendChild(script);
-  });
-}
-
-function readSavedIdentity(): GoogleIdentity | null {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as GoogleIdentity) : null;
-  } catch {
-    return null;
-  }
-}
+import { LogIn, LogOut, ShieldCheck } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
+import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
 
 export default function GoogleSignInPage() {
-  const buttonRef = useRef<HTMLDivElement>(null);
-  const [identity, setIdentity] = useState<GoogleIdentity | null>(() => readSavedIdentity());
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? "";
 
   useEffect(() => {
-    if (!clientId || identity || !buttonRef.current) return;
-    let cancelled = false;
-    void loadGoogleScript()
-      .then(() => {
-        if (cancelled || !buttonRef.current || !window.google?.accounts?.id) return;
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => {
-            try {
-              const decoded = decodeJwtPayload(response.credential);
-              if (decoded.iss !== "https://accounts.google.com" && decoded.iss !== "accounts.google.com") {
-                throw new Error("Google returned an unexpected issuer.");
-              }
-              if (decoded.aud !== clientId) throw new Error("This Google credential was issued for a different application.");
-              if (decoded.exp && decoded.exp * 1000 <= Date.now()) throw new Error("The Google credential has expired. Please sign in again.");
-              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(decoded));
-              setIdentity(decoded);
-              setError(null);
-            } catch (cause) {
-              setError(cause instanceof Error ? cause.message : "Google sign-in failed.");
-            }
-          },
-        });
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          theme: "outline",
-          size: "large",
-          text: "signin_with",
-          shape: "rectangular",
-          width: 320,
-        });
-      })
-      .catch((cause) => setError(cause instanceof Error ? cause.message : "Google Sign-In could not load."));
-    return () => { cancelled = true; };
-  }, [clientId, identity]);
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
 
-  const signOut = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    window.google?.accounts?.id?.disableAutoSelect?.();
-    setIdentity(null);
+    const client = getSupabaseClient();
+    let mounted = true;
+
+    void client.auth
+      .getSession()
+      .then(({ data, error: sessionError }) => {
+        if (!mounted) return;
+        if (sessionError) throw sessionError;
+        setSession(data.session);
+      })
+      .catch((cause) => {
+        if (mounted) setError(cause instanceof Error ? cause.message : "Could not read the sign-in session.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setSigningIn(false);
+      setError(null);
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const signInWithGoogle = async () => {
+    setSigningIn(true);
     setError(null);
+
+    try {
+      const client = getSupabaseClient();
+      const { error: signInError } = await client.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/signin`,
+        },
+      });
+
+      if (signInError) throw signInError;
+    } catch (cause) {
+      setSigningIn(false);
+      setError(cause instanceof Error ? cause.message : "Google sign-in could not start.");
+    }
+  };
+
+  const signOut = async () => {
+    setError(null);
+    try {
+      const client = getSupabaseClient();
+      const { error: signOutError } = await client.auth.signOut();
+      if (signOutError) throw signOutError;
+      setSession(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Sign out failed.");
+    }
   };
 
   return (
@@ -123,29 +84,34 @@ export default function GoogleSignInPage() {
         <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Account access</p>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", margin: "12px 0 8px" }}>Sign in to Tallybook</h1>
         <p className="op-row-sub" style={{ fontSize: ".8rem", lineHeight: 1.6 }}>
-          This first step connects a Google identity to this Tallybook installation. It does not yet upload business records or enable cloud synchronization.
+          Google authentication is now handled through Tallybook's secure Supabase authentication layer. Your existing offline business data remains on this device; cloud synchronization is not enabled yet.
         </p>
 
-        {!clientId ? (
+        {!isSupabaseConfigured ? (
           <div className="attention-note" role="alert" style={{ marginTop: 18 }}>
-            <div><strong>Google Sign-In is not configured for this build.</strong><p>Set <code>VITE_GOOGLE_CLIENT_ID</code> in the local environment and in the deployed app's environment settings, then rebuild.</p></div>
+            <div><strong>Supabase is not configured for this build.</strong><p>Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> in the deployment environment, then rebuild.</p></div>
           </div>
-        ) : identity ? (
+        ) : loading ? (
+          <p className="op-row-sub" style={{ marginTop: 18 }}>Checking your Tallybook account session…</p>
+        ) : session ? (
           <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
             <div className="op-row-card" style={{ marginBottom: 0 }}>
-              {identity.picture ? <img src={identity.picture} alt="" width={42} height={42} style={{ borderRadius: "50%" }} /> : null}
+              {session.user.user_metadata?.avatar_url ? <img src={session.user.user_metadata.avatar_url} alt="" width={42} height={42} style={{ borderRadius: "50%" }} /> : null}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div className="op-row-title">Signed in with Google</div>
-                <div className="op-row-sub" style={{ overflowWrap: "anywhere" }}>{identity.email ?? identity.name ?? "Google account"}</div>
+                <div className="op-row-sub" style={{ overflowWrap: "anywhere" }}>{session.user.email ?? session.user.user_metadata?.full_name ?? "Google account"}</div>
               </div>
-              <span className="stamp stamp-ready">Signed in</span>
+              <span className="stamp stamp-ready">Supabase session active</span>
             </div>
             <button className="secondary-action" type="button" onClick={signOut}><LogOut className="h-4 w-4" aria-hidden="true" />Sign out</button>
-            <p className="op-row-sub">For this first stage, the identity is stored only on this device. Secure server-side verification and cloud business access will be added in the later sync stage.</p>
+            <p className="op-row-sub">This confirms identity/session handling only. Business records are still local and no cloud synchronization has been added.</p>
           </div>
         ) : (
-          <div style={{ marginTop: 18, minHeight: 48 }}>
-            <div ref={buttonRef} />
+          <div style={{ marginTop: 18 }}>
+            <button className="primary-action" type="button" onClick={signInWithGoogle} disabled={signingIn}>
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              {signingIn ? "Opening Google…" : "Sign in with Google"}
+            </button>
           </div>
         )}
 
