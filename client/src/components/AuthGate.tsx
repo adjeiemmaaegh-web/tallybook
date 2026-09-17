@@ -45,8 +45,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // OAuth returns to /signin so the existing Supabase session can settle there.
-  if (location === "/signin") return <>{children}</>;
+  // /signin remains available for OAuth and unauthenticated users. If a
+  // persisted session already exists, leave the sign-in screen immediately.
+  if (location === "/signin") {
+    return session ? <Redirect to="/" /> : <>{children}</>;
+  }
 
   if (checking) {
     return (
