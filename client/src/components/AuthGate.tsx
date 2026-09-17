@@ -3,7 +3,7 @@ import { Redirect, useLocation } from "wouter";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
-export default function AuthGate({ children }: { children: ReactNode }) {
+export function AuthGate({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
@@ -19,17 +19,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     const client = getSupabaseClient();
     let mounted = true;
 
-    void client.auth
-      .getSession()
+    void client.auth.getSession()
       .then(({ data, error: sessionError }) => {
         if (!mounted) return;
         if (sessionError) throw sessionError;
         setSession(data.session);
       })
       .catch((cause) => {
-        if (mounted) {
-          setError(cause instanceof Error ? cause.message : "Could not read the Tallybook session.");
-        }
+        if (mounted) setError(cause instanceof Error ? cause.message : "Could not read the Tallybook session.");
       })
       .finally(() => {
         if (mounted) setChecking(false);
@@ -48,8 +45,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // The sign-in page is the only public route. OAuth returns here so the
-  // Supabase session can be established before the application is opened.
+  // OAuth returns to /signin so the existing Supabase session can settle there.
   if (location === "/signin") return <>{children}</>;
 
   if (checking) {

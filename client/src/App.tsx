@@ -4,6 +4,7 @@ import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotif
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch } from "wouter";
 import { AppShell } from "@/components/AppShell";
+import { AuthGate } from "@/components/AuthGate";
 import { BusinessProfileProvider } from "@/contexts/BusinessProfileContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
@@ -49,13 +50,15 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <DatabaseProvider>
-            <BusinessProfileProvider>
-              <Toaster position="top-center" richColors />
-              <ConnectionRestoredNotifier />
-              <Router />
-            </BusinessProfileProvider>
-          </DatabaseProvider>
+          <AuthGate>
+            <DatabaseProvider>
+              <BusinessProfileProvider>
+                <Toaster position="top-center" richColors />
+                <ConnectionRestoredNotifier />
+                <Router />
+              </BusinessProfileProvider>
+            </DatabaseProvider>
+          </AuthGate>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
