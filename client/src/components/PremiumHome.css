@@ -4,3 +4,8 @@
 .premium-line-chart svg{display:block;width:100%;height:230px;overflow:visible}
 .premium-line-labels{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;padding-top:7px}
 .premium-line-labels small{min-width:0;text-align:center;font-size:10px;color:#66788e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.premium-line-chart{position:relative}
+.premium-chart-empty-note{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 22px;min-width:220px;max-width:90%;border:1px solid #e5edf7;border-radius:12px;background:rgba(248,251,255,.96);color:#66778d;text-align:center;font-size:12px;box-shadow:0 4px 16px #20375a0a;pointer-events:none}
+.premium-chart-empty-note strong{font-size:13px;color:#344c68}
+@media(max-width:639px){.premium-chart-empty-note{min-width:190px;padding:10px 13px}}
