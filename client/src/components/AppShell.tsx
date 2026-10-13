@@ -2,13 +2,14 @@
 import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { db } from "@/db/TallybookDB";
 import { currentStaffId, STAFF_SESSION_CHANGED } from "@/features/staff/staff";
-import { Bell, Users, Cloud, CloudOff, HardDriveDownload, MessageCircleQuestion, Store } from "lucide-react";
+import { Bell, Users, Cloud, CloudOff, HardDriveDownload, MessageCircleQuestion, Store, Menu, X, Truck, CircleDollarSign, BarChart3, Boxes, ShoppingBag, ContactRound, LayoutDashboard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { BrandMark } from "@/components/BrandMark";
 import { DatabaseStatus } from "@/components/DatabaseStatus";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { appRoutes } from "@/lib/routes";
+import "./PremiumShell.css";
 
 interface AppShellProps { children: ReactNode; }
 
@@ -21,6 +22,7 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 
 export function AppShell({ children }: AppShellProps) {
   const { profile, activeCompanyId } = useBusinessProfile();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open">("loading");
   useEffect(() => {
     let mounted = true;
@@ -42,6 +44,14 @@ export function AppShell({ children }: AppShellProps) {
   const [location] = useLocation();
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
+  useEffect(() => { setMenuOpen(false); }, [location]);
+  useEffect(() => { if (!menuOpen) return; const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, [menuOpen]);
+  const groups = [
+    { title: "Workspace", links: [{ href: "/", label: "Home", Icon: LayoutDashboard }, { href: "/sales", label: "Sales (POS)", Icon: ShoppingBag }, { href: "/inventory", label: "Inventory", Icon: Boxes }, { href: "/customers", label: "Customers", Icon: ContactRound }] },
+    { title: "Management", links: [{ href: "/purchases", label: "Purchases", Icon: Truck }, { href: "/expenses", label: "Expenses", Icon: CircleDollarSign }, { href: "/reports", label: "Reports", Icon: BarChart3 }, { href: "/end-of-day", label: "End of day", Icon: Bell }] },
+    { title: "Settings & tools", links: [{ href: "/business", label: "Business setup", Icon: Store }, { href: "/staff", label: "Staff & permissions", Icon: Users }, { href: "/stores", label: "Stores", Icon: Store }, { href: "/commerce", label: "Commerce drafts", Icon: Store }, { href: "/alerts", label: "Alerts", Icon: Bell }, { href: "/sync-status", label: "Sync status", Icon: Cloud }, { href: "/backup", label: "Backup", Icon: HardDriveDownload }, { href: "/assistant", label: "Assistant", Icon: MessageCircleQuestion }] },
+  ];
+  const groupedNav = (onNavigate?: () => void) => groups.map(group => <section key={group.title} className="premium-nav-group"><h2>{group.title}</h2>{group.links.map(({ href, label, Icon }) => <Link key={href} href={href} onClick={onNavigate} aria-current={location === href ? "page" : undefined} className={`premium-nav-item ${location === href ? "premium-nav-selected" : ""}`}><Icon className="h-5 w-5 shrink-0" aria-hidden="true" /><span>{label}</span></Link>)}</section>);
   if (staffGate !== "open" && location !== "/staff") return <main className="mx-auto mt-12 max-w-md rounded-xl border p-6 space-y-4">
     <h1 className="text-xl font-semibold">{staffGate === "locked" ? "Tallybook is locked" : "Checking local staff access"}</h1>
     <p className="text-sm text-muted-foreground">{staffGate === "locked" ? "Unlock with your local staff PIN to access this business." : "Checking the staff records stored on this device."}</p>
@@ -49,8 +59,9 @@ export function AppShell({ children }: AppShellProps) {
   </main>;
   return <div className="app-frame">
     <a className="skip-link" href="#main-content">Skip to page content</a><span className="screen-reader-announcer" aria-live="polite" aria-atomic="true">{pageName} page</span>
-    <aside className="desktop-rail" aria-label="Primary navigation"><div className="px-5 pt-6"><BrandMark /><CompanySwitcher />{profile ? <p className="business-shell-name" title={profile.name}>{profile.name}</p> : <p className="business-shell-name business-shell-name-empty">Set up your business</p>}</div><nav className="mt-10 flex flex-1 flex-col gap-1 px-3">{primaryRoutes.map((route) => <NavigationLink key={route.key} route={route} />)}</nav><div className="shell-utilities"><Link href="/business"><Store className="h-4 w-4" aria-hidden="true" />Business</Link><Link href="/assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />Assistant</Link><Link href="/alerts"><Bell className="h-4 w-4" aria-hidden="true" />Alerts</Link><Link href="/stores"><Store className="h-4 w-4" aria-hidden="true" />Stores</Link><Link href="/commerce"><Store className="h-4 w-4" aria-hidden="true" />Commerce drafts</Link><Link href="/staff"><Users className="h-4 w-4" aria-hidden="true" />Staff</Link><Link href="/sync-status"><Cloud className="h-4 w-4" aria-hidden="true" />Sync status</Link><Link href="/backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" />Backup</Link></div><div className="mx-5 mb-6 border-t border-ink/10 pt-5"><div className="flex items-start gap-3 text-ink-soft"><CloudOff className="mt-0.5 h-4 w-4 shrink-0 text-baobab" aria-hidden="true" /><p className="text-xs leading-relaxed">Your records stay on this device. Use Backup to keep a copy you control.</p></div></div></aside>
-    <div className="content-frame"><header className="top-bar" aria-label="Application status"><div className="mobile-brand-lockup"><BrandMark compact /></div><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
+    <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><div className="premium-rail-brand"><BrandMark /><CompanySwitcher />{profile && <p className="business-shell-name" title={profile.name}>{profile.name}</p>}</div><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
+    {menuOpen && <div className="premium-mobile-overlay"><button type="button" className="premium-drawer-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /><aside className="premium-mobile-drawer" aria-label="Mobile navigation"><div className="premium-drawer-heading"><BrandMark compact /><button type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X className="h-5 w-5" /></button></div><nav className="premium-nav-groups">{groupedNav(() => setMenuOpen(false))}</nav></aside></div>}
+    <div className="content-frame"><header className="top-bar" aria-label="Application status"><button className="premium-menu-button" type="button" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu className="h-5 w-5" /></button><div className="mobile-brand-lockup"><BrandMark compact /></div><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
     <nav className="mobile-nav" aria-label="Primary navigation">{primaryRoutes.map((route) => <NavigationLink key={route.key} route={route} />)}</nav>
   </div>;
 }

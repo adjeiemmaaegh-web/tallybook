@@ -1,0 +1,20 @@
+/* Premium navigation increment: scoped to AppShell; legacy feature screens retain their styles. */
+.premium-desktop-rail { background:#fff; border-right:1px solid #e2e8f0; box-shadow:2px 0 14px rgba(15,23,42,.025); }
+.premium-rail-brand { padding:24px 18px 12px; }
+.premium-nav-groups { overflow-y:auto; padding:12px 12px 24px; flex:1; }
+.premium-nav-group { margin-bottom:22px; }
+.premium-nav-group h2 { margin:0 12px 8px; color:#64748b; font-size:11px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
+.premium-nav-item { display:flex; align-items:center; gap:12px; min-height:43px; padding:9px 12px; margin:3px 0; border-radius:10px; color:#334155; font-size:13px; font-weight:600; text-decoration:none; }
+.premium-nav-item:hover { background:#f1f5f9; }
+.premium-nav-selected,.premium-nav-selected:hover { background:#e8f1ff; color:#135bd8; }
+.premium-storage-note { display:flex; gap:9px; margin:0 18px 18px; padding-top:14px; border-top:1px solid #e2e8f0; color:#64748b; font-size:11px; line-height:1.5; }
+.premium-menu-button { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border:1px solid #e2e8f0; border-radius:10px; background:white; margin-right:10px; }
+.premium-mobile-overlay { position:fixed; inset:0; z-index:90; display:flex; }
+.premium-drawer-backdrop { position:absolute; inset:0; background:rgba(15,23,42,.48); border:0; }
+.premium-mobile-drawer { position:relative; width:min(310px,86vw); height:100%; display:flex; flex-direction:column; overflow:hidden; background:white; box-shadow:12px 0 40px rgba(0,0,0,.16); }
+.premium-drawer-heading { display:flex; align-items:center; justify-content:space-between; padding:20px 16px; border-bottom:1px solid #e2e8f0; }
+.premium-drawer-heading button { width:40px; height:40px; display:grid; place-items:center; border-radius:9px; border:1px solid #e2e8f0; }
+@media(min-width:1024px) { .premium-menu-button { display:none; } .premium-mobile-overlay { display:none; } .page-content { max-width:1600px; padding:30px 32px 90px; } .top-bar { background:white; } }
+@media(max-width:1023px) { .premium-desktop-rail { display:none; } }
+@media(max-width:639px) { .premium-menu-button { flex-shrink:0; } }
+@media(prefers-reduced-motion:reduce) { .premium-nav-item { transition:none; } }
