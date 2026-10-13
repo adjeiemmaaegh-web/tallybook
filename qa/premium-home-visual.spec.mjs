@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test('premium home visual evidence on desktop and mobile with Clementia', async ({ page }, testInfo) => {
-  await page.goto('/business');
+  await page.goto('/business', { waitUntil: 'networkidle' });
+  await page.waitForLoadState('networkidle');
+  await expect.poll(() => page.evaluate(() => document.readyState)).toBe('complete');
   await page.evaluate(async () => {
     const { saveBusinessProfile } = await import('/src/features/business/businessProfile.ts');
     await saveBusinessProfile({ name: 'Visual QA Shop', country: 'Ghana', currency: 'GHS', businessType: 'Retail' });
