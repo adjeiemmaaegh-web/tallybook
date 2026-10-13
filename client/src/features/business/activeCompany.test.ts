@@ -20,6 +20,15 @@ describe("local company workspaces", () => {
     expect(getActiveBusinessProfileId()).toBe("company-two");
   });
 
+  it("rejects a nonexistent company without changing the active company or app metadata", async () => {
+    const database = makeDatabase(); await database.open();
+    await database.businessProfiles.put(profile("primary", "Main Shop"));
+    await persistActiveBusinessProfileId("primary", database);
+    await expect(persistActiveBusinessProfileId("forged-company", database)).rejects.toThrow("no longer available");
+    expect(getActiveBusinessProfileId()).toBe("primary");
+    expect((await database.appMeta.get("activeBusinessProfileId"))?.value).toBe("primary");
+  });
+
   it("clears only the selected company and preserves another workspace", async () => {
     const database = makeDatabase(); await database.open();
     await database.businessProfiles.bulkPut([profile("primary", "Main Shop"), profile("company-two", "Catering")]);
