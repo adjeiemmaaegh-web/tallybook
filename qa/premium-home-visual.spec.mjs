@@ -32,6 +32,13 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await page.screenshot({ path: testInfo.outputPath(`clementia-${viewport.width}.png`), fullPage: true });
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: 'Clementia assistant' })).toHaveCount(0);
+    if (viewport.width < 640) {
+      await expect(page.getByRole('link', { name: 'Business settings' })).toBeHidden();
+      await expect(page.getByRole('link', { name: 'Backup', exact: true })).toBeHidden();
+      await expect(page.getByRole('link', { name: 'View alerts' })).toBeVisible();
+      const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+      expect(width.scroll).toBeLessThanOrEqual(width.client + 1);
+    }
     if (viewport.width < 1024) {
       await page.getByRole('button', { name: 'Open navigation menu' }).click();
       await expect(page.getByRole('dialog', { name: 'Mobile navigation' })).toBeVisible();
