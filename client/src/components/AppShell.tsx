@@ -10,6 +10,7 @@ import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { appRoutes } from "@/lib/routes";
 import "./PremiumShell.css";
+import { ClementiaLauncher } from "./ClementiaLauncher";
 
 interface AppShellProps { children: ReactNode; }
 
@@ -62,6 +63,7 @@ export function AppShell({ children }: AppShellProps) {
     <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><div className="premium-rail-brand"><BrandMark /><CompanySwitcher />{profile && <p className="business-shell-name" title={profile.name}>{profile.name}</p>}</div><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
     {menuOpen && <div className="premium-mobile-overlay"><button type="button" className="premium-drawer-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /><aside className="premium-mobile-drawer" aria-label="Mobile navigation"><div className="premium-drawer-heading"><BrandMark compact /><button type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X className="h-5 w-5" /></button></div><nav className="premium-nav-groups">{groupedNav(() => setMenuOpen(false))}</nav></aside></div>}
     <div className="content-frame"><header className="top-bar" aria-label="Application status"><button className="premium-menu-button" type="button" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu className="h-5 w-5" /></button><div className="mobile-brand-lockup"><BrandMark compact /></div><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
+    <ClementiaLauncher hidden={location === "/assistant" || location === "/sales" || location === "/staff"} />
     <nav className="mobile-nav" aria-label="Primary navigation">{primaryRoutes.map((route) => <NavigationLink key={route.key} route={route} />)}</nav>
   </div>;
 }
