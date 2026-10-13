@@ -13,3 +13,10 @@
 .clementia-launcher:focus-visible,.clementia-panel-header a:focus-visible,.clementia-panel-header button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
 .clementia-panel-body .assistant-composer{background:#fff}
 @media(prefers-reduced-motion:reduce){.clementia-launcher,.clementia-panel{transition:none;animation:none}}
+
+/* Illustrated assistant treatment matching the approved floating helper composition. */
+.clementia-launcher{overflow:visible;padding-left:12px;min-height:54px}
+.clementia-launcher .clementia-avatar{width:55px;height:55px;margin:-13px 0 -7px -8px;overflow:visible;background:transparent}
+.clementia-launcher .clementia-avatar svg{width:64px;height:64px;filter:drop-shadow(0 3px 5px #1b376055)}
+.clementia-panel-header .clementia-avatar{overflow:hidden;background:#eaf3ff}
+.clementia-panel-header .clementia-avatar svg{width:38px;height:38px}
