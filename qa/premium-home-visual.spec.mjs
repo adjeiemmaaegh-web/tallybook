@@ -17,6 +17,13 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.getByRole('heading', { name: 'Getting Started with Tallybook' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Tips for Beginners' })).toBeVisible();
     await expect(page.locator('.today-dashboard')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Expenses Today' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Search products in inventory' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'View alerts' })).toBeVisible();
+    await expect(page.locator('.premium-line-chart svg')).toBeVisible();
+    await expect(page.locator('.premium-line-chart svg polyline')).toHaveCount(1);
+    await expect(page.locator('.premium-step.done')).toHaveCount(1);
+    await expect(page.locator('.premium-chart-empty-note')).toContainText('No sales yet');
     await expect(page.locator('.clementia-launcher .clementia-avatar svg')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`home-${viewport.width}.png`), fullPage: true });
