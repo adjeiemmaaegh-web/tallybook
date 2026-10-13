@@ -115,3 +115,5 @@ temp/
 
 # Private source backups and full local release logs
 artifacts/release-v19/
+
+supabase/.temp/

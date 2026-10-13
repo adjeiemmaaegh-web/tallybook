@@ -1,5 +1,8 @@
 -- Apply through Supabase migrations. No service key belongs in browser code.
 begin;
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
@@ -34,7 +37,7 @@ create policy member_business on public.businesses for select to authenticated u
 );
 
 -- Atomic, retry-safe creation: no caller-selected owner and no orphan business.
-create function public.create_owned_business(business_name text, request_id uuid)
+create function private.create_owned_business(business_name text, request_id uuid)
 returns public.businesses language plpgsql security definer set search_path = '' as $$
 declare actor uuid := auth.uid(); result public.businesses;
 begin
@@ -49,7 +52,7 @@ begin
   return result;
 end $$;
 
-create function public.add_business_attendant(target_business uuid, target_user uuid)
+create function private.add_business_attendant(target_business uuid, target_user uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null or not exists(select 1 from public.businesses where id=target_business and owner_id=auth.uid()) then
@@ -59,7 +62,7 @@ begin
   insert into public.business_members(business_id,user_id,role) values(target_business,target_user,'attendant') on conflict do nothing;
 end $$;
 
-create function public.remove_business_attendant(target_business uuid, target_user uuid)
+create function private.remove_business_attendant(target_business uuid, target_user uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null or not exists(select 1 from public.businesses where id=target_business and owner_id=auth.uid()) then
@@ -67,6 +70,20 @@ begin
   end if;
   delete from public.business_members where business_id=target_business and user_id=target_user and role='attendant';
 end $$;
+revoke all on function private.create_owned_business(text,uuid), private.add_business_attendant(uuid,uuid), private.remove_business_attendant(uuid,uuid) from public, anon;
+grant execute on function private.create_owned_business(text,uuid), private.add_business_attendant(uuid,uuid), private.remove_business_attendant(uuid,uuid) to authenticated;
+create function public.create_owned_business(business_name text, request_id uuid)
+returns public.businesses language sql security invoker set search_path = '' as $$
+  select private.create_owned_business(business_name, request_id);
+$$;
+create function public.add_business_attendant(target_business uuid, target_user uuid)
+returns void language sql security invoker set search_path = '' as $$
+  select private.add_business_attendant(target_business, target_user);
+$$;
+create function public.remove_business_attendant(target_business uuid, target_user uuid)
+returns void language sql security invoker set search_path = '' as $$
+  select private.remove_business_attendant(target_business, target_user);
+$$;
 revoke all on function public.create_owned_business(text,uuid), public.add_business_attendant(uuid,uuid), public.remove_business_attendant(uuid,uuid) from public, anon;
 grant execute on function public.create_owned_business(text,uuid), public.add_business_attendant(uuid,uuid), public.remove_business_attendant(uuid,uuid) to authenticated;
 commit;

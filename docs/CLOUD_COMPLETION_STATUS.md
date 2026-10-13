@@ -13,11 +13,15 @@ Reference: the owner's Tallybook study guide. Its description of schema version 
 
 ## Rollout
 
-The gate is staged behind `VITE_TALLYBOOK_REQUIRE_AUTH=true`. It defaults off to preserve the deployed local app until the production authentication configuration and callback are verified. No production database migration has been applied. Do not treat source preparation as a completed live rollout.
+The gate is staged behind `VITE_TALLYBOOK_REQUIRE_AUTH=true`. It defaults off to preserve the deployed local app until account-local data isolation and the complete authentication journey are verified. The ownership migration is installed in production; the application changes remain in draft PR #4. Do not treat database preparation as a completed synchronization rollout.
 
-Production project supplied by the owner: `https://qfyyfxwvidfvdfdgeu.supabase.co`.
+Verified production project: `https://qfyydfxwvifdvffdfgeu.supabase.co`. The initially pasted reference contained a typo. The connected Tallybook project and the live site's compiled client both use this verified reference. Live site: https://tallybook-eight.vercel.app/.
 
-Before enabling: connect Supabase access, inspect existing public tables/policies/migrations, reconcile naming conflicts, validate migrations against a development database, check Google redirect URLs, then exercise sign-in/sign-out and offline refresh on the deployed preview. Apply the migration and enable the flag only after these checks.
+On 13 October, restored the paused production project and confirmed ACTIVE_HEALTHY. Before migration, public application tables and migration history were empty and there were zero registered accounts. Applied `20261013123347_business_identity` and `20261013123702_restrict_rls_helper`; local filenames match the recorded remote versions. Verified RLS on all three tables and denied anonymous execution of the three public RPCs. Privileged implementations live in a private schema; public wrappers use caller privileges. Removed browser execution grants from the existing RLS event-trigger helper. The security advisor now reports only disabled leaked-password protection; the performance advisor reports the newly created membership index as unused, which is expected before traffic.
+
+Google OAuth is enabled. An unauthenticated authorize request returns a Google redirect with the live `/signin` return address. This verifies initiation only, not a completed real-user login. No local ledger records have been uploaded. Before enabling the gate, exercise real sign-in/sign-out and offline refresh, and implement explicit local-data ownership handling.
+
+The sync status screen now includes cloud business account lookup and explicit creation. Creation persists a request ID before sending, so retries after lost responses or reloads cannot duplicate the same request. This prepares cloud identity only; it does not bind, claim, or upload the local business. Delayed responses from a previous account are discarded.
 
 ## Remaining roadmap
 
@@ -34,4 +38,6 @@ The supplied guide is a roadmap, not a claim that these remaining stages are imp
 
 ## Validation for this foundation
 
-17 targeted client tests passed (authentication, business identity and app navigation). Seven source/database checks passed, including executable PostgreSQL access-control checks. Both authentication browser journeys passed. TypeScript and the production build passed; the existing bundle-size warning remains. Live Supabase OAuth, production migrations, remote ownership and two-device synchronization have not been tested or activated.
+The original foundation passed 17 targeted client tests, seven source/database checks, both authentication browser journeys, TypeScript and the production build. The existing bundle-size warning remains. The revised private-schema migration also passes the executable PostgreSQL access-control test. Production schema and privileges are verified. Completed real-user OAuth and two-device synchronization remain unverified and are not claimed as active.
+
+Latest validation: all nine cloud identity/screen tests passed (the initial screen worker timed out at startup; an isolated rerun passed), all seven source/database checks passed, and TypeScript passed.
