@@ -24,3 +24,13 @@
 .premium-step:hover{border-color:#9fc6f5;box-shadow:0 5px 16px #185ab014}
 .premium-action:focus-visible,.premium-step:focus-visible,.premium-tip:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.premium-action,.premium-step{transition:none}.premium-action:hover{transform:none}}
+
+/* Narrow screens: grid children must shrink instead of forcing the viewport wider. */
+@media(max-width:639px){
+  .premium-home,.premium-main,.premium-middle,.premium-kpis,.premium-side,.premium-setup,.premium-step-grid{min-width:0;max-width:100%}
+  .premium-kpis,.premium-step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .premium-kpi{min-width:0;flex-wrap:wrap;overflow-wrap:anywhere}
+  .premium-card,.premium-step{min-width:0;box-sizing:border-box}
+  .premium-setup-head{flex-wrap:wrap}
+  .premium-welcome h1{overflow-wrap:anywhere}
+}
