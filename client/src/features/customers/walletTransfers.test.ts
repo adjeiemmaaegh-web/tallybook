@@ -33,6 +33,7 @@ describe('Stage 4 wallet and loyalty financial safeguards',()=>{
   await db.businessProfiles.update(transfer.businessProfileId, {currency:'USD'});
   await expect(recordWalletTransfer({...input,amountMinor:100,reference:'changed',submissionKey:'another-deposit-001'},db)).rejects.toThrow(/unknown or different currency/);
   expect(await db.walletTransfers.count()).toBe(1);
+  await db.businessProfiles.update(transfer.businessProfileId, {currency:'GHS'});
   await expect(recordWalletTransfer({...input,kind:'refund',amountMinor:2600,reference:'refund-01',submissionKey:'refund-stage4-001'},db)).rejects.toThrow(/insufficient balance/i);
   expect(await db.walletTransfers.count()).toBe(1);
  });

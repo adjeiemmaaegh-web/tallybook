@@ -210,7 +210,7 @@ describe("customer debt ledger", () => {
     expect(await database.repayments.count()).toBe(1);
   });
 
-  it("refuses to imply a sale currency for old records but keeps customer-level repayment available", async () => {
+  it("refuses linked and unallocated repayments for debt without verified currency", async () => {
     const database = makeDatabase();
     const {customer,sale} = await creditSale(database, "Old Unknown Currency");
     const { currency: _previousCurrency, ...legacySale } = (await database.sales.get(sale.sale.id))!;
@@ -219,8 +219,9 @@ describe("customer debt ledger", () => {
     expect(choices.canLink).toBe(false);
     await expect(recordRepayment({customerId:customer.id,amount:"2.00",method:"cash",currency:"GHS",
       saleAllocations:[{saleId:sale.sale.id,amountMinor:200}]},database)).rejects.toThrow(/eligible|currency/);
-    await recordRepayment({customerId:customer.id,amount:"2.00",method:"cash",currency:"GHS"},database);
-    expect((await getCustomerDebtSummary(customer.id,"GHS",database)).outstandingMinor).toBe(1800);
+    await expect(recordRepayment({customerId:customer.id,amount:"2.00",method:"cash",currency:"GHS"},database)).rejects.toThrow(/no verified currency/i);
+    expect(await database.repayments.count()).toBe(0);
+    expect((await database.sales.get(sale.sale.id))?.outstandingMinor).toBe(2000);
   });
 
   it("supports multiple repayments through to a zero balance and rejects any further repayment", async () => {

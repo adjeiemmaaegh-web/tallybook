@@ -19,7 +19,7 @@ async function sale(when: Date, customerId: string | undefined, lines: Array<{ p
   const paidMinor = paid ?? total;
   const id = `sale-${++saleNumber}`;
   await kit.database.sales.add({
-    id, businessProfileId: "primary", customerId, receiptNumber: `T-${saleNumber}`, status: "completed", subtotalMinor: total, discountMinor: 0, totalMinor: total,
+    id, businessProfileId: "primary", currency: "GHS", customerId, receiptNumber: `T-${saleNumber}`, status: "completed", subtotalMinor: total, discountMinor: 0, totalMinor: total,
     amountPaidMinor: paidMinor, outstandingMinor: total - paidMinor, paymentMethod: paidMinor < total ? "credit" : "cash", submissionKey: id, createdAt: when.toISOString(),
   });
   for (const [index, line] of lines.entries()) {

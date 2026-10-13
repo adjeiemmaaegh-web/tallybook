@@ -24,3 +24,12 @@ Compared with main at a245449. Imported the supplied V19 Milestone 1 source into
 Outstanding client failures require separate reconciliation before treating this snapshot as production-ready.
 
 Final client result: 759 passed, 13 failed across 96 test files (86 passed, 10 failed). Dependency audit: no known vulnerabilities found.
+
+## Follow-up: resolve the 13 client failures
+
+Two supplier-payable application defects were corrected: retry lookups now use the existing company/submission-key compound index, and reconciliation orders events by timestamp instead of relying on random primary-key order. Recognition is processed before settlements with equal timestamps; settlements dated before recognition remain rejected. Regression tests cover reordered events, same-time events and company-scoped retries.
+
+The remaining failures were reconciled with current contracts: provide valid company/currency/phone fixtures; preserve local audit history on backup restore; reject repayments without verified historical currency without mutating debt; assert current validation messages; restore the wallet fixture currency before testing over-refunds; and identify FIFO source receipts through the original issue allocations rather than array position. No tests were skipped and no financial safeguards were removed.
+
+Follow-up verification: all 773 client tests passed across 96 files; all 343 source QA tests passed; TypeScript validation passed. These results supersede the initial 13-failure client result above.
+Production build also passed; the existing bundle-size warning remains.

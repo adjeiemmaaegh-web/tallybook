@@ -79,7 +79,7 @@ describe("Stage 9 local backup and restore", () => {
     expect(snapshot.records.repayments[0].currency).toBe("GHS");
     const tamperedCurrency=structuredClone(snapshot);
     tamperedCurrency.records.repayments[0].currency="USD";
-    expect(()=>parseBackup(stringifyBackup(tamperedCurrency))).toThrow(/currency conflicts/i);
+    expect(()=>parseBackup(stringifyBackup(tamperedCurrency))).toThrow(/currency|currencies/i);
     // An unallocated repayment still has real currency evidence. It must not
     // bypass cross-currency checks merely because no saleAllocations exist.
     const unallocatedConflict=structuredClone(snapshot);

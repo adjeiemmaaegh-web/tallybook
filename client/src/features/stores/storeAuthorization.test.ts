@@ -72,7 +72,7 @@ describe('store administration and benefit write authority (pending client run)'
 
   it('validates customer policy and points permissions inside the write transaction and attributes the actor',async()=>{
     const database=await setup();
-    const customer=await createCustomer({name:'Benefit Customer',phone:'',email:'',address:'',notes:'',status:'active'},database);
+    const customer=await createCustomer({name:'Benefit Customer',phone:'0240000001',email:'',address:'',notes:'',status:'active'},database);
     const owner=await createStaff('Owner','owner','123456',database);
     await unlockStaff(owner.id,'123456',database);
     const cashier=await createStaff('Cashier','cashier','654321',database);

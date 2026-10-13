@@ -122,6 +122,7 @@ describe("privacy and scope", () => {
     expect((await log()).map((entry) => entry.summary)).toEqual(["mine"]);
     await expect(clearCompanyData("company-two", kit.database)).rejects.toThrow("Switch to the company");
     expect(await kit.database.assistantAudit.count()).toBe(2);
+    await kit.database.businessProfiles.put({ ...(await kit.database.businessProfiles.get("primary"))!, id: "company-two", name: "Second company" });
     setActiveBusinessProfileId("company-two");
     await clearCompanyData("company-two", kit.database);
     expect(await kit.database.assistantAudit.count()).toBe(1);
@@ -130,7 +131,7 @@ describe("privacy and scope", () => {
     expect(await kit.database.assistantAudit.count()).toBe(0);
   });
 
-  it("is not part of a backup, and restoring a backup clears stale audit history", async () => {
+  it("is not part of a backup, and restoring a backup preserves device-local audit history", async () => {
     const ai = at(NOW);
     await ai.act(confirmAction(await ai.send("Sell 2 eggs to Kwame, paid cash")));
     const [entry] = await log();
@@ -139,7 +140,7 @@ describe("privacy and scope", () => {
     expect(JSON.stringify(backup)).not.toContain(entry.id);
     expect(Object.keys(backup.records)).not.toContain("assistantAudit");
     await restoreBackup(parseBackup(stringifyBackup(backup)), kit.database);
-    expect(await log()).toHaveLength(0);
+    expect(await log()).toEqual([entry]);
   });
 });
 

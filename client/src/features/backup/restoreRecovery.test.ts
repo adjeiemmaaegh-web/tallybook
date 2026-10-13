@@ -156,7 +156,7 @@ describe('durable two-database restore preimage journal',()=>{
     expect(await readAssistantRestoreSnapshot(company)).toEqual(snapshot('original'));
     expect(await database.appMeta.get(RESTORE_JOURNAL_KEY)).toBeUndefined();
     const injected={...backup,records:{...backup.records,appMeta:[...backup.records.appMeta,{key:RESTORE_JOURNAL_KEY,value:'spoof',updatedAt:new Date().toISOString()}]}};
-    expect(()=>parseBackup(stringifyBackup(injected as typeof backup))).toThrow(/journal/i);
+    expect(()=>parseBackup(stringifyBackup(injected as typeof backup))).toThrow(/unsafe or duplicated device metadata/i);
     database.close();
   });
 });

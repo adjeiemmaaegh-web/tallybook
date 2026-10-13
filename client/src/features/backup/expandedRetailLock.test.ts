@@ -4,6 +4,7 @@
 import Dexie from 'dexie';
 import { afterEach, expect, it } from 'vitest';
 import { initializeDatabase, TallybookDB } from '@/db/TallybookDB';
+import { saveBusinessProfile } from '@/features/business/businessProfile';
 import { createCustomer } from '@/features/customers/customers';
 import { recordWalletTransfer } from '@/features/customers/walletTransfers';
 import { TWO_DATABASE_LOCK_NAME } from './crossTabDataLock.mjs';
@@ -21,6 +22,7 @@ it('refuses a wallet transfer while another tab holds the exclusive recovery loc
   const database=new TallybookDB(name);
   openDatabases.push(database);
   await initializeDatabase(database);
+  await saveBusinessProfile({name:"Lock Test Shop",country:"Ghana",currency:"GHS",businessType:"Retail shop",phone:"",email:"",address:""},database);
   const customer=await createCustomer({name:'Lock Test Buyer',phone:'0123456789',status:'active'},database);
   let release!:()=>void;
   let signal!:()=>void;

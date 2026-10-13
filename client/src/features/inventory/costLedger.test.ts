@@ -69,7 +69,7 @@ describe("persisted inventory cost history", () => {
       const now = new Date().toISOString();
       const movementId = "partial-cost-1";
       const event = await restorePartialInventoryCost(db, current, issueId, {sourceId:movementId,createdAt:now,saleId:saved.sale.id}, 1);
-      expect(event.allocations).toEqual([{receiptId:snapshot[0].id,quantity:1,unitCostMinor:100}]);
+      expect(event.allocations).toEqual([{receiptId:snapshot.find(event => event.id === issueId)!.allocations![0].receiptId,quantity:1,unitCostMinor:100}]);
       await db.products.update(product.id, {stockQuantity: current.stockQuantity + 1});
       await db.inventoryMovements.add({id:movementId,businessProfileId:"primary",productId:product.id,movementType:"reversal",quantityDelta:1,previousQuantity:current.stockQuantity,resultingQuantity:current.stockQuantity+1,createdAt:now});
     });
@@ -90,7 +90,7 @@ describe("persisted inventory cost history", () => {
     expect((await db.products.get(product.id))!.stockQuantity).toBe(beforeStock);
     // Financial reports and backups should continue to fail closed until an
     // exact-linked, immutable partial-return financial posting is implemented.
-    await expect(getFinancialSummary("today",new Date(),undefined,undefined,db)).rejects.toThrow(/matching sale reversal/);
+    await expect(getFinancialSummary("today",new Date(),undefined,undefined,db)).rejects.toThrow(/no uniquely matched full or partial return evidence/);
   });
   it("never substitutes today's product cost for an unknown legacy opening", async () => {
     const { db, product } = await setup();

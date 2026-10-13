@@ -43,7 +43,7 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase is missing, foreign or has no verified currency snapshot; reconcile it before recognizing debt.');
     validAmount(purchase.totalCostMinor);
     const entries = await database.supplierPayableEntries.where('purchaseId').equals(purchaseId).toArray();
-    const existingKey = await database.supplierPayableEntries.where('submissionKey').equals(submissionKey).and(row => row.businessProfileId === company).first();
+    const existingKey = await database.supplierPayableEntries.where('[businessProfileId+submissionKey]').equals([company, submissionKey]).first();
     if (existingKey) {
       reconcileSupplierPayable(purchase, entries);
       if (existingKey.purchaseId === purchaseId && existingKey.supplierId === purchase.supplierId && existingKey.currency === purchase.currency && existingKey.amountMinor === purchase.totalCostMinor && existingKey.kind === 'recognition') return existingKey;
@@ -88,7 +88,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     const rows = await database.supplierPayableEntries.where('purchaseId').equals(purchase.id).toArray();
     if (rows.some(row => row.currency !== purchase.currency)) throw new Error('Supplier currency snapshot mismatch.');
     const balance = reconcileSupplierPayable(purchase, rows);
-    const priorKey = await database.supplierPayableEntries.where('submissionKey').equals(input.submissionKey).and(row => row.businessProfileId === company).first();
+    const priorKey = await database.supplierPayableEntries.where('[businessProfileId+submissionKey]').equals([company, input.submissionKey]).first();
     if (priorKey) {
       if (priorKey.purchaseId === input.purchaseId && priorKey.supplierId === purchase.supplierId && priorKey.currency === purchase.currency && priorKey.kind === input.kind && priorKey.amountMinor === input.amountMinor && priorKey.method === input.method && (priorKey.reference ?? '') === (input.reference?.trim() ?? '')) return priorKey;
       throw new Error('Supplier submission key was reused for different details.');

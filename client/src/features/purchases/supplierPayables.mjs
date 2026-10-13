@@ -17,7 +17,12 @@ export function reconcileSupplierPayable(purchase, entries) {
   const seenIds = new Set();
   const seenKeys = new Set();
   let recognized = false, settledMinor = 0, paidMinor = 0, creditedMinor = 0;
-  for (const row of entries) {
+  // IndexedDB index reads use primary-key order, not event time. Recognition
+  // precedes settlements at the same millisecond; older settlements still fail.
+  const ordered = [...entries].sort((a, b) =>
+    Date.parse(a?.createdAt) - Date.parse(b?.createdAt) ||
+    Number(b?.kind === 'recognition') - Number(a?.kind === 'recognition'));
+  for (const row of ordered) {
     if (!row || !identity(row.id) || !identity(row.submissionKey) || seenIds.has(row.id) || seenKeys.has(row.submissionKey) ||
         row.businessProfileId !== purchase.businessProfileId || row.purchaseId !== purchase.id ||
         row.supplierId !== purchase.supplierId || !identity(purchase.currency) || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||

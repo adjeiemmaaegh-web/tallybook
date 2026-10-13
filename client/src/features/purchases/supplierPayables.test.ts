@@ -1,4 +1,3 @@
-/* These IndexedDB transaction tests require client Vitest/fake-indexeddb, unavailable in the current container. */
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import { initializeDatabase, TallybookDB, DATABASE_SCHEMA_VERSION } from '@/db/TallybookDB';
@@ -37,6 +36,15 @@ describe('v27 explicitly recognized supplier payables',()=>{
     await expect(recordSupplierSettlement({purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:3001,submissionKey:'over-payment-001'},database)).rejects.toThrow(/exceeds/);
     await recordSupplierSettlement({purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:1200,submissionKey:'settlement-retry-002'},database);
     await expect(recordSupplierSettlement({purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:1000,submissionKey:'settlement-retry-002'},database)).rejects.toThrow(/reused/);
+    expect(await database.supplierPayableEntries.count()).toBe(2);
+  });
+  it('scopes submission retries to the company compound index',async()=>{
+    const {database,purchase}=await setup();
+    const key='company-scoped-recognition';
+    await database.supplierPayableEntries.add({id:'other-company-entry',businessProfileId:'other-company',supplierId:'other-supplier',purchaseId:'other-purchase',currency:'GHS',kind:'recognition',amountMinor:3000,submissionKey:key,createdAt:new Date().toISOString()});
+    const recognized=await recognizeUnpaidPurchase(purchase.id,key,database);
+    expect(recognized.businessProfileId).toBe('primary');
+    expect(await recognizeUnpaidPurchase(purchase.id,key,database)).toEqual(recognized);
     expect(await database.supplierPayableEntries.count()).toBe(2);
   });
   it('rejects recognition and settlements on foreign purchase IDs',async()=>{
