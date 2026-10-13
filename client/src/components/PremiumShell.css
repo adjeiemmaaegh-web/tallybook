@@ -18,3 +18,11 @@
 @media(max-width:1023px) { .premium-desktop-rail { display:none; } }
 @media(max-width:639px) { .premium-menu-button { flex-shrink:0; } }
 @media(prefers-reduced-motion:reduce) { .premium-nav-item { transition:none; } }
+
+/* Reference-inspired header search affordance links to the real inventory search. */
+.premium-global-search{display:flex;align-items:center;gap:10px;min-width:160px;max-width:420px;flex:1;padding:10px 14px;border:1px solid #e1e9f3;border-radius:9px;background:#f8fafc;color:#7b899b;text-decoration:none;font-size:12px;white-space:nowrap}
+.premium-global-search:hover{background:#eef5ff;border-color:#bdd7fa;color:#175cb5}
+.premium-global-search span{overflow:hidden;text-overflow:ellipsis}
+.premium-global-search kbd{margin-left:auto;font-size:10px;color:#9aa6b7}
+@media(max-width:1023px){.premium-global-search{min-width:0;max-width:190px;padding:9px}.premium-global-search kbd{display:none}}
+@media(max-width:639px){.premium-global-search{flex:0 0 auto;padding:9px}.premium-global-search span{display:none}}
