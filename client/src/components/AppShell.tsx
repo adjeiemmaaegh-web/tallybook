@@ -1,5 +1,5 @@
 /** Tactile Ledger design reminder: a running ledger strip shows the saved business identity wherever owners work, with generous thumb targets. */
-import { useMemo, useState, useEffect, type ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import { db } from "@/db/TallybookDB";
 import { currentStaffId, STAFF_SESSION_CHANGED } from "@/features/staff/staff";
 import { Bell, Users, Cloud, CloudOff, HardDriveDownload, MessageCircleQuestion, Store, Menu, X, Truck, CircleDollarSign, BarChart3, Boxes, ShoppingBag, ContactRound, LayoutDashboard } from "lucide-react";
@@ -24,6 +24,9 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 export function AppShell({ children }: AppShellProps) {
   const { profile, activeCompanyId } = useBusinessProfile();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuCloseRef = useRef<HTMLButtonElement>(null);
+  const menuDrawerRef = useRef<HTMLElement>(null);
   const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open">("loading");
   useEffect(() => {
     let mounted = true;
@@ -46,7 +49,21 @@ export function AppShell({ children }: AppShellProps) {
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
   useEffect(() => { setMenuOpen(false); }, [location]);
-  useEffect(() => { if (!menuOpen) return; const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, [menuOpen]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuCloseRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setMenuOpen(false); menuTriggerRef.current?.focus(); }
+      if (event.key !== "Tab" || !menuDrawerRef.current) return;
+      const focusable = Array.from(menuDrawerRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
   const groups = [
     { title: "Workspace", links: [{ href: "/", label: "Home", Icon: LayoutDashboard }, { href: "/sales", label: "Sales (POS)", Icon: ShoppingBag }, { href: "/inventory", label: "Inventory", Icon: Boxes }, { href: "/customers", label: "Customers", Icon: ContactRound }] },
     { title: "Management", links: [{ href: "/purchases", label: "Purchases", Icon: Truck }, { href: "/expenses", label: "Expenses", Icon: CircleDollarSign }, { href: "/reports", label: "Reports", Icon: BarChart3 }, { href: "/end-of-day", label: "End of day", Icon: Bell }] },
@@ -61,8 +78,8 @@ export function AppShell({ children }: AppShellProps) {
   return <div className="app-frame">
     <a className="skip-link" href="#main-content">Skip to page content</a><span className="screen-reader-announcer" aria-live="polite" aria-atomic="true">{pageName} page</span>
     <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><div className="premium-rail-brand"><BrandMark /><CompanySwitcher />{profile && <p className="business-shell-name" title={profile.name}>{profile.name}</p>}</div><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
-    {menuOpen && <div className="premium-mobile-overlay"><button type="button" className="premium-drawer-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /><aside className="premium-mobile-drawer" aria-label="Mobile navigation"><div className="premium-drawer-heading"><BrandMark compact /><button type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X className="h-5 w-5" /></button></div><nav className="premium-nav-groups">{groupedNav(() => setMenuOpen(false))}</nav></aside></div>}
-    <div className="content-frame"><header className="top-bar" aria-label="Application status"><button className="premium-menu-button" type="button" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu className="h-5 w-5" /></button><div className="mobile-brand-lockup"><BrandMark compact /></div><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
+    {menuOpen && <div className="premium-mobile-overlay"><button type="button" className="premium-drawer-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /><aside ref={menuDrawerRef} className="premium-mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile navigation"><div className="premium-drawer-heading"><BrandMark compact /><button ref={menuCloseRef} type="button" aria-label="Close menu" onClick={() => { setMenuOpen(false); menuTriggerRef.current?.focus(); }}><X className="h-5 w-5" /></button></div><nav className="premium-nav-groups">{groupedNav(() => setMenuOpen(false))}</nav></aside></div>}
+    <div className="content-frame"><header className="top-bar" aria-label="Application status"><button ref={menuTriggerRef} className="premium-menu-button" type="button" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu className="h-5 w-5" /></button><div className="mobile-brand-lockup"><BrandMark compact /></div><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Clementia assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
     <ClementiaLauncher hidden={location === "/assistant" || location === "/sales" || location === "/staff"} />
     <nav className="mobile-nav" aria-label="Primary navigation">{primaryRoutes.map((route) => <NavigationLink key={route.key} route={route} />)}</nav>
   </div>;

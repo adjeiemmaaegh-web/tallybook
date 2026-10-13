@@ -8,3 +8,8 @@
 .clementia-panel-body .assistant-back{display:none}
 @media(min-width:1024px){.clementia-launcher{bottom:30px}.clementia-panel{bottom:24px}}
 @media(max-width:639px){.clementia-launcher{right:12px;bottom:80px}.clementia-panel{right:0;bottom:0;width:100vw;height:85dvh;border-radius:18px 18px 0 0}}
+
+.clementia-launcher[hidden]{display:none}
+.clementia-launcher:focus-visible,.clementia-panel-header a:focus-visible,.clementia-panel-header button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+.clementia-panel-body .assistant-composer{background:#fff}
+@media(prefers-reduced-motion:reduce){.clementia-launcher,.clementia-panel{transition:none;animation:none}}
