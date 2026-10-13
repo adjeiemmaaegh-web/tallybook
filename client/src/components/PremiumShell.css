@@ -46,3 +46,11 @@
   .top-bar .shell-top-utilities>a[aria-label="Backup"]{display:none}
   .top-bar .shell-top-utilities{gap:4px;flex-shrink:0}
 }
+
+/* Database status remains visible, but its verbose chip must not widen the mobile viewport. */
+@media(max-width:639px){
+  .top-bar{min-width:0}
+  .top-bar .shell-top-utilities{min-width:0;flex:0 1 auto}
+  .top-bar .shell-top-utilities .status-chip{max-width:26px;min-width:26px;width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:0;white-space:nowrap}
+  .top-bar .shell-top-utilities .status-chip span{font-size:0;max-width:0;overflow:hidden}
+}
