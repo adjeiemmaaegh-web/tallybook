@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { BarChart3, CalendarDays, CheckCircle2, Circle, CircleDollarSign, GraduationCap, Lightbulb, Package, ShoppingCart, Truck, UsersRound, WalletCards, Zap } from "lucide-react";
-import { getDashboardSummary, type DashboardSummary } from "@/features/reports/reports";
+import { getDashboardSummary, getBusinessHealthSummary, type DashboardSummary } from "@/features/reports/reports";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import type { SetupCounts } from "@/features/business/setupProgress";
 import "./PremiumHome.css";
@@ -24,11 +24,13 @@ const steps = [
 export function PremiumHomeOverview({companyId,companyName,currency,country,online,counts}:Props) {
   const [summary,setSummary] = useState<DashboardSummary|null>(null);
   const [error,setError] = useState(false);
+  const [expensesToday,setExpensesToday] = useState<number|null>(null);
   useEffect(()=>{
     let active=true;
     const load=()=>{void getDashboardSummary().then(data=>{if(active){setSummary(data);setError(false);}}).catch(()=>{if(active){setSummary(null);setError(true);}});};
-    load();window.addEventListener("focus",load);
-    return ()=>{active=false;window.removeEventListener("focus",load);};
+    const loadExpenses=()=>{void getBusinessHealthSummary("today").then(data=>{if(active)setExpensesToday(data.expensesMinor);}).catch(()=>{if(active)setExpensesToday(null);});};
+    load();loadExpenses();window.addEventListener("focus",load);window.addEventListener("focus",loadExpenses);
+    return ()=>{active=false;window.removeEventListener("focus",load);window.removeEventListener("focus",loadExpenses);};
   },[companyId]);
   const done=[true,Boolean(counts?.products),Boolean(counts?.customers),Boolean(counts?.sales),false];
   const completed=done.filter(Boolean).length;
@@ -37,7 +39,7 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
     {title:"Sales Today",value:summary?formatMinorAmount(summary.todaySalesMinor,currency):"—",detail:summary?`${summary.todayTransactions} transactions`:"Loading records",Icon:CircleDollarSign,color:"#1eb77d"},
     {title:"Total Products",value:counts?String(counts.products):"—",detail:"In inventory",Icon:Package,color:"#2786e8"},
     {title:"Customers",value:counts?String(counts.customers):"—",detail:"Total customers",Icon:UsersRound,color:"#f49a24"},
-    {title:"Collected Today",value:summary?formatMinorAmount(summary.todayMoneyReceivedMinor,currency):"—",detail:"Payments received",Icon:WalletCards,color:"#df4d6a"},
+    {title:"Expenses Today",value:expensesToday!==null?formatMinorAmount(expensesToday,currency):"—",detail:expensesToday!==null?"Recorded expenses":"Unavailable or loading",Icon:WalletCards,color:"#df4d6a"},
   ];
   return <div className="premium-home">
     <div className="premium-main">
