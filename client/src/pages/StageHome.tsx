@@ -81,7 +81,7 @@ export default function StageHome() {
         </div>
         <div className="rounded-xl border bg-card px-4 py-3 text-sm shadow-sm">
           <strong className="block">{profile.name}</strong>
-          <span className="text-xs text-muted-foreground">{profile.country} · {profile.currency} · {online ? "Saved locally" : "Offline — saved locally"}</span>
+          <span className="text-xs text-muted-foreground"><span>{profile.country} · {profile.currency}</span><span> · {online ? "Saved locally" : "Offline — saved locally"}</span></span>
         </div>
       </header>
 

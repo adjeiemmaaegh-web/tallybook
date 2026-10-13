@@ -184,7 +184,7 @@ export default function AssistantPage() {
           placeholder={voice.listening ? "Listening\u2026 speak now" : "Ask Clementia something\u2026"}
           disabled={disabled}
           readOnly={voice.listening}
-          aria-label="Message Clementia"
+          aria-label="Message TallyBook\'s assistant"
         />
         {voice.supported && (
           <button
