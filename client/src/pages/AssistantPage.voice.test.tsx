@@ -1,0 +1,245 @@
+/**
+ * Voice input on the Assistant page. The browser's speech engine is replaced by a fake that behaves like Chrome's: it must be configured with
+ * `lang` (not `language`), reports interim then final results, can fail with the same error codes, and always fires `onend`.
+ * The real page and the real useVoiceInput hook run against it.
+ */
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { AssistantReply } from "@/features/assistant";
+
+const send = vi.fn<(text: string) => Promise<AssistantReply>>();
+const actFn = vi.fn<(action: unknown) => Promise<AssistantReply>>();
+
+vi.mock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: { id: "primary", name: "Kwaku Provision Store", country: "Ghana", currency: "GHS" }, activeCompanyId: "primary" }) }));
+vi.mock("@/contexts/DatabaseContext", () => ({ useDatabase: () => ({ status: "ready" }) }));
+vi.mock("@/features/assistant", async (importOriginal) => ({ ...(await importOriginal<object>()), createAssistant: () => ({ send, act: actFn, pendingToken: () => null }) }));
+
+import AssistantPage from "@/pages/AssistantPage";
+
+type Handler<T> = ((event: T) => void) | null;
+class FakeRecognition {
+  static instances: FakeRecognition[] = [];
+  lang = ""; continuous = true; interimResults = false; maxAlternatives = 0;
+  started = 0; stopped = 0; aborted = 0;
+  onstart: Handler<undefined> = null; onresult: Handler<unknown> = null; onerror: Handler<{ error: string }> = null; onend: Handler<undefined> = null;
+  constructor() { FakeRecognition.instances.push(this); }
+  start() { this.started += 1; this.onstart?.(undefined); }
+  stop() { this.stopped += 1; this.onend?.(undefined); }
+  abort() { this.aborted += 1; }
+  /** What the browser does when the owner speaks. */
+  hear(...parts: Array<{ transcript: string; confidence?: number; isFinal: boolean }>) {
+    this.onresult?.({ resultIndex: 0, results: parts.map((part) => Object.assign([{ transcript: part.transcript, confidence: part.confidence ?? 0 }], { isFinal: part.isFinal })) });
+  }
+  fail(code: string) { this.onerror?.({ error: code }); this.onend?.(undefined); }
+  finish() { this.onend?.(undefined); }
+}
+const current = () => FakeRecognition.instances[FakeRecognition.instances.length - 1];
+const input = () => screen.getByLabelText("Message TallyBook's assistant") as HTMLInputElement;
+const mic = () => screen.getByRole("button", { name: /Speak your message|Stop listening/ });
+
+beforeEach(() => {
+  FakeRecognition.instances = [];
+  (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = FakeRecognition;
+  window.localStorage.clear();
+  Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+  send.mockReset(); actFn.mockReset();
+  send.mockResolvedValue({ kind: "answer", text: "Done." });
+});
+afterEach(() => { delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition; delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition; });
+
+describe("voice input — availability", () => {
+  it("shows the microphone when the browser supports speech recognition", () => {
+    render(<AssistantPage />);
+    expect(mic()).toBeInTheDocument();
+    expect(screen.getByLabelText("Voice language")).toBeInTheDocument();
+  });
+
+  it("also works with the standard (unprefixed) API", () => {
+    delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition = FakeRecognition;
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    expect(current().started).toBe(1);
+  });
+
+  it("hides the microphone, rather than showing a dead button, when the browser can't do it", () => {
+    delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    render(<AssistantPage />);
+    expect(screen.queryByRole("button", { name: /Speak your message/ })).not.toBeInTheDocument();
+    expect(input()).toBeInTheDocument(); // typing is unaffected
+  });
+});
+
+describe("voice input — listening", () => {
+  it("starts the engine configured correctly", () => {
+    render(<AssistantPage />);
+    fireEvent.change(screen.getByLabelText("Voice language"), { target: { value: "en-GH" } });
+    fireEvent.click(mic());
+    const engine = current();
+    expect(engine.started).toBe(1);
+    expect(engine.lang).toBe("en-GH");
+    expect(engine.interimResults).toBe(true);
+    expect(engine.continuous).toBe(false);
+    expect(mic()).toHaveAccessibleName("Stop listening");
+    expect(mic()).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows what is being heard while the owner is still speaking", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().hear({ transcript: "sell two", isFinal: false }));
+    expect(input().value).toBe("sell two");
+    act(() => current().hear({ transcript: "sell two eggs to Kwame", isFinal: false }));
+    expect(input().value).toBe("sell two eggs to Kwame");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("tapping the microphone again stops listening", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    fireEvent.click(mic());
+    expect(current().stopped).toBe(1);
+  });
+
+  it("remembers the chosen language", () => {
+    const { unmount } = render(<AssistantPage />);
+    fireEvent.change(screen.getByLabelText("Voice language"), { target: { value: "fr-FR" } });
+    unmount();
+    render(<AssistantPage />);
+    expect((screen.getByLabelText("Voice language") as HTMLSelectElement).value).toBe("fr-FR");
+    fireEvent.click(mic());
+    expect(current().lang).toBe("fr-FR");
+  });
+
+  it("can't change language mid-listen", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    expect(screen.getByLabelText("Voice language")).toBeDisabled();
+  });
+});
+
+describe("voice input — what happens to the words", () => {
+  const speak = (transcript: string, confidence?: number) => {
+    fireEvent.click(mic());
+    act(() => { current().hear({ transcript, confidence, isFinal: true }); current().finish(); });
+  };
+
+  it("a confident transcript is sent straight to the assistant, exactly as if typed", async () => {
+    render(<AssistantPage />);
+    speak("I counted 25 eggs but we have 37", 0.93);
+    expect(send).toHaveBeenCalledWith("I counted 25 eggs but we have 37");
+    expect(await screen.findByText("Done.")).toBeInTheDocument();
+    expect(screen.getByText("I counted 25 eggs but we have 37", { selector: ".assistant-msg-user p" })).toBeInTheDocument();
+    expect(input().value).toBe("");
+    expect(mic()).toHaveAccessibleName("Speak your message");
+  });
+
+  it("a shaky transcript is NOT thrown away and NOT sent: it waits in the box to be checked", () => {
+    render(<AssistantPage />);
+    speak("sell fifteen eggs", 0.5);
+    expect(send).not.toHaveBeenCalled();
+    expect(input().value).toBe("sell fifteen eggs");
+    expect(screen.getByText(/not fully sure I heard that right/)).toBeInTheDocument();
+  });
+
+  it("a browser that reports no confidence is treated as unsure, but the words still appear", () => {
+    render(<AssistantPage />);
+    speak("add customer Ama", 0);
+    expect(send).not.toHaveBeenCalled();
+    expect(input().value).toBe("add customer Ama");
+    expect(screen.getByText(/Check what I heard/)).toBeInTheDocument();
+  });
+
+  it("the owner can fix the words and send them", async () => {
+    render(<AssistantPage />);
+    speak("sell fifteen eggs", 0.5);
+    fireEvent.change(input(), { target: { value: "sell fifty eggs to walk-in customer, paid cash" } });
+    fireEvent.submit(input().closest("form")!);
+    expect(send).toHaveBeenCalledWith("sell fifty eggs to walk-in customer, paid cash");
+    expect(await screen.findByText("Done.")).toBeInTheDocument();
+  });
+});
+
+describe("voice input — when it can't work, the owner is told why", () => {
+  const alertText = () => screen.getByRole("alert").textContent;
+
+  it.each([
+    ["not-allowed", /Microphone access is blocked/],
+    ["audio-capture", /couldn't find a working microphone/],
+    ["network", /needs an internet connection/],
+    ["service-not-allowed", /microphone key on your phone's keyboard/],
+    ["language-not-supported", /doesn't support that language/],
+    ["something-odd", /Voice typing stopped \(something-odd\)/],
+  ])("error “%s”", (code, message) => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().fail(code));
+    expect(alertText()).toMatch(message);
+    expect(send).not.toHaveBeenCalled();
+    expect(mic()).toHaveAccessibleName("Speak your message"); // the button recovers, so it can be tried again
+  });
+
+  it("says so when nothing was heard", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().finish());
+    expect(alertText()).toMatch(/didn't hear anything/);
+  });
+
+  it("says so, without starting the engine, when the device is offline", () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    expect(alertText()).toMatch(/needs an internet connection/);
+    expect(FakeRecognition.instances).toHaveLength(0);
+  });
+
+  it("an error clears when the owner tries again", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().fail("no-speech"));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    fireEvent.click(mic());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("an aborted session is not shown as an error", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().fail("aborted"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("works again after a failure (a fresh engine each time)", async () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => current().fail("network"));
+    fireEvent.click(mic());
+    expect(FakeRecognition.instances).toHaveLength(2);
+    act(() => { current().hear({ transcript: "show today's sales", confidence: 0.9, isFinal: true }); current().finish(); });
+    expect(send).toHaveBeenCalledWith("show today's sales");
+    expect(await screen.findByText("Done.")).toBeInTheDocument();
+  });
+});
+
+describe("voice input — cleanup", () => {
+  it("stops the engine when leaving the page", () => {
+    const { unmount } = render(<AssistantPage />);
+    fireEvent.click(mic());
+    const engine = current();
+    unmount();
+    expect(engine.aborted).toBe(1);
+  });
+
+  it("a late 'end' from a replaced session can't disturb the new one", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    const first = current();
+    act(() => first.fail("no-speech"));
+    fireEvent.click(mic());
+    const second = current();
+    act(() => first.finish());
+    expect(mic()).toHaveAccessibleName("Stop listening"); // still listening to the second session
+    expect(second.aborted).toBe(0);
+  });
+});

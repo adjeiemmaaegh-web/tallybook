@@ -1,0 +1,6 @@
+Host: Linux
+Node: v22.16.0
+OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+Pinned Node 24.19.0: not available
+Pinned pnpm 10.34.0: not available
+Package registry check (npm view dexie version): EAI_AGAIN getaddrinfo registry.npmjs.org

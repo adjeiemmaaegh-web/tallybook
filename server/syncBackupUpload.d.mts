@@ -1,0 +1,2 @@
+import type {EncryptedBackupEnvelope} from './syncBackupVault.mjs';
+export declare function uploadEncryptedBackup(headers:{authorization?:string;organizationId?:string;deviceId?:string;session?:string},envelope:EncryptedBackupEnvelope,config:{capabilitySecret?:string;sessionSecret?:string;directory:unknown;sessionStore:unknown;vault:{store(envelope:EncryptedBackupEnvelope):Promise<{backupId:string;sha256:string}>}}):Promise<Readonly<{backupId:string;sha256:string;organizationId:string}>>;

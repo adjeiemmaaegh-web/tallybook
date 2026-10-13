@@ -1,0 +1,8 @@
+native command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+native exit: 0, 229 passed / 0 failed / 0 skipped
+mock command: node --test server/tests/paymentGateway.test.mjs
+mock exit: 0, 4 passed
+TS parse only exit: 0 (7 files)
+JS syntax exit: 0
+pnpm/Vitest/types/build/browser: NOT RUN
+runtime: Linux x86_64; Node 22.16.0; global TypeScript 5.8.3; OpenSSL available

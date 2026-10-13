@@ -1,0 +1,17 @@
+OS: Linux x86_64 isolated container (not owner's Windows host or approved staging)
+Date: 2026-10-12
+Node: v22.16.0 (project .node-version pins 24.19.0; exact runtime unavailable)
+Full native command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+Exit: 0; tests: 449, passed: 449, failed/skipped: 0
+Separate simulated gateway: node --test server/tests/paymentGateway.test.mjs
+Exit: 0; tests: 4, passed: 4, failed/skipped: 0
+Focused tests: node --test qa/fin002-period-display-conservation.test.mjs
+Exit: 0; 9 passed
+Syntax: global TypeScript parser createSourceFile for financialIntelligence.ts, financialIntelligence.test.ts, financialPeriodConservation.d.mts
+Exit: 0; all parsed
+Standalone declarations: tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck client/src/features/reports/financialPeriodConservation.d.mts
+Exit: 0
+Repository semantic check: tsc --noEmit
+Exit: 2 (missing @types/node, vite/client; not a source semantic pass)
+Not run: pnpm install --frozen-lockfile, client Vitest, Vite build, Chromium/Playwright, real IndexedDB migrations/browser/physical hardware, remote CI, provider and staging. Installed project dependencies absent in source ZIP.
+Isolated TS-transpiled summarizeFinancials smoke: exit 0; actual report with dependencies stubbed, no IndexedDB/tax/provider verification.

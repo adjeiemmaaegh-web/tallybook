@@ -1,0 +1,2 @@
+export type StoreIntegrityFinding = { code: 'store-location-invalid' | 'store-reference-invalid' | 'store-assignment-invalid' | 'store-observation-invalid' | 'store-transfer-invalid'; recordId?: string };
+export function auditStoreRecords(companyId: string, stores: readonly any[], assignments: readonly any[], observations: readonly any[], requests: readonly any[], products: readonly any[], staff: readonly any[]): StoreIntegrityFinding[];

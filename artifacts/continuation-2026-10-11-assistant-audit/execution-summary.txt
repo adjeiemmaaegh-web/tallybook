@@ -1,0 +1,13 @@
+Source baseline: TALLYBOOK_V19_JOURNAL_CAS_CONTINUATION_2026-10-11_SOURCE.zip
+Expected/observed SHA-256: 20f3b54d770c585ac594c4cc45ba5023acdcf3e7e98e583cd387001ed05b11ff
+Host: Linux x86_64, Node v22.16.0, OpenSSL available
+Native command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+Native exit: 0; passed 271, failed 0, skipped 0
+Mock command: node --test server/tests/paymentGateway.test.mjs
+Mock exit: 0; passed 4, failed 0, skipped 0
+TypeScript syntax: seven changed .ts/.tsx files syntax-parsed using globally installed TypeScript compiler; not semantic verification
+TypeScript semantic: tsc --noEmit --pretty false; exit 2 due missing node and vite/client typings
+Client Vitest/production build/browser/real IndexedDB: not executed; pnpm/project dependencies unavailable
+New pure tests: qa/assistant-data-safety.test.mjs (6 passed within 271 native tests)
+Client integration tests added but NOT EXECUTED
+Release: NO-GO / INCOMPLETE

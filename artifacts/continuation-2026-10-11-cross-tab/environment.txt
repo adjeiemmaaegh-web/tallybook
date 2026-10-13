@@ -1,0 +1,5 @@
+node=v22.16.0
+openssl=OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+os=Linux 6.18.44 x86_64
+pnpm=unavailable
+pinned_node=24.19.0

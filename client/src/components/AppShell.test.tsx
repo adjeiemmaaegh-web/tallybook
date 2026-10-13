@@ -2,15 +2,17 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/AppShell";
+import { db, initializeDatabase } from "@/db/TallybookDB";
 
-vi.mock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: { name: "Accessibility Shop" } }) }));
+vi.mock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: { name: "Accessibility Shop" }, activeCompanyId: "primary" }) }));
 vi.mock("@/components/DatabaseStatus", () => ({ DatabaseStatus: () => <span>Saved on this device</span> }));
 vi.mock("@/components/BrandMark", () => ({ BrandMark: () => <span>Tallybook</span> }));
 
 describe("AppShell Stage 10 accessibility", () => {
-  it("offers a skip link, announces the current page, and exposes every working navigation route", () => {
+  it("offers a skip link, announces the current page, and exposes every working navigation route", async () => {
+    await initializeDatabase(db);
     render(<AppShell><h1>Today’s business</h1></AppShell>);
-    expect(screen.getByRole("link", { name: "Skip to page content" })).toHaveAttribute("href", "#main-content");
+    expect(await screen.findByRole("link", { name: "Skip to page content" })).toHaveAttribute("href", "#main-content");
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getAllByRole("link", { name: /Backup/i }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /more options|menu options/i })).not.toBeInTheDocument();

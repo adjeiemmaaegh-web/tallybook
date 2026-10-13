@@ -1,4 +1,5 @@
 /** Tallybook Africa design reminder: setup is a compact cobalt record card—one business, clear labels, solid readable surfaces, and no unnecessary account step. */
+import { TaxSettings } from "@/components/TaxSettings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, CircleAlert, PencilLine, Plus, Save, Smartphone, Store, ToggleLeft, ToggleRight } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -143,6 +144,12 @@ export default function BusinessSetup() {
             <div className="form-section"><div className="form-section-title"><span>02</span><div><h3>Where and how you trade</h3><p>This keeps future prices and reports easy to read.</p></div></div>
               <div className="form-grid-two"><FormField control={form.control} name="country" render={({ field }) => <FormItem><FormLabel>Country</FormLabel><Select value={field.value} onValueChange={(value) => { field.onChange(value); const match = countryOptions.find((country) => country.value === value); if (match && !form.getFieldState("currency").isDirty) form.setValue("currency", match.currency, { shouldDirty: true, shouldValidate: true }); }}><FormControl><SelectTrigger><SelectValue placeholder="Choose country" /></SelectTrigger></FormControl><SelectContent>{countryOptions.map((country) => <SelectItem key={country.value} value={country.value}>{country.value}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
               <FormField control={form.control} name="currency" render={({ field }) => <FormItem><FormLabel>Currency</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Choose currency" /></SelectTrigger></FormControl><SelectContent>{currencies.map((currency) => <SelectItem key={currency} value={currency}>{currency}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} /></div>
+              <FormField control={form.control} name="preferredPaymentMethod" render={({ field }) => <FormItem><FormLabel>Usual payment method</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="mobile">Mobile Money (MoMo)</SelectItem><SelectItem value="cash">Cash</SelectItem><SelectItem value="card">Card</SelectItem></SelectContent></Select><FormMessage /></FormItem>} />
+              <div className="form-grid-two">
+                <FormField control={form.control} name="mobileMoneyProviderName" render={({ field }) => <FormItem><FormLabel>Mobile Money provider <em>Optional</em></FormLabel><FormControl><Input placeholder="Enter your network or provider" maxLength={80} {...field} /></FormControl><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="cardProviderName" render={({ field }) => <FormItem><FormLabel>Card provider <em>Optional</em></FormLabel><FormControl><Input placeholder="Enter your card processor or bank" maxLength={80} {...field} /></FormControl><FormMessage /></FormItem>} />
+              </div>
+              <p>Record payments received through these providers. Online payment collection requires a separate verified connection.</p>
             </div>
 
             <div className="form-section"><div className="form-section-title"><span>03</span><div><h3>Contact details</h3><p>Optional for now. Add only what you want to keep in your record.</p></div></div>
@@ -156,6 +163,7 @@ export default function BusinessSetup() {
         </Form>
       </section>
 
+      {profile ? <TaxSettings key={`${profile.id}:${profile.updatedAt}`} /> : null}
       <section className="business-form-shell mobile-money-settings" aria-labelledby="mobile-money-settings-title">
         <div className="form-ledger-head"><div><p className="ledger-kicker">Mobile Money</p><h2 id="mobile-money-settings-title">Providers you accept at checkout.</h2><p>Choose your own provider names. Tallybook does not lock this list to a country or network.</p></div><div className="form-ledger-stamp"><Smartphone className="h-4 w-4" aria-hidden="true" /><span>Local setup</span></div></div>
         {!profile ? <div className="mobile-money-settings-note"><CircleAlert className="h-4 w-4" aria-hidden="true" /><p>Save your business details first, then add the providers you accept.</p></div> : <>

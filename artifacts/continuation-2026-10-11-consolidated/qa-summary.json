@@ -1,0 +1,19 @@
+{
+  "native_exit": 0,
+  "native_pass": 357,
+  "mock_exit": 0,
+  "mock_pass": 4,
+  "isolated_declarations_exit": 0,
+  "typescript_syntax_exit": 0,
+  "javascript_syntax_exits": [
+    0,
+    0
+  ],
+  "full_tsc_exit": 2,
+  "full_tsc_status": "blocked_missing_node_and_vite_typings",
+  "vitest": "not_run_dependencies_unavailable",
+  "production_build": "not_run_dependencies_unavailable",
+  "browser": "not_run_dependencies_unavailable",
+  "system": "Linux",
+  "node": "22.16.0"
+}

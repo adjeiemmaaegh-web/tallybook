@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createAdvancedInsights,evaluateAdvisoryRules} from '../client/src/features/insights/localInsights.mjs';
+const data=()=>({inventory:[],sales:[],debts:[],range:{period:'last7'}});
+test('missing evidence fails closed',()=>assert.throws(()=>createAdvancedInsights({}),TypeError));
+test('reorder is threshold grounded, no purchase execution',()=>{const d=data();d.inventory=[{productId:'p1',productName:'Rice',stockQuantity:2,lowStockThreshold:3}];const r=createAdvancedInsights(d);assert.equal(r.length,1);assert.match(r[0].evidence,/stock 2/);assert.equal(evaluateAdvisoryRules(r).length,0)});
+test('sales pace labels itself nonforecast',()=>{const d=data();d.sales=[{totalMinor:1200},{totalMinor:900}];assert.match(createAdvancedInsights(d)[0].title,/not a forecast/)});
+test('debt warns absence of ageing metadata',()=>{const d=data();d.debts=[{outstandingMinor:500}];assert.match(createAdvancedInsights(d)[0].evidence,/Due dates/)});
+test('expiry rejects other companies, invalid dates, and zero stock',()=>{const d=data();const rows=[{companyId:'other',batchId:'x',productName:'X',remainingQuantity:4,expiryDate:'2026-10-12'},{companyId:'a',batchId:'y',productName:'Y',remainingQuantity:4,expiryDate:'2026-10-12'},{companyId:'a',batchId:'z',productName:'Z',remainingQuantity:3,expiryDate:'2026-02-30'}];assert.deepEqual(createAdvancedInsights(d,{companyId:'a',batchRows:rows,now:'2026-10-10T00:00:00Z'}).map(x=>x.id),['expiry:y'])});
+test('automation opt-in never executes actions',()=>{const r=[{id:'x',kind:'reorder',action:'Review'}];assert.deepEqual(evaluateAdvisoryRules(r,{enabled:true}),[{id:'x',kind:'reorder',mode:'review-only',requiresHumanApproval:true,action:'Review'}])});
+test('rejects invalid planning horizons',()=>assert.throws(()=>createAdvancedInsights(data(),{horizonDays:0}),RangeError));

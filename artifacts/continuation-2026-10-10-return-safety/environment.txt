@@ -1,0 +1,7 @@
+Machine: Linux x86_64
+Node: v22.16.0
+OpenSSL: available (native server TLS tests executed)
+Pinned project toolchain: Node 24.19.0 and pnpm 10.34.0; unavailable.
+Installed node_modules: absent; user did not provide external dependency access.
+Current source: no production build, no client Vitest, no semantic TypeScript or browser QA.
+No external provider, deployment, real refund or hardware use.

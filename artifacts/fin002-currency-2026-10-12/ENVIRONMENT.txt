@@ -1,0 +1,12 @@
+Execution: isolated Linux container, 12 October 2026
+Node: v22.16.0, with OpenSSL. Project pinned Node: 24.19.0.
+Source: verified FIN002_RECONCILIATION ZIP SHA256 52b7d29673807f47db1b72a3de16774dbcba219270a74140feaa601064743615
+Native command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+Native result: 431/431, exit 0, 0 skipped, 0 failed
+Mock command: node --test server/tests/paymentGateway.test.mjs
+Mock result: 4/4, exit 0
+Full semantic command: tsc --noEmit
+Full semantic result: exit 2 (missing @types/node and vite/client; see log)
+Changed TS syntax: TypeScript globally installed compiler createSourceFile parseDiagnostics for 8 files; syntax PASS, not a semantic/type check.
+Client Vitest / actual IndexedDB / production build / browser / physical / deployed staging: NOT RUN, missing pinned dependencies.
+No staging, cloud publication, real payment or data mutation outside synthetic source/tests.

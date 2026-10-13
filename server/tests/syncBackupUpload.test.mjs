@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHmac,createHash} from 'node:crypto';
+import {uploadEncryptedBackup} from '../syncBackupUpload.mjs';
+const secret='test-secret-for-backup-write-0123456789-abcdefgh';
+const id='123e4567-e89b-42d3-a456-426614174000';
+function token(claims){const payload=Buffer.from(JSON.stringify(claims)).toString('base64url');return 'Bearer '+payload+'.'+createHmac('sha256',secret).update(payload).digest('base64url')}
+function fixture({scope='backup:write',role='owner',revoked=false}={}){const now=Math.floor(Date.now()/1000);let writes=0;const bytes=Buffer.from('opaque-encrypted-test');const envelope={organizationId:'orgA',deviceId:'deviceA',ciphertext:bytes.toString('base64'),sha256:createHash('sha256').update(bytes).digest('hex')}; const headers={organizationId:'orgA',deviceId:'deviceA',authorization:token({v:1,aud:'tallybook-sync',orgId:'orgA',deviceId:'deviceA',scope,iat:now-1,exp:now+120}),session:token({v:1,aud:'tallybook-sync-session',actorId:'userA',sessionId:'sessionA',iat:now-1,exp:now+120})};const config={capabilitySecret:secret,sessionSecret:secret,sessionStore:{async getSession(){return {id:'sessionA',actorId:'userA',status:revoked?'revoked':'active'}}},directory:{async getOrganization(){return {id:'orgA',status:'active'}},async getMembership(){return {orgId:'orgA',actorId:'userA',status:'active',role}},async getDevice(){return {orgId:'orgA',id:'deviceA',actorId:'userA',status:'active'}}},vault:{async store(){writes++;return {backupId:id,sha256:envelope.sha256}}}};return {headers,config,envelope,writes:()=>writes}}
+test('owner encrypted backup upload returns limited acknowledgement',async()=>{const x=fixture();const v=await uploadEncryptedBackup(x.headers,x.envelope,x.config);assert.deepEqual(v,{backupId:id,sha256:x.envelope.sha256,organizationId:'orgA'});assert.equal(x.writes(),1)});
+test('inspect token cannot write',async()=>{const x=fixture({scope:'sync:inspect'});await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config));assert.equal(x.writes(),0)});
+test('member cannot upload backup',async()=>{const x=fixture({role:'member'});await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config));assert.equal(x.writes(),0)});
+test('revoked session cannot upload',async()=>{const x=fixture({revoked:true});await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config));assert.equal(x.writes(),0)});
+test('cross-device envelope cannot upload',async()=>{const x=fixture();x.envelope.deviceId='deviceB';await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config));assert.equal(x.writes(),0)});
+test('tampered ciphertext cannot upload',async()=>{const x=fixture();x.envelope.ciphertext=Buffer.from('modified').toString('base64');await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config));assert.equal(x.writes(),0)});
+test('vault absent fails closed',async()=>{const x=fixture();delete x.config.vault;await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config))});
+test('unexpected vault acknowledgment rejected',async()=>{const x=fixture();x.config.vault.store=async()=>({backupId:id,sha256:'0'.repeat(64)});await assert.rejects(uploadEncryptedBackup(x.headers,x.envelope,x.config))});

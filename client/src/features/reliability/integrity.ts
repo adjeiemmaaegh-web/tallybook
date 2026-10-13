@@ -1,7 +1,14 @@
 /** Stage 11 integrity audit: inspect local record relationships without mutating owner data. */
+import { validateTaxSnapshot } from "@/features/sales/tax";
 import { DATABASE_SCHEMA_VERSION, db, type TallybookDB } from "@/db/TallybookDB";
 import { expenseCategories, localExpenseDate } from "@/features/expenses/expenses";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
+import { reconcilePrepaidLiability } from "@/features/reports/prepaidLiabilityReconciliation.mjs";
+import { auditReceivableRecords } from "./receivableAudit.mjs";
+import { auditStoreRecords } from "@/features/stores/storeIntegrity.mjs";
+import { reconcileCashPartialReturns } from "@/features/sales/cashPartialReturn.mjs";
+import { assertCashReturnLedgerLinks } from "@/features/sales/cashReturnStockLinks.mjs";
 
 export type IntegrityIssueCode =
   | "business-profile-count"
@@ -19,11 +26,27 @@ export type IntegrityIssueCode =
   | "activity-orphan"
   | "repayment-orphan"
   | "repayment-amount"
+  | "receivable-customer"
+  | "receivable-sale"
+  | "receivable-reversal"
+  | "receivable-repayment"
+  | "receivable-allocation"
+  | "receivable-currency"
+  | "receivable-balance"
+  | "cash-partial-return-integrity"
+  | "cash-partial-return-stock-integrity"
   | "movement-orphan"
   | "purchase-supplier-orphan"
   | "purchase-line-orphan"
   | "purchase-line-total"
   | "purchase-total"
+  | "supplier-payable-integrity"
+  | "prepaid-wallet-integrity"
+  | "store-location-invalid"
+  | "store-reference-invalid"
+  | "store-assignment-invalid"
+  | "store-observation-invalid"
+  | "store-transfer-invalid"
   | "purchase-movement-missing"
   | "purchase-movement-orphan"
   | "mobile-money-provider-orphan"
@@ -41,14 +64,15 @@ export interface IntegrityAudit { checkedAt: string; recordsChecked: number; iss
 const issue = (code: IntegrityIssueCode, message: string, recordId?: string): IntegrityIssue => ({ code, message, recordId });
 
 export async function auditLocalIntegrity(database: TallybookDB = db): Promise<IntegrityAudit> {
-  return database.transaction("r", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.repayments, database.mobileMoneyProviders, database.suppliers, database.purchases, database.purchaseLines, database.expenses], async () => {
-    const [schemaMeta, allBusinesses, allProducts, allCustomers, allSales, allLines, allPayments, allReceipts, allActivities, allRepayments, allMovements, allMobileMoneyProviders, allSuppliers, allPurchases, allPurchaseLines, allExpenses] = await Promise.all([
-      database.appMeta.get("schemaVersion"), database.businessProfiles.toArray(), database.products.toArray(), database.customers.toArray(), database.sales.toArray(), database.saleLines.toArray(), database.payments.toArray(), database.receipts.toArray(), database.customerActivities.toArray(), database.repayments.toArray(), database.inventoryMovements.toArray(), database.mobileMoneyProviders.toArray(), database.suppliers.toArray(), database.purchases.toArray(), database.purchaseLines.toArray(), database.expenses.toArray(),
+  const activeId = getActiveBusinessProfileId();
+  return database.transaction("r", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.repayments, database.saleReversals, database.cashPartialReturns, database.mobileMoneyProviders, database.suppliers, database.purchases, database.purchaseLines, database.supplierPayableEntries, database.walletTransfers, database.customerBenefits, database.expenses, database.storeLocations, database.storeAssignments, database.storeStockObservations, database.storeTransferRequests, database.staffMembers], async () => {
+    const [schemaMeta, allBusinesses, allProducts, allCustomers, allSales, allLines, allPayments, allReceipts, allActivities, allRepayments, allReversals, allCashPartialReturns, allMovements, allCostEvents, allMobileMoneyProviders, allSuppliers, allPurchases, allPurchaseLines, allExpenses, allSupplierPayableEntries, allStores, allStoreAssignments, allStoreObservations, allStoreRequests, allStaffMembers, allWalletTransfers, allCustomerBenefits] = await Promise.all([
+      database.appMeta.get("schemaVersion"), database.businessProfiles.toArray(), database.products.toArray(), database.customers.toArray(), database.sales.toArray(), database.saleLines.toArray(), database.payments.toArray(), database.receipts.toArray(), database.customerActivities.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.cashPartialReturns.toArray(), database.inventoryMovements.toArray(), database.inventoryCostEvents.toArray(), database.mobileMoneyProviders.toArray(), database.suppliers.toArray(), database.purchases.toArray(), database.purchaseLines.toArray(), database.expenses.toArray(), database.supplierPayableEntries.toArray(), database.storeLocations.toArray(), database.storeAssignments.toArray(), database.storeStockObservations.toArray(), database.storeTransferRequests.toArray(), database.staffMembers.toArray(), database.walletTransfers.toArray(), database.customerBenefits.toArray(),
     ]);
-    const activeId = getActiveBusinessProfileId();
+    if (getActiveBusinessProfileId() !== activeId) throw new Error("Company changed during integrity audit.");
     const scoped = <T extends { businessProfileId: string }>(records: T[]) => records.filter((record) => record.businessProfileId === activeId);
     const businesses = allBusinesses.filter((business) => business.id === activeId);
-    const products = scoped(allProducts); const customers = scoped(allCustomers); const sales = scoped(allSales); const lines = scoped(allLines); const payments = scoped(allPayments); const receipts = scoped(allReceipts); const activities = scoped(allActivities); const repayments = scoped(allRepayments); const movements = scoped(allMovements); const mobileMoneyProviders = scoped(allMobileMoneyProviders); const suppliers = scoped(allSuppliers); const purchases = scoped(allPurchases); const purchaseLines = scoped(allPurchaseLines); const expenses = scoped(allExpenses);
+    const products = scoped(allProducts); const customers = scoped(allCustomers); const sales = scoped(allSales); const lines = scoped(allLines); const payments = scoped(allPayments); const receipts = scoped(allReceipts); const activities = scoped(allActivities); const repayments = scoped(allRepayments); const reversals = scoped(allReversals); const cashPartialReturns = scoped(allCashPartialReturns); const movements = scoped(allMovements); const costEvents = scoped(allCostEvents); const mobileMoneyProviders = scoped(allMobileMoneyProviders); const suppliers = scoped(allSuppliers); const purchases = scoped(allPurchases); const purchaseLines = scoped(allPurchaseLines); const expenses = scoped(allExpenses); const supplierPayableEntries = scoped(allSupplierPayableEntries); const stores = scoped(allStores); const storeAssignments = scoped(allStoreAssignments); const storeObservations = scoped(allStoreObservations); const storeRequests = scoped(allStoreRequests); const staffMembers = scoped(allStaffMembers); const walletTransfers = scoped(allWalletTransfers); const customerBenefits = scoped(allCustomerBenefits);
     const issues: IntegrityIssue[] = [];
     const saleIds = new Set(sales.map((sale) => sale.id)); const productIds = new Set(products.map((product) => product.id)); const customerIds = new Set(customers.map((customer) => customer.id)); const mobileMoneyProviderIds = new Set(mobileMoneyProviders.map((provider) => provider.id)); const supplierIds = new Set(suppliers.map((supplier) => supplier.id)); const purchaseIds = new Set(purchases.map((purchase) => purchase.id)); const businessIds = new Set(businesses.map((business) => business.id)); const expenseSubmissionKeys = new Set<string>();
     const linesBySale = new Map<string, typeof lines>(); const paymentsBySale = new Map<string, typeof payments>(); const receiptsBySale = new Map<string, typeof receipts>(); const linesByPurchase = new Map<string, typeof purchaseLines>(); const movementsByPurchase = new Map<string, typeof movements>();
@@ -65,9 +89,12 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
       const lineSubtotal = saleLines.reduce((sum, line) => sum + line.lineTotalMinor, 0); const paid = salePayments.reduce((sum, payment) => sum + payment.amountMinor, 0);
       if (!saleLines.length) issues.push(issue("sale-line-subtotal", `Sale ${sale.receiptNumber} has no saved line records.`, sale.id));
       if (lineSubtotal !== sale.subtotalMinor) issues.push(issue("sale-line-subtotal", `Sale ${sale.receiptNumber} line total does not match its saved subtotal.`, sale.id));
-      if (sale.totalMinor !== sale.subtotalMinor - sale.discountMinor) issues.push(issue("sale-total", `Sale ${sale.receiptNumber} total does not match subtotal minus discount.`, sale.id));
+      try {
+        validateTaxSnapshot(sale);
+        if (sale.totalMinor !== (sale.tax?.totalMinor ?? sale.subtotalMinor - sale.discountMinor)) throw new Error("total mismatch");
+      } catch { issues.push(issue("sale-total", `Sale ${sale.receiptNumber} total does not reconcile with discounts and recorded tax.`, sale.id)); }
       if (sale.outstandingMinor !== sale.totalMinor - sale.amountPaidMinor || sale.outstandingMinor < 0) issues.push(issue("sale-outstanding", `Sale ${sale.receiptNumber} has an inconsistent outstanding amount.`, sale.id));
-      if (paid !== sale.amountPaidMinor) issues.push(issue("payment-amount", `Sale ${sale.receiptNumber} payment records do not match its saved amount paid.`, sale.id));
+      if (paid !== sale.amountPaidMinor - (sale.walletAppliedMinor ?? 0)) issues.push(issue("payment-amount", `Sale ${sale.receiptNumber} payment records do not match its saved amount paid.`, sale.id));
       if (sale.customerId && !customerIds.has(sale.customerId)) issues.push(issue("sale-customer-orphan", `Sale ${sale.receiptNumber} refers to a missing customer record.`, sale.id));
       if (saleReceipts.length !== 1) issues.push(issue("receipt-count", `Sale ${sale.receiptNumber} has ${saleReceipts.length} receipt records; exactly one is expected.`, sale.id));
       if (saleReceipts.some((receipt) => receipt.receiptNumber !== sale.receiptNumber)) issues.push(issue("receipt-number", `A receipt number does not match sale ${sale.receiptNumber}.`, sale.id));
@@ -81,10 +108,35 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
     for (const receipt of receipts) { if (!saleIds.has(receipt.saleId)) issues.push(issue("receipt-orphan", "A receipt refers to a missing sale record.", receipt.id)); }
     for (const activity of activities) { if (!saleIds.has(activity.saleId) || !customerIds.has(activity.customerId)) issues.push(issue("activity-orphan", "A customer activity refers to a missing sale or customer record.", activity.id)); }
     for (const repayment of repayments) { if (!customerIds.has(repayment.customerId)) issues.push(issue("repayment-orphan", "A repayment refers to a missing customer record.", repayment.id)); if (!Number.isInteger(repayment.amountMinor) || repayment.amountMinor <= 0) issues.push(issue("repayment-amount", "A repayment has an invalid saved amount.", repayment.id)); }
+    for (const finding of auditReceivableRecords(activeId, customers, sales, reversals, repayments)) {
+      issues.push(issue(finding.code, "Customer receivable history needs review: stored debt, reversals, repayment allocations or currency evidence do not reconcile.", finding.recordId));
+    }
+    try { reconcileCashPartialReturns(sales, lines, payments, cashPartialReturns, reversals); }
+    catch { issues.push(issue("cash-partial-return-integrity", "Saved partial cash-return quantity, tax or tender evidence does not reconcile; do not issue another refund.")); }
+    try { assertCashReturnLedgerLinks(sales, lines, cashPartialReturns, movements, costEvents); }
+    catch { issues.push(issue("cash-partial-return-stock-integrity", "Saved cash returns do not match original physical stock movements and FIFO restoration events; preserve the ledger and do not issue another refund.")); }
     for (const purchase of purchases) { const purchaseRecordLines = linesByPurchase.get(purchase.id) ?? []; const purchaseMovements = movementsByPurchase.get(purchase.id) ?? []; if (!supplierIds.has(purchase.supplierId)) issues.push(issue("purchase-supplier-orphan", "A purchase refers to a missing supplier record.", purchase.id)); if (!purchaseRecordLines.length) issues.push(issue("purchase-total", "A purchase has no saved line records.", purchase.id)); if (purchaseRecordLines.reduce((sum, line) => sum + line.lineTotalMinor, 0) !== purchase.totalCostMinor) issues.push(issue("purchase-total", "A purchase total does not match its saved purchase lines.", purchase.id)); for (const line of purchaseRecordLines) { const linkedMovement = purchaseMovements.find((movement) => movement.productId === line.productId && movement.movementType === "purchase" && movement.quantityDelta === line.quantity); if (!linkedMovement) issues.push(issue("purchase-movement-missing", "A purchase line is missing its matching stock-in movement.", line.id)); } }
     for (const purchaseLine of purchaseLines) { if (!purchaseIds.has(purchaseLine.purchaseId) || !productIds.has(purchaseLine.productId)) issues.push(issue("purchase-line-orphan", "A purchase line refers to a missing purchase or product record.", purchaseLine.id)); if (!Number.isInteger(purchaseLine.quantity) || purchaseLine.quantity <= 0 || !Number.isInteger(purchaseLine.unitCostMinor) || purchaseLine.unitCostMinor < 0 || purchaseLine.lineTotalMinor !== purchaseLine.quantity * purchaseLine.unitCostMinor) issues.push(issue("purchase-line-total", "A purchase line has an invalid quantity or cost total.", purchaseLine.id)); }
     for (const movement of movements) { if (!productIds.has(movement.productId)) issues.push(issue("movement-orphan", "An inventory movement refers to a missing product record.", movement.id)); if (movement.purchaseId && (!purchaseIds.has(movement.purchaseId) || movement.movementType !== "purchase" || movement.quantityDelta <= 0)) issues.push(issue("purchase-movement-orphan", "A purchase stock movement refers to a missing purchase or has invalid stock-in details.", movement.id)); }
+    try {
+      const purchasesById = new Map(purchases.map(purchase => [purchase.id, purchase]));
+      for (const payable of supplierPayableEntries) {
+        const purchase = purchasesById.get(payable.purchaseId);
+        if (!purchase || !purchase.currency || payable.currency !== purchase.currency) throw new Error("Wrong supplier payable currency or purchase link.");
+      }
+      reconcileSupplierPayables(purchases, supplierPayableEntries);
+    } catch { issues.push(issue("supplier-payable-integrity", "Supplier payable records cannot be reconciled safely; do not trust these liabilities.")); }
+    try {
+      reconcilePrepaidLiability({transfers:walletTransfers,benefits:customerBenefits,
+        sales,reversals},businesses[0]?.currency);
+    } catch {
+      issues.push(issue("prepaid-wallet-integrity", "Prepaid transfers, wallet benefit entries, wallet sale spending or reversal credits do not reconcile. Do not rely on the stored prepaid liability."));
+    }
+    for (const finding of auditStoreRecords(activeId, stores, storeAssignments, storeObservations, storeRequests, products, staffMembers)) {
+      issues.push(issue(finding.code, "Local store directory, assignment, observation or transfer request does not reconcile. Store observations and requests do not establish actual stock balances.", finding.recordId));
+    }
     for (const expense of expenses) { if (!businessIds.has(expense.businessProfileId)) issues.push(issue("expense-business-profile-orphan", "An expense refers to a missing business profile.", expense.id)); if (!(expenseCategories as readonly string[]).includes(expense.category)) issues.push(issue("expense-category", "An expense has an invalid category.", expense.id)); if (!Number.isInteger(expense.amountMinor) || expense.amountMinor <= 0) issues.push(issue("expense-amount", "An expense has an invalid saved amount.", expense.id)); if (!/^\d{4}-\d{2}-\d{2}$/.test(expense.expenseDate) || expense.expenseDate > localExpenseDate()) issues.push(issue("expense-date", "An expense has an invalid or future saved date.", expense.id)); if (Number.isNaN(Date.parse(expense.createdAt))) issues.push(issue("expense-created-at", "An expense is missing a valid saved creation time.", expense.id)); if (expenseSubmissionKeys.has(expense.submissionKey) || expense.submissionKey.length < 8) issues.push(issue("expense-submission-key", "An expense has a repeated or invalid save key.", expense.id)); expenseSubmissionKeys.add(expense.submissionKey); }
-    return { checkedAt: new Date().toISOString(), recordsChecked: businesses.length + products.length + customers.length + sales.length + lines.length + payments.length + receipts.length + activities.length + repayments.length + movements.length + mobileMoneyProviders.length + suppliers.length + purchases.length + purchaseLines.length + expenses.length, issues, status: issues.length ? "attention" : "clear" };
+    if (getActiveBusinessProfileId() !== activeId) throw new Error("Company changed during integrity audit.");
+    return { checkedAt: new Date().toISOString(), recordsChecked: businesses.length + products.length + customers.length + sales.length + lines.length + payments.length + receipts.length + activities.length + repayments.length + reversals.length + cashPartialReturns.length + movements.length + costEvents.length + mobileMoneyProviders.length + suppliers.length + purchases.length + purchaseLines.length + expenses.length + supplierPayableEntries.length + walletTransfers.length + customerBenefits.length + stores.length + storeAssignments.length + storeObservations.length + storeRequests.length + staffMembers.length, issues, status: issues.length ? "attention" : "clear" };
   });
 }

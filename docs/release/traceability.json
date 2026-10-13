@@ -1,0 +1,2628 @@
+{
+  "release": "V19",
+  "decision": "NO-GO",
+  "updated": "2026-10-11",
+  "units": [
+    {
+      "id": "S1-01",
+      "stage": 1,
+      "name": "Atomic checkout and partial payments",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/sales.test.ts"
+      ],
+      "acceptance": "Persist sale, lines, payments, receipt and stock once; crash/failure rolls all records back.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Persist sale, lines, payments, receipt and stock once; crash/failure rolls all records back."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-offline-release.log",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md (scoped native QA only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Core retail service Web Locks are implemented but NOT verified in real Dexie/browser/interruptions. All remaining writers and raw DB paths are outside the scoped change.",
+      "notes": "Atomic stock/cost/sale writes tested, including oversell, retry and rollback. Full power-loss/device matrix remains open."
+    },
+    {
+      "id": "S1-02",
+      "stage": 1,
+      "name": "Barcode and SKU POS",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "acceptance": "Unique company-scoped identifiers; keyboard scanner and camera behave on supported devices.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Unique company-scoped identifiers; keyboard scanner and camera behave on supported devices."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S1-03",
+      "stage": 1,
+      "name": "Park, resume and recover checkout",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/parkedCart.ts",
+        "client/src/features/sales/recoverSavedCheckout.ts"
+      ],
+      "acceptance": "Company-isolated recovery revalidates live stock/prices and never double posts.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Company-isolated recovery revalidates live stock/prices and never double posts."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Recovery now reconciles saved tax snapshots; tests cover persisted checkout. Broad device interruption acceptance remains open. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S1-04",
+      "stage": 1,
+      "name": "Receipts and money arithmetic",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/checkoutMoney.mjs",
+        "client/src/features/receipts/receiptDetail.ts"
+      ],
+      "acceptance": "Minor-unit arithmetic rejects overflow; saved receipts reconcile and print after commit.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Minor-unit arithmetic rejects overflow; saved receipts reconcile and print after commit."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S1-05",
+      "stage": 1,
+      "name": "Discount, loyalty and wallet checkout",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/walletRecovery.test.ts"
+      ],
+      "acceptance": "Authorized tender and benefits reconcile with immutable ledgers and reversals.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authorized tender and benefits reconcile with immutable ledgers and reversals."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S1-06",
+      "stage": 1,
+      "name": "Retail offline acceptance",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "acceptance": "Checkout, customers, purchases, receipts and reload work with no internet or account.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Checkout, customers, purchases, receipts and reload work with no internet or account."
+      ],
+      "dependencies": [],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-offline-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Production Chromium offline checkout/receipt/reload tested at desktop and phone widths. All workflows on physical devices remain open."
+    },
+    {
+      "id": "S2-01",
+      "stage": 2,
+      "name": "Catalogue variants and categories",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "acceptance": "Variant SKU/barcode uniqueness, hierarchy and legacy compatibility.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Variant SKU/barcode uniqueness, hierarchy and legacy compatibility."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S2-02",
+      "stage": 2,
+      "name": "Wholesale units and pricing",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "acceptance": "Positive safe integer base-unit conversions and authoritative price/stock quantities.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Positive safe integer base-unit conversions and authoritative price/stock quantities."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S2-03",
+      "stage": 2,
+      "name": "Services and attachments",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "acceptance": "Non-stock service semantics; bounded validated local product media.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Non-stock service semantics; bounded validated local product media."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S2-04",
+      "stage": 2,
+      "name": "Secure catalogue CSV",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/catalogCsv.ts",
+        "client/src/features/inventory/advancedInventory.ts"
+      ],
+      "acceptance": "Preview/import/export reject malicious rows and duplicate identifiers atomically.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Preview/import/export reject malicious rows and duplicate identifiers atomically."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S2-05",
+      "stage": 2,
+      "name": "Persisted stock counts",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/inventory/advancedInventory.ts"
+      ],
+      "acceptance": "Resume reviewed sessions, detect stale balances and post all changes atomically.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Resume reviewed sessions, detect stale balances and post all changes atomically."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10/client-changed-syntax.log",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md (native lock evidence only; Dexie/browser unverified)"
+      ],
+      "verificationBoundary": "Expanded shared recovery Web Lock scope is implemented but NOT proven by client/IndexedDB/browser interruption checks. Original acceptance status is unchanged.",
+      "notes": "Continuation adds service-level transactional permission revalidation for starting, editing and posting saved stock-count sessions. New Vitest regression has not run."
+    },
+    {
+      "id": "S2-06",
+      "stage": 2,
+      "name": "Batch receiving and expiry allocation",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "acceptance": "Persist batch receipt quantities/cost and reconcile sales, returns and expiry.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Persist batch receipt quantities/cost and reconcile sales, returns and expiry."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10/client-changed-syntax.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Continuation adds transactional authorization to batch registration and catalogue options. This does not complete batch cost provenance or expiry allocations. New client tests have not run."
+    },
+    {
+      "id": "S2-07",
+      "stage": 2,
+      "name": "Historical inventory ledger",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "acceptance": "Immutable receipt/return/adjustment history reconstructs as-of quantity and FIFO costs.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Immutable receipt/return/adjustment history reconstructs as-of quantity and FIFO costs."
+      ],
+      "dependencies": [
+        1
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Schema 26 immutable FIFO receipts/issues/exact reversals implemented; unknown legacy and adjustment costs stay unavailable. Partial refunds, full per-unit/batch receipt costing remain incomplete."
+    },
+    {
+      "id": "S3-01",
+      "stage": 3,
+      "name": "Financial definitions",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "acceptance": "Distinguish revenue, collections, expenses, liabilities and actual cash movements.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Distinguish revenue, collections, expenses, liabilities and actual cash movements."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-10-payables/native-full.log",
+        "docs/release/PAYABLES_CONTINUATION_2026-10-10.md",
+        "docs/release/CASH_RETURN_REVIEW_CONTINUATION_2026-10-11.md",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "artifacts/fin002-2026-10-12/native-full.log",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md (native calendar-date guards only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Financial posting-date validation has native coverage; full financial reconciliation, tax policy, client/browser/real data migration tests remain unverified. Other stage acceptance is not waived.",
+      "notes": " Finance continuation: normalized negative saved full-reversal deltas and exact original-sale linkage in a shared helper, with native tests. Customer sale/credit/management views and supplier/repayment transactional authorization were updated, but client semantic test/build/browser gates are NOT executed; full acceptance is not closed. PAYABLES CONTINUATION: additive v27 records explicitly attested wholly unpaid supplier invoices, manual settlements and credits; currencies separated; historical unknown balances remain unknown. Native pure reducer passed; client integration/backup/migration and cash-flow verification NOT RUN. Criterion remains open. Read-only cash-return review added; no operational refund action enabled and client/browser QA remains missing."
+    },
+    {
+      "id": "S3-02",
+      "stage": 3,
+      "name": "Periods and trends",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "acceptance": "Correct calendar/DST/custom windows over saved events.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Correct calendar/DST/custom windows over saved events."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md (native calendar-date guards only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Financial posting-date validation has native coverage; full financial reconciliation, tax policy, client/browser/real data migration tests remain unverified. Other stage acceptance is not waived."
+    },
+    {
+      "id": "S3-03",
+      "stage": 3,
+      "name": "Collections and receivables",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/reports.ts",
+        "client/src/features/credit/credit.ts"
+      ],
+      "acceptance": "All-time customer debt and period cash reconcile from independent source ledgers.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: All-time customer debt and period cash reconcile from independent source ledgers."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-10-return-safety/native-final.log",
+        "artifacts/continuation-2026-10-10-repayment-allocation/native-full.log",
+        "artifacts/continuation-2026-10-11-repayment-ui/native-final.log",
+        "docs/release/REPAYMENT_UI_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-receivable-currency/native-full.log",
+        "artifacts/continuation-2026-10-11-receivable-audit/native-full.log",
+        "docs/release/CASH_RETURN_REVIEW_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Finance continuation: normalized negative saved full-reversal deltas and exact original-sale linkage in a shared helper, with native tests. Customer sale/credit/management views and supplier/repayment transactional authorization were updated, but client semantic test/build/browser gates are NOT executed; full acceptance is not closed. RETURN SAFETY CONTINUATION: outstanding-sale reversal now rejects customer-level repayments with unknown per-sale allocation; pure native guard passes, but transactional Vitest and complete refund policy still pending. FIN-006: optional per-sale allocations now validated with native tests; legacy repayments remain unknown and client integration/type/build/migration checks remain unexecuted. 2026-10-11: Scoped single-sale repayment UI and currency snapshots source-implemented; pure selection native QA passed. Client integration/semantic typecheck/build and full financial/currency/date verification remain open. 11 Oct receivable-currency increment: transactional denomination guards and legacy unknown display implemented, pure native tests pass; client Vitest/types/build/browser unverified, historical evidence and cross-currency policy outstanding. 11 October receivable-audit continuation: independent native audit detects saved reversals, allocations, currency and negative/overflow balances (250/250 native suite); IndexedDB integration authored but not run. This does not close full financial acceptance. Read-only cash-return review added; no operational refund action enabled and client/browser QA remains missing."
+    },
+    {
+      "id": "S3-04",
+      "stage": 3,
+      "name": "Management dashboard",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/pages/ReportsPage.tsx"
+      ],
+      "acceptance": "Company-scoped permissioned evidence, with honest unavailable states.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Company-scoped permissioned evidence, with honest unavailable states."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md (native calendar-date guards only; client/browser unverified)",
+        "docs/release/FIN002_WALLET_CHRONOLOGY_CONTINUATION_2026-10-12.md (read-only wallet chronology, native QA only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Financial posting-date validation has native coverage; full financial reconciliation, tax policy, client/browser/real data migration tests remain unverified. Other stage acceptance is not waived."
+    },
+    {
+      "id": "S3-05",
+      "stage": 3,
+      "name": "Financial export and print",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "acceptance": "Exports/printed totals match source transactions and sanitize cells.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Exports/printed totals match source transactions and sanitize cells."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "artifacts/fin002-2026-10-12/native-full.log",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md (native calendar-date guards only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Financial posting-date validation has native coverage; full financial reconciliation, tax policy, client/browser/real data migration tests remain unverified. Other stage acceptance is not waived."
+    },
+    {
+      "id": "S3-06",
+      "stage": 3,
+      "name": "COGS, gross profit, valuation and payables",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/purchases/supplierPayables.mjs"
+      ],
+      "acceptance": "Authoritative sale allocations reconcile with purchases, stock, reversals and liabilities.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authoritative sale allocations reconcile with purchases, stock, reversals and liabilities."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-payables/native-full.log",
+        "docs/release/PAYABLES_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-10-return-safety/native-final.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Independently reconstructed FIFO COGS and sales excluding recorded tax less cost implemented. Supplier settlement/payables and complete gross-profit accounting remain missing. PAYABLES CONTINUATION: additive v27 records explicitly attested wholly unpaid supplier invoices, manual settlements and credits; currencies separated; historical unknown balances remain unknown. Native pure reducer passed; client integration/backup/migration and cash-flow verification NOT RUN. Criterion remains open. RETURN SAFETY CONTINUATION: native-tested exact cumulative read-only partial-return allocation draft only; no stock, COGS, tender, tax, credit, supplier, cash or provider posting is implemented."
+    },
+    {
+      "id": "S3-07",
+      "stage": 3,
+      "name": "Tax policy and reconciliation",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "acceptance": "Owner-approved jurisdiction/rates/inclusion/rounding recorded immutably and reconciled.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Owner-approved jurisdiction/rates/inclusion/rounding recorded immutably and reconciled."
+      ],
+      "dependencies": [
+        2
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log",
+        "artifacts/continuation-2026-10-11-return-components/native-final.log",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "artifacts/fin002-2026-10-12/native-full.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Owner supplied single-rate inclusive/exclusive tax off by default, exact rounding, sale snapshots, reversal and backup tests. No jurisdiction-specific filing, exemptions, compound levies or historical tax reconstruction. Partial-return SAVED invoice tax/discount draft allocation improved and native-tested; no tax refund posting or legal compliance claimed."
+    },
+    {
+      "id": "S4-01",
+      "stage": 4,
+      "name": "Customer profiles and groups",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customers.ts",
+        "client/src/features/customers/retentionInsights.ts"
+      ],
+      "acceptance": "Scoped customer history, groups and evidence-based retention.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped customer history, groups and evidence-based retention."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md (native lock evidence only; Dexie/browser unverified)"
+      ],
+      "verificationBoundary": "Expanded shared recovery Web Lock scope is implemented but NOT proven by client/IndexedDB/browser interruption checks. Original acceptance status is unchanged."
+    },
+    {
+      "id": "S4-02",
+      "stage": 4,
+      "name": "Credit policies and due dates",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/credit/credit.ts"
+      ],
+      "acceptance": "Credit limits atomic; dated invoice terms and allocated repayments support accurate ageing.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Credit limits atomic; dated invoice terms and allocated repayments support accurate ageing."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-10-repayment-allocation/native-full.log",
+        "artifacts/continuation-2026-10-11-repayment-ui/native-final.log",
+        "docs/release/REPAYMENT_UI_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-receivable-currency/native-full.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Finance continuation: normalized negative saved full-reversal deltas and exact original-sale linkage in a shared helper, with native tests. Customer sale/credit/management views and supplier/repayment transactional authorization were updated, but client semantic test/build/browser gates are NOT executed; full acceptance is not closed. FIN-006: optional per-sale allocations now validated with native tests; legacy repayments remain unknown and client integration/type/build/migration checks remain unexecuted. 2026-10-11: Scoped single-sale repayment UI and currency snapshots source-implemented; pure selection native QA passed. Client integration/semantic typecheck/build and full financial/currency/date verification remain open. 11 Oct receivable-currency increment: transactional denomination guards and legacy unknown display implemented, pure native tests pass; client Vitest/types/build/browser unverified, historical evidence and cross-currency policy outstanding."
+    },
+    {
+      "id": "S4-03",
+      "stage": 4,
+      "name": "Quotation conversion",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/quotations.ts"
+      ],
+      "acceptance": "Reviewed live price changes; explicit state transitions and idempotent conversion.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Reviewed live price changes; explicit state transitions and idempotent conversion."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Quotation sale/link/cost/stock conversion is atomic; stale prices rejected. Tax-aware preview added. Complete customer workflow acceptance remains open."
+    },
+    {
+      "id": "S4-04",
+      "stage": 4,
+      "name": "Loyalty lifecycle",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/assistant/reversals.ts"
+      ],
+      "acceptance": "Configured earning/redemption/reversal balances cannot overflow or be double spent.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Configured earning/redemption/reversal balances cannot overflow or be double spent."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S4-05",
+      "stage": 4,
+      "name": "Prepaid wallet lifecycle",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "acceptance": "Deposits/refunds/tender/reversal reconcile cash and liability atomically.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Deposits/refunds/tender/reversal reconcile cash and liability atomically."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md (native lock evidence only; Dexie/browser unverified)"
+      ],
+      "verificationBoundary": "Expanded shared recovery Web Lock scope is implemented but NOT proven by client/IndexedDB/browser interruption checks. Original acceptance status is unchanged."
+    },
+    {
+      "id": "S4-06",
+      "stage": 4,
+      "name": "Discount authorization",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "acceptance": "Service permissions and customer limits enforced during checkout.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Service permissions and customer limits enforced during checkout."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12.md (scoped native tests, client/browser not verified)"
+      ],
+      "verificationBoundary": "New administrative recovery locks / post-verification staff credential checks have native model and source-contract evidence only; real IndexedDB, browser Web Locks, physical WebAuthn and complete acceptance tests are still outstanding."
+    },
+    {
+      "id": "S4-07",
+      "stage": 4,
+      "name": "Customer durability",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/db/TallybookDB.ts"
+      ],
+      "acceptance": "All benefit/quote/wallet rows survive migration, export, restore and rollback.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: All benefit/quote/wallet rows survive migration, export, restore and rollback."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S5-01",
+      "stage": 5,
+      "name": "Confirmed quotation handoff",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/quotationDraft.ts",
+        "client/src/features/assistant/assistant.ts"
+      ],
+      "acceptance": "Company-scoped expiring confirmation opens a usable draft in the actual quotation workflow.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Company-scoped expiring confirmation opens a usable draft in the actual quotation workflow."
+      ],
+      "dependencies": [
+        4,
+        6
+      ],
+      "status": "implemented-and-tested",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Company-scoped expiring in-memory handoff opens quotation review and saves an offer only on user action; native browser proves no sale/stock mutation."
+    },
+    {
+      "id": "S5-02",
+      "stage": 5,
+      "name": "Multi-turn customer tasks",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "client/src/features/assistant/conversation.ts"
+      ],
+      "acceptance": "Clarification retains valid customer/item context and rejects ambiguity/cross-company input.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Clarification retains valid customer/item context and rejects ambiguity/cross-company input."
+      ],
+      "dependencies": [
+        4,
+        6
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S5-03",
+      "stage": 5,
+      "name": "Language and speech",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/quotationAssistant.ts",
+        "client/src/features/assistant/voiceInput.ts"
+      ],
+      "acceptance": "Supported language and speech variants preserve all requested items; physical microphone QA.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Supported language and speech variants preserve all requested items; physical microphone QA."
+      ],
+      "dependencies": [
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S5-04",
+      "stage": 5,
+      "name": "Record-grounded finance",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/queries.ts",
+        "client/src/features/assistant/quotationAssistant.ts"
+      ],
+      "acceptance": "Never invent totals or write without permissioned existing services.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Never invent totals or write without permissioned existing services."
+      ],
+      "dependencies": [
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "artifacts/fin002-2026-10-12/native-full.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S5-05",
+      "stage": 5,
+      "name": "Assistant integration and adversarial QA",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/assistant.test.ts",
+        "client/src/features/assistant/phase1Services.test.ts"
+      ],
+      "acceptance": "Full assistant tests and malicious-input/company-boundary checks pass.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Full assistant tests and malicious-input/company-boundary checks pass."
+      ],
+      "dependencies": [
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Assistant-history company guards, complete-history backup path and transactional audit pruning added on 2026-10-11; client/IndexedDB verification and owner audit-retention policy remain open."
+    },
+    {
+      "id": "S6-01",
+      "stage": 6,
+      "name": "Local identities and PIN",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptance": "Scoped owner/cashier/supervisor enrollment, role changes and PIN sessions.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped owner/cashier/supervisor enrollment, role changes and PIN sessions."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S6-02",
+      "stage": 6,
+      "name": "Every write-service permission",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/business/activeCompany.ts"
+      ],
+      "acceptance": "All service mutations enforce company, role, session, shift, approvals and device.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: All service mutations enforce company, role, session, shift, approvals and device."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10/client-changed-syntax.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log"
+      ],
+      "verificationBoundary": "Scoped role revalidation and read-only local store audit implemented; native pure tests passed but client/IndexedDB and full feature acceptance NOT EXECUTED. Existing authoritative-store, hardware and full permission blockers remain. Consolidated local source work improves transaction-time authority or restore metadata/audit safety; client and browser gates remain unexecuted, status unchanged.",
+      "notes": "Continuation fixes concrete customer/stock-count/batch/catalogue write authorization races and assistant saved alias/workflow cross-company ID writes. Client tests remain blocked on missing dependencies; exhaustive authorization + actor attribution still open. Finance continuation: normalized negative saved full-reversal deltas and exact original-sale linkage in a shared helper, with native tests. Customer sale/credit/management views and supplier/repayment transactional authorization were updated, but client semantic test/build/browser gates are NOT executed; full acceptance is not closed."
+    },
+    {
+      "id": "S6-03",
+      "stage": 6,
+      "name": "Shift cash reconciliation",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptance": "Attributable cash sales/repayments/transfers/journals yield independently derived closing variance.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Attributable cash sales/repayments/transfers/journals yield independently derived closing variance."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12.md (scoped native tests, client/browser not verified)"
+      ],
+      "verificationBoundary": "New administrative recovery locks / post-verification staff credential checks have native model and source-contract evidence only; real IndexedDB, browser Web Locks, physical WebAuthn and complete acceptance tests are still outstanding."
+    },
+    {
+      "id": "S6-04",
+      "stage": 6,
+      "name": "Device lock and WebAuthn",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptance": "Secure-context enrollment, challenge verification, expiration, unlock and revocation with PIN fallback.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Secure-context enrollment, challenge verification, expiration, unlock and revocation with PIN fallback."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12.md (scoped native tests, client/browser not verified)"
+      ],
+      "verificationBoundary": "New administrative recovery locks / post-verification staff credential checks have native model and source-contract evidence only; real IndexedDB, browser Web Locks, physical WebAuthn and complete acceptance tests are still outstanding."
+    },
+    {
+      "id": "S6-05",
+      "stage": 6,
+      "name": "Actor attribution and audit",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "acceptance": "Every mutation stores auditable actor/shift attribution without credential disclosure.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Every mutation stores auditable actor/shift attribution without credential disclosure."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log"
+      ],
+      "verificationBoundary": "Scoped role revalidation and read-only local store audit implemented; native pure tests passed but client/IndexedDB and full feature acceptance NOT EXECUTED. Existing authoritative-store, hardware and full permission blockers remain. Consolidated local source work improves transaction-time authority or restore metadata/audit safety; client and browser gates remain unexecuted, status unchanged.",
+      "notes": "Assistant-history company guards, complete-history backup path and transactional audit pruning added on 2026-10-11; client/IndexedDB verification and owner audit-retention policy remain open."
+    },
+    {
+      "id": "S6-06",
+      "stage": 6,
+      "name": "Security recovery",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/db/TallybookDB.ts"
+      ],
+      "acceptance": "Secure migration/restore and authenticated/unauthenticated/privilege-escalation checks.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Secure migration/restore and authenticated/unauthenticated/privilege-escalation checks."
+      ],
+      "dependencies": [
+        1,
+        4
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Security continuation 2026-10-10: local POSIX session/enrollment cross-process locks, private directory/file checks, credential revalidation and negative tests; only the local helper boundary is implemented-and-tested. Production identity, durable shared storage, power-failure recovery and real devices remain unverified or missing. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S7-01",
+      "stage": 7,
+      "name": "Onboarding and navigation",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/business/setupProgress.ts",
+        "client/src/App.tsx"
+      ],
+      "acceptance": "Scoped setup progress and all linked routes work.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped setup progress and all linked routes work."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Ghana/GHS/MoMo setup defaults and configurable country/provider fields tested in native browser. Full onboarding accessibility/device matrix remains open."
+    },
+    {
+      "id": "S7-02",
+      "stage": 7,
+      "name": "Mobile POS and customer display",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/sales/customerCartSummary.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "acceptance": "Touch checkout and isolated read-only customer display on phone/tablet.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Touch checkout and isolated read-only customer display on phone/tablet."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S7-03",
+      "stage": 7,
+      "name": "Printing and receipt recovery",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/receipts/browserPrint.ts",
+        "client/src/features/receipts/receiptDetail.ts"
+      ],
+      "acceptance": "Supported printers, saved-receipt recovery and agreed ESC/POS capability.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Supported printers, saved-receipt recovery and agreed ESC/POS capability."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S7-04",
+      "stage": 7,
+      "name": "Local notifications",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/inventory/alertPreferences.ts",
+        "client/src/features/inventory/localAlerts.ts"
+      ],
+      "acceptance": "Explicit opt-in, denial handling and truthful supported foreground notification behavior.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Explicit opt-in, denial handling and truthful supported foreground notification behavior."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S7-05",
+      "stage": 7,
+      "name": "Encrypted backup and restore",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupCrypto.ts"
+      ],
+      "acceptance": "Authenticated encryption, mandatory staff protection, corrupt input rejection and atomic restore.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authenticated encryption, mandatory staff protection, corrupt input rejection and atomic restore."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-cash-return-audit/native-full.log (ledger-wide cash-return physical/FIFO cross-check; client verification pending)",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/native-final.log (bounded plain/encrypted backup test; browser verification pending)",
+        "docs/release/ENCRYPTED_ENVELOPE_PREFLIGHT_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log",
+        "artifacts/continuation-2026-10-11-cross-tab/native-final.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers. Consolidated local source work improves transaction-time authority or restore metadata/audit safety; client and browser gates remain unexecuted, status unchanged. CROSS-TAB CONTINUATION: Web Locks helper native tests pass; real multi-tab IndexedDB, full source semantics, and physical interruption are unverified.",
+      "notes": "Cost events plus eight sync/store tables added to consistent backup snapshot and scoped restore; tax snapshots validated. Cross-database crash atomicity remains open. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified. Assistant-history company guards, complete-history backup path and transactional audit pruning added on 2026-10-11; client/IndexedDB verification and owner audit-retention policy remain open. 11 October backup-resource increment adds byte-bounded JSON/encrypted backup parse/import and pre-file-read guards; Node native tests pass, while browser memory and full client checks remain open."
+    },
+    {
+      "id": "S7-06",
+      "stage": 7,
+      "name": "Accessibility, performance and offline",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts",
+        "client/src/App.tsx"
+      ],
+      "acceptance": "Keyboard/screen-reader/mobile/large-data and offline PWA recovery acceptance.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Keyboard/screen-reader/mobile/large-data and offline PWA recovery acceptance."
+      ],
+      "dependencies": [
+        1,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S8-01",
+      "stage": 8,
+      "name": "Cloud opt-in and durable outbox",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/syncFoundation.ts"
+      ],
+      "acceptance": "No cloud account required locally; consent and durable company-scoped unique operations.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: No cloud account required locally; consent and durable company-scoped unique operations."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S8-02",
+      "stage": 8,
+      "name": "Organization/member/device identity",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/deviceRegistry.ts",
+        "server/syncEnrollment.mjs"
+      ],
+      "acceptance": "Persistent scoped enrollment/revocation, expiring sessions and hardened authentication.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Persistent scoped enrollment/revocation, expiring sessions and hardened authentication."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Security continuation 2026-10-10: local POSIX session/enrollment cross-process locks, private directory/file checks, credential revalidation and negative tests; only the local helper boundary is implemented-and-tested. Production identity, durable shared storage, power-failure recovery and real devices remain unverified or missing."
+    },
+    {
+      "id": "S8-03",
+      "stage": 8,
+      "name": "TLS and request boundaries",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "server/syncHttps.mjs",
+        "server/index.ts"
+      ],
+      "acceptance": "Explicit TLS/proxy/CORS/session/rate-limiting configuration rejects unauthorized requests.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Explicit TLS/proxy/CORS/session/rate-limiting configuration rejects unauthorized requests."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S8-04",
+      "stage": 8,
+      "name": "Durable server storage",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "server/syncJournal.mjs",
+        "server/syncSessionStore.mjs"
+      ],
+      "acceptance": "Transactional durable multi-instance storage and safe crash/lock recovery.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Transactional durable multi-instance storage and safe crash/lock recovery."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Security continuation 2026-10-10: local POSIX session/enrollment cross-process locks, private directory/file checks, credential revalidation and negative tests; only the local helper boundary is implemented-and-tested. Production identity, durable shared storage, power-failure recovery and real devices remain unverified or missing. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S8-05",
+      "stage": 8,
+      "name": "Remote receipts and acknowledgements",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/outboxAcknowledgements.ts"
+      ],
+      "acceptance": "Only matching authenticated remote receipts acknowledge metadata delivery.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Only matching authenticated remote receipts acknowledge metadata delivery."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S8-06",
+      "stage": 8,
+      "name": "Business-data replication",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "acceptance": "Cryptographically authenticated financial events, ordered replay, deduplication and full records.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Cryptographically authenticated financial events, ordered replay, deduplication and full records."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S8-07",
+      "stage": 8,
+      "name": "Conflict and power-failure recovery",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "acceptance": "Concurrent disconnected writes reconcile deterministically without overselling or duplicate money.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Concurrent disconnected writes reconcile deterministically without overselling or duplicate money."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-cross-tab/native-final.log",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md (scoped native QA only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Core retail service Web Locks are implemented but NOT verified in real Dexie/browser/interruptions. All remaining writers and raw DB paths are outside the scoped change.",
+      "notes": "Security continuation 2026-10-10: local POSIX session/enrollment cross-process locks, private directory/file checks, credential revalidation and negative tests; only the local helper boundary is implemented-and-tested. Production identity, durable shared storage, power-failure recovery and real devices remain unverified or missing. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S8-08",
+      "stage": 8,
+      "name": "Encrypted recovery and keys",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/encryptedRecovery.ts",
+        "server/syncBackupVault.mjs"
+      ],
+      "acceptance": "Verified encrypted backup upload/download, key handling and complete restore.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Verified encrypted backup upload/download, key handling and complete restore."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/native-final.log (bounded plain/encrypted backup test; browser verification pending)",
+        "docs/release/ENCRYPTED_ENVELOPE_PREFLIGHT_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified. 11 October backup-resource increment adds byte-bounded JSON/encrypted backup parse/import and pre-file-read guards; Node native tests pass, while browser memory and full client checks remain open."
+    },
+    {
+      "id": "S8-09",
+      "stage": 8,
+      "name": "Browser/cloud integration",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/syncStatus.ts",
+        "server/index.ts"
+      ],
+      "acceptance": "Authenticated UI/session acquisition, revoked devices, disconnected reconnection and staging end-to-end.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authenticated UI/session acquisition, revoked devices, disconnected reconnection and staging end-to-end."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-01",
+      "stage": 9,
+      "name": "Store directory",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeDirectory.ts"
+      ],
+      "acceptance": "Company-scoped stores and service access controls.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Company-scoped stores and service access controls."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md (native lock evidence only; Dexie/browser unverified)"
+      ],
+      "verificationBoundary": "Expanded shared recovery Web Lock scope is implemented but NOT proven by client/IndexedDB/browser interruption checks. Original acceptance status is unchanged."
+    },
+    {
+      "id": "S9-02",
+      "stage": 9,
+      "name": "Staff store assignments",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeDirectory.ts"
+      ],
+      "acceptance": "Active membership and store scope rechecked at use.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Active membership and store scope rechecked at use."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md (native lock evidence only; Dexie/browser unverified)"
+      ],
+      "verificationBoundary": "Expanded shared recovery Web Lock scope is implemented but NOT proven by client/IndexedDB/browser interruption checks. Original acceptance status is unchanged."
+    },
+    {
+      "id": "S9-03",
+      "stage": 9,
+      "name": "Physical count observations",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeStockCounts.ts"
+      ],
+      "acceptance": "Append-only scoped observations never imply saleable balances.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Append-only scoped observations never imply saleable balances."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-04",
+      "stage": 9,
+      "name": "Transfer requests",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeTransfers.ts"
+      ],
+      "acceptance": "Scoped validated cancellable planning requests never imply moved stock.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped validated cancellable planning requests never imply moved stock."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Scoped role revalidation and read-only local store audit implemented; native pure tests passed but client/IndexedDB and full feature acceptance NOT EXECUTED. Existing authoritative-store, hardware and full permission blockers remain."
+    },
+    {
+      "id": "S9-05",
+      "stage": 9,
+      "name": "Local store activity",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeReport.ts"
+      ],
+      "acceptance": "Report permission, local planning summaries and honest evidence limits.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Report permission, local planning summaries and honest evidence limits."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Scoped role revalidation and read-only local store audit implemented; native pure tests passed but client/IndexedDB and full feature acceptance NOT EXECUTED. Existing authoritative-store, hardware and full permission blockers remain."
+    },
+    {
+      "id": "S9-06",
+      "stage": 9,
+      "name": "Authoritative store balances",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "acceptance": "Receipt/sale/refund/adjustment ledgers preserve each store's quantities and costs.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Receipt/sale/refund/adjustment ledgers preserve each store's quantities and costs."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-07",
+      "stage": 9,
+      "name": "Actual stock transfers",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeTransfers.ts"
+      ],
+      "acceptance": "Atomic double-entry physical movements preserve cost and reject duplicates.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Atomic double-entry physical movements preserve cost and reject duplicates."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-08",
+      "stage": 9,
+      "name": "Offline attendant checkout",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "acceptance": "Scoped revoked-device behavior, assigned-store checkout and attributed payments.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped revoked-device behavior, assigned-store checkout and attributed payments."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-09",
+      "stage": 9,
+      "name": "Multi-device replay",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "acceptance": "Authenticated durable replay, ordered conflict resolution and owner visibility.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authenticated durable replay, ordered conflict resolution and owner visibility."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-10",
+      "stage": 9,
+      "name": "Owner consolidation",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeReport.ts"
+      ],
+      "acceptance": "Store-tagged sales/stock/profit/currency reconcile from source records.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Store-tagged sales/stock/profit/currency reconcile from source records."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S9-11",
+      "stage": 9,
+      "name": "Multi-store acceptance",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "acceptance": "Migration, concurrency, security, real browsers/devices and ledger QA pass.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Migration, concurrency, security, real browsers/devices and ledger QA pass."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Scoped role revalidation and read-only local store audit implemented; native pure tests passed but client/IndexedDB and full feature acceptance NOT EXECUTED. Existing authoritative-store, hardware and full permission blockers remain."
+    },
+    {
+      "id": "S10-01",
+      "stage": 10,
+      "name": "Authorized public catalogue",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "acceptance": "Merchant consent and privacy; public catalogue served at server-trusted prices.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Merchant consent and privacy; public catalogue served at server-trusted prices."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S10-02",
+      "stage": 10,
+      "name": "Verified customer orders",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "acceptance": "Authenticated customer order identities and trusted totals.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authenticated customer order identities and trusted totals."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S10-03",
+      "stage": 10,
+      "name": "Payment adapter and settlement",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts",
+        "server/index.ts"
+      ],
+      "acceptance": "Selected provider sandbox, signed webhooks, retries, capture/refund/chargeback/settlement reconciliation.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Selected provider sandbox, signed webhooks, retries, capture/refund/chargeback/settlement reconciliation."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "blocked",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/mock-payments.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Owner explicitly has no approved gateway. Local mock contract only: success/failure/timeout/idempotency/refunds/chargebacks pass. Real webhooks/settlement are unimplemented and unverified."
+    },
+    {
+      "id": "S10-04",
+      "stage": 10,
+      "name": "Stock reservations and fulfillment",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts",
+        "client/src/features/inventory/inventory.ts"
+      ],
+      "acceptance": "Authoritative TTL reservation and atomic commit/release after all security/accounting gates.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Authoritative TTL reservation and atomic commit/release after all security/accounting gates."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S10-05",
+      "stage": 10,
+      "name": "Shipment and delivery tracking",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "acceptance": "Real fulfillment/carrier statuses; never derive delivery from preparation planning.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Real fulfillment/carrier statuses; never derive delivery from preparation planning."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "blocked",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S10-06",
+      "stage": 10,
+      "name": "Portable commerce backup",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/backup/backup.ts"
+      ],
+      "acceptance": "Scoped drafts and current records restored atomically; pre-v25 compatibility.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped drafts and current records restored atomically; pre-v25 compatibility."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    },
+    {
+      "id": "S10-07",
+      "stage": 10,
+      "name": "Commerce security and acceptance",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "qa/stage10-local-lifecycle.test.cjs"
+      ],
+      "acceptance": "Full sandbox/browser/migration/security and payment/inventory tests; live feature gates remain closed.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Full sandbox/browser/migration/security and payment/inventory tests; live feature gates remain closed."
+      ],
+      "dependencies": [
+        2,
+        3,
+        6,
+        8,
+        9
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12.md (scoped native tests, client/browser not verified)"
+      ],
+      "verificationBoundary": "New administrative recovery locks / post-verification staff credential checks have native model and source-contract evidence only; real IndexedDB, browser Web Locks, physical WebAuthn and complete acceptance tests are still outstanding."
+    },
+    {
+      "id": "S11-01",
+      "stage": 11,
+      "name": "Evidence-based local insights",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "acceptance": "Scoped saved facts, honest missing-data states and advisory-only defaults.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Scoped saved facts, honest missing-data states and advisory-only defaults."
+      ],
+      "dependencies": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Live batch and SKU evidence wired to Insights page. Full UI/forecast acceptance remains open."
+    },
+    {
+      "id": "S11-02",
+      "stage": 11,
+      "name": "SKU demand and reorders",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "acceptance": "Historical unit sales/returns plus stock support validated reorder quantities without invented confidence.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Historical unit sales/returns plus stock support validated reorder quantities without invented confidence."
+      ],
+      "dependencies": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Observed sales units, reversed-sale exclusion and no-forecast caveat implemented; validated demand/reorder model remains missing."
+    },
+    {
+      "id": "S11-03",
+      "stage": 11,
+      "name": "Live batch expiry",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs",
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "acceptance": "Validated live company-scoped batches feed expiry evidence.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Validated live company-scoped batches feed expiry evidence."
+      ],
+      "dependencies": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Live company-scoped batch quantities/expiry integration tested; physical/device UI acceptance remains open."
+    },
+    {
+      "id": "S11-04",
+      "stage": 11,
+      "name": "Receivable ageing",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs",
+        "client/src/features/credit/credit.ts"
+      ],
+      "acceptance": "Explicit dated debt, due terms and repayment allocation ground ageing.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Explicit dated debt, due terms and repayment allocation ground ageing."
+      ],
+      "dependencies": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S11-05",
+      "stage": 11,
+      "name": "Persisted permissioned automation",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "acceptance": "Audited opted-in rules with approvals, safe scheduling and notification verification.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Audited opted-in rules with approvals, safe scheduling and notification verification."
+      ],
+      "dependencies": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S12-01",
+      "stage": 12,
+      "name": "Reproducible toolchain and CI",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "acceptance": "Frozen install, all client/Node tests, semantic types, build and configured lint pass.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Frozen install, all client/Node tests, semantic types, build and configured lint pass."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/frozen-install-final.log",
+        "artifacts/release-v19/node-final-windows.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Frozen install, client suite, semantic types and build verified locally. Full Node suite fails POSIX security tests on Windows; Ubuntu CI configured but not executed."
+    },
+    {
+      "id": "S12-02",
+      "stage": 12,
+      "name": "Stock and money reconciliation",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/inventory/historicalCosting.ts"
+      ],
+      "acceptance": "Independent full-history reconciliation including duplicate/concurrent/crash/rollback scenarios.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Independent full-history reconciliation including duplicate/concurrent/crash/rollback scenarios."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "missing",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-11-receivable-audit/native-full.log",
+        "artifacts/continuation-2026-10-11-cash-return-audit/native-full.log (ledger-wide cash-return physical/FIFO cross-check; client verification pending)"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Independent stock/cost/source/sale reconciliation implemented and tested. Full liabilities, refunds, complete history and store accounting remain missing. 11 October receivable-audit continuation: independent native audit detects saved reversals, allocations, currency and negative/overflow balances (250/250 native suite); IndexedDB integration authored but not run. This does not close full financial acceptance."
+    },
+    {
+      "id": "S12-03",
+      "stage": 12,
+      "name": "Migration and recovery matrix",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "acceptance": "Every supported version through current migrates in real IndexedDB and survives backup recovery.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Every supported version through current migrates in real IndexedDB and survives backup recovery."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-cash-return-audit/native-full.log (ledger-wide cash-return physical/FIFO cross-check; client verification pending)",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/native-final.log (bounded plain/encrypted backup test; browser verification pending)",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log",
+        "artifacts/continuation-2026-10-11-cross-tab/native-final.log",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md (scoped native QA only; client/browser unverified)"
+      ],
+      "verificationBoundary": "Core retail service Web Locks are implemented but NOT verified in real Dexie/browser/interruptions. All remaining writers and raw DB paths are outside the scoped change.",
+      "notes": "All historical schemas 1–25 upgraded in native Chromium IndexedDB with metadata/product fixtures and no fabricated cost events. Exhaustive historical transactions, scale and cross-database crash recovery remain open. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified. Assistant-history company guards, complete-history backup path and transactional audit pruning added on 2026-10-11; client/IndexedDB verification and owner audit-retention policy remain open. 11 October backup-resource increment adds byte-bounded JSON/encrypted backup parse/import and pre-file-read guards; Node native tests pass, while browser memory and full client checks remain open."
+    },
+    {
+      "id": "S12-04",
+      "stage": 12,
+      "name": "Security and dependencies",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "server/index.ts",
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptance": "Threat model, all-write authorization, malicious imports, audit/SBOM/license and security review.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Threat model, all-write authorization, malicious imports, audit/SBOM/license and security review."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/dependency-audit-release.json",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md",
+        "docs/release/ENCRYPTED_ENVELOPE_PREFLIGHT_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers. Consolidated local source work improves transaction-time authority or restore metadata/audit safety; client and browser gates remain unexecuted, status unchanged.",
+      "notes": "Write candidate inventory, guarded mutations, malicious backup tests, package/license inventory and zero package-audit vulnerabilities. Not a completed penetration/all-write review. Assistant-history company guards, complete-history backup path and transactional audit pruning added on 2026-10-11; client/IndexedDB verification and owner audit-retention policy remain open."
+    },
+    {
+      "id": "S12-05",
+      "stage": 12,
+      "name": "Full production acceptance",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts"
+      ],
+      "acceptance": "Offline PWA, browsers/mobile/hardware/WebAuthn/accessibility/performance/security acceptance.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Offline PWA, browsers/mobile/hardware/WebAuthn/accessibility/performance/security acceptance."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "implemented-unverified",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+    },
+    {
+      "id": "S12-06",
+      "stage": 12,
+      "name": "Deployment and release artifact",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "docs/release-checklist.md"
+      ],
+      "acceptance": "Manifest, hashed artifact, staging rollback/recovery drill, operator/user docs and explicit GO/NO-GO.",
+      "requiredTests": [
+        "Full relevant client integration tests: pnpm test",
+        "pnpm check",
+        "pnpm build",
+        "Node QA/server suite",
+        "Browser acceptance: Manifest, hashed artifact, staging rollback/recovery drill, operator/user docs and explicit GO/NO-GO."
+      ],
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "blocked",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "notes": "Local source/build/evidence artifacts and runbooks supplied. Staging and recovery drills prohibited until owner approves proposed environment. Scoped durable assistant-backup restore preimage journal added 2026-10-11; real IndexedDB crash/client and clear recovery remain unverified."
+    }
+  ],
+  "ownerDecisions": {
+    "countryDefault": "Ghana",
+    "currencyDefault": "GHS",
+    "paymentDefault": "mobile",
+    "countryAndProviderSelectable": true,
+    "paymentProviderApproved": null,
+    "paymentTesting": "local mock only",
+    "tax": "configurable and off until explicitly set up",
+    "externalDeployment": "not authorized; propose staging first"
+  }
+}

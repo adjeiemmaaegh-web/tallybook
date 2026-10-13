@@ -1,0 +1,13 @@
+Environment and reproducibility details
+2026-10-10T16:32:13Z
+Linux 3ac44871e22d 6.18.44 #1 SMP Sat Sep 26 20:02:31 UTC 2026 x86_64 GNU/Linux
+v22.16.0
+OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+continuation/local-hardening-2026-10-10
+a083a2253b3a68bf5d04019e01f8a879d570db45
+Corepack version:
+0.32.0
+Node runtime matches .node-version?
+24.19.0
+elapsed_seconds=5
+server_js_syntax_exit=0

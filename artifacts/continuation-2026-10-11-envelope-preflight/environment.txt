@@ -1,0 +1,6 @@
+node=v22.16.0
+openssl=3.0.16
+pinned_node=24.19.0
+pnpm=unavailable
+cwd=/mnt/data/tallybook_20261011_followup/tallybook_fixed
+2026-10-11T03:27:46+00:00

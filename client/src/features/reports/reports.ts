@@ -1,11 +1,15 @@
+import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger Stage 7: reports read immutable local facts; they never create, edit, or reinterpret business records as accounting profit. */
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import type { Customer } from "@/features/customers/customers";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import type { DebtRepayment } from "@/features/credit/credit";
 import { expenseCategories, expenseCategoryLabels, type ExpenseCategory } from "@/features/expenses/expenses";
 import type { Product } from "@/features/inventory/inventory";
 import { paymentMethodLabel, type Payment, type PaymentMethod, type Sale } from "@/features/sales/sales";
+import type { SaleReversal } from "@/features/assistant/reversals";
+import { reconcileCreditLedger } from "@/features/sales/creditLedger.mjs";
 
 export const reportPeriods = ["today", "last7", "all"] as const;
 export type ReportPeriod = (typeof reportPeriods)[number];
@@ -78,13 +82,16 @@ export function reportDateRange(period: ReportPeriod, now = new Date()): DateRan
 
 function customerMap(customers: Customer[]) { return new Map(customers.map((customer) => [customer.id, customer])); }
 function salesRows(sales: Sale[], customerById: Map<string, Customer>): SalesReportRow[] {
-  return sales.map((sale) => ({ id: sale.id, receiptNumber: sale.receiptNumber, createdAt: sale.createdAt, paymentMethod: sale.paymentMethod, totalMinor: sale.totalMinor, receivedMinor: sale.amountPaidMinor, outstandingMinor: sale.outstandingMinor, customerName: sale.customerId ? customerById.get(sale.customerId)?.name : undefined })).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  return sales.map((sale) => ({ id: sale.id, receiptNumber: sale.receiptNumber, createdAt: sale.createdAt, paymentMethod: sale.paymentMethod, totalMinor: sale.totalMinor, receivedMinor: sale.amountPaidMinor - (sale.walletAppliedMinor ?? 0), outstandingMinor: sale.outstandingMinor, customerName: sale.customerId ? customerById.get(sale.customerId)?.name : undefined })).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
-function debtRows(sales: Sale[], repayments: DebtRepayment[], customers: Customer[]): DebtReportRow[] {
+function debtRows(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[], customers: Customer[]): DebtReportRow[] {
   return customers.filter((customer) => !customer.archivedAt).map((customer) => {
-    const salesOutstandingMinor = sales.filter((sale) => sale.customerId === customer.id).reduce((sum, sale) => sum + sale.outstandingMinor, 0);
-    const repaidMinor = repayments.filter((repayment) => repayment.customerId === customer.id).reduce((sum, repayment) => sum + repayment.amountMinor, 0);
-    return { customerId: customer.id, customerName: customer.name, phone: customer.phone, salesOutstandingMinor, repaidMinor, outstandingMinor: Math.max(0, salesOutstandingMinor - repaidMinor) };
+    const { salesOutstandingMinor, repaidMinor, outstandingMinor } = reconcileCreditLedger(
+      sales.filter((sale) => sale.customerId === customer.id),
+      reversals.filter((reversal) => reversal.customerId === customer.id),
+      repayments.filter((repayment) => repayment.customerId === customer.id),
+    );
+    return { customerId: customer.id, customerName: customer.name, phone: customer.phone, salesOutstandingMinor, repaidMinor, outstandingMinor };
   }).filter((row) => row.salesOutstandingMinor > 0 || row.repaidMinor > 0).sort((left, right) => right.outstandingMinor - left.outstandingMinor || left.customerName.localeCompare(right.customerName));
 }
 function inventoryRows(products: Product[]): InventoryReportRow[] {
@@ -99,23 +106,29 @@ function paymentRows(payments: Payment[], repayments: DebtRepayment[], customerB
 
 async function sourceRecords(database: TallybookDB) {
   const activeId = getActiveBusinessProfileId();
-  const [allSales, allPayments, allRepayments, allCustomers, allProducts, allSaleLines, allExpenses] = await Promise.all([database.sales.toArray(), database.payments.toArray(), database.repayments.toArray(), database.customers.toArray(), database.products.toArray(), database.saleLines.toArray(), database.expenses.toArray()]);
-  return { sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId) };
+  const [allSales, allPayments, allRepayments, allReversals, allCustomers, allProducts, allSaleLines, allExpenses, allWalletTransfers] = await database.transaction("r", [database.sales, database.payments, database.repayments, database.saleReversals, database.customers, database.products, database.saleLines, database.expenses, database.walletTransfers], async () => Promise.all([database.sales.toArray(), database.payments.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.customers.toArray(), database.products.toArray(), database.saleLines.toArray(), database.expenses.toArray(), database.walletTransfers.toArray()]));
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
+  return { sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), reversals: allReversals.filter((reversal) => reversal.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId), walletTransfers: allWalletTransfers.filter((t) => t.businessProfileId === activeId) };
 }
 
 export async function getReportsSnapshot(period: ReportPeriod, now = new Date(), database: TallybookDB = db): Promise<ReportsSnapshot> {
+  const company = getActiveBusinessProfileId();
+  await requirePermission("reports", database);
   const range = reportDateRange(period, now);
-  const { sales, payments, repayments, customers, products } = await sourceRecords(database);
+  const { sales, payments, repayments, reversals, customers, products, walletTransfers } = await sourceRecords(database);
   const customerById = customerMap(customers);
   const filteredSales = sales.filter((sale) => inRange(sale.createdAt, range));
   const filteredPayments = payments.filter((payment) => inRange(payment.createdAt, range));
   const filteredRepayments = repayments.filter((repayment) => inRange(repayment.createdAt, range));
-  const debts = debtRows(sales, repayments, customers);
-  const receivedMinor = [...filteredPayments, ...filteredRepayments].reduce((sum, payment) => sum + payment.amountMinor, 0);
-  return { range, sales: salesRows(filteredSales, customerById), payments: paymentRows(filteredPayments, filteredRepayments, customerById), debts, inventory: inventoryRows(products), totals: { salesMinor: filteredSales.reduce((sum, sale) => sum + sale.totalMinor, 0), receivedMinor, outstandingDebtMinor: debts.reduce((sum, debt) => sum + debt.outstandingMinor, 0), transactionCount: filteredSales.length } };
+  const filteredReversals = reversals.filter((reversal) => inRange(reversal.createdAt, range));
+  const debts = debtRows(sales, repayments, reversals, customers);
+  const receivedMinor = [...filteredPayments, ...filteredRepayments].reduce((sum, payment) => sum + payment.amountMinor, 0) + filteredReversals.reduce((sum, reversal) => sum + reversal.reversedReceivedMinor + (sales.find(sale => sale.id === reversal.originalSaleId)?.walletAppliedMinor ?? 0), 0) + walletTransfers.filter(t=>inRange(t.createdAt,range)).reduce((sum,t)=>sum+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0);
+  assertCompanyScope(company, getActiveBusinessProfileId());
+  return { range, sales: salesRows(filteredSales, customerById), payments: paymentRows(filteredPayments, filteredRepayments, customerById), debts, inventory: inventoryRows(products), totals: { salesMinor: filteredSales.reduce((sum, sale) => sum + sale.totalMinor, 0) + filteredReversals.reduce((sum, reversal) => sum + reversal.reversedSaleTotalMinor, 0), receivedMinor, outstandingDebtMinor: debts.reduce((sum, debt) => sum + debt.outstandingMinor, 0), transactionCount: filteredSales.length } };
 }
 
 export async function getDashboardSummary(now = new Date(), database: TallybookDB = db): Promise<DashboardSummary> {
+  const company = getActiveBusinessProfileId();
   const today = await getReportsSnapshot("today", now, database);
   const { sales, repayments, customers, saleLines } = await sourceRecords(database);
   const customerById = customerMap(customers);
@@ -136,16 +149,20 @@ export async function getDashboardSummary(now = new Date(), database: TallybookD
     const daySales = sales.filter((sale) => { const createdAt = new Date(sale.createdAt); return createdAt >= day && createdAt < nextDay; });
     return { dateKey: localDateKey(day), label: readableDay(day), salesMinor: daySales.reduce((sum, sale) => sum + sale.totalMinor, 0), transactions: daySales.length };
   });
+  assertCompanyScope(company, getActiveBusinessProfileId());
   return { generatedAt: now.toISOString(), todaySalesMinor: today.totals.salesMinor, todayMoneyReceivedMinor: today.totals.receivedMinor, outstandingDebtMinor: today.totals.outstandingDebtMinor, todayTransactions: today.totals.transactionCount, lowStockProducts: today.inventory.filter((product) => product.isLowStock), recentSales: today.sales.slice(0, 5), bestSeller, recentActivity, trend };
 }
 
 export async function getBusinessHealthSummary(period: ReportPeriod, now = new Date(), database: TallybookDB = db): Promise<BusinessHealthSummary> {
+  const company = getActiveBusinessProfileId();
+  await requirePermission("reports", database);
   const [reports, records] = await Promise.all([getReportsSnapshot(period, now, database), sourceRecords(database)]);
   const filteredExpenses = records.expenses.filter((expense) => expenseInRange(expense.expenseDate, reports.range));
   const expensesByCategory = expenseCategories.map((category) => {
     const categoryExpenses = filteredExpenses.filter((expense) => expense.category === category);
     return { category, label: expenseCategoryLabels[category], amountMinor: categoryExpenses.reduce((sum, expense) => sum + expense.amountMinor, 0), count: categoryExpenses.length };
   });
+  assertCompanyScope(company, getActiveBusinessProfileId());
   return {
     generatedAt: now.toISOString(), range: reports.range, salesMinor: reports.totals.salesMinor, moneyCollectedMinor: reports.totals.receivedMinor,
     outstandingDebtMinor: reports.totals.outstandingDebtMinor, expensesMinor: filteredExpenses.reduce((sum, expense) => sum + expense.amountMinor, 0),
@@ -154,8 +171,10 @@ export async function getBusinessHealthSummary(period: ReportPeriod, now = new D
 }
 
 export async function getEndOfDaySummary(now = new Date(), database: TallybookDB = db): Promise<EndOfDaySummary> {
+  const company = getActiveBusinessProfileId();
+  await requirePermission("reports", database);
   const today = await getReportsSnapshot("today", now, database);
-  const { sales, payments, repayments } = await sourceRecords(database);
+  const { sales, payments, repayments, walletTransfers } = await sourceRecords(database);
   const todaySales = sales.filter((sale) => inRange(sale.createdAt, today.range));
   const todayPayments = payments.filter((payment) => inRange(payment.createdAt, today.range));
   const todayRepayments = repayments.filter((repayment) => inRange(repayment.createdAt, today.range));
@@ -165,12 +184,13 @@ export async function getEndOfDaySummary(now = new Date(), database: TallybookDB
     salesMinor: todaySales.filter((sale) => sale.paymentMethod === method).reduce((sum, sale) => sum + sale.totalMinor, 0),
     receivedMinor: method === "credit" ? 0 : todayPayments.filter((payment) => payment.method === method).reduce((sum, payment) => sum + payment.amountMinor, 0) + todayRepayments.filter((repayment) => repayment.method === method).reduce((sum, repayment) => sum + repayment.amountMinor, 0),
   }));
+  assertCompanyScope(company, getActiveBusinessProfileId());
   return {
     generatedAt: now.toISOString(),
     dateLabel: new Intl.DateTimeFormat(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(now),
     salesMinor: today.totals.salesMinor,
     salesCount: todaySales.length,
-    receivedMinor: todayPayments.reduce((sum, payment) => sum + payment.amountMinor, 0) + todayRepayments.reduce((sum, repayment) => sum + repayment.amountMinor, 0),
+    receivedMinor: todayPayments.reduce((sum, payment) => sum + payment.amountMinor, 0) + todayRepayments.reduce((sum, repayment) => sum + repayment.amountMinor, 0) + walletTransfers.filter(t=>inRange(t.createdAt,today.range)).reduce((sum,t)=>sum+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0),
     unpaidFromTodaySalesMinor: todaySales.reduce((sum, sale) => sum + sale.outstandingMinor, 0),
     namedCustomersServed: new Set(todaySales.flatMap((sale) => sale.customerId ? [sale.customerId] : [])).size,
     lowStockProducts: today.inventory.filter((product) => product.isLowStock),

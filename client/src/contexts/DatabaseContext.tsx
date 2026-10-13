@@ -1,5 +1,6 @@
 /** Tactile Ledger design reminder: local data readiness is visible, calm, and never concealed behind a server dependency. */
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { recoverPendingBackupRestore } from "@/features/backup/restoreRecovery";
 import { initializeDatabase, type DatabaseReadiness } from "@/db/TallybookDB";
 
 export type DatabaseState =
@@ -17,6 +18,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const startDatabase = useCallback(async () => {
     setState({ status: "checking", readiness: null, message: null });
     try {
+      await recoverPendingBackupRestore();
       const readiness = await initializeDatabase();
       setState({ status: "ready", readiness, message: null });
     } catch (error) {

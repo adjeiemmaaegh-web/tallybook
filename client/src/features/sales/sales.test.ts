@@ -2,11 +2,13 @@
 import Dexie from "dexie";
 import { afterEach, describe, expect, it } from "vitest";
 import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/TallybookDB";
+import { setCustomerPolicy } from "@/features/customers/customerBenefits";
 import { createCustomer } from "@/features/customers/customers";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
 import { createProduct, getInventorySnapshot } from "@/features/inventory/inventory";
 import { addMobileMoneyProvider } from "@/features/payments/mobileMoney";
 import { completeSale, getCustomerSaleSummary, getSaleSnapshot } from "@/features/sales/sales";
+import { recoverSavedCheckout } from "@/features/sales/recoverSavedCheckout";
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -35,6 +37,22 @@ afterEach(async () => {
 });
 
 describe("atomic sales", () => {
+  it("enforces customer discount limits without changing stock or financial records", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const product = await createProductFixture(database, "Discounted rice", "8", "10.00");
+    const customer = await createCustomer({ name: "Kojo", phone: "0240000001", email: "", address: "", notes: "", status: "active" }, database);
+    await setCustomerPolicy(customer.id, { maxDiscountPercent: 10 }, database);
+    const input = { lines: [{ productId: product.id, quantity: 2 }], customerId: customer.id, paymentMethod: "cash" as const, amountPaid: "17.00", currency: "GHS", discount: "3.00" };
+    await expect(completeSale(input, database)).rejects.toThrow("approved maximum discount");
+    expect(await database.sales.count()).toBe(0);
+    expect(await database.inventoryMovements.where("movementType").equals("sale").count()).toBe(0);
+    expect((await database.products.get(product.id))?.stockQuantity).toBe(8);
+    const saved = await completeSale({ ...input, discount: "2.00", amountPaid: "18.00" }, database);
+    expect(saved.sale.discountMinor).toBe(200);
+    expect(saved.sale.totalMinor).toBe(1800);
+  });
+
   it("completes a cash sale by writing sale, line, payment, receipt, and stock movement together", async () => {
     const database = makeDatabase();
     await initializeDatabase(database);
@@ -51,6 +69,41 @@ describe("atomic sales", () => {
     expect(snapshot.receipts).toMatchObject([{ saleId: result.sale.id, receiptNumber: result.sale.receiptNumber }]);
     expect(inventory.products).toMatchObject([{ id: product.id, stockQuantity: 3 }]);
     expect(inventory.movements[0]).toMatchObject({ productId: product.id, movementType: "sale", quantityDelta: -2, resultingQuantity: 3 });
+  });
+
+  it("recovers a committed two-item partial-payment receipt from IndexedDB without writing again", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const rice = await createProductFixture(database, "Rice", "8", "10.00");
+    const oil = await createProductFixture(database, "Oil", "6", "15.00");
+    const customer = await createCustomer({ name: "Ama", phone: "0240000002", email: "", address: "", notes: "", status: "active" }, database);
+    const key = "recovery-integrated-001";
+    const saved = await completeSale({ lines: [{ productId: rice.id, quantity: 2 }, { productId: oil.id, quantity: 1 }], customerId: customer.id, discount: "0", paymentMethod: "cash", amountPaid: "12.00", currency: "GHS", submissionKey: key }, database);
+    const before = { sales: await database.sales.count(), lines: await database.saleLines.count(), payments: await database.payments.count(), receipts: await database.receipts.count(), movements: await database.inventoryMovements.count() };
+    // Emulate a browser reload by retrieving authoritative records, not calling completeSale again.
+    const snapshot = await getSaleSnapshot(database);
+    const recovered = recoverSavedCheckout(snapshot, saved.sale.businessProfileId, key);
+    expect(recovered?.sale.id).toBe(saved.sale.id);
+    expect(recovered?.receipt.receiptNumber).toBe(saved.receipt.receiptNumber);
+    expect(recovered?.sale.outstandingMinor).toBe(2300);
+    expect(recovered?.payment?.amountMinor).toBe(1200);
+    expect({ sales: await database.sales.count(), lines: await database.saleLines.count(), payments: await database.payments.count(), receipts: await database.receipts.count(), movements: await database.inventoryMovements.count() }).toEqual(before);
+    expect((await database.products.get(rice.id))?.stockQuantity).toBe(6);
+    expect((await database.products.get(oil.id))?.stockQuantity).toBe(5);
+  });
+
+  it("rejects corrupted persisted payment data on recovery without changing the ledger", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const rice = await createProductFixture(database, "Rice", "3", "10.00");
+    const result = await completeSale({ lines: [{ productId: rice.id, quantity: 1 }], discount: "0", paymentMethod: "cash", amountPaid: "10.00", currency: "GHS", submissionKey: "recovery-corrupt-001" }, database);
+    const initial = await getSaleSnapshot(database);
+    expect(recoverSavedCheckout(initial, result.sale.businessProfileId, result.sale.submissionKey)?.sale.id).toBe(result.sale.id);
+    await database.payments.update(result.payment!.id, { amountMinor: 500 });
+    const changed = await getSaleSnapshot(database);
+    expect(() => recoverSavedCheckout(changed, result.sale.businessProfileId, result.sale.submissionKey)).toThrow(/payment/);
+    expect(await database.sales.count()).toBe(1);
+    expect((await database.products.get(rice.id))?.stockQuantity).toBe(2);
   });
 
   it("accepts a comma-grouped full payment amount and records the sale once", async () => {
@@ -148,6 +201,38 @@ describe("atomic sales", () => {
     expect(await database.payments.where("saleId").equals(result.sale.id).count()).toBe(0);
     expect(inventory.products).toEqual(expect.arrayContaining([expect.objectContaining({ id: first.id, stockQuantity: 1 }), expect.objectContaining({ id: second.id, stockQuantity: 1 })]));
     expect((await database.inventoryMovements.filter((movement) => movement.note === `Sale ${result.sale.receiptNumber}`).count())).toBe(2);
+  });
+
+  it("rejects changed cart or payment details for an already committed checkout key", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const first = await createProductFixture(database, "Rice", "6", "10.00");
+    const second = await createProductFixture(database, "Oil", "5", "12.00");
+    const base = { lines: [{ productId: first.id, quantity: 1 }], discount: "0", paymentMethod: "cash" as const, amountPaid: "10.00", currency: "GHS", submissionKey: "checkout-immutable-001" };
+    const saved = await completeSale(base, database);
+    await expect(completeSale({ ...base, lines: [{ productId: second.id, quantity: 1 }] }, database)).rejects.toThrow("different details");
+    await expect(completeSale({ ...base, amountPaid: "9.00" }, database)).rejects.toThrow("different details");
+    const retried = await completeSale(base, database);
+    expect(retried.sale.id).toBe(saved.sale.id);
+    expect(await database.sales.count()).toBe(1);
+    expect(await database.saleLines.count()).toBe(1);
+    expect(await database.payments.count()).toBe(1);
+    expect(await database.receipts.count()).toBe(1);
+    expect((await database.products.get(first.id))?.stockQuantity).toBe(5);
+    expect((await database.products.get(second.id))?.stockQuantity).toBe(5);
+  });
+
+  it("rejects a changed partial payment on retry without duplicating customer debt", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const product = await createProductFixture(database, "Soap", "4", "20.00");
+    const customer = await createCustomer({ name: "Abena", phone: "0240000003", email: "", address: "", notes: "", status: "active" }, database);
+    const request = { lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id, discount: "0", paymentMethod: "cash" as const, amountPaid: "5.00", currency: "GHS", submissionKey: "partial-retry-immutable" };
+    await completeSale(request, database);
+    await expect(completeSale({ ...request, amountPaid: "10.00" }, database)).rejects.toThrow("different details");
+    expect((await getCustomerSaleSummary(customer.id, "GHS", database)).outstandingMinor).toBe(1500);
+    expect(await database.sales.count()).toBe(1);
+    expect(await database.payments.count()).toBe(1);
   });
 
   it("rejects insufficient stock and customerless credit without leaving partial records", async () => {

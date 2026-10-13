@@ -10,6 +10,8 @@ import { auditLocalIntegrity } from "@/features/reliability/integrity";
 import { completeSale } from "@/features/sales/sales";
 import { completePurchase, createSupplier } from "@/features/purchases/purchases";
 import { createExpense } from "@/features/expenses/expenses";
+import { recordRepayment } from "@/features/credit/credit";
+import { executeLatestSaleReversal } from "@/features/assistant/reversals";
 
 const names = new Set<string>(); const openDatabases: Dexie[] = []; let sequence = 0;
 function database() { const name = `tallybook-integrity-${Date.now()}-${++sequence}`; names.add(name); const result = new TallybookDB(name); openDatabases.push(result); return result; }
@@ -74,6 +76,33 @@ describe("Stage 11 local integrity audit", () => {
     const audit = await auditLocalIntegrity(localDatabase);
     expect(audit.issues.map((entry) => entry.code)).toEqual(expect.arrayContaining(["purchase-supplier-orphan", "purchase-total", "purchase-line-total", "purchase-movement-missing"]));
     expect(await localDatabase.purchases.get(purchase.id)).toEqual(before.purchase); expect(await localDatabase.purchaseLines.get(line.id)).toEqual(before.line); expect(await localDatabase.inventoryMovements.where("purchaseId").equals(purchase.id).count()).toBe(before.movements);
+  });
+
+  it("detects tampered allocation evidence independently without editing the saved repayment", async () => {
+    const localDatabase = database(); const { product, customer } = await readyLedger(localDatabase);
+    const completed = await completeSale({ lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id,
+      discount: "0", paymentMethod: "credit", amountPaid: "0", currency: "GHS", submissionKey: "integrity-receivable-001" }, localDatabase);
+    const repayment = await recordRepayment({ customerId: customer.id, amount: "3.00", method: "cash", currency: "GHS",
+      saleAllocations: [{ saleId: completed.sale.id, amountMinor: 300 }], submissionKey: "integrity-repayment-001" }, localDatabase);
+    expect((await auditLocalIntegrity(localDatabase)).status).toBe("clear");
+    await localDatabase.repayments.update(repayment.id, { saleAllocations: [{ saleId: completed.sale.id, amountMinor: 301 }] });
+    const saved = await localDatabase.repayments.get(repayment.id);
+    const audit = await auditLocalIntegrity(localDatabase);
+    expect(audit.issues.map(entry => entry.code)).toContain("receivable-allocation");
+    expect(await localDatabase.repayments.get(repayment.id)).toEqual(saved);
+  });
+
+  it("detects tampered full reversals and preserves the original transaction records", async () => {
+    const localDatabase = database(); const { product, customer } = await readyLedger(localDatabase);
+    await completeSale({ lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id,
+      discount: "0", paymentMethod: "credit", amountPaid: "0", currency: "GHS", submissionKey: "integrity-reversal-sale-001" }, localDatabase);
+    const reversal = await executeLatestSaleReversal("GHS", localDatabase, "integrity-reversal-save-001");
+    expect((await auditLocalIntegrity(localDatabase)).status).toBe("clear");
+    await localDatabase.saleReversals.update(reversal.id, { reversedOutstandingMinor: -1 });
+    const original = await localDatabase.saleReversals.get(reversal.id);
+    const audit = await auditLocalIntegrity(localDatabase);
+    expect(audit.issues.map(entry => entry.code)).toContain("receivable-reversal");
+    expect(await localDatabase.saleReversals.get(reversal.id)).toEqual(original);
   });
 
   it("reports malformed saved expenses without changing their local history", async () => {

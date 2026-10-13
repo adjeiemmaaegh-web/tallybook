@@ -1,0 +1,1321 @@
+{
+  "limitations": "Static candidate inventory; delegation and all backend/restore/callback paths require manual review and executable tests.",
+  "entries": [
+    {
+      "file": "client/src/features/assistant/audit.ts",
+      "name": "recordAudit",
+      "line": 59,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.assistantAudit",
+          "line": 62
+        },
+        {
+          "method": "bulkDelete",
+          "target": "database.assistantAudit",
+          "line": 66
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/assistant/reversals.ts",
+      "name": "executeLatestSaleReversal",
+      "line": 45,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.inventoryBatches",
+          "line": 117
+        },
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 132
+        },
+        {
+          "method": "add",
+          "target": "database.saleReversals",
+          "line": 138
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 139
+        },
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 142
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 144
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/backup/backup.ts",
+      "name": "recordBackupExportedAt",
+      "line": 102,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 106
+        },
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 107
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/backup/backup.ts",
+      "name": "restoreBackup",
+      "line": 332,
+      "writes": [
+        {
+          "method": "bulkDelete",
+          "target": "database.stockCountSessions",
+          "line": 384
+        },
+        {
+          "method": "delete",
+          "target": "database.assistantAudit.where(\"businessProfileId\").equals(companyId)",
+          "line": 386
+        },
+        {
+          "method": "delete",
+          "target": "database.businessProfiles",
+          "line": 387
+        },
+        {
+          "method": "put",
+          "target": "database.businessProfiles",
+          "line": 388
+        },
+        {
+          "method": "bulkPut",
+          "target": "database.table(key)",
+          "line": 392
+        },
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 394
+        }
+      ],
+      "permissionCalls": [
+        "authorizedCompany",
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/activeCompany.ts",
+      "name": "persistActiveBusinessProfileId",
+      "line": 30,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 32
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/activeCompany.ts",
+      "name": "clearCompanyData",
+      "line": 39,
+      "writes": [
+        {
+          "method": "delete",
+          "target": "database.businessProfiles",
+          "line": 51
+        },
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 53
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 54
+        }
+      ],
+      "permissionCalls": [
+        "authorized",
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/businessProfile.ts",
+      "name": "saveBusinessProfile",
+      "line": 90,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.businessProfiles",
+          "line": 114
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 116
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/businessProfile.ts",
+      "name": "createBusinessProfile",
+      "line": 121,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.businessProfiles",
+          "line": 131
+        },
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 133
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/businessProfile.ts",
+      "name": "saveInitialProvider",
+      "line": 138,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.mobileMoneyProviders",
+          "line": 144
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/commerce.ts",
+      "name": "createDraftOrder",
+      "line": 47,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.commerceOrders",
+          "line": 66
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 67
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/commerce.ts",
+      "name": "cancelDraftOrder",
+      "line": 77,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.commerceOrders",
+          "line": 83
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 84
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/commerce.ts",
+      "name": "transitionLocalOrder",
+      "line": 89,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.commerceOrders",
+          "line": 98
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 99
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/credit/credit.ts",
+      "name": "recordRepayment",
+      "line": 89,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.repayments",
+          "line": 117
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 118
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customerBenefits.ts",
+      "name": "setCustomerPolicy",
+      "line": 16,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.customerPolicies",
+          "line": 29
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customerBenefits.ts",
+      "name": "recordCustomerBenefit",
+      "line": 47,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 64
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customers.ts",
+      "name": "createCustomer",
+      "line": 55,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.customers",
+          "line": 64
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customers.ts",
+      "name": "updateCustomer",
+      "line": 68,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.customers",
+          "line": 78
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customers.ts",
+      "name": "archiveCustomer",
+      "line": 82,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.customers",
+          "line": 87
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/quotations.ts",
+      "name": "createQuotation",
+      "line": 17,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.quotations",
+          "line": 46
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/quotations.ts",
+      "name": "setQuotationStatus",
+      "line": 54,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.quotations",
+          "line": 65
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/quotations.ts",
+      "name": "convertQuotationToSale",
+      "line": 103,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.quotations",
+          "line": 121
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/walletTransfers.ts",
+      "name": "recordWalletTransfer",
+      "line": 17,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 51
+        },
+        {
+          "method": "add",
+          "target": "database.walletTransfers",
+          "line": 54
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 55
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/expenses/expenses.ts",
+      "name": "createExpense",
+      "line": 64,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.expenses",
+          "line": 86
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 87
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/advancedInventory.ts",
+      "name": "postStockCount",
+      "line": 25,
+      "writes": [
+        {
+          "method": "bulkPut",
+          "target": "database.products",
+          "line": 50
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 51
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 52
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/advancedInventory.ts",
+      "name": "importProductCatalogCsv",
+      "line": 81,
+      "writes": [
+        {
+          "method": "bulkAdd",
+          "target": "database.products",
+          "line": 109
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 111
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 112
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/costLedger.ts",
+      "name": "appendInventoryCostChange",
+      "line": 123,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 131
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 149
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/costLedger.ts",
+      "name": "restoreInventoryCost",
+      "line": 162,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 171
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "createCategory",
+      "line": 160,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.categories",
+          "line": 170
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "createProduct",
+      "line": 190,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.products",
+          "line": 212
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryMovements",
+          "line": 213
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "updateProduct",
+      "line": 219,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 237
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "archiveProduct",
+      "line": 242,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 249
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "adjustStock",
+      "line": 254,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 273
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryMovements",
+          "line": 274
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 275
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "setCatalogueOptions",
+      "line": 29,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 49
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "saveStockCountSession",
+      "line": 53,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.stockCountSessions",
+          "line": 61
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "updateStockCountSession",
+      "line": 65,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.stockCountSessions",
+          "line": 72
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "postSavedStockCount",
+      "line": 76,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.stockCountSessions",
+          "line": 82
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "registerBatch",
+      "line": 87,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryBatches",
+          "line": 99
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/mobileMoney.ts",
+      "name": "addMobileMoneyProvider",
+      "line": 32,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.mobileMoneyProviders",
+          "line": 46
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 47
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/mobileMoney.ts",
+      "name": "setMobileMoneyProviderActive",
+      "line": 52,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.mobileMoneyProviders",
+          "line": 60
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 61
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/purchases/purchases.ts",
+      "name": "createSupplier",
+      "line": 76,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.suppliers",
+          "line": 84
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/purchases/purchases.ts",
+      "name": "updateSupplier",
+      "line": 87,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.suppliers",
+          "line": 95
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/purchases/purchases.ts",
+      "name": "archiveSupplier",
+      "line": 98,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.suppliers",
+          "line": 103
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/purchases/purchases.ts",
+      "name": "completePurchase",
+      "line": 106,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.purchases",
+          "line": 142
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.purchaseLines",
+          "line": 142
+        },
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 144
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 145
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 146
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sales/sales.ts",
+      "name": "completeSale",
+      "line": 130,
+      "writes": [
+        {
+          "method": "bulkPut",
+          "target": "database.inventoryBatches",
+          "line": 297
+        },
+        {
+          "method": "add",
+          "target": "database.sales",
+          "line": 298
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 299
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.saleLines",
+          "line": 300
+        },
+        {
+          "method": "add",
+          "target": "database.payments",
+          "line": 301
+        },
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 303
+        },
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 308
+        },
+        {
+          "method": "add",
+          "target": "database.customerBenefits",
+          "line": 318
+        },
+        {
+          "method": "add",
+          "target": "database.receipts",
+          "line": 323
+        },
+        {
+          "method": "add",
+          "target": "database.customerActivities",
+          "line": 324
+        },
+        {
+          "method": "bulkPut",
+          "target": "database.products",
+          "line": 325
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 326
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "createStaff",
+      "line": 34,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.staffMembers",
+          "line": 47
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 48
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "enrollStaffAuthenticator",
+      "line": 68,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 84
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 85
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "unlockStaffWithAuthenticator",
+      "line": 88,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 126
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "revokeStaffAuthenticator",
+      "line": 129,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 134
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 135
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "changeStaffStatus",
+      "line": 149,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 149
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 149
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "setStaffPermissions",
+      "line": 150,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 158
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 159
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "changeStaffRole",
+      "line": 162,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 168
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 169
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "resetStaffPin",
+      "line": 172,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffMembers",
+          "line": 179
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 180
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "openShift",
+      "line": 183,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.staffShifts",
+          "line": 183
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 183
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "closeShift",
+      "line": 239,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.staffShifts",
+          "line": 250
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 251
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeDirectory.ts",
+      "name": "createStore",
+      "line": 18,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeLocations",
+          "line": 27
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeDirectory.ts",
+      "name": "assignStore",
+      "line": 31,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeAssignments",
+          "line": 42
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeStockCounts.ts",
+      "name": "recordStoreStockObservation",
+      "line": 27,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeStockObservations",
+          "line": 40
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "requestStoreTransfer",
+      "line": 16,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeTransferRequests",
+          "line": 29
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "cancelStoreTransfer",
+      "line": 33,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.storeTransferRequests",
+          "line": 41
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/deviceRegistry.ts",
+      "name": "registerLocalSyncDevice",
+      "line": 25,
+      "writes": [
+        {
+          "method": "add",
+          "target": "db.syncDevices",
+          "line": 39
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/deviceRegistry.ts",
+      "name": "revokeLocalSyncDevice",
+      "line": 51,
+      "writes": [
+        {
+          "method": "put",
+          "target": "db.syncDevices",
+          "line": 59
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/outboxAcknowledgements.ts",
+      "name": "acknowledgeStagedEvent",
+      "line": 38,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.syncOutbox",
+          "line": 55
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/reconciliation.ts",
+      "name": "inspectRemoteClaim",
+      "line": 33,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.syncConflicts",
+          "line": 46
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/syncFoundation.ts",
+      "name": "setSyncConsent",
+      "line": 44,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.syncConsents",
+          "line": 51
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/syncFoundation.ts",
+      "name": "enqueueSyncEvent",
+      "line": 56,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.syncOutbox",
+          "line": 72
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 import Dexie from "dexie";
 import { afterEach, describe, expect, it } from "vitest";
 import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
-import { businessProfileSchema, getBusinessProfile, saveBusinessProfile } from "@/features/business/businessProfile";
+import { businessProfileSchema, getBusinessProfile, saveBusinessProfile, toBusinessProfileFormValues } from "@/features/business/businessProfile";
 
 const names = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -86,5 +86,16 @@ describe("business profile", () => {
     expect(() => businessProfileSchema.parse({ ...validProfile, name: "A" })).toThrow("business name");
     expect(() => businessProfileSchema.parse({ ...validProfile, email: "not-an-email" })).toThrow("valid email");
     expect(() => businessProfileSchema.parse({ ...validProfile, currency: "" })).toThrow("currency");
+  });
+
+  it("defaults new setup to Ghana, cedis and MoMo and persists the owner's country and providers", async () => {
+    expect(toBusinessProfileFormValues()).toMatchObject({ country: "Ghana", currency: "GHS", preferredPaymentMethod: "mobile" });
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const saved = await saveBusinessProfile({ ...validProfile, country: "Kenya", currency: "KES", preferredPaymentMethod: "card", mobileMoneyProviderName: "M-Pesa", cardProviderName: "My acquiring bank" }, database);
+    expect(toBusinessProfileFormValues(saved)).toMatchObject({ country: "Kenya", currency: "KES", preferredPaymentMethod: "card", cardProviderName: "My acquiring bank" });
+    expect(await database.mobileMoneyProviders.toArray()).toMatchObject([{ businessProfileId: saved.id, name: "M-Pesa", active: true }]);
+    await saveBusinessProfile(saved, database);
+    expect(await database.mobileMoneyProviders.count()).toBe(1);
   });
 });

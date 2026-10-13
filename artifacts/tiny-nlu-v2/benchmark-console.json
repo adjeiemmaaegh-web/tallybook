@@ -1,0 +1,311 @@
+{
+  "generatedAt": "2026-10-08T14:29:05.629Z",
+  "architecture": "hashed character/word features with independent linear semantic heads and deterministic composition",
+  "training": {
+    "totalExamples": 2128,
+    "trainExamples": 1702,
+    "validationExamples": 426,
+    "unseenChallengeExamples": 1310,
+    "featureSpace": 8192
+  },
+  "modelSize": {
+    "jsonBytes": 454694,
+    "compressedTarget": "under 1 MB preferred"
+  },
+  "runtime": {
+    "benchmarkMs": 40209.729830000004,
+    "inferenceP50Us": 6677.209000001312,
+    "inferenceP95Us": 8721.25600000436,
+    "inferenceP99Us": 10377.775000000838
+  },
+  "comparison": {
+    "newModel": {
+      "accuracy": 0.47183098591549294,
+      "macroF1": 0.4891776426882809
+    },
+    "existingParser": {
+      "unseenAccuracy": 0.5770992366412214,
+      "unseenMacroF1": 0.4514834163932062
+    },
+    "previousCentroid": {
+      "accuracy": 0.6547619047619048,
+      "unseenAccuracy": 0.64
+    }
+  },
+  "unseen": {
+    "accuracy": 0.35877862595419846,
+    "macroF1": 0.29732561089257037,
+    "mistakes": [
+      {
+        "text": "wetin dey left",
+        "expected": "INVENTORY_QUERY",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "how much dey kwame owe",
+        "expected": "CUSTOMER_BALANCE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "give kwame two eggs cash",
+        "expected": "RECORD_SALE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "kofi bring 8 eggs",
+        "expected": "RECEIVE_STOCK",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "what can i do here",
+        "expected": "HELP",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "can you bring up rice for me",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need see eggs here",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me let me see reports page",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now display me supplier page please",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please see stock for me",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly let me see products today",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need display me eggs page screen",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me see reports now",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now let me see supplier here",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please display me stock page page",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly see products please",
+        "expected": "NAVIGATE",
+        "actual": "BEST_SELLING"
+      },
+      {
+        "text": "i need let me see eggs for me",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me display me reports page today",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now see supplier screen",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please let me see stock now",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly display me products page here",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need see eggs page",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me let me see reports please",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now display me supplier page for me",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please see stock today",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly let me see products screen",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "can you opin rice please",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need display me eggs page now",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me see reports here",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now let me see supplier page",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please display me stock page please",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly see products for me",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need let me see eggs today",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me display me reports page screen",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now see supplier now",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "please let me see stock here",
+        "expected": "NAVIGATE",
+        "actual": "INVENTORY_QUERY"
+      },
+      {
+        "text": "kindly display me products page page",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "i need see eggs please",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      },
+      {
+        "text": "show me let me see reports for me",
+        "expected": "NAVIGATE",
+        "actual": "FEATURE_DISCOVERY"
+      },
+      {
+        "text": "now display me supplier page today",
+        "expected": "NAVIGATE",
+        "actual": "UNKNOWN"
+      }
+    ]
+  },
+  "safety": {
+    "rows": [
+      {
+        "text": "record sale",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "FINANCIAL_WRITE",
+        "blocked": false,
+        "rejected": false
+      },
+      {
+        "text": "give kwame two eggs cash",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "AMBIGUOUS",
+        "blocked": false,
+        "rejected": true
+      },
+      {
+        "text": "pay john 500",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "FINANCIAL_WRITE",
+        "blocked": false,
+        "rejected": false
+      },
+      {
+        "text": "kwame don pay me 100",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "FINANCIAL_WRITE",
+        "blocked": false,
+        "rejected": false
+      },
+      {
+        "text": "receive stock from kofi",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "FINANCIAL_WRITE",
+        "blocked": false,
+        "rejected": false
+      },
+      {
+        "text": "kofi bring 8 eggs",
+        "expected": "FINANCIAL_WRITE",
+        "predicted": "FINANCIAL_WRITE",
+        "blocked": false,
+        "rejected": true
+      },
+      {
+        "text": "delete the last sale",
+        "expected": "DESTRUCTIVE",
+        "predicted": "DESTRUCTIVE",
+        "blocked": true,
+        "rejected": true
+      },
+      {
+        "text": "refund kwame",
+        "expected": "DESTRUCTIVE",
+        "predicted": "DESTRUCTIVE",
+        "blocked": true,
+        "rejected": true
+      }
+    ],
+    "unsafeAutoWrites": 0,
+    "allWritesDeferred": true
+  },
+  "acceptance": {
+    "inDomainMacroF1Target": 0.92,
+    "unseenMacroF1Target": 0.85,
+    "minimumUnseenChallengeTarget": 500,
+    "noUnsafeWritesTarget": true,
+    "status": "NO-GO"
+  },
+  "note": "This Stage 1 artifact is isolated. Production assistant routing and financial execution were not changed."
+}

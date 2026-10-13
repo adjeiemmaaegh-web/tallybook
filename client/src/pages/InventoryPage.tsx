@@ -14,10 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
+import { exportProductCatalogCsv, importProductCatalogCsv, type StockCountPreview } from "@/features/inventory/advancedInventory";
+import { saveStockCountSession, updateStockCountSession, postSavedStockCount, type StockCountSession } from "@/features/inventory/stage2Inventory";
+import { db } from "@/db/TallybookDB";
 import { adjustStock, archiveProduct, categoryFormSchema, createCategory, createProduct, formatMinorAmount, getInventorySnapshot, isLowStock, productFormSchema, stockAdjustmentSchema, type CategoryFormValues, type InventoryMovement, type InventorySnapshot, type Product, type ProductFormValues, type StockAdjustmentValues, updateProduct } from "@/features/inventory/inventory";
 
 const emptySnapshot: InventorySnapshot = { categories: [], products: [], archivedProducts: [], movements: [] };
-const blankProduct: ProductFormValues = { name: "", sku: "", categoryId: "uncategorized", sellingPrice: "", costPrice: "", initialStock: "0", lowStockThreshold: "0" };
+const blankProduct: ProductFormValues = { name: "", sku: "", barcode: "", categoryId: "uncategorized", sellingPrice: "", costPrice: "", initialStock: "0", lowStockThreshold: "0" };
 const blankCategory: CategoryFormValues = { name: "" };
 const blankAdjustment: StockAdjustmentValues = { movementType: "increase", quantity: "", note: "" };
 
@@ -27,7 +30,7 @@ function quantityLabel(movement: InventoryMovement) {
 }
 
 function movementVerb(type: InventoryMovement["movementType"]) {
-  return ({ initial: "Opening stock", increase: "Stock added", decrease: "Stock removed", correction: "Stock counted", sale: "Sale completed", purchase: "Purchase received" })[type];
+  return ({ initial: "Opening stock", increase: "Stock added", decrease: "Stock removed", correction: "Stock counted", sale: "Sale completed", purchase: "Purchase received", reversal: "Sale reversed" })[type];
 }
 
 export default function InventoryPage() {
@@ -36,6 +39,10 @@ export default function InventoryPage() {
   const [snapshot, setSnapshot] = useState<InventorySnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
   const [productQuery, setProductQuery] = useState("");
+  const [stockCount, setStockCount] = useState<StockCountSession | null>(null);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const csvUploadRef = useRef<HTMLInputElement | null>(null);
+  const [postingCount, setPostingCount] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -91,6 +98,48 @@ export default function InventoryPage() {
   const visibleProducts = useMemo(() => snapshot.products.filter((product) => product.name.toLocaleLowerCase().includes(productQuery.trim().toLocaleLowerCase()) || (product.sku ?? "").toLocaleLowerCase().includes(productQuery.trim().toLocaleLowerCase())), [productQuery, snapshot.products]);
   const currency = profile?.currency ?? "USD";
 
+  const downloadCatalog = () => {
+    const data = exportProductCatalogCsv(snapshot.products);
+    const url = URL.createObjectURL(new Blob(["\uFEFF", data], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url; anchor.download = "tallybook-products.csv";
+    document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const beginStockCount = async () => {
+    try { setStockCount(await saveStockCountSession(snapshot.products.filter(p => p.itemKind !== "service").map(p => p.id))); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Unable to start stock count."); }
+  };
+  const commitStockCount = async () => {
+    if (!stockCount || postingCount) return;
+    setPostingCount(true);
+    try { await updateStockCountSession(stockCount.id, Object.fromEntries(stockCount.lines.map(line => [line.productId, line.countedQuantity]))); const changes = await postSavedStockCount(stockCount.id); setStockCount(null); toast.success(`${changes.length} stock corrections recorded.`); await refresh(); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Stock count was not posted."); }
+    finally { setPostingCount(false); }
+  };
+
+  const resumeStockCount = async () => {
+    try {
+      const sessions = await db.stockCountSessions.where("businessProfileId").equals(activeCompanyId).toArray();
+      const draft = sessions.filter(session => session.status === "draft").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      if (!draft) { toast.info("No saved draft stock count."); return; }
+      setStockCount(draft);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to resume stock count."); }
+  };
+  const importCsv = async (file: File | undefined) => {
+    if (!file || importingCsv) return;
+    if (file.size > 2_000_000) { toast.error("CSV exceeds the 2 MB import limit."); return; }
+    setImportingCsv(true);
+    try {
+      const text = await file.text();
+      const approved = window.confirm("Import products into this business? Existing stock records will not be replaced. Review the file before continuing.");
+      if (!approved) return;
+      const records = await importProductCatalogCsv(text);
+      toast.success(`${records.length} products imported.`);
+      await refresh();
+    } catch (error) { toast.error(error instanceof Error ? error.message : "CSV import failed. No products were imported."); }
+    finally { setImportingCsv(false); if (csvUploadRef.current) csvUploadRef.current.value = ""; }
+  };
   const openNewProduct = () => {
     if (!profile) { toast.info("Set up your business before adding stock."); return; }
     setEditingProduct(null);
@@ -100,7 +149,7 @@ export default function InventoryPage() {
 
   const openEditProduct = (product: Product) => {
     setEditingProduct(product);
-    productForm.reset({ name: product.name, sku: product.sku ?? "", categoryId: product.categoryId ?? "uncategorized", sellingPrice: String(product.sellingPriceMinor / (currency === "RWF" || currency === "TZS" || currency === "UGX" ? 1 : 100)), costPrice: product.costPriceMinor === undefined ? "" : String(product.costPriceMinor / (currency === "RWF" || currency === "TZS" || currency === "UGX" ? 1 : 100)), initialStock: String(product.stockQuantity), lowStockThreshold: String(product.lowStockThreshold) });
+    productForm.reset({ name: product.name, sku: product.sku ?? "", barcode: product.barcode ?? "", categoryId: product.categoryId ?? "uncategorized", sellingPrice: String(product.sellingPriceMinor / (currency === "RWF" || currency === "TZS" || currency === "UGX" ? 1 : 100)), costPrice: product.costPriceMinor === undefined ? "" : String(product.costPriceMinor / (currency === "RWF" || currency === "TZS" || currency === "UGX" ? 1 : 100)), initialStock: String(product.stockQuantity), lowStockThreshold: String(product.lowStockThreshold) });
     setProductDialogOpen(true);
   };
 
@@ -178,7 +227,7 @@ export default function InventoryPage() {
       <div className="inventory-hero-summary"><span className="stamp stamp-ready"><Check className="h-3.5 w-3.5" aria-hidden="true" />{snapshot.products.length} active {snapshot.products.length === 1 ? "product" : "products"}</span><span className={lowStockProducts.length ? "inventory-alert-token" : "inventory-quiet-token"}>{lowStockProducts.length ? `${lowStockProducts.length} low-stock ${lowStockProducts.length === 1 ? "item" : "items"}` : "No low-stock items"}</span></div>
     </section>
 
-    <section className="inventory-actions" aria-label="Inventory actions"><button className="primary-action" type="button" onClick={openNewProduct}><PackagePlus className="h-4 w-4" aria-hidden="true" />Add product</button><Link href="/purchases" className="secondary-action"><Truck className="h-4 w-4" aria-hidden="true" />Purchases</Link><button className="secondary-action" type="button" onClick={() => { categoryForm.reset(blankCategory); setCategoryDialogOpen(true); }}><FolderPlus className="h-4 w-4" aria-hidden="true" />Add category</button><ArchivedRecordsAccess count={snapshot.archivedProducts.length} onOpen={() => void openArchivedRecords()} /><span className="inventory-actions-note"><History className="h-4 w-4" aria-hidden="true" />Each count change becomes a movement record.</span></section>
+    <section className="inventory-actions" aria-label="Inventory actions"><button className="primary-action" type="button" onClick={openNewProduct}><PackagePlus className="h-4 w-4" aria-hidden="true" />Add product</button><Link href="/purchases" className="secondary-action"><Truck className="h-4 w-4" aria-hidden="true" />Purchases</Link><button className="secondary-action" type="button" onClick={() => { categoryForm.reset(blankCategory); setCategoryDialogOpen(true); }}><FolderPlus className="h-4 w-4" aria-hidden="true" />Add category</button><input ref={csvUploadRef} type="file" accept=".csv,text/csv" className="sr-only" aria-label="Choose product CSV" onChange={e => void importCsv(e.target.files?.[0])} /><button type="button" className="secondary-action" disabled={importingCsv} onClick={() => csvUploadRef.current?.click()}>Import products CSV</button><button type="button" className="secondary-action" onClick={() => void resumeStockCount()}>Resume stock count</button><button type="button" className="secondary-action" onClick={downloadCatalog} disabled={!snapshot.products.length}>Export products CSV</button><button type="button" className="secondary-action" onClick={() => void beginStockCount()} disabled={!snapshot.products.length}>Count all stock</button><ArchivedRecordsAccess count={snapshot.archivedProducts.length} onOpen={() => void openArchivedRecords()} /><span className="inventory-actions-note"><History className="h-4 w-4" aria-hidden="true" />Each count change becomes a movement record.</span></section>
 
     {lowStockProducts.length ? <section className="low-stock-strip"><TrendingDown className="h-5 w-5" aria-hidden="true" /><div><p className="ledger-kicker">Low stock attention</p><strong>{lowStockProducts.map((product) => product.name).join(", ")}</strong><span> needs a count check.</span></div></section> : null}
 
@@ -193,7 +242,9 @@ export default function InventoryPage() {
 
     <section className="inventory-history" aria-labelledby="history-title"><div className="inventory-history-head"><div><p className="ledger-kicker">Inventory history</p><h2 id="history-title">Every count leaves a line.</h2></div><span className="workspace-marker">MOV</span></div>{snapshot.movements.length ? <div className="movement-list">{snapshot.movements.slice(0, 8).map((movement) => { const product = [...snapshot.products, ...snapshot.archivedProducts].find((item) => item.id === movement.productId); return <div className="movement-row" key={movement.id}><span className={`movement-token movement-${movement.movementType}`}>{movement.movementType === "decrease" ? <Minus className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-3.5 w-3.5" aria-hidden="true" />}</span><div><strong>{product?.name ?? "Archived product"}</strong><p>{movementVerb(movement.movementType)} · {quantityLabel(movement)}{movement.note ? ` · ${movement.note}` : ""}</p></div><time>{new Date(movement.createdAt).toLocaleDateString()}</time></div>; })}</div> : <p className="inventory-history-empty">Opening stock movements will appear here as products are added.</p>}</section>
 
-    <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>{editingProduct ? `Edit ${editingProduct.name}` : "Add a product"}</DialogTitle><DialogDescription>{editingProduct ? "Update the product details. Use Adjust stock to preserve count history." : "The opening quantity will create the first movement in this product’s stock history."}</DialogDescription></DialogHeader><Form {...productForm}><form className="inventory-form" onSubmit={submitProduct} noValidate><FormField control={productForm.control} name="name" render={({ field }) => <FormItem><FormLabel>Product name</FormLabel><FormControl><Input placeholder="For example, Laundry soap" {...field} /></FormControl><FormMessage /></FormItem>} /><div className="inventory-form-two"><FormField control={productForm.control} name="categoryId" render={({ field }) => <FormItem><FormLabel>Category</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="uncategorized">Uncategorized</SelectItem>{snapshot.categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} /><FormField control={productForm.control} name="sku" render={({ field }) => <FormItem><FormLabel>Reference <em>Optional</em></FormLabel><FormControl><Input placeholder="For example, SOAP-1" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="sellingPrice" render={({ field }) => <FormItem><FormLabel>Selling price ({currency})</FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="costPrice" render={({ field }) => <FormItem><FormLabel>Cost price <em>Optional</em></FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="initialStock" render={({ field }) => <FormItem><FormLabel>{editingProduct ? "Current stock" : "Opening stock"}</FormLabel><FormControl><Input inputMode="numeric" disabled={Boolean(editingProduct)} {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="lowStockThreshold" render={({ field }) => <FormItem><FormLabel>Low-stock level</FormLabel><FormControl><Input inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-footer"><span><Tag className="h-4 w-4 text-baobab" aria-hidden="true" />Stock changes are recorded separately.</span><button className="primary-action" type="submit" disabled={productForm.formState.isSubmitting}><Save className="h-4 w-4" aria-hidden="true" />{editingProduct ? "Save product" : "Add product"}</button></div></form></Form></DialogContent></Dialog>
+    <Dialog open={Boolean(stockCount)} onOpenChange={(open) => { if (!open && !postingCount) setStockCount(null); }}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>Physical stock count</DialogTitle><DialogDescription>Review quantities before posting. If any stock changes after this count begins, posting is rejected so no sale is overwritten.</DialogDescription></DialogHeader><div className="space-y-3">{stockCount?.lines.map((line, index) => { const product = snapshot.products.find(p => p.id === line.productId); return <label key={line.productId} className="flex items-center justify-between gap-3"><span>{product?.name ?? "Product"} (expected {line.expectedQuantity})</span><Input aria-label={`Counted quantity for ${product?.name ?? line.productId}`} className="w-28" inputMode="numeric" type="number" min={0} step={1} value={line.countedQuantity} onChange={(event) => setStockCount(prev => prev ? { ...prev, lines: prev.lines.map((item, i) => i === index ? { ...item, countedQuantity: Number(event.target.value) } : item) } : prev)} /></label>; })}</div><div className="inventory-form-footer"><button type="button" className="secondary-action" disabled={postingCount} onClick={() => setStockCount(null)}>Cancel</button><button type="button" className="primary-action" disabled={postingCount} onClick={() => void commitStockCount()}>Post reviewed count</button></div></DialogContent></Dialog>
+
+    <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>{editingProduct ? `Edit ${editingProduct.name}` : "Add a product"}</DialogTitle><DialogDescription>{editingProduct ? "Update the product details. Use Adjust stock to preserve count history." : "The opening quantity will create the first movement in this product’s stock history."}</DialogDescription></DialogHeader><Form {...productForm}><form className="inventory-form" onSubmit={submitProduct} noValidate><FormField control={productForm.control} name="name" render={({ field }) => <FormItem><FormLabel>Product name</FormLabel><FormControl><Input placeholder="For example, Laundry soap" {...field} /></FormControl><FormMessage /></FormItem>} /><div className="inventory-form-two"><FormField control={productForm.control} name="categoryId" render={({ field }) => <FormItem><FormLabel>Category</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="uncategorized">Uncategorized</SelectItem>{snapshot.categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} /><FormField control={productForm.control} name="sku" render={({ field }) => <FormItem><FormLabel>Reference <em>Optional</em></FormLabel><FormControl><Input placeholder="For example, SOAP-1" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="barcode" render={({ field }) => <FormItem><FormLabel>Barcode <em>Optional</em></FormLabel><FormControl><Input placeholder="Scan or type barcode" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="sellingPrice" render={({ field }) => <FormItem><FormLabel>Selling price ({currency})</FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="costPrice" render={({ field }) => <FormItem><FormLabel>Cost price <em>Optional</em></FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="initialStock" render={({ field }) => <FormItem><FormLabel>{editingProduct ? "Current stock" : "Opening stock"}</FormLabel><FormControl><Input inputMode="numeric" disabled={Boolean(editingProduct)} {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="lowStockThreshold" render={({ field }) => <FormItem><FormLabel>Low-stock level</FormLabel><FormControl><Input inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-footer"><span><Tag className="h-4 w-4 text-baobab" aria-hidden="true" />Stock changes are recorded separately.</span><button className="primary-action" type="submit" disabled={productForm.formState.isSubmitting}><Save className="h-4 w-4" aria-hidden="true" />{editingProduct ? "Save product" : "Add product"}</button></div></form></Form></DialogContent></Dialog>
 
     <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}><DialogContent className="inventory-dialog"><DialogHeader><DialogTitle>Add a category</DialogTitle><DialogDescription>Categories make your shelf easier to scan. They do not change stock quantities.</DialogDescription></DialogHeader><Form {...categoryForm}><form className="inventory-form" onSubmit={submitCategory} noValidate><FormField control={categoryForm.control} name="name" render={({ field }) => <FormItem><FormLabel>Category name</FormLabel><FormControl><Input placeholder="For example, Household goods" {...field} /></FormControl><FormMessage /></FormItem>} /><div className="inventory-form-footer"><span><Tag className="h-4 w-4 text-baobab" aria-hidden="true" />Categories stay local to this business.</span><button className="primary-action" type="submit" disabled={categoryForm.formState.isSubmitting}><FolderPlus className="h-4 w-4" aria-hidden="true" />Save category</button></div></form></Form></DialogContent></Dialog>
 

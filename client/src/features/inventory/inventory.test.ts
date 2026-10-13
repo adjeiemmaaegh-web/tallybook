@@ -71,6 +71,30 @@ describe("inventory ledger", () => {
     expect(snapshot.movements).toHaveLength(1);
   });
 
+  it("rejects duplicate SKU and barcode identifiers without changing stock", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const first = await createProduct({ ...productValues, barcode: "1234567890123" }, "GHS", database);
+    await expect(createProduct({ ...productValues, name: "Other soap", sku: " soap-1 " }, "GHS", database)).rejects.toThrow(/already assigned/);
+    await expect(createProduct({ ...productValues, name: "Other soap", sku: "OTHER", barcode: "1234567890123" }, "GHS", database)).rejects.toThrow(/already assigned/);
+    await expect(createProduct({ ...productValues, name: "Other soap", sku: "1234567890123" }, "GHS", database)).rejects.toThrow(/already assigned/);
+    expect(await database.products.count()).toBe(1);
+    expect((await database.products.get(first.id))?.stockQuantity).toBe(10);
+    expect(await database.inventoryMovements.count()).toBe(1);
+  });
+
+  it("enforces unique barcodes on edits and permits reusing an archived code", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const first = await createProduct({ ...productValues, barcode: "BAR-A" }, "GHS", database);
+    const second = await createProduct({ ...productValues, name: "Second soap", sku: "SOAP-2", barcode: "BAR-B" }, "GHS", database);
+    await expect(updateProduct(second.id, { ...productValues, name: "Second soap", sku: "SOAP-2", barcode: "bar-a" }, "GHS", database)).rejects.toThrow(/already assigned/);
+    expect((await database.products.get(second.id))?.barcode).toBe("BAR-B");
+    await archiveProduct(first.id, database);
+    await updateProduct(second.id, { ...productValues, name: "Second soap", sku: "SOAP-2", barcode: "bar-a" }, "GHS", database);
+    expect((await database.products.get(second.id))?.barcode).toBe("bar-a");
+  });
+
   it("adds the Stage 3 stores without removing a Stage 2 business profile", async () => {
     const databaseName = `tallybook-stage-2-migration-${Date.now()}-${++sequence}`;
     names.add(databaseName);

@@ -1,0 +1,1 @@
+client Vitest/IndexedDB, production build and Playwright: NOT RUN (dependency/pinned toolchain unavailable).

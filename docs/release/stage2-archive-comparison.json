@@ -1,0 +1,169 @@
+{
+  "archive": "C:\\Users\\adjei\\Downloads\\tallybook-v9-stage2-integration-hardening.zip",
+  "sha256": "115B9A4E4343104CAFF37A6A1072425E1B6BD4FFFCDC1C37BB3EF5AFE83C1882",
+  "comparedAgainst": "Patched V19 working tree; no files replaced",
+  "entries": [
+    {
+      "path": "client/src/db/TallybookDB.ts",
+      "archiveSha256": "15B23DD3B2DE03B8A54524DBDBA0E829665FB8150738CD876D1F6BC2BA03AA8E",
+      "currentSha256": "16DE84D01026E8260B17E602E50E333B64ECAC3138CD797B5B66D414159F7F92",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/db/TallybookDB.test.ts",
+      "archiveSha256": "CF9D5B0CD3B19C2BCCDAEE592859A6353A0B1A89DA51187B9CC81FFB1725D2AD",
+      "currentSha256": "5FA4BB93944B5AB616938D115E77EAE64571853C7F611EE306870703D8D578D5",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/customers/customers.test.ts",
+      "archiveSha256": "83A56AFF3BB5B5EB12C78C9C9A81DFAC2BAEEBBBE3746542C0ABDC653A54B5B8",
+      "currentSha256": "83A56AFF3BB5B5EB12C78C9C9A81DFAC2BAEEBBBE3746542C0ABDC653A54B5B8",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/customers/customerListView.ts",
+      "archiveSha256": "01A4773BAD24600C1635160BAA54089114E5501E2DDC0984C14F1D1B7A62F1EC",
+      "currentSha256": "01A4773BAD24600C1635160BAA54089114E5501E2DDC0984C14F1D1B7A62F1EC",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/customers/customers.ts",
+      "archiveSha256": "1F319730C45F5ADBF48CAB393352817632A73CEFEEE4F15087E9B4DE7D3717F3",
+      "currentSha256": "63A50F6E9C81AB1307059A72DE7B70877B60E421427792AC5FD9FA3690F1D761",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/customers/customerListView.test.ts",
+      "archiveSha256": "48BF45A17CFDCB134F52CB4CCADEFAE181D6458CB281D68E342141D4B269DDC2",
+      "currentSha256": "48BF45A17CFDCB134F52CB4CCADEFAE181D6458CB281D68E342141D4B269DDC2",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/purchases/purchases.ts",
+      "archiveSha256": "DC055DE34BD5D79F0C181422F3CEEC06974212E48EA8018B2FCA2AF39CE6DEBB",
+      "currentSha256": "17D55849308D41F85D028322354063B391A06311625F131F3116C002B0EC52EB",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/purchases/purchases.test.ts",
+      "archiveSha256": "ABFFC6B113A1008F2B495906441EBECC10D84029A1EEFE79CFB973C7B4CC1C4B",
+      "currentSha256": "32F7C2B247BD23FC3A9A38431E459AAE6460068E7E7B76CE376298830C6DF165",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/sales/sales.ts",
+      "archiveSha256": "4F184C25C3086937950F430C6A3BCFF46C6BEDDFB0FA4D2DBCFA4C65286D2A62",
+      "currentSha256": "11409E20088A737D0DAB1ED56B2E3EFF37A1AA28878658255CD2782226B329D7",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/sales/recoverSavedCheckout.test.ts",
+      "archiveSha256": "884A5EB04E74C17777D3D181AE0698124216A714722D91C84A645C3202E8E3CE",
+      "currentSha256": "884A5EB04E74C17777D3D181AE0698124216A714722D91C84A645C3202E8E3CE",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/completion.ts",
+      "archiveSha256": "5F9C46DA4AB79C1D19EFE8E418B05C2AEBD5240CBEC215C02C9A990A29265CCB",
+      "currentSha256": "5F9C46DA4AB79C1D19EFE8E418B05C2AEBD5240CBEC215C02C9A990A29265CCB",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/pendingCheckout.test.ts",
+      "archiveSha256": "736BE6FA1F00E8352E5325F57CF5B11CC66314DCA50E9C2A6D53E5958DB6E6D8",
+      "currentSha256": "736BE6FA1F00E8352E5325F57CF5B11CC66314DCA50E9C2A6D53E5958DB6E6D8",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/pendingCheckout.ts",
+      "archiveSha256": "1BEF23326D282844CA9A6CAD1EE03E4A3A486CB1A78385DED5FCF7BF1B6363A2",
+      "currentSha256": "1BEF23326D282844CA9A6CAD1EE03E4A3A486CB1A78385DED5FCF7BF1B6363A2",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/parkedCart.ts",
+      "archiveSha256": "06493DAE876D09C95EA5E3C8F20A92C838A3D53566CE8D4A29DC15BF6BAE738C",
+      "currentSha256": "06493DAE876D09C95EA5E3C8F20A92C838A3D53566CE8D4A29DC15BF6BAE738C",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/parkedCart.test.ts",
+      "archiveSha256": "6676D521399A721387A3CE9818216269D04B6618FA38D89497F83EBBF282D8D3",
+      "currentSha256": "6676D521399A721387A3CE9818216269D04B6618FA38D89497F83EBBF282D8D3",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/sales/sales.test.ts",
+      "archiveSha256": "99A764F9CE19D1699B7A394E063585330C2612F2FED6E21EBE319C7FC37079FA",
+      "currentSha256": "B83C81FB2EC20EF5261B21E1F4E2EE79C1EF68C957ECA22EC18CF184589B04DD",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/sales/recoverSavedCheckout.ts",
+      "archiveSha256": "6D80383C86161464D8E7979244465A5BC44D80776D2BACB7DD2119A41DB076AA",
+      "currentSha256": "5101FC1EED740D38931F72B34C4C3EE7D72C996AEC3108D6A753EF15F1D74E71",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/reports/reports.ts",
+      "archiveSha256": "7E19C0808FDAA604BE7A76D96BAC680E2390844FAC051242775D4F300740E9A1",
+      "currentSha256": "C3BD35CA6555AA42F9EDBB4AA68C5BD4331436BA1C2B42F7527F564A2BDD35C2",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/reports/reports.test.ts",
+      "archiveSha256": "3D22B12E9BA3CCCDA826818690438EA1EDAF307585A46E3D1B3D699DE1E7B8E5",
+      "currentSha256": "3D22B12E9BA3CCCDA826818690438EA1EDAF307585A46E3D1B3D699DE1E7B8E5",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/inventory/stage2Inventory.test.ts",
+      "archiveSha256": "DA808CAB831D815AD5E3540A4632820070E58C2D551E3B8DA2AA1386E9DA3AC5",
+      "currentSha256": "DA808CAB831D815AD5E3540A4632820070E58C2D551E3B8DA2AA1386E9DA3AC5",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/inventory/advancedInventory.ts",
+      "archiveSha256": "D017C6E87F4DA9EBE502E0DAA784AB6232D726AE81B2595E39758A0D044223EA",
+      "currentSha256": "E104174B8560714165F9F7235B2BF9DBA58EF96D0E127EB9E7565F0920C35FCF",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/inventory/stage2Inventory.ts",
+      "archiveSha256": "AA54F79E94B4D7FA842AB0C55005E3E93442BD17BD2289767F6565687861DD26",
+      "currentSha256": "BEFBB61D283A1D40B57D41E46A791B07E3EB70FF5486D95473FC97D8F99968F6",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/inventory/advancedInventory.test.ts",
+      "archiveSha256": "A5B4C91BCABA6146B92D61CF2F752FC22534B5B9EE67E7791CED67E0E2B558A2",
+      "currentSha256": "A5B4C91BCABA6146B92D61CF2F752FC22534B5B9EE67E7791CED67E0E2B558A2",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/inventory/catalogCsv.ts",
+      "archiveSha256": "9B47AE939A5D581E047C15550BA7D34E0123E4A3E317349BB2A2B759E7F64EA0",
+      "currentSha256": "9B47AE939A5D581E047C15550BA7D34E0123E4A3E317349BB2A2B759E7F64EA0",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/inventory/catalogCsv.test.ts",
+      "archiveSha256": "605FA4DD9FA7F9046E62DAC773BAC916D562B5D27FA8A94C9B2636F5A90DCA87",
+      "currentSha256": "605FA4DD9FA7F9046E62DAC773BAC916D562B5D27FA8A94C9B2636F5A90DCA87",
+      "status": "identical"
+    },
+    {
+      "path": "client/src/features/inventory/inventory.ts",
+      "archiveSha256": "BA1B813E85AC4DE669DD7FF530BDFF58DEE605028209C1427F7DF5BFEDE8B415",
+      "currentSha256": "6309F090BE94F32C0160BA590D59238622882AD7F67CCFFBEFEEFFE35A2E8053",
+      "status": "different-reviewed-source-required"
+    },
+    {
+      "path": "client/src/features/inventory/inventory.test.ts",
+      "archiveSha256": "705D20664C76BED48008B2922C068ABA7DFD73DBFA69237A969451CE47047BA9",
+      "currentSha256": "705D20664C76BED48008B2922C068ABA7DFD73DBFA69237A969451CE47047BA9",
+      "status": "identical"
+    }
+  ]
+}

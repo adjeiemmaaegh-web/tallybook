@@ -1,0 +1,1072 @@
+diff --git a/NEXT_AGENT_MASTER_PROMPT.md b/NEXT_AGENT_MASTER_PROMPT.md
+new file mode 100644
+index 0000000..79410c8
+--- /dev/null
++++ b/NEXT_AGENT_MASTER_PROMPT.md
+@@ -0,0 +1,334 @@
++# Tallybook V19 — master prompt for the next development agent
++
++Prepared from the verified handover dated 10 October 2026.
++
++**How to use:** Give the new coding agent this entire document together with the handover ZIP or access to the existing repository. This document is an implementation instruction when the owner submits it to that agent to resume work. Creating this document does not itself restart the previous agent's implementation work.
++
++---
++
++## 1. Your assignment
++
++You are the lead engineer responsible for completing Tallybook's remaining production-readiness work. Work in the actual repository, implement working software, exercise it in appropriate environments, fix failures, and retain reproducible evidence. Continue the existing twelve-stage roadmap. Do not replace the application, invent another stage, or deliver only recommendations.
++
++The previous agent stopped at the owner's explicit request to hand over promptly. That stop was not a declaration of completion. My submission of this prompt to you authorizes resuming local development and testing. It does **not** authorize an external deployment, a paid hosting purchase, a live payment, a provider account, destructive changes to real business data, or external publication.
++
++Your objective is to resolve the remaining acceptance criteria and prepare a demonstrably production-ready release. If required credentials, hardware, business decisions or deployment approval remain unavailable, complete independent authorized work and report the release as **NO-GO / INCOMPLETE** with the precise outstanding gates. Never substitute a mocked or skipped check for external verification.
++
++## 2. Owner decisions you must preserve
++
++These are settled requirements. Do not ask the owner to approve them again.
++
++1. **Default market and tender:** Ghana, Ghanaian cedis (`GHS`) and Mobile Money (`mobile` / MoMo). Users choose their country and payment-provider details during business setup. Keep country, currency and provider configuration flexible.
++2. **No approved online gateway:** No payment gateway account has been set up or authorized. Do not assume a particular MoMo or card gateway is approved. Provider names entered in setup are labels, not authorization or proof of an integration.
++3. **Mock payments for now:** Continue local mock testing. The owner will select the provider and supply sandbox credentials securely later. Do not request secrets in chat, commit them, or include them in logs or archives. Do not initiate real charges or refunds.
++4. **Tax:** Configurable per business, **off until explicitly configured by the owner**. Registration status, rate and inclusive/exclusive rules must be supplied. Do not infer a Ghana rate, auto-enable tax based on country, or claim statutory compliance from the current single-rate calculator.
++5. **Deployment:** No staging host is authorized. Do not deploy to production or any external server without explicit approval. Continue local testing and present a concrete staging proposal before any deployment or external recovery drill.
++6. **Offline retail:** Local checkout, stock, purchases, customers and receipts must continue without internet or a cloud account. Cloud is optional and explicitly opted into.
++7. **Data integrity:** Preserve business separation, financial history and recoverability. Do not invent historical cost, due dates, delivery outcomes or forecast confidence. Do not silently waive requirements to make the release appear complete.
++
++Ask only for genuinely missing information or approvals that affect the next dependent step. Bundle questions where practical, explain why they are needed, and continue unrelated work. A missing payment account is not a reason to stop improving local accounting, security or recovery.
++
++## 3. Find and verify the correct starting point
++
++Existing Windows repository:
++
++```text
++C:\Users\adjei\Videos\New folder\tallybook_fixed
++```
++
++Handover bundle:
++
++```text
++artifacts/release-v19/TALLYBOOK_V19_HANDOVER_2026-10-10.zip
++```
++
++Expected SHA-256 for that original handover ZIP:
++
++```text
++20F6800C5D26A9BBB17CD50B4EECBB9D16167FEB696A3269C90AFC67C653D4D8
++```
++
++The ZIP contains the `tallybook_fixed/` source directory, production build, source patch, commit list and retained evidence. It excludes `.git`, installed dependencies, secrets and the private original source backup. This new prompt was created after the ZIP and is supplied separately. If working on another machine, locate the extracted root; do not assume the Windows path exists there.
++
++Git state at handover:
++
++| Commit | Purpose |
++|---|---|
++| `a944037` | Preserved original V19 source baseline |
++| `42a4e62` | Toolchain portability and audited dependency updates |
++| `ca11f66` | Cost ledger, tax, guarded retail workflows and mock payment contract |
++| `a0ce1e7` | Browser QA and release documentation |
++| `4c8d207` | Owner-requested handover and remaining-work instructions |
++
++Branch at handover: `codex/v19-release-completion`. The working tree was clean then; inspect it now and preserve any later changes, including this prompt. Do not reset to the original archive or overwrite the completed work. Create a safe continuation branch where appropriate. If only the ZIP is available, verify its checksum, initialize a local baseline if needed, and preserve the included patch/history evidence instead of pretending the original commits are present.
++
++Read these before changing product code:
++
++```text
++AGENTS.md and applicable repository instructions, if present
++docs/release/HANDOVER.md
++docs/release/RELEASE_REPORT.md
++docs/release/blockers.json
++docs/release/traceability.json
++docs/release/write-entrypoints.json
++docs/release/OPERATIONS.md
++docs/release/STAGING_PROPOSAL.md
++docs/release/staging-manifest.json
++docs/release/dependency-inventory.json
++docs/release/stage2-archive-comparison.json
++docs/release/source/TALLYBOOK_V19_DEVELOPMENT_AGENT_MASTER_PROMPT.md
++docs/release/source/TALLYBOOK_V19_FULL_RELEASE_AUDIT_2026-10-10.md
++```
++
++Use the owner's latest instructions first, then this continuation assignment, then the handover's source/evidence and original acceptance documents. Treat historical completion claims as claims to verify. The traceability register contains 82 units across stages 1–12; the blocker register contains 19 issues, including one already-resolved portability issue. They define the starting backlog, not an immutable limit on newly discovered defects. The latest source and executed evidence may require correcting stale paths or notes.
++
++## 4. Understand what already works
++
++Preserve and extend the existing implementation:
++
++- Schema **26** adds `inventoryCostEvents`. FIFO receipt layers, issue allocations and full sale reversals are persisted and replayable. Sales record cost evidence; unknown legacy cost stays unknown.
++- Core stock/sale/purchase operations include cost and quantity changes in one transaction. Tests cover oversell, duplicate retry, late-write rollback, foreign-company records and tampered allocation evidence.
++- `costReconciliation.ts` independently checks cost events against stock movements and saved sale lines. Financial intelligence separates recorded tax from sales and displays COGS only when evidence reconciles.
++- `sales/tax.ts` implements an owner-supplied single-rate tax policy using exact integer intermediates. Business setup, checkout, quotations, receipts, recovery, backup validation and management reports use saved tax snapshots.
++- Permission checks moved inside several core transactions; company clearing scopes the main database. Backup includes cost events plus eight previously missing sync/store tables. Restored sync consent is disabled until the owner opts in again.
++- Quotations have an expiring company-scoped preparation handoff. The user must review and save the offer. Conversion links the quotation and sale atomically.
++- Insights use real remaining batches and observed SKU sale quantities, with missing-evidence limitations.
++- `server/paymentGateway.mjs` is an isolated local mock contract. Default mode is disabled; mock mode is restricted to local testing/development. It has no HTTP endpoint or retail-ledger posting.
++- Browser QA uses isolated synthetic contexts. Production PWA tests cover offline checkout/receipt/reload, including configured tax.
++
++Important implementation entry points:
++
++```text
++client/src/db/TallybookDB.ts
++client/src/features/inventory/costLedger.ts
++client/src/features/inventory/inventory.ts
++client/src/features/inventory/stage2Inventory.ts
++client/src/features/inventory/advancedInventory.ts
++client/src/features/purchases/purchases.ts
++client/src/features/sales/sales.ts
++client/src/features/sales/tax.ts
++client/src/features/sales/recoverSavedCheckout.ts
++client/src/features/assistant/reversals.ts
++client/src/features/reports/costReconciliation.ts
++client/src/features/reports/financialIntelligence.ts
++client/src/features/reports/reports.ts
++client/src/features/reliability/integrity.ts
++client/src/features/business/businessProfile.ts
++client/src/features/business/activeCompany.ts
++client/src/features/backup/backup.ts
++client/src/features/assistant/assistantLocalStore.ts
++client/src/features/staff/staff.ts
++client/src/features/customers/quotations.ts
++client/src/features/customers/quotationHandoff.ts
++client/src/features/insights/insightEvidence.ts
++client/src/features/sync/
++client/src/features/stores/
++client/src/features/commerce/commerce.ts
++server/index.ts
++server/paymentGateway.mjs
++server/sync*.mjs
++```
++
++Read related tests and call sites before editing. Shared data contracts require coordinated updates to UI, validation, recovery, exports, assistant flows, sync and backups.
++
++## 5. Reproduce the baseline; do not inherit a certification
++
++Historical handover results were:
++
++| Check | Recorded result |
++|---|---|
++| Client tests | 696 passed in 86 files |
++| Types, frozen install, production build | Passed |
++| Native browser suite | 3 passed; one test loops historical schemas 1–25 |
++| Production offline browser suite | 3 passed, desktop/phone widths including a taxed sale |
++| Mock gateway contract | 4 passed separately |
++| Full Windows Node/server suite before the mock addition | 123 passed, 28 failed, 1 skipped out of 152 |
++| Dependency audit | Zero known package vulnerabilities at that snapshot |
++| Remote CI, staging/recovery, real gateway, physical hardware | Not executed |
++
++Do not sum separate runs into a fictional full-suite result. Test counts can legitimately grow; the objective is correct behavior and passing required suites, not matching an old count. A prior zero-advisory audit is not a current security result.
++
++Tested pins were Node 24.19.0 and pnpm 10.34.0. Inspect `.node-version`, `package.json`, `.npmrc`, lockfile and CI first. Review current supported runtime/security patches using official release information before changing pins; make dependency/runtime updates explicit, reproducible and tested.
++
++Run applicable commands, retaining command, exit status, environment, duration and output:
++
++```sh
++pnpm install --frozen-lockfile
++pnpm test
++pnpm check
++pnpm build
++node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
++node --test server/tests/paymentGateway.test.mjs
++pnpm exec playwright install --with-deps chromium
++pnpm exec playwright test
++pnpm exec playwright test --config playwright.offline.config.mjs
++pnpm audit --json
++pnpm licenses list --json
++node scripts/audit-write-paths.mjs
++git diff --check
++```
++
++Adapt shell syntax correctly for the host, without changing what is tested. Browser runtime installation may need environment approval. There was no configured lint script; do not claim lint passed unless you actually configure and run an appropriate check.
++
++The Windows failures involve POSIX paths/ownership/permissions and symlink restrictions; the TLS skip lacked OpenSSL. Reproduce them and verify the explanation. Run the full server suite on an available authorized Linux/POSIX environment with OpenSSL. Do not skip these cases, trust forwarded headers, weaken file modes, or catch security failures merely to turn the run green. A local Linux VM/container can be used if available and permitted; installing host virtualization or provisioning a remote runner requires applicable approval. Configured CI is not executed CI.
++
++## 6. Execution discipline
++
++Maintain a current task plan tied to the 82 acceptance units and blocker IDs. After each meaningful unit: implement, add risk-based tests, execute them, inspect the diff and update evidence. Use broader regressions after shared contracts or migrations change. Preserve failed runs and explain fixes. Do not rewrite assertions to normalize broken financial behavior.
++
++Use these statuses consistently: `implemented-and-tested`, `implemented-unverified`, `missing`, `blocked`, and `expressly excluded`. “Blocked” must identify a concrete unavailable dependency. “Expressly excluded” requires a recorded owner decision. Partial implementation or a local mock does not close an external integration criterion.
++
++For every issue, record severity, scope, source paths, reproduction, root cause, implementation, acceptance tests, exact evidence and unresolved dependencies. The AST inventory's 65 candidates are a starting aid, not proof of complete authorization coverage.
++
++Work autonomously within the authorized local scope. Do not repeatedly ask permission for routine reversible edits or tests. Do not create paid resources, publish, contact third parties, send messages or push changes without applicable authorization. Delegate only if the owner or applicable environment instructions authorize it. Keep concise progress updates; do not overwhelm the owner with raw tool output.
++
++Implement in the following dependency order. Independent local work can proceed while an external gate is pending.
++
++## 7. Phase A — inventory, accounting and historical truth
++
++Primary issues: `FIN-001`, `FIN-002`, `ARCH-001`; relevant stages 2–4 and 12.
++
++1. Finish receipt, adjustment, batch and unit-conversion costing. Establish stable identities and base-unit quantities; validate integer bounds and reconcile physical quantities with costing quantities. Preserve the existing FIFO policy unless a change is explicitly justified and approved. Do not confuse physical expiry allocation with accounting cost allocation; document and test their relationship.
++2. Implement partial returns/refunds with explicit original sale-line links. Bound cumulative returned quantities and refunded amounts. Restore eligible stock/batches and original cost allocations exactly once. Distinguish sellable returns, damaged/non-restockable returns and money-only corrections. Require owner clarification when a material return policy is undefined.
++3. Make cash/card/MoMo, prepaid wallet, loyalty, credit, tax and partial-refund behavior reconcile. Define cumulative rounding/remainder allocation so partial refunds cannot over-refund a discount, tax or original tender. Keep a local reversal, a cash refund and a provider refund as distinct recorded events. Never mark a provider refund successful before verification.
++4. Build the missing supplier settlement/payables model with immutable payments/credits linked to purchases. Define opening liabilities, partial settlements, purchase returns and dates from actual supplied records. Do not assume every saved purchase was paid in cash.
++5. Define and test each reported figure: gross/net sales, recorded tax, COGS, gross margin, expenses, cash movements, prepaid liability, receivables, repayments and supplier payables. Specify period versus as-of/current balances. Independently reconstruct totals from source events, including cross-period returns and reversals; do not validate a report by calling the same summation function twice.
++6. Audit all report/CSV/print/assistant surfaces for consistent definitions and safe arithmetic. Investigate currency identity and minor-unit precision throughout transactions, receipts, retries and historical records. Snapshot currency where required; do not relabel old transactions using a newly selected profile currency. Verify currency rules from authoritative references before migrating data. Never reinterpret ambiguous legacy money without evidence.
++7. Extend tax only where requirements and authoritative rules support it. The supported local default remains off. If business requirements need exemptions, multiple/compound taxes, input tax or statutory documents, model those explicitly and test them. For legal rates/rules, use current official jurisdiction sources and obtain necessary business facts. A country selection alone is insufficient.
++8. Provide a controlled reconciliation path for unknown legacy costs. Preserve unavailable amounts until evidence is supplied; use auditable corrections with provenance. Do not retroactively treat a present-day cost as an old receipt. Financial readiness includes honest handling of unrecoverable history, not fabricated completeness.
++9. Reconcile the available Stage 2 archive selectively. The prior comparison covered 27 relevant files, 15 identical and 12 different. Inspect semantics and tests; never overwrite the new work wholesale. Locate the Stage 3 source if available; otherwise identify the acceptance criteria that can be implemented from specifications and separately record unverifiable branch provenance.
++
++Required tests include concurrent sales/purchases/returns, duplicate intents, partial/refund limits, safe-integer extremes, cross-company records, mixed known/unknown cost, exact restoration, partial tender, wallet/points conservation, tax changes and rounding, posting failure at every meaningful boundary, and full-history reconciliation. Use isolated synthetic ledgers with independently calculated expectations.
++
++## 8. Phase B — complete authorization and audit coverage
++
++Primary issue: `SEC-001`; relevant stages 1–10 and 12.
++
++Inspect every mutation, including helpers, imports, restore/clear, assistant actions, callbacks, sync replay and backend routes. Prioritize remaining catalogue options, batch registration, stock-count preparation/editing, customers, suppliers and store administration, where permission checks may occur before the actual write.
++
++For each operation:
++
++- Capture the intended company/store, revalidate scope and role inside the write transaction, and validate all referenced records belong to that scope.
++- Test unlocked/locked, expired/revoked/disabled identity, permitted and denied role, relevant shift state, company switch during an await, duplicate request and direct service invocation.
++- Record the actual actor, device/store when applicable, action, immutable target and time. Preserve the supported no-staff offline setup path with explicit provenance; do not invent an authenticated staff identity or accidentally make first-time local retail require a cloud account.
++- Keep approval bound to the exact action, amount, scope and submission identity; prevent reuse after cart changes or session changes.
++- Ensure exports, reports, backup and sensitive reads cannot expose foreign-company data.
++
++Complete PIN/WebAuthn enrollment, unlock, revocation and recovery tests at supported boundaries. Verify secure-context behavior on real supported devices when available. UI visibility is not authorization. Synthetic browser tests do not prove physical WebAuthn support. Do not call an editable local database a cryptographically tamper-proof audit log.
++
++## 9. Phase C — crash-safe storage, migration and recovery
++
++Primary issues: `DATA-001`, `DATA-002`.
++
++The main database and assistant local store are separate. Current in-process compensation does not survive interruption between databases. Fix restore/clear with a coherent architecture: either safely migrate to one transactional database or implement a durable recovery journal with explicit phases, startup recovery, idempotency and verifiable completion. Just adding another `try/catch` is insufficient.
++
++Cover every persisted table and intentionally retained audit record. Investigate assistant audit exclusion/clearing and define retention consistent with the audit requirements. Reject duplicate identities, foreign ownership, orphan relationships, malformed money/quantities/timestamps, invalid enum states, broken cost/tax links, unsupported future schemas and oversized inputs. Bound parsing and archive/decryption resources. Restore must not silently re-enable sync or another company's access.
++
++Extend real IndexedDB migration fixtures from schemas 1–25 to include the current schema 26 before introducing later versions. Preserve the tested historical snapshots; version any new migration. Populate realistic linked sales, lines, payments, costs, refunds, taxes, customers, wallets, staff, stores and pending outbox records, not only metadata and a product. Add large datasets, quota pressure, transaction failures, reload/process interruption and cross-company tests.
++
++Test encrypted backup corruption/wrong passphrase, interrupted export/restore, recovery after each journal phase, and repeat execution after a crash. Keep pre-upgrade backups and document how to recover writes made after a backup. Never downgrade an upgraded database in place or erase recent transactions to claim rollback success.
++
++## 10. Phase D — remaining assistant and intelligence behavior
++
++Primary issues: `AST-001`, `INT-001`.
++
++Preserve the working quotation handoff and atomic conversion. Complete remaining record-grounded multi-turn tasks with explicit context expiry, company binding, stale-record handling, confirmation and permission checks. Keep suggestions distinct from saved financial actions. Test retries, ambiguous names, malformed input, company switching and hostile text embedded in records.
++
++Build receivable ageing from explicit debt dates, agreed terms and repayment allocations. Historical transactions without due dates must display unknown ageing, not invented overdue status. Do not confuse current outstanding balance with period-specific ageing.
++
++Complete demand/reorder features from observed SKU unit history, returns, stockouts and valid assumptions. Label estimates and limitations. Do not invent confidence intervals or lead times. If an essential supplier lead time is unknown, request/configure it or show that a recommendation is unavailable.
++
++Implement persisted automation only as explicit owner opt-in, with a bounded action allowlist, preview/approval where required, actor audit, company/store binding, deduplication, cancellation and pause controls. Handle offline/missed schedules predictably. Notification permission is not approval to mutate money or stock. Do not send real customer messages or activate external delivery without explicit authorization.
++
++## 11. Phase E — authenticated cloud and authoritative stores
++
++Primary issues: `CLOUD-001`, `STORE-001`, `ENV-003`.
++
++Complete local protocol/service work while external deployment is pending. Keep unavailable capabilities fail-closed.
++
++Cloud requirements:
++
++- Durable organization/member/device identity, session issuance/expiry/revocation, scoped enrollment and recovery, secret rotation and audit.
++- Verified direct TLS or a separately designed and tested trusted-proxy model. Current protected routes require direct TLS; do not silently replace this with trust in client-supplied forwarding headers.
++- Persistent storage with tested ownership, permissions, atomic writes, corruption detection, concurrency, restart behavior and backup/recovery.
++- Authenticated opt-in financial event replication, durable outbox, immutable operation identities, acknowledgements, replay ordering, schema validation, deduplication and conflict handling. A queued request or uploaded ciphertext is not proof that business records were applied remotely.
++- Treat every received event as untrusted. Validate actor, tenant, device, source record, amount and state before applying. A valid signature alone does not authorize an invalid business transaction.
++
++Store requirements:
++
++- Real per-store stock balances and cost attribution, with explicit store identity on affected transactions.
++- Audited transfer lifecycle with conserved quantities/costs, in-transit state where applicable, receipt confirmation and exact cancellation/return rules.
++- Scoped attendants, enrollment/revocation, shifts and owner consolidation without double counting.
++- Explicit strategy for disconnected stock ownership/allocations. Do not claim global oversell prevention while independent offline devices can spend the same unrestricted balance. Present material allocation or availability policy choices for owner decision; preserve authorized local retail.
++
++Never treat stock observations as balances, transfer requests as executed transfers, or local activity summaries as consolidated authoritative accounts. Test duplicate/delayed/out-of-order/cross-company events, conflicting edits, replay after restore, revoked offline devices, interrupted writes, concurrent stores and reconciliation after reconnecting.
++
++## 12. Phase F — payments and public commerce
++
++Primary issues: `PAY-001`, `COM-001`; stage 10 remains gated by accounting, security, cloud and inventory correctness.
++
++First complete provider-neutral interfaces and local contract tests. Keep mock records visibly simulated and isolated from real collections, receipts, settlements and business reports. The current mock is ephemeral; it does not establish durable payment processing or signed-webhook verification.
++
++Prepare configurable provider adapters without selecting or enabling a gateway on the owner's behalf. When a provider is approved and sandbox credentials are securely available, implement against its current official documentation and execute real sandbox cases. Required cases include success, decline, cancellation, timeout with unknown outcome, delayed success, duplicated and out-of-order webhooks, invalid signatures, wrong merchant/currency/amount, replay, expired events, partial/full refunds, over-refund rejection, chargeback and settlement mismatch. Use stable idempotency keys and explicit state transitions. Do not mark a timeout failed or paid without evidence.
++
++Do not collect/store raw card details or emulate a provider certification. Use the approved provider's supported hosted/tokenized flow where applicable. Ensure no secret enters browser bundles, reports, logs, patches or artifacts.
++
++Public-commerce work must include owner-authorized product publishing, server-trusted prices/taxes/availability, verified orders, privacy boundaries, abuse protection, authoritative reservations with expiry, and atomic commit/release. Test payment-after-reservation-expiry, inventory conflict after authorization, duplicate fulfillment and crash recovery. Resolve these with explicit compensating states/actions, not invented completed sales.
++
++Connect shipment/delivery status only to authenticated carrier evidence or clearly attributed manual actions allowed by the agreed workflow. A local “prepared” or “ready” order is not shipped, delivered or paid. Real carrier accounts and actions need separate authorization where required.
++
++## 13. Phase G — production QA, staging and operations
++
++Primary issues: `ENV-001`, `HW-001`, `OPS-001`, `PERF-001`, `RUNTIME-001`; remaining stage-12 criteria.
++
++Run all suites on the final source with the locked toolchain. Exercise real IndexedDB and the built PWA, not only development mode or mocked storage. Cover supported browsers, mobile layouts, accessibility, keyboard/screen-reader flows, receipts, printing, camera/scanners, WebAuthn, offline reload and service-worker updates. Document actual hardware/browser versions and limitations.
++
++Measure representative low-end device startup, bundle size, memory, large-ledger operations and offline responsiveness. Establish justified budgets and report measurements. Do not hide the existing large-chunk warning by merely increasing its threshold. Separate loading where useful without breaking offline availability.
++
++Update dependency/runtime audit and the dependency/license inventory. Review actual distributed notices, including the patched `wouter` dependency and relevant MPL/attribution obligations. Retain notices and identify unresolved licensing decisions; a metadata list is not legal certification. Perform targeted security review and authorized local adversarial tests; production penetration testing is not authorized by this prompt.
++
++The existing staging proposal is a private single-instance Ubuntu 24.04 LTS VM, approximately 2 vCPU/4 GB RAM/30 GB persistent POSIX storage, direct TLS, synthetic data, restricted tester access and live features disabled. These resources are estimates, not guaranteed capacity. Review the proposal against the final architecture and current support information. Do not provision it yet.
++
++Before external deployment, obtain approval for the hosting account/environment, region, cost limit, hostname/TLS setup, permitted access, operator and recovery storage. Stage and production approvals are separate. Supply a concrete manifest/runbook and tested artifact so the owner can review exactly what would run. Never treat a configured provider or approved staging host as authorization to charge customers or deploy production.
++
++After staging approval, verify deployment, health, TLS, access boundaries, persistent storage, backup/restore, interruption/restart, rollback and service-worker/client compatibility. Measure recovery time and potential data loss; do not invent RTO/RPO claims. Configure and test meaningful monitoring/alerts for service health, disk space, certificate expiry, authentication anomalies, failed events, corrupted journals, backup failures and stalled reconciliation, without logging secrets or unnecessary customer data.
++
++## 14. Issue closure and acceptance
++
++Use the current register as the checklist. Explicitly disposition every issue:
++
++| Issue IDs | Required closure evidence |
++|---|---|
++| `ENV-001`, `ENV-002`, `ENV-003` | Reproducible install/types/build/client/server/browser checks; preserve resolved portability; actual POSIX/TLS results |
++| `FIN-001`, `FIN-002` | Full supported stock/cost/refund/tax/receivable/payable reconciliation and failure tests |
++| `SEC-001` | Complete mutation/read authority review with positive/negative role, race, scope and actor tests |
++| `DATA-001`, `DATA-002` | Historical migration/restore matrix and actual durable cross-database interruption recovery |
++| `CLOUD-001`, `STORE-001` | Authenticated durable replay, conflicts, scoped store operations and independent consolidation evidence |
++| `PAY-001`, `COM-001` | Approved provider sandbox evidence plus trusted order/reservation/fulfillment integration; mocks alone do not close these |
++| `AST-001`, `INT-001` | Remaining assistant, debt ageing, demand and explicitly approved persisted automation tests |
++| `HW-001`, `OPS-001` | Actual hardware acceptance and approved staging/recovery/monitoring evidence |
++| `ARCH-001` | Selective historical-source reconciliation or explicit account of unavailable provenance and resulting verification |
++| `PERF-001`, `RUNTIME-001` | Measured performance, supported runtime/security review and distribution notice review |
++
++Add issues discovered during development. Resolve root causes; do not simply rename blockers, remove tests or lower severity. If the owner explicitly reduces release scope, record the approval, excluded features and enforced gates. Describe any readiness claim as applying to that approved scope; do not call an incomplete twelve-stage product complete.
++
++## 15. Final deliverables and definition of done
++
++Deliver one consolidated result with:
++
++1. Patched repository and reviewable local commit series, preserving unrelated changes.
++2. Exact source commit and a verified source/build/evidence archive with SHA-256 checksums. Exclude secrets, private backups, real customer data, dependency folders and unnecessary caches.
++3. Updated 82-unit traceability and prioritized issue register, including new findings and exact evidence for every closure.
++4. Full logs for successful, failed, retried and skipped commands, with environment details. Include relevant browser traces/screenshots and reproducible synthetic fixtures.
++5. New migration/backup formats and tested restore/rollback instructions.
++6. Security review, independent financial reconciliation report, dependency/runtime audit and distribution inventory/notices.
++7. User/operator guidance, supported-platform matrix, deployment manifest, monitoring and recovery runbooks.
++8. Explicit release decision: **GO only for a fully evidenced approved scope; otherwise NO-GO / INCOMPLETE**, with the precise remaining work, unavailable inputs and next executable checks.
++
++Production-ready means all required product behavior is implemented, all in-scope P0/P1 issues are resolved, money/stock/tenant invariants are demonstrated, the final artifact passes the complete applicable tests, recovery and operational controls are verified, and required external/hardware checks have real evidence. It does not mean a successful build, a large test count, configured CI, a mock gateway or an optimistic report.
++
++At any owner request to stop, pause or hand over, promptly stop new implementation, preserve changes and document the exact state. Otherwise continue authorized feasible work through the dependent acceptance units. Do not stop after one convenient fix or keep asking whether to continue.
++
++## 16. Start now
++
++Verify the repository/archive identity and current working tree, read the handover and acceptance registers, reproduce the applicable baseline, and make a dependency-ordered plan linked to issue IDs. Identify unavailable environments/accounts without treating them as permission to provision anything. Then begin the remaining local finance and authorization/recovery work while preserving the completed cost/tax/quotation/offline behavior. Keep the product NO-GO until the evidence supports a different decision.
+diff --git a/client/src/features/assistant/assistantLocalStore.security.test.ts b/client/src/features/assistant/assistantLocalStore.security.test.ts
+new file mode 100644
+index 0000000..96b3dfd
+--- /dev/null
++++ b/client/src/features/assistant/assistantLocalStore.security.test.ts
+@@ -0,0 +1,51 @@
++import { afterEach, describe, expect, it } from "vitest";
++import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
++import { assistantLocalDB, deleteStoredAlias, deleteStoredWorkflow, saveStoredAlias, saveStoredWorkflow } from "./assistantLocalStore";
++
++const workflow = (businessProfileId: string, id = "same-workflow") => ({
++  id, businessProfileId, name: "Morning check", description: "Read-only summary", commands: ["Morning check"],
++});
++const alias = (businessProfileId: string, id = "same-alias") => ({
++  id, businessProfileId, phrase: "stock", canonicalValue: "inventory", kind: "intent" as const, confidence: 1, enabled: true,
++});
++
++afterEach(async () => {
++  setActiveBusinessProfileId("primary");
++  await assistantLocalDB.open();
++  await assistantLocalDB.transaction("rw", [assistantLocalDB.aliases, assistantLocalDB.workflows], async () => {
++    await assistantLocalDB.aliases.clear();
++    await assistantLocalDB.workflows.clear();
++  });
++});
++
++describe("assistant local company isolation", () => {
++  it("rejects writes targeting an inactive company", async () => {
++    setActiveBusinessProfileId("primary");
++    await expect(saveStoredWorkflow(workflow("foreign"))).rejects.toThrow(/Switch to the company/);
++    await expect(saveStoredAlias(alias("foreign"))).rejects.toThrow(/Switch to the company/);
++  });
++
++  it("cannot overwrite or delete another company's saved workflow by its globally unique ID", async () => {
++    setActiveBusinessProfileId("company-two");
++    await saveStoredWorkflow(workflow("company-two"));
++    setActiveBusinessProfileId("primary");
++    await expect(saveStoredWorkflow(workflow("primary"))).rejects.toThrow(/another company/);
++    await expect(deleteStoredWorkflow("same-workflow")).rejects.toThrow(/another company/);
++    expect(await assistantLocalDB.workflows.get("same-workflow")).toMatchObject({businessProfileId:"company-two"});
++    setActiveBusinessProfileId("company-two");
++    await deleteStoredWorkflow("same-workflow");
++    expect(await assistantLocalDB.workflows.get("same-workflow")).toBeUndefined();
++  });
++
++  it("cannot overwrite or delete another company's saved alias by its globally unique ID", async () => {
++    setActiveBusinessProfileId("company-two");
++    await saveStoredAlias(alias("company-two"));
++    setActiveBusinessProfileId("primary");
++    await expect(saveStoredAlias(alias("primary"))).rejects.toThrow(/another company/);
++    await expect(deleteStoredAlias("same-alias")).rejects.toThrow(/another company/);
++    expect(await assistantLocalDB.aliases.get("same-alias")).toMatchObject({businessProfileId:"company-two"});
++    setActiveBusinessProfileId("company-two");
++    await deleteStoredAlias("same-alias");
++    expect(await assistantLocalDB.aliases.get("same-alias")).toBeUndefined();
++  });
++});
+diff --git a/client/src/features/assistant/assistantLocalStore.ts b/client/src/features/assistant/assistantLocalStore.ts
+index 207a35c..4b725e4 100644
+--- a/client/src/features/assistant/assistantLocalStore.ts
++++ b/client/src/features/assistant/assistantLocalStore.ts
+@@ -1,5 +1,6 @@
+ import Dexie, { type Table } from "dexie";
+ import { nanoid } from "nanoid";
++import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+ 
+ export interface StoredWorkflow { id: string; businessProfileId: string; name: string; description: string; commands: string[]; createdAt: string; updatedAt: string }
+ export interface StoredAlias { id: string; businessProfileId: string; phrase: string; canonicalValue: string; kind: "product" | "customer" | "supplier" | "intent"; confidence: number; enabled: boolean; createdAt: string; updatedAt: string }
+@@ -22,20 +23,70 @@ class AssistantLocalDB extends Dexie {
+ export const assistantLocalDB = new AssistantLocalDB();
+ 
+ async function open() { await assistantLocalDB.open(); }
+-export async function listStoredWorkflows(businessProfileId: string) { await open(); return assistantLocalDB.workflows.where("businessProfileId").equals(businessProfileId).sortBy("updatedAt"); }
++
++function assertActiveCompany(companyId: string) {
++  if (!companyId || companyId !== getActiveBusinessProfileId())
++    throw new Error("Switch to the company that owns this assistant record before changing it.");
++}
++
++export async function listStoredWorkflows(businessProfileId: string) {
++  await open(); return assistantLocalDB.workflows.where("businessProfileId").equals(businessProfileId).sortBy("updatedAt");
++}
+ export async function saveStoredWorkflow(input: Omit<StoredWorkflow, "id" | "createdAt" | "updatedAt"> & { id?: string }) {
+-  await open(); const now = new Date().toISOString(); const existing = input.id ? await assistantLocalDB.workflows.get(input.id) : undefined;
+-  const value: StoredWorkflow = { ...input, id: input.id ?? nanoid(14), createdAt: existing?.createdAt ?? now, updatedAt: now };
+-  await assistantLocalDB.workflows.put(value); return value;
++  assertActiveCompany(input.businessProfileId);
++  await open();
++  return assistantLocalDB.transaction("rw", assistantLocalDB.workflows, async () => {
++    assertActiveCompany(input.businessProfileId);
++    const existing = input.id ? await assistantLocalDB.workflows.get(input.id) : undefined;
++    if (existing && existing.businessProfileId !== input.businessProfileId)
++      throw new Error("Assistant workflow belongs to another company.");
++    assertActiveCompany(input.businessProfileId);
++    const now = new Date().toISOString();
++    const value: StoredWorkflow = { ...input, id: input.id ?? nanoid(14), createdAt: existing?.createdAt ?? now, updatedAt: now };
++    await assistantLocalDB.workflows.put(value);
++    return value;
++  });
++}
++export async function deleteStoredWorkflow(id: string) {
++  await open();
++  const companyId = getActiveBusinessProfileId();
++  await assistantLocalDB.transaction("rw", assistantLocalDB.workflows, async () => {
++    const existing = await assistantLocalDB.workflows.get(id);
++    if (!existing) return;
++    assertActiveCompany(companyId);
++    if (existing.businessProfileId !== companyId) throw new Error("Assistant workflow belongs to another company.");
++    await assistantLocalDB.workflows.delete(id);
++  });
++}
++export async function listStoredAliases(businessProfileId: string) {
++  await open(); return assistantLocalDB.aliases.where("businessProfileId").equals(businessProfileId).and((alias) => alias.enabled).toArray();
+ }
+-export async function deleteStoredWorkflow(id: string) { await open(); await assistantLocalDB.workflows.delete(id); }
+-export async function listStoredAliases(businessProfileId: string) { await open(); return assistantLocalDB.aliases.where("businessProfileId").equals(businessProfileId).and((alias) => alias.enabled).toArray(); }
+ export async function saveStoredAlias(input: Omit<StoredAlias, "id" | "createdAt" | "updatedAt"> & { id?: string }) {
+-  await open(); const now = new Date().toISOString(); const existing = input.id ? await assistantLocalDB.aliases.get(input.id) : undefined;
+-  const value: StoredAlias = { ...input, id: input.id ?? nanoid(14), createdAt: existing?.createdAt ?? now, updatedAt: now };
+-  await assistantLocalDB.aliases.put(value); return value;
++  assertActiveCompany(input.businessProfileId);
++  await open();
++  return assistantLocalDB.transaction("rw", assistantLocalDB.aliases, async () => {
++    assertActiveCompany(input.businessProfileId);
++    const existing = input.id ? await assistantLocalDB.aliases.get(input.id) : undefined;
++    if (existing && existing.businessProfileId !== input.businessProfileId)
++      throw new Error("Assistant alias belongs to another company.");
++    assertActiveCompany(input.businessProfileId);
++    const now = new Date().toISOString();
++    const value: StoredAlias = { ...input, id: input.id ?? nanoid(14), createdAt: existing?.createdAt ?? now, updatedAt: now };
++    await assistantLocalDB.aliases.put(value);
++    return value;
++  });
++}
++export async function deleteStoredAlias(id: string) {
++  await open();
++  const companyId = getActiveBusinessProfileId();
++  await assistantLocalDB.transaction("rw", assistantLocalDB.aliases, async () => {
++    const existing = await assistantLocalDB.aliases.get(id);
++    if (!existing) return;
++    assertActiveCompany(companyId);
++    if (existing.businessProfileId !== companyId) throw new Error("Assistant alias belongs to another company.");
++    await assistantLocalDB.aliases.delete(id);
++  });
+ }
+-export async function deleteStoredAlias(id: string) { await open(); await assistantLocalDB.aliases.delete(id); }
+ export async function recordAssistantHistory(value: Omit<AssistantHistoryRecord, "id" | "createdAt">) { await open(); const row = { ...value, id: nanoid(14), createdAt: new Date().toISOString() }; await assistantLocalDB.history.put(row); return row; }
+ export async function listAssistantHistory(businessProfileId: string, limit = 50) { await open(); return assistantLocalDB.history.where("businessProfileId").equals(businessProfileId).reverse().sortBy("createdAt").then((rows) => rows.slice(0, limit)); }
+ export async function clearAssistantHistory(businessProfileId: string) { await open(); await assistantLocalDB.history.where("businessProfileId").equals(businessProfileId).delete(); }
+diff --git a/client/src/features/customers/customers.ts b/client/src/features/customers/customers.ts
+index 944fe9b..e317a49 100644
+--- a/client/src/features/customers/customers.ts
++++ b/client/src/features/customers/customers.ts
+@@ -53,39 +53,46 @@ export async function getCustomerSnapshot(database: TallybookDB = db): Promise<C
+ }
+ 
+ export async function createCustomer(values: CustomerFormValues, database: TallybookDB = db) {
+-  await requirePermission("sell", database);
+   const input = customerFormSchema.parse(values);
+-  const now = new Date().toISOString();
+-  const normalizedName = normalizeCustomerName(input.name);
+   const activeId = getActiveBusinessProfileId();
+-  const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && !customer.archivedAt).first();
+-  if (duplicate) throw new Error("An active customer with this name already exists.");
+-  const customer: Customer = { id: nanoid(12), businessProfileId: getActiveBusinessProfileId(), name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, createdAt: now, updatedAt: now };
+-  await database.customers.add(customer);
+-  return customer;
++  const normalizedName = normalizeCustomerName(input.name);
++  return database.transaction("rw", [database.customers, database.staffMembers], async () => {
++    await requirePermission("sell", database, activeId);
++    const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && !customer.archivedAt).first();
++    if (duplicate) throw new Error("An active customer with this name already exists.");
++    const now = new Date().toISOString();
++    const customer: Customer = { id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, createdAt: now, updatedAt: now };
++    await database.customers.add(customer);
++    return customer;
++  });
+ }
+ 
+ export async function updateCustomer(customerId: string, values: CustomerFormValues, database: TallybookDB = db) {
+-  await requirePermission("staff", database);
+   const input = customerFormSchema.parse(values);
+-  const existing = await database.customers.get(customerId);
+-  if (!existing || existing.businessProfileId !== getActiveBusinessProfileId() || existing.archivedAt) throw new Error("This customer is no longer active.");
+-  const normalizedName = normalizeCustomerName(input.name);
+   const activeId = getActiveBusinessProfileId();
+-  const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && customer.id !== customerId && !customer.archivedAt).first();
+-  if (duplicate) throw new Error("An active customer with this name already exists.");
+-  const updated: Customer = { ...existing, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, updatedAt: new Date().toISOString() };
+-  await database.customers.put(updated);
+-  return updated;
++  return database.transaction("rw", [database.customers, database.staffMembers], async () => {
++    await requirePermission("staff", database, activeId);
++    const existing = await database.customers.get(customerId);
++    if (!existing || existing.businessProfileId !== activeId || existing.archivedAt) throw new Error("This customer is no longer active.");
++    const normalizedName = normalizeCustomerName(input.name);
++    const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && customer.id !== customerId && !customer.archivedAt).first();
++    if (duplicate) throw new Error("An active customer with this name already exists.");
++    const updated: Customer = { ...existing, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, updatedAt: new Date().toISOString() };
++    await database.customers.put(updated);
++    return updated;
++  });
+ }
+ 
+ export async function archiveCustomer(customerId: string, database: TallybookDB = db) {
+-  await requirePermission("staff", database);
+-  const customer = await database.customers.get(customerId);
+-  if (!customer || customer.businessProfileId !== getActiveBusinessProfileId() || customer.archivedAt) throw new Error("This customer is already archived or unavailable.");
+-  const archived = { ...customer, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+-  await database.customers.put(archived);
+-  return archived;
++  const activeId = getActiveBusinessProfileId();
++  return database.transaction("rw", [database.customers, database.staffMembers], async () => {
++    await requirePermission("staff", database, activeId);
++    const customer = await database.customers.get(customerId);
++    if (!customer || customer.businessProfileId !== activeId || customer.archivedAt) throw new Error("This customer is already archived or unavailable.");
++    const archived = { ...customer, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
++    await database.customers.put(archived);
++    return archived;
++  });
+ }
+ 
+ export function searchCustomers(customers: Customer[], query: string) {
+diff --git a/client/src/features/inventory/stage2Inventory.ts b/client/src/features/inventory/stage2Inventory.ts
+index 822fd83..2e93b12 100644
+--- a/client/src/features/inventory/stage2Inventory.ts
++++ b/client/src/features/inventory/stage2Inventory.ts
+@@ -27,9 +27,9 @@ function validateImage(value: string | undefined) {
+ }
+ /** A variant is a real product with its own SKU and stock, never a shared quantity alias. */
+ export async function setCatalogueOptions(productId: string, options: CatalogueOptions, database: TallybookDB = db) {
+-  await requirePermission("inventory", database);
+   const company = getActiveBusinessProfileId();
+-  return database.transaction("rw", database.products, async () => {
++  return database.transaction("rw", [database.products, database.staffMembers], async () => {
++    await requirePermission("inventory", database, company);
+     const product = await database.products.get(productId);
+     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("Product is unavailable.");
+     if (options.parentProductId) {
+@@ -55,7 +55,8 @@ export async function saveStockCountSession(productIds: string[], database: Tall
+   const preview = await prepareStockCount(productIds, database);
+   const now = new Date().toISOString();
+   const session: StockCountSession = { ...preview, businessProfileId: preview.companyId, id: nanoid(16), status: "draft", updatedAt: now };
+-  await database.transaction("rw", database.stockCountSessions, async () => {
++  await database.transaction("rw", [database.stockCountSessions, database.staffMembers], async () => {
++    await requirePermission("inventory", database, preview.companyId);
+     const existing = await database.stockCountSessions.where("businessProfileId").equals(preview.companyId).toArray();
+     if (existing.some(item => item.status === "draft")) throw new Error("Resume or complete your saved stock count before starting another.");
+     await database.stockCountSessions.add(session);
+@@ -63,10 +64,11 @@ export async function saveStockCountSession(productIds: string[], database: Tall
+   return session;
+ }
+ export async function updateStockCountSession(id: string, counts: Record<string, number>, database: TallybookDB = db) {
+-  await requirePermission("inventory", database);
+-  return database.transaction("rw", database.stockCountSessions, async () => {
++  const company = getActiveBusinessProfileId();
++  return database.transaction("rw", [database.stockCountSessions, database.staffMembers], async () => {
++    await requirePermission("inventory", database, company);
+     const session = await database.stockCountSessions.get(id);
+-    if (!session || session.companyId !== getActiveBusinessProfileId() || session.status !== "draft") throw new Error("Stock count cannot be edited.");
++    if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock count cannot be edited.");
+     for (const [key, value] of Object.entries(counts)) if (!session.lines.some(l => l.productId === key) || !whole(value)) throw new Error("Invalid stock-count line.");
+     const updated = { ...session, lines: session.lines.map(l => counts[l.productId] === undefined ? l : { ...l, countedQuantity: counts[l.productId] }), updatedAt: new Date().toISOString() };
+     await database.stockCountSessions.put(updated);
+@@ -74,10 +76,11 @@ export async function updateStockCountSession(id: string, counts: Record<string,
+   });
+ }
+ export async function postSavedStockCount(id: string, database: TallybookDB = db) {
+-  await requirePermission("inventory", database);
++  const company = getActiveBusinessProfileId();
+   return database.transaction("rw", [database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
++    await requirePermission("inventory", database, company);
+     const session = await database.stockCountSessions.get(id);
+-    if (!session || session.companyId !== getActiveBusinessProfileId() || session.status !== "draft") throw new Error("Stock-count session is unavailable or already posted.");
++    if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock-count session is unavailable or already posted.");
+     const result = await postStockCount(session, database);
+     await database.stockCountSessions.put({ ...session, status: "posted", postedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+     return result;
+@@ -85,11 +88,11 @@ export async function postSavedStockCount(id: string, database: TallybookDB = db
+ }
+ /** Batch receipts are metadata until sales can allocate FIFO batches atomically. */
+ export async function registerBatch(productId: string, batchCode: string, quantity: number, expiryDate?: string, database: TallybookDB = db) {
+-  await requirePermission("inventory", database);
+   if (!whole(quantity) || !quantity || !batchCode.trim() || batchCode.length > 64) throw new Error("Invalid batch information.");
+   if (expiryDate && (!/^\d{4}-\d{2}-\d{2}$/.test(expiryDate) || !Number.isFinite(Date.parse(expiryDate + "T00:00:00Z")) || new Date(expiryDate + "T00:00:00Z").toISOString().slice(0, 10) !== expiryDate)) throw new Error("Invalid expiry date.");
+   const company = getActiveBusinessProfileId();
+-  return database.transaction("rw", database.products, database.inventoryBatches, async () => {
++  return database.transaction("rw", [database.products, database.inventoryBatches, database.staffMembers], async () => {
++    await requirePermission("inventory", database, company);
+     const product = await database.products.get(productId);
+     if (!product || product.businessProfileId !== company || product.archivedAt || product.itemKind === "service") throw new Error("Batch product is unavailable.");
+     const batches = await database.inventoryBatches.where("productId").equals(productId).toArray();
+diff --git a/client/src/features/security/serviceAuthorityContinuation.test.ts b/client/src/features/security/serviceAuthorityContinuation.test.ts
+new file mode 100644
+index 0000000..d9e4bf0
+--- /dev/null
++++ b/client/src/features/security/serviceAuthorityContinuation.test.ts
+@@ -0,0 +1,63 @@
++/** Continuation regressions: authorization is required by the write service,
++ * not just a page button. Execute with the full Vitest/IndexedDB suite. */
++import Dexie from "dexie";
++import { webcrypto } from "node:crypto";
++import { afterEach, describe, expect, it } from "vitest";
++import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
++import { saveBusinessProfile } from "@/features/business/businessProfile";
++import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
++import { createCustomer, updateCustomer, archiveCustomer } from "@/features/customers/customers";
++import { createProduct } from "@/features/inventory/inventory";
++import { registerBatch, saveStockCountSession, setCatalogueOptions } from "@/features/inventory/stage2Inventory";
++import { createStaff, lockStaff, unlockStaff } from "@/features/staff/staff";
++
++if (!globalThis.crypto?.subtle) Object.defineProperty(globalThis, "crypto", { configurable: true, value: webcrypto });
++const opened: TallybookDB[] = [];
++async function setup() {
++  setActiveBusinessProfileId("primary");
++  const database = new TallybookDB(`continuation-authority-${Date.now()}-${opened.length}`);
++  opened.push(database);
++  await initializeDatabase(database);
++  await saveBusinessProfile({ name: "Test Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, database);
++  return database;
++}
++afterEach(async () => {
++  lockStaff("primary");
++  setActiveBusinessProfileId("primary");
++  for (const database of opened.splice(0)) {
++    const name = database.name;
++    database.close();
++    await new Dexie(name).delete();
++  }
++});
++
++describe("transaction-bound customer and inventory permissions", () => {
++  it("denies direct customer creates, edits, and archives after staff lock", async () => {
++    const database = await setup();
++    const owner = await createStaff("Owner", "owner", "123456", database);
++    const input = { name: "Ama Mensah", phone: "0241234567", email: "", address: "", notes: "", status: "active" as const };
++    await expect(createCustomer(input, database)).rejects.toThrow(/locked/);
++    expect(await database.customers.count()).toBe(0);
++    await unlockStaff(owner.id, "123456", database);
++    const customer = await createCustomer(input, database);
++    lockStaff("primary");
++    await expect(updateCustomer(customer.id, {...input, name:"Changed"}, database)).rejects.toThrow(/locked/);
++    await expect(archiveCustomer(customer.id, database)).rejects.toThrow(/locked/);
++    const saved = await database.customers.get(customer.id);
++    expect(saved?.name).toBe("Ama Mensah");
++    expect(saved?.archivedAt).toBeUndefined();
++  });
++
++  it("denies direct catalogue, count-session, and batch changes after staff lock", async () => {
++    const database = await setup();
++    const product = await createProduct({name:"Eggs",sku:"",categoryId:"uncategorized",sellingPrice:"5",costPrice:"",initialStock:"5",lowStockThreshold:"1"},"GHS",database);
++    const owner = await createStaff("Owner", "owner", "123456", database);
++    await expect(setCatalogueOptions(product.id,{baseUnit:"unit"},database)).rejects.toThrow(/locked/);
++    await expect(saveStockCountSession([product.id],database)).rejects.toThrow(/locked/);
++    await expect(registerBatch(product.id,"B1",1,undefined,database)).rejects.toThrow(/locked/);
++    expect(await database.inventoryBatches.count()).toBe(0);
++    await unlockStaff(owner.id,"123456",database);
++    await setCatalogueOptions(product.id,{baseUnit:"unit"},database);
++    expect((await database.products.get(product.id))?.baseUnit).toBe("unit");
++  });
++});
+diff --git a/docs/release/CONTINUATION_2026-10-10.md b/docs/release/CONTINUATION_2026-10-10.md
+new file mode 100644
+index 0000000..244538a
+--- /dev/null
++++ b/docs/release/CONTINUATION_2026-10-10.md
+@@ -0,0 +1,41 @@
++# Tallybook V19 — local continuation increment (10 October 2026)
++
++**Decision: NO-GO / INCOMPLETE.** This is a genuine *first increment*, not implementation or proof of "65%" of the roadmap. The prior percentage was a rough estimate of locally actionable work, not an acceptance count. No external services were connected, no real transactions were processed, and no deployment occurred.
++
++## Source identity and scope
++
++- Received handover: `TALLYBOOK_V19_HANDOVER_2026-10-10.zip`.
++- Received SHA-256: `20f6800c5d26a9bbb17cd50b4eecbb9d16167feb696a3269c90afc67c653d4d8` — **matches** the master's expected hash.
++- Handover contained source, old prebuilt `dist/`, logs and registers, but no `.git`, installed packages or secrets.
++- Local Git was initialized with a snapshot commit. This is a new local history: old commit IDs named in the handover were **not** restored or represented as executable ancestry.
++- Product source edits: `server/syncJournal.mjs`, `server/syncBackupVault.mjs`, `client/src/features/assistant/assistantLocalStore.ts`, `client/src/features/customers/customers.ts`, `client/src/features/inventory/stage2Inventory.ts`.
++- New Node regressions: `server/tests/syncJournal.test.mjs`, `server/tests/syncBackupVault.test.mjs`; new pending Vitest regressions: `client/src/features/assistant/assistantLocalStore.security.test.ts`, `client/src/features/security/serviceAuthorityContinuation.test.ts`.
++
++## Implemented changes
++
++1. **Server journal filesystem safety** — reject symlink journal targets even if their underlying file permissions look safe; reject symlink journal parent directories; validate private lock inode before unlinking; enforce byte-size limit *including* the proposed append. Explicitly keep the journal inaccessible from HTTP and do not claim actual financial replay.
++2. **Opaque backup vault safety** — reject symlink root directories and reject tampered vault metadata (unexpected fields/invalid saved date). No real cloud backup or recovery has been claimed.
++3. **Assistant saved data scope** — saved workflow/alias creation and deletion now check the active company, recheck in the write transaction, and reject IDs already owned by another company. This is only a company-isolation improvement; it is not full actor/role authorization or cross-database crash recovery.
++4. **Customer service mutations** — create, edit and archive now perform the required staff permission and company scope check *inside* their IndexedDB write transaction, rather than only before an awaited read.
++5. **Inventory service mutations** — catalogue options, draft stock-count session create/edit/post and batch registration now revalidate staff inventory permission inside the corresponding write transaction. No new stock-cost/allocation policy was invented.
++
++## Actual test evidence
++
++- **PASS**: baseline on Linux, `node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs`: **156/156, zero skipped** (see `artifacts/continuation-2026-10-10/native-baseline.log`).
++- **PASS**: final identical broad command after server changes: **160/160, zero skipped** (`native-final.log`, exit 0). Four additional regression cases prove symlink-target, symlink-parent, vault-symlink-root and malformed-record rejection.
++- **PASS**: isolated mock payment contract 4/4, `payment-mock-final.log`, exit 0. This is included in 160/160 and is **not** counted again as a separate full-suite result.
++- **PASS (syntax only)**: TypeScript transpile parser for changed client source/test files. Parser success **is not** type checking or client behavior evidence; see `client-changed-syntax.log`.
++- **NOT RUN**: client Vitest, semantic TypeScript checks, production Vite/PWA build, Playwright and full AST authorization inventory. Handover omitted dependencies, corepack could not fetch pnpm 10.34.0 (`getaddrinfo EAI_AGAIN registry.npmjs.org`), and `node scripts/audit-write-paths.mjs` cannot resolve TypeScript package locally. `pnpm-unavailable.log`, `write-path-audit-unavailable.log` retain failure details; do **not** inherit the previous agent's green build for the new code.
++- Test host: Linux x86_64, Node 22.16.0, OpenSSL; **not** the handover-pinned Node 24.19.0. Full host information and statuses in `environment.txt` and `.exit` files.
++
++## Blockers still open
++
++Accounting/COGS, partial refunds, supplier liabilities, legacy cost evidence, authoritative per-store stock, complete service-level actor audit, crash-safe dual IndexedDB recovery, debt ageing, automation, authenticated cloud financial replay, trusted commerce/reservations/fulfillment, provider sandbox verification, external staging, physical devices, end-to-end production build/browser QA, and dependency/runtime/license review remain **NO-GO**. An accepted local POSIX test removes only the previous *Windows-specific* file-permission/TLS test uncertainty; it is **not** proof of staging or production security.
++
++## Reproducing independently
++
++1. Install the exact toolchain pinned in `.node-version` and `package.json`, then `pnpm install --frozen-lockfile` in an authorized environment with available dependencies.
++2. Run the full commands from `NEXT_AGENT_MASTER_PROMPT.md`, including `pnpm test`, `pnpm check`, `pnpm build`, native Node/QA, real IndexedDB browsers, static write path audit and source diff.
++3. Review changes and add full negative/positive staff, company-switch and interruption tests around affected client services; existing additional Vitest regressions are present but currently **unexecuted**.
++4. Do not copy the prebuilt `dist/` in the original handover into a release of this patched source; a new build must be produced and verified first.
++5. Do not enable remote payment, public commerce, sync replay or deployment until their acceptance gates and explicit external approvals are satisfied.
+diff --git a/docs/release/HANDOVER.md b/docs/release/HANDOVER.md
+index 78048fc..0f7969b 100644
+--- a/docs/release/HANDOVER.md
++++ b/docs/release/HANDOVER.md
+@@ -1,3 +1,5 @@
++> **10 October 2026 continuation note:** The owner subsequently authorized further local implementation. The historical stop statement below describes the old handover, not the current authorization. See `CONTINUATION_2026-10-10.md` for new source edits, POSIX testing and unverified client gates. The release remains **NO-GO / INCOMPLETE**.
++
+ # Tallybook V19 handover — 10 October 2026
+ 
+ Implementation stopped at the owner's request: **hand over now; remaining work will be done later**. Do not resume implementation or deploy without a new request.
+diff --git a/docs/release/RELEASE_REPORT.md b/docs/release/RELEASE_REPORT.md
+index 0fce8a3..750584b 100644
+--- a/docs/release/RELEASE_REPORT.md
++++ b/docs/release/RELEASE_REPORT.md
+@@ -1,3 +1,5 @@
++> **Continuation update:** This report documents the earlier handover build, **not** a rebuilt artifact after the latest edits. See `CONTINUATION_2026-10-10.md`. The latest changed source has not passed client/type/build/Playwright verification and remains **NO-GO**.
++
+ # Tallybook V19 consolidated release report
+ 
+ Date: 2026-10-10. Decision: **NO-GO / INCOMPLETE**. This is a tested local development candidate, not certification that all twelve stages are complete. No external deployment, provider connection, real collection or production-data migration was performed.
+diff --git a/docs/release/blockers.json b/docs/release/blockers.json
+index 8280db0..8d7cf61 100644
+--- a/docs/release/blockers.json
++++ b/docs/release/blockers.json
+@@ -17,9 +17,10 @@
+         "artifacts/release-v19/client-tax-final.log",
+         "artifacts/release-v19/types-release.log",
+         "artifacts/release-v19/build-release.log",
+-        "artifacts/release-v19/frozen-install-final.log"
++        "artifacts/release-v19/frozen-install-final.log",
++        "artifacts/continuation-2026-10-10/pnpm-unavailable.log"
+       ],
+-      "fixes": "Pinned updated pnpm/lockfile and frozen install; local client/types/build pass. Full Linux gate remains unexecuted."
++      "fixes": "Pinned updated pnpm/lockfile and frozen install; local client/types/build pass. Full Linux gate remains unexecuted. Continuation Linux Node22 native suite passes; pnpm client suite/types/build not rerun because pnpm 10.34.0 fetch is blocked by DNS and dependencies were intentionally absent from the handover."
+     },
+     {
+       "id": "ENV-002",
+@@ -41,18 +42,22 @@
+       "id": "ENV-003",
+       "severity": "P0",
+       "title": "Server filesystem adapters rely on POSIX security",
+-      "status": "blocked",
++      "status": "implemented-and-tested",
+       "paths": [
+         "server/syncLogin.mjs",
+         "server/syncJournal.mjs",
+-        "server/syncSessionStore.mjs"
++        "server/syncSessionStore.mjs",
++        "server/syncBackupVault.mjs",
++        "server/tests/syncJournal.test.mjs",
++        "server/tests/syncBackupVault.test.mjs"
+       ],
+       "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+       "acceptance": "Verify full integration on a POSIX filesystem or implement and test an equivalent native Windows ACL boundary; never bypass permission checks.",
+       "evidence": [
+-        "artifacts/release-v19/node-final-windows.log"
++        "artifacts/release-v19/node-final-windows.log",
++        "artifacts/continuation-2026-10-10/native-final.log"
+       ],
+-      "fixes": "Windows final full Node suite: 123 pass, 28 fail, 1 skip, 152 tests before four added mock tests. Keep POSIX guards intact; execute full Linux CI with OpenSSL."
++      "fixes": "Windows final full Node suite: 123 pass, 28 fail, 1 skip, 152 tests before four added mock tests. Keep POSIX guards intact; execute full Linux CI with OpenSSL. LOCAL POSIX ACCEPTANCE UPDATE: full available native Node/QA suite on Linux with OpenSSL passed 160/160, 0 skipped, under Node 22.16.0; additional symlink/record hardening tests included. This closes local POSIX adapter verification only; production TLS/deployment, pinned Node 24 and remote recovery remain unverified."
+     },
+     {
+       "id": "FIN-001",
+@@ -95,16 +100,20 @@
+       "title": "Complete authorization and actor coverage",
+       "status": "implemented-unverified",
+       "paths": [
+-        "client/src/features/staff/staff.ts"
++        "client/src/features/staff/staff.ts",
++        "client/src/features/customers/customers.ts",
++        "client/src/features/inventory/stage2Inventory.ts",
++        "client/src/features/assistant/assistantLocalStore.ts"
+       ],
+       "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+       "acceptance": "Enumerate every mutation and run positive/negative service-level security checks.",
+       "evidence": [
+         "artifacts/release-v19/client-tax-final.log",
+         "artifacts/release-v19/types-release.log",
+-        "artifacts/release-v19/build-release.log"
++        "artifacts/release-v19/build-release.log",
++        "artifacts/continuation-2026-10-10/client-changed-syntax.log"
+       ],
+-      "fixes": "Permission checks moved inside core financial/inventory/configuration transactions. AST candidate inventory is not proof of all-write coverage; remaining catalogue/batch/customer/store write races and actor completeness need review."
++      "fixes": "Permission checks moved inside core financial/inventory/configuration transactions. AST candidate inventory is not proof of all-write coverage; remaining catalogue/batch/customer/store write races and actor completeness need review. Local continuation moves customer, catalogue, batch and draft count authorization checks inside write transactions, and prevents assistant alias/workflow overwrite or delete across active-company boundaries. New Vitest regressions have NOT executed due unavailable dependencies; complete service inventory/staff attribution still outstanding."
+     },
+     {
+       "id": "DATA-001",
+@@ -136,8 +145,10 @@
+       ],
+       "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+       "acceptance": "Implement persistent production identity and full authenticated record replay; obtain authorized staging configuration.",
+-      "evidence": [],
+-      "fixes": "No production financial record replay or approved server. Existing transport foundations remain disabled/incomplete; Linux persistence/TLS verification required first."
++      "evidence": [
++        "artifacts/continuation-2026-10-10/native-final.log"
++      ],
++      "fixes": "No production financial record replay or approved server. Existing transport foundations remain disabled/incomplete; Linux persistence/TLS verification required first. Local filesystem staging journal and opaque backup vault now reject additional symlink/path and malformed-record cases; isolated Node tests pass. These are not remote financial replication or authenticated cloud service."
+     },
+     {
+       "id": "STORE-001",
+diff --git a/docs/release/traceability.json b/docs/release/traceability.json
+index 90de380..bcc7cbb 100644
+--- a/docs/release/traceability.json
++++ b/docs/release/traceability.json
+@@ -299,9 +299,11 @@
+       "evidence": [
+         "artifacts/release-v19/client-tax-final.log",
+         "artifacts/release-v19/types-release.log",
+-        "artifacts/release-v19/build-release.log"
++        "artifacts/release-v19/build-release.log",
++        "artifacts/continuation-2026-10-10/client-changed-syntax.log"
+       ],
+-      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
++      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
++      "notes": "Continuation adds service-level transactional permission revalidation for starting, editing and posting saved stock-count sessions. New Vitest regression has not run."
+     },
+     {
+       "id": "S2-06",
+@@ -327,9 +329,11 @@
+       "evidence": [
+         "artifacts/release-v19/client-tax-final.log",
+         "artifacts/release-v19/types-release.log",
+-        "artifacts/release-v19/build-release.log"
++        "artifacts/release-v19/build-release.log",
++        "artifacts/continuation-2026-10-10/client-changed-syntax.log"
+       ],
+-      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
++      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
++      "notes": "Continuation adds transactional authorization to batch registration and catalogue options. This does not complete batch cost provenance or expiry allocations. New client tests have not run."
+     },
+     {
+       "id": "S2-07",
+@@ -968,9 +972,11 @@
+       "evidence": [
+         "artifacts/release-v19/client-tax-final.log",
+         "artifacts/release-v19/types-release.log",
+-        "artifacts/release-v19/build-release.log"
++        "artifacts/release-v19/build-release.log",
++        "artifacts/continuation-2026-10-10/client-changed-syntax.log"
+       ],
+-      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
++      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
++      "notes": "Continuation fixes concrete customer/stock-count/batch/catalogue write authorization races and assistant saved alias/workflow cross-company ID writes. Client tests remain blocked on missing dependencies; exhaustive authorization + actor attribution still open."
+     },
+     {
+       "id": "S6-03",
+diff --git a/server/syncBackupVault.mjs b/server/syncBackupVault.mjs
+index e8dc0ea..6d155d6 100644
+--- a/server/syncBackupVault.mjs
++++ b/server/syncBackupVault.mjs
+@@ -2,7 +2,7 @@
+  * Caller must enforce verified session, membership, device and consent before use.
+  * This module stores only ciphertext and does not decrypt or restore client data.
+  */
+-import { open, mkdir, stat, readdir } from 'node:fs/promises';
++import { open, lstat } from 'node:fs/promises';
+ import { constants } from 'node:fs';
+ import { createHash, randomUUID } from 'node:crypto';
+ import { join, resolve } from 'node:path';
+@@ -26,7 +26,7 @@ export function createEncryptedBackupVault(root){
+   if(typeof root!=='string' || !root.startsWith('/') || root.includes('\0')) throw new Error('Absolute vault path required');
+   const directory=resolve(root);
+   async function verifiedDirectory(){
+-    const info=await stat(directory);
++    const info=await lstat(directory);
+     if(!info.isDirectory() || (info.mode & 0o077)!==0) throw new Error('Unsafe vault directory');
+   }
+   return Object.freeze({
+@@ -52,7 +52,11 @@ export function createEncryptedBackupVault(root){
+         const info=await fd.stat();
+         if(!info.isFile() || info.nlink!==1 || (info.mode & 0o077)!==0 || info.size>MAX*1.5+2048) throw new Error('Unsafe backup file');
+         const record=JSON.parse(await fd.readFile('utf8'));
+-        if(record.version!==1 || record.organizationId!==organizationId || !validId(record.deviceId)) throw new Error('Backup scope mismatch');
++        if(!record || typeof record!=='object' || Array.isArray(record) ||
++           Object.keys(record).sort().join(',')!=='ciphertext,createdAt,deviceId,organizationId,sha256,version' ||
++           record.version!==1 || record.organizationId!==organizationId || !validId(record.deviceId) ||
++           typeof record.createdAt!=='string' || !Number.isFinite(Date.parse(record.createdAt)))
++          throw new Error('Backup scope mismatch');
+         validateEncryptedBackupEnvelope({organizationId:record.organizationId,deviceId:record.deviceId,sha256:record.sha256,ciphertext:record.ciphertext});
+         return Object.freeze({backupId,organizationId,deviceId:record.deviceId,sha256:record.sha256,ciphertext:record.ciphertext,createdAt:record.createdAt});
+       } finally {await fd.close();}
+diff --git a/server/syncJournal.mjs b/server/syncJournal.mjs
+index 0d58f09..4718dbd 100644
+--- a/server/syncJournal.mjs
++++ b/server/syncJournal.mjs
+@@ -2,7 +2,8 @@
+  * Not wired to HTTP. All ingress remains disabled until authenticated persistence
+  * and remote replay/financial reconciliation are verified end-to-end.
+  */
+-import { open, lstat, mkdir, stat } from 'node:fs/promises';
++import { open, lstat } from 'node:fs/promises';
++import { constants } from 'node:fs';
+ import { resolve, dirname } from 'node:path';
+ const ID = /^[A-Za-z0-9:_-]{1,128}$/;
+ const DIGEST = /^[a-f0-9]{64}$/;
+@@ -33,19 +34,26 @@ async function withLock(lockFile, callback) {
+   // administrator intervention; never automatically break another writer's lock.
+   let handle;
+   for(let i=0;i<20;i++) {
+-    try {handle=await open(lockFile,'wx',0o600);break;}
++    try {handle=await open(lockFile,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);break;}
+     catch(e) {if(e.code!=='EEXIST' || i===19) throw e; await new Promise(r=>setTimeout(r,LOCK_RETRY_MS));}
+   }
++  // The exclusive lock is only valid while the pathname still names this
++  // exact private, single-link inode. Never unlink an unexpected replacement.
++  const original=await handle.stat();
++  if(!original.isFile() || original.nlink!==1 || (original.mode & 0o077)!==0) {
++    await handle.close(); throw new Error('Unsafe journal lock');
++  }
+   try {return await callback();} finally {
++    const current=await lstat(lockFile).catch(()=>null);
+     await handle.close();
+-    // Prevent removing an unrelated replacement lock file: only intended for
+-    // trusted single-host operators; unexpected lock tampering fails closed.
++    if(!current || !current.isFile() || current.dev!==original.dev || current.ino!==original.ino ||
++        current.nlink!==1 || (current.mode & 0o077)!==0) throw new Error('Journal lock was replaced; refusing to unlink it');
+     const {unlink}=await import('node:fs/promises'); await unlink(lockFile);
+   }
+ }
+ async function readJournal(filename) {
+   let handle;
+-  try {handle=await open(filename,'r');} catch(e) {if(e.code==='ENOENT') return []; throw e;}
++  try {handle=await open(filename,constants.O_RDONLY|constants.O_NOFOLLOW);} catch(e) {if(e.code==='ENOENT') return []; throw e;}
+   try {
+     const info=await handle.stat();
+     if(!info.isFile() || info.size>20_000_000 || (info.mode & 0o077)!==0 || info.nlink!==1) throw new Error('Unsafe journal file');
+@@ -70,7 +78,7 @@ export function createFileSyncJournal(filename) {
+   const pathname=resolve(filename);
+   async function guarded(action) {
+     const parent=dirname(pathname);
+-    const folder=await stat(parent);
++    const folder=await lstat(parent);
+     if(!folder.isDirectory() || (folder.mode & 0o022)!==0) throw new Error('Unsafe journal directory');
+     return withLock(pathname+'.lock',action);
+   }
+@@ -88,11 +96,10 @@ export function createFileSyncJournal(filename) {
+         const record={version:1,event:item,acceptedAt:new Date().toISOString()};
+         const serialized=JSON.stringify(record)+'\n';
+         // O_EXCL on initial creation, and O_NOFOLLOW for subsequent opens.
+-        const {constants}=await import('node:fs');
+         const fd=await open(pathname,constants.O_WRONLY|constants.O_APPEND|constants.O_CREAT|constants.O_NOFOLLOW,0o600);
+         try {
+           const before=await fd.stat();
+-          if(!before.isFile() || before.nlink!==1 || (before.mode & 0o077)!==0 || before.size>20_000_000) throw new Error('Unsafe journal target');
++          if(!before.isFile() || before.nlink!==1 || (before.mode & 0o077)!==0 || before.size+Buffer.byteLength(serialized)>20_000_000) throw new Error('Unsafe journal target');
+           await fd.writeFile(serialized); await fd.sync();
+         } finally {await fd.close();}
+         return Object.freeze({status:'stored',reason:null});
+diff --git a/server/tests/syncBackupVault.test.mjs b/server/tests/syncBackupVault.test.mjs
+index b900302..e8621e1 100644
+--- a/server/tests/syncBackupVault.test.mjs
++++ b/server/tests/syncBackupVault.test.mjs
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import {mkdtemp,chmod,rm} from 'node:fs/promises';
++import {mkdtemp,chmod,rm,symlink,writeFile,readFile} from 'node:fs/promises';
+ import {tmpdir} from 'node:os';
+ import {join} from 'node:path';
+ import {createHash} from 'node:crypto';
+@@ -13,3 +13,25 @@ test('invalid and empty ciphertext rejected',()=>{assert.throws(()=>validateEncr
+ test('vault rejects unsafe root directory',async()=>{const dir=await mkdtemp(join(tmpdir(),'vault-'));try{await chmod(dir,0o755);await assert.rejects(createEncryptedBackupVault(dir).store(envelope()),/Unsafe vault/)}finally{await rm(dir,{recursive:true,force:true})}});
+ test('vault writes immutable named ciphertext and reads within organization',async()=>{const dir=await mkdtemp(join(tmpdir(),'vault-'));try{await chmod(dir,0o700);const vault=createEncryptedBackupVault(dir);const stored=await vault.store(envelope());const read=await vault.read('org-a',stored.backupId);assert.equal(read.ciphertext,envelope().ciphertext);await assert.rejects(vault.read('org-b',stored.backupId),/scope mismatch/)}finally{await rm(dir,{recursive:true,force:true})}});
+ test('backup identifier traversal rejected',async()=>{const dir=await mkdtemp(join(tmpdir(),'vault-'));try{await chmod(dir,0o700);await assert.rejects(createEncryptedBackupVault(dir).read('org-a','../../etc/passwd'),/scope/)}finally{await rm(dir,{recursive:true,force:true})}});
++
++test('vault refuses symlink root even when its destination is private',async()=>{
++  const dir=await mkdtemp(join(tmpdir(),'vault-link-'));
++  try {
++    const linked=join(dir,'linked');
++    await symlink(dir,linked,'dir');
++    await assert.rejects(createEncryptedBackupVault(linked).store(envelope()),/Unsafe vault directory/);
++  } finally { await rm(dir,{recursive:true,force:true}); }
++});
++test('vault rejects records altered to include unrecognized fields or invalid creation dates',async()=>{
++  const dir=await mkdtemp(join(tmpdir(),'vault-record-'));
++  try {
++    const vault=createEncryptedBackupVault(dir);
++    const stored=await vault.store(envelope());
++    const path=join(dir,stored.backupId+'.backup');
++    const original=JSON.parse(await readFile(path,'utf8'));
++    await writeFile(path,JSON.stringify({...original,unexpected:'unsafe'}));
++    await assert.rejects(vault.read('org-a',stored.backupId),/scope mismatch/);
++    await writeFile(path,JSON.stringify({...original,createdAt:'not-a-date'}));
++    await assert.rejects(vault.read('org-a',stored.backupId),/scope mismatch/);
++  } finally { await rm(dir,{recursive:true,force:true}); }
++});
+diff --git a/server/tests/syncJournal.test.mjs b/server/tests/syncJournal.test.mjs
+index bd12f96..b9534d4 100644
+--- a/server/tests/syncJournal.test.mjs
++++ b/server/tests/syncJournal.test.mjs
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import {mkdtemp,rm,writeFile,chmod,readFile} from 'node:fs/promises';
++import {mkdtemp,rm,writeFile,chmod,symlink,readFile} from 'node:fs/promises';
+ import {tmpdir} from 'node:os';
+ import {join} from 'node:path';
+ import {createFileSyncJournal,validateJournalEvent,evaluateJournalEvent} from '../syncJournal.mjs';
+@@ -14,3 +14,24 @@ test('separate businesses and concurrent writers',()=>sandbox(async file=>{const
+ test('reject truncated journal rather than treating it as empty',()=>sandbox(async file=>{await writeFile(file,'{"version":1}',{mode:0o600});await assert.rejects(createFileSyncJournal(file).stageEvent(sample()));}));
+ test('reject writable journal files',()=>sandbox(async file=>{await writeFile(file,'',{mode:0o600});await chmod(file,0o666);await assert.rejects(createFileSyncJournal(file).stageEvent(sample()));}));
+ test('never expose a remote HTTP write route',async()=>{const {readFile}=await import('node:fs/promises');const gateway=await readFile(new URL('../index.ts',import.meta.url),'utf8');assert.ok(gateway.includes('Remote synchronization is not enabled.'));assert.equal(gateway.includes('stageEvent('),false);});
++
++test('reject a journal symlink even when its target has safe permissions',()=>sandbox(async file=>{
++  const target=file+'.target';
++  await writeFile(target,'',{mode:0o600});
++  await symlink(target,file);
++  const journal=createFileSyncJournal(file);
++  await assert.rejects(journal.inspect('business-a'),{code:'ELOOP'});
++  await assert.rejects(journal.stageEvent(sample()),{code:'ELOOP'});
++  assert.equal(await readFile(target,'utf8'),'');
++}));
++test('reject a symlink journal parent directory',async()=>{
++  const dir=await mkdtemp(join(tmpdir(),'tb-journal-parent-'));
++  try {
++    const actual=join(dir,'real');
++    const link=join(dir,'linked');
++    const {mkdir}=await import('node:fs/promises');
++    await mkdir(actual,{mode:0o700});
++    await symlink(actual,link,'dir');
++    await assert.rejects(createFileSyncJournal(join(link,'events.jsonl')).stageEvent(sample()),/Unsafe journal directory/);
++  } finally { await rm(dir,{recursive:true,force:true}); }
++});

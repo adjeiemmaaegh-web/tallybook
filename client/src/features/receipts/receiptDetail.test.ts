@@ -15,6 +15,15 @@ const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigat
 afterEach(() => { vi.restoreAllMocks(); if (navigatorDescriptor) Object.defineProperty(globalThis, "navigator", navigatorDescriptor); });
 
 describe("read-only receipt detail", () => {
+  it("distinguishes prepaid settlement from fresh cash received", () => {
+    const wallet: SaleSnapshot = { ...snapshot, sales: [{ ...snapshot.sales[0], paymentMethod: "wallet", walletAppliedMinor: 1500 }], payments: [] };
+    const detail = resolveReceiptDetail({ receiptId: "receipt-1", snapshot: wallet, profile, customers })!;
+    const text = formatReceiptShareText(detail);
+    expect(text).toMatch(/Settled: GHS\s15\.00/);
+    expect(text).toMatch(/Prepaid wallet used: GHS\s15\.00/);
+    expect(text).toMatch(/New cash received: GHS\s0\.00/);
+    expect(text).toMatch(/Remaining: GHS\s30\.00/);
+  });
   it("reconstructs original part-paid Mobile Money sale facts without changing the saved records", () => {
     const original = JSON.stringify(snapshot);
     const detail = resolveReceiptDetail({ receiptId: "receipt-1", snapshot, profile, customers });
@@ -36,7 +45,7 @@ describe("read-only receipt detail", () => {
     expect(text).toContain("Customer: Ama Mensah");
     expect(text).toContain("Cooking oil × 2");
     expect(text).toMatch(/Discount: GHS\s5\.00/);
-    expect(text).toMatch(/Paid: GHS\s15\.00/);
+    expect(text).toMatch(/Settled: GHS\s15\.00/);
     expect(text).toMatch(/Remaining: GHS\s30\.00/);
     expect(text).toContain("Payment: Mobile Money · MTN MoMo · Ref MOMO-77");
     expect(text).not.toContain("sale-1");
@@ -75,6 +84,6 @@ describe("read-only receipt detail", () => {
 
     expect(detail.sale).toMatchObject({ totalMinor: 4500, amountPaidMinor: 0, outstandingMinor: 4500 });
     expect(receiptPaymentDescription(detail)).toBe("Credit · Pay later");
-    expect(formatReceiptShareText(detail)).toMatch(/Paid: GHS\s0\.00[\s\S]*Remaining: GHS\s45\.00/);
+    expect(formatReceiptShareText(detail)).toMatch(/Settled: GHS\s0\.00[\s\S]*Remaining: GHS\s45\.00/);
   });
 });

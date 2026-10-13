@@ -1,6 +1,6 @@
 /** Tallybook Africa design reminder: receipt views are read-only local facts; sharing and printing must never mutate a sale, payment, stock record, balance, or receipt. */
 import { formatMinorAmount } from "@/features/inventory/inventory";
-import { shareBusinessText, type BusinessShareResult } from "@/features/sharing/businessSharing";
+import { shareBusinessText, type ShareBusinessTextResult } from "@/features/sharing/businessSharing";
 import { paymentMethodLabel, type Payment, type Receipt, type Sale, type SaleLine, type SaleSnapshot } from "@/features/sales/sales";
 
 export interface ReceiptDetailProfile { name: string; currency: string; }
@@ -52,8 +52,17 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
     "",
     `Subtotal: ${formatMinorAmount(detail.sale.subtotalMinor, detail.currency)}`,
     discount,
+    ...(detail.sale.tax ? [`${detail.sale.tax.policy.label} (${detail.sale.tax.policy.rateBasisPoints / 100}%, ${detail.sale.tax.policy.priceMode}): ${formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}`, `Before tax: ${formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}`, ...(detail.sale.tax.policy.registrationNumber ? [`Tax registration: ${detail.sale.tax.policy.registrationNumber}`] : [])] : []),
     `Total: ${formatMinorAmount(detail.sale.totalMinor, detail.currency)}`,
-    `Paid: ${formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}`,
+    `Settled: ${formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}`,
+    ...(detail.sale.walletAppliedMinor ? [
+      `Prepaid wallet used: ${formatMinorAmount(detail.sale.walletAppliedMinor, detail.currency)}`,
+      `New cash received: ${formatMinorAmount(detail.sale.amountPaidMinor - detail.sale.walletAppliedMinor, detail.currency)}`,
+    ] : []),
+    ...(detail.sale.loyaltyRedeemedPoints ? [
+      `Loyalty points redeemed: ${detail.sale.loyaltyRedeemedPoints}`,
+      `Loyalty discount: ${formatMinorAmount(detail.sale.loyaltyRedeemedMinor ?? 0, detail.currency)}`,
+    ] : []),
     `Remaining: ${formatMinorAmount(detail.sale.outstandingMinor, detail.currency)}`,
     payment,
     "",
@@ -61,7 +70,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
   ].filter((line): line is string => Boolean(line)).join("\n");
 }
 
-export type ReceiptShareResult = BusinessShareResult;
+export type ReceiptShareResult = ShareBusinessTextResult;
 
 export async function shareReceiptText(text: string): Promise<ReceiptShareResult> {
   return shareBusinessText({ title: "Tallybook receipt", text });

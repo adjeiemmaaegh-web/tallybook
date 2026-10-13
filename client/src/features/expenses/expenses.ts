@@ -1,3 +1,4 @@
+import { activeStaffShift, requirePermission } from "@/features/staff/staff";
 /** Tallybook Africa Stage 8 design reminder: expenses are small, immutable local facts; they never alter stock, purchases, sales, collections, debt, or product prices. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -22,10 +23,14 @@ export interface Expense {
   businessProfileId: string;
   category: ExpenseCategory;
   amountMinor: number;
+  /** Currency captured when recorded; absent on unverified legacy expenses. */
+  currency?: string;
   expenseDate: string;
   note?: string;
   submissionKey: string;
   createdAt: string;
+  staffId?: string;
+  shiftId?: string;
 }
 
 export interface ExpenseFormValues { category: ExpenseCategory; amount: string; expenseDate: string; note?: string; }
@@ -59,20 +64,30 @@ function parseExpenseAmount(amount: string, currency: string) {
 }
 
 export async function createExpense(values: CreateExpenseInput, database: TallybookDB = db) {
+  const staff=await requirePermission("inventory", database);
+  const shift=await activeStaffShift(staff,database);
   const input = expenseFormSchema.parse(values);
   validateExpenseDate(input.expenseDate);
+  if (!/^[A-Z]{3}$/.test(values.currency)) throw new Error("Use a valid three-letter expense currency.");
   const amountMinor = parseExpenseAmount(input.amount, values.currency);
   const now = new Date().toISOString();
   const submissionKey = values.submissionKey ?? nanoid(18);
-  return database.transaction("rw", database.expenses, async () => {
+  return database.transaction("rw", database.expenses, database.staffAudits, async () => {
     const activeId = getActiveBusinessProfileId();
     const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
-    if (existing) return existing;
+    if (existing) {
+      if (existing.category !== input.category || existing.amountMinor !== amountMinor || existing.currency !== values.currency ||
+          existing.expenseDate !== input.expenseDate || (existing.note ?? "") !== (input.note?.trim() ?? ""))
+        throw new Error("This submission key was already used for a different expense. Review the saved record before retrying.");
+      return existing;
+    }
     const expense: Expense = {
-      id: nanoid(14), businessProfileId: getActiveBusinessProfileId(), category: input.category, amountMinor, expenseDate: input.expenseDate,
+      id: nanoid(14), businessProfileId: getActiveBusinessProfileId(), category: input.category, amountMinor, currency: values.currency, expenseDate: input.expenseDate,
       note: input.note?.trim() || undefined, submissionKey, createdAt: now,
+      ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}),
     };
     await database.expenses.add(expense);
+    if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'expense.recorded',createdAt:now,details:expense.id});
     return expense;
   });
 }

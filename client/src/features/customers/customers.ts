@@ -1,8 +1,11 @@
+import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger customer reminder: people records stay local, and financial figures are never invented before a real transaction exists. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 
 export const CUSTOMER_BUSINESS_ID = "primary" as const;
 export const customerStatuses = ["active", "inactive"] as const;
@@ -48,40 +51,61 @@ export function customerFormValues(customer?: Customer | null): CustomerFormValu
 export async function getCustomerSnapshot(database: TallybookDB = db): Promise<CustomerSnapshot> {
   const activeId = getActiveBusinessProfileId();
   const allCustomers = (await database.customers.orderBy("name").toArray()).filter((customer) => customer.businessProfileId === activeId);
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
   return { customers: allCustomers.filter((customer) => !customer.archivedAt), archivedCustomers: allCustomers.filter((customer) => Boolean(customer.archivedAt)) };
 }
 
 export async function createCustomer(values: CustomerFormValues, database: TallybookDB = db) {
-  const input = customerFormSchema.parse(values);
-  const now = new Date().toISOString();
-  const normalizedName = normalizeCustomerName(input.name);
-  const activeId = getActiveBusinessProfileId();
-  const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && !customer.archivedAt).first();
-  if (duplicate) throw new Error("An active customer with this name already exists.");
-  const customer: Customer = { id: nanoid(12), businessProfileId: getActiveBusinessProfileId(), name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, createdAt: now, updatedAt: now };
-  await database.customers.add(customer);
-  return customer;
+  return withCoordinatedRetailWrite(async () => {
+    const input = customerFormSchema.parse(values);
+    const activeId = getActiveBusinessProfileId();
+    const normalizedName = normalizeCustomerName(input.name);
+    return database.transaction("rw", [database.customers, database.staffMembers], async () => {
+      await requirePermission("sell", database, activeId);
+      const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && !customer.archivedAt).first();
+      if (duplicate) throw new Error("An active customer with this name already exists.");
+      const now = new Date().toISOString();
+      const customer: Customer = { id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, createdAt: now, updatedAt: now };
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+      await database.customers.add(customer);
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+      return customer;
+    });
+  });
 }
 
 export async function updateCustomer(customerId: string, values: CustomerFormValues, database: TallybookDB = db) {
-  const input = customerFormSchema.parse(values);
-  const existing = await database.customers.get(customerId);
-  if (!existing || existing.businessProfileId !== getActiveBusinessProfileId() || existing.archivedAt) throw new Error("This customer is no longer active.");
-  const normalizedName = normalizeCustomerName(input.name);
-  const activeId = getActiveBusinessProfileId();
-  const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && customer.id !== customerId && !customer.archivedAt).first();
-  if (duplicate) throw new Error("An active customer with this name already exists.");
-  const updated: Customer = { ...existing, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, updatedAt: new Date().toISOString() };
-  await database.customers.put(updated);
-  return updated;
+  return withCoordinatedRetailWrite(async () => {
+    const input = customerFormSchema.parse(values);
+    const activeId = getActiveBusinessProfileId();
+    return database.transaction("rw", [database.customers, database.staffMembers], async () => {
+      await requirePermission("staff", database, activeId);
+      const existing = await database.customers.get(customerId);
+      if (!existing || existing.businessProfileId !== activeId || existing.archivedAt) throw new Error("This customer is no longer active.");
+      const normalizedName = normalizeCustomerName(input.name);
+      const duplicate = await database.customers.where("normalizedName").equals(normalizedName).and((customer) => customer.businessProfileId === activeId && customer.id !== customerId && !customer.archivedAt).first();
+      if (duplicate) throw new Error("An active customer with this name already exists.");
+      const updated: Customer = { ...existing, name: input.name.trim(), normalizedName, phone: input.phone.trim(), email: cleanOptional(input.email), address: cleanOptional(input.address), notes: cleanOptional(input.notes), status: input.status, updatedAt: new Date().toISOString() };
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+      await database.customers.put(updated);
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+      return updated;
+    });
+  });
 }
 
 export async function archiveCustomer(customerId: string, database: TallybookDB = db) {
-  const customer = await database.customers.get(customerId);
-  if (!customer || customer.businessProfileId !== getActiveBusinessProfileId() || customer.archivedAt) throw new Error("This customer is already archived or unavailable.");
-  const archived = { ...customer, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-  await database.customers.put(archived);
-  return archived;
+  return withCoordinatedRetailWrite(async () => {
+    const activeId = getActiveBusinessProfileId();
+    return database.transaction("rw", [database.customers, database.staffMembers], async () => {
+      await requirePermission("staff", database, activeId);
+      const customer = await database.customers.get(customerId);
+      if (!customer || customer.businessProfileId !== activeId || customer.archivedAt) throw new Error("This customer is already archived or unavailable.");
+      const archived = { ...customer, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      await database.customers.put(archived);
+      return archived;
+    });
+  });
 }
 
 export function searchCustomers(customers: Customer[], query: string) {

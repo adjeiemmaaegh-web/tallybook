@@ -1,0 +1,2 @@
+import type {SyncJournalEvent,JournalDecision} from './syncJournal.mjs';
+export declare function stageAuthenticatedEvent(headers:{authorization?:string;organizationId?:string;deviceId?:string;session?:string},event:SyncJournalEvent,config:unknown):Promise<Readonly<{organizationId:string;eventId:string;operationId:string;status:JournalDecision['status'];reason:string|null;financialReplicationEnabled:false}>>;

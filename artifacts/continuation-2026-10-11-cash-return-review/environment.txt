@@ -1,0 +1,6 @@
+Host: Linux isolated container
+Runtime: Node v22.16.0 (project pins Node24.19.0)
+Tools: global TypeScript parser available. Project node_modules and pnpm unavailable.
+No staging, provider, actual cash, physical printer, or customer database used.
+Command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+Command: node --test server/tests/paymentGateway.test.mjs

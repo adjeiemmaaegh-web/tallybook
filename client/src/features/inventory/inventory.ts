@@ -1,12 +1,17 @@
+import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
+import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger design reminder: stock is never silently overwritten—every quantity change leaves a clear local movement record. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
+import { appendInventoryCostChange } from "./costLedger";
 
 export const INVENTORY_BUSINESS_ID = "primary" as const;
 
-export const stockMovementTypes = ["initial", "increase", "decrease", "correction", "sale", "purchase"] as const;
+export const stockMovementTypes = ["initial", "increase", "decrease", "correction", "sale", "purchase", "reversal"] as const;
 export type StockMovementType = (typeof stockMovementTypes)[number];
 
 export interface ProductCategory {
@@ -25,6 +30,18 @@ export interface Product {
   name: string;
   normalizedName: string;
   sku?: string;
+  barcode?: string;
+  /** Optional family reference. Every variant is still an independent stocked SKU. */
+  parentProductId?: string;
+  variantLabel?: string;
+  /** The existing sales ledger remains integer-unit based. */
+  baseUnit?: string;
+  packSize?: number;
+  wholesalePriceMinor?: number;
+  wholesaleMinimumQuantity?: number;
+  itemKind?: "stock" | "service";
+  /** Restricted-size local image; no remote fetch. */
+  imageDataUrl?: string;
   categoryId?: string;
   sellingPriceMinor: number;
   costPriceMinor?: number;
@@ -66,6 +83,7 @@ export const categoryFormSchema = z.object({ name: nameSchema });
 export const productFormSchema = z.object({
   name: nameSchema,
   sku: optionalText(48, "Reference"),
+  barcode: optionalText(64, "Barcode"),
   categoryId: z.string(),
   sellingPrice: requiredAmount("Selling price"),
   costPrice: optionalAmount("Cost price"),
@@ -108,9 +126,14 @@ export function normalizeMoneyInput(value: string) {
 }
 
 export function parseAmountToMinor(value: string, currency: string) {
-  const parsed = Number(normalizeMoneyInput(value));
-  if (!Number.isFinite(parsed) || parsed < 0) throw new Error("Enter a valid amount.");
-  return Math.round(parsed * currencyMinorDivisor(currency));
+  const normalized = normalizeMoneyInput(value) || "0";
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) throw new Error("Enter a valid amount.");
+  const [whole, fraction = ""] = normalized.split(".");
+  const divisor = currencyMinorDivisor(currency);
+  if (divisor === 1 && Number(fraction) !== 0) throw new Error("This currency requires a whole amount.");
+  const result = Number(whole) * divisor + (divisor === 1 ? 0 : Number(fraction.padEnd(2, "0")));
+  if (!Number.isSafeInteger(result) || result < 0) throw new Error("Amount exceeds safe limits.");
+  return result;
 }
 
 export function formatMinorAmount(value: number, currency: string) {
@@ -121,11 +144,12 @@ function cleanOptional(value: string | undefined) { const cleaned = value?.trim(
 
 export async function getInventorySnapshot(database: TallybookDB = db): Promise<InventorySnapshot> {
   const activeId = getActiveBusinessProfileId();
-  const [allCategories, allProducts, allMovements] = await Promise.all([
+  const [allCategories, allProducts, allMovements] = await database.transaction("r", [database.categories, database.products, database.inventoryMovements], async () => Promise.all([
     database.categories.orderBy("name").toArray(),
     database.products.orderBy("name").toArray(),
     database.inventoryMovements.orderBy("createdAt").reverse().toArray(),
-  ]);
+  ]));
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
   const categories = allCategories.filter((category) => category.businessProfileId === activeId);
   const products = allProducts.filter((product) => product.businessProfileId === activeId);
   const movements = allMovements.filter((movement) => movement.businessProfileId === activeId);
@@ -138,84 +162,146 @@ export async function getInventorySnapshot(database: TallybookDB = db): Promise<
 }
 
 export async function createCategory(values: CategoryFormValues, database: TallybookDB = db) {
-  const input = categoryFormSchema.parse(values);
-  const now = new Date().toISOString();
-  const normalizedName = normalizeName(input.name);
-  const activeId = getActiveBusinessProfileId();
-  const duplicate = await database.categories.where("normalizedName").equals(normalizedName).and((category) => category.businessProfileId === activeId && !category.archivedAt).first();
-  if (duplicate) throw new Error("A category with this name already exists.");
-  const category: ProductCategory = { id: nanoid(12), businessProfileId: getActiveBusinessProfileId(), name: input.name.trim(), normalizedName, createdAt: now, updatedAt: now };
-  await database.categories.add(category);
-  return category;
+  return withCoordinatedRetailWrite(async () => {
+    const input = categoryFormSchema.parse(values);
+    const now = new Date().toISOString();
+    const normalizedName = normalizeName(input.name);
+    const activeId = getActiveBusinessProfileId();
+    return database.transaction("rw", [database.categories, database.staffMembers], async () => {
+    await requirePermission("inventory", database, activeId);
+    const duplicate = await database.categories.where("normalizedName").equals(normalizedName).and((category) => category.businessProfileId === activeId && !category.archivedAt).first();
+    if (duplicate) throw new Error("A category with this name already exists.");
+    const category: ProductCategory = { id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName, createdAt: now, updatedAt: now };
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
+    await database.categories.add(category);
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
+    return category;
+    });
+  });
+}
+
+/** Normalized identifiers must be unique among active items of the same company. */
+export function normalizeProductCode(value: string | undefined) { return value?.trim().toLocaleLowerCase() ?? ""; }
+
+async function assertUniqueProductCodes(database: TallybookDB, companyId: string, sku: string | undefined, barcode: string | undefined, excludeId?: string) {
+  const identifiers = [normalizeProductCode(sku), normalizeProductCode(barcode)].filter(Boolean);
+  if (new Set(identifiers).size !== identifiers.length) throw new Error("SKU and barcode must be different identifiers.");
+  if (!identifiers.length) return;
+  const products = await database.products.toArray();
+  for (const product of products) {
+    if (product.businessProfileId !== companyId || product.archivedAt || product.id === excludeId) continue;
+    const existing = [normalizeProductCode(product.sku), normalizeProductCode(product.barcode)].filter(Boolean);
+    if (identifiers.some((code) => existing.includes(code))) throw new Error("This SKU or barcode is already assigned to an active product.");
+  }
 }
 
 export async function createProduct(values: ProductFormValues, currency: string, database: TallybookDB = db) {
-  const input = productFormSchema.parse(values);
-  const now = new Date().toISOString();
-  const normalizedName = normalizeName(input.name);
-  const initialStock = Number(input.initialStock);
-  const activeId = getActiveBusinessProfileId();
-  const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
-  if (duplicate) throw new Error("An active product with this name already exists.");
-  if (input.categoryId !== "uncategorized") {
-    const category = await database.categories.get(input.categoryId);
-    if (!category || category.businessProfileId !== getActiveBusinessProfileId() || category.archivedAt) throw new Error("Choose an active category or leave the product uncategorized.");
-  }
-  const product: Product = {
-    id: nanoid(12), businessProfileId: getActiveBusinessProfileId(), name: input.name.trim(), normalizedName,
-    sku: cleanOptional(input.sku), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId,
-    sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined,
-    stockQuantity: initialStock, lowStockThreshold: Number(input.lowStockThreshold), createdAt: now, updatedAt: now,
-  };
-  const initialMovement: InventoryMovement = { id: nanoid(14), businessProfileId: getActiveBusinessProfileId(), productId: product.id, movementType: "initial", quantityDelta: initialStock, previousQuantity: 0, resultingQuantity: initialStock, note: "Opening stock", createdAt: now };
-  await database.transaction("rw", database.products, database.inventoryMovements, async () => {
-    await database.products.add(product);
-    await database.inventoryMovements.add(initialMovement);
+  return withCoordinatedRetailWrite(async () => {
+    const input = productFormSchema.parse(values);
+    const now = new Date().toISOString();
+    const normalizedName = normalizeName(input.name);
+    const initialStock = Number(input.initialStock);
+    const activeId = getActiveBusinessProfileId();
+    return database.transaction("rw", [database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers], async () => {
+    await requirePermission("inventory", database, activeId);
+    const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
+    if (duplicate) throw new Error("An active product with this name already exists.");
+    if (input.categoryId !== "uncategorized") {
+      const category = await database.categories.get(input.categoryId);
+      if (!category || category.businessProfileId !== activeId || category.archivedAt) throw new Error("Choose an active category or leave the product uncategorized.");
+    }
+    const product: Product = {
+      id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName,
+      sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId,
+      sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined,
+      stockQuantity: initialStock, lowStockThreshold: Number(input.lowStockThreshold), createdAt: now, updatedAt: now,
+    };
+    const initialMovement: InventoryMovement = { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "initial", quantityDelta: initialStock, previousQuantity: 0, resultingQuantity: initialStock, note: "Opening stock", createdAt: now };
+      await assertUniqueProductCodes(database, activeId, input.sku, input.barcode);
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+      await database.products.add(product);
+      await database.inventoryMovements.add(initialMovement);
+      await appendInventoryCostChange(database, product, initialStock, { sourceId: initialMovement.id, createdAt: now }, { opening: true, unitCostMinor: product.costPriceMinor });
+      assertCompanyScope(activeId, getActiveBusinessProfileId());
+    return product;
+    });
   });
-  return product;
 }
 
 export async function updateProduct(productId: string, values: ProductFormValues, currency: string, database: TallybookDB = db) {
-  const input = productFormSchema.parse(values);
-  const existing = await database.products.get(productId);
-  if (!existing || existing.businessProfileId !== getActiveBusinessProfileId() || existing.archivedAt) throw new Error("This product is no longer active.");
-  const normalizedName = normalizeName(input.name);
-  const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.id !== productId && !product.archivedAt).first();
-  if (duplicate) throw new Error("An active product with this name already exists.");
-  if (input.categoryId !== "uncategorized") {
-    const category = await database.categories.get(input.categoryId);
-    if (!category || category.businessProfileId !== getActiveBusinessProfileId() || category.archivedAt) throw new Error("Choose an active category or leave the product uncategorized.");
-  }
-  const initialStock = Number(input.initialStock);
-  if (initialStock !== existing.stockQuantity) throw new Error("Use Adjust stock to change the quantity so the history remains complete.");
-  const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
-  await database.products.put(updated);
-  return updated;
+  return withCoordinatedRetailWrite(async () => {
+    const company = getActiveBusinessProfileId();
+    const input = productFormSchema.parse(values);
+    return database.transaction("rw", [database.products, database.categories, database.staffMembers], async () => {
+    await requirePermission("inventory", database, company);
+    const existing = await database.products.get(productId);
+    if (!existing || existing.businessProfileId !== company || existing.archivedAt) throw new Error("This product is no longer active.");
+    const normalizedName = normalizeName(input.name);
+    const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === company && product.id !== productId && !product.archivedAt).first();
+    if (duplicate) throw new Error("An active product with this name already exists.");
+    if (input.categoryId !== "uncategorized") {
+      const category = await database.categories.get(input.categoryId);
+      if (!category || category.businessProfileId !== company || category.archivedAt) throw new Error("Choose an active category or leave the product uncategorized.");
+    }
+    const initialStock = Number(input.initialStock);
+    if (initialStock !== existing.stockQuantity) throw new Error("Use Adjust stock to change the quantity so the history remains complete.");
+    const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
+      await assertUniqueProductCodes(database, existing.businessProfileId, input.sku, input.barcode, productId);
+      assertCompanyScope(company, getActiveBusinessProfileId());
+      await database.products.put(updated);
+      assertCompanyScope(company, getActiveBusinessProfileId());
+    return updated;
+    });
+  });
 }
 
 export async function archiveProduct(productId: string, database: TallybookDB = db) {
-  const product = await database.products.get(productId);
-  if (!product || product.businessProfileId !== getActiveBusinessProfileId() || product.archivedAt) throw new Error("This product is already archived or unavailable.");
-  const archived = { ...product, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-  await database.products.put(archived);
-  return archived;
+  return withCoordinatedRetailWrite(async () => {
+    const company = getActiveBusinessProfileId();
+    return database.transaction("rw", [database.products, database.staffMembers], async () => {
+    await requirePermission("inventory", database, company);
+    const product = await database.products.get(productId);
+    if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is already archived or unavailable.");
+    const archived = { ...product, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    assertCompanyScope(company, getActiveBusinessProfileId());
+    await database.products.put(archived);
+    assertCompanyScope(company, getActiveBusinessProfileId());
+    return archived;
+    });
+  });
 }
 
 export async function adjustStock(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
+  // Acquire the cross-tab shared lock before opening the IndexedDB write transaction.
+  return withCrossTabDataLock("shared", () => adjustStockWhileLocked(productId, values, database));
+}
+
+async function adjustStockWhileLocked(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
   const input = stockAdjustmentSchema.parse(values);
-  const product = await database.products.get(productId);
-  if (!product || product.businessProfileId !== getActiveBusinessProfileId() || product.archivedAt) throw new Error("This product is unavailable for adjustment.");
-  const requested = Number(input.quantity);
-  const quantityDelta = input.movementType === "increase" ? requested : input.movementType === "decrease" ? -requested : requested - product.stockQuantity;
-  const resultingQuantity = product.stockQuantity + quantityDelta;
-  if (resultingQuantity < 0) throw new Error("You cannot reduce stock below zero.");
-  const now = new Date().toISOString();
-  const movement: InventoryMovement = { id: nanoid(14), businessProfileId: getActiveBusinessProfileId(), productId, movementType: input.movementType, quantityDelta, previousQuantity: product.stockQuantity, resultingQuantity, note: cleanOptional(input.note), createdAt: now };
-  await database.transaction("rw", database.products, database.inventoryMovements, async () => {
+  const company = getActiveBusinessProfileId();
+  return database.transaction("rw", [database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+    const staff = await requirePermission("inventory", database, company);
+    const product = await database.products.get(productId);
+    if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is unavailable for adjustment.");
+    if (product.itemKind === "service") throw new Error("Services cannot have physical stock adjustments.");
+    if (!Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < 0) throw new Error("Stock needs reconciliation before adjustment.");
+    const requested = Number(input.quantity);
+    const quantityDelta = input.movementType === "increase" ? requested : input.movementType === "decrease" ? -requested : requested - product.stockQuantity;
+    const resultingQuantity = product.stockQuantity + quantityDelta;
+    if (resultingQuantity < 0) throw new Error("You cannot reduce stock below zero.");
+    if (!Number.isSafeInteger(resultingQuantity) || resultingQuantity > 9_999_999) throw new Error("Stock quantity exceeds supported limits.");
+    const batches = await database.inventoryBatches.where("productId").equals(productId).and(b => b.businessProfileId === company).toArray();
+    if (quantityDelta && batches.length) throw new Error("Reconcile batches before changing tracked stock.");
+    const now = new Date().toISOString();
+    const movement: InventoryMovement = { id: nanoid(14), businessProfileId: company, productId, movementType: input.movementType, quantityDelta, previousQuantity: product.stockQuantity, resultingQuantity, note: cleanOptional(input.note), createdAt: now };
+    assertCompanyScope(company, getActiveBusinessProfileId());
+    await appendInventoryCostChange(database, product, quantityDelta, { sourceId: movement.id, createdAt: now });
     await database.products.put({ ...product, stockQuantity: resultingQuantity, updatedAt: now });
     await database.inventoryMovements.add(movement);
+    if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:staff.businessProfileId,staffId:staff.id,action:'inventory.adjusted',createdAt:now,details:movement.id});
+    assertCompanyScope(company, getActiveBusinessProfileId());
+    return movement;
   });
-  return movement;
 }
 
 export function isLowStock(product: Product) { return product.stockQuantity <= product.lowStockThreshold; }

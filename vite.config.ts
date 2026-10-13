@@ -66,6 +66,10 @@ export default defineConfig({
     setupFiles: [path.resolve(import.meta.dirname, "client/src/test/setup.ts")],
     include: ["src/**/*.test.{ts,tsx}"],
     clearMocks: true,
+    // Bound concurrent jsdom workers and allow real PBKDF2 work on slower CI hosts.
+    maxWorkers: 2,
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
   server: {
     port: 3000,

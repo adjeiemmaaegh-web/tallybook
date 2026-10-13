@@ -1,0 +1,90 @@
+import { auditLocalIntegrity } from "@/features/reliability/integrity";
+import Dexie from "dexie";
+import { afterEach, expect, it, vi } from "vitest";
+import { calculateTax, taxPolicyKey, type TaxPolicy } from "./tax";
+import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
+import { saveBusinessProfile } from "@/features/business/businessProfile";
+import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { createProduct } from "@/features/inventory/inventory";
+import { completeSale, getSaleSnapshot } from "./sales";
+import { recoverSavedCheckout } from "./recoverSavedCheckout";
+import { createBackup, parseBackup, restoreBackup } from "@/features/backup/backup";
+import { getFinancialSummary } from "@/features/reports/financialIntelligence";
+import { executeLatestSaleReversal } from "@/features/assistant/reversals";
+import { createStaff, unlockStaff, lockStaff } from "@/features/staff/staff";
+import { formatReceiptShareText, resolveReceiptDetail } from "@/features/receipts/receiptDetail";
+
+const policy: TaxPolicy = { enabled: true, registrationStatus: "registered", registrationNumber: "TEST-ONLY", label: "Example tax", rateBasisPoints: 1250, priceMode: "exclusive" };
+const profile = {name:"Tax shop", country:"Ghana", currency:"GHS", businessType:"Retail"};
+const databases: TallybookDB[] = [];
+async function fixture(taxPolicy?: TaxPolicy) {
+  setActiveBusinessProfileId("primary");lockStaff("primary");
+  const db = new TallybookDB(`tax-${crypto.randomUUID()}`);databases.push(db);await initializeDatabase(db);
+  await saveBusinessProfile({...profile, taxPolicy},db);
+  const product=await createProduct({name:"Rice",categoryId:"uncategorized",sellingPrice:"10",costPrice:"1",initialStock:"3",lowStockThreshold:"1"},"GHS",db);
+  const input={lines:[{productId:product.id,quantity:1}],discount:"2",amountPaid:"9",paymentMethod:"cash" as const,currency:"GHS",submissionKey:"tax-checkout-01",taxReviewKey:taxPolicyKey(taxPolicy)};
+  return {db,product,input};
+}
+afterEach(async()=>{vi.restoreAllMocks();lockStaff("primary");setActiveBusinessProfileId("primary");for(const db of databases.splice(0)){db.close();await new Dexie(db.name).delete();}});
+
+it("keeps tax off by default and calculates exact invoice half-up inclusive/exclusive amounts",()=>{
+  expect(calculateTax(999)).toBeUndefined();
+  expect(calculateTax(999,{...policy,enabled:false})).toBeUndefined();
+  expect(calculateTax(800,policy)).toMatchObject({taxableMinor:800,taxMinor:100,totalMinor:900});
+  expect(calculateTax(900,{...policy,priceMode:"inclusive"})).toMatchObject({taxableMinor:800,taxMinor:100,totalMinor:900});
+  expect(calculateTax(4,policy)?.taxMinor).toBe(1);
+  expect(()=>calculateTax(Number.MAX_SAFE_INTEGER,policy)).toThrow(/safe money/);
+  expect(()=>calculateTax(100,{...policy,registrationStatus:"unknown"})).toThrow(/registered status/);
+});
+it("records discounted tax, receipt, recovery and net-of-tax cost reporting together",async()=>{
+  const {db,input}=await fixture(policy);const saved=await completeSale(input,db);
+  expect(saved.sale).toMatchObject({subtotalMinor:1000,discountMinor:200,totalMinor:900,outstandingMinor:0,tax:{taxMinor:100,taxableMinor:800}});
+  expect((await auditLocalIntegrity(db)).issues).toEqual([]);
+  const snapshot=await getSaleSnapshot(db);
+  expect(recoverSavedCheckout(snapshot,"primary",input.submissionKey)?.sale.id).toBe(saved.sale.id);
+  const detail=resolveReceiptDetail({receiptId:saved.receipt.id,snapshot,profile,customers:[]})!;
+  expect(formatReceiptShareText(detail)).toContain("Example tax (12.5%, exclusive)");
+  expect(await getFinancialSummary("today",new Date(),undefined,undefined,db)).toMatchObject({recordedTaxMinor:100,salesExcludingRecordedTaxMinor:800,cogsMinor:100,salesLessCostMinor:700});
+});
+it("preserves the original tax snapshot on retries after a policy change and reverses it exactly",async()=>{
+  const {db,input}=await fixture(policy);const first=await completeSale(input,db);
+  await saveBusinessProfile({...profile,taxPolicy:{...policy,rateBasisPoints:2000}},db);
+  expect((await completeSale(input,db)).sale.tax).toEqual(first.sale.tax);
+  await executeLatestSaleReversal("GHS",db,"tax-reversal");
+  expect(await getFinancialSummary("today",new Date(),undefined,undefined,db)).toMatchObject({recordedTaxMinor:0,salesExcludingRecordedTaxMinor:0,salesLessCostMinor:0});
+});
+it("rejects stale or missing tax review without a sale or stock write",async()=>{
+  const {db,product,input}=await fixture(policy);
+  for(const taxReviewKey of [undefined,"off"]) await expect(completeSale({...input,taxReviewKey},db)).rejects.toThrow(/review/);
+  expect(await db.sales.count()).toBe(0);expect((await db.products.get(product.id))?.stockQuantity).toBe(3);
+});
+it("rolls back a taxed checkout after a receipt storage failure",async()=>{
+  const {db,product,input}=await fixture(policy);
+  vi.spyOn(db.receipts,"add").mockRejectedValueOnce(new Error("disk full"));
+  await expect(completeSale(input,db)).rejects.toThrow("disk full");
+  expect(await db.sales.count()).toBe(0);expect(await db.inventoryCostEvents.count()).toBe(1);
+  expect((await db.products.get(product.id))?.stockQuantity).toBe(3);
+});
+it("backs up and restores policy and immutable receipts, rejects altered tax",async()=>{
+  const {db,input}=await fixture(policy);await completeSale(input,db);const backup=await createBackup(db);
+  const tampered=structuredClone(backup);tampered.records.sales[0].tax!.taxMinor++;
+  expect(()=>parseBackup(JSON.stringify(tampered))).toThrow(/tax amounts/);
+  const invalid=structuredClone(backup);invalid.records.businessProfiles[0].taxPolicy!.registrationStatus="unknown";
+  expect(()=>parseBackup(JSON.stringify(invalid))).toThrow(/registered status/);
+  await restoreBackup(backup,db);
+  expect((await db.businessProfiles.get("primary"))?.taxPolicy).toEqual(policy);
+  expect((await db.sales.toArray())[0].tax?.taxMinor).toBe(100);
+});
+it("keeps tax policies scoped to their business",async()=>{
+  const {db}=await fixture(policy);setActiveBusinessProfileId("second-company");
+  await saveBusinessProfile({...profile,name:"Second company"},db);
+  expect((await db.businessProfiles.get("second-company"))?.taxPolicy).toBeUndefined();
+  expect((await db.businessProfiles.get("primary"))?.taxPolicy).toEqual(policy);
+});
+it("denies tax changes from cashier and locked owner sessions",async()=>{
+  const {db}=await fixture();const owner=await createStaff("Owner","owner","123456",db);await unlockStaff(owner.id,"123456",db);
+  const cashier=await createStaff("Cashier","cashier","654321",db);await unlockStaff(cashier.id,"654321",db);
+  await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/permission denied/);
+  lockStaff("primary");await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/locked/);
+  expect((await db.businessProfiles.get("primary"))?.taxPolicy).toBeUndefined();
+});

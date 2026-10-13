@@ -1,0 +1,34 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ts = require('typescript');
+const source = fs.readFileSync('client/src/features/stores/storeDirectory.ts','utf8');
+const code = ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+let company='a', actor={id:'staff-a'}, serial=0;
+const stores=[], memberships=[], staff=[{id:'staff-a',businessProfileId:'a'},{id:'staff-b',businessProfileId:'b'}];
+const table=(records)=>({get:async id=>records.find(x=>x.id===id),add:async value=>{records.push(value)},where:key=>({equals:values=>({first:async()=>records.find(r=> key==='businessProfileId'?r.businessProfileId===values:JSON.stringify(key==='[businessProfileId+normalizedName]'?[r.businessProfileId,r.normalizedName]:[r.businessProfileId,r.staffId,r.storeId])===JSON.stringify(values)),toArray:async()=>records.filter(r=>r.businessProfileId===values)})})});
+const database={storeLocations:table(stores),storeAssignments:table(memberships),staffMembers:table(staff),businessProfiles:table([{id:'a'},{id:'b'}]),transaction:async(_mode,...args)=>args.at(-1)()};
+const moduleExports={};
+vm.runInNewContext(code,{exports:moduleExports,require:id=>{
+ if(id==='nanoid')return{nanoid:()=>`id-${++serial}`};
+ if(id==='@/db/TallybookDB')return {db:database};
+ if(id==='@/features/business/activeCompany')return {getActiveBusinessProfileId:()=>company};
+ if(id==='@/features/staff/staff')return {currentStaffId:()=>actor.id,requirePermission:async()=>actor};
+ throw new Error(id);
+}}, {filename:'storeDirectory.js'});
+(async()=>{
+ assert.equal(moduleExports.normalizeStoreName('  Main   Shop '),'main shop');
+ await assert.rejects(()=>moduleExports.createStore('  ' ,database));
+ await moduleExports.createStore('Main',database);
+ await assert.rejects(()=>moduleExports.createStore(' main ',database),/already exists/);
+ await assert.rejects(()=>moduleExports.assignStore(stores[0].id,'staff-b',database),/active staff/);
+ await moduleExports.assignStore(stores[0].id,'staff-a',database);
+ assert.equal(memberships.length,1);
+ await moduleExports.assignStore(stores[0].id,'staff-a',database);
+ assert.equal(memberships.length,1);
+ assert.equal((await moduleExports.requireAttendantStore(stores[0].id,database)).staffId,'staff-a');
+ company='b';actor={id:'staff-b'};
+ await assert.rejects(()=>moduleExports.requireAttendantStore(stores[0].id,database),/authorization/);
+ assert.equal((await moduleExports.listStores(database)).length,0);
+ console.log('Stage 9 isolated checks: 9 assertions passed');
+})().catch(e=>{console.error(e);process.exitCode=1});

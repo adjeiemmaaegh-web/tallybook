@@ -14,6 +14,7 @@ const workspaceDetails: Record<Exclude<AppRouteKey, "today">, { heading: string;
   expenses: { heading: "Keep business spending clear.", copy: "Simple expenses can sit beside your local records without changing sales, stock, or customer balances.", rows: ["Expense category", "Amount spent", "Saved date"], marker: "EXP" },
   businessHealth: { heading: "See what needs attention.", copy: "Saved figures can be reviewed in plain language without becoming an accounting statement.", rows: ["Money collected", "Expenses", "Low stock"], marker: "HLTH" },
   backup: { heading: "Keep a copy you control.", copy: "A portable backup file can hold the business record you already saved on this device.", rows: ["Backup file", "Checked record count", "Restore confirmation"], marker: "BKP" },
+  assistant: { heading: "Ask for what you need.", copy: "A plain-language shortcut onto your saved sales, stock, and customer records — nothing is saved until you confirm it.", rows: ["Balances and stock", "Today's sales", "Sales, receipts, payments"], marker: "ASK" },
 };
 
 export function StagePlaceholder({ routeKey }: { routeKey: Exclude<AppRouteKey, "today"> }) {

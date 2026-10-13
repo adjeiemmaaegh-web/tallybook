@@ -1,0 +1,6 @@
+Client Vitest: NOT RUN — required dependencies unavailable
+semantic pnpm check: NOT RUN
+pnpm build: NOT RUN
+Playwright browser: NOT RUN
+physical hardware / remote services: NOT RUN
+Pinned Node24 unavailable; Linux Node22 used for native QA

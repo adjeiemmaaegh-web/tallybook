@@ -1,8 +1,8 @@
 /** Tactile Ledger design reminder: navigation names are short, task-first, and honest about unfinished stages. */
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, Boxes, CircleDollarSign, ContactRound, HardDriveDownload, HeartPulse, LayoutDashboard, ShoppingBag, Store, Sunset, Truck } from "lucide-react";
+import { BarChart3, Boxes, CircleDollarSign, ContactRound, HardDriveDownload, HeartPulse, LayoutDashboard, MessageCircleQuestion, ShoppingBag, Store, Sunset, Truck } from "lucide-react";
 
-export type AppRouteKey = "today" | "business" | "inventory" | "customers" | "sales" | "reports" | "endOfDay" | "purchases" | "expenses" | "businessHealth" | "backup";
+export type AppRouteKey = "today" | "business" | "inventory" | "customers" | "sales" | "reports" | "endOfDay" | "purchases" | "expenses" | "businessHealth" | "backup" | "assistant";
 
 export interface AppRouteDefinition {
   key: AppRouteKey;
@@ -27,6 +27,7 @@ export const appRoutes: readonly AppRouteDefinition[] = [
   { key: "expenses", href: "/expenses", label: "Expenses", shortLabel: "Expenses", icon: CircleDollarSign, availableFromStage: 8, description: "Local business spending records." },
   { key: "businessHealth", href: "/business-health", label: "Business Health", shortLabel: "Health", icon: HeartPulse, availableFromStage: 8, description: "A plain-language local view of business activity and attention points." },
   { key: "backup", href: "/backup", label: "Backup", shortLabel: "Backup", icon: HardDriveDownload, availableFromStage: 9, description: "Owner-controlled local backup and restore files." },
+  { key: "assistant", href: "/assistant", label: "Assistant", shortLabel: "Ask", icon: MessageCircleQuestion, availableFromStage: 10, description: "Ask about balances, stock, and sales in plain language, or prepare a sale, stock receipt, or payment for you to confirm." },
 ] as const;
 
 export function getRouteDefinition(key: AppRouteKey): AppRouteDefinition {

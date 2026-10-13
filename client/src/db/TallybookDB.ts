@@ -9,13 +9,14 @@ import type { DebtRepayment } from "@/features/credit/credit";
 import type { MobileMoneyProvider } from "@/features/payments/mobileMoney";
 import type { Purchase, PurchaseLine, Supplier } from "@/features/purchases/purchases";
 import type { Expense } from "@/features/expenses/expenses";
+import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 11;
+export const DATABASE_SCHEMA_VERSION = 28;
 
 export interface AppMetaRecord {
-  key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId";
+  key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal";
   value: string;
   updatedAt: string;
 }
@@ -32,6 +33,7 @@ export class TallybookDB extends Dexie {
   categories!: Table<ProductCategory, ProductCategory["id"]>;
   products!: Table<Product, Product["id"]>;
   inventoryMovements!: Table<InventoryMovement, InventoryMovement["id"]>;
+  inventoryCostEvents!: Table<import("@/features/inventory/costLedger").InventoryCostEvent, string>;
   customers!: Table<Customer, Customer["id"]>;
   sales!: Table<Sale, Sale["id"]>;
   saleLines!: Table<SaleLine, SaleLine["id"]>;
@@ -43,7 +45,32 @@ export class TallybookDB extends Dexie {
   suppliers!: Table<Supplier, Supplier["id"]>;
   purchases!: Table<Purchase, Purchase["id"]>;
   purchaseLines!: Table<PurchaseLine, PurchaseLine["id"]>;
+  supplierPayableEntries!: Table<import("@/features/purchases/supplierPayables.ts").SupplierPayableEntry, string>;
   expenses!: Table<Expense, Expense["id"]>;
+  /** Device-local log of what the Assistant saved. Not part of backups. */
+  assistantAudit!: Table<AssistantAuditEntry, AssistantAuditEntry["id"]>;
+  saleReversals!: Table<import("@/features/assistant/reversals").SaleReversal, string>;
+  cashPartialReturns!: Table<import("@/features/sales/cashPartialReturnPosting").CashPartialSaleReturn, string>;
+  stockCountSessions!: Table<import("@/features/inventory/stage2Inventory").StockCountSession, string>;
+  inventoryBatches!: Table<import("@/features/inventory/stage2Inventory").InventoryBatch, string>;
+  quotations!: Table<import("@/features/customers/quotations").Quotation, string>;
+  customerBenefits!: Table<import("@/features/customers/customerBenefits").CustomerBenefitEntry, string>;
+  customerPolicies!: Table<import("@/features/customers/customerBenefits").CustomerPolicy, string>;
+  staffMembers!: Table<import("@/features/staff/staff").StaffMember, string>;
+  staffShifts!: Table<import("@/features/staff/staff").StaffShift, string>;
+  staffAudits!: Table<import("@/features/staff/staff").StaffAudit, string>;
+  walletTransfers!: Table<import("@/features/customers/walletTransfers").WalletTransfer, string>;
+  syncConsents!: Table<import("@/features/sync/syncFoundation").SyncConsent, string>;
+  syncOutbox!: Table<import("@/features/sync/syncFoundation").SyncOutboxEvent, string>;
+  syncConflicts!: Table<import("@/features/sync/reconciliation").SyncConflict, string>;
+  syncDevices!: Table<import("@/features/sync/deviceRegistry").LocalSyncDevice, string>;
+
+  storeLocations!: Table<import("@/features/stores/storeDirectory").StoreLocation, string>;
+  storeAssignments!: Table<import("@/features/stores/storeDirectory").StoreAssignment, string>;
+  storeTransferRequests!: Table<import("@/features/stores/storeTransfers").StoreTransferRequest, string>;
+  storeStockObservations!: Table<import("@/features/stores/storeStockCounts").StoreStockObservation, string>;
+
+  commerceOrders!: Table<import("@/features/commerce/commerce").CommerceOrder, string>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -208,6 +235,37 @@ export class TallybookDB extends Dexie {
         if (purchase?.businessProfileId) await purchaseLines.put({ ...line, businessProfileId: purchase.businessProfileId });
       }
     });
+    this.version(12).stores({ saleReversals: "id, businessProfileId, originalSaleId, customerId, createdAt, &submissionKey" });
+    // v13: adds the Assistant activity log. A new, empty table: no existing record is touched.
+    this.version(13).stores({ assistantAudit: "id, businessProfileId, createdAt, action" });
+    this.version(14).stores({
+      stockCountSessions: "id, businessProfileId, status, updatedAt",
+      inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt",
+    });
+    this.version(15).stores({ quotations: "id, businessProfileId, customerId, status, createdAt" });
+    this.version(16).stores({ customerBenefits: "id, businessProfileId, customerId, kind, createdAt, &submissionKey", customerPolicies: "id, businessProfileId, customerId" });
+    this.version(17).stores({ walletTransfers: "id, businessProfileId, customerId, kind, createdAt, &submissionKey" });
+    this.version(18).stores({ staffMembers: "id, businessProfileId, role, createdAt", staffShifts: "id, businessProfileId, staffId, openedAt, closedAt", staffAudits: "id, businessProfileId, staffId, action, createdAt" });
+    this.version(19).stores({ syncConsents: "businessProfileId, enabled, updatedAt", syncOutbox: "id, businessProfileId, [businessProfileId+operationId], [businessProfileId+status], createdAt, status" });
+    this.version(20).stores({ syncDevices: "id, businessProfileId, [businessProfileId+status], registeredAt" });
+    this.version(21).stores({ syncConflicts: "id, businessProfileId, [businessProfileId+status], eventId, detectedAt" });
+    this.version(22).stores({
+      storeLocations: "id, businessProfileId, [businessProfileId+normalizedName], [businessProfileId+status]",
+      storeAssignments: "id, businessProfileId, staffId, storeId, &[businessProfileId+staffId+storeId]",
+    });
+    // v23 append-only physical counts by store; intentionally does not alter company stock or financial ledgers.
+    this.version(23).stores({
+      storeStockObservations: "id, businessProfileId, storeId, productId, [businessProfileId+storeId], observedAt",
+    });
+    // v24 transfer intentions only; never posts stock movements or sales.
+    this.version(24).stores({ storeTransferRequests: "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status]" });
+    this.version(25).stores({ commerceOrders: "id, businessProfileId, status, createdAt, [businessProfileId+status]" });
+    // Immutable evidence from this version onward. Legacy costs are never inferred.
+    this.version(26).stores({ inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, createdAt" });
+    // Optional, explicitly attested supplier liability evidence. Historical purchases remain unclassified.
+    this.version(27).stores({ supplierPayableEntries: "id, businessProfileId, purchaseId, supplierId, kind, createdAt, &[businessProfileId+submissionKey]" });
+    // v28: strictly limited, immutable, offline cash partial-return journal.
+    this.version(28).stores({ cashPartialReturns: "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]" });
   }
 }
 

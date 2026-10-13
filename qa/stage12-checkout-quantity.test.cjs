@@ -1,0 +1,14 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+const vm = require('node:vm');
+const source = fs.readFileSync('client/src/features/sales/checkoutQuantities.ts', 'utf8');
+const compiled = ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const output = {}; vm.runInNewContext(compiled, {exports:output, Number, Map, Error});
+const merge = output.mergeCheckoutQuantities;
+test('normalizes duplicate cart lines before inventory checks', ()=> assert.equal(merge([{productId:'x',quantity:3},{productId:'x',quantity:4}]).get('x'),7));
+test('rejects combined quantity exceeding allowed line cap', ()=> assert.throws(()=>merge([{productId:'x',quantity:9000000},{productId:'x',quantity:1000000}]),/Combined checkout quantity/));
+test('rejects invalid and unsafe quantities', ()=> {for(const quantity of [0,-1,1.5,Infinity,NaN,Number.MAX_SAFE_INTEGER+1]) assert.throws(()=>merge([{productId:'x',quantity}]));});
+test('rejects empty and malformed product IDs', ()=> {assert.throws(()=>merge([]));assert.throws(()=>merge([{productId:'   ',quantity:1}]));});
+test('keeps different products isolated', ()=> assert.equal(merge([{productId:'a',quantity:2},{productId:'b',quantity:3}]).size,2));

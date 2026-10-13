@@ -4,7 +4,7 @@ import { withSaleCompletionTimeout } from "@/features/sales/completion";
 
 describe("sale completion recovery", () => {
   it("rejects a stalled local completion operation with a clear retry-safe message", async () => {
-    await expect(withSaleCompletionTimeout(new Promise<never>(() => {}), 1)).rejects.toThrow("No second sale will be created if you try again.");
+    await expect(withSaleCompletionTimeout(new Promise<never>(() => {}), 1)).rejects.toThrow("Check recent sales before retrying");
   });
 
   it("returns the saved result when the local completion operation resolves promptly", async () => {

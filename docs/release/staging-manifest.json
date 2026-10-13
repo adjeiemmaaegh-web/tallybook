@@ -1,0 +1,23 @@
+{
+  "status": "proposal-awaiting-owner-approval",
+  "environment": "tallybook-staging",
+  "os": "Ubuntu 24.04 LTS",
+  "instances": 1,
+  "resourcesEstimate": {"vcpu": 2, "memoryGiB": 4, "diskGiB": 30},
+  "filesystem": "persistent POSIX; dedicated service owner; private data and key permissions",
+  "transport": "direct TLS or layer-4 TLS passthrough",
+  "data": "synthetic test companies only",
+  "node": "local tested pin .node-version; security patch review and revalidation before provisioning",
+  "environmentVariables": {
+    "NODE_ENV": "production",
+    "PORT": "3443",
+    "TALLYBOOK_SERVER_TRANSPORT": "https",
+    "TALLYBOOK_SYNC_ACCESS_ENABLED": "false",
+    "TALLYBOOK_SYNC_BACKUP_UPLOAD_ENABLED": "false",
+    "TALLYBOOK_SYNC_EVENT_STAGE_ENABLED": "false"
+  },
+  "secretPathsToSupplySecurely": ["TALLYBOOK_TLS_CERT_FILE", "TALLYBOOK_TLS_KEY_FILE"],
+  "payments": {"approvedProvider": null, "realCollection": false, "testing": "isolated local mock contract only"},
+  "deploymentExecuted": false,
+  "recoveryDrillExecuted": false
+}

@@ -14,6 +14,8 @@ client/dev-dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
 
 # IDE and editor files
 .vscode/
@@ -110,3 +112,6 @@ temp/
 .webdev/
 
 .project-config.json
+
+# Private source backups and full local release logs
+artifacts/release-v19/

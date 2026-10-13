@@ -1,0 +1,6 @@
+platform: Linux-6.18.44-x86_64-with-glibc2.41
+arch: x86_64
+cwd: /mnt/data/tallybook_next_stage/git_review/tallybook_fixed
+pnpm: None
+node_modules exists: False
+No secrets, deployments, provider or staging actions performed.

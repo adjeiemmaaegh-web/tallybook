@@ -12,8 +12,11 @@ describe("Stage 8 local expenses", () => {
   it("saves one positive expense once for a repeated submission key and keeps the history read-only", async () => {
     const localDatabase = database(); await initializeDatabase(localDatabase);
     const saved = await createExpense({ category: "transport", amount: "12.50", expenseDate: localExpenseDate(), note: "Market delivery", currency: "GHS", submissionKey: "expense-repeat-key" }, localDatabase);
-    const repeated = await createExpense({ category: "rent", amount: "99.00", expenseDate: localExpenseDate(), currency: "GHS", submissionKey: "expense-repeat-key" }, localDatabase);
+    const repeated = await createExpense({ category: "transport", amount: "12.50", expenseDate: localExpenseDate(), note: "Market delivery", currency: "GHS", submissionKey: "expense-repeat-key" }, localDatabase);
+    await expect(createExpense({ category: "rent", amount: "99.00", expenseDate: localExpenseDate(), currency: "GHS", submissionKey: "expense-repeat-key" }, localDatabase)).rejects.toThrow("different expense");
 
+    expect(saved.currency).toBe("GHS");
+    await expect(createExpense({ category: "transport", amount: "12.50", expenseDate: localExpenseDate(), note: "Market delivery", currency: "USD", submissionKey: "expense-repeat-key" }, localDatabase)).rejects.toThrow("different expense");
     expect(repeated).toEqual(saved);
     expect(await listExpenses(localDatabase)).toEqual([saved]);
     expect(await localDatabase.sales.count()).toBe(0);

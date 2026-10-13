@@ -34,6 +34,34 @@ describe("TallybookDB", () => {
     expect(await database.appMeta.get("databaseCreatedAt")).toMatchObject({ key: "databaseCreatedAt" });
   });
 
+  it("migrates version 20 sync records to version 21 without losing events and creates conflicts table", async () => {
+    const name = `tallybook-v20-migration-${Date.now()}-${++testNumber}`;
+    const legacy = new Dexie(name);
+    legacy.version(20).stores({
+      appMeta: "key, updatedAt",
+      businessProfiles: "id, name, country, currency, businessType, updatedAt",
+      syncConsents: "businessProfileId, enabled, updatedAt",
+      syncOutbox: "id, businessProfileId, [businessProfileId+operationId], [businessProfileId+status], createdAt, status",
+      syncDevices: "id, businessProfileId, [businessProfileId+status], registeredAt",
+    });
+    await legacy.open();
+    const date = "2026-10-09T12:00:00.000Z";
+    await legacy.table("businessProfiles").put({ id: "primary", name: "Migration Store", country: "Ghana", currency: "GHS", businessType: "Retail", updatedAt: date });
+    await legacy.table("syncConsents").put({ businessProfileId: "primary", enabled: true, updatedAt: date });
+    await legacy.table("syncOutbox").put({ id: "event-1", operationId: "operation-1", businessProfileId: "primary", status: "pending", createdAt: date });
+    await legacy.table("syncDevices").put({ id: "device-1", businessProfileId: "primary", status: "active", registeredAt: date });
+    legacy.close();
+    const upgraded = new TallybookDB(name);
+    databases.push(upgraded);
+    const readiness = await initializeDatabase(upgraded);
+    expect(readiness.schemaVersion).toBe(DATABASE_SCHEMA_VERSION);
+    expect((await upgraded.appMeta.get("schemaVersion"))?.value).toBe(String(DATABASE_SCHEMA_VERSION));
+    expect((await upgraded.syncOutbox.get("event-1"))?.operationId).toBe("operation-1");
+    expect((await upgraded.syncDevices.get("device-1"))?.status).toBe("active");
+    expect((await upgraded.syncConsents.get("primary"))?.enabled).toBe(true);
+    expect(await upgraded.syncConflicts.count()).toBe(0);
+  });
+
   it("keeps the original creation timestamp when initialization runs again", async () => {
     const database = makeDatabase();
 

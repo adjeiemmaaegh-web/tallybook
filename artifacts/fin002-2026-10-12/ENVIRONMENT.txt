@@ -1,0 +1,7 @@
+FIN-002 development environment
+OS: Linux
+Node: 22.16.0, not the pinned 24.19.0
+TypeScript parser: global TypeScript (project dependencies absent)
+Inputs: TALLYBOOK_V19_ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12_SOURCE.zip, verified SHA256 ed4e6be8d7c275de2d44c53118a2754dbdcff6b9da3efcc21a8256d5cc038df3
+Production/pinned client toolchain: unavailable; pnpm/Vitest/IndexedDB/browser QA not executed
+Financial inputs: synthetic tests only. No statutory rates, registration, cross-currency conversion, owner invoice reconciliation, provider confirmations or data migration assumptions made.

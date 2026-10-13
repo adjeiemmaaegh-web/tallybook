@@ -40,7 +40,8 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         </DialogHeader>
         <section className="receipt-detail-summary" aria-label="Receipt totals">
           <div><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
-          <div><span>Paid</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}</strong></div>
+          <div><span>Settled</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}</strong></div>
+          {detail.sale.walletAppliedMinor ? <><div><span>Prepaid wallet applied</span><strong>{formatMinorAmount(detail.sale.walletAppliedMinor, detail.currency)}</strong></div><div><span>New money received</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor - detail.sale.walletAppliedMinor, detail.currency)}</strong></div></> : null}
           <div><span>Remaining</span><strong>{formatMinorAmount(detail.sale.outstandingMinor, detail.currency)}</strong></div>
         </section>
         <section className="receipt-detail-meta" aria-label="Receipt information">
@@ -53,7 +54,9 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         </section>
         <section className="receipt-detail-calculation" aria-label="Receipt calculation">
           <div><span>Subtotal</span><strong>{formatMinorAmount(detail.sale.subtotalMinor, detail.currency)}</strong></div>
-          {detail.sale.discountMinor > 0 ? <div><span>Discount</span><strong>−{formatMinorAmount(detail.sale.discountMinor, detail.currency)}</strong></div> : null}
+          {detail.sale.loyaltyRedeemedPoints ? <div><span>Loyalty redeemed ({detail.sale.loyaltyRedeemedPoints} pts)</span><strong>−{formatMinorAmount(detail.sale.loyaltyRedeemedMinor ?? 0, detail.currency)}</strong></div> : null}
+          {detail.sale.discountMinor > (detail.sale.loyaltyRedeemedMinor ?? 0) ? <div><span>Other discounts</span><strong>−{formatMinorAmount(detail.sale.discountMinor - (detail.sale.loyaltyRedeemedMinor ?? 0), detail.currency)}</strong></div> : null}
+          {detail.sale.tax ? <><div><span>{detail.sale.tax.policy.label} ({detail.sale.tax.policy.rateBasisPoints / 100}%, {detail.sale.tax.policy.priceMode})</span><strong>{formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}</strong></div><div><span>Before tax</span><strong>{formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}</strong></div>{detail.sale.tax.policy.registrationNumber ? <p>Tax registration: {detail.sale.tax.policy.registrationNumber}</p> : null}</> : null}
           <div className="receipt-detail-total"><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
         </section>
         {manualText ? <section className="receipt-manual-copy" aria-live="polite"><div><Copy className="h-4 w-4" aria-hidden="true" /><strong>Copy receipt text</strong></div><p>Your browser could not open sharing or copy automatically. Select and copy this text into your customer message.</p><textarea aria-label="Receipt text for manual copy" readOnly value={manualText} /></section> : null}

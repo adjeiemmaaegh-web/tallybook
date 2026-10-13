@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-10-08T14:29:05.628Z",
+  "total": 2128,
+  "train": 1702,
+  "validation": 426,
+  "unseen": 1310,
+  "groups": [
+    "open-stock",
+    "customer-nav",
+    "inventory",
+    "balance",
+    "slow",
+    "best",
+    "sales",
+    "reports",
+    "supplier-nav",
+    "expense-nav",
+    "write-payment",
+    "write-sale",
+    "write-stock",
+    "safety",
+    "remaining",
+    "pidgin-inventory",
+    "open-customer",
+    "pidgin-balance",
+    "pidgin-insight",
+    "open-report",
+    "help",
+    "ood"
+  ],
+  "note": "Names and products are placeholders used only for role extraction; no live business records are embedded."
+}

@@ -1,0 +1,21 @@
+{
+  "source_base": "TALLYBOOK_V19_CONSOLIDATED_QA_CONTINUATION_2026-10-11_SOURCE.zip",
+  "source_base_sha256": "ec23b694da65a414a3ca66f1ec952b66600b56124c880671cce71fd72300a64d",
+  "native_command": "node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs",
+  "native_exit": 0,
+  "native_pass": 361,
+  "native_fail": 0,
+  "native_skip": 0,
+  "mock_command": "node --test server/tests/paymentGateway.test.mjs",
+  "mock_exit": 0,
+  "mock_pass": 4,
+  "typescript_syntax": "passed",
+  "full_typescript_exit": 2,
+  "full_typescript_reason": "missing node and vite/client typings",
+  "vitest": "not_run_no_dependencies",
+  "build": "not_run_no_dependencies",
+  "browser": "not_run_no_dependencies",
+  "system": "Linux",
+  "node": "22.16.0",
+  "release": "NO-GO / INCOMPLETE"
+}

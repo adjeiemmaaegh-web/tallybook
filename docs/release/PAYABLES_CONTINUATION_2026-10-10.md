@@ -1,0 +1,23 @@
+# Tallybook V19 — supplier payable continuation (10 October 2026)
+
+**Release decision: NO-GO / INCOMPLETE.** Owner-authorized local code development from `TALLYBOOK_V19_FINANCE_CONTINUATION_2026-10-10_SOURCE.zip` (SHA-256 `de96bd3ae797e1973300480c36f5c8b45acd022721d6f5866e4d2450c14077a9`). This replaces neither the complete 12-stage roadmap nor any mandatory hardware/external gate. No deployments, provider calls, bank payments, charges, refunds, credentials or real business records were used.
+
+## Scope: FIN-004 (new); FIN-002 and S3-06 remain incomplete
+
+Historical purchase stock/cost receipts previously had no reliable supplier payment status. This increment **does not retroactively classify them**. New v27 `supplierPayableEntries` is additive and append-only from the application service, with three explicit events: (1) owner attestation that a specific original purchase invoice is wholly unpaid, (2) manually recorded payment known to have already occurred, and (3) supplier credit (non-cash). Liability recognition matches the entire original purchase cost and is allowed only on purchases with a newly saved original currency snapshot; legacy records with no currency remain unknown. Previously paid/part-paid legacy liabilities require separately evidenced reconciliation policy and are not automatically inferred.
+
+An IndexedDB transaction rechecks local staff/shift permissions, company and purchase ownership, original supplier/currency, full-history settlement bounds, idempotency, and mutation audit. An existing idempotency key can be repeated only for the same valid saved operation. The purchases UI explicitly asks for confirmation of wholly unpaid status and distinguishes manual payment/credit from actual funds transfer. Records never claim a payment provider was contacted. Currency-specific balances are shown separately, not added across GHS/USD/etc.
+
+The new table is included in company backup/restore with relationship, currency and arithmetic validation; missing table data is accepted for pre-v27 backup formats only. The local integrity audit checks supplier payable lineage. Updated UI does not reinterpret a historic purchase total as the current business currency. No existing stock or sale mutation contract is intentionally changed except new-purchase currency snapshots and checking currency on a repeated purchase submission.
+
+**Limitations:** No historical opening liabilities, partially paid purchase recognition or supplier returns; no bank confirmation; no independent cash-flow/profit reconciliation. The existing Financial Intelligence report deliberately continues to disclaim that supplier payables/settlements are unavailable; this source change alone does not certify statutory accounts or cash flow. A production rollout requires a tested IndexedDB v26→v27 migration, a backup before upgrade, current client Vitest/types/build, browser offline/recovery and other roadmap gates. Do not downgrade a live database.
+
+## Locally executed evidence
+
+- Environment: Linux x86_64, Node `v22.16.0` and OpenSSL. Project pinned Node `24.19.0` / pnpm `10.34.0` unavailable; no `node_modules` in the provided source archive.
+- Native Node/QA command: `node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs` — **185/185 pass, 0 fails, 0 skips**. Includes 12 new independent supplier payable pure-function cases (unknown status, partial payments, supplier credits, exact settlement, overpayment, duplicate ID/key, tenant/supplier cross-links, overflow and multi-currency separation). Exact logs and exit code in `artifacts/continuation-2026-10-10-payables/`.
+- Isolated mock gateway contract `node --test server/tests/paymentGateway.test.mjs` — 4/4 pass, independently run; not a live payment integration.
+- 7 changed TS/TSX sources syntax-parsed with global TypeScript transpiler and zero parse diagnostics. This does not check type semantics or build/import resolution.
+- **NOT RUN:** pinned dependency installation, semantic `pnpm check`, client Vitest + new real IndexedDB tests, Vite build, v26→v27 browser migration, production offline/PWA/browser, backups restore/recovery integration and all external/hardware checks. Therefore the new FIN-004 implementation remains **implemented-unverified**.
+
+Next: run full pinned client suite and repair any failures; independent reconciliation of manual supplier payments against cash outflows, explicit partial/legacy opening-liability policy, partial sale returns/refunds, exhaustive authorization and durable multi-database recovery. Preserve 82 acceptance units and all unresolved critical blockers.

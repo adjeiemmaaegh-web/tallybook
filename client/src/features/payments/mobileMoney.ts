@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { requirePermission } from "@/features/staff/staff";
 
 export interface MobileMoneyProvider {
   id: string;
@@ -29,29 +30,35 @@ export async function getMobileMoneyProviders(database: TallybookDB = db, includ
 }
 
 export async function addMobileMoneyProvider(input: MobileMoneyProviderInput, database: TallybookDB = db): Promise<MobileMoneyProvider> {
+  const activeId = getActiveBusinessProfileId();
   const values = mobileMoneyProviderSchema.parse(input);
   const name = values.name.trim().replace(/\s+/g, " ");
   const normalizedName = normalizeProviderName(name);
   const now = new Date().toISOString();
 
-  return database.transaction("rw", database.businessProfiles, database.mobileMoneyProviders, async () => {
-    const activeId = getActiveBusinessProfileId();
+  return database.transaction("rw", [database.businessProfiles, database.mobileMoneyProviders, database.staffMembers, database.staffAudits], async () => {
+    const actor = await requirePermission("staff", database, activeId);
     const profile = await database.businessProfiles.get(activeId);
     if (!profile) throw new Error("Save your business details before adding a Mobile Money provider.");
     const existing = (await database.mobileMoneyProviders.where("businessProfileId").equals(activeId).toArray()).find((provider) => provider.normalizedName === normalizedName);
     if (existing) return existing;
     const provider: MobileMoneyProvider = { id: nanoid(14), businessProfileId: activeId, name, normalizedName, active: true, createdAt: now, updatedAt: now };
     await database.mobileMoneyProviders.add(provider);
+    if (actor) await database.staffAudits.add({ id: nanoid(14), businessProfileId: activeId, staffId: actor.id, action: "payments.provider.added", createdAt: now, details: provider.id });
     return provider;
   });
 }
 
 export async function setMobileMoneyProviderActive(providerId: string, active: boolean, database: TallybookDB = db): Promise<MobileMoneyProvider> {
-  return database.transaction("rw", database.mobileMoneyProviders, async () => {
+  const company = getActiveBusinessProfileId();
+  if (typeof active !== "boolean") throw new Error("Invalid provider status.");
+  return database.transaction("rw", [database.mobileMoneyProviders, database.staffMembers, database.staffAudits], async () => {
+    const actor = await requirePermission("staff", database, company);
     const provider = await database.mobileMoneyProviders.get(providerId);
     if (!provider || provider.businessProfileId !== getActiveBusinessProfileId()) throw new Error("This Mobile Money provider is no longer available.");
     const updated = { ...provider, active, updatedAt: new Date().toISOString() };
     await database.mobileMoneyProviders.put(updated);
+    if (actor) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: actor.id, action: "payments.provider.status", createdAt: updated.updatedAt, details: `${providerId}:${active}` });
     return updated;
   });
 }

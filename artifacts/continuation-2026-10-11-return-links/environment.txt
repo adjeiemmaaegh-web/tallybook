@@ -1,0 +1,12 @@
+Continuation: TALLYBOOK V19 CASH RETURN STOCK LINKS (11 October 2026)
+Input ZIP: TALLYBOOK_V19_CASH_RETURN_REVIEW_CONTINUATION_2026-10-11_SOURCE.zip
+Input SHA-256: 6b4d7e1e66cfd93ee0943f03c0b68b1077a205d647213411c15a6be6e358e1eb
+Runtime: Linux; Node v22.16.0; OpenSSL 3.5.5; pinned Node 24.19.0 unavailable.
+Native QA command: node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+Native QA exit: 0; 325 passed; 0 failures/skips; output in native-final.log
+Mock command: node --test server/tests/paymentGateway.test.mjs
+Mock exit: 0; 4 passed; output in mock-final.log
+TypeScript syntax: 5 changed TS/T declaration files parsed by installed TypeScript parser with 0 syntax diagnostics.
+Semantic TS check: tsc --noEmit exited 2 on missing @types/node and vite/client type declarations, see tsc.log.
+pnpm unavailable; corepack registry fetch failed; frozen install, Vitest, production build, Playwright, migration and real IndexedDB checks NOT EXECUTED.
+No payment, external staging, hosting or production deployment authorized.

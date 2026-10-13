@@ -1,0 +1,3 @@
+Native QA checks were run on Node.js 22.16.0 Linux/OpenSSL with command:
+node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+The first run had 398 passes and 1 failure because qa/stage10-local-lifecycle.test.cjs hard-coded a module-import mock without the newly introduced shared-lock adapter. It was updated with an uncontended-lock stub; no test assertion was disabled. A later TypeScript syntax parse identified a mismatched parenthesis in the new company-creation wrapper, corrected before the final run. The final native suite, mock gateway, syntax checks and declaration type checks are separate runs, not summed. Real IndexedDB/Vitest/browser are NOT executed.

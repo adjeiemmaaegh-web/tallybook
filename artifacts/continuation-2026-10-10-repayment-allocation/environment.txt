@@ -1,0 +1,7 @@
+Date: 2026-10-10
+v22.16.0
+OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+pnpm unavailable
+project node_modules unavailable
+24.19.0
+store-dir=.pnpm-store

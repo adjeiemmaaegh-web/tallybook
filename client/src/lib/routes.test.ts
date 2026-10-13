@@ -4,7 +4,7 @@ import { appRoutes, getRouteDefinition } from "@/lib/routes";
 
 describe("application routes", () => {
   it("provides one unique route for each current application destination", () => {
-    expect(appRoutes.map((route) => route.href)).toEqual(["/", "/business", "/inventory", "/customers", "/sales", "/reports", "/end-of-day", "/purchases", "/expenses", "/business-health", "/backup"]);
+    expect(appRoutes.map((route) => route.href)).toEqual(["/", "/business", "/inventory", "/customers", "/sales", "/reports", "/end-of-day", "/purchases", "/expenses", "/business-health", "/backup", "/assistant"]);
     expect(new Set(appRoutes.map((route) => route.href)).size).toBe(appRoutes.length);
   });
 
@@ -17,5 +17,6 @@ describe("application routes", () => {
     expect(getRouteDefinition("expenses").availableFromStage).toBe(8);
     expect(getRouteDefinition("businessHealth").availableFromStage).toBe(8);
     expect(getRouteDefinition("backup").availableFromStage).toBe(9);
+    expect(getRouteDefinition("assistant").availableFromStage).toBe(10);
   });
 });

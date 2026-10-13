@@ -1,0 +1,1044 @@
+{
+  "release": "Tallybook V19",
+  "decision": "NO-GO / INCOMPLETE",
+  "blockers": [
+    {
+      "id": "ENV-001",
+      "severity": "P0",
+      "title": "Frozen dependencies and full toolchain",
+      "status": "implemented-unverified",
+      "paths": [
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Install pinned pnpm; run full tests/types/build, preserve exit status and logs.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/frozen-install-final.log",
+        "artifacts/continuation-2026-10-10/pnpm-unavailable.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log"
+      ],
+      "fixes": "Pinned updated pnpm/lockfile and frozen install; local client/types/build pass. Full Linux gate remains unexecuted. Continuation Linux Node22 native suite passes; pnpm client suite/types/build not rerun because pnpm 10.34.0 fetch is blocked by DNS and dependencies were intentionally absent from the handover. SECURITY CONTINUATION: Linux Node 22 native suite 171/171, 0 skips. Project pin Node 24.19.0 and pnpm 10.34.0 remain unavailable in this container; client suite/types/build/browser checks for updated source cannot be claimed. FINANCE CONTINUATION: Linux Node22 native suite 173/173, 0 skipped; client semantic typecheck/Vitest/build/browser still NOT RUN after finance edits. PAYABLES CONTINUATION: native Node22 185/185; 7 TS/TSX source syntax checks, client Vitest/semantic tsc/build/Playwright not run."
+    },
+    {
+      "id": "ENV-002",
+      "severity": "P0",
+      "title": "Nonportable Node QA compiler paths",
+      "status": "implemented-and-tested",
+      "paths": [
+        "qa/stage10-local-lifecycle.test.cjs",
+        "scripts/stage9-transfer-qa.cjs"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Use repository TypeScript rather than an absolute global Linux installation.",
+      "evidence": [
+        "artifacts/release-v19/node-final-windows.log"
+      ],
+      "fixes": "All absolute global TypeScript imports replaced with repository dependency. Node suites load; remaining failures are POSIX/TLS host constraints."
+    },
+    {
+      "id": "ENV-003",
+      "severity": "P0",
+      "title": "Server filesystem adapters rely on POSIX security",
+      "status": "implemented-and-tested",
+      "paths": [
+        "server/syncLogin.mjs",
+        "server/syncJournal.mjs",
+        "server/syncSessionStore.mjs",
+        "server/syncBackupVault.mjs",
+        "server/tests/syncJournal.test.mjs",
+        "server/tests/syncBackupVault.test.mjs"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Verify full integration on a POSIX filesystem or implement and test an equivalent native Windows ACL boundary; never bypass permission checks.",
+      "evidence": [
+        "artifacts/release-v19/node-final-windows.log",
+        "artifacts/continuation-2026-10-10/native-final.log"
+      ],
+      "fixes": "Windows final full Node suite: 123 pass, 28 fail, 1 skip, 152 tests before four added mock tests. Keep POSIX guards intact; execute full Linux CI with OpenSSL. LOCAL POSIX ACCEPTANCE UPDATE: full available native Node/QA suite on Linux with OpenSSL passed 160/160, 0 skipped, under Node 22.16.0; additional symlink/record hardening tests included. This closes local POSIX adapter verification only; production TLS/deployment, pinned Node 24 and remote recovery remain unverified."
+    },
+    {
+      "id": "FIN-001",
+      "severity": "P0",
+      "title": "Persisted inventory history and atomic cost allocations",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Immutable cost/quantity events, atomic sale allocations and tested reversals/reconciliation.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "fixes": "Persisted FIFO cost allocations, exact sale reversal/batch restoration, safe arithmetic and independent reconciliation pass local tests. Partial refunds, full receipt batch/per-unit costing and historical evidence remain incomplete."
+    },
+    {
+      "id": "FIN-002",
+      "severity": "P0",
+      "title": "Financial reconciliation and tax policy",
+      "status": "missing",
+      "paths": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/supplierReporting.mjs",
+        "client/src/features/reports/saleTenderReconciliation.mjs",
+        "client/src/pages/FinancialIntelligencePage.tsx",
+        "client/src/features/reports/financialCurrencyEvidence.mjs",
+        "client/src/features/expenses/expenses.ts",
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reports/prepaidLiabilityReconciliation.mjs",
+        "client/src/features/reports/prepaidLiabilityReconciliation.d.mts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/reports/financialPeriodConservation.mjs",
+        "client/src/features/reports/financialPeriodConservation.d.mts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Independent full-history accounting reconciliation; obtain jurisdiction/rate/inclusion rules for tax.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "artifacts/fin002-2026-10-12/native-full.log",
+        "artifacts/fin002-2026-10-12/mock-gateway.log",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "artifacts/fin002-currency-2026-10-12/native-full.log",
+        "artifacts/fin002-currency-2026-10-12/mock-gateway.log",
+        "artifacts/fin002-currency-2026-10-12/ts-syntax.log",
+        "artifacts/fin002-currency-2026-10-12/tsc-full.log",
+        "docs/release/FIN002_CURRENCY_EVIDENCE_CONTINUATION_2026-10-12.md",
+        "qa/fin002-prepaid-liability.test.mjs",
+        "artifacts/fin002-prepaid-2026-10-12/native-full.log",
+        "artifacts/fin002-prepaid-2026-10-12/mock-gateway.log",
+        "artifacts/fin002-prepaid-2026-10-12/typechecks.log",
+        "docs/release/FIN002_PREPAID_LIABILITY_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_PERIOD_CONSERVATION_CONTINUATION_2026-10-12.md",
+        "qa/fin002-period-display-conservation.test.mjs",
+        "artifacts/fin002-period-2026-10-12/native-full.log",
+        "artifacts/fin002-period-2026-10-12/mock-gateway.log",
+        "artifacts/fin002-period-2026-10-12/ts-syntax.log",
+        "artifacts/fin002-period-2026-10-12/tsc-full.log",
+        "artifacts/fin002-period-2026-10-12/isolated-summary-smoke.log",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md",
+        "qa/fin002-period-display-conservation.test.mjs",
+        "artifacts/fin002-posting-date-2026-10-12/native-full.log",
+        "artifacts/fin002-posting-date-2026-10-12/mock-gateway.log",
+        "artifacts/fin002-posting-date-2026-10-12/tsc-full.log",
+        "docs/release/FIN002_WALLET_CHRONOLOGY_CONTINUATION_2026-10-12.md",
+        "qa/fin002-prepaid-liability.test.mjs",
+        "artifacts/fin002-wallet-chronology-2026-10-12/focused-before.log",
+        "artifacts/fin002-wallet-chronology-2026-10-12/focused-after.log",
+        "artifacts/fin002-wallet-chronology-2026-10-12/native-full.log",
+        "artifacts/fin002-wallet-chronology-2026-10-12/mock-gateway.log",
+        "artifacts/fin002-wallet-chronology-2026-10-12/tsc-full.log"
+      ],
+      "fixes": "Single-rate configured tax snapshots and recorded-tax report separation implemented. Complete supplier payables, settlements, full-history accounting and statutory tax remain incomplete. FINANCE CONTINUATION: fixed sign mismatch in saved full credit-sale reversals, added independent per-customer credit ledger consistency and duplicate/orphan/overpayment/overflow guards. Native reconciliation tests pass. Full client/IndexedDB tests and the broader supplier payable/partial-refund model remain unverified/incomplete. PAYABLES CONTINUATION: new explicitly recognized payable and supplier payment/credit model is source-implemented, with native reconciliation tests. Legacy liabilities, owner-verified evidence, comprehensive cash reporting, client migration/backup integration and full client suites remain unresolved. FIN002 2026-10-12: added independently verified full-history supplier payable reconstruction, currency-separated as-of recognized balances and period manual supplier payments in financial report/CSV, and separate full-history sale-to-tender conservation audit. 21 native tests added; all 424 native/4 mock tests pass. Broad FIN-002 REMAINS MISSING due incomplete statutory tax/accounting scope, full client tests and unknown owner historical liabilities. FIN002 currency continuation 2026-10-12: new expense and wallet transfer currency snapshots with idempotent collision guards; read-only independent all-history single-currency report gating prevents current profile currency from relabeling unknown or different-currency historical sales, debts, expenses, prepaid transfers and cash partial returns. Backup validates supplied currency evidence. 7 native tests, full Linux Node22 431/431 PASS and separate mock 4/4; TS syntax parsed; full client/type/browser tests unrun/blocked. Historical FX/reclassification, comprehensive accounting and statutory tax remain incomplete; FIN-002 stays MISSING. FIN002 prepaid continuation 2026-10-12: read-only full-history prepaid liability reconciler cross-links transfer -> exact customer benefit delta, saved wallet sale debit, exact original benefit ID -> reversal credit, validates single currency, tenant, timestamp, uniqueness, cumulative nonnegative customer balance and safe aggregate; exposes as-of liability separately from cash collections in management UI/CSV and flags inconsistent wallet history in local integrity audit. 9 additional native tests; Linux native 440/440 and isolated mock 4/4; full client toolchain remains unavailable. Historical wallet grants/unknown currency require provenance; no balances are backfilled or provider funds verified. Broad FIN-002 remains MISSING. FIN002 period conservation 2026-10-12: independent checked per-day and category BigInt projection rechecks headline revenue/collections/expenses, validates complete historical posting/expense dates before period selection, rejects hidden precision overflow or mismatched per-day display without changing saved records. Native 449/449 and simulated mock 4/4 pass; client Vitest/IndexedDB and full TypeScript/build/browser remain unavailable. P0 broad FIN-002 STILL MISSING. FIN002 posting-date continuation 2026-10-12: original timestamp calendar-rollover and invalid timezone acceptance fixed; expense creation timestamp now verified independently from expense business date. Native Linux Node22 454/454 PASS, mock 4/4; full client/browser/TS still blocked/unverified. Broad FIN-002 remains MISSING. FIN002 wallet chronology 2026-10-12: normalized distinct valid ISO timestamp spellings by epoch instant for balance chronology; reused strict date validation for saved wallet/benefit postings. Added three native tests, including reproduced false-negative overdraft and malformed-date acceptance; Linux Node22 full native 457/457, simulated gateway 4/4, focused TZ checks 12/12 each. Full client/IndexedDB/semantic repo TypeScript/build/browser unverified; broad FIN-002 remains MISSING."
+    },
+    {
+      "id": "SEC-001",
+      "severity": "P0",
+      "title": "Complete authorization and actor coverage",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/customers/customers.ts",
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/assistant/assistantLocalStore.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Enumerate every mutation and run positive/negative service-level security checks.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/continuation-2026-10-10/client-changed-syntax.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log"
+      ],
+      "fixes": "Permission checks moved inside core financial/inventory/configuration transactions. AST candidate inventory is not proof of all-write coverage; remaining catalogue/batch/customer/store write races and actor completeness need review. Local continuation moves customer, catalogue, batch and draft count authorization checks inside write transactions, and prevents assistant alias/workflow overwrite or delete across active-company boundaries. New Vitest regressions have NOT executed due unavailable dependencies; complete service inventory/staff attribution still outstanding. SECURITY CONTINUATION: fixed some optional server credential/session directory security boundaries and revocation-on-lock-wait. Client-level service/actor inventory and full permission proof are still outstanding. FINANCE CONTINUATION: supplier create/update/archive and customer repayment recheck inventory/sell staff permissions within write transactions. Supplier writes atomically check uniqueness and save actor audit when staff are configured. Client tests added but not run (dependencies unavailable); exhaustive authority coverage remains incomplete. CONSOLIDATED CONTINUATION: captured company scope guard in major read paths, transactional staff management authorization and post-hash PIN revalidation; broad write/read inventory still not fully audited or browser-tested. EXPANDED LOCK CONTINUATION: prepaid-wallet staff/shift checks now run inside the posting transaction and company identity is revalidated; full mutation authority review still open."
+    },
+    {
+      "id": "DATA-001",
+      "severity": "P0",
+      "title": "Historical migration and restore matrix",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Real IndexedDB every supported schema, corrupted backups, rollback and large data.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log"
+      ],
+      "fixes": "Native IndexedDB schemas 1–25 pass basic fixtures; restore cost/sync/store/tax covered. Large datasets, full historical transaction matrix and all malformed structural inputs not exhausted. CONSOLIDATED CONTINUATION: business backups now exclude device-local metadata; legacy benign fields are parsed but not imported. Full Dexie/migration tests still unexecuted."
+    },
+    {
+      "id": "CLOUD-001",
+      "severity": "P0",
+      "title": "Authenticated financial replication and durable identity",
+      "status": "missing",
+      "paths": [
+        "server/index.ts",
+        "client/src/features/sync",
+        "server/syncLogin.mjs",
+        "server/syncEnrollment.mjs",
+        "server/syncDirectory.mjs",
+        "server/syncSessionStore.mjs"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Implement persistent production identity and full authenticated record replay; obtain authorized staging configuration.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10/native-final.log",
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md"
+      ],
+      "fixes": "No production financial record replay or approved server. Existing transport foundations remain disabled/incomplete; Linux persistence/TLS verification required first. Local filesystem staging journal and opaque backup vault now reject additional symlink/path and malformed-record cases; isolated Node tests pass. These are not remote financial replication or authenticated cloud service. SECURITY CONTINUATION: the disabled/local-only server identity foundations now serialize session issuance and enrollment writes across POSIX Node processes and reject unsafe identity/session/directory/enrollment files; five-worker tests and 171 native QA tests pass. This does not implement hosted identity, permanent shared DB, financial replay or a deployed production gateway."
+    },
+    {
+      "id": "STORE-001",
+      "severity": "P0",
+      "title": "Authoritative store stock, transfers and attendants",
+      "status": "missing",
+      "paths": [
+        "client/src/features/stores"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Implement after FIN-001, SEC-001 and CLOUD-001 pass.",
+      "evidence": []
+    },
+    {
+      "id": "PAY-001",
+      "severity": "P0",
+      "title": "Payment provider and sandbox credentials",
+      "status": "blocked",
+      "paths": [
+        "client/src/features/commerce/commerce.ts",
+        "server/index.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Owner selects MoMo/card provider and supplies authorized sandbox configuration through local environment; no live captures.",
+      "evidence": [
+        "artifacts/release-v19/mock-payments.log"
+      ],
+      "fixes": "Owner confirmed no provider account/approval. Local mock contract implemented. Real signed callbacks, provider refunds/settlement and sandbox success evidence await selection and secure credentials."
+    },
+    {
+      "id": "COM-001",
+      "severity": "P0",
+      "title": "Public storefront, reservations and delivery",
+      "status": "missing",
+      "paths": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Authenticated orders, trusted prices, TTL reservations, fulfillment and actual carrier tracking.",
+      "evidence": []
+    },
+    {
+      "id": "AST-001",
+      "severity": "P1",
+      "title": "Quotation handoff and complete assistant workflows",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/assistant/quotationDraft.ts"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Integrate usable draft handoff, retained context, record grounding and permission checks.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log",
+        "artifacts/release-v19/browser-release.log"
+      ],
+      "fixes": "Quotation handoff/browser save completed; broader multi-turn workflow acceptance and advisory automation remain incomplete."
+    },
+    {
+      "id": "INT-001",
+      "severity": "P1",
+      "title": "Live intelligence and permissioned automation",
+      "status": "missing",
+      "paths": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "SKU units, real batch evidence, dated debt and opt-in persisted approved rules.",
+      "evidence": [
+        "artifacts/release-v19/client-tax-final.log",
+        "artifacts/release-v19/types-release.log",
+        "artifacts/release-v19/build-release.log"
+      ],
+      "fixes": "Live batch expiry and observed SKU unit counts implemented. Dated debt allocation, validated reorder model and persisted approved automation remain missing."
+    },
+    {
+      "id": "HW-001",
+      "severity": "P0",
+      "title": "Physical devices and supported hardware acceptance",
+      "status": "blocked",
+      "paths": [
+        "docs/release/traceability.json"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Obtain supported phone/tablet, camera/scanner, printer and WebAuthn testing access; results cannot be simulated as physical passes.",
+      "evidence": []
+    },
+    {
+      "id": "OPS-001",
+      "severity": "P0",
+      "title": "Staging deployment, recovery, monitoring and release",
+      "status": "blocked",
+      "paths": [
+        "docs/release"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Authorized staging target, secrets through environment, production configuration and rollback/recovery drills.",
+      "evidence": [],
+      "fixes": "Owner prohibited external deployment until approval. Concrete private Ubuntu staging proposal supplied; no host provisioning, external deployment, monitoring or recovery drill executed."
+    },
+    {
+      "id": "ARCH-001",
+      "severity": "P1",
+      "title": "Historical Stage 2/3 reconciliation",
+      "status": "implemented-unverified",
+      "paths": [
+        "STAGE2_INTEGRATION_QA.md",
+        "STAGE3_V10_PARALLEL_BUILD_PLAN.md"
+      ],
+      "reproduction": "See source audit and local execution logs in artifacts/release-v19.",
+      "acceptance": "Inspect available Stage 2 archive selectively and identify missing Stage 3 branch source.",
+      "evidence": [
+        "docs/release/stage2-archive-comparison.json"
+      ],
+      "fixes": "Stage 2 archive fingerprinted; 27 relevant files compared, 15 identical and 12 different; selected inventory/count/report/customer diffs reviewed. No wholesale replacement. Stage 3 branch archive unavailable."
+    },
+    {
+      "id": "DATA-002",
+      "severity": "P0",
+      "title": "Crash atomicity across main and assistant databases",
+      "status": "missing",
+      "paths": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/restoreJournal.mjs"
+      ],
+      "reproduction": "A process interruption between writes to the two IndexedDB databases bypasses in-process compensation.",
+      "acceptance": "Unify storage or implement a durable recovery protocol; test interruption after each restore/clear phase and retain all required audit records.",
+      "evidence": [
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/COMPANY_CLEAR_CONTINUATION_2026-10-11.md",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-consolidated/native-final.log",
+        "docs/release/ASSISTANT_SNAPSHOT_SAFETY_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-cross-tab/native-final.log"
+      ],
+      "fixes": "Durable assistant preimage journal now locally implemented for both backup restore and company clear (DATA-003 and DATA-004), but neither path is client-verified. Cross-tab assistant writes, missing/expired audit retention policy, quota exhaustion, process interrupt matrix, and comprehensive migration/backup/historical audit remain unresolved. DATA-002 stays OPEN. JOURNAL STATE GUARD: new v1 journals include expected assistant postimage, recovery checks exact before/after and refuses unrecognized intervening edits without overwriting them. Still NO global cross-tab mutual exclusion: a tab can edit after successful assistant application and before ledger commit; full crash/IndexedDB browser QA remains missing. CONSOLIDATED CONTINUATION: backup restore retains pre-existing device-local assistant audit rather than silently deleting it. Global two-database crash coordination and owner retention policy remain unresolved. SNAPSHOT CONTINUATION: rejected nonportable assistant snapshots to prevent JSON journal roundtrip loss and removed explicit undefined optional intent in NEW saved history records. This does NOT prove global cross-tab locking, 2-DB crash-safe recovery, or physical browser interruption acceptance. CROSS-TAB CONTINUATION: Web Locks now exclusively coordinate cooperating restore, company-clear, pending-journal startup recovery and shared assistant mutators, with native modeled contention QA. Retail service writers/raw IndexedDB still lack the global protocol, and real browser/IndexedDB crash tests are NOT RUN; DATA-002 remains missing. RETAIL-WRITER FOLLOW-UP: eight selected core financial/inventory service boundaries now acquire shared Web Locks outside their write transactions (see DATA-010). Many other retail paths and direct IndexedDB access still do not; browser crash testing remains unrun. DATA-002 stays missing. EXPANDED LOCK CONTINUATION: 25 additional customer/store/inventory/supplier entrypoints now participate in shared Web Locks; universal retail/raw-IndexedDB coordination and real 2-DB crash evidence still MISSING."
+    },
+    {
+      "id": "PERF-001",
+      "severity": "P1",
+      "title": "Device performance and bundle budget",
+      "status": "implemented-unverified",
+      "paths": [
+        "vite.config.ts",
+        "client/src/main.tsx"
+      ],
+      "reproduction": "Production build emits a main-chunk size warning; real low-end device cold-start/memory budgets unmeasured.",
+      "acceptance": "Measure low-end supported devices and define/pass performance budgets before release.",
+      "evidence": [
+        "artifacts/release-v19/build-release.log"
+      ]
+    },
+    {
+      "id": "RUNTIME-001",
+      "severity": "P1",
+      "title": "Runtime patch and distribution notices review",
+      "status": "implemented-unverified",
+      "paths": [
+        ".node-version",
+        "docs/release/dependency-inventory.json"
+      ],
+      "reproduction": "Local runtime is the tested Node 24.19.0; official Node release list has newer patches. Package audit does not assess the runtime. License metadata needs distribution review.",
+      "acceptance": "Review latest supported runtime security patch, pin/rerun tests; verify required notices and modified wouter patch license obligations.",
+      "evidence": [
+        "docs/release/STAGING_PROPOSAL.md",
+        "docs/release/dependency-inventory.json"
+      ]
+    },
+    {
+      "id": "SEC-002",
+      "severity": "P1",
+      "title": "Optional server identity snapshot cross-process and file safety",
+      "status": "implemented-and-tested",
+      "paths": [
+        "server/syncLogin.mjs",
+        "server/syncEnrollment.mjs",
+        "server/syncDirectory.mjs",
+        "server/syncSessionStore.mjs",
+        "server/tests/syncLogin.test.mjs",
+        "server/tests/syncEnrollment.test.mjs",
+        "server/tests/syncDirectory.test.mjs",
+        "server/tests/syncSessionStore.test.mjs"
+      ],
+      "reproduction": "Previously two independent Node processes could each read and replace the same session or enrollment snapshot under in-process-only locks. The session snapshot reader accepted mode 0644 and the identity directory performed an lstat/readFile race. Run the new five-process, permission, hardlink, symlink and account-disable tests.",
+      "rootCause": "Single-process promise queues used for multi-process read/modify/write; read-only pathname checks were not descriptor based and had incomplete POSIX file validation.",
+      "fixes": "Added bounded exclusive private filesystem locks with inode verification and fail-closed stale locks; durable temp-file replace; restrictive parent/file permissions, link validation and descriptor checks; revalidate credentials immediately before session issue. Scoped to local POSIX foundations; not deployment/certification.",
+      "acceptance": "Concurrent independent issuer/enrollment instances preserve all records; revoked identity cannot mint a session after lock wait; symlink/hardlink/public file and parent modes fail closed; all native regressions pass.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10-security/native-final.log",
+        "artifacts/continuation-2026-10-10-security/targeted-final.log",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md"
+      ]
+    },
+    {
+      "id": "FIN-003",
+      "severity": "P1",
+      "title": "Customer credit reversal sign, net-balance reporting and full-reversal linkage",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/reports.ts",
+        "qa/stage12-credit-reconciliation.test.mjs",
+        "client/src/features/credit/credit.test.ts"
+      ],
+      "reproduction": "A saved SaleReversal.reversedOutstandingMinor is negative, but checkedCreditExposure previously passed it through checkedMinorSum (which rejects negatives); credit-limited customers cannot buy after a legitimate full reversal. getCustomerSaleSummary previously reported only gross saved sales, ignoring repayments and reversals. The management debt report previously clamped negative corruption to zero.",
+      "rootCause": "Inconsistent sign conventions and duplicated, incomplete receivable aggregations across checkout, credit, customer summary and management reporting.",
+      "fixes": "Added exact original-sale-linked full-reversal and safe-integer checks to the shared pure reconciliation helper; reused it for credit limits, customer debt, customer sale summary and management debt report. Moved repayment role/shift revalidation into the write transaction. Added real IndexedDB integration scenarios for new credit after reversal and consistency after repayment.",
+      "acceptance": "Rerun full client Vitest/types/build/browser on pinned runtime. Verify real purchase/refund/repayment/credit scenarios against independent reference totals, actor permission races, legacy migrations and malformed records; do not close this issue from native pure-helper tests alone.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10-finance/native-full.log",
+        "artifacts/continuation-2026-10-10-finance/client-parse.log",
+        "artifacts/continuation-2026-10-10-finance/unavailable-client-gates.log",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md"
+      ]
+    },
+    {
+      "id": "FIN-004",
+      "severity": "P1",
+      "title": "Explicit supplier payable recognition, manual settlements and currency integrity",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/purchases/supplierPayables.mjs",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/purchases/supplierPayables.d.mts",
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/purchases/purchases.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/pages/PurchasesPage.tsx",
+        "qa/stage12-supplier-payables.test.mjs",
+        "client/src/features/purchases/supplierPayables.test.ts"
+      ],
+      "reproduction": "V26 purchase receipts only record stock/cost; supplier payment or unpaid status cannot be reconstructed. A historical payment or liability cannot be assumed.",
+      "rootCause": "Supplier purchases previously had no explicit liability recognition, immutable manual settlement and supplier credit event store, or persistent purchase currency snapshot.",
+      "fixes": "Introduced additive IndexedDB v27 supplierPayableEntries with explicit owner-recognized wholly unpaid invoices, bounded manual payments and supplier credits; new purchase currency snapshots; idempotent company-scoped write transactions with staff/shift checks and audit; safe currency-separated summary; strict backups and integrity checks; unclassified legacy receipts remain unknown.",
+      "acceptance": "Run pinned client Vitest/types/build and real v26->v27 IndexedDB migrations, backup corrupt/restore and offline reload tests; verify original-currency precision; add opening balances/partially paid historical purchase policy, independent cash-flow reconciliation, supplier returns and invoicing. Manual entries are not proof of provider settlement.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10-payables/native-full.log",
+        "artifacts/continuation-2026-10-10-payables/ts-syntax.log",
+        "docs/release/PAYABLES_CONTINUATION_2026-10-10.md"
+      ]
+    },
+    {
+      "id": "FIN-005",
+      "severity": "P0",
+      "title": "Partial return allocation groundwork and ambiguous credit-sale reversal prevention",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/partialReturnPlan.mjs",
+        "client/src/features/sales/partialReturnPlan.d.mts",
+        "client/src/features/sales/reversalDebtGuard.mjs",
+        "client/src/features/sales/reversalDebtGuard.d.mts",
+        "client/src/features/assistant/reversals.ts",
+        "qa/partial-return-draft.test.mjs",
+        "client/src/features/credit/credit.test.ts"
+      ],
+      "reproduction": "Legacy repayments have only customerId. If customer has two unpaid credit sales and one customer-level repayment, an aggregate positive balance cannot prove which particular sale remains unpaid. The former full reversal compared aggregate debt to one sale outstanding, enabling erasure of potentially repaid sale debt. There is no persistent partial-return posting model.",
+      "rootCause": "Missing per-sale repayment allocation/line-linked refund ledger; prior full-reversal preflight used aggregated debt in place of verifiable per-sale repayment state.",
+      "fixes": "Added immutable-record read-only cumulative partial-return draft allocation with BigInt exact rounding, deterministic per-line shares, over-return/unsafe arithmetic/foreign record checks. Full outstanding credit-sale reversal now fails closed if any customer repayments exist without per-sale allocation evidence. Captured company ID is reused in latest-sale lookup inside write transaction; added client service integration regression (not executed). Neither drafts nor guard claim a posted partial refund.",
+      "acceptance": "Define owner-approved disposition policy and per-sale repayment allocation; implement atomic durable partial-return/reversal ledger, original FIFO and batch restoration, loyalty/wallet/discount/tax/tender conservation, immutable cash/provider refund verification, historic migration and backup/restore. Execute client integration/types/build/offline browser plus policy and end-to-end financial reconciliation. Read-only draft helper alone does not close financial refunds.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10-return-safety/native-final.log",
+        "artifacts/continuation-2026-10-10-return-safety/mock-final.log",
+        "docs/release/RETURN_SAFETY_CONTINUATION_2026-10-10.md"
+      ]
+    },
+    {
+      "id": "FIN-006",
+      "severity": "P0",
+      "title": "New per-sale repayment evidence is service-implemented; legacy allocations and full refund reconciliation remain open",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/reversalDebtGuard.mjs",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/stage12-repayment-allocations.test.mjs",
+        "client/src/features/credit/credit.test.ts",
+        "client/src/features/backup/backup.test.ts",
+        "client/src/features/credit/repaymentTargets.mjs",
+        "client/src/features/credit/repaymentTargets.d.mts",
+        "client/src/pages/CustomersPage.tsx"
+      ],
+      "reproduction": "Old customer-scoped repayments can be applied to one of multiple unpaid sales only by guessing. New explicit split allocations must be checked across duplicate intents, all other repayments and sale reversals, not just a total balance.",
+      "rootCause": "No explicit, validated per-sale repayment evidence in previous write and reversal contracts.",
+      "fixes": "Introduced optional immutable repayment.saleAllocations linked to actual customer/company sale IDs; same-transaction validation of exact payment sum and cumulative per-sale limits; refusal of duplicate/foreign/missing/reversed sales, wrong totals and unsafe integer money; strict idempotency; selective different-sale reversal with no legacy unknown allocations; backup tamper validation. Existing legacy repayments remain unallocated. No interactive allocation picker and no claim of operational refunds. 2026-10-11 REPAYMENT UI: reviewed single-sale option selector and transaction-time mixed-legacy/currency/remaining-debt checks added; optional saved currency snapshots and backup validation added; native projection checks pass. Client tests/types/build/browser not executed.",
+      "acceptance": "Run real client/Vitest IndexedDB and backup/migration tests plus semantic typecheck, build and offline browsers. Deliver reviewed customer allocation UI and historical evidence policy, per-sale currency and due-date tracking, compensating credit/debt changes for genuine partial refunds, and full financial reconciliation. Keep financial release NO-GO until all required gates pass.",
+      "evidence": [
+        "artifacts/continuation-2026-10-10-repayment-allocation/native-full.log",
+        "artifacts/continuation-2026-10-10-repayment-allocation/typescript-syntax.log",
+        "docs/release/REPAYMENT_ALLOCATION_CONTINUATION_2026-10-10.md",
+        "artifacts/continuation-2026-10-11-repayment-ui/native-final.log",
+        "docs/release/REPAYMENT_UI_CONTINUATION_2026-10-11.md"
+      ]
+    },
+    {
+      "id": "FIN-007",
+      "severity": "P1",
+      "title": "Repayment UI with explicit recorded-currency target evidence is source-implemented but unverified in real browser",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/pages/CustomersPage.tsx",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/credit/repaymentTargets.mjs",
+        "client/src/features/credit/repaymentTargets.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/stage12-repayment-targets.test.mjs"
+      ],
+      "reproduction": "Previously the Customers page always produced unallocated payments despite the service accepting saleAllocations. Old Sale rows lacked persisted currency so displaying them as current GHS could misstate history. There was no UI policy for mixed historical unallocated repayments.",
+      "rootCause": "No UI sale selection projection with reliable per-sale remaining debt and recorded currency.",
+      "fixes": "Added explicitly optional one-sale payment assignment for new, verified-currency sale records; repeat validation in Dexie write transaction; block link on ambiguous historical payments and missing currency, preserve unallocated default; validate optional currency evidence in backups. Pure native tests 12/12; client UI/service/backup tests authored only, not run.",
+      "acceptance": "Run client Vitest/IndexedDB/browser/typecheck/build with locked dependencies; verify payment mode selection, customer/company switch, stale sale and currency policy end-to-end; design policy for mixed historical currency/repayments, split-UI, dates, full-history cash and refunds.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-repayment-ui/native-final.log",
+        "artifacts/continuation-2026-10-11-repayment-ui/ts-syntax.log",
+        "docs/release/REPAYMENT_UI_CONTINUATION_2026-10-11.md"
+      ]
+    },
+    {
+      "id": "FIN-008",
+      "severity": "P0",
+      "title": "Mixed and unknown currency customer receivables can be silently summed",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/receivable-currency-safety.test.mjs",
+        "client/src/features/credit/credit.test.ts",
+        "client/src/features/backup/backup.test.ts"
+      ],
+      "reproduction": "Prior source reconciles GHS, USD and unknown legacy debt/payments as plain minor units. Customer credit checkout only rechecked existing debt if a credit limit was configured. Unallocated payment backups bypassed known-currency conflict checks.",
+      "rootCause": "Saved customer ledger had denomination snapshots but no consistent per-customer currency identity, read-side indication of missing evidence, or universal transactional write guard.",
+      "fixes": "Introduced pure denomination inspection; fail closed on known mixed/known plus unknown monetary evidence; block unverified/foreign-currency credit extension and repayment inside transactions; strict sale-linked currency identity, accurate historical summary labels and unallocated-backup validation; guarded old sale currency-unknown retries.",
+      "acceptance": "Run pinned client Vitest with real IndexedDB, semantic TS, build and browser regression; design evidence-based legacy currency reconciliation and cross-currency policy, and separate all monetary reporting/printing/cash flow by known currency. Complete full partial refunds, multi-database crash recovery and owner policy acceptance before financial GO.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-receivable-currency/native-full.log",
+        "artifacts/continuation-2026-10-11-receivable-currency/ts-syntax.log",
+        "docs/release/RECEIVABLE_CURRENCY_CONTINUATION_2026-10-11.md"
+      ]
+    },
+    {
+      "id": "FIN-009",
+      "severity": "P1",
+      "title": "Independent saved customer receivable/reversal/allocation integrity audit",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/reliability/receivableAudit.mjs",
+        "client/src/features/reliability/receivableAudit.d.mts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/reliability/integrity.test.ts",
+        "qa/receivable-audit.test.mjs"
+      ],
+      "reproduction": "Run node --test qa/receivable-audit.test.mjs; author Dexie client tests to tamper with repayment allocations or reversal signs and call auditLocalIntegrity.",
+      "acceptance": "Independently detect malformed/foreign/duplicate reversals, impossible repayment allocations, mixed-currency debt and negative/overflow balances without mutating saved records; run full client/IndexedDB and migration verification.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-receivable-audit/native-full.log",
+        "artifacts/continuation-2026-10-11-receivable-audit/mock-payments.log",
+        "artifacts/continuation-2026-10-11-receivable-audit/changed-syntax.log",
+        "docs/release/RECEIVABLE_AUDIT_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Added standalone read-only BigInt receivable audit wired into existing local audit and saleReversals Dexie read transaction. 13 pure native tests passed as part of 250/250; new client integration tests are unexecuted. No refund posting or destructive repair. Full release remains NO-GO."
+    },
+    {
+      "id": "DATA-003",
+      "severity": "P0",
+      "title": "Durable cross-IndexedDB backup restore preimage journal",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/contexts/DatabaseContext.tsx",
+        "client/src/features/business/activeCompany.ts"
+      ],
+      "reproduction": "Previously, after assistant data was restored but before the retail transaction committed, interrupting the browser caused permanently divergent data; in-memory compensation never ran.",
+      "acceptance": "Persist and validate the assistant preimage before its update; atomically commit retail records and remove marker; repeat startup recovery after interrupted phases; fail closed on malformed/inaccessible marker; verify real IndexedDB interruption tests, concurrent tabs, quota, all audit/clear semantics.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-restore/native-full.log",
+        "qa/restore-journal.test.mjs",
+        "client/src/features/backup/restoreRecovery.test.ts",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Implemented a durable appMeta recovery marker (schema unchanged), startup restore of assistant preimage, marker removal atomically with committed retail restore, fail-closed malformed/foreign/collision checks, 32 MiB preimage bound, and backup/export/clear guard. Native pure tests pass. Client IndexedDB crash and browser verification NOT RUN. Does not cover separate-company clear coordination, assistant audit retention, cross-tab concurrency or physical interruption; DATA-002 remains open."
+    },
+    {
+      "id": "DATA-004",
+      "severity": "P0",
+      "title": "Cross-IndexedDB company clear assistant preimage recovery",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/restoreJournal.mjs",
+        "qa/restore-journal.test.mjs",
+        "client/src/features/backup/restoreRecovery.test.ts"
+      ],
+      "reproduction": "Before this change, clearCompanyData deleted the main retail company but did not delete workflows/aliases/history from the separate assistant DB; a crash could permanently leave orphaned assistant records, without a durable clear recovery decision.",
+      "fixes": "Clear persists a typed, bounded assistant preimage before assistant deletion and deletes the journal inside the same main IndexedDB transaction as retail data and company profile. On failure/startup, journal triggers assistant rollback. Retains other companies, deletes the scoped main assistant audit, checks permissions again inside the retail transaction, clears stale backup metadata; older restore markers remain readable.",
+      "acceptance": "Run client Vitest/Dexie tests and full rollback/crash/reopen matrix across before-marker, after-marker, after-assistant-commit, failed/committed-retail-delete, and recovery interruption. Verify app startup, multiple companies, low quota, tab races and retention policy; audit all cross-database mutation writers before DATA-002 is closed.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-company-clear/native-full.log",
+        "artifacts/continuation-2026-10-11-company-clear/mock-payment.log",
+        "artifacts/continuation-2026-10-11-company-clear/ts-syntax.log",
+        "docs/release/COMPANY_CLEAR_CONTINUATION_2026-10-11.md"
+      ]
+    },
+    {
+      "id": "DATA-005",
+      "severity": "P1",
+      "title": "Recovery journal protects against stale and unexpected assistant preimage overwrites",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "qa/restore-journal.test.mjs",
+        "client/src/features/backup/restoreRecovery.test.ts"
+      ],
+      "reproduction": "Start a restore or clear journal, allow a second tab to modify an assistant record, and invoke recovery; older recovery could replay the stale preimage over intervening edits.",
+      "acceptance": "Run real Dexie/IndexedDB client tests and multi-tab crash/race matrix. Require journal before/after state verification without loss; add global mutation coordination and physical interruption tests before DATA-002 closes.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-journal-cas/native-full.log",
+        "artifacts/continuation-2026-10-11-journal-cas/mock-payment.log",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-snapshot-safe/native-full.log",
+        "docs/release/ASSISTANT_SNAPSHOT_SAFETY_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Source-implemented: exact postimage persisted within 32 MiB journal bound, stable snapshot field comparison, assistant-write expected-before check inside a single assistant DB transaction, startup recovery refuses unknown state and leaves marker for manual reconciliation. Legacy v1 marker without after is readable but if assistant diverges from preimage automatic recovery fails closed. Six pure native tests pass. Four Dexie client tests added but NOT RUN; no global Web Locks or full tab coordination. SNAPSHOT SERIALIZATION CONTINUATION (2026-10-11): validate all before/after assistant records for exact JSON-roundtrippable values before recording a durable marker; reject Date/Map/Set/typed arrays, nonfinite/undefined/BigInt/functions/symbols, cyclic/deep graphs, hidden/accessor/unsafe keys, sparse arrays and unexpected snapshot tables. No journal schema change. Native test evidence passes; IndexedDB/client test written but not executed. This is a scoped improvement only; global multi-tab mutual exclusion remains missing."
+    },
+    {
+      "id": "SEC-003",
+      "severity": "P1",
+      "title": "Assistant local conversation and saved-record read isolation",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/assistant/assistant.ts",
+        "client/src/features/assistant/assistantDataSafety.mjs",
+        "client/src/features/assistant/assistantLocalStore.security.test.ts"
+      ],
+      "reproduction": "Before fix, recordAssistantHistory, clearAssistantHistory, listAssistantHistory and stored workflow/alias reads took arbitrary company IDs directly. History listing also lacked deterministic newest-first behavior.",
+      "acceptance": "Deny all foreign-company direct calls; validate inside assistant write transactions and after reads; do not record async responses under a newly selected company; execute real Vitest/Dexie tests and cross-tab review.",
+      "evidence": [
+        "qa/assistant-data-safety.test.mjs",
+        "artifacts/continuation-2026-10-11-assistant-audit/native-full.log",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Company guards and stable bounded history reads implemented, six native pure tests added covering guards/limits/ordering/pruning; client Dexie tests added but UNEXECUTED. Cross-tab coordination still open under DATA-002."
+    },
+    {
+      "id": "DATA-006",
+      "severity": "P1",
+      "title": "Assistant backup history truncated to recent display limit and activity-log prune non-atomic",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/assistant/audit.ts",
+        "client/src/features/backup/backup.test.ts",
+        "client/src/features/assistant/audit.test.ts"
+      ],
+      "reproduction": "Previous createBackup called listAssistantHistory(activeId) whose default 50 limit discarded all older conversation history. Audit append/prune were separate IndexedDB writes.",
+      "acceptance": "Backup retains all authorized company history, never silently truncates; activity-log retention append/prune is transactionally atomic, with real IndexedDB failure tests and backup size/recovery checks. Audit-record policy remains a distinct owner decision.",
+      "evidence": [
+        "qa/assistant-data-safety.test.mjs",
+        "artifacts/continuation-2026-10-11-assistant-audit/native-full.log",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "All-history backup export and single-transaction activity append/prune implemented. Pure native tests pass; IndexedDB integration tests written but not run. 1000-entry activity-log retention/backup exclusion remains unchanged pending owner decision."
+    },
+    {
+      "id": "SEC-004",
+      "severity": "P1",
+      "title": "Stage 9 store and Stage 4 customer benefit writes had time-of-check staff authorization gaps",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/stores/storeDirectory.ts",
+        "client/src/features/stores/storeStockCounts.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/stores/storeAuthorization.test.ts"
+      ],
+      "reproduction": "Previously role checks were outside Dexie writes; an actor could become locked/revoked or company-scoped data could change after preliminary permission check.",
+      "acceptance": "Verify inside-transaction staff role/company and actor audit, positive/negative role tests, session expiry and company-switch rollback in real IndexedDB.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-auth/native-final.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Store and benefit write transactions now include staffMembers, recheck role/scope before writes and save staffed actor audit atomically. Native suite passes but IndexedDB/Vitest and full semantic type checks did not execute; further staff/shift paths remain in SEC-001."
+    },
+    {
+      "id": "STORE-002",
+      "severity": "P1",
+      "title": "Local store records lacked an independent read-only integrity audit",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/stores/storeIntegrity.mjs",
+        "client/src/features/reliability/integrity.ts",
+        "qa/stage9-store-integrity.test.mjs"
+      ],
+      "reproduction": "Earlier integrity audit did not inspect store directory, attendant assignments, observed counts, or transfer requests.",
+      "acceptance": "Independent company-scoped malformed/orphan/duplicate/date/quantity/actor tests, Dexie integration, and no confusion with authoritative stock balances.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-auth/native-final.log",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Pure local metadata audit integrated read-only, 12 native tests passing. Main integrity and real IndexedDB integration verification remain pending. Does not resolve authoritative per-store stock or actual transfers (STORE-001)."
+    },
+    {
+      "id": "FIN-011",
+      "severity": "P1",
+      "title": "Saved invoice tax/discount component conservation in partial-return draft",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/partialReturnPlan.mjs",
+        "client/src/features/sales/partialReturnPlan.d.mts",
+        "qa/partial-return-draft.test.mjs"
+      ],
+      "reproduction": "Legacy draft allocator exposed only total and accepted some unverified tax arithmetic; see new tampering and cumulative native tests.",
+      "acceptance": "Verify cumulative exact tax, taxable and discount amounts from original invoice under partial returns; reject tampered tax policies and imprecise totals; execute client/IndexedDB integration before closing.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-return-components/native-final.log",
+        "artifacts/continuation-2026-10-11-return-components/types-attempt.log",
+        "docs/release/PARTIAL_RETURN_COMPONENTS_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Read-only exact BigInt component allocations and saved tax policy validation implemented. Native suite 288/288. Unverified client and full tax/refund posting; broad FIN-001/FIN-002/FIN-005 remain open."
+    },
+    {
+      "id": "FIN-012",
+      "severity": "P1",
+      "title": "Partial FIFO cost restoration conserves original receipt allocations",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/inventory/partialCostRestoration.mjs",
+        "client/src/features/inventory/partialCostRestoration.d.mts",
+        "client/src/features/inventory/costLedger.ts",
+        "client/src/features/inventory/costLedger.test.ts",
+        "qa/stage12-partial-fifo-restoration.test.mjs"
+      ],
+      "reproduction": "Existing inventory cost replay supported only one exact full reversal; incremental/restockable return restoration could not be costed from original FIFO issue evidence.",
+      "acceptance": "Validate multiple immutable partial restoration events against original issue and exact receipt costs; reject duplicate or excessive restorations, tampering, foreign sale/company records and overflow; verify atomic integration and reconciliation with real partial-return postings in client tests.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-partial-fifo/native-final.log",
+        "artifacts/continuation-2026-10-11-partial-fifo/mock-final.log",
+        "docs/release/PARTIAL_FIFO_RESTORATION_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Pure deterministic original FIFO restoration segments and bounded cumulative immutable-reversal replay added; transaction-only cost helper is not connected to refund/stock/finance UI. Native suite 300/300 passed but client Dexie/TS semantic/build/browser unverified. Actual refund posting FIN-001/FIN-005 and reconciliation remain open."
+    },
+    {
+      "id": "FIN-013",
+      "severity": "P1",
+      "title": "Narrow atomic, staff-confirmed cash-only partial-return posting and reporting",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/sales/cashPartialReturn.mjs",
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/costReconciliation.ts",
+        "client/src/features/staff/staff.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/assistant/reversals.ts"
+      ],
+      "reproduction": "The previous partial-return and FIFO planners had no production transaction caller, no cash-return record, and financial reports rejected orphan partial FIFO reversals.",
+      "acceptance": "Execute and verify real IndexedDB atomicity and schema 27-to-28 migrations; staff authorization, receipt/tender validation, saved tax/discount component conservation, exact FIFO/restock and repeat/idempotency rejection, independent cross-period cash/revenue/COGS/shift reconciliation, tampered backup rollback, browser UI and full QA; expand to other return methods only with agreed policy.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-cash-partial-return/native-final.log",
+        "artifacts/continuation-2026-10-11-cash-partial-return/mock-final.log",
+        "artifacts/continuation-2026-10-11-cash-partial-return/types-attempt.log",
+        "docs/release/CASH_PARTIAL_RETURN_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Source-implemented initial cash-only non-customer restockable return service, v28 immutable cash-return journal, original receipt/payment verification, FIFO and stock write in one Dexie transaction, return-aware cost and financial reporting, shift outflow, backup and integrity checks, and full-reversal exclusion. Native 310/310; separate mock 4/4. UI not exposed; IndexedDB tests written but not run, TypeScript semantic/build/browser not verified. Broad FIN-001/002/005 and provider/customer/wallet/points/batch returns remain open."
+    },
+    {
+      "id": "FIN-014",
+      "severity": "P1",
+      "title": "Read-only return review and narrow cash refund workflow activation",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/cashReturnReview.mjs",
+        "client/src/features/sales/cashReturnReview.d.mts",
+        "client/src/features/sales/cashReturnReview.ts",
+        "client/src/components/CashReturnReviewDialog.tsx",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "reproduction": "The v28 cash partial return service has no UI. Operators lack a safe receipt-linked, quantity-and-invoice preview before an owner-approved refund workflow.",
+      "acceptance": "Execute Vitest/IndexedDB and browser checks of the read-only review, verify keyboard/accessibility/company isolation, reconcile original tax and FIFO snapshots against tampered records; obtain owner policy and test full cash workflow before separately enabling an actual posting control.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-cash-return-review/native-final.log",
+        "artifacts/continuation-2026-10-11-cash-return-review/mock-final.log",
+        "artifacts/continuation-2026-10-11-cash-return-review/tsc.log",
+        "docs/release/CASH_RETURN_REVIEW_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Added strictly read-only Sales-page return review, original receipt/tender/stock/FIFO/previous-return rejection, provisional original tax/discount/total quote, and 8 native tests. Native QA 318/318, mock 4/4; React/IndexedDB, TypeScript semantics/build/browser not executed. No operational refund control enabled; FIN-013 and broad returns remain open."
+    },
+    {
+      "id": "FIN-015",
+      "severity": "P1",
+      "title": "Match prior cash refunds with immutable physical stock and original FIFO evidence before further returns",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/cashReturnStockLinks.mjs",
+        "client/src/features/sales/cashReturnStockLinks.d.mts",
+        "client/src/features/sales/cashReturnReview.ts",
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "qa/stage12-cash-return-stock-links.test.mjs"
+      ],
+      "reproduction": "The prior return review and posting preflight checked cash amounts and quantities but did not cross-check every prior return movement/event ID against original FIFO receipt allocation in the same transaction. Corrupted prior evidence could be quoted or followed by another refund.",
+      "acceptance": "Validate original issue, each historical return, movement, cost restoration and receipt-layer allocations at a consistent company-scoped read/write snapshot; reject absent, duplicate, altered, foreign or out-of-order evidence, and run real IndexedDB, browser and backup/restore integration tests before enabling operational posting.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-return-links/native-final.log",
+        "artifacts/continuation-2026-10-11-return-links/mock-final.log",
+        "artifacts/continuation-2026-10-11-return-links/tsc.log",
+        "docs/release/CASH_RETURN_STOCK_LINKS_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Added pure prior-return stock/FIFO cross-link validator invoked within read-only review and transaction-bound refund posting; 7 native tests added (325/325 passing), 2 IndexedDB tests written but UNEXECUTED. Client semantic types/build/browser/migration remain open. Narrow cash-return service has no UI posting access; broader financial readiness remains NO-GO."
+    },
+    {
+      "id": "FIN-016",
+      "severity": "P1",
+      "title": "Audit cash-return physical stock and original FIFO links across backups and company history",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/cashReturnStockLinks.mjs",
+        "client/src/features/sales/cashReturnStockLinks.d.mts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "qa/stage12-cash-return-ledger-links.test.mjs",
+        "client/src/features/sales/cashPartialReturnPosting.test.ts"
+      ],
+      "reproduction": "The per-sale review and posting code rejected forged earlier stock/FIFO evidence, but local integrity scanning and backup parsing could accept those altered links because they validated return monetary amounts without using the read-only stock/FIFO cross-reference check.",
+      "acceptance": "At a consistent company-scoped snapshot, check every saved cash return against matching original sale/line issue, stock movement and receipt-layer FIFO restoration; reject absent, altered, foreign and multiply linked evidence in backup import and local audit; run actual IndexedDB, cross-company backup, browser and mutation/rollback tests on the pinned toolchain.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-cash-return-audit/native-full.log",
+        "artifacts/continuation-2026-10-11-cash-return-audit/mock-payment.log",
+        "artifacts/continuation-2026-10-11-cash-return-audit/changed-syntax.log",
+        "artifacts/continuation-2026-10-11-cash-return-audit/tsc-attempt.log",
+        "docs/release/CASH_RETURN_LEDGER_AUDIT_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Added pure read-only ledger-wide validator with global duplicate stock/FIFO references and per-sale original issue/receipt-layer checks; backup parser rejects unmatched historical return links before restore; company integrity audit flags them without mutating records. Eight new native tests pass (333/333 full Node suite; mock 4/4). Two client IndexedDB scenarios were written but not executed; semantic TypeScript/build/browser/migrations blocked by unavailable dependencies. This does not enable refund UI posting or certify FIN-013."
+    },
+    {
+      "id": "DATA-007",
+      "severity": "P1",
+      "title": "Portable byte-bound enforcement and semantic postimage validation for durable recovery journals",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "qa/restore-journal.test.mjs"
+      ],
+      "reproduction": "Durable journal limit was evaluated with JavaScript UTF-16 .length, permitting a multibyte string below 32M code units but over the declared 32 MiB UTF-8 bound; company-clear postimage could falsely contain surviving assistant records.",
+      "acceptance": "Reject oversized UTF-8 encoded journal on parse and save; reject populated company-clear postimage while preserving legacy journal compatibility; run native tests and real IndexedDB restore/company-clear across browser interruption, quota and multiple tabs before closing DATA-002 or release.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-journal-byte-budget/native-full.log",
+        "artifacts/continuation-2026-10-11-journal-byte-budget/mock-payment.log",
+        "docs/release/RESTORE_JOURNAL_BYTE_BUDGET_CONTINUATION_2026-10-11.md"
+      ],
+      "fixes": "Pure journal parser/serializer now enforce 32 MiB UTF-8 JSON byte budget and reject nonempty company-clear postimages. Native coverage added; browser and client verification pending."
+    },
+    {
+      "id": "DATA-008",
+      "severity": "P1",
+      "title": "Bound local backup import and encryption/decryption resources",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/backupResourceLimits.mjs",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupCrypto.ts",
+        "client/src/pages/BackupPage.tsx",
+        "qa/backup-resource-limits.test.mjs",
+        "qa/backup-crypto-size.test.mjs",
+        "client/src/features/backup/backupCrypto.test.ts"
+      ],
+      "reproduction": "Previously the local backup reader called File.text(), JSON.parse(), atob(), and crypto.subtle decrypt on files and ciphertext without explicit byte limits; oversized multibyte JSON can use substantially more UTF-8 bytes than JS string length.",
+      "rootCause": "Backup import/export/crypto lacked consistent upfront UTF-8 and envelope resource limits, including file metadata preflight and authenticated ciphertext bounds. Subsequent review also found salt/IV were decoded prior to field-level preflight and decrypted bytes used non-fatal UTF-8 decoding.",
+      "fixes": "Added deterministic 64 MiB UTF-8 JSON and 96 MiB encrypted-envelope cap, compatible with the existing connected-recovery 100 MiB bound; fail-closed file.size gate before File.text(), JSON.parse gate, encryption gate before key derivation, ciphertext base64 length bound before atob/PBKDF2, and authenticated plaintext byte bound before decoding. No records are truncated or modified when refused. Current continuation adds fixed-size canonical salt/IV and ciphertext-base64 preflight before atob/PBKDF2 and strict UTF-8 decoding after authentication; invalid authenticated bytes fail closed.",
+      "acceptance": "Run full client Vitest/types/build, browser and real IndexedDB restore on both valid and oversized files, wrong keys and corrupted envelopes; measure memory/quota on low-end Windows and agree safe supported archive sizes with owner. Large historical archives requiring a higher cap need an approved streamed/import-recovery design, never silent truncation.",
+      "evidence": [
+        "artifacts/continuation-2026-10-11-backup-resource-limits/native-final.log",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/mock-payment.log",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/changed-source-syntax.log",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/semantic-tsc.log",
+        "artifacts/continuation-2026-10-11-backup-resource-limits/pnpm-version.log",
+        "docs/release/BACKUP_RESOURCE_LIMIT_CONTINUATION_2026-10-11.md",
+        "artifacts/continuation-2026-10-11-envelope-preflight/native-qa.log",
+        "artifacts/continuation-2026-10-11-envelope-preflight/mock-payment.log",
+        "artifacts/continuation-2026-10-11-envelope-preflight/isolated-semantic-tsc.log",
+        "artifacts/continuation-2026-10-11-envelope-preflight/repository-semantic-tsc.log",
+        "docs/release/ENCRYPTED_ENVELOPE_PREFLIGHT_CONTINUATION_2026-10-11.md"
+      ],
+      "unresolvedDependencies": "Pinned Node24 and pnpm/client dependencies unavailable; semantic TS, Vite/Vitest, IndexedDB, Playwright, physical low-RAM memory and file-selection QA have not run."
+    },
+    {
+      "id": "DATA-009",
+      "severity": "P0",
+      "title": "Origin-wide Web Locks coordination for destructive two-database work and assistant writers",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/crossTabDataLock.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts"
+      ],
+      "reproduction": "In two real secure-context browser tabs, hold a shared assistant write or exclusive recovery lock and attempt concurrent backup restore/company clear/assistant mutation; unsupported browsers must refuse destructive operations without changing data.",
+      "rootCause": "Existing journals and assistant CAS prevent some stale overwrites, but coordinating two separate IndexedDB commits from independent browser tabs requires origin-wide admission control.",
+      "fixes": "Introduced origin-wide Web Locks exclusive lease-free lock spanning restore/company clear and pending-journal recovery; cooperating assistant mutators request shared lock outside IndexedDB transactions. Unsupported browsers refuse destructive actions. Native contention tests passed. Does not cover every retail mutation; DATA-002 stays missing. Next continuation added eight selected retail writer entrypoints as shared-lock participants; refer to DATA-010. Real browser verification is still missing.",
+      "acceptance": "Execute Dexie and multi-tab real Chromium/Firefox support matrix; verify lock ordering, fallback fail-closed, power loss at each journal phase, mixed retail writes, browser reopen, and quota failures; ensure supported browser/secure-context policy documented.",
+      "evidence": [
+        "qa/cross-tab-data-lock.test.mjs",
+        "artifacts/continuation-2026-10-11-cross-tab/native-final.log",
+        "artifacts/continuation-2026-10-11-cross-tab/mock-gateway.log",
+        "docs/release/CROSS_TAB_LOCK_CONTINUATION_2026-10-11.md",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md (additional cooperating retail services, unverified)"
+      ],
+      "unresolvedDependencies": "Client/Vitest/pinned pnpm unavailable (registry EAI_AGAIN), real multi-tab browser and full retail write lock coverage not verified. No external deployment authorized."
+    },
+    {
+      "id": "DATA-010",
+      "severity": "P0",
+      "title": "Coordinate selected core retail mutations with origin-wide recovery Web Locks",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/customers/quotations.ts",
+        "client/src/features/purchases/purchases.ts",
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/assistant/reversals.ts",
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/backup/retailWriteCoordination.test.ts",
+        "qa/retail-write-lock-coverage.test.mjs"
+      ],
+      "reproduction": "Run a supported browser with a recovery exclusive Web Lock held in one tab and attempt checkout, quotation conversion, supplier purchase/settlement, stock correction, full-sale reversal, or narrow cash partial refund from a second tab. Previously all could start their IndexedDB writes despite recovery.",
+      "rootCause": "The existing Web Locks protocol covered destructive multi-database operations and assistant mutations only, not the main financial and inventory service entrypoints.",
+      "fixes": "These eight exported retail entrypoints now acquire a shared origin-wide Web Lock before their IndexedDB write transaction. Quotation conversion holds one lock around the whole atomic conversion; nested completeSale reuses its active Dexie transaction instead of awaiting a Web Lock inside it. Unsupported browsers preserve ordinary offline retail and continue to fail closed for destructive operations. Added ten native modeled/static coverage tests and an unexecuted Dexie contention test.",
+      "acceptance": "Run the complete pinned TypeScript/IndexedDB/Vitest suite, including nested quotation conversion, concurrent tabs and lock denial with exact rollback. Test actual secure-context browsers including lock-release after tab termination. Audit and coordinate ALL remaining retail writers and direct/raw IndexedDB access, startup recovery and physical interruption before closing DATA-002, this issue or declaring release ready.",
+      "evidence": [
+        "qa/retail-write-lock-coverage.test.mjs",
+        "artifacts/continuation-2026-10-11-retail-lock/native-full.log",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md"
+      ],
+      "unresolvedDependencies": "Native coverage tests do not execute the changed Dexie retail services. Pinned pnpm/Node24/client dependencies unavailable. Raw IndexedDB, other app writers, and all production browser/crash tests remain outside this scoped improvement."
+    },
+    {
+      "id": "DATA-011",
+      "severity": "P0",
+      "title": "Coordinate additional customer, wallet, store, catalogue, stock-count and supplier mutations with recovery lock",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/backup/retailWriteLock.mjs",
+        "client/src/features/backup/retailWriteLock.d.mts",
+        "client/src/features/backup/coordinatedRetailWrite.ts",
+        "client/src/features/customers/customers.ts",
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/stores/storeDirectory.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeStockCounts.ts",
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/inventory/advancedInventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "reproduction": "While one tab owns the exclusive two-database recovery lock, attempts to create/update/archive customer records, apply prepaid-wallet transfer, manage stores/transfers/counts, catalogue or supplier records should refuse BEFORE opening a write transaction. Previously these 25 public entrypoints did not join Web Locks.",
+      "rootCause": "DATA-010 guarded only eight high-risk retail mutation services; additional exported Dexie mutation entrypoints remained outside origin-wide recovery admission control. Prepaid transfer staff permission and shift were checked before its write transaction and its transaction did not include staff tables.",
+      "fixes": "Added a transaction-aware shared-lock wrapper around 25 additional public mutation entrypoints across ten source modules. Await lock outside Dexie transactions; nested calls execute immediately in an existing transaction rather than suspending it to request a second Web Lock. Revalidated prepaid transfer staff rights, active shift and active company within its write transaction; included staff and shift tables, and checked company scope before/after writing. Transfer listing now fails on company-switch. Web Locks absence still allows ordinary offline writes, with destructive two-DB actions fail closed.",
+      "acceptance": "Run locked client Vitest/IndexedDB including nested stock-count and catalogue flows, Deny/Allow race tests for every affected mutation, wallet staff revocation and shift close during dispatch, multi-tab restore/clear contention, actual browser interruption and rollback. Review unguarded staff, business profile, quote drafting, debt and direct/raw IndexedDB writers before claiming DATA-002 solved.",
+      "evidence": [
+        "qa/retail-write-expanded-lock.test.mjs",
+        "client/src/features/backup/expandedRetailLock.test.ts (written NOT executed)",
+        "artifacts/continuation-2026-10-11-expanded-lock/native-final.log",
+        "artifacts/continuation-2026-10-11-expanded-lock/mock-final.log",
+        "artifacts/continuation-2026-10-11-expanded-lock/ts-syntax.log",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md"
+      ],
+      "unresolvedDependencies": "The 392 passing native tests include simulated lock behavior and source-coverage checks, NOT Dexie execution for these new paths. Full TypeScript and write-path AST audit blocked by missing node/vite/typescript dependencies; pinned Node24/pnpm and actual secure-context multi-tab browser unavailable. DATA-002 remains missing."
+    },
+    {
+      "id": "DATA-012",
+      "severity": "P1",
+      "title": "Business, staff and local commerce mutations participate in recovery coordination",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/commerce/commerce.ts",
+        "client/src/features/staff/staff.ts",
+        "client/src/features/backup/adminRecoveryCoordination.test.ts"
+      ],
+      "reproduction": "Under an exclusive cross-tab recovery lock, direct company-profile, commerce and staff administration writes must fail before opening an IndexedDB write transaction. A nested transaction must not await a browser Web Lock.",
+      "acceptance": "Execute real Dexie/IndexedDB and browser Web Locks contention tests; verify company-switch and staff permission races, no partial writes and recovery interoperability.",
+      "evidence": [
+        "artifacts/continuation-2026-10-12-admin-auth/native-final.log",
+        "artifacts/continuation-2026-10-12-admin-auth/ts-syntax.log",
+        "client/src/features/backup/adminRecoveryCoordination.test.ts (written, UNEXECUTED)"
+      ],
+      "fixes": "Added shared-lock wrappers to 14 administrative/commerce entrypoints (2 business, 3 local commerce, 9 staff), before the DB transaction. Added company-switch guard to business profile read/write and stale-actor checks for shift close and review. The lock remains advisory: other raw IndexedDB writers are uncovered, and real browser/IndexedDB QA is not available."
+    },
+    {
+      "id": "SEC-006",
+      "severity": "P1",
+      "title": "Staff authenticator and supervisor approval must reject stale credentials and sessions",
+      "status": "implemented-unverified",
+      "paths": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/staff/credentialFreshness.mjs",
+        "client/src/features/staff/credentialFreshness.d.mts",
+        "qa/staff-recovery-coordination.test.mjs"
+      ],
+      "reproduction": "Revoke/replace a WebAuthn verifier, reset supervisor PIN, change supervisor role/permissions, or switch cashier session while crypto verification is outstanding; stale successful verification must not authorize unlock or a discount.",
+      "acceptance": "Real WebAuthn/browser + IndexedDB tests on supported devices, credential/session races and counter replay, shift-close authorization within the write transaction; native guard test must pass.",
+      "evidence": [
+        "artifacts/continuation-2026-10-12-admin-auth/native-final.log",
+        "artifacts/continuation-2026-10-12-admin-auth/isolated-types.log",
+        "qa/staff-recovery-coordination.test.mjs"
+      ],
+      "fixes": "Added post-verification WebAuthn credential/counter and scope checks within staff write transaction; supervisor approval rechecks PIN verifier, role/permissions, active cashier identity after PBKDF2 and binds pending approval to that cashier; shift open/close and staff management locks are shared with recovery. No physical authenticator verification or tamper-proof staff data claim."
+    }
+  ]
+}

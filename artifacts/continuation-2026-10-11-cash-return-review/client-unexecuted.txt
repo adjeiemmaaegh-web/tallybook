@@ -1,0 +1,1 @@
+2026-10-11 read-only refund preview: Client React/Vitest and real IndexedDB tests not executed. Project dependencies and pnpm absent; pinned Node24 unavailable. TypeScript syntax parser checks pass but semantic tsc fails on missing node and vite/client declarations. New UI must not be considered accepted until client/build/browser QA runs.

@@ -1,0 +1,6 @@
+export interface LocalInsight {id: string;kind:'stock'|'debt'|'sales';severity:'attention'|'information';title:string;evidence:string;action:string;href:string}
+export function createLocalInsights(snapshot: {inventory: Array<{isLowStock:boolean; stockQuantity:number;lowStockThreshold:number; productName:string}>;debts:Array<{outstandingMinor:number}>;sales:unknown[];range?:{label:string}}):LocalInsight[];
+
+export interface AdvancedInsight {id:string;kind:'reorder'|'demand'|'repayment'|'expiry';severity:'attention'|'information';title:string;evidence:string;action:string;href:string}
+export function createAdvancedInsights(snapshot: {inventory: Array<{productId:string;productName:string;stockQuantity:number;lowStockThreshold:number}>;sales:Array<{totalMinor:number}>;debts:Array<{outstandingMinor:number}>;range?:{period?:string}},options?:{horizonDays?:number;batchRows?:Array<{companyId:string;batchId:string;productName:string;remainingQuantity:number;expiryDate:string}>;companyId?:string;now?:string}):AdvancedInsight[];
+export function evaluateAdvisoryRules(findings:AdvancedInsight[],policy?:{enabled?:boolean}):Array<{id:string;kind:string;mode:string;requiresHumanApproval:boolean;action:string}>;

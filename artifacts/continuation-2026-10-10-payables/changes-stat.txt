@@ -1,0 +1,19 @@
+ .../environment.txt                                |    1 +
+ .../native-exit-code.txt                           |    1 +
+ .../native-full.log                                | 1122 ++++++++++++++++++++
+ .../continuation-2026-10-10-payables/ts-syntax.log |    8 +
+ client/src/db/TallybookDB.ts                       |    5 +-
+ client/src/features/backup/backup.ts               |   23 +-
+ client/src/features/purchases/purchases.ts         |    6 +-
+ .../src/features/purchases/supplierPayables.d.mts  |    5 +
+ client/src/features/purchases/supplierPayables.mjs |   84 ++
+ .../features/purchases/supplierPayables.test.ts    |   58 +
+ client/src/features/purchases/supplierPayables.ts  |  108 ++
+ client/src/features/reliability/integrity.ts       |   20 +-
+ client/src/pages/PurchasesPage.tsx                 |   44 +-
+ docs/release/HANDOVER.md                           |    2 +
+ docs/release/PAYABLES_CONTINUATION_2026-10-10.md   |   23 +
+ docs/release/blockers.json                         |   33 +-
+ docs/release/traceability.json                     |   18 +-
+ qa/stage12-supplier-payables.test.mjs              |   21 +
+ 18 files changed, 1561 insertions(+), 21 deletions(-)
