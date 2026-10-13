@@ -43,7 +43,7 @@ test("no cloud sync or auth gate is enabled in app routing", () => {
   assert.doesNotMatch(page, /supabase\.storage/);
 });
 
-test("Vercel automatic deployments are disabled in the isolated V19 candidate", () => {
+test("Vercel automatic deployments are enabled for the connected project", () => {
   const config = JSON.parse(read("vercel.json"));
-  assert.equal(config.git.deploymentEnabled, false);
+  assert.equal(config.git.deploymentEnabled, true);
 });
