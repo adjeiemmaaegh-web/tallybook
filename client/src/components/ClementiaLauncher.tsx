@@ -39,7 +39,7 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
   return <>
     <button ref={triggerRef} type="button" className="clementia-launcher" aria-label="Let Clementia assist you" aria-expanded={open} aria-controls="clementia-assistant-panel" onClick={() => setOpen(true)} hidden={open}>
       <span className="clementia-avatar" aria-hidden="true"><ClementiaPortrait/></span>
-      <span>Let Clementia assist you</span>
+      <span className="clementia-launcher-label">Let Clementia assist you</span>
     </button>
     {open && <section ref={panelRef} id="clementia-assistant-panel" className="clementia-panel" role="dialog" aria-modal="false" aria-label="Clementia assistant">
       <header className="clementia-panel-header">
