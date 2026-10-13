@@ -34,3 +34,15 @@
 .premium-nav-item{min-height:40px;margin:2px 0}
 .premium-desktop-rail .premium-rail-brand{padding-top:17px;padding-bottom:8px}
 @media(min-width:1024px){.top-bar{gap:12px}.top-bar .premium-global-search{order:0}.top-bar .shell-top-utilities{margin-left:auto}}
+
+/* Mobile reference fidelity: prioritize navigation, search and company identity. Secondary tools stay in the drawer. */
+@media(max-width:639px){
+  .top-bar{gap:5px;padding-left:8px;padding-right:8px}
+  .top-bar .premium-menu-button{width:36px;height:36px;margin-right:0;flex-shrink:0}
+  .top-bar .mobile-brand-lockup{display:none}
+  .top-bar .premium-global-search{padding:8px;border-radius:8px}
+  .top-bar .shell-top-utilities>a[aria-label="Business settings"],
+  .top-bar .shell-top-utilities>a[aria-label="Clementia assistant"],
+  .top-bar .shell-top-utilities>a[aria-label="Backup"]{display:none}
+  .top-bar .shell-top-utilities{gap:4px;flex-shrink:0}
+}
