@@ -26,3 +26,11 @@
 .premium-global-search kbd{margin-left:auto;font-size:10px;color:#9aa6b7}
 @media(max-width:1023px){.premium-global-search{min-width:0;max-width:190px;padding:9px}.premium-global-search kbd{display:none}}
 @media(max-width:639px){.premium-global-search{flex:0 0 auto;padding:9px}.premium-global-search span{display:none}}
+
+/* Keep the reference sidebar's core workflows immediately visible; advanced tools remain grouped below. */
+.premium-nav-groups{scrollbar-width:thin;scrollbar-color:#dbe6f5 transparent}
+.premium-nav-group{margin-bottom:15px}
+.premium-nav-group h2{margin-bottom:6px}
+.premium-nav-item{min-height:40px;margin:2px 0}
+.premium-desktop-rail .premium-rail-brand{padding-top:17px;padding-bottom:8px}
+@media(min-width:1024px){.top-bar{gap:12px}.top-bar .premium-global-search{order:0}.top-bar .shell-top-utilities{margin-left:auto}}
