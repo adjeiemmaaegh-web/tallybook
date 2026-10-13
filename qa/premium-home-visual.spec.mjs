@@ -37,6 +37,10 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       await expect(page.getByRole('link', { name: 'Backup', exact: true })).toBeHidden();
       await expect(page.getByRole('link', { name: 'View alerts' })).toBeVisible();
       const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+      if (width.scroll > width.client + 1) {
+        const offenders = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.right > document.documentElement.clientWidth + 1 && getComputedStyle(el).position !== 'fixed'; }).slice(0, 12).map(el => ({ tag: el.tagName, className: String(el.className).slice(0, 100), right: Math.round(el.getBoundingClientRect().right) })));
+        console.log('Mobile overflow offenders:', JSON.stringify(offenders));
+      }
       expect(width.scroll).toBeLessThanOrEqual(width.client + 1);
     }
     if (viewport.width < 1024) {
