@@ -32,6 +32,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Native IndexedDB migrations and setup
         run: set -o pipefail; pnpm exec playwright test 2>&1 | tee artifacts/release-v19/browser-ci.log
+      - name: Authentication gate browser checks
+        run: pnpm exec playwright test --config playwright.auth.config.mjs
       - name: Offline production checkout
         run: set -o pipefail; pnpm exec playwright test --config playwright.offline.config.mjs 2>&1 | tee artifacts/release-v19/offline-ci.log
       - name: Dependency vulnerabilities
