@@ -11,6 +11,11 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Welcome to Tallybook/ })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sales Overview' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Getting Started with Tallybook' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tips for Beginners' })).toBeVisible();
+    await expect(page.locator('.today-dashboard')).toHaveCount(0);
+    await expect(page.getByRole('img', { name: 'Clementia illustrated assistant' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`home-${viewport.width}.png`), fullPage: true });
     await page.getByRole('button', { name: 'Let Clementia assist you' }).click();
