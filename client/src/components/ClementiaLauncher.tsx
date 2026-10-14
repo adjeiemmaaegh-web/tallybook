@@ -62,6 +62,9 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       if (event.key === "Escape") {
+        // Floating mode is nonmodal: do not consume Escape intended for
+        // navigation menus or another control outside the assistant.
+        if (!maximized && !panelRef.current?.contains(document.activeElement)) return;
         event.preventDefault();
         if (maximized) {
           setMaximized(false);
