@@ -24,6 +24,8 @@ Changed files do **not** change business database schemas, payment pathways or f
 | Low/medium | In a long legacy Assistant conversation, the minimize control could scroll out of view. | Made the control sticky on the standalone page. |
 | Medium, modal accessibility | Fullscreen declared `aria-modal` but left the page behind the assistant focusable, clickable and scrollable. | Temporarily mark sibling UI regions inert, lock document scroll, redirect escaped focus into the dialog, and restore previous state on minimize/close. |
 | Medium, keyboard conflicts | In floating (nonmodal) mode, document-wide Escape could dismiss Clementia while focus was in another part of Tallybook or its mobile navigation. | Scope floating Escape handling to focus inside Clementia; defer to controls that already prevented the key event. |
+| High, cross-company UI confidentiality | Same assistant component could display stale company conversation and saved-shortcut state while asynchronous operations completed after a company switch. | Key the assistant's child session by active company ID, ignore stale shortcut responses, and catch load failures. |
+| Medium, reliability | A failure in loading local workflows/aliases/history previously produced an unhandled rejected promise. | Show an explicit local-tools warning and clear the failed list state. |
 | Coverage | Resize state, Escape, focus, route, draft, background isolation and mobile behavior lacked comprehensive assertions. | Added browser-test scenarios at six screen sizes, including backdrop inert/scroll cleanup and direct fullscreen close; **not executed yet**. |
 
 ## Static design checks (not runtime passes)
@@ -65,3 +67,18 @@ Review commits: `997f412` (background inert/scroll/focus handling), `d9b7f21` (m
 The added `inert` property relies on modern browsers. While the code restores the initial state on effect cleanup and prevents background scroll, no browser session has yet confirmed timing, fullscreen viewport dimensions or focus behavior on Windows/mobile browsers. Review confidence stays **7.5/10** rather than claiming a higher executed-test score.
 
 **Automation status:** 0 runtime test commands executed for this increment. Tallybook V19 commercial release remains NO-GO.
+
+## Additional source-only increment — per-company assistant UI state
+
+**Root cause identified:** The prior AssistantPage mounted once and tried to clear its chat via a passive effect on `activeCompanyId`. Concurrent assistant replies and three asynchronous stored-shortcut reads could settle in a different company session, while an individual failed IndexedDB read generated an unhandled promise rejection.
+
+**Fix in `client/src/pages/AssistantPage.tsx`:**
+- A narrow `AssistantPage` wrapper uses `key={activeCompanyId}` to remount `CompanyScopedAssistant` when the selected company changes. Draft input, confirmation previews, conversation turns, pending UI promises, saved shortcuts, and voice recognition component state start fresh.
+- Stored workflow/alias/history loads check an effect-local `current` flag before publishing results. Cleanup marks stale operations inactive.
+- Failed loads are caught, local shortcut results cleared and a visible warning presented rather than producing an unhandled promise rejection.
+
+**Deferred regression cases:** `client/src/pages/AssistantPage.companyIsolation.test.tsx` (1) unsent Alpha draft cleared on switching to Beta, (2) delayed Alpha reply never appears in Beta chat, and (3) delayed Alpha saved-workflow results cannot overwrite Beta shortcuts. The three tests are **authored but not executed**.
+
+**Scope/limitations:** This is **UI isolation**. A transaction already confirmed and underway can still finish; this fix neither cancels it nor claims to establish backend transaction serializability across rapid company switches. Stored assistant data operations already independently validate company scope, but full cross-company financial write authorization remains a separate release gate.
+
+**Assessment:** This specific change is **7.5/10 static-review confidence**, with no runtime TypeScript, unit, browser, or financial-safety pass to support a higher rating. The whole Tallybook release remains NO-GO.
