@@ -31,3 +31,12 @@
   .clementia-launcher .clementia-avatar svg{width:82px;height:82px;filter:drop-shadow(0 5px 8px rgba(23,51,92,.25))}
   .clementia-launcher-label{white-space:nowrap}
 }
+
+/* Round 4: the desktop reference features a portrait above the help pill. */
+@media(min-width:1024px){
+  .clementia-launcher{right:28px;bottom:22px;min-height:54px;padding:9px 23px 9px 112px;border-radius:999px;background:linear-gradient(100deg,#1868ee,#1559d5);box-shadow:0 12px 30px rgba(23,76,165,.25)}
+  .clementia-launcher .clementia-avatar{left:3px;bottom:5px;width:109px;height:121px;align-items:end}
+  .clementia-launcher .clementia-avatar svg{width:118px;height:118px;filter:drop-shadow(0 5px 9px rgba(22,50,94,.22))}
+  .clementia-launcher-label{font-size:13px;letter-spacing:0}
+}
+@media(max-width:639px){.clementia-launcher{min-height:54px}}
