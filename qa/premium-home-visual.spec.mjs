@@ -47,6 +47,7 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
         };
         return { header: box('.top-bar'), rail: box('.premium-desktop-rail'), kpis: box('.premium-kpis'), chart: box('.premium-chart'), setup: box('.premium-setup'), tips: box('.premium-side'), helper: box('.clementia-launcher') };
       });
+      console.log('Round 6 reference anchors:', JSON.stringify(anchors));
       const near = (actual, expected, tolerance, label) => expect(Math.abs(actual - expected), label).toBeLessThanOrEqual(tolerance);
       expect(anchors.header).not.toBeNull();
       near(anchors.header.x, 0, 1, 'Full-width header origin');
