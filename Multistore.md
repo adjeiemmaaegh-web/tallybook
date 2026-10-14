@@ -85,3 +85,11 @@ Record: OS/Node/pnpm versions, Git SHA (`git rev-parse HEAD`), failing test and 
 
 At the end of each development round, **update this same `Multistore.md`** with exact commit SHA, touched modules, invariants/code-review findings, tests actually executed, untested items, observed failures, blockers, data migration impact and instructions for the next round. Leave the release at NO-GO until the owner completes and reviews the acceptance suite. Do not claim all bugs are gone solely from inspection.
 
+
+## Round 1 continuation — offline account fail-closed (2026-10-14)
+
+**Change:** `client/src/auth/AuthGate.tsx` no longer treats a localStorage offline-user marker as authorization to mount an arbitrary local ledger while the optional authentication gate is enabled. This previously allowed cached account A's marker to open cached device records even with no verified company binding. Marker changes from other tabs, including switching to another nonempty user, now close the session view. Two existing Vitest regression cases have been changed to assert fail-closed behavior.
+
+**Tradeoff:** Enabling mandatory cloud AuthGate now blocks offline ledger access when the session cannot be verified. This is intentional and temporary until a separate, recoverable, company-specific offline ownership binding/grant is designed, implemented and tested; it does not change ordinary offline-first behavior because the mandatory AuthGate flag remains **off** by default. Do not remove this guard merely to restore offline access; finish the explicit local account binding and per-device proof first.
+
+**QA:** Source reviewed and regression test cases updated, but full Vitest, browser, types and multi-account tests are deferred. Production is untouched. Round 1 remains PARTIAL and release NO-GO.
