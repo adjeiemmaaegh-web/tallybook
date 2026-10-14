@@ -36,6 +36,8 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.locator('.premium-line-chart svg')).toBeVisible();
     await expect(page.locator('.premium-line-chart svg polyline')).toHaveCount(1);
     await expect(page.locator('.premium-line-chart svg text')).toHaveCount(5);
+    const ticks = await page.locator('.premium-line-chart svg text').allTextContents();
+    expect(new Set(ticks).size).toBe(5);
     await expect(page.locator('.premium-step.done')).toHaveCount(1);
     await expect(page.locator('.premium-chart-empty-note')).toContainText('No sales yet');
     await expect(page.locator('.clementia-launcher .clementia-avatar svg')).toBeVisible();
