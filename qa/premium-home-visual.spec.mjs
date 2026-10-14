@@ -8,7 +8,7 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     const { saveBusinessProfile } = await import('/src/features/business/businessProfile.ts');
     await saveBusinessProfile({ name: 'Visual QA Shop', country: 'Ghana', currency: 'GHS', businessType: 'Retail' });
   });
-  for (const viewport of [{ width: 1536, height: 1024 }, { width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of [{ width: 1536, height: 1024 }, { width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 320, height: 700 }]) {
     await page.setViewportSize(viewport);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Welcome to Tallybook/ })).toBeVisible();
@@ -34,6 +34,8 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       await expect(page.locator('#getting-started')).toBeVisible();
     }
     await expect(page.locator('.premium-line-chart svg')).toBeVisible();
+    const layout = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+    expect(layout.scroll, `Horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(layout.client + 1);
     await expect(page.locator('.premium-line-chart svg polyline')).toHaveCount(1);
     await expect(page.locator('.premium-line-chart svg text')).toHaveCount(5);
     const ticks = await page.locator('.premium-line-chart svg text').allTextContents();
@@ -48,6 +50,7 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await page.screenshot({ path: testInfo.outputPath(`clementia-${viewport.width}.png`), fullPage: true });
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: 'Clementia assistant' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeFocused();
     if (viewport.width < 640) {
       await expect(page.getByRole('link', { name: 'Business settings' })).toBeHidden();
       await expect(page.getByRole('link', { name: 'Backup', exact: true })).toBeHidden();
