@@ -23,3 +23,11 @@
 
 /* Keep the helper accessible without obscuring mobile dashboard charts or action cards. */
 @media(max-width:639px){.clementia-launcher{right:12px;bottom:calc(68px + env(safe-area-inset-bottom,0px));padding:7px;width:54px;height:54px;min-height:54px;justify-content:center;border-radius:50%}.clementia-launcher .clementia-avatar{margin:0;width:48px;height:48px}.clementia-launcher .clementia-avatar svg{width:53px;height:53px}.clementia-launcher .clementia-launcher-label{display:none}}
+
+/* Desktop reference: illustrated Clementia rises above a wide, clearly labeled blue help pill. */
+@media(min-width:1024px){
+  .clementia-launcher{right:30px;bottom:28px;min-height:58px;padding:10px 20px 10px 65px;box-shadow:0 15px 34px rgba(17,72,174,.28);font-size:13px;letter-spacing:.005em}
+  .clementia-launcher .clementia-avatar{position:absolute;left:-6px;bottom:5px;width:75px;height:82px;margin:0;align-items:end}
+  .clementia-launcher .clementia-avatar svg{width:82px;height:82px;filter:drop-shadow(0 5px 8px rgba(23,51,92,.25))}
+  .clementia-launcher-label{white-space:nowrap}
+}
