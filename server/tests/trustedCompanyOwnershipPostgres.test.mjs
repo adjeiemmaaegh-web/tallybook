@@ -60,6 +60,27 @@ test('zero-row database mutation rolls back as a conflict',async()=>{
   assert.equal(x.calls.at(-1).sql,'ROLLBACK');
   assert.equal(x.released(),1);
 });
+test('transfer updates existing local binding owner in the same transaction',async()=>{
+  const x=mockPool();
+  await createPostgresCompanyOwnershipStore(x.pool).transaction(async tx=>{
+    await tx.putCompanyOwner('company','next-owner');
+    await tx.updateBindingOwner('company','next-owner');
+  });
+  const update=x.calls.find(c=>c.sql.includes('update public.company_local_bindings'));
+  assert.deepEqual(update.params,['company','next-owner']);
+  assert.equal(x.calls.at(-1).sql,'COMMIT');
+});
+test('transfer tolerates cloud-only company without local binding',async()=>{
+  const x=mockPool();
+  x.client.query=async function(sql,params=[]){
+    x.calls.push({sql,params});
+    if(sql.includes('update public.company_local_bindings'))return {rowCount:0,rows:[]};
+    return {rowCount:1,rows:[{id:'ok'}]};
+  };
+  await createPostgresCompanyOwnershipStore(x.pool).transaction(
+    tx=>tx.updateBindingOwner('cloud-only','next-owner'));
+  assert.equal(x.calls.at(-1).sql,'COMMIT');
+});
 test('a private transaction pool is mandatory',()=>{
   assert.throws(()=>createPostgresCompanyOwnershipStore(null));
   assert.throws(()=>createPostgresCompanyOwnershipStore({}));
