@@ -68,8 +68,9 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
       if (!valid(newOwnerId) || !valid(recoveryId)) deny();
       return operate(session,companyId,async(tx,userId,company,now) => {
         if (company.ownerId !== userId) deny();
+        const currentOwnerMembership = await tx.getMembership(companyId,userId);
         if (userId === newOwnerId ||
-            !active(await tx.getMembership(companyId,userId),companyId,userId,'owner')) deny();
+            !active(currentOwnerMembership,companyId,userId,'owner')) deny();
         const target = await tx.getMembership(companyId,newOwnerId);
         if (target?.companyId !== companyId || target?.userId !== newOwnerId ||
             target?.status !== 'active' || target?.role !== 'attendant') deny();
@@ -79,7 +80,7 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
             proof?.kind !== 'approved-transfer' || proof?.status !== 'unused' ||
             !Number.isSafeInteger(proof?.expiresAt) || proof.expiresAt <= now) deny();
         await tx.putMembership(immutable({...target,role:'owner'}));
-        await tx.putMembership(immutable({...(await tx.getMembership(companyId,userId)),role:'attendant'}));
+        await tx.putMembership(immutable({...currentOwnerMembership,role:'attendant'}));
         await tx.putCompanyOwner(companyId,newOwnerId);
         // A local binding, when present, follows the authoritative owner.
         // No existing binding is created implicitly during a transfer.
