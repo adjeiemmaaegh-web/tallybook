@@ -22,10 +22,9 @@ function RequiredAuthGate({ children, signIn }: Props) {
     if (!isSupabaseConfigured) { setState("error"); return; }
     let active = true;
     let revision = 0;
-    const cachedOfflineUser = () => {
-      try { return !navigator.onLine && Boolean(localStorage.getItem(OFFLINE_IDENTITY_KEY)); }
-      catch { return false; }
-    };
+    // Offline identity is not proof of ownership of local IndexedDB records.
+    // Until explicit account-to-local-company binding is verified, fail closed.
+    const cachedOfflineUser = () => false;
     const remember = (id: string | null) => {
       try {
         if (id) localStorage.setItem(OFFLINE_IDENTITY_KEY, id);
@@ -53,8 +52,10 @@ function RequiredAuthGate({ children, signIn }: Props) {
       });
     };
     const storageChanged = (event: StorageEvent) => {
-      if (event.key === OFFLINE_IDENTITY_KEY && event.newValue === null) {
-        revision++; setState("signed-out");
+      // A marker changed to a different account is not a valid session either.
+      if (event.key === OFFLINE_IDENTITY_KEY) {
+        revision++;
+        setState("signed-out");
       }
     };
     check();
