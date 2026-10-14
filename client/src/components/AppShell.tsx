@@ -9,6 +9,7 @@ import { DatabaseStatus } from "@/components/DatabaseStatus";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { appRoutes } from "@/lib/routes";
+import { markReportsExplored } from "@/features/business/setupProgress";
 import "./PremiumShell.css";
 import { ClementiaLauncher } from "./ClementiaLauncher";
 
@@ -49,6 +50,9 @@ export function AppShell({ children }: AppShellProps) {
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
   useEffect(() => { setMenuOpen(false); }, [location]);
+  useEffect(() => {
+    if (location === "/reports" && staffGate === "open") markReportsExplored(activeCompanyId);
+  }, [location, activeCompanyId, staffGate]);
   useEffect(() => {
     if (!menuOpen) return;
     menuCloseRef.current?.focus();
