@@ -147,3 +147,5 @@
 .premium-header-wordmark strong{font-size:22px;line-height:1;font-weight:850;letter-spacing:-.04em;color:#0a1b3c}
 .premium-header-wordmark small{font-size:9px;line-height:1.2;color:#4c678d;white-space:nowrap}
 }
+
+@media(min-width:1440px){.page-content{padding-bottom:14px}}
