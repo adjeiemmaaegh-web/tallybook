@@ -176,3 +176,8 @@
 
 /* Final reference measured top padding: the 1536px helper column starts at y90. */
 @media(min-width:1440px){.app-frame .page-content{padding-top:14px!important}}
+
+/* Round 6 traced 1536px actual layout: legacy rail had 100dvh height PLUS the 65px header.
+   Limit rail to the available viewport and restore y180/318/750 dashboard card reference anchors. */
+@media(min-width:1024px){.app-frame .premium-desktop-rail{height:calc(100dvh - 65px)!important;max-height:calc(100dvh - 65px)!important}}
+@media(min-width:1440px){.app-frame .page-content{padding-top:22px!important}}
