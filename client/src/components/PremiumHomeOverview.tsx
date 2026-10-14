@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { BarChart3, CalendarDays, CheckCircle2, ChevronDown, Circle, CircleDollarSign, GraduationCap, Lightbulb, Package, ShoppingCart, Truck, UsersRound, WalletCards, Zap } from "lucide-react";
 import { getDashboardSummary, getBusinessHealthSummary, type DashboardSummary } from "@/features/reports/reports";
 import { formatMinorAmount } from "@/features/inventory/inventory";
-import type { SetupCounts } from "@/features/business/setupProgress";
+import { hasReportsExplored, type SetupCounts } from "@/features/business/setupProgress";
 import "./PremiumHome.css";
 
 interface Props { companyId: string; companyName: string; currency: string; country: string; online: boolean; counts: SetupCounts | null; }
@@ -32,7 +32,7 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
     load();loadExpenses();window.addEventListener("focus",load);window.addEventListener("focus",loadExpenses);
     return ()=>{active=false;window.removeEventListener("focus",load);window.removeEventListener("focus",loadExpenses);};
   },[companyId]);
-  const done=[true,Boolean(counts?.products),Boolean(counts?.customers),Boolean(counts?.sales),false];
+  const done=[true,Boolean(counts?.products),Boolean(counts?.customers),Boolean(counts?.sales),hasReportsExplored(companyId)];
   const completed=done.filter(Boolean).length;
   const max=Math.max(10000,...(summary?.trend.map(p=>p.salesMinor)??[]));
   const axisValue=(fraction:number)=>formatMinorAmount(Math.round(max*fraction),currency);
