@@ -19,8 +19,11 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
   }, [hidden]);
 
   useEffect(() => {
+    if (open && !hidden) closeRef.current?.focus();
+  }, [open, hidden]);
+
+  useEffect(() => {
     if (!open || hidden) return;
-    closeRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
