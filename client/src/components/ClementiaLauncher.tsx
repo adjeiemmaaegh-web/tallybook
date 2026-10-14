@@ -47,7 +47,7 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
       // remain inside it until the user minimizes or closes the assistant.
       if (event.key === "Tab" && maximized && panelRef.current) {
         const focusable = Array.from(panelRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), summary, [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
         )).filter((element) => element.getClientRects().length > 0);
         if (focusable.length) {
           const first = focusable[0], last = focusable[focusable.length - 1];
