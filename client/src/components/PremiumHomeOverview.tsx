@@ -34,7 +34,8 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
   },[companyId]);
   const done=[true,Boolean(counts?.products),Boolean(counts?.customers),Boolean(counts?.sales),false];
   const completed=done.filter(Boolean).length;
-  const max=Math.max(1,...(summary?.trend.map(p=>p.salesMinor)??[]));
+  const max=Math.max(100,...(summary?.trend.map(p=>p.salesMinor)??[]));
+  const axisValue=(fraction:number)=>formatMinorAmount(Math.round(max*fraction),currency);
   const cards=[
     {title:"Sales Today",value:summary?formatMinorAmount(summary.todaySalesMinor,currency):"—",detail:summary?`${summary.todayTransactions} transactions`:"Loading records",Icon:CircleDollarSign,color:"#1eb77d"},
     {title:"Total Products",value:counts?String(counts.products):"—",detail:"In inventory",Icon:Package,color:"#2786e8"},
