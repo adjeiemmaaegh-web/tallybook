@@ -8,6 +8,7 @@ import type { AssistantReply } from "@/features/assistant";
 
 const mock = vi.hoisted(() => ({
   companyId: "alpha",
+  currency: "GHS",
   pendingAlphaReply: null as null | ((reply: AssistantReply) => void),
   pendingAlphaWorkflows: null as null | ((rows: Array<{ id: string; name: string; description: string }>) => void),
 }));
@@ -15,7 +16,7 @@ const mock = vi.hoisted(() => ({
 vi.mock("@/contexts/BusinessProfileContext", () => ({
   useBusinessProfile: () => ({
     activeCompanyId: mock.companyId,
-    profile: { id: mock.companyId, name: mock.companyId, currency: "GHS", country: "Ghana" },
+    profile: { id: mock.companyId, name: mock.companyId, currency: mock.currency, country: "Ghana" },
   }),
 }));
 vi.mock("@/contexts/DatabaseContext", () => ({ useDatabase: () => ({ status: "ready" }) }));
@@ -42,6 +43,7 @@ import AssistantPage from "@/pages/AssistantPage";
 
 beforeEach(() => {
   mock.companyId = "alpha";
+  mock.currency = "GHS";
   mock.pendingAlphaReply = null;
   mock.pendingAlphaWorkflows = null;
 });
@@ -57,6 +59,18 @@ describe("Clementia company-switch UI isolation", () => {
     view.rerender(<AssistantPage />);
     expect(screen.getByRole("textbox", { name: "Message TallyBook's assistant" })).toHaveValue("");
     expect(screen.queryByText("Alpha unsent private notes")).not.toBeInTheDocument();
+  });
+
+  it("invalidates unsent drafts if a company's currency changes", () => {
+    const view = render(<AssistantPage />);
+    const composer = screen.getByRole("textbox", { name: "Message TallyBook's assistant" });
+    fireEvent.change(composer, { target: { value: "GHS amount from an old preview" } });
+    expect(composer).toHaveValue("GHS amount from an old preview");
+
+    mock.currency = "USD";
+    view.rerender(<AssistantPage />);
+    expect(screen.getByRole("textbox", { name: "Message TallyBook's assistant" })).toHaveValue("");
+    expect(screen.queryByText("GHS amount from an old preview")).not.toBeInTheDocument();
   });
 
   it("discards pending questions and ignores a prior company's late reply", async () => {
