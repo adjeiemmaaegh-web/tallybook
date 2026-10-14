@@ -40,7 +40,7 @@ function harness({reviewerAllowed=true,sessionActive=true}={}){
     reviewerDirectory:{async isAuthorizedReviewer(id){return reviewerAllowed&&id===reviewer;}},
     evidenceDirectory:{async getVerifiedRecovery(id){return {
       id,companyId:'co',ownerId:owner,reviewerId:reviewer,
-      kind:'verified-restore',localCompanyId:'local',verified:true,
+      kind:'verified-restore',localCompanyId:'local',verified:true,verifiedAtEpochMs:900,
     };}},
     clock:()=>1000,
   });
