@@ -156,3 +156,5 @@
   .premium-side-help a{margin-top:15px}
 }
 /* The search and date text are real company-specific data, not hard-coded reference values. */
+
+@media(min-width:1440px){.premium-identity{display:none}}
