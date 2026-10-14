@@ -94,3 +94,11 @@ At the end of each development round, **update this same `Multistore.md`** with 
 
 **QA:** Source reviewed and regression test cases updated, but full Vitest, browser, types and multi-account tests are deferred. Production is untouched. Round 1 remains PARTIAL and release NO-GO.
 - **Follow-up hardening:** cached non-null `getSession()` while offline and offline auth listener sessions also cannot grant ledger entry when the mandatory AuthGate is enabled; added dedicated Vitest regression for the cached offline session path. No full suite executed yet.
+
+## Round 1 continuation — trusted ownership clock (2026-10-14)
+
+- In `server/trustedCompanyOwnership.mjs`, a server-only ownership operation previously checked recovery expiry and wrote binding/audit timestamps using separate clock calls.
+- Updated `operate` to obtain one positive safe-integer time value inside the transaction, deny invalid clocks, and reuse the timestamp for proof expiry, binding creation and ownership audit. This is not a client grant or a deployment.
+- Added two Node regression test cases in `server/tests/trustedCompanyOwnership.test.mjs` for shared audit/binding timestamp and an expired-recovery boundary.
+- Review limitation: no complete Node/Vitest/build/browser execution was performed on this branch. A server-issued and independently reviewed recovery proof remains mandatory. Local company binding, authorization, and finance sync are not active.
+- Commit history on `stage9/multistore-integration-20261014` preserves this patch. **Round 1 PARTIAL / Release NO-GO.**
