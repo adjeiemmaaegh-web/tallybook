@@ -64,8 +64,10 @@ function ReplyBubble({ reply, onAction }: { reply: AssistantReply; onAction: (ac
  * cannot reappear in the newly selected company's UI.
  */
 export default function AssistantPage() {
-  const { activeCompanyId } = useBusinessProfile();
-  return <CompanyScopedAssistant key={activeCompanyId} />;
+  const { activeCompanyId, profile } = useBusinessProfile();
+  // A changed currency invalidates old previews even within the same company.
+  // The assistant instance captures currency when it is created.
+  return <CompanyScopedAssistant key={JSON.stringify([activeCompanyId, profile?.currency ?? null])} />;
 }
 
 function CompanyScopedAssistant() {
