@@ -29,6 +29,7 @@ function fixture() {
       getRecovery:async id=>nextProofs.get(id),
       getBinding:async(c,l)=>nextBindings.get(c+':'+l),
       putBinding:async x=>{const key=x.companyId+':'+x.localCompanyId;if(nextBindings.has(key))throw Error('duplicate');nextBindings.set(key,x);},
+      updateBindingOwner:async(c,u)=>{for(const [key,value] of nextBindings) if(value.companyId===c)nextBindings.set(key,{...value,ownerId:u});},
       consumeRecovery:async id=>{const p=nextProofs.get(id);if(!p||p.status!=='unused')throw Error('consumed');p.status='consumed';},
       appendAudit:async event=>{nextAudit.push(event);},
     });
@@ -73,8 +74,19 @@ test('approved owner transfer is atomic, auditable and replay protected',async()
   assert.equal(r.transferred,true);
   assert.equal(f.members.get('co:bob').role,'owner');
   assert.equal(f.members.get('co:alice').role,'attendant');
+  assert.equal(f.getOwnerId(),'bob');
   assert.equal(f.audits[0].type,'ownership-transferred');
   await assert.rejects(f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'}));
+});
+test('an existing local binding follows a verified ownership transfer atomically',async()=>{
+  const f=fixture();
+  await f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'});
+  assert.equal(f.bindings.get('co:local').ownerId,'alice');
+  await f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
+  assert.equal(f.bindings.get('co:local').ownerId,'bob');
+  assert.equal(f.getOwnerId(),'bob');
+  assert.equal(f.members.get('co:bob').role,'owner');
+  assert.equal(f.proofs.get('transfer').status,'consumed');
 });
 test('transfer requires approved recovery proof and active target admin',async()=>{
   const f=fixture();f.members.get('co:bob').status='revoked';
