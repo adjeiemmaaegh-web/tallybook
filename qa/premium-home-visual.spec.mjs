@@ -33,6 +33,43 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       await expect(page).toHaveURL(/#getting-started$/);
       await expect(page.locator('#getting-started')).toBeVisible();
     }
+    if (viewport.width === 1536) {
+      // Reference anchors allow independent desktop fidelity review, not just element presence.
+      const anchors = await page.evaluate(() => {
+        const box = (selector) => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { x: Math.round(r.x + window.scrollX), y: Math.round(r.y + window.scrollY), w: Math.round(r.width), h: Math.round(r.height) };
+        };
+        return { header: box('.top-bar'), rail: box('.premium-desktop-rail'), kpis: box('.premium-kpis'), chart: box('.premium-chart'), setup: box('.premium-setup'), tips: box('.premium-side'), helper: box('.clementia-launcher') };
+      });
+      const near = (actual, expected, tolerance, label) => expect(Math.abs(actual - expected), label).toBeLessThanOrEqual(tolerance);
+      expect(anchors.header).not.toBeNull();
+      near(anchors.header.x, 0, 1, 'Full-width header origin');
+      near(anchors.header.h, 65, 2, 'Header height');
+      near(anchors.rail.w, 262, 2, 'Sidebar width');
+      near(anchors.rail.y, 65, 2, 'Sidebar starts below header');
+      near(anchors.kpis.x, 284, 10, 'KPI left edge');
+      near(anchors.kpis.y, 180, 23, 'KPI top edge');
+      near(anchors.chart.x, 284, 10, 'Chart left edge');
+      near(anchors.chart.y, 318, 23, 'Chart top edge');
+      near(anchors.chart.h, 414, 3, 'Chart height');
+      near(anchors.setup.y, 750, 25, 'Getting started top edge');
+      near(anchors.tips.x, 1259, 12, 'Help-column origin');
+      near(anchors.helper.w, 265, 2, 'Clementia help card width');
+      near(anchors.helper.h, 176, 2, 'Clementia help card height');
+      const portrait = await page.evaluate(async () => {
+        const response = await fetch('/premium-clementia.svg');
+        if (!response.ok) return false;
+        const body = await response.text();
+        const b64 = body.match(/base64,([^"]+)/)?.[1];
+        if (!b64) return false;
+        const decoded = atob(b64);
+        return decoded.slice(0, 4) === 'RIFF' && decoded.length === 4820;
+      });
+      expect(portrait, 'Owner-approved bundled Clementia portrait must be byte-complete').toBe(true);
+    }
     await expect(page.locator('.premium-line-chart svg')).toBeVisible();
     const layout = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
     expect(layout.scroll, `Horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(layout.client + 1);
