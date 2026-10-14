@@ -49,6 +49,8 @@ This invokes the local Vite server automatically. The Playwright test verifies s
 - Floating panel opens and closes; focus returns to the launcher.
 - Maximize expands in place, with no route change; **Minimize Clementia** reverses it.
 - Unsent draft text survives maximize/minimize and Escape.
+- While maximized, dashboard navigation and controls behind Clementia are inert and background scrolling is locked; after minimize **or direct close**, both are restored.
+- In floating mode, Escape intended for the page or another open control does not unexpectedly close Clementia.
 - A user on the legacy full-page `/assistant` route can minimize back to the floating panel.
 - No horizontal overflow or broken quick-action/setup links.
 
