@@ -23,7 +23,7 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setOpen(false);
+        close();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
