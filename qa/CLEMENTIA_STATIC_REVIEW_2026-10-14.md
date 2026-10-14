@@ -22,7 +22,9 @@ Changed files do **not** change business database schemas, payment pathways or f
 | Medium | Legacy full-screen `/assistant` route still had no minimize control. | Added a UI-only in-memory handoff to Home and the floating assistant. |
 | Low/medium | A user without a configured business could visit the full Assistant gate but not see minimize. | Added the same minimize action in the no-profile gate. |
 | Low/medium | In a long legacy Assistant conversation, the minimize control could scroll out of view. | Made the control sticky on the standalone page. |
-| Coverage | Resize state, Escape, focus, route, draft and mobile behavior lacked comprehensive assertions. | Added browser-test scenarios at six screen sizes; **not executed yet**. |
+| Medium, modal accessibility | Fullscreen declared `aria-modal` but left the page behind the assistant focusable, clickable and scrollable. | Temporarily mark sibling UI regions inert, lock document scroll, redirect escaped focus into the dialog, and restore previous state on minimize/close. |
+| Medium, keyboard conflicts | In floating (nonmodal) mode, document-wide Escape could dismiss Clementia while focus was in another part of Tallybook or its mobile navigation. | Scope floating Escape handling to focus inside Clementia; defer to controls that already prevented the key event. |
+| Coverage | Resize state, Escape, focus, route, draft, background isolation and mobile behavior lacked comprehensive assertions. | Added browser-test scenarios at six screen sizes, including backdrop inert/scroll cleanup and direct fullscreen close; **not executed yet**. |
 
 ## Static design checks (not runtime passes)
 
@@ -31,17 +33,19 @@ Changed files do **not** change business database schemas, payment pathways or f
 - Escape prioritizes minimize when maximized and closes otherwise.
 - The resize control receives a proper accessible name, pressed state and focus styling.
 - The maximized panel has `aria-modal` and a keyboard Tab trap that includes disclosure summaries.
+- On maximize, sibling navigation/content are made inert and root/body scrolling is locked; cleanup restores each sibling's prior inert state and previous inline overflow values even when closing directly from fullscreen.
+- Floating panel Escape handling is scoped to focus within its own dialog to avoid conflicting with unrelated app overlays.
 - The standalone `/assistant` route can navigate back to a floating panel via a one-shot, in-memory marker. The **legacy** page's existing unsent draft and conversation are not transferred to Home, because that old route navigation remounts the assistant. The normal new in-place maximize/minimize path avoids that limitation.
 - Full-height layouts use dynamic viewport units and include a small-screen override.
 - No new application or ledger write operations were introduced in the changed paths.
 
 ## Provisional risk score
 
-**7.5 / 10 — source-review confidence in this isolated Clementia fix.**
+**7.5 / 10 — source-review confidence in this isolated Clementia fix after modal-isolation hardening.**
 
 This is a subjective assessment of implementation logic, expected integration behavior and documented browser checks. It is **not** a score for successfully executed tests. Runtime tests run for this candidate: **none**. GitHub's Actions budget block prevented its jobs from starting, and the owner deferred full PC testing.
 
-Strengths: direct root-cause correction, same-component resizing, explicit focus behavior, backwards-compatible recovery, locally documented acceptance test suite. Deductions: no runtime browser or TypeScript results on the latest commit, unverified device/browser interactions, and legacy route navigation cannot preserve its old live conversation.
+Strengths: direct root-cause correction, same-component resizing, background inert/scroll cleanup, scoped keyboard handling, backwards-compatible recovery, locally documented acceptance test suite. Deductions: no runtime browser or TypeScript results on the latest commit, unverified device/browser interactions, and legacy route navigation cannot preserve its old live conversation.
 
 **Whole Tallybook product:** not rated as production-ready by this review. Existing accounting, authorization, backups, crash recovery, real-data and platform release gates must still be independently verified. Do not infer a product-wide 7.5/10 from the feature-only score.
 
@@ -53,3 +57,11 @@ Strengths: direct root-cause correction, same-component resizing, explicit focus
 4. Review any failures with their logs; fix and rerun. Obtain explicit owner approval before merging; do not authorize deployment or commercial use from a static review.
 
 **No claim of bug-free software is made.**
+
+## Additional source-only increment — modal isolation and Escape scoping
+
+Review commits: `997f412` (background inert/scroll/focus handling), `d9b7f21` (modal assertions), `18ad373` (scoped Escape), `601bdda` (cleanup/Escape regression cases).
+
+The added `inert` property relies on modern browsers. While the code restores the initial state on effect cleanup and prevents background scroll, no browser session has yet confirmed timing, fullscreen viewport dimensions or focus behavior on Windows/mobile browsers. Review confidence stays **7.5/10** rather than claiming a higher executed-test score.
+
+**Automation status:** 0 runtime test commands executed for this increment. Tallybook V19 commercial release remains NO-GO.
