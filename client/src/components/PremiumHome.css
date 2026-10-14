@@ -34,3 +34,14 @@
   .premium-setup-head{flex-wrap:wrap}
   .premium-welcome h1{overflow-wrap:anywhere}
 }
+
+/* Reference alignment at full desktop width: larger chart and balanced right-hand cards. */
+@media(min-width:1280px){
+  .premium-home{grid-template-columns:minmax(0,1fr) 245px;gap:20px}
+  .premium-middle{grid-template-columns:minmax(0,1.65fr) minmax(220px,.95fr);gap:16px}
+  .premium-chart{min-height:390px}
+  .premium-line-chart{height:285px}
+  .premium-line-chart svg{height:255px}
+  .premium-setup{margin-top:20px}
+  .premium-step{min-height:168px;justify-content:center}
+}
