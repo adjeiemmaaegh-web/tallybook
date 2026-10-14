@@ -193,6 +193,18 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       }
     }
   }
+  // Backward compatibility: users already stranded on the old full-page
+  // /assistant route can minimize to the floating panel after updating.
+  await page.goto('/assistant', { waitUntil: 'networkidle' });
+  await expect(page.getByRole('button', { name: 'Minimize Clementia' })).toBeVisible();
+  await page.getByRole('button', { name: 'Minimize Clementia' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  const restoredPanel = page.getByRole('dialog', { name: 'Clementia assistant' });
+  await expect(restoredPanel).toBeVisible();
+  await expect(restoredPanel.getByRole('button', { name: 'Maximize Clementia' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(restoredPanel).toHaveCount(0);
+
   // Visiting Reports marks only this local company's optional exploration step complete.
   await page.goto('/reports', { waitUntil: 'networkidle' });
   await expect(page).toHaveURL(/\/reports$/);
