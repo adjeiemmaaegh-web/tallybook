@@ -1,5 +1,5 @@
 /** Tallybook Africa design reminder: this is a shortcut into TallyBook's existing ledger, not a chatbot — every figure it shows must trace back to a real saved record, and nothing is written until the owner taps Confirm. */
-import { ArrowLeft, CircleAlert, CircleCheck, MessageCircleQuestion, Mic, Send } from "lucide-react";
+import { ArrowLeft, CircleAlert, CircleCheck, MessageCircleQuestion, Mic, Minimize2, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { createAssistant, deleteStoredAlias, deleteStoredWorkflow, listAssistantHistory, listPersistentWorkflows, listStoredAliases, saveStoredAlias, type Assistant, type AssistantAction, type AssistantReply } from "@/features/assistant";
 import { VOICE_LANGUAGES, defaultVoiceLanguage, rememberVoiceLanguage, useVoiceInput } from "@/features/assistant/voiceInput";
+import { requestClementiaPanelRestore } from "@/lib/clementiaWindow";
 
 interface Turn { id: number; from: "user" | "assistant"; reply?: AssistantReply; text?: string }
 
@@ -60,7 +61,7 @@ function ReplyBubble({ reply, onAction }: { reply: AssistantReply; onAction: (ac
 export default function AssistantPage() {
   const { profile, activeCompanyId } = useBusinessProfile();
   const { status: databaseStatus } = useDatabase();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -149,6 +150,13 @@ export default function AssistantPage() {
 
   return (
     <div className="assistant-page">
+      {location === "/assistant" && (
+        <button className="secondary-action assistant-minimize" type="button"
+          onClick={() => { requestClementiaPanelRestore(); setLocation("/"); }}
+          aria-label="Minimize Clementia">
+          <Minimize2 className="h-4 w-4" aria-hidden="true" /> Minimize Clementia
+        </button>
+      )}
       <section className="assistant-hero">
         <p className="eyebrow"><span className="eyebrow-dot" />Ask Tallybook</p>
         <span className="workspace-marker">ASK</span>
