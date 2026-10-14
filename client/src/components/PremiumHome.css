@@ -51,3 +51,26 @@
 .premium-step.done .premium-step-cta{background:#e7f8ef;color:#16845c}
 .premium-step:hover .premium-step-cta{background:#d8e9ff}
 @media(min-width:1280px){.premium-step{justify-content:flex-start}}
+
+/* Round 2: reference-sized desktop composition, without altering tablet/mobile layout. */
+@media(min-width:1440px){
+  .premium-home{grid-template-columns:minmax(0,1fr) 230px;gap:16px}
+  .premium-welcome{margin-bottom:16px;align-items:center}
+  .premium-welcome h1{font-size:27px}
+  .premium-identity{margin-top:7px}
+  .premium-kpis{gap:12px;margin-bottom:14px}
+  .premium-kpi{min-height:103px;padding:15px 13px;gap:9px}
+  .premium-kpi-icon{width:40px;height:40px}
+  .premium-middle{grid-template-columns:minmax(0,1.62fr) minmax(235px,1fr);gap:14px}
+  .premium-chart{min-height:350px}
+  .premium-line-chart{height:246px}
+  .premium-line-chart svg{height:216px}
+  .premium-setup{margin-top:14px}
+  .premium-step-grid{margin-top:12px;gap:8px}
+  .premium-step{min-height:137px;padding:10px 6px;gap:5px}
+  .premium-step .premium-step-number{width:25px;height:25px}
+  .premium-step-cta{padding:6px 8px}
+  .premium-side{gap:12px}
+  .premium-side .premium-card{padding:16px}
+  .premium-tip{margin:10px 0}
+}
