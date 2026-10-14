@@ -25,6 +25,9 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       await expect(page.locator('.premium-rail-setup')).toHaveAttribute('href', '/#getting-started');
       await expect(page.locator('#getting-started')).toBeVisible();
       await expect(page.locator('.clementia-launcher-label')).toBeVisible();
+      await page.locator('.premium-rail-setup').click();
+      await expect(page).toHaveURL(/#getting-started$/);
+      await expect(page.locator('#getting-started')).toBeVisible();
     }
     await expect(page.locator('.premium-line-chart svg')).toBeVisible();
     await expect(page.locator('.premium-line-chart svg polyline')).toHaveCount(1);
