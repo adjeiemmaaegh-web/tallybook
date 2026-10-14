@@ -98,3 +98,17 @@ test('no session resolver or transaction adapter means fail closed',()=>{
   assert.throws(()=>createTrustedCompanyOwnershipService({sessionResolver:null,store:{transaction(){}}}));
   assert.throws(()=>createTrustedCompanyOwnershipService({sessionResolver:()=>null,store:null}));
 });
+
+test('binding records one validated timestamp in both binding and audit', async () => {
+  const f = fixture();
+  await f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'});
+  assert.equal(f.bindings.get('co:local').createdAt, 1000);
+  assert.equal(f.audits[0].at, 1000);
+});
+test('expiry uses one clock reading and rejects a boundary-expired recovery', async () => {
+  const f = fixture();
+  f.proofs.get('restore').expiresAt = 1000;
+  await assert.rejects(f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'}));
+  assert.equal(f.bindings.size, 0);
+  assert.equal(f.proofs.get('restore').status, 'unused');
+});
