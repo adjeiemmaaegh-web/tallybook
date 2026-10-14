@@ -41,24 +41,35 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
     userId: userData.user.id,
     expiresAtEpochMs: session.expires_at * 1000,
   };
-  // RLS must enforce auth.uid() = user_id independently of this browser filter.
-  const { data: memberships, error: membershipError } = await client.from("company_memberships")
-    .select("user_id,company_id,role,status")
-    .eq("company_id", companyId)
+  // The actual Tallybook Supabase schema is businesses + business_members.
+  // RLS on business_members allows users to see only their own membership.
+  const { data: memberships, error: membershipError } = await client.from("business_members")
+    .select("user_id,business_id,role")
+    .eq("business_id", companyId)
     .eq("user_id", principal.userId)
     .limit(2);
   if (membershipError || !memberships || memberships.length !== 1)
     throw new Error("Company access is not authorized.");
   const row = memberships[0] as Record<string, unknown>;
-  if (typeof row.user_id !== "string" || typeof row.company_id !== "string" ||
-      !["owner", "admin", "staff"].includes(String(row.role)) ||
-      !["active", "revoked", "pending"].includes(String(row.status)))
+  if (row.user_id !== principal.userId || row.business_id !== companyId ||
+      (row.role !== "owner" && row.role !== "attendant"))
+    throw new Error("Company access is not authorized.");
+  // Independently verify the authoritative owner field of the business.
+  // Do not treat a forged or inconsistent owner membership as sufficient.
+  const { data: businesses, error: businessError } = await client.from("businesses")
+    .select("id,owner_id")
+    .eq("id", companyId)
+    .limit(2);
+  if (businessError || !businesses || businesses.length !== 1 ||
+      businesses[0].id !== companyId ||
+      typeof businesses[0].owner_id !== "string" ||
+      (row.role === "owner" && businesses[0].owner_id !== principal.userId))
     throw new Error("Company access is not authorized.");
   const membership: AuthoritativeCompanyMembership = {
-    userId: row.user_id,
-    companyId: row.company_id,
-    role: row.role as AuthoritativeCompanyMembership["role"],
-    status: row.status as AuthoritativeCompanyMembership["status"],
+    userId: principal.userId,
+    companyId,
+    role: row.role === "owner" ? "owner" : "staff",
+    status: "active", // database membership exists; revocation deletes row
   };
   requireCompanyAccess(principal, membership, companyId, action);
   // A sign-out or user change may occur while membership is being fetched.
