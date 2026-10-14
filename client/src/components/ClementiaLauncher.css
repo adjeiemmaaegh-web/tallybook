@@ -40,3 +40,19 @@
   .clementia-launcher-label{font-size:13px;letter-spacing:0}
 }
 @media(max-width:639px){.clementia-launcher{min-height:54px}}
+
+/* Round 6: reference-like Clementia guidance surface, still the same functional assistant dialog. */
+.clementia-launcher-copy{display:flex;flex-direction:column;text-align:left}
+.clementia-launcher-copy small{font-size:12px;line-height:1.5;font-weight:400}
+.clementia-launcher-arrow{display:none}
+@media(min-width:1024px){
+.clementia-launcher{right:17px;bottom:50px;width:265px;height:176px;min-height:176px;display:flex;align-items:flex-start;padding:32px 24px 18px;border-radius:29px;background:linear-gradient(130deg,#1269f3,#0860de);box-shadow:0 15px 27px rgba(18,86,199,.19);font-size:13px;gap:0}
+.clementia-launcher .clementia-avatar{left:28px;bottom:173px;width:193px;height:207px;overflow:visible;align-items:end}
+.clementia-launcher .clementia-avatar svg{width:193px;height:207px;filter:drop-shadow(0 3px 4px rgba(20,51,90,.10))}
+.clementia-launcher-copy{gap:12px}
+.clementia-launcher-label{font-size:21px;line-height:1.18;font-weight:800;letter-spacing:-.04em;white-space:normal}
+.clementia-launcher-copy small{font-size:13px;color:white;line-height:1.5;white-space:nowrap}
+.clementia-launcher-arrow{display:grid;position:absolute;right:10px;top:10px;width:38px;height:38px;place-items:center;border-radius:50%;background:#fff;color:#1669ec;font-size:23px;line-height:1}
+}
+@media(max-width:639px){.clementia-launcher-copy,.clementia-launcher-arrow{display:none}.clementia-launcher .clementia-avatar svg{width:53px;height:53px}}
+@media(min-width:640px) and (max-width:1023px){.clementia-launcher-copy small,.clementia-launcher-arrow{display:none}}
