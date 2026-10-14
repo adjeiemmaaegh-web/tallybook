@@ -159,3 +159,5 @@
   .app-frame .premium-rail-setup{min-height:210px;margin-bottom:66px}
   .skip-link:not(:focus-visible){transform:translateY(-220%)}
 }
+
+@media(min-width:1024px){aside.premium-desktop-rail nav.premium-nav-groups{padding-top:30px}}
