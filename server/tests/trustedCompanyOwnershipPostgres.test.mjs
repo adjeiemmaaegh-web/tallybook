@@ -85,3 +85,20 @@ test('a private transaction pool is mandatory',()=>{
   assert.throws(()=>createPostgresCompanyOwnershipStore(null));
   assert.throws(()=>createPostgresCompanyOwnershipStore({}));
 });
+
+test('existing cloud-company binding is detected even for a different local ID',async()=>{
+  const x=mockPool();
+  x.client.query=async function(sql,params=[]){
+    x.calls.push({sql,params});
+    if(sql.includes('from public.company_local_bindings') && sql.startsWith('select'))
+      return {rows:[{company_id:'cloud',local_company_id:'original-local'}],rowCount:1};
+    return {rows:[],rowCount:0};
+  };
+  await createPostgresCompanyOwnershipStore(x.pool).transaction(async tx=>{
+    assert.deepEqual(await tx.getBinding('cloud','attempted-rebind'),
+      {companyId:'cloud',localCompanyId:'original-local'});
+  });
+  const lookup=x.calls.find(c=>c.sql.startsWith('select')&&c.sql.includes('company_local_bindings'));
+  assert.deepEqual(lookup.params,['cloud']);
+  assert.equal(x.calls.at(-1).sql,'COMMIT');
+});

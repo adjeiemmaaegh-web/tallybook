@@ -109,3 +109,10 @@ At the end of each development round, **update this same `Multistore.md`** with 
 - **Fix:** retain `currentOwnerMembership` returned by the first transactional read. Validate it as an active owner and use that same record when updating the former owner to `attendant`. The destination membership, server-issued transfer proof, company owner update, recovery consumption, and audit remain required within the same transaction.
 - **Regression added:** `server/tests/trustedCompanyOwnership.test.mjs` tracks transactional membership reads and asserts exactly one lookup per actor/recipient and correct persisted roles, proof consumption and audit.
 - **Verification:** source reviewed; new test is written but not executed on the full repository yet under the agreed owner-PC deferred QA plan. No Vercel/Supabase operations or production change. **Round 1 remains PARTIAL; release NO-GO.**
+
+## Round 1 continuation — cloud-company binding uniqueness (2026-10-15)
+
+- Found that private PostgreSQL `getBinding(companyId,localCompanyId)` searched for a specific local ID even though `company_local_bindings.company_id` is the unique primary key. Rebinding the same company to a different local ID should be recognized as an existing association before insert.
+- Updated the read to lock and inspect any binding matching the cloud company ID; report the actual existing local company ID and reject inconsistent multiple rows. The database primary key remains the authoritative concurrency defense.
+- Added a native Node regression for attempted rebind with a different local ID and parameterized lookup.
+- GitHub-backed source review only; the new regression and full acceptance suite remain unexecuted. No database migration, live writes, production promotion, or feature activation. Round 1 remains partial; release NO-GO.

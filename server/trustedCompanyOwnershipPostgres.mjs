@@ -52,8 +52,9 @@ export function createPostgresCompanyOwnershipStore(pool) {
             exactlyOne(q);
           },
           async getBinding(companyId,localCompanyId) {
-            const q=await client.query('select company_id from public.company_local_bindings where company_id=$1 and local_company_id=$2 for update',[companyId,localCompanyId]);
-            return q.rows.length?{companyId,localCompanyId}:null;
+            const q=await client.query('select company_id,local_company_id from public.company_local_bindings where company_id=$1 for update',[companyId]);
+            if(q.rows.length>1) throw Error('Company binding integrity conflict');
+            return q.rows.length?{companyId:q.rows[0].company_id,localCompanyId:q.rows[0].local_company_id}:null;
           },
           async putBinding(binding) {
             const q=await client.query('insert into public.company_local_bindings(company_id,local_company_id,owner_id,created_at) values($1,$2,$3,to_timestamp($4::double precision/1000)) returning company_id',
