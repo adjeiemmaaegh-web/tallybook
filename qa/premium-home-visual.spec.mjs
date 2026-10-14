@@ -123,12 +123,17 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     // Regression: maximizing used to route to /assistant and strand users there
     // without a minimize control. Resizing must preserve unsent text and route.
     const draft = 'My draft question stays here when I resize Clementia';
+    const originalPageOverflow = await page.evaluate(() => document.documentElement.style.overflow);
     const composer = clementia.getByRole('textbox', { name: "Message TallyBook's assistant" });
     await composer.fill(draft);
     await clementia.getByRole('button', { name: 'Maximize Clementia' }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(clementia).toHaveClass(/clementia-panel-maximized/);
     await expect(clementia).toHaveAttribute('aria-modal', 'true');
+    // Fullscreen is a real modal: the underlying shell is inert and its scroll locked.
+    await expect(page.locator('.content-frame')).toHaveJSProperty('inert', true);
+    await expect(page.locator('.mobile-nav')).toHaveJSProperty('inert', true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
     await expect(clementia.getByRole('button', { name: 'Minimize Clementia' })).toBeFocused();
     // The local tools disclosure is a native keyboard-focusable <summary>.
     // Trap Shift+Tab from the first control and Tab back from the last control.
@@ -149,6 +154,10 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await clementia.getByRole('button', { name: 'Minimize Clementia' }).click();
     await expect(clementia).not.toHaveClass(/clementia-panel-maximized/);
     await expect(clementia).toHaveAttribute('aria-modal', 'false');
+    // Unwinding the modal must restore the underlying dashboard and scroll exactly.
+    await expect(page.locator('.content-frame')).toHaveJSProperty('inert', false);
+    await expect(page.locator('.mobile-nav')).toHaveJSProperty('inert', false);
+    await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe(originalPageOverflow);
     await expect(clementia.getByRole('button', { name: 'Maximize Clementia' })).toBeFocused();
     await expect(composer).toHaveValue(draft);
     await clementia.getByRole('button', { name: 'Maximize Clementia' }).click();
