@@ -54,3 +54,12 @@
   .top-bar .shell-top-utilities .status-chip{max-width:26px;min-width:26px;width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:0;white-space:nowrap}
   .top-bar .shell-top-utilities .status-chip span{font-size:0;max-width:0;overflow:hidden}
 }
+
+/* Reference sidebar onboarding card; navigates to the actual company-specific checklist. */
+.premium-rail-setup{display:flex;align-items:center;gap:10px;margin:0 13px 12px;padding:14px 11px;border:1px solid #d6e6ff;border-radius:13px;background:linear-gradient(135deg,#edf5ff,#f8fbff);color:#1757ae;text-decoration:none;font-size:12px}
+.premium-rail-setup:hover{border-color:#94bdf3;background:#e8f2ff}
+.premium-rail-setup-icon{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:10px;background:#d8eaff}
+.premium-rail-setup strong{display:block;color:#174c93;font-weight:800}
+.premium-rail-setup small{display:block;margin-top:3px;color:#58718f;font-size:10px;line-height:1.4}
+.premium-rail-setup>span:last-child{margin-left:auto;font-size:18px}
+.premium-rail-setup:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
