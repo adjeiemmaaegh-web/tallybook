@@ -24,7 +24,14 @@ export function createTrustedRecoveryIssuer({resolveReviewer,verifyRecovery,stor
         (kind==='verified-restore'&&evidence?.localCompanyId!==localCompanyId)||
         (kind==='approved-transfer'&&evidence?.recipientId!==recipientId))denied();
       const now=clock();
-      if(!Number.isSafeInteger(now)||now<0)denied();
+      if(!Number.isSafeInteger(now)||now<0 || now>Number.MAX_SAFE_INTEGER-600000)denied();
+      // Recovery evidence is independently reviewed, time-bounded and cannot
+      // be self-approved by the company owner even if they have reviewer status.
+      if(reviewer.userId===evidence.ownerId ||
+         !Number.isSafeInteger(evidence.verifiedAtEpochMs) ||
+         evidence.verifiedAtEpochMs<0 ||
+         evidence.verifiedAtEpochMs>now ||
+         now-evidence.verifiedAtEpochMs>24*60*60*1000)denied();
       return store.transaction(async tx=>{
         if(!tx||!['getCompany','getMembership','getRecovery','putRecovery','appendApprovalAudit'].every(k=>typeof tx[k]==='function'))denied();
         const company=await tx.getCompany(companyId);
