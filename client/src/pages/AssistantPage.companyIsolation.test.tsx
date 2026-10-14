@@ -47,6 +47,18 @@ beforeEach(() => {
 });
 
 describe("Clementia company-switch UI isolation", () => {
+  it("drops an unsent confidential draft as soon as the active company changes", () => {
+    const view = render(<AssistantPage />);
+    const input = screen.getByRole("textbox", { name: "Message TallyBook's assistant" });
+    fireEvent.change(input, { target: { value: "Alpha unsent private notes" } });
+    expect(input).toHaveValue("Alpha unsent private notes");
+
+    mock.companyId = "beta";
+    view.rerender(<AssistantPage />);
+    expect(screen.getByRole("textbox", { name: "Message TallyBook's assistant" })).toHaveValue("");
+    expect(screen.queryByText("Alpha unsent private notes")).not.toBeInTheDocument();
+  });
+
   it("discards pending questions and ignores a prior company's late reply", async () => {
     const view = render(<AssistantPage />);
     fireEvent.change(screen.getByRole("textbox", { name: "Message TallyBook's assistant" }), {
