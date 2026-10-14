@@ -5,7 +5,7 @@ import {createTrustedCompanyOwnershipService} from '../trustedCompanyOwnership.m
 function fixture() {
   const members = new Map([
     ['co:alice',{companyId:'co',userId:'alice',role:'owner',status:'active'}],
-    ['co:bob',{companyId:'co',userId:'bob',role:'admin',status:'active'}],
+    ['co:bob',{companyId:'co',userId:'bob',role:'attendant',status:'active'}],
   ]);
   const proofs = new Map([
     ['restore',{id:'restore',companyId:'co',localCompanyId:'local',ownerId:'alice',kind:'verified-restore',status:'unused',expiresAt:2000}],
