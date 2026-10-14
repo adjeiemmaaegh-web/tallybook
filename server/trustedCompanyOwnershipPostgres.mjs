@@ -60,6 +60,16 @@ export function createPostgresCompanyOwnershipStore(pool) {
               [binding.companyId,binding.localCompanyId,binding.ownerId,binding.createdAt]);
             exactlyOne(q);
           },
+          async updateBindingOwner(companyId,userId) {
+            // Zero rows means there is no local binding, which is valid for
+            // cloud-only companies. A single existing binding must follow the
+            // new canonical owner inside this same serializable transaction.
+            const q=await client.query(
+              'update public.company_local_bindings set owner_id=$2 where company_id=$1 returning company_id',
+              [companyId,userId]);
+            if(!Number.isSafeInteger(q?.rowCount) || q.rowCount<0 || q.rowCount>1)
+              throw Error('Company binding update conflict');
+          },
           async appendAudit(event) {
             const q=await client.query('insert into public.company_ownership_audit(event_type,company_id,actor_id,recipient_id,local_company_id,recovery_id,event_at) values($1,$2,$3,$4,$5,$6,to_timestamp($7::double precision/1000)) returning id',
               [event.type,event.companyId,event.actorId,event.recipientId??null,event.localCompanyId??null,event.recoveryId,event.at]);
