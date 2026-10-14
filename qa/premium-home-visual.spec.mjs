@@ -116,10 +116,40 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`home-${viewport.width}.png`), fullPage: true });
     await page.getByRole('button', { name: 'Let Clementia assist you' }).click();
-    await expect(page.getByRole('dialog', { name: 'Clementia assistant' })).toBeVisible();
+    const clementia = page.getByRole('dialog', { name: 'Clementia assistant' });
+    await expect(clementia).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`clementia-${viewport.width}.png`), fullPage: true });
+
+    // Regression: maximizing used to route to /assistant and strand users there
+    // without a minimize control. Resizing must preserve unsent text and route.
+    const draft = 'My draft question stays here when I resize Clementia';
+    const composer = clementia.getByRole('textbox', { name: "Message TallyBook's assistant" });
+    await composer.fill(draft);
+    await clementia.getByRole('button', { name: 'Maximize Clementia' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(clementia).toHaveClass(/clementia-panel-maximized/);
+    await expect(clementia).toHaveAttribute('aria-modal', 'true');
+    await expect(clementia.getByRole('button', { name: 'Minimize Clementia' })).toBeFocused();
+    await expect(composer).toHaveValue(draft);
+    const expandedBox = await clementia.boundingBox();
+    expect(expandedBox?.width, 'Maximized assistant fills viewport width').toBeGreaterThanOrEqual(viewport.width - 1);
+    expect(expandedBox?.height, 'Maximized assistant fills viewport height').toBeGreaterThanOrEqual(viewport.height - 1);
+    if (viewport.width === 1536 || viewport.width === 390) {
+      await page.screenshot({ path: testInfo.outputPath(`clementia-maximized-${viewport.width}.png`) });
+    }
+
+    await clementia.getByRole('button', { name: 'Minimize Clementia' }).click();
+    await expect(clementia).not.toHaveClass(/clementia-panel-maximized/);
+    await expect(clementia).toHaveAttribute('aria-modal', 'false');
+    await expect(clementia.getByRole('button', { name: 'Maximize Clementia' })).toBeFocused();
+    await expect(composer).toHaveValue(draft);
+    await clementia.getByRole('button', { name: 'Maximize Clementia' }).click();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'Clementia assistant' })).toHaveCount(0);
+    await expect(clementia).toBeVisible();
+    await expect(clementia).not.toHaveClass(/clementia-panel-maximized/);
+    await expect(composer).toHaveValue(draft);
+    await page.keyboard.press('Escape');
+    await expect(clementia).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeFocused();
     if (viewport.width < 640) {
       await expect(page.getByRole('link', { name: 'Business settings' })).toBeHidden();
