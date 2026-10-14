@@ -27,7 +27,7 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
     const userId = await actor(session);
     if (!valid(companyId)) deny();
     return store.transaction(async tx => {
-      if (!tx || !['getCompany','getMembership','putMembership','getRecovery','consumeRecovery','appendAudit']
+      if (!tx || !['getCompany','getMembership','putMembership','getRecovery','consumeRecovery','appendAudit','getBinding','putBinding']
           .every(k => typeof tx[k] === 'function')) deny();
       const company = await tx.getCompany(companyId);
       if (company?.id !== companyId || company?.status !== 'active') deny();
@@ -47,10 +47,15 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
             !Number.isSafeInteger(proof?.expiresAt) || proof.expiresAt <= clock()) deny();
         // A verified restore proof must have been created and signed off by a
         // trusted server review; this API cannot mint one from browser claims.
+        if (await tx.getBinding(cloudCompanyId,localCompanyId)) deny();
+        // Store must enforce a unique (cloudCompanyId,localCompanyId) binding
+        // inside the same serializable transaction, including across workers.
+        await tx.putBinding(immutable({companyId:cloudCompanyId,localCompanyId,
+          ownerId:userId,createdAt:clock()}));
         await tx.consumeRecovery(recoveryId);
-        await tx.appendAudit(immutable({type:'company-binding-reviewed',companyId:cloudCompanyId,
+        await tx.appendAudit(immutable({type:'company-binding-created',companyId:cloudCompanyId,
           localCompanyId,actorId:userId,recoveryId,at:clock()}));
-        return immutable({companyId:cloudCompanyId,localCompanyId,userId,bindingReviewed:true,
+        return immutable({companyId:cloudCompanyId,localCompanyId,userId,bindingCreated:true,
           cloudAccessGranted:false});
       });
     },
