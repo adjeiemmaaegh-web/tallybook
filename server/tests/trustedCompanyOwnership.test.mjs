@@ -72,7 +72,7 @@ test('approved owner transfer is atomic, auditable and replay protected',async()
   const r=await f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
   assert.equal(r.transferred,true);
   assert.equal(f.members.get('co:bob').role,'owner');
-  assert.equal(f.members.get('co:alice').role,'admin');
+  assert.equal(f.members.get('co:alice').role,'attendant');
   assert.equal(f.audits[0].type,'ownership-transferred');
   await assert.rejects(f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'}));
 });
