@@ -1,5 +1,5 @@
 /** Tallybook Africa design reminder: this is a shortcut into TallyBook's existing ledger, not a chatbot — every figure it shows must trace back to a real saved record, and nothing is written until the owner taps Confirm. */
-import { ArrowLeft, CircleAlert, CircleCheck, MessageCircleQuestion, Mic, Send } from "lucide-react";
+import { ArrowLeft, CircleAlert, CircleCheck, MessageCircleQuestion, Mic, Minimize2, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { createAssistant, deleteStoredAlias, deleteStoredWorkflow, listAssistantHistory, listPersistentWorkflows, listStoredAliases, saveStoredAlias, type Assistant, type AssistantAction, type AssistantReply } from "@/features/assistant";
 import { VOICE_LANGUAGES, defaultVoiceLanguage, rememberVoiceLanguage, useVoiceInput } from "@/features/assistant/voiceInput";
+import { requestClementiaPanelRestore } from "@/lib/clementiaWindow";
 
 interface Turn { id: number; from: "user" | "assistant"; reply?: AssistantReply; text?: string }
 
@@ -57,10 +58,22 @@ function ReplyBubble({ reply, onAction }: { reply: AssistantReply; onAction: (ac
   );
 }
 
+/**
+ * Company changes unmount the previous chat immediately, including its pending
+ * drafts, previews and speech recognition. A late result from the old company
+ * cannot reappear in the newly selected company's UI.
+ */
 export default function AssistantPage() {
+  const { activeCompanyId, profile } = useBusinessProfile();
+  // A changed currency invalidates old previews even within the same company.
+  // The assistant instance captures currency when it is created.
+  return <CompanyScopedAssistant key={JSON.stringify([activeCompanyId, profile?.currency ?? null])} />;
+}
+
+function CompanyScopedAssistant() {
   const { profile, activeCompanyId } = useBusinessProfile();
   const { status: databaseStatus } = useDatabase();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -69,6 +82,7 @@ export default function AssistantPage() {
   const [workflows, setWorkflows] = useState<Array<{ id: string; name: string; description: string }>>([]);
   const [aliases, setAliases] = useState<Array<{ id: string; phrase: string; canonicalValue: string }>>([]);
   const [history, setHistory] = useState<Array<{ id: string; input: string; createdAt: string; replayText: string }>>([]);
+  const [localToolsError, setLocalToolsError] = useState<string | null>(null);
   const [aliasPhrase, setAliasPhrase] = useState("");
   const [aliasValue, setAliasValue] = useState("");
   const busyRef = useRef(false);
@@ -76,17 +90,28 @@ export default function AssistantPage() {
   const nextId = useRef(0);
   const threadEnd = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { assistantRef.current = null; setTurns([]); }, [activeCompanyId]);
   useEffect(() => {
-    if (!activeCompanyId) return;
-    const workflowsTask = typeof listPersistentWorkflows === "function" ? listPersistentWorkflows(activeCompanyId) : Promise.resolve([]);
-    const aliasesTask = typeof listStoredAliases === "function" ? listStoredAliases(activeCompanyId) : Promise.resolve([]);
-    const historyTask = typeof listAssistantHistory === "function" ? listAssistantHistory(activeCompanyId, 8) : Promise.resolve([]);
-    void Promise.all([workflowsTask, aliasesTask, historyTask]).then(([savedWorkflows, savedAliases, savedHistory]) => {
+    // A previous company's async load is not allowed to populate this session.
+    let current = true;
+    setLocalToolsError(null);
+    if (!activeCompanyId) return () => { current = false; };
+    void Promise.all([
+      listPersistentWorkflows(activeCompanyId),
+      listStoredAliases(activeCompanyId),
+      listAssistantHistory(activeCompanyId, 8),
+    ]).then(([savedWorkflows, savedAliases, savedHistory]) => {
+      if (!current) return;
       setWorkflows(savedWorkflows.map(({ id, name, description }) => ({ id, name, description })));
       setAliases(savedAliases.map(({ id, phrase, canonicalValue }) => ({ id, phrase, canonicalValue })));
       setHistory(savedHistory.map(({ id, input, createdAt, replayText }) => ({ id, input, createdAt, replayText })));
+    }).catch(() => {
+      if (!current) return;
+      setLocalToolsError("Saved assistant shortcuts could not be loaded. Close and reopen Clementia to retry.");
+      setWorkflows([]);
+      setAliases([]);
+      setHistory([]);
     });
+    return () => { current = false; };
   }, [activeCompanyId]);
   useLayoutEffect(() => { threadEnd.current?.scrollIntoView?.({ block: "end" }); }, [turns]);
 
@@ -129,6 +154,7 @@ export default function AssistantPage() {
   };
 
   const handleAction = (action: AssistantAction) => { if (action.type === "navigate") { setLocation(action.href); return; } void runAction(action.type === "say" ? action.text : null, (assistant) => assistant.act(action)); };
+  const minimizeStandalone = () => { requestClementiaPanelRestore(); setLocation("/"); };
 
   if (!profile) {
     return (
@@ -139,6 +165,7 @@ export default function AssistantPage() {
           <p className="eyebrow"><span className="eyebrow-dot" />Assistant</p>
           <h1>Set up your business first.</h1>
           <p>The assistant answers from your saved records, so it needs a business set up before it has anything to read.</p>
+          {location === "/assistant" && <button className="secondary-action assistant-minimize" type="button" onClick={minimizeStandalone} aria-label="Minimize Clementia"><Minimize2 className="h-4 w-4" aria-hidden="true"/> Minimize Clementia</button>}
           <Link href="/business" className="primary-action">Set up business</Link>
         </div>
       </section>
@@ -149,6 +176,13 @@ export default function AssistantPage() {
 
   return (
     <div className="assistant-page">
+      {location === "/assistant" && (
+        <button className="secondary-action assistant-minimize" type="button"
+          onClick={minimizeStandalone}
+          aria-label="Minimize Clementia">
+          <Minimize2 className="h-4 w-4" aria-hidden="true" /> Minimize Clementia
+        </button>
+      )}
       <section className="assistant-hero">
         <p className="eyebrow"><span className="eyebrow-dot" />Ask Tallybook</p>
         <span className="workspace-marker">ASK</span>
@@ -213,6 +247,7 @@ export default function AssistantPage() {
       <section className="assistant-local-tools" aria-label="Local assistant tools">
         <details><summary>On-device workflows and memory</summary>
           <p className="assistant-more">These settings stay on this device and do not sync to a server.</p>
+          {localToolsError && <p role="alert" className="assistant-more">{localToolsError}</p>}
           <button type="button" className="secondary-action" onClick={() => assistantRef.current?.clearContext()}>Clear conversation context</button>
           <div className="assistant-details"><strong>Saved workflows</strong>{workflows.length ? workflows.map((workflow) => <div key={workflow.id}><span>{workflow.name}</span><button type="button" className="quiet-action" onClick={() => void runAction(workflow.name, (assistant) => assistant.send(workflow.name))}>Run</button><button type="button" className="quiet-action" onClick={() => { void deleteStoredWorkflow(workflow.id).then(() => setWorkflows((items) => items.filter((item) => item.id !== workflow.id))); }}>Delete</button></div>) : <span>None yet. Ask for a check, then say “save this as my morning check”.</span>}</div>
           <div className="assistant-details"><strong>Learned terms</strong>{aliases.length ? aliases.map((alias) => <div key={alias.id}><span>{alias.phrase} → {alias.canonicalValue}</span><button type="button" className="quiet-action" onClick={() => { void deleteStoredAlias(alias.id).then(() => setAliases((items) => items.filter((item) => item.id !== alias.id))); }}>Remove</button></div>) : <span>No custom terms yet.</span>}

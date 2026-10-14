@@ -56,3 +56,81 @@
 }
 @media(max-width:639px){.clementia-launcher-copy,.clementia-launcher-arrow{display:none}.clementia-launcher .clementia-avatar svg{width:53px;height:53px}}
 @media(min-width:640px) and (max-width:1023px){.clementia-launcher-copy small,.clementia-launcher-arrow{display:none}}
+
+
+/* Maximize in place: keep the same assistant instance and its unsent draft.
+   Avoid navigating to /assistant, which previously had no inverse minimize action. */
+.clementia-panel.clementia-panel-maximized {
+  inset: 0;
+  z-index: 110;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+}
+.clementia-panel-maximized .clementia-panel-header {
+  padding: 14px clamp(14px, 3vw, 40px);
+}
+.clementia-panel-maximized .clementia-panel-body {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.clementia-panel-maximized .assistant-page {
+  width: 100%;
+  max-width: 960px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 18px clamp(12px, 3vw, 28px) 26px;
+}
+@media (max-width: 639px) {
+  .clementia-panel.clementia-panel-maximized {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100dvh;
+    width: 100vw;
+    border-radius: 0;
+  }
+}
+
+/* Backward-compatible visible minimize action for the standalone /assistant page. */
+.assistant-page > .assistant-minimize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  gap: 8px;
+  min-height: 42px;
+  margin: 0 0 2px;
+}
+.assistant-page > .assistant-minimize:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+/* In the old header the maximize control was a link with margin-left:auto.
+   Keep it right-aligned now that it is a toggle button. */
+.clementia-panel-header > button[aria-pressed] { margin-left: auto; }
+.clementia-panel-header > button[aria-pressed]:hover,
+.clementia-panel-header > button[aria-label="Close Clementia"]:hover { background: #eaf1fd; }
+.clementia-panel-header > button[aria-pressed]:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+
+/* Keep the recovery action discoverable when a long standalone chat is scrolled. */
+.assistant-page > .assistant-minimize {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  background: #fff;
+}
+.reports-gate-sheet > .assistant-minimize {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 12px 0;
+}
