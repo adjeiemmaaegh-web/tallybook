@@ -12,21 +12,26 @@ function fixture() {
     ['transfer',{id:'transfer',companyId:'co',ownerId:'alice',recipientId:'bob',kind:'approved-transfer',status:'unused',expiresAt:2000}],
   ]);
   const audits = [];
+  const bindings = new Map();
   // Clone-on-write models atomic transaction rollback, including audit/recovery.
   const store = {async transaction(fn) {
     const nextMembers = new Map([...members].map(([k,v])=>[k,{...v}]));
     const nextProofs = new Map([...proofs].map(([k,v])=>[k,{...v}]));
     const nextAudit = [];
+    const nextBindings = new Map([...bindings].map(([k,v])=>[k,{...v}]));
     const result = await fn({
       getCompany:async id=>id==='co'?{id,status:'active'}:null,
       getMembership:async(c,u)=>nextMembers.get(c+':'+u),
       putMembership:async m=>{nextMembers.set(m.companyId+':'+m.userId,m);},
       getRecovery:async id=>nextProofs.get(id),
+      getBinding:async(c,l)=>nextBindings.get(c+':'+l),
+      putBinding:async x=>{const key=x.companyId+':'+x.localCompanyId;if(nextBindings.has(key))throw Error('duplicate');nextBindings.set(key,x);},
       consumeRecovery:async id=>{const p=nextProofs.get(id);if(!p||p.status!=='unused')throw Error('consumed');p.status='consumed';},
       appendAudit:async event=>{nextAudit.push(event);},
     });
     members.clear();for(const [k,v] of nextMembers) members.set(k,v);
     proofs.clear();for(const [k,v] of nextProofs) proofs.set(k,v);
+    bindings.clear();for(const [k,v] of nextBindings) bindings.set(k,v);
     audits.push(...nextAudit);
     return result;
   }};
@@ -34,12 +39,14 @@ function fixture() {
     sessionResolver:async session => session==='alice'||session==='bob'?{userId:session,active:true}:null,
     store,clock:()=>1000,
   });
-  return {service,members,proofs,audits};
+  return {service,members,proofs,audits,bindings};
 }
 test('verified server backup proof permits one inert binding review, never grants access',async()=>{
   const f=fixture();
   const r=await f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'});
   assert.equal(r.cloudAccessGranted,false);
+  assert.equal(r.bindingCreated,true);
+  assert.equal(f.bindings.get('co:local').ownerId,'alice');
   assert.equal(f.audits.length,1);
   await assert.rejects(f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'}));
 });
@@ -52,6 +59,7 @@ test('reject forged local company, wrong actor, missing session and foreign dest
     {session:'alice',cloudCompanyId:'other',localCompanyId:'local',recoveryId:'restore'},
   ]) await assert.rejects(f.service.bindExistingCompany(request));
   assert.equal(f.audits.length,0);
+  assert.equal(f.bindings.size,0);
   assert.equal(f.proofs.get('restore').status,'unused');
 });
 test('approved owner transfer is atomic, auditable and replay protected',async()=>{
