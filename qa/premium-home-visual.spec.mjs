@@ -26,6 +26,7 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.getByRole('link', { name: 'View alerts' })).toBeVisible();
     if (viewport.width >= 1024) {
       await expect(page.locator('.premium-rail-setup')).toBeVisible();
+      await expect(page.locator('.premium-rail-setup')).toContainText("Let's get your business ready.");
       await expect(page.locator('.premium-rail-setup')).toHaveAttribute('href', '/#getting-started');
       await expect(page.locator('#getting-started')).toBeVisible();
       await expect(page.locator('.clementia-launcher-label')).toBeVisible();
