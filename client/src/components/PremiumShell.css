@@ -63,3 +63,14 @@
 .premium-rail-setup small{display:block;margin-top:3px;color:#58718f;font-size:10px;line-height:1.4}
 .premium-rail-setup>span:last-child{margin-left:auto;font-size:18px}
 .premium-rail-setup:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
+
+/* Round 2: desktop shell spacing follows the approved compact reference canvas. */
+@media(min-width:1440px){
+  .page-content{padding:22px 24px 72px}
+  .premium-desktop-rail .premium-rail-brand{padding-top:14px;padding-bottom:6px}
+  .premium-nav-groups{padding-top:8px;padding-bottom:10px}
+  .premium-nav-group{margin-bottom:11px}
+  .premium-nav-item{min-height:37px;padding:7px 11px}
+  .premium-rail-setup{padding:10px;margin-bottom:9px}
+  .premium-storage-note{margin-bottom:12px;padding-top:9px}
+}
