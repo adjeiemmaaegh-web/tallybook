@@ -130,6 +130,14 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(clementia).toHaveClass(/clementia-panel-maximized/);
     await expect(clementia).toHaveAttribute('aria-modal', 'true');
     await expect(clementia.getByRole('button', { name: 'Minimize Clementia' })).toBeFocused();
+    // The local tools disclosure is a native keyboard-focusable <summary>.
+    // Trap Shift+Tab from the first control and Tab back from the last control.
+    if (viewport.width === 1536 || viewport.width === 390) {
+      await page.keyboard.press('Shift+Tab');
+      await expect(clementia.locator('.assistant-local-tools summary')).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(clementia.getByRole('button', { name: 'Minimize Clementia' })).toBeFocused();
+    }
     await expect(composer).toHaveValue(draft);
     const expandedBox = await clementia.boundingBox();
     expect(expandedBox?.width, 'Maximized assistant fills viewport width').toBeGreaterThanOrEqual(viewport.width - 1);
