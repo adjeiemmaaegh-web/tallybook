@@ -149,3 +149,13 @@
 }
 
 @media(min-width:1440px){.page-content{padding-bottom:14px}}
+
+/* Explicitly override the older 72px application header used by non-premium screens. */
+@media(min-width:1024px){
+  .app-frame .top-bar{min-height:65px!important;max-height:65px!important;height:65px!important}
+  .app-frame .premium-desktop-rail{top:65px}
+}
+@media(min-width:1440px){
+  .app-frame .premium-rail-setup{min-height:210px;margin-bottom:66px}
+  .skip-link:not(:focus-visible){transform:translateY(-220%)}
+}
