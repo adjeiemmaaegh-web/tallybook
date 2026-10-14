@@ -33,7 +33,7 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
     throw new Error("Company access is not authorized.");
   const { data: sessionData, error: sessionError } = await client.auth.getSession();
   const session = sessionData.session;
-  if (sessionError || !session || session.user.id !== userData.user.id || !Number.isSafeInteger(session.expires_at))
+  if (sessionError || !session || session.user.id !== userData.user.id || typeof session.expires_at !== "number" || !Number.isSafeInteger(session.expires_at))
     throw new Error("Company access is not authorized.");
   if (session.expires_at <= 0 || session.expires_at > Math.floor(Number.MAX_SAFE_INTEGER / 1000))
     throw new Error("Company access is not authorized.");
@@ -67,6 +67,7 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
   const { data: finalSession, error: finalSessionError } = await client.auth.getSession();
   if (finalSessionError || !finalSession.session ||
       finalSession.session.user.id !== principal.userId ||
+      typeof finalSession.session.expires_at !== "number" ||
       !Number.isSafeInteger(finalSession.session.expires_at) ||
       finalSession.session.expires_at <= 0 ||
       finalSession.session.expires_at > Math.floor(Number.MAX_SAFE_INTEGER / 1000) ||
