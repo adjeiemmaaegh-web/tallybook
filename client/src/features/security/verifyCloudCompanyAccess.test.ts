@@ -48,6 +48,10 @@ describe("verified cloud company access (inactive preview service)", () => {
     membership([], new Error("request failed"));
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
+  it("rejects unsafe session timestamps", async () => {
+    getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER } }, error: null });
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+  });
   it("rejects expired sessions", async () => {
     getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: 1 } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
