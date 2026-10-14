@@ -40,6 +40,15 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.locator('.premium-line-chart svg text')).toHaveCount(5);
     const ticks = await page.locator('.premium-line-chart svg text').allTextContents();
     expect(new Set(ticks).size).toBe(5);
+    const captionOffsets = await page.evaluate(() => {
+      const svg = document.querySelector('.premium-line-chart svg');
+      const labels = [...document.querySelectorAll('.premium-line-labels small')];
+      const points = [...document.querySelectorAll('.premium-line-chart svg circle')];
+      if (!svg || labels.length !== 7 || points.length !== 7) return [Infinity];
+      const rect = svg.getBoundingClientRect();
+      return labels.map((label, i) => Math.abs(label.getBoundingClientRect().left + label.getBoundingClientRect().width / 2 - (rect.left + Number(points[i].getAttribute('cx')) / 700 * rect.width)));
+    });
+    expect(Math.max(...captionOffsets), `Chart day-label misalignment at ${viewport.width}px`).toBeLessThanOrEqual(2);
     await expect(page.locator('.premium-step.done')).toHaveCount(1);
     await expect(page.locator('.premium-chart-empty-note')).toContainText('No sales yet');
     await expect(page.locator('.clementia-launcher .clementia-avatar svg')).toBeVisible();
