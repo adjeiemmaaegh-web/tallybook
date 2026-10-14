@@ -68,6 +68,8 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
   if (finalSessionError || !finalSession.session ||
       finalSession.session.user.id !== principal.userId ||
       !Number.isSafeInteger(finalSession.session.expires_at) ||
+      finalSession.session.expires_at <= 0 ||
+      finalSession.session.expires_at > Math.floor(Number.MAX_SAFE_INTEGER / 1000) ||
       finalSession.session.expires_at * 1000 <= Date.now())
     throw new Error("Company access is not authorized.");
   return { userId: principal.userId, companyId, role: membership.role };
