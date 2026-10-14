@@ -12,3 +12,16 @@ export function buildSetupSteps(counts: SetupCounts): SetupStep[] {
     { id: "backup", title: "Create a backup after your first sale", href: "/backup", done: false, optional: true },
   ];
 }
+
+/** UI-only visit marker, scoped per local company; never changes ledger/business facts. */
+const reportVisitKey = (companyId: string) => `tallybook:setup-reports-visited:${companyId}`;
+export function hasReportsExplored(companyId: string): boolean {
+  if (!companyId || typeof window === "undefined") return false;
+  try { return window.localStorage.getItem(reportVisitKey(companyId)) === "1"; }
+  catch { return false; }
+}
+export function markReportsExplored(companyId: string): void {
+  if (!companyId || typeof window === "undefined") return;
+  try { window.localStorage.setItem(reportVisitKey(companyId), "1"); }
+  catch { /* Optional onboarding hint; disabled storage must not block accounting. */ }
+}

@@ -1,13 +1,13 @@
 /** Adobea design reminder (Stage 1 restyle): Home opens straight into today's numbers and the four most-used actions — no explainer copy, no marketing hero. */
-import { ArrowRight, ShoppingBag, UsersRound, PackageSearch, BarChart3, CheckCircle2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { db } from "@/db/TallybookDB";
-import { buildSetupSteps, type SetupCounts } from "@/features/business/setupProgress";
+import type { SetupCounts } from "@/features/business/setupProgress";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { useOnlineState } from "@/hooks/useOnlineState";
-import { TodayDashboard } from "@/components/TodayDashboard";
+import { PremiumHomeOverview } from "@/components/PremiumHomeOverview";
 
 export default function StageHome() {
   const { status, retry } = useDatabase();
@@ -68,56 +68,5 @@ export default function StageHome() {
     );
   }
 
-  return (
-    <div className="home-workspace space-y-5 pb-6">
-      <section>
-        <div className="op-section-title">
-          <span>Hello, <strong>{profile.name}</strong></span>
-        </div>
-        <p className="op-row-sub" style={{ marginBottom: 10 }}>
-          <span>{profile.country} · {profile.currency}</span>
-          {" — "}
-          {online ? "Saved on this device" : "Working offline, saved on this device"}
-        </p>
-
-        <div className="op-quick-actions">
-          <Link href="/sales" className="op-qa-btn">
-            <ShoppingBag className="h-[18px] w-[18px]" aria-hidden="true" />
-            New Sale
-          </Link>
-          <Link href="/customers?view=owing" className="op-qa-btn op-alt">
-            <UsersRound className="h-[18px] w-[18px]" aria-hidden="true" />
-            View Debts
-          </Link>
-          <Link href="/inventory" className="op-qa-btn op-alt">
-            <PackageSearch className="h-[18px] w-[18px]" aria-hidden="true" />
-            Stock
-          </Link>
-          <Link href="/reports" className="op-qa-btn op-alt">
-            <BarChart3 className="h-[18px] w-[18px]" aria-hidden="true" />
-            Reports
-          </Link>
-        </div>
-      </section>
-
-      {counts && (counts.products === 0 || counts.sales === 0) ? (
-        <section className="op-row-card" aria-labelledby="setup-checklist-title" style={{ display: "block" }}>
-          <h2 id="setup-checklist-title" className="op-row-title">Get your shop ready</h2>
-          <p className="op-row-sub">Your records stay on this device. Start with products, then record a sale. Customer details are optional for cash sales.</p>
-          <ul className="space-y-2 mt-3">
-            {buildSetupSteps(counts).filter(step => step.id !== "backup" || counts.sales > 0).map(step => (
-              <li key={step.id}>
-                <Link href={step.href} className="flex items-center gap-3 rounded-lg border p-3 min-h-11">
-                  {step.done ? <CheckCircle2 className="h-5 w-5 text-green-700" aria-hidden="true" /> : <ArrowRight className="h-5 w-5" aria-hidden="true" />}
-                  <span>{step.title}{step.done ? " — done" : ""}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      {setupError ? <p role="status" className="op-row-sub">Setup progress is unavailable. Your saved records have not been changed.</p> : null}
-      <TodayDashboard currency={profile.currency} activeCompanyId={activeCompanyId} />
-    </div>
-  );
+  return <>{setupError && <p role="status">Setup progress is temporarily unavailable. Saved records were not changed.</p>}<PremiumHomeOverview companyId={activeCompanyId} companyName={profile.name} country={profile.country} currency={profile.currency} online={online} counts={counts} /></>;
 }

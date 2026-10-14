@@ -152,7 +152,7 @@ export default function AssistantPage() {
       <section className="assistant-hero">
         <p className="eyebrow"><span className="eyebrow-dot" />Ask Tallybook</p>
         <span className="workspace-marker">ASK</span>
-        <h1>A shortcut, not a new ledger.</h1>
+        <h1>Meet Clementia, your business assistant.</h1>
         <p>Ask about balances, stock, and sales, or describe a sale, a stock receipt, or a payment in plain language. Every answer comes from your saved records, works offline, and nothing is saved until you confirm.</p>
       </section>
 
@@ -181,7 +181,7 @@ export default function AssistantPage() {
             // Enter sends; Shift+Enter starts a new line, so several transactions can be typed or pasted, one per line.
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); }
           }}
-          placeholder={voice.listening ? "Listening\u2026 speak now" : "Ask TallyBook something\u2026"}
+          placeholder={voice.listening ? "Listening\u2026 speak now" : "Ask Clementia something\u2026"}
           disabled={disabled}
           readOnly={voice.listening}
           aria-label="Message TallyBook's assistant"
