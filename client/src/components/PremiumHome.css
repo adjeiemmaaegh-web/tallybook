@@ -93,3 +93,8 @@
   .premium-kpi{min-width:0;overflow-wrap:anywhere}
   .premium-card{box-sizing:border-box}
 }
+
+/* Round 6: chart captions use the same normalized coordinates as SVG data points. */
+.premium-line-labels{position:relative;display:block;height:22px;padding:7px 0 0;box-sizing:border-box}
+.premium-line-labels small{position:absolute;top:7px;width:14.28%;transform:translateX(-50%);text-align:center;line-height:1.4}
+@media(max-width:639px){.premium-line-labels{padding-left:0;padding-right:0}.premium-line-labels small{font-size:9px}}
