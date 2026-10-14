@@ -158,3 +158,11 @@
 /* The search and date text are real company-specific data, not hard-coded reference values. */
 
 @media(min-width:1440px){.premium-identity{display:none}}
+
+/* Reference chart control links to real reports instead of an inert fake dropdown. */
+.premium-chart-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.premium-chart-header .premium-section-title{margin-bottom:20px}
+.premium-chart-period{display:inline-flex;align-items:center;justify-content:center;gap:15px;min-height:37px;margin-bottom:20px;padding:0 12px;border:1px solid #dce8f7;border-radius:9px;background:#fff;color:#233c60;text-decoration:none;white-space:nowrap;font-size:12px;font-weight:600}
+.premium-chart-period:hover{background:#f0f6ff;border-color:#a9cefa}
+.premium-chart-period:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
+@media(max-width:400px){.premium-chart-period{gap:4px;padding:0 6px;font-size:10px}}
