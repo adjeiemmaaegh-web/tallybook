@@ -168,3 +168,5 @@
   .app-frame .premium-header-brand{padding-left:24px}
 }
 @media(min-width:1440px){.app-frame .top-bar>.company-switcher-compact{margin-left:70px}}
+
+@media(min-width:1024px){.app-frame{grid-template-columns:262px minmax(0,1fr)!important;grid-template-rows:65px minmax(0,auto)}}
