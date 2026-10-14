@@ -161,3 +161,10 @@
 }
 
 @media(min-width:1024px){aside.premium-desktop-rail nav.premium-nav-groups{padding-top:30px}}
+
+/* Global Stage layout applies a 40px topbar inset; remove it for the spanning reference header. */
+@media(min-width:1024px){
+  .app-frame .top-bar{padding:0 16px 0 0!important}
+  .app-frame .premium-header-brand{padding-left:24px}
+}
+@media(min-width:1440px){.app-frame .top-bar>.company-switcher-compact{margin-left:70px}}
