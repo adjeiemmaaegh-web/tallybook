@@ -15,6 +15,7 @@ describe("AppShell Stage 10 accessibility", () => {
     expect(await screen.findByRole("link", { name: "Skip to page content" })).toHaveAttribute("href", "#main-content");
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getAllByRole("link", { name: /Backup/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Open Tallybook account" })).toHaveAttribute("href", "/account");
     expect(screen.queryByRole("button", { name: /more options|menu options/i })).not.toBeInTheDocument();
   });
 });

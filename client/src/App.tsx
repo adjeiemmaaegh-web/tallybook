@@ -1,4 +1,5 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
+import { AuthGate } from "@/auth/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
 import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotifier";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,7 +40,8 @@ function Router() {
     <AppShell>
       <Switch>
         <Route path="/" component={StageHome} />
-        <Route path="/signin" component={isSupabaseAuthPreviewEnabled ? SupabaseSignInPage : GoogleSignInPage} />
+        <Route path="/signin" component={GoogleSignInPage} />
+        <Route path="/account" component={isSupabaseAuthPreviewEnabled ? SupabaseSignInPage : GoogleSignInPage} />
         <Route path="/business" component={BusinessSetup} />
         <Route path="/inventory" component={InventoryPage} />
         <Route path="/customers" component={CustomersPage} />
@@ -71,6 +73,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <AuthGate signIn={<GoogleSignInPage />}>
           <DatabaseProvider>
             <BusinessProfileProvider>
               <Toaster position="top-center" richColors />
@@ -78,6 +81,7 @@ function App() {
               <Router />
             </BusinessProfileProvider>
           </DatabaseProvider>
+          </AuthGate>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -35,9 +35,10 @@ test("optional sign-in maintains session listener cleanup and safe redirect", ()
   assert.match(page, /redirectTo: `\$\{window\.location\.origin\}\/signin`/);
 });
 
-test("no cloud sync or auth gate is enabled in app routing", () => {
+test("cloud authentication gate is staged without enabling bookkeeping sync", () => {
   const app = read("client/src/App.tsx");
-  assert.doesNotMatch(app, /<AuthGate\b/);
+  assert.match(app, /<AuthGate\b/);
+  assert.match(read("client/src/auth/AuthGate.tsx"), /VITE_TALLYBOOK_REQUIRE_AUTH === "true"/);
   const page = read("client/src/pages/SupabaseSignInPage.tsx");
   assert.doesNotMatch(page, /\.from\(/);
   assert.doesNotMatch(page, /supabase\.storage/);
