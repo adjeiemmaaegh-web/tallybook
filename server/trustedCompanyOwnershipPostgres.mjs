@@ -1,3 +1,4 @@
+import { createRecoveryApprovalTransactionMethods } from './recoveryApprovalPostgres.mjs';
 /** PostgreSQL transaction adapter for trustedCompanyOwnership.
  * Requires a PRIVATE server-side connection pool with connect()/query()/release().
  * Never instantiate in a browser or with a publishable Supabase key.
@@ -16,7 +17,9 @@ export function createPostgresCompanyOwnershipStore(pool) {
         const exactlyOne = result => {
           if (result?.rowCount !== 1) throw Error('Company ownership update conflict');
         };
+        const approvalMethods = createRecoveryApprovalTransactionMethods(client);
         const tx = Object.freeze({
+          ...approvalMethods,
           async getCompany(id) {
             const q = await client.query('select id, owner_id from public.businesses where id=$1 for update',[id]);
             return q.rows.length === 1
