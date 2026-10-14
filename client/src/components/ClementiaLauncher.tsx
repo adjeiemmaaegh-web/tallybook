@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import AssistantPage from "@/pages/AssistantPage";
+import { consumeClementiaPanelRestore } from "@/lib/clementiaWindow";
 import "./ClementiaLauncher.css";
 
 function ClementiaPortrait() { return <svg viewBox="0 0 193 207" role="img" aria-label="Clementia illustrated assistant" width="64" height="64"><image href="/premium-clementia.svg" width="193" height="207" /></svg>; }
@@ -15,7 +16,15 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (hidden) { setOpen(false); setMaximized(false); }
+    if (hidden) {
+      setOpen(false);
+      setMaximized(false);
+    } else if (consumeClementiaPanelRestore()) {
+      // Users who maximized using the older /assistant navigation can now
+      // minimize back into the floating assistant instead of getting stuck.
+      setOpen(true);
+      setMaximized(false);
+    }
   }, [hidden]);
 
   useEffect(() => {
