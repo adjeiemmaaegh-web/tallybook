@@ -36,15 +36,16 @@ function RequiredAuthGate({ children, signIn }: Props) {
     const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       revision++;
-      if (session) { remember(session.user.id); setState("signed-in"); }
+      if (session && navigator.onLine) { remember(session.user.id); setState("signed-in"); }
       else if (event === "SIGNED_OUT") { remember(null); setState("signed-out"); }
-      else { if (navigator.onLine) remember(null); setState(cachedOfflineUser() ? "signed-in" : "signed-out"); }
+      else { if (navigator.onLine) remember(null); setState(navigator.onLine ? "signed-out" : "error"); }
     });
     const check = () => {
       const startedAt = revision;
       void client.auth.getSession().then(({ data, error }) => {
         if (!active || startedAt !== revision) return;
         if (error) { setState(cachedOfflineUser() ? "signed-in" : "error"); return; }
+        if (!navigator.onLine) { setState("error"); return; }
         if (data.session) { remember(data.session.user.id); setState("signed-in"); }
         else { if (navigator.onLine) remember(null); setState(cachedOfflineUser() ? "signed-in" : "signed-out"); }
       }).catch(() => {
