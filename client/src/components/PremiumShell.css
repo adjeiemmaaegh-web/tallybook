@@ -181,3 +181,14 @@
    Limit rail to the available viewport and restore y180/318/750 dashboard card reference anchors. */
 @media(min-width:1024px){.app-frame .premium-desktop-rail{height:calc(100dvh - 65px)!important;max-height:calc(100dvh - 65px)!important}}
 @media(min-width:1440px){.app-frame .page-content{padding-top:22px!important}}
+
+/* Round 7 acceptance: the legacy global app grid starts at 768px. Tablet
+   navigation is the accessible drawer until the premium rail starts at 1024px.
+   Avoid the two navigation systems occupying the tablet viewport together. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-frame { display: block !important; width: 100%; min-width: 0; }
+  .app-frame > .premium-desktop-rail { display: none !important; }
+  .app-frame > .content-frame { display: block; width: 100%; min-width: 0; }
+  .app-frame .top-bar { width: 100%; max-width: 100%; min-width: 0; }
+  .app-frame .page-content { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; padding: 22px 22px 48px; }
+}
