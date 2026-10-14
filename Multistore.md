@@ -102,3 +102,10 @@ At the end of each development round, **update this same `Multistore.md`** with 
 - Added two Node regression test cases in `server/tests/trustedCompanyOwnership.test.mjs` for shared audit/binding timestamp and an expired-recovery boundary.
 - Review limitation: no complete Node/Vitest/build/browser execution was performed on this branch. A server-issued and independently reviewed recovery proof remains mandatory. Local company binding, authorization, and finance sync are not active.
 - Commit history on `stage9/multistore-integration-20261014` preserves this patch. **Round 1 PARTIAL / Release NO-GO.**
+
+## Round 1 continuation — consistent owner membership during transfer (2026-10-15)
+
+- **Finding:** `transferOwner` validated the old owner's `business_members` row, then fetched the same row a second time for demotion. Re-reading is redundant and risks using a different, unvalidated object if the adapter changes or has a faulty implementation.
+- **Fix:** retain `currentOwnerMembership` returned by the first transactional read. Validate it as an active owner and use that same record when updating the former owner to `attendant`. The destination membership, server-issued transfer proof, company owner update, recovery consumption, and audit remain required within the same transaction.
+- **Regression added:** `server/tests/trustedCompanyOwnership.test.mjs` tracks transactional membership reads and asserts exactly one lookup per actor/recipient and correct persisted roles, proof consumption and audit.
+- **Verification:** source reviewed; new test is written but not executed on the full repository yet under the agreed owner-PC deferred QA plan. No Vercel/Supabase operations or production change. **Round 1 remains PARTIAL; release NO-GO.**
