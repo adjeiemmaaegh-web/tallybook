@@ -52,6 +52,26 @@ describe("verified cloud company access (inactive preview service)", () => {
     getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
+  it("rejects absent or unverified account identity", async () => {
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+    getUser.mockRejectedValue(new Error("network failure"));
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+  });
+  it("rejects pending memberships, malformed rows and duplicate results", async () => {
+    membership([{ user_id: "user-1", company_id: "company-1", role: "owner", status: "pending" }]);
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+    membership([{ user_id: "user-1", company_id: "company-1", role: "unknown", status: "active" }]);
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+    membership([{ user_id: "user-1", company_id: "company-1", role: "owner", status: "active" }, { user_id: "user-1", company_id: "company-1", role: "owner", status: "active" }]);
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+  });
+  it("rejects unsafe or out-of-range session timestamps", async () => {
+    for (const invalid of [0, -1, Number.MAX_SAFE_INTEGER, Number.NaN, 1.5]) {
+      getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: invalid } }, error: null });
+      await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+    }
+  });
   it("rejects expired sessions", async () => {
     getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: 1 } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
