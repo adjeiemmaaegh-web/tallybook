@@ -5,7 +5,7 @@ function setup() {
   const approvals=new Map(), audits=[];
   const reviewer={userId:'reviewer',active:true,canApproveRecovery:true};
   const evidence={id:'proof',companyId:'co',ownerId:'owner',reviewerId:'reviewer',
-    kind:'verified-restore',localCompanyId:'local',verified:true};
+    kind:'verified-restore',localCompanyId:'local',verified:true,verifiedAtEpochMs:900};
   const issuer=createTrustedRecoveryIssuer({
     resolveReviewer:async()=>reviewer,
     verifyRecovery:async()=>evidence,
@@ -53,6 +53,19 @@ test('rejects forged evidence target or recipient',async()=>{
   await assert.rejects(f.issuer.issue({reviewSession:'reviewer',evidenceId:'proof',
     companyId:'co',kind:'approved-transfer',recipientId:'attendant'}));
   assert.equal(f.approvals.size,0);
+});
+test('denies stale, future-dated and self-approved recovery evidence',async()=>{
+  const f=setup(),request={reviewSession:'reviewer',evidenceId:'proof',
+    companyId:'co',kind:'verified-restore',localCompanyId:'local'};
+  f.evidence.verifiedAtEpochMs=-90000000;
+  await assert.rejects(f.issuer.issue(request));
+  f.evidence.verifiedAtEpochMs=2000;
+  await assert.rejects(f.issuer.issue(request));
+  f.evidence.verifiedAtEpochMs=900;
+  f.evidence.ownerId='reviewer';
+  await assert.rejects(f.issuer.issue(request));
+  assert.equal(f.approvals.size,0);
+  assert.equal(f.audits.length,0);
 });
 test('requires trusted callbacks and a transactional store',()=>{
   assert.throws(()=>createTrustedRecoveryIssuer({}));
