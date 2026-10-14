@@ -98,3 +98,61 @@
 .premium-line-labels{position:relative;display:block;height:22px;padding:7px 0 0;box-sizing:border-box}
 .premium-line-labels small{position:absolute;top:7px;width:14.28%;transform:translateX(-50%);text-align:center;line-height:1.4}
 @media(max-width:639px){.premium-line-labels{padding-left:0;padding-right:0}.premium-line-labels small{font-size:9px}}
+
+/* Round 6 measured against the owner's 1536 x 1024 approved reference.
+   Keep the reference geometry limited to wide desktop; retain Round 5 responsive protections. */
+@media(min-width:1280px){
+  .premium-home{grid-template-columns:minmax(0,1fr) 260px;column-gap:24px;max-width:none}
+  .premium-middle{grid-template-columns:minmax(0,1.73fr) minmax(0,1fr);gap:16px}
+  .premium-side{gap:20px}
+  .premium-side>.premium-card:first-child{min-height:267px}
+  .premium-side-help{min-height:199px}
+}
+@media(min-width:1440px){
+  .premium-welcome{margin-bottom:22px;align-items:flex-start}
+  .premium-welcome h1{font-size:27px;letter-spacing:-.045em;color:#0d1938}
+  .premium-welcome p:not(.premium-identity){font-size:15px;margin-top:6px;color:#526989}
+  .premium-date{min-width:228px;min-height:69px;margin-top:0;padding:14px 15px}
+  .premium-date strong{font-size:12px}
+  .premium-date small{display:block;margin:5px 0 0 22px;font-size:11px}
+  .premium-identity{position:absolute;max-width:450px;font-size:10px;opacity:.72;transform:translateY(1px)}
+  .premium-kpis{gap:16px;margin-bottom:18px}
+  .premium-kpi{min-height:120px;height:120px;padding:16px 18px;gap:18px}
+  .premium-kpi-icon{width:51px;height:51px;border-radius:13px}
+  .premium-kpi-icon svg{width:27px;height:27px}
+  .premium-kpi h3{font-size:13px;letter-spacing:0}
+  .premium-kpi strong{font-size:25px;margin:7px 0 2px;color:#091637}
+  .premium-kpi small{font-size:11px}
+  .premium-card{border-radius:14px;border-color:#e4edf9;padding:18px}
+  .premium-middle{grid-template-columns:minmax(0,1.73fr) minmax(0,1fr);gap:16px}
+  .premium-middle>.premium-card{height:414px}
+  .premium-section-title{font-size:19px;color:#0f1d3b;margin-bottom:20px}
+  .premium-line-chart{height:305px}
+  .premium-line-chart svg{height:238px}
+  .premium-line-labels{margin-top:0}
+  .premium-chart-empty-note{top:42%;padding:20px 24px;min-width:300px}
+  .premium-chart-empty-note strong{font-size:13px}
+  .premium-chart-empty-note span{font-size:13px}
+  .premium-action-list{gap:12px}
+  .premium-action{min-height:60px;padding:7px 10px;gap:17px;font-size:14px}
+  .premium-action span:first-child{width:52px;height:52px;border-radius:11px}
+  .premium-action span:first-child svg{width:26px;height:26px}
+  .premium-action small{font-size:12px;margin-top:4px}
+  .premium-setup{height:261px;margin-top:18px;padding:16px}
+  .premium-setup-head{align-items:center}
+  .premium-setup .premium-section-title{font-size:18px;margin-bottom:3px}
+  .premium-step-grid{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:14px;gap:10px}
+  .premium-step{min-height:167px;padding:9px 7px;gap:6px}
+  .premium-step strong{font-size:12px;color:#0d1c3a}
+  .premium-step small{font-size:11px;line-height:1.4;min-height:29px}
+  .premium-step .premium-step-number{width:29px;height:29px}
+  .premium-step-cta{min-height:30px;padding:6px 10px;font-size:11px}
+  .premium-side h2{font-size:15px;margin-bottom:16px;color:#0b1938}
+  .premium-side .premium-card{padding:16px}
+  .premium-tip{min-height:30px;margin:4px 0;gap:12px;font-size:13px}
+  .premium-tip svg{width:20px;height:20px}
+  .premium-side-help{padding-top:19px!important}
+  .premium-side-help p{font-size:13px;line-height:1.6}
+  .premium-side-help a{margin-top:15px}
+}
+/* The search and date text are real company-specific data, not hard-coded reference values. */
