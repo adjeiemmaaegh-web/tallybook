@@ -74,3 +74,12 @@
   .premium-side .premium-card{padding:16px}
   .premium-tip{margin:10px 0}
 }
+
+/* Round 3: align day labels with plotted points and refine onboarding visual hierarchy. */
+.premium-line-labels{padding-left:12.14%;padding-right:1.72%;box-sizing:border-box}
+.premium-section-title{letter-spacing:-.018em;color:#20344f}
+.premium-step{background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)}
+.premium-step.done{border-color:#d8efe5}
+.premium-step-cta{min-height:27px;box-sizing:border-box}
+.premium-step:focus-visible .premium-step-cta{box-shadow:0 0 0 2px #93c5fd}
+@media(max-width:639px){.premium-line-labels{padding-left:12.14%;padding-right:1.72%}}
