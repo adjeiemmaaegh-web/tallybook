@@ -83,3 +83,13 @@
 .premium-step-cta{min-height:27px;box-sizing:border-box}
 .premium-step:focus-visible .premium-step-cta{box-shadow:0 0 0 2px #93c5fd}
 @media(max-width:639px){.premium-line-labels{padding-left:12.14%;padding-right:1.72%}}
+
+/* Round 5: tablet widths must collapse the secondary action column before it forces horizontal scrolling. */
+@media(min-width:640px) and (max-width:1023px){
+  .premium-home,.premium-main,.premium-middle,.premium-side,.premium-kpis,.premium-setup{min-width:0;max-width:100%;box-sizing:border-box}
+  .premium-middle{grid-template-columns:minmax(0,1fr)}
+  .premium-middle>.premium-card{min-width:0}
+  .premium-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .premium-kpi{min-width:0;overflow-wrap:anywhere}
+  .premium-card{box-sizing:border-box}
+}
