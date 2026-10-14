@@ -56,6 +56,16 @@ This invokes the local Vite server automatically. The Playwright test verifies s
 
 Screenshots and failure traces are under `artifacts/ui-visual/`. The run only **passes** if the command exits with code **0** and Playwright reports all tests passed.
 
+## Company and currency isolation regressions
+
+The full `pnpm.cmd test --maxWorkers=2` run below includes `client/src/pages/AssistantPage.companyIsolation.test.tsx`. To check just those deferred tests first:
+
+```powershell
+pnpm.cmd exec vitest run src/pages/AssistantPage.companyIsolation.test.tsx
+```
+
+This must verify unsent draft and pending reply isolation across company changes, rejection of late stored-shortcut reads, and invalidation of previews when the selected company's currency changes. It is **not** a database/finance transaction test; approved writes already in flight require separate authorization and transaction-boundary checks.
+
 ## Wider app checks (run in this order)
 
 ```powershell
