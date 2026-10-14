@@ -32,6 +32,9 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       await page.locator('.premium-rail-setup').click();
       await expect(page).toHaveURL(/#getting-started$/);
       await expect(page.locator('#getting-started')).toBeVisible();
+      // Hash navigation is tested above; restore the top-of-page visual state for the reference screenshot.
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     }
     if (viewport.width === 1536) {
       // Reference anchors allow independent desktop fidelity review, not just element presence.
