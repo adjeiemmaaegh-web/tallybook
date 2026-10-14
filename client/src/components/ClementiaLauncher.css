@@ -113,3 +113,10 @@
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
+
+/* In the old header the maximize control was a link with margin-left:auto.
+   Keep it right-aligned now that it is a toggle button. */
+.clementia-panel-header > button[aria-pressed] { margin-left: auto; }
+.clementia-panel-header > button[aria-pressed]:hover,
+.clementia-panel-header > button[aria-label="Close Clementia"]:hover { background: #eaf1fd; }
+.clementia-panel-header > button[aria-pressed]:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
