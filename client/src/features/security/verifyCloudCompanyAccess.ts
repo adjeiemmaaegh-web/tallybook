@@ -35,6 +35,8 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
   const session = sessionData.session;
   if (sessionError || !session || session.user.id !== userData.user.id || !Number.isSafeInteger(session.expires_at))
     throw new Error("Company access is not authorized.");
+  if (session.expires_at <= 0 || session.expires_at > Math.floor(Number.MAX_SAFE_INTEGER / 1000))
+    throw new Error("Company access is not authorized.");
   const principal: VerifiedCompanyPrincipal = {
     userId: userData.user.id,
     expiresAtEpochMs: session.expires_at * 1000,
