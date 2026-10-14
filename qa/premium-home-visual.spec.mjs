@@ -8,7 +8,7 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     const { saveBusinessProfile } = await import('/src/features/business/businessProfile.ts');
     await saveBusinessProfile({ name: 'Visual QA Shop', country: 'Ghana', currency: 'GHS', businessType: 'Retail' });
   });
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of [{ width: 1536, height: 1024 }, { width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Welcome to Tallybook/ })).toBeVisible();
