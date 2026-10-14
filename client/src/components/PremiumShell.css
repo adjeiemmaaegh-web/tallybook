@@ -173,3 +173,6 @@
 
 /* Round 6: enforce exact interior offset independently of inherited page-content media styles. */
 @media(min-width:1440px){.app-frame .page-content{padding:22px 17px 14px 22px!important;max-width:none!important;width:100%!important}}
+
+/* Final reference measured top padding: the 1536px helper column starts at y90. */
+@media(min-width:1440px){.app-frame .page-content{padding-top:14px!important}}
