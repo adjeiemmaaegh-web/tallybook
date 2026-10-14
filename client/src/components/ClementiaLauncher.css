@@ -98,3 +98,18 @@
     border-radius: 0;
   }
 }
+
+/* Backward-compatible visible minimize action for the standalone /assistant page. */
+.assistant-page > .assistant-minimize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  gap: 8px;
+  min-height: 42px;
+  margin: 0 0 2px;
+}
+.assistant-page > .assistant-minimize:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
