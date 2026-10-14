@@ -120,3 +120,17 @@
 .clementia-panel-header > button[aria-pressed]:hover,
 .clementia-panel-header > button[aria-label="Close Clementia"]:hover { background: #eaf1fd; }
 .clementia-panel-header > button[aria-pressed]:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+
+/* Keep the recovery action discoverable when a long standalone chat is scrolled. */
+.assistant-page > .assistant-minimize {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  background: #fff;
+}
+.reports-gate-sheet > .assistant-minimize {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 12px 0;
+}
