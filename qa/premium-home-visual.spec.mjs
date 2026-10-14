@@ -126,6 +126,12 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     const originalPageOverflow = await page.evaluate(() => document.documentElement.style.overflow);
     const composer = clementia.getByRole('textbox', { name: "Message TallyBook's assistant" });
     await composer.fill(draft);
+    if (viewport.width === 1536 || viewport.width === 390) {
+      // Floating mode is nonmodal. Escape outside Clementia belongs to the page.
+      await page.locator('#main-content').focus();
+      await page.keyboard.press('Escape');
+      await expect(clementia).toBeVisible();
+    }
     await clementia.getByRole('button', { name: 'Maximize Clementia' }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(clementia).toHaveClass(/clementia-panel-maximized/);
@@ -168,6 +174,17 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await page.keyboard.press('Escape');
     await expect(clementia).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Let Clementia assist you' })).toBeFocused();
+    if (viewport.width === 1536 || viewport.width === 390) {
+      // Direct close from fullscreen must also release the app background.
+      await page.getByRole('button', { name: 'Let Clementia assist you' }).click();
+      const again = page.getByRole('dialog', { name: 'Clementia assistant' });
+      await again.getByRole('button', { name: 'Maximize Clementia' }).click();
+      await expect(page.locator('.content-frame')).toHaveJSProperty('inert', true);
+      await again.getByRole('button', { name: 'Close Clementia' }).click();
+      await expect(again).toHaveCount(0);
+      await expect(page.locator('.content-frame')).toHaveJSProperty('inert', false);
+      await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe(originalPageOverflow);
+    }
     if (viewport.width < 640) {
       await expect(page.getByRole('link', { name: 'Business settings' })).toBeHidden();
       await expect(page.getByRole('link', { name: 'Backup', exact: true })).toBeHidden();
