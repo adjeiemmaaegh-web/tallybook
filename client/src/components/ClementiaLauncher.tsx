@@ -32,8 +32,35 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
   }, [open, hidden]);
 
   useEffect(() => {
+    if (!open || hidden || !maximized || !panelRef.current) return;
+    const panel = panelRef.current;
+    // A modal must actually isolate the background, not only announce aria-modal.
+    // Save each sibling's prior inert state so minimizing restores the app exactly.
+    const siblings = Array.from(panel.parentElement?.children ?? [])
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== panel);
+    const priorInert = siblings.map((element) => ({ element, inert: element.inert }));
+    priorInert.forEach(({ element }) => { element.inert = true; });
+    const root = document.documentElement;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    root.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    const returnFocusInside = (event: FocusEvent) => {
+      if (event.target instanceof Node && !panel.contains(event.target)) resizeRef.current?.focus();
+    };
+    document.addEventListener("focusin", returnFocusInside);
+    return () => {
+      document.removeEventListener("focusin", returnFocusInside);
+      priorInert.forEach(({ element, inert }) => { element.inert = inert; });
+      root.style.overflow = previousRootOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [open, hidden, maximized]);
+
+  useEffect(() => {
     if (!open || hidden) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === "Escape") {
         event.preventDefault();
         if (maximized) {
@@ -51,8 +78,16 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
         )).filter((element) => element.getClientRects().length > 0);
         if (focusable.length) {
           const first = focusable[0], last = focusable[focusable.length - 1];
-          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+          if (!panelRef.current.contains(document.activeElement)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first).focus();
+          } else if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
         }
       }
     };
