@@ -139,3 +139,11 @@
   .premium-header-brand{display:contents}
   .premium-header-brandmark,.premium-header-account{display:none}
 }
+
+@media(min-width:1024px){
+.premium-header-brandmark{display:flex;align-items:center;gap:9px;min-width:0}
+.premium-header-logo{display:grid;place-items:center;width:41px;height:41px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,#2d94ff,#0b58df);color:#fff}
+.premium-header-wordmark{display:grid;min-width:0;gap:2px}
+.premium-header-wordmark strong{font-size:22px;line-height:1;font-weight:850;letter-spacing:-.04em;color:#0a1b3c}
+.premium-header-wordmark small{font-size:9px;line-height:1.2;color:#4c678d;white-space:nowrap}
+}
