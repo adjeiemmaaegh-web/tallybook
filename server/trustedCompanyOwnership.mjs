@@ -68,14 +68,14 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
             !active(await tx.getMembership(companyId,userId),companyId,userId,'owner')) deny();
         const target = await tx.getMembership(companyId,newOwnerId);
         if (target?.companyId !== companyId || target?.userId !== newOwnerId ||
-            target?.status !== 'active' || target?.role !== 'admin') deny();
+            target?.status !== 'active' || target?.role !== 'attendant') deny();
         const proof = await tx.getRecovery(recoveryId);
         if (proof?.id !== recoveryId || proof?.companyId !== companyId ||
             proof?.ownerId !== userId || proof?.recipientId !== newOwnerId ||
             proof?.kind !== 'approved-transfer' || proof?.status !== 'unused' ||
             !Number.isSafeInteger(proof?.expiresAt) || proof.expiresAt <= clock()) deny();
         await tx.putMembership(immutable({...target,role:'owner'}));
-        await tx.putMembership(immutable({...(await tx.getMembership(companyId,userId)),role:'admin'}));
+        await tx.putMembership(immutable({...(await tx.getMembership(companyId,userId)),role:'attendant'}));
         await tx.consumeRecovery(recoveryId);
         await tx.appendAudit(immutable({type:'ownership-transferred',companyId,actorId:userId,
           recipientId:newOwnerId,recoveryId,at:clock()}));
