@@ -15,6 +15,10 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Sales Overview' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Getting Started with Tallybook' })).toBeVisible();
+    await expect(page.locator('.premium-step-cta')).toHaveCount(5);
+    await expect(page.locator('.premium-step.done .premium-step-cta')).toContainText(['Review setup']);
+    await expect(page.locator('.premium-step:not(.done) .premium-step-cta')).toHaveCount(4);
+    await expect(page.locator('.premium-step:not(.done) .premium-step-cta').first()).toHaveText('Get started →');
     await expect(page.getByRole('heading', { name: 'Tips for Beginners' })).toBeVisible();
     await expect(page.locator('.today-dashboard')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Expenses Today' })).toBeVisible();
