@@ -130,6 +130,7 @@ export default function AssistantPage() {
   };
 
   const handleAction = (action: AssistantAction) => { if (action.type === "navigate") { setLocation(action.href); return; } void runAction(action.type === "say" ? action.text : null, (assistant) => assistant.act(action)); };
+  const minimizeStandalone = () => { requestClementiaPanelRestore(); setLocation("/"); };
 
   if (!profile) {
     return (
@@ -140,6 +141,7 @@ export default function AssistantPage() {
           <p className="eyebrow"><span className="eyebrow-dot" />Assistant</p>
           <h1>Set up your business first.</h1>
           <p>The assistant answers from your saved records, so it needs a business set up before it has anything to read.</p>
+          {location === "/assistant" && <button className="secondary-action assistant-minimize" type="button" onClick={minimizeStandalone} aria-label="Minimize Clementia"><Minimize2 className="h-4 w-4" aria-hidden="true"/> Minimize Clementia</button>}
           <Link href="/business" className="primary-action">Set up business</Link>
         </div>
       </section>
@@ -152,7 +154,7 @@ export default function AssistantPage() {
     <div className="assistant-page">
       {location === "/assistant" && (
         <button className="secondary-action assistant-minimize" type="button"
-          onClick={() => { requestClementiaPanelRestore(); setLocation("/"); }}
+          onClick={minimizeStandalone}
           aria-label="Minimize Clementia">
           <Minimize2 className="h-4 w-4" aria-hidden="true" /> Minimize Clementia
         </button>
