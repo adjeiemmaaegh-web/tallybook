@@ -55,14 +55,16 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       near(anchors.rail.w, 262, 2, 'Sidebar width');
       near(anchors.rail.y, 65, 2, 'Sidebar starts below header');
       near(anchors.kpis.x, 284, 10, 'KPI left edge');
-      near(anchors.kpis.y, 180, 23, 'KPI top edge');
+      near(anchors.kpis.y, 180, 3, 'KPI top edge');
       near(anchors.chart.x, 284, 10, 'Chart left edge');
-      near(anchors.chart.y, 318, 23, 'Chart top edge');
+      near(anchors.chart.y, 318, 3, 'Chart top edge');
       near(anchors.chart.h, 414, 3, 'Chart height');
-      near(anchors.setup.y, 750, 25, 'Getting started top edge');
+      near(anchors.setup.y, 750, 3, 'Getting started top edge');
       near(anchors.tips.x, 1259, 12, 'Help-column origin');
       near(anchors.helper.w, 265, 2, 'Clementia help card width');
       near(anchors.helper.h, 176, 2, 'Clementia help card height');
+      const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+      expect(documentHeight, 'Reference dashboard must fit in exactly the 1024px desktop viewport').toBeLessThanOrEqual(1025);
       const portrait = await page.evaluate(async () => {
         const response = await fetch('/premium-clementia.svg');
         if (!response.ok) return false;
