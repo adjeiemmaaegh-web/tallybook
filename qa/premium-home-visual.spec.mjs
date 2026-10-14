@@ -60,6 +60,17 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       near(anchors.chart.x, 284, 10, 'Chart left edge');
       near(anchors.chart.y, 318, 3, 'Chart top edge');
       near(anchors.chart.h, 414, 3, 'Chart height');
+      const chartDetails = await page.evaluate(() => {
+        const first = document.querySelector('.premium-line-chart svg circle');
+        const note = document.querySelector('.premium-chart-empty-note');
+        const rect = first?.getBoundingClientRect();
+        const noteRect = note?.getBoundingClientRect();
+        return { firstPointX: rect ? Math.round(rect.x + rect.width / 2) : null, noteY: noteRect ? Math.round(noteRect.y) : null };
+      });
+      expect(chartDetails.firstPointX).not.toBeNull();
+      expect(chartDetails.noteY).not.toBeNull();
+      near(chartDetails.firstPointX, 338, 7, 'Reference chart first data point');
+      near(chartDetails.noteY, 452, 14, 'Reference empty-state message top edge');
       near(anchors.setup.y, 750, 3, 'Getting started top edge');
       near(anchors.tips.x, 1259, 12, 'Help-column origin');
       near(anchors.helper.w, 265, 2, 'Clementia help card width');
