@@ -16,6 +16,12 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
     await expect(page.getByRole('heading', { name: 'Sales Overview' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Getting Started with Tallybook' })).toBeVisible();
     await expect(page.locator('.premium-step-cta')).toHaveCount(5);
+    await expect(page.locator('.premium-action')).toHaveCount(5);
+    expect(await page.locator('.premium-action').evaluateAll(links => links.map(link => link.getAttribute('href'))),
+      'Every quick action must link to its real workflow').toEqual(['/sales','/inventory','/customers','/purchases','/reports']);
+    expect(await page.locator('.premium-step').evaluateAll(links => links.map(link => link.getAttribute('href'))),
+      'Every onboarding step must link to its real workflow').toEqual(['/business','/inventory','/customers','/sales','/reports']);
+    await expect(page.locator('.premium-chart-period')).toHaveAttribute('href','/reports');
     await expect(page.locator('.premium-step.done .premium-step-cta')).toContainText(['Completed']);
     await expect(page.locator('.premium-step:not(.done) .premium-step-cta')).toHaveCount(4);
     await expect(page.locator('.premium-step:not(.done) .premium-step-cta').first()).toHaveText('Add Products');
