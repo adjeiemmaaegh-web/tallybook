@@ -44,6 +44,11 @@ describe("verified cloud company access (inactive preview service)", () => {
       .mockResolvedValueOnce({ data: { session: { user: { id: "user-2" }, expires_at } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
+  it("rejects an invalid final session after membership verification", async () => {
+    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at } }, error: null })
+      .mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER } }, error: null });
+    await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
+  });
   it("rejects missing or ambiguous membership rows", async () => {
     membership([]);
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
