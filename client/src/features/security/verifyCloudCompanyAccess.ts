@@ -61,5 +61,14 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
     status: row.status as AuthoritativeCompanyMembership["status"],
   };
   requireCompanyAccess(principal, membership, companyId, action);
+  // A sign-out or user change may occur while membership is being fetched.
+  // Recheck the current authenticated account before returning this snapshot.
+  // Callers must still repeat authorization at each sensitive service write.
+  const { data: finalSession, error: finalSessionError } = await client.auth.getSession();
+  if (finalSessionError || !finalSession.session ||
+      finalSession.session.user.id !== principal.userId ||
+      !Number.isSafeInteger(finalSession.session.expires_at) ||
+      finalSession.session.expires_at * 1000 <= Date.now())
+    throw new Error("Company access is not authorized.");
   return { userId: principal.userId, companyId, role: membership.role };
 }
