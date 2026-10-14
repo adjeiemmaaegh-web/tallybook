@@ -163,4 +163,14 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       }
     }
   }
+  // Visiting Reports marks only this local company's optional exploration step complete.
+  await page.goto('/reports', { waitUntil: 'networkidle' });
+  await expect(page).toHaveURL(/\/reports$/);
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await expect(page.getByRole('heading', { name: /Welcome to Tallybook/ })).toBeVisible();
+  await expect(page.locator('.premium-step.done')).toHaveCount(2);
+  await expect(page.locator('.premium-progress')).toHaveAttribute('aria-valuenow', '2');
+  await expect(page.locator('.premium-step.done')).toContainText(['Set up your business','Explore reports']);
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('.premium-step.done')).toHaveCount(2);
 });
