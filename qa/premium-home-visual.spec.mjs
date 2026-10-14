@@ -126,12 +126,35 @@ test('premium home visual evidence on desktop and mobile with Clementia', async 
       }
       expect(width.scroll).toBeLessThanOrEqual(width.client + 1);
     }
+    if (viewport.width === 768) {
+      await expect(page.locator('.premium-desktop-rail')).toBeHidden();
+      const tabletShell = await page.evaluate(() => {
+        const content = document.querySelector('.page-content')?.getBoundingClientRect();
+        const rail = document.querySelector('.premium-desktop-rail');
+        return {
+          width: document.documentElement.clientWidth,
+          contentLeft: content?.left,
+          contentWidth: content?.width,
+          railDisplay: rail ? getComputedStyle(rail).display : null,
+        };
+      });
+      expect(tabletShell.railDisplay, 'Tablet must not show the desktop sidebar').toBe('none');
+      expect(tabletShell.contentLeft, 'Tablet dashboard must begin at the left side of the viewport').toBeLessThanOrEqual(24);
+      expect(tabletShell.contentWidth, 'Tablet dashboard must use the full viewport').toBeGreaterThanOrEqual(720);
+    }
     if (viewport.width < 1024) {
       await page.getByRole('button', { name: 'Open navigation menu' }).click();
       await expect(page.getByRole('dialog', { name: 'Mobile navigation' })).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath('mobile-navigation.png'), fullPage: true });
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog', { name: 'Mobile navigation' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Open navigation menu' })).toBeFocused();
+      if (viewport.width === 768) {
+        await page.getByRole('button', { name: 'Open navigation menu' }).click();
+        await page.getByRole('dialog', { name: 'Mobile navigation' }).getByRole('link', { name: 'Inventory', exact: true }).click();
+        await expect(page).toHaveURL(/\/inventory$/);
+        await expect(page.getByRole('dialog', { name: 'Mobile navigation' })).toHaveCount(0);
+      }
     }
   }
 });
