@@ -12,6 +12,7 @@ function fixture() {
     ['transfer',{id:'transfer',companyId:'co',ownerId:'alice',recipientId:'bob',kind:'approved-transfer',status:'unused',expiresAt:2000}],
   ]);
   const audits = [];
+  const membershipReads = [];
   let ownerId = 'alice';
   const bindings = new Map();
   // Clone-on-write models atomic transaction rollback, including audit/recovery.
@@ -24,7 +25,7 @@ function fixture() {
     const result = await fn({
       getCompany:async id=>id==='co'?{id,status:'active',ownerId:nextOwner}:null,
       putCompanyOwner:async (id,userId)=>{if(id!=='co')throw Error('missing company');nextOwner=userId;},
-      getMembership:async(c,u)=>nextMembers.get(c+':'+u),
+      getMembership:async(c,u)=>{ membershipReads.push([c,u]); return nextMembers.get(c+':'+u); },
       putMembership:async m=>{nextMembers.set(m.companyId+':'+m.userId,m);},
       getRecovery:async id=>nextProofs.get(id),
       getBinding:async(c,l)=>nextBindings.get(c+':'+l),
@@ -44,7 +45,7 @@ function fixture() {
     sessionResolver:async session => session==='alice'||session==='bob'?{userId:session,active:true}:null,
     store,clock:()=>1000,
   });
-  return {service,members,proofs,audits,bindings,getOwnerId:()=>ownerId};
+  return {service,members,proofs,audits,bindings,membershipReads,getOwnerId:()=>ownerId};
 }
 test('verified server backup proof permits one inert binding review, never grants access',async()=>{
   const f=fixture();
@@ -111,4 +112,13 @@ test('expiry uses one clock reading and rejects a boundary-expired recovery', as
   await assert.rejects(f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'}));
   assert.equal(f.bindings.size, 0);
   assert.equal(f.proofs.get('restore').status, 'unused');
+});
+
+test('owner transfer demotes the same validated owner membership, without a second read',async()=>{
+  const f=fixture();
+  await f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
+  assert.deepEqual(f.membershipReads,[['co','alice'],['co','bob']]);
+  assert.deepEqual(f.members.get('co:alice'),{companyId:'co',userId:'alice',role:'attendant',status:'active'});
+  assert.equal(f.proofs.get('transfer').status,'consumed');
+  assert.equal(f.audits.length,1);
 });
