@@ -5,6 +5,14 @@
  * and live auth.sessions in the SAME SERIALIZABLE transaction as the data IO.
  * This is an inactive development adapter; NOT financial replication.
  */
+import {requireRun5Access} from './run5TenantPolicy.mjs';
+const DOMAIN=Object.freeze({
+ products:'catalog',customers:'customers',suppliers:'suppliers',
+ purchases:'purchases',sales:'sales','sale-lines':'sales',
+ payments:'payments',expenses:'expenses',inventory:'inventory',
+ ledger:'audit',assistant:'assistant',reports:'audit',
+ backups:'audit',sync:'audit'
+});
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RECORD=/^[A-Za-z0-9:_-]{1,128}$/;
 const COLLECTIONS=new Set(['products','customers','suppliers','purchases',
@@ -71,9 +79,11 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
       member.status!=='active'||!['owner','attendant'].includes(member.role))deny();
     if(member.role==='owner'&&business.ownerId!==actor.userId)deny();
     if(member.role==='attendant'&&business.ownerId===actor.userId)deny();
-    // Attendants see only operational product/stock records. All customer,
-    // payment, sale, supplier, assistant, backup and sync records are owner-only
-    // until Run 6 introduces independently verified staff authorization.
+    // Single authoritative Run 5 policy, including owner-only sensitive
+    // exports/reports and a prohibition on generic financial writes.
+    requireRun5Access({principal:actor,company:business,membership:member,
+      request:{companyId,domain:DOMAIN[collection],
+        action:kind==='owner'?'export':kind},now});
     if(member.role!=='owner'&&(kind!=='read'||
        !['products','inventory'].includes(collection)))deny();
     // Tenant RLS GUCs are installed only AFTER live session and membership
