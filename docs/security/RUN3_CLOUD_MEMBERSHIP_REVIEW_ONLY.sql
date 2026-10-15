@@ -61,6 +61,20 @@ revoke all on public.company_membership_audit from public,anon,authenticated;
 -- reviewer history. The private transaction role must have reviewed SQL
 -- privileges; it is never browser-accessible or committed to Git.
 -- No direct assignment RPC may bypass the invitation acceptance gate.
+-- Deny the old direct-grant RPC in the isolated test schema. Signature
+-- discovery is read-only from pg_proc; this applies to all public overloads.
+-- Review affected callers and creation flow before considering deployment.
+do $
+declare item record;
+begin
+  for item in select p.oid::regprocedure as signature
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='add_business_attendant'
+  loop
+    execute format('revoke execute on function %s from public,anon,authenticated',
+      item.signature);
+  end loop;
+end $;
 -- Review/revoke EXECUTE on legacy add_business_attendant per exact function
 -- signature once the disposable project's pg_proc catalog is inspected.
 
