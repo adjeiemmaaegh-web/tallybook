@@ -59,3 +59,33 @@ test('shift completion checks authorization before and after commit preparations
  assert.match(shift,/assertStaffShift/);
  assert.match(shift,/Staff session changed before shift close committed/);
 });
+
+test('high-risk local mutation entrypoints still enforce their required staff role',()=>{
+ const writes=[
+  ['sales/sales.ts','completeSaleWhileLocked','sell'],
+  ['inventory/inventory.ts','adjustStock','inventory'],
+  ['purchases/purchases.ts','completePurchase','inventory'],
+  ['expenses/expenses.ts','createExpense','inventory'],
+  ['staff/staff.ts','changeStaffRole','staff'],
+  ['staff/staff.ts','resetStaffPin','staff']
+ ];
+ for(const[file,fn,permission]of writes){
+  const contents=source(file);
+  const pattern=new RegExp('(?:async )?function '+fn+'\\(');
+  const found=pattern.exec(contents);
+  assert.ok(found,'Missing high-risk write '+fn);
+  const remaining=contents.slice(found.index);
+  const next=remaining.slice(0,Math.min(8500,remaining.length));
+  assert.match(next,new RegExp('requirePermission\\(["\\x27]'+permission+'["\\x27]'));
+ }
+});
+test('sale checkout awaits fresh database supervisor approval in posting transaction',()=>{
+ const sale=source('sales/sales.ts');
+ assert.match(sale,/await consumeCheckoutDiscountApproval\(/);
+ assert.match(sale,/database\.staffMembers/);
+ assert.match(sale,/database\.staffShifts/);
+ const staff=source('staff/staff.ts');
+ const consumption=body(staff,'consumeCheckoutDiscountApproval');
+ assert.match(consumption,/staffCredentialBinding\(latest\)/);
+ assert.match(consumption,/assertStaffShift/);
+});
