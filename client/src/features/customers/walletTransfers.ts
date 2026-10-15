@@ -1,5 +1,6 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Separate cash movement evidence for prepaid deposits/refunds.
  * Sales using prepaid wallet value do not record new cash inflows.
  * External payment verification remains an owner responsibility: no provider webhook is claimed.
@@ -27,7 +28,8 @@ export async function recordWalletTransfer(input: {
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0 || input.amountMinor > 1_000_000_000) throw new Error('Invalid prepaid cash amount.');
     if (!input.reference.trim() || input.reference.length > 120) throw new Error('Enter an auditable payment or refund reference.');
     if (input.submissionKey.length < 8 || input.submissionKey.length > 80) throw new Error('Invalid transfer key.');
-    return database.transaction('rw',[database.businessProfiles,database.customers,database.customerBenefits,database.walletTransfers,database.staffMembers,database.staffShifts,database.staffAudits],async()=>{
+    return database.transaction('rw',[database.appMeta,database.businessProfiles,database.customers,database.customerBenefits,database.walletTransfers,database.staffMembers,database.staffShifts,database.staffAudits],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed before prepaid transfer.');
       const staff=await requirePermission(input.kind === 'refund' ? 'refund' : 'sell',database,businessProfileId);
       const shift=await activeStaffShift(staff,database);
