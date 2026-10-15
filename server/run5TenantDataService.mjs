@@ -72,6 +72,9 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
     if(member.role==='attendant'&&business.ownerId===actor.userId)deny();
     if((kind==='owner'||(kind==='write'&&OWNER_ONLY.has(collection)))&&
       member.role!=='owner')deny();
+    // Tenant RLS GUCs are installed only AFTER live session and membership
+    // checks, in the same SQL transaction, never from HTTP request headers.
+    if(await tx.activateTenantScope(actor.userId,companyId)!==true)deny();
     return Object.freeze({actorId:actor.userId,companyId,role:member.role,now});
   }
   const context=(input,collection,id=null)=>{
