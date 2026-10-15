@@ -28,16 +28,42 @@ export async function requestRun2OwnerLink(input:Run2OwnerLinkRequest):Promise<{
   // revalidated on the backend. Never trust a local email/company selector.
   if(typeof window==='undefined'||window.location.protocol!=='https:')
     throw Error('Secure online connection required for company linking.');
-  const response=await fetch('/api/run2/ownership/bind',{
-    method:'POST',
-    credentials:'omit',
-    headers:{'Content-Type':'application/json',
-      Authorization:'Bearer '+input.accessToken},
-    body:JSON.stringify({cloudCompanyId:input.cloudCompanyId,
-      localCompanyId:reviewed.companyId,recoveryId:input.recoveryApprovalId})
+  const {getSupabaseClient}=await import('@/lib/supabase');
+  const client=getSupabaseClient();
+  const initial=await client.auth.getUser();
+  const saved=await client.auth.getSession();
+  if(initial.error||saved.error||
+     initial.data.user?.id!==input.verifiedAccountUserId||
+     saved.data.session?.user.id!==input.verifiedAccountUserId||
+     saved.data.session?.access_token!==input.accessToken)
+    throw Error('Verified owner session changed.');
+  let authChanged=false;
+  const {data:{subscription}}=client.auth.onAuthStateChange(event=>{
+    if(event!=='INITIAL_SESSION')authChanged=true;
   });
-  if(!response.ok)throw Error('The owner-approved company link was not authorized.');
-  const result:unknown=await response.json();
+  let result:unknown;
+  try{
+    const response=await fetch('/api/run2/ownership/bind',{
+      method:'POST',credentials:'omit',cache:'no-store',
+      headers:{'Content-Type':'application/json',
+        Authorization:'Bearer '+input.accessToken},
+      body:JSON.stringify({cloudCompanyId:input.cloudCompanyId,
+        localCompanyId:reviewed.companyId,recoveryId:input.recoveryApprovalId})
+    });
+    if(!response.ok)throw Error('The owner-approved company link was not authorized.');
+    result=await response.json();
+    const finalIdentity=await client.auth.getUser();
+    const final=await client.auth.getSession();
+    if(authChanged||finalIdentity.error||final.error||
+       finalIdentity.data.user?.id!==input.verifiedAccountUserId||
+       final.data.session?.user.id!==input.verifiedAccountUserId||
+       final.data.session?.access_token!==input.accessToken||
+       !Number.isSafeInteger(final.data.session?.expires_at)||
+       (final.data.session?.expires_at??0)*1000<=Date.now())
+      throw Error('Owner account changed while company linking was in progress.');
+  }finally{
+    subscription.unsubscribe();
+  }
   if(!result||typeof result!=='object')throw Error('Invalid company-link receipt.');
   const r=result as Record<string,unknown>;
   if(r.companyId!==input.cloudCompanyId||r.localCompanyId!==reviewed.companyId||

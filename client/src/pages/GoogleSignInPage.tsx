@@ -1,123 +1,70 @@
-import { useEffect, useState } from "react";
-import { Link } from "wouter";
-import { LogIn, LogOut, ShieldCheck } from "lucide-react";
-import type { Session } from "@supabase/supabase-js";
-import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+/** V19 Run 4: account controls use verified cloud session state only. */
+import {useState} from 'react';
+import {Link} from 'wouter';
+import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
+import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
+import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
 
-export default function GoogleSignInPage() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
-    }
-
-    const client = getSupabaseClient();
-    let mounted = true;
-
-    void client.auth
-      .getSession()
-      .then(({ data, error: sessionError }) => {
-        if (!mounted) return;
-        if (sessionError) throw sessionError;
-        setSession(data.session);
-      })
-      .catch((cause) => {
-        if (mounted) setError(cause instanceof Error ? cause.message : "Could not read the sign-in session.");
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+export default function GoogleSignInPage(){
+  const {state,retry,signOut}=useRun4CloudSession(isSupabaseConfigured);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  async function signIn(selectAccount=false){
+    if(busy||!isSupabaseConfigured)return;
+    setBusy(true);setError(null);
+    try{
+      if(selectAccount){
+        const confirmed=await signOut();
+        if(!confirmed)throw Error('Could not confirm cloud sign-out before switching.');
+      }
+      const {error:oauthError}=await getSupabaseClient().auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:`${window.location.origin}/signin`,
+          queryParams:selectAccount?{prompt:'select_account'}:undefined}
       });
-
-    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
-      if (!mounted) return;
-      setSession(nextSession);
-      setSigningIn(false);
-      setError(null);
-    });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const signInWithGoogle = async () => {
-    setSigningIn(true);
-    setError(null);
-
-    try {
-      const client = getSupabaseClient();
-      const { error: signInError } = await client.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/signin`,
-        },
-      });
-
-      if (signInError) throw signInError;
-    } catch (cause) {
-      setSigningIn(false);
-      setError(cause instanceof Error ? cause.message : "Google sign-in could not start.");
-    }
-  };
-
-  const signOut = async () => {
-    setError(null);
-    try {
-      const client = getSupabaseClient();
-      const { error: signOutError } = await client.auth.signOut();
-      if (signOutError) throw signOutError;
-      setSession(null);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Sign out failed.");
-    }
-  };
-
-  return (
-    <div className="home-workspace space-y-5 pb-6" style={{ maxWidth: 620, margin: "0 auto" }}>
-      <section className="op-row-card" style={{ display: "block", padding: 22 }}>
-        <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Account access</p>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", margin: "12px 0 8px" }}>Sign in to Tallybook</h1>
-        <p className="op-row-sub" style={{ fontSize: ".8rem", lineHeight: 1.6 }}>
-          Google authentication is now handled through Tallybook's secure Supabase authentication layer. Your existing offline business data remains on this device; cloud synchronization is not enabled yet.
-        </p>
-
-        {!isSupabaseConfigured ? (
-          <div className="attention-note" role="alert" style={{ marginTop: 18 }}>
-            <div><strong>Supabase is not configured for this build.</strong><p>Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> in the deployment environment, then rebuild.</p></div>
-          </div>
-        ) : loading ? (
-          <p className="op-row-sub" style={{ marginTop: 18 }}>Checking your Tallybook account session…</p>
-        ) : session ? (
-          <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-            <div className="op-row-card" style={{ marginBottom: 0 }}>
-              {session.user.user_metadata?.avatar_url ? <img src={session.user.user_metadata.avatar_url} alt="" width={42} height={42} style={{ borderRadius: "50%" }} /> : null}
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="op-row-title">Signed in with Google</div>
-                <div className="op-row-sub" style={{ overflowWrap: "anywhere" }}>{session.user.email ?? session.user.user_metadata?.full_name ?? "Google account"}</div>
-              </div>
-              <span className="stamp stamp-ready">Supabase session active</span>
-            </div>
-            <button className="secondary-action" type="button" onClick={signOut}><LogOut className="h-4 w-4" aria-hidden="true" />Sign out</button>
-            <p className="op-row-sub">This confirms identity/session handling only. Business records are still local and no cloud synchronization has been added.</p>
-          </div>
-        ) : (
-          <div style={{ marginTop: 18 }}>
-            <button className="primary-action" type="button" onClick={signInWithGoogle} disabled={signingIn}>
-              <LogIn className="h-4 w-4" aria-hidden="true" />
-              {signingIn ? "Opening Google…" : "Sign in with Google"}
-            </button>
-          </div>
-        )}
-
-        {error ? <p role="alert" style={{ marginTop: 14, color: "var(--color-clay)", fontSize: ".78rem" }}>{error}</p> : null}
-      </section>
-      <Link className="back-link" href="/">Back to Tallybook</Link>
-    </div>
-  );
+      if(oauthError)throw oauthError;
+    }catch(e){setError(e instanceof Error?e.message:'Cloud sign-in could not start.');}
+    finally{setBusy(false);}
+  }
+  async function logOut(){
+    if(busy)return;setBusy(true);setError(null);
+    try{
+      if(!await signOut())throw Error('Sign-out could not be confirmed. Cloud access stays locked.');
+    }catch(e){setError(e instanceof Error?e.message:'Cloud sign-out failed.');}
+    finally{setBusy(false);}
+  }
+  return <div className="home-workspace space-y-5 pb-6" style={{maxWidth:620,margin:'0 auto'}}>
+    <section className="op-row-card" style={{display:'block',padding:22}}>
+      <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Cloud authentication</p>
+      <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
+        Tallybook account</h1>
+      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
+        remain on this device without signing in. Signing out does not encrypt or erase
+        records stored in this browser.</p>
+      {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
+       state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
+       state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
+       state.status==='signed-in'?<div className="space-y-3">
+        <p role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
+        <div className="flex flex-wrap gap-2">
+          <button className="secondary-action" disabled={busy} type="button"
+            onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
+          <button className="secondary-action" disabled={busy} type="button"
+            onClick={()=>void signIn(true)}>Switch Google account</button>
+          <Link href="/cloud-account" className="underline">Open cloud account preview</Link>
+        </div>
+       </div>:
+       <div className="space-y-3">
+         {state.status==='error'?<p role="alert">Cloud identity could not be verified.
+           No local records were changed.</p>:null}
+         <button className="primary-action" type="button" disabled={busy}
+           onClick={()=>void signIn()}><LogIn className="h-4 w-4"/>
+           {busy?'Opening Google…':'Sign in with Google'}</button>
+         {state.status==='error'?<button className="secondary-action" type="button"
+           onClick={()=>void retry()}><RefreshCw className="h-4 w-4"/>Retry</button>:null}
+       </div>}
+      {error?<p role="alert">{error}</p>:null}
+    </section>
+    <Link href="/" className="back-link">Return to offline Tallybook</Link>
+  </div>;
 }

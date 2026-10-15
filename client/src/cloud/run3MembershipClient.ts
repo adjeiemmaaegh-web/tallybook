@@ -14,17 +14,36 @@ async function call(action:string,body:Record<string,string>){
      auth.user.id!==identity.user.id||
      !Number.isSafeInteger(auth.expires_at)||auth.expires_at!*1000<=Date.now())
     throw Error('Your account session changed. Sign in again.');
-  const res=await fetch('/api/run3/membership/'+action,{
-    method:'POST',credentials:'omit',cache:'no-store',
-    headers:{'Content-Type':'application/json',
-      Authorization:'Bearer '+auth.access_token},
-    body:JSON.stringify(body)
+  // A signed-out account or token rotation invalidates a response already
+  // in flight. The authenticated server still authorizes the actual mutation.
+  let changed=false;
+  const {data:{subscription}}=client.auth.onAuthStateChange(event=>{
+    if(event!=='INITIAL_SESSION')changed=true;
   });
-  if(!res.ok)throw Error('Cloud membership operation was denied or unavailable.');
-  const result:unknown=await res.json();
-  if(!result||typeof result!=='object'||Array.isArray(result))
-    throw Error('Invalid cloud membership response.');
-  return result as Record<string,unknown>;
+  try{
+    const res=await fetch('/api/run3/membership/'+action,{
+      method:'POST',credentials:'omit',cache:'no-store',
+      headers:{'Content-Type':'application/json',
+        Authorization:'Bearer '+auth.access_token},
+      body:JSON.stringify(body)
+    });
+    if(!res.ok)throw Error('Cloud membership operation was denied or unavailable.');
+    const result:unknown=await res.json();
+    const {data:finalIdentity,error:identityError}=await client.auth.getUser();
+    const {data:finalSession,error:finalError}=await client.auth.getSession();
+    if(changed||identityError||finalError||
+      finalIdentity.user?.id!==identity.user.id||
+      finalSession.session?.user.id!==identity.user.id||
+      finalSession.session?.access_token!==auth.access_token||
+      !Number.isSafeInteger(finalSession.session?.expires_at)||
+      (finalSession.session?.expires_at??0)*1000<=Date.now())
+      throw Error('Account changed before the cloud operation completed.');
+    if(!result||typeof result!=='object'||Array.isArray(result))
+      throw Error('Invalid cloud membership response.');
+    return result as Record<string,unknown>;
+  }finally{
+    subscription.unsubscribe();
+  }
 }
 export async function inviteCloudAttendant(companyId:string,targetUserId:string){
   const r=await call('invite',{companyId,targetUserId});

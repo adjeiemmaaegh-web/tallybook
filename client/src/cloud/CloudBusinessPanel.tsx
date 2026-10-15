@@ -94,7 +94,7 @@ export function CloudBusinessPanel() {
     </form>}
     {isSupabaseConfigured && userId &&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
-      ? <Run3MembershipPanel userId={userId} companyId={business?.id ?? null}
+      ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.owner_id === userId}/> : null}
     {error && <p role="alert">{error}</p>}
   </section>;
