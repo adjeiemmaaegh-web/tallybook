@@ -16,7 +16,7 @@ export function AuthGate({children,signIn,enabled=true}:Props){
 }
 
 function CloudOnlyGate({children,signIn}:{children:ReactNode;signIn:ReactNode}){
-  const {state,retry}=useRun4CloudSession();
+  const {state,retry}=useRun4CloudSession(true,true);
   if(state.status==='signed-in')return <>{children}</>;
   if(state.status==='signed-out')return <Redirect to="/signin" replace/>;
   if(state.status==='checking')
@@ -32,6 +32,5 @@ function CloudOnlyGate({children,signIn}:{children:ReactNode;signIn:ReactNode}){
     <p role="alert">No cloud membership has been granted. Your offline business records were not changed.</p>
     <button className="rounded border px-4 py-2" onClick={()=>void retry()}>Retry verification</button>
     <a href="/" className="underline">Return to offline Tallybook</a>
-    {signIn && null}
   </main>;
 }
