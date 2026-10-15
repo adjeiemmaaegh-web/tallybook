@@ -9,7 +9,7 @@ test('new private evidence schema never exposes browser writer credentials',()=>
   }
   assert.doesNotMatch(sql,/grant\s+(?:all|select|insert|update|delete)\s+on\s+public\./i);
 });
-test('verified evidence enforces independent reviewer and signed receipt shape',()=>{
+test('verified evidence enforces independent reviewer and digest receipt shape',()=>{
   assert.match(sql,/check \(reviewer_id <> owner_id\)/);
   assert.match(sql,/backup_manifest_sha256\s+~\s+'\^\[a-f0-9\]\{64\}\$'/);
   assert.match(sql,/restore_receipt_sha256\s+~\s+'\^\[a-f0-9\]\{64\}\$'/);
