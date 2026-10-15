@@ -23,7 +23,7 @@ export function makeRun2OwnershipHandler({coordinator,evidence,enabled=false,all
     const operation=operations[req.params?.action];
     if(!operation){res.status(404).json({error:'Unknown operation'});return;}
     if(!isDirectTls(req)||!allowedOrigin||!allowedOrigin.startsWith('https://')||
-       req.headers.origin!==allowedOrigin||req.is('application/json')!==true){
+       req.headers.origin!==allowedOrigin||!req.is('application/json')){
       res.status(403).json({error:'Request denied'});return;
     }
     const address=String(req.socket.remoteAddress||'unknown'),now=Date.now();
