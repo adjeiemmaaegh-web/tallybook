@@ -72,33 +72,33 @@ function fixture(){
    sessionOff:()=>sessionActive=false,
    failAudit:()=>failAudit=true,setNow:n=>now=n,scopeCount:()=>scopeCount};
 }
-const put=(f,c=ID.A,session=TOKENS.ownerA,id='row1',collection='products')=>
+const put=(f,c=ID.A,session=TOKENS.ownerA,id='row1',collection='assistant')=>
  f.service.put({session,companyId:c,collection,id,payload:{companyId:c,value:1},
    expectedRevision:0});
 test('owner insert and exact company-qualified read return only scoped data',async()=>{
  const f=fixture(),record=await put(f);
  assert.equal(record.companyId,ID.A);assert.equal(record.revision,1);
- const found=await f.service.get({session:TOKENS.ownerA,companyId:ID.A,collection:'products',id:'row1'});
+ const found=await f.service.get({session:TOKENS.ownerA,companyId:ID.A,collection:'assistant',id:'row1'});
  assert.equal(found.id,'row1');assert.equal(f.audits.length,2);
  assert.equal(f.scopeCount(),2);
 });
 test('same record ID in two businesses never aliases another tenant',async()=>{
  const f=fixture();await put(f,ID.A,TOKENS.ownerA);
  await put(f,ID.B,TOKENS.ownerB);
- const a=await f.service.get({session:TOKENS.ownerA,companyId:ID.A,collection:'products',id:'row1'});
- const b=await f.service.get({session:TOKENS.ownerB,companyId:ID.B,collection:'products',id:'row1'});
+ const a=await f.service.get({session:TOKENS.ownerA,companyId:ID.A,collection:'assistant',id:'row1'});
+ const b=await f.service.get({session:TOKENS.ownerB,companyId:ID.B,collection:'assistant',id:'row1'});
  assert.equal(a.companyId,ID.A);assert.equal(b.companyId,ID.B);
  assert.equal(f.rows.size,2);
 });
 test('cross-tenant owner get/list/put/export/import and report are all denied',async()=>{
  const f=fixture();await put(f);
- const bad={session:TOKENS.ownerB,companyId:ID.A,collection:'products'};
+ const bad={session:TOKENS.ownerB,companyId:ID.A,collection:'assistant'};
  for(const action of [
    ()=>f.service.get({...bad,id:'row1'}),
    ()=>f.service.list(bad),
    ()=>f.service.put({...bad,id:'p2',payload:{companyId:ID.A},expectedRevision:0}),
    ()=>f.service.exportRows(bad),
-   ()=>f.service.importRows({...bad,rows:[{companyId:ID.A,collection:'products',
+   ()=>f.service.importRows({...bad,rows:[{companyId:ID.A,collection:'assistant',
      id:'p3',payload:{companyId:ID.A},expectedRevision:0}]}),
    ()=>f.service.report({session:TOKENS.ownerB,companyId:ID.A}),
    ()=>f.service.assistant({session:TOKENS.ownerB,companyId:ID.A}),
@@ -109,26 +109,28 @@ test('cross-tenant owner get/list/put/export/import and report are all denied',a
 test('nonmember cannot read tenant data, even with valid Supabase session',async()=>{
  const f=fixture();await put(f);
  await assert.rejects(f.service.list({session:TOKENS.stranger,companyId:ID.A,
-   collection:'products'}),/denied/);
+   collection:'assistant'}),/denied/);
 });
 test('revoked auth.sessions row blocks all data operations',async()=>{
  const f=fixture();await put(f);f.sessionOff();
  await assert.rejects(f.service.get({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',id:'row1'}),/denied/);
+   collection:'assistant',id:'row1'}),/denied/);
  await assert.rejects(put(f,ID.A,TOKENS.ownerA,'new'),/denied/);
 });
 test('removed membership immediately rejects new authenticated read',async()=>{
  const f=fixture();await put(f);f.members.delete(ID.A+ID.ownerA);
  await assert.rejects(f.service.list({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products'}),/denied/);
+   collection:'assistant'}),/denied/);
 });
 test('expired access JWT rejected at privileged transaction boundary',async()=>{
  const f=fixture();await put(f);f.setNow(200000);
  await assert.rejects(f.service.list({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products'}),/denied/);
+   collection:'assistant'}),/denied/);
 });
 test('attendant may use allowed products but cannot read financial/backup/assistant',async()=>{
- const f=fixture();await put(f,ID.A,TOKENS.staffA);
+ const f=fixture();
+ f.rows.set([ID.A,'products','row1'].join('|'),{companyId:ID.A,collection:'products',
+   id:'row1',revision:1,payload:{companyId:ID.A,value:1}});
  await f.service.list({session:TOKENS.staffA,companyId:ID.A,collection:'products'});
  for(const collection of ['ledger','reports','backups','assistant','sync',
    'expenses','purchases','suppliers']){
@@ -144,7 +146,7 @@ test('all supplied company identifiers including deeply nested object must match
    {companyId:ID.B},{deep:{businessProfileId:ID.B}},
    {nested:[{organizationId:ID.B}]},{tenantId:ID.B}
  ])await assert.rejects(f.service.put({session:TOKENS.ownerA,companyId:ID.A,
-    collection:'customers',id:'invalid',payload,expectedRevision:0}),/denied/);
+    collection:'assistant',id:'invalid',payload,expectedRevision:0}),/denied/);
  assert.equal(f.rows.size,0);
 });
 test('invalid categories, record keys and non-json content rejected before mutation',async()=>{
@@ -155,22 +157,22 @@ test('invalid categories, record keys and non-json content rejected before mutat
  for(const payload of [{companyId:ID.A,amountMinor:2.5},
    {companyId:ID.A,amountMinor:Infinity},[1,2]]){
    await assert.rejects(f.service.put({session:TOKENS.ownerA,companyId:ID.A,
-     collection:'products',id:'row1',payload,expectedRevision:0}),/denied/);
+     collection:'assistant',id:'row1',payload,expectedRevision:0}),/denied/);
  }
 });
 test('optimistic revision protects against overwrite and stale delete',async()=>{
  const f=fixture();await put(f);
  await assert.rejects(put(f),/revision conflict/);
  await assert.rejects(f.service.remove({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',id:'row1',expectedRevision:7}),/revision conflict/);
+   collection:'assistant',id:'row1',expectedRevision:7}),/revision conflict/);
  const next=await f.service.put({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',id:'row1',payload:{companyId:ID.A,value:2},expectedRevision:1});
+   collection:'assistant',id:'row1',payload:{companyId:ID.A,value:2},expectedRevision:1});
  assert.equal(next.revision,2);
 });
 test('delete respects exact tenant, revision and appends audit atomically',async()=>{
  const f=fixture();await put(f);
  const response=await f.service.remove({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',id:'row1',expectedRevision:1});
+   collection:'assistant',id:'row1',expectedRevision:1});
  assert.equal(response.removed,true);assert.equal(f.rows.size,0);
  assert.equal(f.audits.at(-1).action,'delete');
 });
@@ -178,39 +180,54 @@ test('audit failure rolls back a new write and import together',async()=>{
  const f=fixture();f.failAudit();
  await assert.rejects(put(f),/audit persistence failed/);
  await assert.rejects(f.service.importRows({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',rows:[{companyId:ID.A,collection:'products',id:'row1',
+   collection:'assistant',rows:[{companyId:ID.A,collection:'assistant',id:'row1',
      payload:{companyId:ID.A},expectedRevision:0}]}),/audit persistence failed/);
  assert.equal(f.rows.size,0);
 });
 test('owner export and import are tenant-limited, bounded and non-overwriting',async()=>{
  const f=fixture();await put(f);
  const exported=await f.service.exportRows({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products'});
+   collection:'assistant'});
  assert.equal(exported.exported,true);assert.equal(exported.rows.length,1);
  assert.equal(exported.rows[0].companyId,ID.A);
  await assert.rejects(f.service.importRows({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',rows:[{companyId:ID.A,collection:'products',id:'row1',
+   collection:'assistant',rows:[{companyId:ID.A,collection:'assistant',id:'row1',
      payload:{companyId:ID.A},expectedRevision:0}]}),/revision conflict/);
  await assert.rejects(f.service.exportRows({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'products',limit:101}),/denied/);
+   collection:'assistant',limit:101}),/denied/);
 });
 test('duplicate and cross-company import rows rejected before SQL writes',async()=>{
  const f=fixture();
- const entry={companyId:ID.A,collection:'products',id:'p',
+ const entry={companyId:ID.A,collection:'assistant',id:'p',
    payload:{companyId:ID.A},expectedRevision:0};
  for(const rows of [[entry,entry],[{...entry,companyId:ID.B}]]){
    await assert.rejects(f.service.importRows({session:TOKENS.ownerA,companyId:ID.A,
-     collection:'products',rows}),/denied/);
+     collection:'assistant',rows}),/denied/);
  }
  assert.equal(f.rows.size,0);
 });
 test('report, assistant, and sync previews return scoped records only',async()=>{
  const f=fixture();
- for(const collection of ['reports','assistant','sync'])await put(f,ID.A,TOKENS.ownerA,'row1',collection);
+ for(const collection of ['reports','assistant','sync'])
+   f.rows.set([ID.A,collection,'row1'].join('|'),{companyId:ID.A,collection,
+     id:'row1',revision:1,payload:{companyId:ID.A,value:1}});
  const data=await f.service.report({session:TOKENS.ownerA,companyId:ID.A});
  assert.equal(data.authoritativeLedger,false);
  const assistant=await f.service.assistant({session:TOKENS.ownerA,companyId:ID.A});
  assert.equal(assistant.rows[0].companyId,ID.A);
  const sync=await f.service.syncInspect({session:TOKENS.ownerA,companyId:ID.A});
  assert.equal(sync.replicationEnabled,false);
+});
+
+test('generic cloud financial, stock and customer writes remain fail-closed until invariant-safe writers',async()=>{
+ const f=fixture();
+ for(const collection of ['products','customers','sales','payments','ledger',
+   'backups','inventory','sync','reports']){
+   await assert.rejects(f.service.put({session:TOKENS.ownerA,companyId:ID.A,
+     collection,id:'new',payload:{companyId:ID.A},expectedRevision:0}),/denied/);
+   await assert.rejects(f.service.importRows({session:TOKENS.ownerA,companyId:ID.A,
+     collection,rows:[{companyId:ID.A,collection,id:'new',
+       payload:{companyId:ID.A},expectedRevision:0}]}),/denied/);
+ }
+ assert.equal(f.rows.size,0);
 });
