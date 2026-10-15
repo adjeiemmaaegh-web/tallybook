@@ -361,3 +361,46 @@
 @media (prefers-reduced-motion: reduce) {
   .settings-workspace *, .settings-business-page *{transition:none!important}
 }
+
+
+/* Keep the original tax policy form intact, with the same clean two-column rhythm. */
+.settings-business-page .tax-premium-form {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: end;
+  column-gap: 15px;
+  row-gap: 13px;
+}
+.settings-business-page .tax-premium-form > label:first-child,
+.settings-business-page .tax-premium-form > p {
+  grid-column: 1/-1;
+}
+.settings-business-page .tax-premium-form > label:first-child {
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: #edf5ff;
+  border: 1px solid #d7e8fa;
+  color: var(--settings-ink);
+}
+.settings-business-page .tax-premium-form > button {
+  grid-column: 2;
+  justify-self: end;
+}
+.settings-business-page .tax-premium-form > label > input:not([type="checkbox"]),
+.settings-business-page .tax-premium-form > label > select {
+  display: block;
+  margin-top: 7px;
+}
+@media (max-width: 639px) {
+  .settings-business-page .tax-premium-form {
+    grid-template-columns: 1fr;
+  }
+  .settings-business-page .tax-premium-form > label:first-child,
+  .settings-business-page .tax-premium-form > p,
+  .settings-business-page .tax-premium-form > button {
+    grid-column: 1;
+  }
+  .settings-business-page .tax-premium-form > button {
+    width: 100%;
+  }
+}
