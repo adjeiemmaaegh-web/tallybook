@@ -27,8 +27,10 @@ const invalidateSupervisorApprovals = (company:string) => {
 };
 export const STAFF_SESSION_CHANGED = 'tallybook:staff-session';
 const signalSessionChanged = () => { if (typeof window !== 'undefined') window.dispatchEvent(new Event(STAFF_SESSION_CHANGED)); };
-export function rolePermissions(role:StaffRole):readonly StaffPermission[] { return policy[role]; }
-export function allowed(role:StaffRole, action:StaffPermission) { return policy[role].includes(action); }
+export function rolePermissions(role:StaffRole):readonly StaffPermission[] { return policy[role]??[]; }
+export function allowed(role:StaffRole, action:StaffPermission) {
+  return Array.isArray(policy[role])&&policy[role].includes(action);
+}
 export function staffCan(member:StaffMember, action:StaffPermission) { return allowed(member.role,action) && (!member.permissions || member.permissions.includes(action)); }
 export function currentStaffId(company=getActiveBusinessProfileId()) { const id=verifiedSessions.get(company);if (!id) return null; if (Date.now() >= (sessionExpiration.get(company) ?? 0)) { lockStaff(company); return null; } return id; }
 export function lockStaff(company=getActiveBusinessProfileId()) {
