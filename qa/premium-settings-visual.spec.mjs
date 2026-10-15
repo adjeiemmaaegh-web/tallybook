@@ -72,6 +72,15 @@ test("staff owner-first setup, separate masked PIN fields, permissions, shift an
   await expect(page.getByRole("button",{name:"Confirm disable"})).toBeVisible();
   await page.getByRole("button",{name:"Cancel"}).click();
   await expect(page.getByRole("button",{name:"Confirm disable"})).toHaveCount(0);
+  await page.getByRole("button",{name:"Promote to supervisor"}).click();
+  await expect(page.getByText(/resets custom permissions to the new role defaults/)).toBeVisible();
+  await page.getByRole("button",{name:"Cancel"}).click();
+  await expect(page.getByRole("button",{name:"Confirm role change"})).toHaveCount(0);
+  await page.getByRole("button",{name:"Disable account"}).click();
+  await page.getByRole("button",{name:"Confirm disable"}).click();
+  await expect(page.getByRole("button",{name:"Enable account"})).toBeVisible();
+  await page.getByRole("button",{name:"Enable account"}).click();
+  await expect(page.getByRole("button",{name:"Disable account"})).toBeVisible();
 
   for (const size of [{width:1440,height:900},{width:768,height:1024},{width:390,height:844},{width:320,height:700}]) {
     await page.setViewportSize(size);
