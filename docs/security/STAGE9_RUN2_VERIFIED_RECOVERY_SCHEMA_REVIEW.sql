@@ -20,6 +20,18 @@ create table if not exists public.company_recovery_reviewers (
 -- External restoration review must bind both the original backup manifest and
 -- independent restore-check receipt by a real reviewer, not submitted booleans.
 -- Do NOT infer that SHA-256 strings alone prove backup or restore authenticity.
+-- Provisioning requires two independently approved operators; this record is
+-- inserted atomically with the reviewer by the private operator-only service.
+create table if not exists public.company_recovery_reviewer_approvals (
+  id uuid primary key,
+  reviewer_id uuid not null references public.company_recovery_reviewers(user_id),
+  operator_a uuid not null references auth.users(id),
+  operator_b uuid not null references auth.users(id),
+  approval_digest text not null check (approval_digest ~ '^[a-f0-9]{64}$'),
+  created_at timestamptz not null,
+  check (operator_a <> operator_b and reviewer_id <> operator_a and reviewer_id <> operator_b)
+);
+
 create table if not exists public.company_recovery_verified_evidence (
   id text primary key check (char_length(id) between 1 and 128),
   company_id uuid not null references public.businesses(id),
@@ -71,12 +83,15 @@ create table if not exists public.company_recovery_evidence_audit (
 create index if not exists company_recovery_evidence_company_status_idx
   on public.company_recovery_verified_evidence(company_id,status,verified_at);
 
+alter table public.company_recovery_reviewer_approvals enable row level security;
+alter table public.company_recovery_reviewer_approvals force row level security;
 alter table public.company_recovery_evidence_audit enable row level security;
 alter table public.company_recovery_evidence_audit force row level security;
 alter table public.company_recovery_reviewers enable row level security;
 alter table public.company_recovery_reviewers force row level security;
 alter table public.company_recovery_verified_evidence enable row level security;
 alter table public.company_recovery_verified_evidence force row level security;
+revoke all on public.company_recovery_reviewer_approvals from public,anon,authenticated;
 revoke all on public.company_recovery_evidence_audit from public,anon,authenticated;
 revoke all on public.company_recovery_reviewers from public,anon,authenticated;
 revoke all on public.company_recovery_verified_evidence from public,anon,authenticated;
