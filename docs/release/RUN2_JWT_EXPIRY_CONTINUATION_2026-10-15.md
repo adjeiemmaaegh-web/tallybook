@@ -35,3 +35,14 @@ This is *additional* defense in depth, not a claim that a session revocation tra
 ## Release boundaries
 
 No `main` merge, staging, public endpoint, live Supabase SQL, payment, cloud replication, destructive data changes, or production deployment was performed or approved by this increment. Draft PR #12 and PR #13 remain unmerged; owner approval is required for separately restricted operations. **Run 2 remains OPEN / NOT PASSED** until every required check above has actual independent evidence.
+
+
+## Additional recovery conflict-of-interest safeguard
+
+**Implementation checkpoint:** `f512e718c0a37b0a659666a34c4d1d7bdacd331f`.
+
+Security review found that the independent reviewer of an approved owner transfer could also be its intended recipient. `server/trustedRecoveryIssuer.mjs` now denies that self-review; the still-**unapplied** private SQL schema adds `recipient_id is null or reviewer_id <> recipient_id` as a database guard; and `server/tests/trustedRecoveryIssuer.test.mjs` adds a negative regression ensuring zero approvals/audits and unchanged evidence status.
+
+After this additional code/test commit, exact retrieved committed sources and six associated checked-in native test modules were executed through the isolated V8 compatibility harness: **53/53 cases passed**. This is **not** native Node / CI / PostgreSQL / Supabase integration acceptance. No reviewer was provisioned, restore proof was minted, migration was executed, or commercial write path was enabled.
+
+The full Run 2 acceptance requirements and blocker classifications remain unchanged: **OPEN / NOT PASSED**.
