@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness, listAccessibleCloudBusinesses, type CloudBusiness } from "./businessIdentity";
 import {Run3MembershipPanel} from "./Run3MembershipPanel";
+import {Run5TenantBoundaryPanel} from "./Run5TenantBoundaryPanel";
 
 /** Account identity only. Creating a cloud business does not claim local data. */
 export function CloudBusinessPanel() {
@@ -96,6 +97,10 @@ export function CloudBusinessPanel() {
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.owner_id === userId}/> : null}
+    {isSupabaseConfigured && userId && business &&
+      import.meta.env.VITE_TALLYBOOK_RUN5_TENANT_PREVIEW === "true"
+      ? <Run5TenantBoundaryPanel key={userId+":"+business.id}
+          userId={userId} companyId={business.id}/> : null}
     {error && <p role="alert">{error}</p>}
   </section>;
 }

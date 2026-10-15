@@ -104,3 +104,17 @@ Following the owner's superseding directive, V19 **Run 4** was implemented as a 
 Run 4 implements cloud-only, verified Supabase AuthGate; sign-in/out/account switching; fail-closed timer/refresh, revoked-session and pending-operation handling; protected read-only private auth.sessions probe with default-off runtime; and guarantees offline ledger routes remain usable without cloud auth. Related Run 2/3 cloud request clients reject responses after account/token changes. Authored **22** controller plus **7** server native-style cases, with **29/29** passed in isolated V8 harness, and 10 authored, unexecuted React/Vitest cases. See `docs/release/RUN4_AUTH_SESSION_FULL_INCREMENT_2026-10-16.md` for exact limitations.
 
 **Run 2 NOT PASSED; Run 3 NOT PASSED; Run 4 NOT PASSED. Stage 9 partial; commercial NO-GO.** Cloud server runtime, live DB, staging, payments and deployments remain unauthorized. Next development run under owner's cadence: V19 Run 5, tenant-scoped authorization.
+
+
+## 16 October 2026 — owner-authorized Run 5 full-source increment
+
+The owner's newer whole-run coding rule authorizes implementing the whole source scope of successive V19 runs despite deferred external test execution, without falsely marking acceptance PASS. Draft `v19/run5-tenant-service-authorization-20261016` continues from Run 4 and adds canonical live-session/member tenant guards around cloud data reads, optimistic owner-only metadata writes, report/export, backup/import/assistant/sync preview APIs, private serializable Postgres/RLS audit, disabled-by-default HTTP composition and unmounted read-only client. The proposed disposable-only schema is unapplied; generic financial/cloud POS writes remain intentionally forbidden. `docs/release/RUN5_TENANT_AUTH_FULL_INCREMENT_2026-10-16.md` documents 57/57 isolated V8 mock checks and all actual native/database/browser/deployment QA deferred.
+
+**Runs 2–5 acceptance OPEN / NOT PASSED; commercial NO-GO.** The development cadence amendment does not override accepted SHA, real Supabase RLS testing, offline preservation, independent QA or separate production approvals. Next source development Run 6.
+
+
+## 16 October 2026 — Run 5 cloud tenant authorization development increment
+
+The owner's whole-run source cadence continues: Run 5 cloud tenant isolation implementation is on `v19/run5-tenant-service-authorization-20261016`, based on draft Run 4 `f983c7c924b1454c0cf0d2b215498887fd47d01e`. It implements canonical owner/attendant per-domain permission gates for reads, metadata writes, reports, export/import, backup, assistant and sync; tenant identity check in the same SERIALIZABLE transaction, restricted PostgreSQL role/RLS review schema, tenant row validation, default-OFF API and opt-in read-only cloud preview, and native-style source regression tests. The related owner/attendant client policy mismatch has been reconciled.
+
+**All 57 new checked-in focused Node-style cases passed in isolated V8/mock tests, NOT native Node or real RLS.** Actual full pinned CI, Vitest/types/build, disposable two-company Supabase/PostgreSQL test, browser/Windows and exhaustive offline entrypoint evidence remain **DEFERRED / NOT EXECUTED**. Full handover: `docs/release/RUN5_TENANT_AUTHORIZATION_FULL_INCREMENT_2026-10-16.md`. Runs 2, 3, 4, 5 ACCEPTANCE NOT PASSED, Stage 9 incomplete, commercial **NO-GO**. Run 6 is next *source-development* increment, without promoting any unverified acceptance gate.

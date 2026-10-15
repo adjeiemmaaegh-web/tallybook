@@ -1,0 +1,36 @@
+# Tallybook V19 — Run 5 whole-run source implementation: Tenant authorization
+**Date:** 2026-10-16  
+**Base:** Run 4 draft head `f983c7c924b1454c0cf0d2b215498887fd47d01e`  
+**Branch:** `v19/run5-tenant-service-authorization-20261016`  
+**Release:** **NOT PASSED / commercial NO-GO**. This is source development, not production authorization.
+
+## Owner cadence
+Implement each V19 run as an entire source-development increment. When CI, Windows, browser or real disposable Supabase/PostgreSQL testing is unavailable, record those tests as **DEFERRED / NOT EXECUTED** and continue coding. Never turn compatibility/mock checks into full acceptance, merge to `main` or activate production financial/cloud features without separate approval.
+
+## Run 5 implementation scope
+1. **Canonical company and session trust:** `run5TenantPolicy.mjs`, `run5TenantDataService.mjs` and `run5TenantService.mjs` reject local IndexedDB company selectors, forged actor/company IDs, expired JWTs, revoked live auth.sessions and absent canonical `business_members`. Require `owner|attendant`, matching `businesses.owner_id` and transaction-time checks before any cloud data IO. Private cross-tenant row checks reject wrong company/collection, nested foreign `companyId` / `businessProfileId` / `tenantId`, bad record formats, oversized/cyclic payloads and overlarge pages.
+2. **Read/write/report/export/import/backup/assistant/sync authorization:** service interfaces provide scope-checked access by domain with owner-only sensitive operations. Attendant cloud preview can read only operational product/catalog/inventory data; financial, customer, payment, staff, supplier, report, backup, assistant and sync operations require owners. Generic financial record writes/imports/deletes remain explicitly **DENIED**, including to owners, pending immutable ledger/refund/FIFO authorizations in later runs. Mutating metadata is restricted to trusted, version-checked cases; no remote payment, financial replication or public financial upload is activated. Reports are preview/provisional only, not certified monetary analytics; single-page backup results are explicitly incomplete.
+3. **Database transaction enforcement:** `run5TenantPostgres.mjs` uses parameterized `SERIALIZABLE` transactions, locked Auth/session/membership read dependencies, company+domain scoped record operations, optimistic revision checks, audit writes and rollback on failed authorization or audit. It sets transaction-local actor/company context only after trusted checks, then `SET LOCAL ROLE tallybook_run5_private` for restricted tenant IO. No privileged DB pool or secrets ship to browsers.
+4. **RLS:** `docs/security/RUN5_TENANT_RECORDS_RLS_DISPOSABLE_REVIEW.sql` is **review-only, unapplied** and includes a disposable-project guard, dedicated NOLOGIN/NOBYPASSRLS role, restrictive membership visibility, table-level `ENABLE/FORCE ROW LEVEL SECURITY`, no browser grants, owner-only separate INSERT/UPDATE/DELETE policies for metadata and append-only audit. A broad, unsafe `FOR ALL` DELETE rule was removed and a duplicated SQL section repaired. Existing canonical company/membership RLS and legacy RPC grants need project-specific reconciliation. A superseded duplicate draft is not the canonical migration.
+5. **HTTP and composition:** `run5TenantRoutes.mjs`, `run5TenantRuntime.mjs`, and `server/index.ts` register narrow authorization endpoints with direct TLS, exact Origin, bearer-only, request allowlists, generic denial, no-store and throttling, but they are **disabled by default**. No production private pool connection or HTTP data delivery is configured.
+6. **Client and user switching:** `client/src/cloud/run5TenantReadClient.ts` performs a read-only product catalog scope check, validates initial and final Supabase account/token, rejects foreign rows, and never writes local IndexedDB. The keyed `Run5TenantBoundaryPanel.tsx` is opt-in only via `VITE_TALLYBOOK_RUN5_TENANT_PREVIEW=true` in CloudBusinessPanel; default OFF. `companyAccessPolicy.ts`, `cloudMembershipModel.mjs` and `verifyCloudCompanyAccess.ts` now use canonical `owner|attendant`, rejecting legacy invented `admin|staff` privileges and token changes.
+
+## Focused QA source
+- `server/tests/run5TenantDataService.test.mjs` — 17 native-style cases.
+- `server/tests/run5TenantService.test.mjs` — 10 cases.
+- `server/tests/run5TenantPolicy.test.mjs` — 8 cases.
+- `server/tests/run5TenantPolicyIsolation.test.mjs` — 10 additional negative cases.
+- `server/tests/run5TenantPostgres.test.mjs` — 6 transaction/rollback cases.
+- `server/tests/run5TenantRoutes.test.mjs` — 6 HTTP/abuse cases.
+- These **57 checked-in cases** passed in an isolated V8 compatibility harness using mocked private SQL, auth and HTTP. This is **NOT** native Node, real Supabase/PostgreSQL/RLS, Windows/browser, or full client/CI acceptance.
+- Existing client cloud policy tests were updated and a token-rotation regression authored, but **Vitest not executed**.
+- `qa/run5-disposable-rest-rls-probe.mjs` is an **auth-gated, read-only, not executed** 2-account / 2-company Supabase REST/RLS negative test; it refuses the recorded live project.
+
+## Deferred QA and source limitations (mandatory before Run 5 acceptance)
+1. Actual Node 24/pnpm dependency install, complete native `node --test`, full Vitest, TypeScript semantic checks, Vite/Express builds, dependency audit, Playwright browser/IndexedDB, Windows and hardware, all on exact final candidate SHA. GitHub Actions on earlier draft heads failed before job steps; no PASS may be inferred.
+2. Approved disposable Supabase/PostgreSQL: compare live schema catalog, review role grants/policy chains/RPCs, test the proposed SQL syntax with real policy evaluation, two independent real accounts/companies and attendant, browser REST write-denial probes, private role switch, unset/spoofed GUC, tenant row read/write/deletes, revoke/expiry races, concurrency, revision conflict/audit rollback, replay and RLS bypass roles. Do not apply these review SQL scripts to the production project.
+3. Exhaustive entrypoint audit of **existing offline** sales/inventory/reports/backup/import/export/assistant/local sync modules: these remain governed by local staff and company-scope logic; the Run 5 cloud middleware does **not** magically secure every offline IndexedDB path. Run 6 staff authorization and Run 7 cross-IndexedDB atomicity still require extensive native/browser proof.
+4. Production-equivalent account switching, sign-out and stale HTTP responses; read-only cloud panel in native React/Vite; verify no remote company selection alters local company state and that local offline business remains usable.
+5. Real backup/restore and import/export integrity, encrypted cloud backup design, assistant grounding/permission matrix, optional sync idempotency and remote financial replication remain feature-gated and require later V19 runs. Run 5 implements their **authorization boundary**, not the full future financial/cloud feature.
+
+**Disposition:** Run 5 broad source implementation provided for review. **Run 2, 3, 4 and 5 ACCEPTANCE NOT PASSED.** Historical blocker/traceability categories remain unchanged. Commercial release **NO-GO**. No live Supabase SQL, cloud sync/payment, staging, external deployment, or `main` merge occurred.
