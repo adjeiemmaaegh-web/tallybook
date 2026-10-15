@@ -7,7 +7,7 @@ const error=/Recovery approval issuance denied/;
 function harness(options={}) {
   const approvals=new Map(),events=[],calls=[];
   let reviewerAuthorized=true,sessionActive=true,ownerId='owner';
-  const reviewer={userId:'reviewer',sessionId:'session',active:true};
+  const reviewer={userId:'reviewer',sessionId:'session',active:true,expiresAtEpochMs:2000};
   const proof={id:'proof',companyId:'co',ownerId:'owner',reviewerId:'reviewer',kind:'verified-restore',
     recipientId:null,localCompanyId:'local',status:'verified',verifiedAtEpochMs:900,
     backupManifestSha256:H,restoreReceiptSha256:J,transferReviewSha256:null};
@@ -86,11 +86,20 @@ test('failed approval insertion and failed audit roll back evidence consumption 
 });
 test('old external verifyRecovery callback cannot substitute for locked DB evidence',async()=>{
  const h=harness();const service=createTrustedRecoveryIssuer({
-  resolveReviewer:async()=>({userId:'reviewer',sessionId:'session',active:true}),
+  resolveReviewer:async()=>({userId:'reviewer',sessionId:'session',active:true,expiresAtEpochMs:2000}),
   verifyRecovery:async()=>({...h.proof,verified:true}),
   store:{transaction:fn=>fn({getCompany:async()=>({id:'co',ownerId:'owner',status:'active'})})},clock:()=>1000});
  await assert.rejects(service.issue(input()),error);
 });
 test('requires trusted reviewer resolver and transactional provider',()=>{
  assert.throws(()=>createTrustedRecoveryIssuer({}),error);
+});
+
+test('expired or missing reviewer JWT deadline denies before database evidence inspection',async()=>{
+  for(const expiresAtEpochMs of [1000,0,null]){
+    const h=harness();h.reviewer.expiresAtEpochMs=expiresAtEpochMs;
+    await assert.rejects(h.issuer.issue(input()),error);
+    assert.equal(h.calls.includes('proof-lock'),false);
+    assert.equal(h.approvals.size,0);
+  }
 });
