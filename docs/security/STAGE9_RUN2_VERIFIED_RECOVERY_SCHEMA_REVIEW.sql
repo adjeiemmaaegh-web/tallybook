@@ -28,8 +28,13 @@ create table if not exists public.company_recovery_verified_evidence (
   kind text not null check (kind in ('verified-restore','approved-transfer')),
   recipient_id uuid references auth.users(id),
   local_company_id text check (char_length(local_company_id) between 1 and 128),
-  status text not null default 'verified' check (status in ('verified','consumed','revoked')),
-  verified_at timestamptz not null,
+  -- Evidence is UNVERIFIED by default; only a separately approved and audited
+  -- human+restore verification process may promote pending -> verified.
+  status text not null default 'pending' check (status in ('pending','verified','consumed','revoked')),
+  verified_at timestamptz,
+  check ((status='pending' and verified_at is null) or
+         (status in ('verified','consumed') and verified_at is not null) or
+         status='revoked'),
   backup_manifest_sha256 text,
   restore_receipt_sha256 text,
   transfer_review_sha256 text,
