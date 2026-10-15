@@ -81,6 +81,34 @@ describe('V19 Run 6 stale credential and supervisor authorization',()=>{
   lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
   expect(await consumeCheckoutDiscountApproval('run6-checkout-key-003',150,1000,'primary',db)).toBeNull();
  });
+ it('rejects approval if the supervisor was disabled after verifying their PIN',async()=>{
+  const db=makeDB();const {cashier,supervisor}=await setup(db);
+  lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
+  await openShift(0,db);
+  await approveCheckoutDiscount(supervisor.id,'222222','run6-stale-supervisor-01',120,1000,db);
+  await db.staffMembers.update(supervisor.id,{disabledAt:new Date().toISOString()});
+  expect(await consumeCheckoutDiscountApproval('run6-stale-supervisor-01',120,1000,'primary',db)).toBeNull();
+ });
+ it('rejects supervisor approval after PIN reset or revoked discount permission',async()=>{
+  const db=makeDB();const {cashier,supervisor}=await setup(db);
+  lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
+  await openShift(0,db);
+  await approveCheckoutDiscount(supervisor.id,'222222','run6-stale-credential-01',120,1000,db);
+  await db.staffMembers.update(supervisor.id,{pinHash:'a'.repeat(64)});
+  expect(await consumeCheckoutDiscountApproval('run6-stale-credential-01',120,1000,'primary',db)).toBeNull();
+  await db.staffMembers.update(supervisor.id,{pinHash:supervisor.pinHash});
+  await approveCheckoutDiscount(supervisor.id,'222222','run6-stale-permission-01',120,1000,db);
+  await db.staffMembers.update(supervisor.id,{permissions:['sell']});
+  expect(await consumeCheckoutDiscountApproval('run6-stale-permission-01',120,1000,'primary',db)).toBeNull();
+ });
+ it('rejects approval if cashier shift closes before discount checkout',async()=>{
+  const db=makeDB();const {cashier,supervisor}=await setup(db);
+  lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
+  const shift=await openShift(0,db);
+  await approveCheckoutDiscount(supervisor.id,'222222','run6-closed-shift-01',120,1000,db);
+  await closeShift(shift.id,0,db);
+  expect(await consumeCheckoutDiscountApproval('run6-closed-shift-01',120,1000,'primary',db)).toBeNull();
+ });
  it('permission changes cannot elevate cashier to staff management',async()=>{
   const db=makeDB();const {cashier}=await setup(db);
   await expect(setStaffPermissions(cashier.id,['staff'],db)).rejects.toThrow();
