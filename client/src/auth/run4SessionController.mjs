@@ -6,7 +6,7 @@
 const denied=()=>{throw Error('Verified cloud session required');};
 const validId=x=>typeof x==='string'&&x.length>0&&x.length<=128&&x.trim()===x;
 export function createRun4SessionController({
-  auth,clock=Date.now,isOnline=()=>true,
+  auth,clock=Date.now,isOnline=()=>true,serverProof=null,
   schedule=fn=>{const id=setTimeout(fn,0);return ()=>clearTimeout(id);},
   alarm=(fn,ms)=>{const id=setTimeout(fn,ms);return ()=>clearTimeout(id);},
   onChange=()=>{}
@@ -62,8 +62,22 @@ export function createRun4SessionController({
         emit('signed-out');return current;
       }
       if(!isOnline()){emit('offline');return current;}
-      verifiedToken=session.access_token;
       const deadline=session.expires_at*1000;
+      if(serverProof){
+        const proof=await serverProof({userId:session.user.id,
+          accessToken:session.access_token,expiresAtEpochMs:deadline});
+        if(!same(seq))return current;
+        if(proof?.active!==true||proof.userId!==session.user.id||
+           proof.expiresAtEpochMs!==deadline){emit('error');return current;}
+        const latest=await auth.getSession();
+        if(!same(seq))return current;
+        if(latest?.error||!validSession(latest?.data?.session,clock())||
+           latest.data.session.access_token!==session.access_token||
+           latest.data.session.user.id!==session.user.id){
+          emit('signed-out');return current;
+        }
+      }
+      verifiedToken=session.access_token;
       const state=emit('signed-in',session.user.id,deadline);
       const delay=Math.max(1,Math.min(2147483647,deadline-clock()));
       expiryCancel=alarm(()=>{
