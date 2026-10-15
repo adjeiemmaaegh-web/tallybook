@@ -21,7 +21,7 @@ import {
 export interface CheckedCompanyAccess {
   readonly userId: string;
   readonly companyId: string;
-  readonly role: "owner" | "admin" | "staff";
+  readonly role: "owner" | "attendant";
 }
 
 export async function verifyCloudCompanyAccess(companyId: string, action: CompanyAccessAction): Promise<CheckedCompanyAccess> {
