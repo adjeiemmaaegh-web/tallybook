@@ -68,7 +68,7 @@ test('ownership bind still cannot occur without a preexisting server-issued reco
  assert.ok(calls.some(([sql])=>sql==='ROLLBACK'));
  assert.ok(!calls.some(([sql])=>sql?.startsWith('insert into public.company_local_bindings')));
 });
-test('coordinator refuses partial private configuration; fake injected reviewer flags give no authority',()=>{
+test('coordinator refuses missing private authentication and connection configuration',()=>{
  assert.throws(()=>createCompanyOwnershipCoordinator({}),/not configured/);
  assert.throws(()=>createCompanyOwnershipCoordinator({authClient:{auth:{getUser:async()=>{}}},privatePool:{connect:async()=>{}}}),/not configured/);
 });
