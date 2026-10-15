@@ -61,10 +61,37 @@ export function requireRun5Access({principal,company,membership,request,now=Date
     action:r.action,domain:r.domain,recordId:r.recordId,
     expiresAtEpochMs:principal.expiresAtEpochMs});
 }
-export function assertRun5ScopedRows(rows,companyId,{max=500}={}){
-  if(!Array.isArray(rows)||rows.length>max||!uuid.test(companyId)||
-     rows.some(x=>!x||typeof x!=='object'||Array.isArray(x)||
-       x.companyId!==companyId))deny();
+const ownershipKeys=new Set(['companyId','businessProfileId','organizationId','tenantId']);
+function assertNestedTenant(value,companyId,depth=0,seen=new WeakSet()){
+  if(depth>24)deny();
+  if(value===null||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number'&&Number.isFinite(value))return;
+  if(!value||typeof value!=='object'||seen.has(value))deny();
+  seen.add(value);
+  try{
+    if(Array.isArray(value)){
+      if(value.length>1000)deny();
+      for(const entry of value)assertNestedTenant(entry,companyId,depth+1,seen);
+      return;
+    }
+    if(Object.getPrototypeOf(value)!==Object.prototype&&
+       Object.getPrototypeOf(value)!==null)deny();
+    for(const key of Reflect.ownKeys(value)){
+      if(typeof key!=='string'||['__proto__','prototype','constructor'].includes(key)||
+         !Object.getOwnPropertyDescriptor(value,key)?.enumerable)deny();
+      const entry=value[key];
+      if(ownershipKeys.has(key)&&entry!==companyId)deny();
+      assertNestedTenant(entry,companyId,depth+1,seen);
+    }
+  }finally{seen.delete(value);}
+}
+export function assertRun5ScopedRows(rows,companyId,{max=500,domain=null}={}){
+  if(!Array.isArray(rows)||rows.length>max||!uuid.test(companyId))deny();
+  for(const row of rows){
+    if(!row||typeof row!=='object'||Array.isArray(row)||
+       row.companyId!==companyId||(domain!==null&&row.domain!==domain))deny();
+    assertNestedTenant(row.data,companyId);
+  }
   return rows;
 }
 export function assertRun5ScopedPayload(payload,companyId){
@@ -74,6 +101,7 @@ export function assertRun5ScopedPayload(payload,companyId){
      typeof payload.domain!=='string'||!Object.hasOwn(kinds,payload.domain)||
      !payload.data||typeof payload.data!=='object'||Array.isArray(payload.data)||
      payload.data.companyId!==companyId)deny();
+  assertNestedTenant(payload.data,companyId);
   const json=JSON.stringify(payload.data);
   if(!json||json.length>32768)deny();
   return payload;
