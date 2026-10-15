@@ -1,4 +1,5 @@
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tallybook Africa Stage 8 design reminder: expenses are small, immutable local facts; they never alter stock, purchases, sales, collections, debt, or product prices. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -72,7 +73,8 @@ export async function createExpense(values: CreateExpenseInput, database: Tallyb
   const amountMinor = parseExpenseAmount(input.amount, values.currency);
   const now = new Date().toISOString();
   const submissionKey = values.submissionKey ?? nanoid(18);
-  return database.transaction("rw", database.expenses, database.staffAudits, async () => {
+  return database.transaction("rw", database.expenses, database.staffAudits, database.appMeta, async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const activeId = getActiveBusinessProfileId();
     const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
     if (existing) {
