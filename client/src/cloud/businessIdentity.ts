@@ -14,6 +14,22 @@ export async function getCurrentBusiness(businessId?: string): Promise<CloudBusi
   return data as CloudBusiness | null;
 }
 
+/** Read only the businesses exposed by canonical membership RLS.
+ * Choosing a cloud business never switches or binds a local IndexedDB company.
+ */
+export async function listAccessibleCloudBusinesses(): Promise<CloudBusiness[]> {
+  const client = getSupabaseClient();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) throw new Error("Sign in before listing cloud businesses.");
+  const { data, error } = await client.from("businesses")
+    .select("id,name,owner_id,created_at,updated_at").order("created_at").limit(100);
+  if (error || !Array.isArray(data)) throw new Error("Could not list your cloud businesses.");
+  if (data.some(row => typeof row?.id !== "string" ||
+      typeof row?.name !== "string" || typeof row?.owner_id !== "string"))
+    throw new Error("Invalid cloud membership list.");
+  return data as CloudBusiness[];
+}
+
 /** The caller supplies a stable UUID so a retried creation cannot duplicate a shop. */
 export async function createBusiness(name: string, requestId: string): Promise<CloudBusiness> {
   if (!name.trim() || name.trim().length > 80) throw new Error("Enter a business name of 1–80 characters.");
@@ -23,9 +39,10 @@ export async function createBusiness(name: string, requestId: string): Promise<C
   return data as CloudBusiness;
 }
 
-/** Only an existing owner can assign another authenticated user. RLS/RPC checks
- * are authoritative; possession of a business ID never grants membership. */
-export async function linkUserToBusiness(businessId: string, userId: string): Promise<void> {
-  const { error } = await getSupabaseClient().rpc("add_business_attendant", { target_business: businessId, target_user: userId });
-  if (error) throw new Error("Only the business owner can assign an existing account to this business.");
+/** Deprecated insecure direct assignment route. Run 3 requires a targeted
+ * invitation, authenticated recipient redemption and audit in one SQL txn.
+ * Never revive add_business_attendant from client code.
+ */
+export async function linkUserToBusiness(_businessId: string, _userId: string): Promise<void> {
+  throw new Error("Direct membership assignment is disabled. Use a targeted Run 3 invitation.");
 }
