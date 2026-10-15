@@ -20,6 +20,7 @@ import { RESTORE_JOURNAL_KEY } from "./restoreJournal.mjs";
 import { withCrossTabDataLock } from "./crossTabDataLock.mjs";
 import { assertImportableLegacyBackupMetadata, portableBackupMetadata } from "./backupMetadataPolicy.mjs";
 import {normalizeRun8BackupTables,RUN8_BACKUP_TABLES} from "./run8BackupCompatibility.mjs";
+import {assertRun8UnambiguousJSON} from "./run8JSONPreflight.mjs";
 import { assertPlainBackupSize } from "./backupResourceLimits.mjs";
 import { beginBackupRestoreJournal, recoverPendingBackupRestoreWhileLocked, readAssistantRestoreSnapshot, writeAssistantRestoreSnapshot } from "./restoreRecovery";
 import type { SaleReversal } from "@/features/assistant/reversals";
@@ -398,6 +399,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
 
 export function parseBackup(text: string): TallybookBackup {
   assertPlainBackupSize(text); // Reject before allocating a parsed record graph.
+  assertRun8UnambiguousJSON(text); // JSON.parse alone silently hides duplicate money/company keys.
   let parsed: unknown;
   try { parsed = JSON.parse(text); } catch { throw new Error("This file is not valid Tallybook backup JSON."); }
   if (!isRecord(parsed) || parsed.kind !== BACKUP_KIND) throw new Error("This file is not a Tallybook local backup.");
