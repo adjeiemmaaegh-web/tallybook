@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness, getCurrentBusiness, type CloudBusiness } from "./businessIdentity";
+import {Run3MembershipPanel} from "./Run3MembershipPanel";
 
 /** Account identity only. Creating a cloud business does not claim local data. */
 export function CloudBusinessPanel() {
@@ -77,6 +78,10 @@ export function CloudBusinessPanel() {
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
     </form>}
+    {isSupabaseConfigured && userId &&
+      import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
+      ? <Run3MembershipPanel userId={userId} companyId={business?.id ?? null}
+         isOwner={business?.owner_id === userId}/> : null}
     {error && <p role="alert">{error}</p>}
   </section>;
 }
