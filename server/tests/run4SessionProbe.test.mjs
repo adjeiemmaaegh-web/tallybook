@@ -51,3 +51,14 @@ test('server requires an independently wired private pool before enablement',()=
  const app={post:()=>{}};
  assert.throws(()=>installRun4SessionProbe({app,enabled:true}),/not configured/);
 });
+
+test('repeated live session checks are throttled before auth lookup',async()=>{
+ let calls=0;
+ const h=make({resolver:async()=>{calls++;
+   return {active:true,userId:sid,expiresAtEpochMs:5000000};}});
+ const handler=makeRun4SessionProbe({resolver:h.resolver,enabled:true,
+   allowedOrigin:'https://test.invalid',clock:()=>1000});
+ for(let i=0;i<31;i++)await handler(h.req,h.res);
+ assert.equal(h.res.statusCode,429);
+ assert.equal(calls,30);
+});
