@@ -9,14 +9,14 @@ function token(userId){
  const part=Buffer.from(JSON.stringify({sub:userId,session_id:sid,role:'authenticated',aud:'authenticated',exp:3600})).toString('base64url');
  return 'eyJhbGciOiJSUzI1NiJ9.'+part+'.'+'a'.repeat(64);
 }
-function harness({reviewerAllowed=true,sessionActive=true,evidenceAvailable=true,foreignEvidence=false}={}){
+function harness({reviewerAllowed=true,sessionActive=true,transactionSessionActive=true,evidenceAvailable=true,foreignEvidence=false}={}){
  const calls=[];
  const pool={
   async query(sql,params){calls.push([sql,params]);return {rows:[{active:sessionActive}]};},
   async connect(){return {
    async query(sql,params){
     calls.push([sql,params]);
-    if(sql.startsWith('select id from auth.sessions'))return {rows:sessionActive?[{id:sid}]:[],rowCount:sessionActive?1:0};
+    if(sql.startsWith('select id from auth.sessions'))return {rows:transactionSessionActive?[{id:sid}]:[],rowCount:transactionSessionActive?1:0};
     if(sql.startsWith('select user_id from public.company_recovery_reviewers'))
       return {rows:reviewerAllowed?[{user_id:reviewer}]:[],rowCount:reviewerAllowed?1:0};
     if(sql.includes('from public.company_recovery_verified_evidence where id='))
@@ -71,4 +71,27 @@ test('ownership bind still cannot occur without a preexisting server-issued reco
 test('coordinator refuses missing private authentication and connection configuration',()=>{
  assert.throws(()=>createCompanyOwnershipCoordinator({}),/not configured/);
  assert.throws(()=>createCompanyOwnershipCoordinator({authClient:{auth:{getUser:async()=>{}}},privatePool:{connect:async()=>{}}}),/not configured/);
+});
+
+test('ownership binding revalidates revoked session inside transaction, after successful outer Supabase check',async()=>{
+ const {coordinator,calls}=harness({sessionActive:true,transactionSessionActive:false});
+ await assert.rejects(coordinator.bindExistingCompany({
+  session:token(owner),cloudCompanyId:'co',localCompanyId:'local',recoveryId:'proof',
+ }),/Company ownership operation denied/);
+ const sql=calls.map(([s])=>s);
+ assert.ok(sql.some(s=>s?.startsWith('select id from auth.sessions')));
+ assert.ok(sql.some(s=>s==='ROLLBACK'));
+ assert.equal(sql.some(s=>s?.startsWith('select id, owner_id from public.businesses')),false);
+ assert.equal(sql.some(s=>s?.startsWith('insert into public.company_local_bindings')),false);
+});
+test('owner transfer revalidates revoked session inside transaction before membership writes',async()=>{
+ const {coordinator,calls}=harness({sessionActive:true,transactionSessionActive:false});
+ await assert.rejects(coordinator.transferOwner({
+  session:token(owner),companyId:'co',newOwnerId:reviewer,recoveryId:'proof',
+ }),/Company ownership operation denied/);
+ const sql=calls.map(([s])=>s);
+ assert.ok(sql.some(s=>s?.startsWith('select id from auth.sessions')));
+ assert.ok(sql.some(s=>s==='ROLLBACK'));
+ assert.equal(sql.some(s=>s?.startsWith('update public.business_members')),false);
+ assert.equal(sql.some(s=>s?.startsWith('update public.businesses')),false);
 });
