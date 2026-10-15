@@ -1,17 +1,37 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useBusinessProfile } from '@/contexts/BusinessProfileContext';
-import { STAFF_SESSION_CHANGED, createStaff, listStaff, unlockStaff, lockStaff, openShift, closeShift, currentStaffId, changeStaffStatus, previewShiftCash, changeStaffRole, setStaffPermissions, resetStaffPin, enrollStaffAuthenticator, unlockStaffWithAuthenticator, revokeStaffAuthenticator, rolePermissions, type StaffDirectoryEntry, type StaffShift, type StaffAudit } from '@/features/staff/staff';
+import { STAFF_SESSION_CHANGED, createStaff, listStaff, unlockStaff, lockStaff, requirePermission, openShift, closeShift, currentStaffId, changeStaffStatus, previewShiftCash, changeStaffRole, setStaffPermissions, resetStaffPin, enrollStaffAuthenticator, unlockStaffWithAuthenticator, revokeStaffAuthenticator, rolePermissions, type StaffDirectoryEntry, type StaffShift, type StaffAudit } from '@/features/staff/staff';
 import { db } from '@/db/TallybookDB';
 
 export default function StaffPage(){
  const {activeCompanyId}=useBusinessProfile();
  const [people,setPeople]=useState<StaffDirectoryEntry[]>([]);const [shifts,setShifts]=useState<StaffShift[]>([]);const [audit,setAudit]=useState<StaffAudit[]>([]);
  const [name,setName]=useState('');const [role,setRole]=useState<'owner'|'supervisor'|'cashier'>('cashier');const [pin,setPin]=useState('');const [chosen,setChosen]=useState('');const [float,setFloat]=useState('0');const [count,setCount]=useState('0');const [cashPreview,setCashPreview]=useState<{expectedCashMinor:number;movementMinor:number}|null>(null);const [busy,setBusy]=useState(false);const [unlocked,setUnlocked]=useState(false);const [resetPin,setResetPin]=useState('');
- const refresh=useCallback(async()=>{const [members,allShifts,logs]=await Promise.all([listStaff(),db.staffShifts.where('businessProfileId').equals(activeCompanyId).toArray(),db.staffAudits.where('businessProfileId').equals(activeCompanyId).toArray()]);setPeople(members);setShifts(allShifts.sort((a,b)=>b.openedAt.localeCompare(a.openedAt)));const id=currentStaffId(activeCompanyId);setUnlocked(members.some(m=>m.id===id&&!m.disabledAt));const role=members.find(m=>m.id===id&&!m.disabledAt)?.role;setAudit(role==='owner'||role==='supervisor'?logs.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,40):[]);},[activeCompanyId]);
- useEffect(()=>{setPin('');setUnlocked(false);setAudit([]);void refresh().catch(()=>toast.error('Unable to load local staff.'));const onSession=()=>{setAudit([]);void refresh().catch(()=>{});};window.addEventListener(STAFF_SESSION_CHANGED,onSession);return()=>window.removeEventListener(STAFF_SESSION_CHANGED,onSession);},[refresh]);
+ const refresh=useCallback(async()=>{
+   const members=await listStaff();
+   let active=null;
+   try{active=await requirePermission('sell',db,activeCompanyId);}
+   catch{active=null;}
+   const allShifts=active
+     ?await db.staffShifts.where('businessProfileId').equals(activeCompanyId)
+       .filter(s=>s.staffId===active!.id).toArray():[];
+   let logs:StaffAudit[]=[];
+   if(active&&(active.role==='owner'||active.role==='supervisor')){
+     try{
+       await requirePermission('reports',db,activeCompanyId);
+       logs=await db.staffAudits.where('businessProfileId').equals(activeCompanyId).toArray();
+       await requirePermission('reports',db,activeCompanyId);
+     }catch{logs=[];}
+   }
+   setPeople(members);
+   setShifts(allShifts.sort((a,b)=>b.openedAt.localeCompare(a.openedAt)));
+   setUnlocked(Boolean(active));
+   setAudit(logs.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,40));
+ },[activeCompanyId]);
+ useEffect(()=>{setPin('');setResetPin('');setChosen('');setUnlocked(false);setAudit([]);void refresh().catch(()=>toast.error('Unable to load local staff.'));const onSession=()=>{setAudit([]);void refresh().catch(()=>{});};window.addEventListener(STAFF_SESSION_CHANGED,onSession);return()=>window.removeEventListener(STAFF_SESSION_CHANGED,onSession);},[refresh]);
  async function run(action:()=>Promise<unknown>){setBusy(true);try{await action();setPin('');await refresh();toast.success('Staff operation saved.');}catch(e){toast.error(e instanceof Error?e.message:'Staff operation failed.');}finally{setBusy(false);}}
- const ownId=currentStaffId(activeCompanyId);const manager=people.find(p=>p.id===ownId)?.role==='owner';const currentShift=shifts.find(s=>s.staffId===ownId&&!s.closedAt);
+ const ownId=currentStaffId(activeCompanyId);const manager=unlocked&&people.find(p=>p.id===ownId)?.role==='owner';const currentShift=shifts.find(s=>s.staffId===ownId&&!s.closedAt);
  useEffect(()=>{let mounted=true;setCashPreview(null);if(currentShift)void previewShiftCash(currentShift.id).then(s=>{if(mounted)setCashPreview(s);}).catch(()=>{});return()=>{mounted=false;};},[currentShift?.id,activeCompanyId]);
  return <main className="mx-auto max-w-4xl space-y-5 p-4"><header><h1 className="text-2xl font-semibold">Local staff and shifts</h1><p className="text-sm text-muted-foreground">Device-local cashier controls. These do not provide cloud identity, remote revocation, or protection against someone with direct browser database access.</p></header>
  <section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Session</h2>{unlocked?<button className="rounded border p-3" onClick={()=>{lockStaff(activeCompanyId);setUnlocked(false);setAudit([]);}}>Lock this session</button>:<div className="grid gap-2 sm:grid-cols-3"><select aria-label="Staff member" className="rounded border p-3 bg-background" value={chosen} onChange={e=>setChosen(e.target.value)}><option value="">Select cashier</option>{people.filter(x=>!x.disabledAt).map(x=><option key={x.id} value={x.id}>{x.name} ({x.role})</option>)}</select><input aria-label="Staff PIN" className="rounded border p-3" value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="6–12 digit PIN"/><button disabled={busy||!chosen} className="rounded bg-primary text-primary-foreground p-3" onClick={()=>void run(()=>unlockStaff(chosen,pin))}>Unlock</button><button disabled={busy||!chosen||!people.find(p=>p.id===chosen)?.hasAuthenticator} className="rounded border p-3" onClick={()=>void run(()=>unlockStaffWithAuthenticator(chosen))}>Unlock with device</button></div>}{unlocked&&<div className="flex gap-2 flex-wrap"><button disabled={busy} className="rounded border p-3" onClick={()=>void run(()=>enrollStaffAuthenticator())}>Register device biometric / security key</button>{people.find(p=>p.id===ownId)?.hasAuthenticator&&<button disabled={busy} className="rounded border p-3" onClick={()=>void run(()=>revokeStaffAuthenticator(ownId!))}>Remove device unlock</button>}</div>}<p className="text-xs text-muted-foreground">Optional secure-context device unlock; PIN remains available. Platform support and biometric behavior vary by device.</p></section>
