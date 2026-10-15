@@ -144,12 +144,16 @@ function cleanOptional(value: string | undefined) { const cleaned = value?.trim(
 
 export async function getInventorySnapshot(database: TallybookDB = db): Promise<InventorySnapshot> {
   const activeId = getActiveBusinessProfileId();
-  const [allCategories, allProducts, allMovements] = await database.transaction("r", [database.categories, database.products, database.inventoryMovements], async () => Promise.all([
-    database.categories.orderBy("name").toArray(),
-    database.products.orderBy("name").toArray(),
-    database.inventoryMovements.orderBy("createdAt").reverse().toArray(),
-  ]));
+  const [allCategories, allProducts, allMovements] = await database.transaction("r", [database.categories, database.products, database.inventoryMovements, database.staffMembers], async () => {
+    await requirePermission("sell",database,activeId);
+    return Promise.all([
+      database.categories.orderBy("name").toArray(),
+      database.products.orderBy("name").toArray(),
+      database.inventoryMovements.orderBy("createdAt").reverse().toArray(),
+    ]);
+  });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
+  await requirePermission("sell",database,activeId);
   const categories = allCategories.filter((category) => category.businessProfileId === activeId);
   const products = allProducts.filter((product) => product.businessProfileId === activeId);
   const movements = allMovements.filter((movement) => movement.businessProfileId === activeId);
