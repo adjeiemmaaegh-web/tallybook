@@ -28,7 +28,7 @@ test("create and unlock PINs and per-user PIN reset inputs cannot share UI state
   assert.match(staffUI, /const \[newPin, setNewPin\]/);
   assert.match(staffUI, /const \[unlockPin, setUnlockPin\]/);
   assert.match(staffUI, /const \[resetPins, setResetPins\]/);
-  assert.match(staffUI, /key=\{companyId\}/);
+  assert.match(staffUI, /key=\{activeCompanyId\}/);
   assert.match(staffUI, /setUnlockPin\(""\); setNewPin\(""\); setResetPins\(\{\}\)/);
 });
 
