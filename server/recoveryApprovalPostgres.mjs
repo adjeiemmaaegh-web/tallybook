@@ -34,6 +34,46 @@ export function createRecoveryApprovalTransactionMethods(client) {
         restoreReceiptSha256:row.restore_receipt_sha256,
         transferReviewSha256:row.transfer_review_sha256});
     },
+    async insertPendingEvidence(e) {
+      exactlyOne(await client.query(`insert into public.company_recovery_verified_evidence
+        (id,company_id,owner_id,reviewer_id,kind,recipient_id,local_company_id,
+         backup_artifact_id,status,requested_at)
+        values ($1,$2,$3,$4,$5,$6,$7,$8,'pending',to_timestamp($9::double precision/1000))
+        returning id`,[e.id,e.companyId,e.ownerId,e.reviewerId,e.kind,e.recipientId,
+          e.localCompanyId,e.backupArtifactId,e.requestedAt]));
+    },
+    async getPendingEvidence(id) {
+      const r=await client.query(`select id,company_id,owner_id,reviewer_id,kind,
+        recipient_id,local_company_id,backup_artifact_id,status,requested_at
+        from public.company_recovery_verified_evidence where id=$1 for update`,[id]);
+      if(r.rows?.length!==1)return null;
+      const e=r.rows[0];
+      return Object.freeze({id:e.id,companyId:e.company_id,ownerId:e.owner_id,
+        reviewerId:e.reviewer_id,kind:e.kind,recipientId:e.recipient_id,
+        localCompanyId:e.local_company_id,backupArtifactId:e.backup_artifact_id,
+        status:e.status,requestedAt:epoch(e.requested_at)});
+    },
+    async verifyEvidence(e) {
+      exactlyOne(await client.query(`update public.company_recovery_verified_evidence
+        set status='verified',verified_at=to_timestamp($3::double precision/1000),
+        backup_manifest_sha256=$4,restore_receipt_sha256=$5,transfer_review_sha256=$6
+        where id=$1 and reviewer_id=$2 and status='pending' returning id`,
+        [e.id,e.reviewerId,e.at,e.backupManifestSha256,e.restoreReceiptSha256,
+         e.transferReviewSha256]));
+    },
+    async revokeEvidence(id) {
+      exactlyOne(await client.query(`update public.company_recovery_verified_evidence
+        set status='revoked' where id=$1 and status in ('pending','verified')
+        returning id`,[id]));
+    },
+    async appendEvidenceAudit(a) {
+      if(!['requested','verified','revoked'].includes(a.action)||
+         !Number.isSafeInteger(a.at))denied();
+      exactlyOne(await client.query(`insert into public.company_recovery_evidence_audit
+        (evidence_id,company_id,actor_id,action,created_at)
+        values ($1,$2,$3,$4,to_timestamp($5::double precision/1000)) returning id`,
+        [a.id,a.companyId,a.actorId,a.action,a.at]));
+    },
     async consumeVerifiedEvidence(id) {
       exactlyOne(await client.query(`update public.company_recovery_verified_evidence
         set status='consumed' where id=$1 and status='verified' returning id`,[id]));
