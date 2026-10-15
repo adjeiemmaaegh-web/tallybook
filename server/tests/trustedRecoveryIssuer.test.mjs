@@ -103,3 +103,15 @@ test('expired or missing reviewer JWT deadline denies before database evidence i
     assert.equal(h.approvals.size,0);
   }
 });
+
+test('transfer recipient cannot act as their own independent recovery reviewer',async()=>{
+  const h=harness();
+  const req={reviewSession:'reviewer-token',evidenceId:'proof',companyId:'co',
+    kind:'approved-transfer',recipientId:'reviewer'};
+  Object.assign(h.proof,{kind:'approved-transfer',recipientId:'reviewer',localCompanyId:null,
+    transferReviewSha256:K,backupManifestSha256:null,restoreReceiptSha256:null});
+  await assert.rejects(h.issuer.issue(req),error);
+  assert.equal(h.approvals.size,0);
+  assert.equal(h.proof.status,'verified');
+  assert.equal(h.events.length,0);
+});
