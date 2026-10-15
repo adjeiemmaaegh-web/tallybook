@@ -33,6 +33,8 @@ export function createTrustedRecoveryIssuer({resolveReviewer,store,clock=Date.no
           evidence?.kind!==kind||evidence?.status!=='verified'||
           evidence?.reviewerId!==reviewer.userId||!valid(evidence?.ownerId)||
           reviewer.userId===evidence.ownerId||
+          // A transfer recipient cannot independently review their own elevation.
+          (kind==='approved-transfer' && reviewer.userId===recipientId)||
           (kind==='verified-restore' && (evidence.localCompanyId!==localCompanyId ||
             evidence.recipientId!==null || !DIGEST.test(evidence.backupManifestSha256??'') ||
             !DIGEST.test(evidence.restoreReceiptSha256??''))) ||
