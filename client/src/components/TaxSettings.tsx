@@ -26,9 +26,9 @@ export function TaxSettings() {
     finally { setBusy(false); }
   }
   if (!profile) return null;
-  return <section className="business-form-shell" aria-labelledby="tax-settings-title">
-    <div className="form-ledger-head"><div><h2 id="tax-settings-title">Tax settings</h2><p>Tax is off until you configure it. Use this only when one rate applies to every item. Tallybook does not select a country's tax rate.</p></div></div>
-    <form className="business-form" onSubmit={submit}>
+  return <section className="business-form-shell tax-premium-shell" aria-labelledby="tax-settings-title">
+    <div className="form-ledger-head"><div><p className="ledger-kicker">TRADING SETTINGS</p><h2 id="tax-settings-title">Tax settings</h2><p>Tax is off until you configure it. Use this only when one rate applies to every item. Tallybook does not select a country's tax rate.</p></div></div>
+    <form className="business-form tax-premium-form" onSubmit={submit}>
       <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} /> Apply tax to future sales</label>
       <label>Registration status<select aria-label="Tax registration status" value={registrationStatus} onChange={e => setStatus(e.target.value as TaxPolicy["registrationStatus"])}><option value="unknown">Not supplied</option><option value="not-registered">Not registered</option><option value="registered">Registered</option></select></label>
       <label>Registration number (optional)<input className="border p-2" value={registrationNumber} onChange={e => setNumber(e.target.value)} maxLength={80} /></label>
