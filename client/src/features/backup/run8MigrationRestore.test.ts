@@ -44,6 +44,23 @@ describe('Run 8 saved-data migration and transactional rollback',()=>{
   expect(await d.businessProfiles.count()).toBe(1);
   d.close();
  });
+ it('rejects unknown top-level future financial data without mutating the device',async()=>{
+  const d=await fixture();
+  const raw=JSON.parse(stringifyBackup(await createBackup(d)));
+  raw.newFinancialData={id:'unimported'};
+  expect(()=>parseBackup(JSON.stringify(raw))).toThrow(/unknown top-level data/);
+  expect((await d.businessProfiles.get(company))?.name).toBe('Saved ledger');
+  d.close();
+ });
+ it('rejects assistant snapshots with omitted or unknown tables',async()=>{
+  const d=await fixture();
+  const raw=JSON.parse(stringifyBackup(await createBackup(d)));
+  delete raw.assistant.history;
+  expect(()=>parseBackup(JSON.stringify(raw))).toThrow(/assistant section is incomplete/);
+  raw.assistant.history=[];raw.assistant.unknownArchive=[];
+  expect(()=>parseBackup(JSON.stringify(raw))).toThrow(/assistant section is incomplete/);
+  d.close();
+ });
  it('imports historical v9 empty tables without inventing modern receivables or staff',async()=>{
   const d=await fixture();
   const raw=JSON.parse(stringifyBackup(await createBackup(d)));
