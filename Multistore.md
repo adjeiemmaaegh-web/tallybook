@@ -127,3 +127,6 @@ Review found that the PostgreSQL ownership-transfer UPDATE verified only the clo
 - Added `server/tests/storeDeviceAuthorization.test.mjs` with positive, negative, revocation, wrong-tenant/device, expiry and no-cache cases, and `docs/security/STAGE9_ROUND1_STORE_DEVICE_AUTHORIZATION.md`.
 - **Not yet connected:** authoritative device-grant table, trusted grant-issuance endpoint, verified local binding UI, and service-level write-path enforcement. Client UI AuthGate cannot by itself isolate local IndexedDB account data. The new security code is inert and must not be represented as full completed Round 1.
 - Tests were written but have not been executed on the combined branch. Full acceptance remains owner-PC deferred. No live DB modification or production deploy. Release NO-GO.
+
+### Round 1 server-only scope adapter draft
+Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security/STAGE9_ROUND1_STORE_DEVICE_SCHEMA.sql`, and native SQL reader tests. The SQL is review-only and deliberately not installed: it introduces canonical store scopes and expiring, revocable store/device grants, private to the trusted server. Real issuance and account-to-local binding remain required before any data access. These modules are not connected to HTTP financial writes or local IndexedDB; implementation is NOT ready to claim Round 1 complete.
