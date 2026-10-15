@@ -19,6 +19,10 @@ import { assistantLocalDB, listAllAssistantHistoryForBackup, listStoredAliases, 
 import { RESTORE_JOURNAL_KEY } from "./restoreJournal.mjs";
 import { withCrossTabDataLock } from "./crossTabDataLock.mjs";
 import { assertImportableLegacyBackupMetadata, portableBackupMetadata } from "./backupMetadataPolicy.mjs";
+import {normalizeRun8BackupTables,RUN8_BACKUP_TABLES} from "./run8BackupCompatibility.mjs";
+import {assertRun8UnambiguousJSON} from "./run8JSONPreflight.mjs";
+import {RUN8_VERIFIED_RECEIPT_KEY,RUN8_VERIFIED_RECEIPT_KIND,
+ serializeRun8VerifiedReceipt,parseRun8VerifiedReceipt} from "./run8VerifiedReceipt.mjs";
 import { assertPlainBackupSize } from "./backupResourceLimits.mjs";
 import { beginBackupRestoreJournal, recoverPendingBackupRestoreWhileLocked, readAssistantRestoreSnapshot, writeAssistantRestoreSnapshot } from "./restoreRecovery";
 import type { SaleReversal } from "@/features/assistant/reversals";
@@ -102,41 +106,60 @@ const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevice
 const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
-export async function getLastBackupAt(database: TallybookDB = db): Promise<string | null> {
-  await database.open();
-  return (await database.appMeta.get("lastBackupAt"))?.value ?? null;
-}
-
-export async function getLastBackupCompanyId(database: TallybookDB = db): Promise<string | null> {
-  await database.open();
-  return (await database.appMeta.get("lastBackupCompanyId"))?.value ?? null;
-}
-
-/** The company saved in the exported file is the authority for the receipt.
- * A tab/company switch between file generation and metadata update must NOT
- * make another company appear to have a recent backup.
- * This timestamp records an export attempt, NOT independent proof of saved
- * bytes or successful restore.
+/** Historical lastBackupAt/lastBackupCompanyId rows are NOT evidence that
+ * a file was saved. Only the Run 8 reselected-file marker is trustworthy as
+ * evidence of a local verification step, not of independent disaster recovery.
  */
+export async function getVerifiedBackupReceipt(database:TallybookDB=db){
+  await database.open();
+  const row=await database.appMeta.get(RUN8_VERIFIED_RECEIPT_KEY);
+  if(!row)return null;
+  try{
+    const receipt=parseRun8VerifiedReceipt(row.value);
+    if(!await database.businessProfiles.get(receipt.companyId))return null;
+    return receipt;
+  }catch{return null;} // Corrupt evidence cannot grant backup readiness.
+}
+export async function getLastBackupAt(database:TallybookDB=db):Promise<string|null>{
+  return (await getVerifiedBackupReceipt(database))?.createdAt??null;
+}
+export async function getLastBackupCompanyId(database:TallybookDB=db):Promise<string|null>{
+  return (await getVerifiedBackupReceipt(database))?.companyId??null;
+}
 export function recordBackupExportedAt(
-  value = new Date().toISOString(),
-  database: TallybookDB = db,
-  exportedCompanyId = getActiveBusinessProfileId()
-): Promise<string> {
-  return withCrossTabDataLock('shared', async () => {
+  value=new Date().toISOString(),database:TallybookDB=db,
+  exportedCompanyId=getActiveBusinessProfileId(),verifiedSha256?:string
+):Promise<string>{
+  return withCrossTabDataLock('shared',async()=>{
     await database.open();
     if(!exportedCompanyId?.trim()||exportedCompanyId!==getActiveBusinessProfileId()||
        typeof value!=='string'||!Number.isFinite(Date.parse(value)))
-      throw new Error('Company or backup timestamp changed before export recording.');
+      throw Error('Company or backup timestamp changed before export recording.');
+    if(verifiedSha256!==undefined&&!/^[0-9a-f]{64}$/.test(verifiedSha256))
+      throw Error('Invalid encrypted backup-file fingerprint.');
     await database.transaction('rw',[database.appMeta,database.businessProfiles,database.staffMembers],async()=>{
       if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
-        throw new Error('Recover the interrupted restore before recording a backup.');
+        throw Error('Recover the interrupted restore before recording a backup.');
       if(exportedCompanyId!==getActiveBusinessProfileId()||
          !await database.businessProfiles.get(exportedCompanyId))
-        throw new Error('The exported company is no longer selected or available.');
+        throw Error('The exported company is no longer selected or available.');
       await requirePermission('staff',database,exportedCompanyId);
+      // Kept only as legacy diagnostic metadata; neither one alone grants
+      // destructive company-clear readiness.
       await database.appMeta.put({key:'lastBackupAt',value,updatedAt:value});
       await database.appMeta.put({key:'lastBackupCompanyId',value:exportedCompanyId,updatedAt:value});
+      if(verifiedSha256){
+        const verifiedAt=new Date().toISOString();
+        const receipt=serializeRun8VerifiedReceipt({
+          kind:RUN8_VERIFIED_RECEIPT_KIND,companyId:exportedCompanyId,
+          createdAt:value,verifiedAt,sha256:verifiedSha256
+        });
+        await database.appMeta.put({key:RUN8_VERIFIED_RECEIPT_KEY,
+          value:receipt,updatedAt:verifiedAt});
+      }else{
+        // An older or unverified export must never inherit prior V2 proof.
+        await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
+      }
     });
     return value;
   });
@@ -397,36 +420,43 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
 
 export function parseBackup(text: string): TallybookBackup {
   assertPlainBackupSize(text); // Reject before allocating a parsed record graph.
+  assertRun8UnambiguousJSON(text); // JSON.parse alone silently hides duplicate money/company keys.
   let parsed: unknown;
   try { parsed = JSON.parse(text); } catch { throw new Error("This file is not valid Tallybook backup JSON."); }
   if (!isRecord(parsed) || parsed.kind !== BACKUP_KIND) throw new Error("This file is not a Tallybook local backup.");
+  // A future root field or an incomplete assistant section could otherwise
+  // be dropped without warning while replacing an owner's saved records.
+  const rootKeys=["kind","formatVersion","createdAt","databaseSchemaVersion","records","assistant"];
+  if(Object.keys(parsed).some(key=>!rootKeys.includes(key)))
+    throw new Error("Backup contains unknown top-level data. A newer Tallybook version may be required.");
+  if(parsed.assistant!==undefined){
+    const expectedAssistantKeys=["workflows","aliases","history"];
+    if(!isRecord(parsed.assistant)||
+       Object.keys(parsed.assistant).length!==expectedAssistantKeys.length||
+       Object.keys(parsed.assistant).some(key=>!expectedAssistantKeys.includes(key)))
+      throw new Error("Backup assistant section is incomplete or contains unsupported tables.");
+  }
   if (parsed.formatVersion !== BACKUP_FORMAT_VERSION) throw new Error("This backup format is not supported by this version of Tallybook.");
   if (typeof parsed.createdAt !== "string" || Number.isNaN(Date.parse(parsed.createdAt))) throw new Error("This backup is missing a valid creation date.");
   if (typeof parsed.databaseSchemaVersion !== "number" || !Number.isInteger(parsed.databaseSchemaVersion) || parsed.databaseSchemaVersion < 1) throw new Error("This backup has an unsupported database schema version.");
   if (parsed.databaseSchemaVersion > DATABASE_SCHEMA_VERSION) throw new Error("This backup needs a newer version of Tallybook before it can be restored.");
   if (!isRecord(parsed.records)) throw new Error("This backup is missing its local record section.");
-  const records = parsed.records;
-  for (const key of recordKeys) {
-    const tableRecords = records[key];
-    if ((extendedKeys as readonly string[]).includes(key) && tableRecords === undefined && parsed.databaseSchemaVersion < 26) continue;
-    if (key === "mobileMoneyProviders" && tableRecords === undefined && parsed.databaseSchemaVersion <= 7) continue;
-    if ((key === "suppliers" || key === "purchases" || key === "purchaseLines") && tableRecords === undefined && parsed.databaseSchemaVersion <= 8) continue;
-    if (key === "expenses" && tableRecords === undefined && parsed.databaseSchemaVersion <= 9) continue;
-    if (key === "saleReversals" && tableRecords === undefined && parsed.databaseSchemaVersion <= 11) continue;
-    if ((key === "stockCountSessions" || key === "inventoryBatches") && tableRecords === undefined && parsed.databaseSchemaVersion < 14) continue;
-    if (key === "quotations" && tableRecords === undefined && parsed.databaseSchemaVersion < 15) continue;
-    if ((key === "customerBenefits" || key === "customerPolicies") && tableRecords === undefined && parsed.databaseSchemaVersion < 16) continue;
-    if (key === "walletTransfers" && tableRecords === undefined && parsed.databaseSchemaVersion < 17) continue;
-    if (key === "inventoryCostEvents" && tableRecords === undefined && parsed.databaseSchemaVersion < 26) continue;
-    if (key === "supplierPayableEntries" && tableRecords === undefined && parsed.databaseSchemaVersion < 27) continue;
-    if (key === "cashPartialReturns" && tableRecords === undefined && parsed.databaseSchemaVersion < 28) continue;
-    if (key === "commerceOrders" && tableRecords === undefined && parsed.databaseSchemaVersion < 25) continue;
-    if (["staffMembers", "staffShifts", "staffAudits"].includes(key) && tableRecords === undefined && parsed.databaseSchemaVersion < 18) continue;
-    if (!Array.isArray(tableRecords) || !tableRecords.every(isRecord) || !hasUniqueIds(tableRecords)) throw new Error(`This backup has invalid ${key} records.`);
-    if (key === "expenses" && !tableRecords.every(hasValidExpenseRecord)) throw new Error("This backup has invalid expense records.");
+  // Normalize optional historical tables only if they did not yet exist.
+  // Reject unknown future table names and missing already-introduced tables.
+  const normalizedTables=normalizeRun8BackupTables(
+    parsed.records,parsed.databaseSchemaVersion,DATABASE_SCHEMA_VERSION
+  );
+  if(RUN8_BACKUP_TABLES.length!==recordKeys.length ||
+     RUN8_BACKUP_TABLES.some((key,index)=>key!==recordKeys[index]))
+    throw new Error("Backup schema compatibility policy is out of sync.");
+  for(const key of recordKeys){
+    const rows=normalizedTables[key];
+    if(!rows.every(isRecord)||!hasUniqueIds(rows))
+      throw new Error(`This backup has invalid ${key} records.`);
+    if(key==="expenses"&&!rows.every(hasValidExpenseRecord))
+      throw new Error("This backup has invalid expense records.");
   }
-  for (const key of extendedKeys) records[key] ??= [];
-  const backup = { ...parsed, records: { ...records, mobileMoneyProviders: records.mobileMoneyProviders ?? [], suppliers: records.suppliers ?? [], purchases: records.purchases ?? [], purchaseLines: records.purchaseLines ?? [], supplierPayableEntries: records.supplierPayableEntries ?? [], expenses: records.expenses ?? [], saleReversals: records.saleReversals ?? [], cashPartialReturns: records.cashPartialReturns ?? [], stockCountSessions: records.stockCountSessions ?? [], inventoryBatches: records.inventoryBatches ?? [], quotations: records.quotations ?? [], customerBenefits: records.customerBenefits ?? [], customerPolicies: records.customerPolicies ?? [], walletTransfers: records.walletTransfers ?? [], staffMembers: records.staffMembers ?? [], staffShifts: records.staffShifts ?? [], staffAudits: records.staffAudits ?? [], commerceOrders: records.commerceOrders ?? [], inventoryCostEvents: records.inventoryCostEvents ?? [] } } as unknown as TallybookBackup;
+  const backup={...parsed,records:normalizedTables} as unknown as TallybookBackup;
   assertImportableLegacyBackupMetadata(backup.records.appMeta); // Allow old metadata only for reading, never applying.
   validateCompanyRecords(backup.records, backup.assistant);
   return backup;
@@ -502,6 +532,9 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
       await database.table(key).bulkPut(rows);
     }
     await database.appMeta.put({ key: "activeBusinessProfileId", value: companyId, updatedAt: new Date().toISOString() });
+    // A restored ledger has a new local revision; old file verification must
+    // not be presented as a fresh backup of the restored contents.
+    await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
     if (restoreMarker) await database.appMeta.delete(RESTORE_JOURNAL_KEY); // Commit decision: atomic with ledger data.
     });
   } catch (error) {
