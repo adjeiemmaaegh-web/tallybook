@@ -56,7 +56,7 @@ describe('V19 Run 6 stale credential and supervisor authorization',()=>{
   lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
   await expect(approveCheckoutDiscount(supervisor.id,'222222',
     'run6-checkout-key-001',100,1000,db)).rejects.toThrow(/denied/);
-  expect(consumeCheckoutDiscountApproval('run6-checkout-key-001',100,1000)).toBeNull();
+  expect(await consumeCheckoutDiscountApproval('run6-checkout-key-001',100,1000,'primary',db)).toBeNull();
  });
  it('persists an audit before publishing exact one-time approval',async()=>{
   const db=makeDB();const {cashier,supervisor}=await setup(db);
@@ -68,8 +68,8 @@ describe('V19 Run 6 stale credential and supervisor authorization',()=>{
   expect(logs).toHaveLength(1);
   expect(logs[0].staffId).toBe(supervisor.id);
   expect(logs[0].details).toContain(shift.id);
-  expect(consumeCheckoutDiscountApproval('run6-checkout-key-002',100,1000)).toBe(supervisor.id);
-  expect(consumeCheckoutDiscountApproval('run6-checkout-key-002',100,1000)).toBeNull();
+  expect(await consumeCheckoutDiscountApproval('run6-checkout-key-002',100,1000,'primary',db)).toBe(supervisor.id);
+  expect(await consumeCheckoutDiscountApproval('run6-checkout-key-002',100,1000,'primary',db)).toBeNull();
  });
  it('role changes by owner make earlier cashier approvals unusable',async()=>{
   const db=makeDB();const {owner,cashier,supervisor}=await setup(db);
@@ -79,7 +79,7 @@ describe('V19 Run 6 stale credential and supervisor authorization',()=>{
   lockStaff('primary');await unlockStaff(owner.id,'123456',db);
   await changeStaffRole(supervisor.id,'cashier',db);
   lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
-  expect(consumeCheckoutDiscountApproval('run6-checkout-key-003',150,1000)).toBeNull();
+  expect(await consumeCheckoutDiscountApproval('run6-checkout-key-003',150,1000,'primary',db)).toBeNull();
  });
  it('permission changes cannot elevate cashier to staff management',async()=>{
   const db=makeDB();const {cashier}=await setup(db);
