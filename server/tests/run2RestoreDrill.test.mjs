@@ -19,8 +19,9 @@ function isolated(change=x=>x){
 test('disposable restore compares full snapshot, not a caller success flag',async()=>{
   const x=isolated(v=>{v.records.syncConsents[0].enabled=false;return v;});
   const result=await performIndependentRestoreDrill({backupText:JSON.stringify(source()),
-    companyId:'local',makeIsolatedStore:x.makeIsolatedStore});
+    companyId:'local',backupArtifactId:'vault-1',makeIsolatedStore:x.makeIsolatedStore});
   assert.match(result.backupManifestSha256,/^[a-f0-9]{64}$/);
+  assert.equal(result.backupArtifactId,'vault-1');
   assert.match(result.restoreReceiptSha256,/^[a-f0-9]{64}$/);
   assert.equal(x.state.closed,true);
 });
