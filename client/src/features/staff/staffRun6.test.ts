@@ -4,6 +4,8 @@ import {afterEach,describe,expect,it} from 'vitest';
 import {TallybookDB,initializeDatabase} from '@/db/TallybookDB';
 import {saveBusinessProfile} from '@/features/business/businessProfile';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
+import {createProduct} from '@/features/inventory/inventory';
+import {completeSale} from '@/features/sales/sales';
 import {createStaff,unlockStaff,lockStaff,currentStaffId,requirePermission,
   openShift,closeShift,approveCheckoutDiscount,
   consumeCheckoutDiscountApproval,changeStaffRole,resetStaffPin,
@@ -108,6 +110,37 @@ describe('V19 Run 6 stale credential and supervisor authorization',()=>{
   await approveCheckoutDiscount(supervisor.id,'222222','run6-closed-shift-01',120,1000,db);
   await closeShift(shift.id,0,db);
   expect(await consumeCheckoutDiscountApproval('run6-closed-shift-01',120,1000,'primary',db)).toBeNull();
+ });
+ it('records approved cashier discount only when current supervisor remains authorized',async()=>{
+  const db=makeDB();const {cashier,supervisor}=await setup(db);
+  const product=await createProduct({name:'Stock item',sku:'run6-item',
+    categoryId:'uncategorized',sellingPrice:'10',costPrice:'',
+    initialStock:'4',lowStockThreshold:'1'},'GHS',db);
+  lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
+  await openShift(0,db);
+  const key='run6-checkout-post-01';
+  await approveCheckoutDiscount(supervisor.id,'222222',key,100,1000,db);
+  const result=await completeSale({lines:[{productId:product.id,quantity:1}],
+    discount:'1',paymentMethod:'cash',amountPaid:'9',currency:'GHS',
+    submissionKey:key},db);
+  expect(result.sale.discountMinor).toBe(100);
+  expect((await db.staffAudits.where('businessProfileId').equals('primary').toArray())
+    .some(x=>x.action==='sale.completed'&&x.details.includes(supervisor.id))).toBe(true);
+ });
+ it('refuses posting a supervisor-discount sale after supervisor revocation',async()=>{
+  const db=makeDB();const {cashier,supervisor}=await setup(db);
+  const product=await createProduct({name:'Stock item',sku:'run6-item-b',
+    categoryId:'uncategorized',sellingPrice:'10',costPrice:'',
+    initialStock:'4',lowStockThreshold:'1'},'GHS',db);
+  lockStaff('primary');await unlockStaff(cashier.id,'333333',db);
+  await openShift(0,db);
+  const key='run6-checkout-denied-01';
+  await approveCheckoutDiscount(supervisor.id,'222222',key,100,1000,db);
+  await db.staffMembers.update(supervisor.id,{permissions:['sell']});
+  await expect(completeSale({lines:[{productId:product.id,quantity:1}],
+    discount:'1',paymentMethod:'cash',amountPaid:'9',currency:'GHS',
+    submissionKey:key},db)).rejects.toThrow(/supervisor must approve/i);
+  expect(await db.sales.count()).toBe(0);
  });
  it('permission changes cannot elevate cashier to staff management',async()=>{
   const db=makeDB();const {cashier}=await setup(db);
