@@ -32,6 +32,7 @@ import BusinessHealthPage from "@/pages/BusinessHealthPage";
 import StageHome from "@/pages/StageHome";
 import GoogleSignInPage from "@/pages/GoogleSignInPage";
 import SupabaseSignInPage from "@/pages/SupabaseSignInPage";
+import CloudAccountPage from "@/pages/CloudAccountPage";
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -42,6 +43,7 @@ function Router() {
         <Route path="/" component={StageHome} />
         <Route path="/signin" component={GoogleSignInPage} />
         <Route path="/account" component={isSupabaseAuthPreviewEnabled ? SupabaseSignInPage : GoogleSignInPage} />
+        <Route path="/cloud-account" component={CloudAccountPage} />
         <Route path="/business" component={BusinessSetup} />
         <Route path="/inventory" component={InventoryPage} />
         <Route path="/customers" component={CustomersPage} />
