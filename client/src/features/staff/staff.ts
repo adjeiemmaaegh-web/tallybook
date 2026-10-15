@@ -398,7 +398,7 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
 }
 
 
-interface DiscountApproval { company: string; approverId: string; cashierId: string; cashierGeneration:number; amountMinor: number; subtotalMinor:number; expiresAt: number; }
+interface DiscountApproval { company: string; approverId: string; approverCredentialBinding:string; cashierId: string; cashierGeneration:number; amountMinor: number; subtotalMinor:number; expiresAt: number; }
 const discountApprovals = new Map<string, DiscountApproval>();
 /** One-time approval bound to one immutable checkout key and one exact discount. */
 export async function approveCheckoutDiscount(approverId: string, pin: string, submissionKey: string, amountMinor: number, subtotalMinor:number, database:TallybookDB=db) {
@@ -444,31 +444,47 @@ export async function approveCheckoutDiscount(approverId: string, pin: string, s
          (sessionGenerations.get(company)??0)!==generation||
          getActiveBusinessProfileId()!==company)
         throw new Error('Staff session changed during supervisor approval.');
-      return {expiresAt,generation};
+      return {expiresAt,generation,approverCredentialBinding:staffCredentialBinding(latestApprover!)};
     })
   );
   failedAttempts.delete(throttleKey);
   discountApprovals.set(`${company}:${submissionKey}`,{
-    company,approverId,cashierId:active.id,cashierGeneration:result.generation,
+    company,approverId,approverCredentialBinding:result.approverCredentialBinding,
+    cashierId:active.id,cashierGeneration:result.generation,
     amountMinor,subtotalMinor,expiresAt:result.expiresAt});
   return {approverId:approver.id,expiresAt:result.expiresAt};
 }
-export function consumeCheckoutDiscountApproval(submissionKey:string, amountMinor:number, subtotalMinor:number, company=getActiveBusinessProfileId()) {
-  const key = `${company}:${submissionKey}`;
+/** Call INSIDE the sale IndexedDB write transaction; revalidate the supervisor
+ * and cashier against current staff records, not only the memory receipt. */
+export async function consumeCheckoutDiscountApproval(
+  submissionKey:string,amountMinor:number,subtotalMinor:number,
+  company=getActiveBusinessProfileId(),database:TallybookDB=db
+):Promise<string|null>{
+  const key=`${company}:${submissionKey}`;
   const approval=discountApprovals.get(key);
-  if(!approval || company!==getActiveBusinessProfileId())return null;
-  try {
+  if(!approval||company!==getActiveBusinessProfileId())return null;
+  try{
+    const generation=sessionGenerations.get(company)??0;
+    const cashierId=currentStaffId(company);
     const approver=assertExactSupervisorApproval({
-      approval,companyId:company,cashierId:currentStaffId(company),
-      cashierGeneration:sessionGenerations.get(company)??0,
+      approval,companyId:company,cashierId,cashierGeneration:generation,
       amountMinor,subtotalMinor
     });
+    const cashier=await requirePermission('sell',database,company);
+    if(!cashier||cashier.id!==cashierId||cashier.role!=='cashier')return null;
+    const latest=await database.staffMembers.get(approver);
+    if(!latest||latest.businessProfileId!==company||latest.disabledAt||
+       !staffCan(latest,'discount')||
+       staffCredentialBinding(latest)!==approval.approverCredentialBinding)return null;
+    const shift=await database.staffShifts.where('staffId').equals(cashier.id)
+      .filter(x=>x.businessProfileId===company&&!x.closedAt).first();
+    assertStaffShift({staff:cashier,shift,companyId:company});
+    if(company!==getActiveBusinessProfileId()||
+       currentStaffId(company)!==cashier.id||
+       (sessionGenerations.get(company)??0)!==generation)return null;
     discountApprovals.delete(key);
     return approver;
-  } catch {
-    // A mismatch cannot turn into an approval for a different checkout.
-    return null;
-  }
+  }catch{return null;}
 }
 
 /** Snapshot current local shift; money sources use this ID for attributed cash reconciliation. */
