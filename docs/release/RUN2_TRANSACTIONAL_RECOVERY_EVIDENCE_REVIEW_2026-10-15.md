@@ -30,7 +30,7 @@ node --test server/tests/*.test.mjs
 
 **20 passed / 0 failed / 0 skipped.** This command ran the four Run-2-focused native test modules in the review workspace, **not all test modules from the full Tallybook repository**. Checks include reviewer and session revocation, stale/foreign evidence, wrong recipient, independent reviewer, mandatory SHA-256-shaped receipts, one-use replay prevention, conditional PostgreSQL operations, simulated rollback after insertion/audit failure, coordinator transaction composition and source-SQL RLS rules.
 
-Local TAP log SHA-256: `d23d7873033236de555a445eea92e5180993a0d0220e1768ffcb74df9ba79d5d`.
+Local TAP log SHA-256: `adb4b9a1fa1c39ebab9c20633c89326d33daf7f05a158b6697f19a1a60d35ddf`.
 
 Verified local Git blob hashes of the **exact changed GitHub source/test/SQL files**:
 
@@ -41,8 +41,8 @@ Verified local Git blob hashes of the **exact changed GitHub source/test/SQL fil
 | `server/companyOwnershipCoordinator.mjs` | `2b6dbb6f170a411c1f4a35bd827621c03777b92e` |
 | `server/tests/trustedRecoveryIssuer.test.mjs` | `159748b2fa5c3b8fffda7761ba5dd16a5f90bb7f` |
 | `server/tests/recoveryApprovalPostgres.test.mjs` | `1d1d501da79b1a89f1cb52d248cb035fd1241a16` |
-| `server/tests/companyOwnershipCoordinator.test.mjs` | `a9a6aed1451d8c4a51966e98fd9e6dd7e660d70c` |
-| `server/tests/trustedRecoveryEvidenceSchema.test.mjs` | `29bf7797643008cad56b0b9dd38bd1935106516f` |
+| `server/tests/companyOwnershipCoordinator.test.mjs` | `202813d5c1369c647e4a5979c11d05978629851e` |
+| `server/tests/trustedRecoveryEvidenceSchema.test.mjs` | `28dfec602ca94e5ba8deb45e449fc702de3b18d1` |
 | `docs/security/STAGE9_RUN2_VERIFIED_RECOVERY_SCHEMA_REVIEW.sql` | `4cf190d0275c0d66df6d266f491bca13f29f5045` |
 
 The unchanged test dependencies `server/trustedCompanyOwnership.mjs`, `server/trustedCompanyOwnershipPostgres.mjs` and `server/supabaseOwnershipSession.mjs` were mirrored with matching source-branch Git blob SHAs `774f493cdf6cc119bdc176f47d5ce113be3c7efe`, `c05b085ea48d9812fb12e7fa7c70df9e71cbcfb0`, and `c2d1fc84c5c4aefce12c1d718f01c726abf36951`.
