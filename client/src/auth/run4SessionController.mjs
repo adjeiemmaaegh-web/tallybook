@@ -13,7 +13,7 @@ export function createRun4SessionController({
 }={}){
   if(typeof auth?.getUser!=='function'||typeof auth?.getSession!=='function'||
      typeof auth?.onAuthStateChange!=='function'||typeof auth?.signOut!=='function')denied();
-  let generation=0,started=false,disposed=false,verifiedToken=null,expiryCancel=null;
+  let generation=0,started=false,disposed=false,blockedBySignOut=false,verifiedToken=null,expiryCancel=null;
   let subscription=null;
   let current=Object.freeze({status:'checking',userId:null,expiresAtEpochMs:null,generation:0});
   const emit=(status,userId=null,expiresAtEpochMs=null)=>{
@@ -36,7 +36,7 @@ export function createRun4SessionController({
     return Number.isSafeInteger(at)&&exp>at;
   };
   async function refresh(){
-    if(disposed)return current;
+    if(disposed||blockedBySignOut)return current;
     const seq=++generation;
     verifiedToken=null;clearAlarm();emit('checking');
     if(!isOnline()){if(same(seq))emit('offline');return current;}
@@ -82,7 +82,11 @@ export function createRun4SessionController({
     if(disposed)return;
     // The event's session is deliberately ignored, including INITIAL_SESSION
     // and TOKEN_REFRESHED. Never trust a locally editable session object.
-    if(event==='SIGNED_OUT'){invalidate('signed-out');return;}
+    if(event==='SIGNED_OUT'){
+      blockedBySignOut=true;invalidate('signed-out');return;
+    }
+    if(event==='SIGNED_IN')blockedBySignOut=false;
+    if(blockedBySignOut)return;
     invalidate(isOnline()?'checking':'offline');
     schedule(()=>{if(!disposed)void refresh();});
   }
@@ -101,6 +105,7 @@ export function createRun4SessionController({
     subscription?.unsubscribe?.();subscription=null;
   }
   async function signOut(){
+    blockedBySignOut=true;
     invalidate('signed-out');
     try{
       const result=await auth.signOut();
