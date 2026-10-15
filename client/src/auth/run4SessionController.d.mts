@@ -17,6 +17,8 @@ export interface Run4ControllerOptions {
   auth:Run4Auth;
   clock?:()=>number;
   isOnline?:()=>boolean;
+  serverProof?:(input:{userId:string;accessToken:string;expiresAtEpochMs:number})=>
+    Promise<{active:boolean;userId:string;expiresAtEpochMs:number}>;
   schedule?:(callback:()=>void)=>()=>void;
   alarm?:(callback:()=>void,milliseconds:number)=>()=>void;
   onChange?:(state:Run4Snapshot)=>void;
