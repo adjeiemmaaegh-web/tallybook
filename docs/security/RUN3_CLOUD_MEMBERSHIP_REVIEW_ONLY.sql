@@ -3,6 +3,17 @@
 -- existing public.businesses/business_members policies and RPC EXECUTE grants.
 -- This extends the actual canonical owner|attendant schema. No new role table.
 
+-- Hard stop unless an operator has explicitly unlocked an ISOLATED disposable
+-- database session: SET tallybook.run3_disposable_only = 'approved';
+-- Do not set this variable on Tallybook's live Supabase project.
+do $
+begin
+  if current_setting('tallybook.run3_disposable_only',true)
+       is distinct from 'approved' then
+    raise exception 'RUN 3 schema is approved for disposable tests ONLY';
+  end if;
+end $;
+
 -- Existing canonical tables must not authorize arbitrary tenant or membership
 -- writes from browser credentials. Keep CREATE-BUSINESS RPC security review
 -- separate; test its SECURITY DEFINER path before deploying any RLS change.
@@ -14,10 +25,34 @@ revoke all on public.businesses from public,anon;
 revoke all on public.business_members from public,anon;
 revoke insert,update,delete on public.businesses from authenticated;
 revoke insert,update,delete on public.business_members from authenticated;
--- Existing RLS SELECT policies MUST be reviewed/reconciled, not assumed safe.
--- The intended policies are own business membership and member's own row.
--- Do not add permissive policies on top of unknown permissive existing policies.
--- The server-only invitation service uses a private least-privileged role.
+-- ISOLATED BASELINE: replace all pre-existing policies on these two
+-- canonical tables in a disposable test schema before enabling production.
+-- A permissive existing SELECT policy can otherwise widen an additive policy.
+-- Snapshot the existing pg_policies records first; this is intentionally
+-- destructive to test policies, never deploy against production blindly.
+do $
+declare policy record;
+begin
+  for policy in select tablename,policyname from pg_policies
+    where schemaname='public' and tablename in ('businesses','business_members')
+  loop
+    execute format('drop policy %I on public.%I',policy.policyname,policy.tablename);
+  end loop;
+end $;
+create policy run3_business_read_member on public.businesses
+  for select to authenticated using (
+    exists (select 1 from public.business_members m
+      where m.business_id=businesses.id and m.user_id=(select auth.uid()))
+  );
+create policy run3_member_read_own on public.business_members
+  for select to authenticated using (user_id=(select auth.uid()));
+-- No browser INSERT/UPDATE/DELETE policy on canonical membership tables.
+grant select(id,name,owner_id,created_at,updated_at)
+  on public.businesses to authenticated;
+grant select(business_id,user_id,role,created_at)
+  on public.business_members to authenticated;
+
+-- Server-only invitation mutations require a reviewed private role.
 
 create table if not exists public.company_member_invites (
   id uuid primary key,
