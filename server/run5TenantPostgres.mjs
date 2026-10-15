@@ -87,14 +87,44 @@ export function createRun5TenantPostgresStore(pool){
             and record_id=$3 and revision=$4
             returning company_id`,[companyId,collection,id,expectedRevision]));
         },
+        async readRecords({companyId,domain,recordId,limit}){
+          const rows=await tx.listRows(companyId,domain,limit,null);
+          const filtered=recordId===null?rows:rows.filter(row=>row?.id===recordId);
+          return filtered.map(row=>({
+            companyId:row.companyId,domain:row.collection,recordId:row.id,
+            data:row.payload,revision:row.revision
+          }));
+        },
+        async countRecords({companyId,domain}){
+          const r=await client.query(`select count(*)::text as total
+            from public.company_tenant_records
+            where company_id=$1::uuid and collection=$2`,[companyId,domain]);
+          if(r?.rows?.length!==1||!/^\\d+$/.test(String(r.rows[0].total)))deny();
+          const n=Number(r.rows[0].total);
+          if(!Number.isSafeInteger(n))deny();
+          return n;
+        },
+        async upsertMetadata({companyId,domain,recordId,data,expectedRevision}){
+          const row=await tx.putRow({companyId,collection:domain,id:recordId,
+            payload:data,expectedRevision});
+          return {companyId:row.companyId,domain:row.collection,
+            recordId:row.id,revision:row.revision};
+        },
+        async insertImportedMetadata({companyId,domain,recordId,data}){
+          const row=await tx.putRow({companyId,collection:domain,id:recordId,
+            payload:data,expectedRevision:0});
+          if(row?.companyId!==companyId||row.collection!==domain||
+             row.id!==recordId)deny();
+        },
         async appendAudit(event){
-          if(!['read','write','delete','import'].includes(event.action))deny();
+          if(!['read','write','delete','import','report','export','backup','assistant','sync'].includes(event.action))deny();
           one(await client.query(`insert into public.company_tenant_data_audit
             (company_id,actor_id,operation,collection,record_id,at)
             values($1::uuid,$2::uuid,$3,$4,$5,
               to_timestamp($6::double precision/1000)) returning id`,
             [event.companyId,event.actorId,event.action,
-              event.collection,event.recordId,event.at]));
+              event.collection??event.domain,event.recordId??null,
+              event.at??Date.now()]));
         }
       });
       const value=await fn(tx);
