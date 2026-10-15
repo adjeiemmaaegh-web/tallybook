@@ -25,7 +25,8 @@ test('parser refuses unknown root and incomplete assistant snapshots',()=>{
  const code=backup();
  assert.match(code,/unknown top-level data/);
  assert.match(code,/assistant section is incomplete/);
- assert.match(code,/Required backup table/); // via explicit module import or policy
+ assert.match(source('client/src/features/backup/run8BackupCompatibility.mjs'),
+   /Required backup table/);
 });
 test('v2 encrypted backups bind authenticated header and keep v1 decrypt compatibility',()=>{
  const crypto=source('client/src/features/backup/backupCrypto.ts');
