@@ -403,6 +403,18 @@ export function parseBackup(text: string): TallybookBackup {
   let parsed: unknown;
   try { parsed = JSON.parse(text); } catch { throw new Error("This file is not valid Tallybook backup JSON."); }
   if (!isRecord(parsed) || parsed.kind !== BACKUP_KIND) throw new Error("This file is not a Tallybook local backup.");
+  // A future root field or an incomplete assistant section could otherwise
+  // be dropped without warning while replacing an owner's saved records.
+  const rootKeys=["kind","formatVersion","createdAt","databaseSchemaVersion","records","assistant"];
+  if(Object.keys(parsed).some(key=>!rootKeys.includes(key)))
+    throw new Error("Backup contains unknown top-level data. A newer Tallybook version may be required.");
+  if(parsed.assistant!==undefined){
+    const expectedAssistantKeys=["workflows","aliases","history"];
+    if(!isRecord(parsed.assistant)||
+       Object.keys(parsed.assistant).length!==expectedAssistantKeys.length||
+       Object.keys(parsed.assistant).some(key=>!expectedAssistantKeys.includes(key)))
+      throw new Error("Backup assistant section is incomplete or contains unsupported tables.");
+  }
   if (parsed.formatVersion !== BACKUP_FORMAT_VERSION) throw new Error("This backup format is not supported by this version of Tallybook.");
   if (typeof parsed.createdAt !== "string" || Number.isNaN(Date.parse(parsed.createdAt))) throw new Error("This backup is missing a valid creation date.");
   if (typeof parsed.databaseSchemaVersion !== "number" || !Number.isInteger(parsed.databaseSchemaVersion) || parsed.databaseSchemaVersion < 1) throw new Error("This backup has an unsupported database schema version.");
