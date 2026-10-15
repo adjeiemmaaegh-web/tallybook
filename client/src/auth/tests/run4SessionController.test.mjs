@@ -130,3 +130,59 @@ test('never reads or writes a legacy offline account authorization marker',async
   assert.equal(f.controller.getSnapshot().status,'signed-in');
   assert.equal(Object.keys(f.controller.getSnapshot()).includes('accessToken'),false);
 });
+
+
+test('required server proof authorizes only matching live Supabase session',async()=>{
+  const session={user:{id:A},access_token:'a'.repeat(32),expires_at:2000};
+  const auth={getSession:async()=>({data:{session},error:null}),
+    getUser:async()=>({data:{user:{id:A}},error:null}),
+    signOut:async()=>({error:null}),
+    onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})};
+  const controller=createRun4SessionController({auth,clock:()=>1000,
+    alarm:()=>()=>{},serverProof:async p=>({
+      active:true,userId:p.userId,expiresAtEpochMs:p.expiresAtEpochMs})});
+  assert.equal((await controller.refresh()).status,'signed-in');
+});
+test('revoked live server session denies UI even if cached token and getUser succeed',async()=>{
+  const session={user:{id:A},access_token:'a'.repeat(32),expires_at:2000};
+  const auth={getSession:async()=>({data:{session},error:null}),
+    getUser:async()=>({data:{user:{id:A}},error:null}),
+    signOut:async()=>({error:null}),
+    onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})};
+  const controller=createRun4SessionController({auth,clock:()=>1000,
+    serverProof:async()=>{throw Error('auth.sessions revoked');}});
+  assert.equal((await controller.refresh()).status,'error');
+  assert.equal(controller.getSnapshot().userId,null);
+});
+test('mismatched or wrong-expiry private proof cannot unlock cloud workspace',async()=>{
+  const session={user:{id:A},access_token:'a'.repeat(32),expires_at:2000};
+  const auth={getSession:async()=>({data:{session},error:null}),
+    getUser:async()=>({data:{user:{id:A}},error:null}),
+    signOut:async()=>({error:null}),
+    onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})};
+  for(const proof of [
+    {active:false,userId:A,expiresAtEpochMs:2000000},
+    {active:true,userId:B,expiresAtEpochMs:2000000},
+    {active:true,userId:A,expiresAtEpochMs:1999000}
+  ]){
+    const controller=createRun4SessionController({auth,clock:()=>1000,
+      serverProof:async()=>proof});
+    assert.equal((await controller.refresh()).status,'error');
+  }
+});
+test('sign-out during a delayed private session probe cannot restore old tenant',async()=>{
+  const session={user:{id:A},access_token:'a'.repeat(32),expires_at:2000};
+  let complete;
+  const auth={getSession:async()=>({data:{session},error:null}),
+    getUser:async()=>({data:{user:{id:A}},error:null}),
+    signOut:async()=>({error:null}),
+    onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})};
+  const controller=createRun4SessionController({auth,clock:()=>1000,
+    serverProof:()=>new Promise(r=>{complete=r;})});
+  const request=controller.refresh();
+  for(let i=0;i<5;i++)await Promise.resolve();
+  controller.authEvent('SIGNED_OUT');
+  complete({active:true,userId:A,expiresAtEpochMs:2000000});
+  await request;
+  assert.equal(controller.getSnapshot().status,'signed-out');
+});
