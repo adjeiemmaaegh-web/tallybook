@@ -1,4 +1,5 @@
 import { requirePermission } from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tactile Ledger Stage 6: debt is derived from completed customer sales minus immutable repayment records, never typed as a mutable balance. */
 import { nanoid } from "nanoid";
 import { activeStaffShift } from "@/features/staff/staff";
@@ -120,7 +121,8 @@ export async function getCustomerRepaymentTargets(customerId: string, currency: 
 export async function recordRepayment(values: RecordRepaymentInput, database: TallybookDB = db) {
   const input = recordRepaymentSchema.parse(values);
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.customers, database.sales, database.repayments, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
+  return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("sell", database, activeId);
     const shift = await activeStaffShift(staff, database);
     if (staff?.role === "cashier" && !shift) throw new Error("Open a shift before recording repayments.");
