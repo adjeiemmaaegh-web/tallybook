@@ -39,6 +39,8 @@ create table if not exists public.company_recovery_verified_evidence (
   restore_receipt_sha256 text,
   transfer_review_sha256 text,
   check (reviewer_id <> owner_id),
+  -- Transfer recipient must not be their own independent reviewer.
+  check (recipient_id is null or reviewer_id <> recipient_id),
   constraint evidence_kind_fields check (
     (kind='verified-restore' and local_company_id is not null and recipient_id is null
       and backup_manifest_sha256 ~ '^[a-f0-9]{64}$'
