@@ -112,14 +112,34 @@ export async function getLastBackupCompanyId(database: TallybookDB = db): Promis
   return (await database.appMeta.get("lastBackupCompanyId"))?.value ?? null;
 }
 
-export async function recordBackupExportedAt(value = new Date().toISOString(), database: TallybookDB = db): Promise<string> {
-  await database.open();
-  const companyId = getActiveBusinessProfileId();
-  await database.transaction("rw", database.appMeta, async () => {
-    await database.appMeta.put({ key: "lastBackupAt", value, updatedAt: value });
-    await database.appMeta.put({ key: "lastBackupCompanyId", value: companyId, updatedAt: value });
+/** The company saved in the exported file is the authority for the receipt.
+ * A tab/company switch between file generation and metadata update must NOT
+ * make another company appear to have a recent backup.
+ * This timestamp records an export attempt, NOT independent proof of saved
+ * bytes or successful restore.
+ */
+export function recordBackupExportedAt(
+  value = new Date().toISOString(),
+  database: TallybookDB = db,
+  exportedCompanyId = getActiveBusinessProfileId()
+): Promise<string> {
+  return withCrossTabDataLock('shared', async () => {
+    await database.open();
+    if(!exportedCompanyId?.trim()||exportedCompanyId!==getActiveBusinessProfileId()||
+       typeof value!=='string'||!Number.isFinite(Date.parse(value)))
+      throw new Error('Company or backup timestamp changed before export recording.');
+    await database.transaction('rw',[database.appMeta,database.businessProfiles,database.staffMembers],async()=>{
+      if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
+        throw new Error('Recover the interrupted restore before recording a backup.');
+      if(exportedCompanyId!==getActiveBusinessProfileId()||
+         !await database.businessProfiles.get(exportedCompanyId))
+        throw new Error('The exported company is no longer selected or available.');
+      await requirePermission('staff',database,exportedCompanyId);
+      await database.appMeta.put({key:'lastBackupAt',value,updatedAt:value});
+      await database.appMeta.put({key:'lastBackupCompanyId',value:exportedCompanyId,updatedAt:value});
+    });
+    return value;
   });
-  return value;
 }
 
 /** Export is a TWO-DATABASE read. Hold the exclusive origin-wide Web Lock
