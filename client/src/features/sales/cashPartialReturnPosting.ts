@@ -1,4 +1,5 @@
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Narrow, explicitly confirmed LOCAL CASH-only partial restock/refund posting.
  * The customer must already have received cash; no provider or wallet transfer
  * is initiated here. The caller must collect an explicit staff confirmation.
@@ -69,9 +70,10 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       new Set(values.lines.map(row=>row.saleLineId)).size !== values.lines.length)
     throw new Error('Confirm the actual cash refund and provide a unique return request with valid sale lines.');
   const company = getActiveBusinessProfileId();
-  return database.transaction('rw', [database.businessProfiles, database.staffMembers, database.staffShifts, database.staffAudits,
+  return database.transaction('rw', [database.appMeta, database.businessProfiles, database.staffMembers, database.staffShifts, database.staffAudits,
     database.sales, database.saleLines, database.payments, database.receipts, database.saleReversals, database.cashPartialReturns,
     database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
     const shift = await activeStaffShift(staff,database);
     if (getActiveBusinessProfileId() !== company) throw new Error('Company switched during the return.');
