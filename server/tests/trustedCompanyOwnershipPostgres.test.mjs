@@ -114,3 +114,34 @@ test('conditional owner change uses prior owner as a database predicate', async 
  assert.match(writes[0].sql,/where id=\$1 and owner_id=\$3/);
  assert.deepEqual(writes[0].params,['co','new','old']);
 });
+
+test('binding and transfer services can lock the live Supabase session in the same SQL transaction',async()=>{
+ const x=mockPool();
+ x.client.query=async function(sql,params=[]){
+   x.calls.push({sql,params});
+   if(sql.includes('from auth.sessions'))return {rows:[{id:'sid'}],rowCount:1};
+   return {rows:[],rowCount:0};
+ };
+ await createPostgresCompanyOwnershipStore(x.pool).transaction(async tx=>{
+   assert.equal(await tx.assertActiveSession('sid','actor',1000),true);
+ });
+ const lookup=x.calls.find(({sql})=>sql.includes('from auth.sessions'));
+ assert.ok(lookup);
+ assert.match(lookup.sql,/for share/i);
+ assert.deepEqual(lookup.params,['sid','actor',1000]);
+ assert.equal(x.calls[0].sql,'BEGIN ISOLATION LEVEL SERIALIZABLE');
+ assert.equal(x.calls.at(-1).sql,'COMMIT');
+});
+test('missing or duplicate private session rows fail closed',async()=>{
+ for(const rows of [[],[{id:'s'},{id:'s'}]]){
+   const x=mockPool();
+   x.client.query=async function(sql,params=[]){
+     x.calls.push({sql,params});
+     if(sql.includes('from auth.sessions'))return {rows,rowCount:rows.length};
+     return {rows:[],rowCount:0};
+   };
+   await createPostgresCompanyOwnershipStore(x.pool).transaction(
+     async tx=>assert.equal(await tx.assertActiveSession('sid','actor',1000),false));
+   assert.equal(x.calls.at(-1).sql,'COMMIT');
+ }
+});
