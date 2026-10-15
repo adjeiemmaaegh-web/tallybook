@@ -119,22 +119,28 @@ export async function getSaleSnapshot(database: TallybookDB = db): Promise<SaleS
   const activeId = getActiveBusinessProfileId();
   // Read related checkout records from one consistent IndexedDB snapshot.
   // Separate requests could otherwise straddle a committed checkout.
-  const [allSales, allLines, allPayments, allReceipts] = await database.transaction("r", [database.sales, database.saleLines, database.payments, database.receipts], async () =>
-    Promise.all([database.sales.orderBy("createdAt").reverse().toArray(), database.saleLines.toArray(), database.payments.orderBy("createdAt").reverse().toArray(), database.receipts.orderBy("issuedAt").reverse().toArray()])
-  );
+  const [allSales, allLines, allPayments, allReceipts] = await database.transaction("r", [database.sales, database.saleLines, database.payments, database.receipts, database.staffMembers], async () => {
+    await requirePermission("sell",database,activeId);
+    return Promise.all([database.sales.orderBy("createdAt").reverse().toArray(), database.saleLines.toArray(), database.payments.orderBy("createdAt").reverse().toArray(), database.receipts.orderBy("issuedAt").reverse().toArray()]);
+  });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
+  await requirePermission("sell",database,activeId);
   return { sales: allSales.filter((sale) => sale.businessProfileId === activeId), lines: allLines.filter((line) => line.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), receipts: allReceipts.filter((receipt) => receipt.businessProfileId === activeId) };
 }
 
 export async function getCustomerSaleSummary(customerId: string, currency: string, database: TallybookDB = db) {
   const activeId = getActiveBusinessProfileId();
-  const [sales, activities, reversals, repayments] = await database.transaction("r", [database.sales, database.customerActivities, database.saleReversals, database.repayments], async () => Promise.all([
+  const [sales, activities, reversals, repayments] = await database.transaction("r", [database.sales, database.customerActivities, database.saleReversals, database.repayments, database.staffMembers], async () => {
+    await requirePermission("sell",database,activeId);
+    return Promise.all([
     database.sales.where("customerId").equals(customerId).and((sale) => sale.businessProfileId === activeId).toArray(),
     database.customerActivities.where("customerId").equals(customerId).and((activity) => activity.businessProfileId === activeId).reverse().sortBy("createdAt"),
     database.saleReversals.where("customerId").equals(customerId).and((reversal) => reversal.businessProfileId === activeId).toArray(),
     database.repayments.where("customerId").equals(customerId).and((repayment) => repayment.businessProfileId === activeId).toArray(),
-  ]));
+  ]);
+  });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
+  await requirePermission("sell",database,activeId);
   const { outstandingMinor } = reconcileCreditLedger(sales, reversals, repayments);
   const denomination = inspectReceivableCurrency(sales, repayments);
   const outstandingLabel = denomination.hasUnknownMoney
