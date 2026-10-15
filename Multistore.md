@@ -188,3 +188,12 @@ Source review caught an unsafe evidence-table default and corrected it before an
 **Verification scope:** Added six unexecuted native regression cases across ownership service, transaction adapter and private coordinator. Executed **8/8 isolated JavaScript V8 behavior checks against exact committed code** (six negative/SQL, two positive; first harness's stale reference errors were corrected) and **5/5 isolated syntax parses** of changed JS/test files. These are not the full Node/Vitest/type/build/browser/real-DB test matrix and are not acceptance evidence for the final branch SHA. Prior recovery-evidence 20/20 local Node results apply to an earlier commit only.
 
 **Release controls:** V19 Run 2 **OPEN / NOT PASSED**; Stage 9 Round 1 **PARTIAL**; 47-blocker / 82-acceptance-unit historical registers unchanged. No migration, live Supabase access, production route, cloud sync, payment, staging, merge to `main` or deployment authorization.
+
+
+## V19 Run 2 continuation — transaction-time JWT expiry (15 October 2026)
+
+Review-only security hardening was committed to draft PR #13: the verified Supabase JWT expiration is now propagated by `server/supabaseOwnershipSession.mjs`, and the private company-binding, owner-transfer and recovery-approval services deny authorization when the transaction starts at or after the JWT deadline, even if `auth.sessions` has not yet expired. The previous transaction-bound session lock remains mandatory.
+
+Four new `node:test` regression cases were authored; **native Node execution remains unverified**. Six isolated V8 checks of proposed source passed before commit; the **52 checked-in test cases** across six native-test modules were executed on exact source/test checkpoint `159adbed868ef9503553ce0744b4fcb8d704eba3` through a **V8 compatibility harness**, passing **52/52** after harness repairs. This is **not** Node/CI, real Supabase/PostgreSQL, backup/restore or release acceptance. GitHub Actions run `38773123967` failed before steps; the exact final-head full suite remains unexecuted.
+
+Evidence and required recovery/owner-link/database/CI gates: `docs/release/RUN2_JWT_EXPIRY_CONTINUATION_2026-10-15.md`. No live database migration, connection, HTTP route, payment, cloud activation, deployment or merge to `main`. Historic 47 blocker / 82 acceptance-unit statuses are unchanged. **V19 Run 2 OPEN / NOT PASSED; Stage 9 Round 1 PARTIAL; commercial release NO-GO.**
