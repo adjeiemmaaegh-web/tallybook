@@ -90,7 +90,8 @@ export async function createSupplier(values: SupplierFormValues, database: Tally
     const input = supplierFormSchema.parse(values);
     const normalizedName = normalizeName(input.name);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const existing = await database.suppliers.where("normalizedName").equals(normalizedName)
         .and((supplier) => supplier.businessProfileId === activeId && !supplier.archivedAt).first();
@@ -108,7 +109,8 @@ export async function updateSupplier(supplierId: string, values: SupplierFormVal
   return withCoordinatedRetailWrite(async () => {
     const input = supplierFormSchema.parse(values);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const supplier = await database.suppliers.get(supplierId);
       if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("This supplier is no longer active.");
@@ -128,7 +130,8 @@ export async function updateSupplier(supplierId: string, values: SupplierFormVal
 export async function archiveSupplier(supplierId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const supplier = await database.suppliers.get(supplierId);
       if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("This supplier is already archived or unavailable.");
