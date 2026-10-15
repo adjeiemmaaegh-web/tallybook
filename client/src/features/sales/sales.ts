@@ -225,7 +225,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const subtotalMinor = checkoutMoney.subtotalMinor;
     const manualDiscountMinor = parseAmount(input.discount, input.currency);
     const discountApprovedBy = manualDiscountMinor > 0 && cashier?.role === "cashier"
-      ? consumeCheckoutDiscountApproval(submissionKey, manualDiscountMinor, subtotalMinor, activeId) : undefined;
+      ? await consumeCheckoutDiscountApproval(submissionKey, manualDiscountMinor, subtotalMinor, activeId, database) : undefined;
     if (manualDiscountMinor > 0 && cashier?.role === "cashier" && !discountApprovedBy)
       throw new Error("A supervisor must approve this exact discount before checkout.");
     const discountMinor = manualDiscountMinor + redemptionMinor;
