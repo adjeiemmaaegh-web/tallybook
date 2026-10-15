@@ -19,6 +19,7 @@ const validRecord=x=>typeof x==='string'&&RECORD.test(x);
 const validCollection=x=>typeof x==='string'&&COLLECTIONS.has(x);
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 function assertScope(payload,companyId){
+  if(!object(payload))deny();
   const visited=new WeakSet();
   const walk=(value,depth)=>{
     if(depth>20)deny();
@@ -70,8 +71,9 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
       member.status!=='active'||!['owner','attendant'].includes(member.role))deny();
     if(member.role==='owner'&&business.ownerId!==actor.userId)deny();
     if(member.role==='attendant'&&business.ownerId===actor.userId)deny();
-    if((kind==='owner'||(kind==='write'&&OWNER_ONLY.has(collection)))&&
-      member.role!=='owner')deny();
+    // Finance, backups, assistant history and sync metadata are owner-only
+    // for both reads and writes until Run 6 introduces finer staff grants.
+    if((kind==='owner'||OWNER_ONLY.has(collection))&&member.role!=='owner')deny();
     // Tenant RLS GUCs are installed only AFTER live session and membership
     // checks, in the same SQL transaction, never from HTTP request headers.
     if(await tx.activateTenantScope(actor.userId,companyId)!==true)deny();
