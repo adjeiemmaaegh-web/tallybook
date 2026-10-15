@@ -39,6 +39,14 @@ export function createRun5TenantPostgresStore(pool){
           if(!roleSet.has(m.role))deny();
           return {companyId:m.business_id,userId:m.user_id,role:m.role,status:'active'};
         },
+        async activateTenantScope(actorId,companyId){
+          const q=await client.query(`select
+            set_config('tallybook.run5_actor_id',$1,true) as actor_id,
+            set_config('tallybook.run5_company_id',$2,true) as company_id`,
+            [actorId,companyId]);
+          return q?.rows?.length===1&&q.rows[0].actor_id===actorId&&
+            q.rows[0].company_id===companyId;
+        },
         async getRow(companyId,collection,id){
           const q=await client.query(`select company_id,collection,record_id,revision,payload
             from public.company_tenant_records
