@@ -70,6 +70,8 @@ describe('Stage 6 local staff security',()=>{
     const supervisor=await createStaff('Manager','supervisor','222222',database);
     const cashier=await createStaff('Ada','cashier','654321',database);
     lockStaff('primary');await unlockStaff(cashier.id,'654321',database);
+    // A supervisor can authorize a cashier discount only for an open shift.
+    await openShift(0,database);
     await expect(approveCheckoutDiscount(supervisor.id,'000000','discount-key-001',100,500,database)).rejects.toThrow(/incorrect/);
     await approveCheckoutDiscount(supervisor.id,'222222','discount-key-001',100,500,database);
     expect(consumeCheckoutDiscountApproval('discount-key-001',99,500)).toBeNull();
