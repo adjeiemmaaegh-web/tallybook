@@ -14,6 +14,7 @@ import { selectServerTransport } from "./syncHttps.mjs";
 import { createAccessActions, isDirectTls } from "./syncAccessRoutes.mjs";
 import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
 import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
+import {installRun4SessionProbe} from "./run4SessionProbe.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -30,6 +31,8 @@ async function startServer() {
   mountRun2OwnershipRoutes(app,express.json,{enabled:false});
   // Run 3 stays review-only until a private isolated runtime is approved.
   installRun3MembershipRuntime({app,jsonParser:express.json,enabled:false});
+  // Live auth.sessions probe remains disabled until approved isolated runtime.
+  installRun4SessionProbe({app,enabled:false});
 
   // Serve static files from dist/public in production
   const staticPath =
