@@ -5,8 +5,9 @@
 -- Pre-existing migration 20261014113009 / reviewer audit 20261014115304 already
 -- exist in the named Supabase project: DO NOT REAPPLY THOSE MIGRATIONS.
 
--- Provision reviewers only through independently approved privileged operations.
--- No route, service or seed that creates an authorized reviewer is supplied here.
+-- Reviewer provisioning is restricted to the separately approved, two-operator
+-- private run2ReviewerProvisioning.mjs workflow. No public route, initial reviewer
+-- seed, operator signature directory or production provisioning is activated.
 create table if not exists public.company_recovery_reviewers (
   user_id uuid primary key references auth.users(id),
   status text not null check (status in ('active','revoked')),
