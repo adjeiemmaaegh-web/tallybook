@@ -7,6 +7,7 @@ import { backupDownloadName, createBackup, getBackupSummary, getLastBackupAt, ge
 import { encryptBackupText, decryptBackupText, isEncryptedBackup } from "@/features/backup/backupCrypto";
 import { assertBackupImportFileSize } from "@/features/backup/backupResourceLimits.mjs";
 import { auditLocalIntegrity, type IntegrityAudit } from "@/features/reliability/integrity";
+import {db} from "@/db/TallybookDB";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 
 function formatBackupDate(value: string) {
@@ -48,7 +49,16 @@ export default function BackupPage() {
       URL.revokeObjectURL(url);
       const backupSummary = getBackupSummary(backup);
       setMessage(`Backup ready for ${backupSummary.businessName ?? profile?.name ?? "this company"}: ${backupSummary.counts.sales} sale record${backupSummary.counts.sales === 1 ? "" : "s"} included.`);
-      try { setLastBackupAt(await recordBackupExportedAt(backup.createdAt)); setLastBackupCompanyId(profile?.id ?? null); } catch { setLastBackupAt(null); setLastBackupCompanyId(null); }
+      try {
+        const exportedCompanyId=backup.records.businessProfiles[0]?.id;
+        if(!exportedCompanyId)throw Error('Export company is missing.');
+        setLastBackupAt(await recordBackupExportedAt(backup.createdAt,db,exportedCompanyId));
+        setLastBackupCompanyId(exportedCompanyId);
+      }catch{
+        // The file was generated, but this device cannot truthfully certify
+        // that a matching company's backup marker was saved.
+        setLastBackupAt(null);setLastBackupCompanyId(null);
+      }
       toast.success("Local backup downloaded", { description: "Keep the file somewhere you can find it when restoring this device." });
     } catch (cause) {
       const text = cause instanceof Error ? cause.message : "Tallybook could not prepare this local backup.";
