@@ -32,8 +32,13 @@ export function createRun5TenantService({resolveSession,store,clock=Date.now,fea
     async read({session,companyId,domain,recordId=null,limit=50}){
       if(!Number.isSafeInteger(limit)||limit<1||limit>200)deny();
       return transact({session,companyId,domain,recordId,action:'read'},
-        async(tx,ctx)=>Object.freeze({companyId,domain,rows:assertRun5ScopedRows(
-          await tx.readRecords({companyId,domain,recordId,limit}),companyId,{max:limit,domain})}));
+        async(tx,ctx)=>{
+          const rows=assertRun5ScopedRows(
+            await tx.readRecords({companyId,domain,recordId,limit}),
+            companyId,{max:limit,domain});
+          await audit(tx,ctx);
+          return Object.freeze({companyId,domain,rows});
+        });
     },
     async writeMetadata({session,companyId,domain,recordId,data,expectedRevision=0}){
       if(!['catalog','assistant'].includes(domain)||!uuid.test(recordId??'')||
