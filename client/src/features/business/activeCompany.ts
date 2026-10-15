@@ -1,5 +1,6 @@
 import { lockStaff, requirePermission } from "@/features/staff/staff";
 import { RESTORE_JOURNAL_KEY } from "@/features/backup/restoreJournal.mjs";
+import {RUN8_VERIFIED_RECEIPT_KEY,parseRun8VerifiedReceipt} from "@/features/backup/run8VerifiedReceipt.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { beginCompanyClearJournal, readAssistantRestoreSnapshot, recoverPendingBackupRestoreWhileLocked, writeAssistantRestoreSnapshot } from "@/features/backup/restoreRecovery";
 import type { BusinessProfile } from "@/features/business/businessProfile";
@@ -92,6 +93,14 @@ async function clearCompanyDataWhileLocked(companyId: string, database: Tallyboo
       if ((await database.appMeta.get("lastBackupCompanyId"))?.value === companyId) {
         await database.appMeta.delete("lastBackupCompanyId");
         await database.appMeta.delete("lastBackupAt");
+      }
+      // Never resurrect a verified-backup indicator if a cleared company ID
+      // is recreated later. Proof for a different company is retained.
+      const proofRow=await database.appMeta.get(RUN8_VERIFIED_RECEIPT_KEY);
+      if(proofRow){
+        const proof=parseRun8VerifiedReceipt(proofRow.value);
+        if(proof.companyId===companyId)
+          await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
       }
       // Durable commit decision: never remove outside this transaction.
       await database.appMeta.delete(RESTORE_JOURNAL_KEY);
