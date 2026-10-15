@@ -22,9 +22,10 @@ describe("verified company access policy (pure guard; not wired into legacy loca
     expect(canAccessCompany(principal, { ...membership, status: "pending" }, "company-a", "read", now)).toBe(false);
   });
   it("enforces role privileges and rejects invalid runtime role values", () => {
-    expect(canAccessCompany(principal, { ...membership, role: "staff" }, "company-a", "write", now)).toBe(true);
-    expect(canAccessCompany(principal, { ...membership, role: "staff" }, "company-a", "manage_members", now)).toBe(false);
-    expect(canAccessCompany(principal, { ...membership, role: "admin" }, "company-a", "delete_company", now)).toBe(false);
+    expect(canAccessCompany(principal, { ...membership, role: "attendant" }, "company-a", "read", now)).toBe(true);
+    expect(canAccessCompany(principal, { ...membership, role: "attendant" }, "company-a", "write", now)).toBe(false);
+    expect(canAccessCompany(principal, { ...membership, role: "attendant" }, "company-a", "manage_members", now)).toBe(false);
+    expect(canAccessCompany(principal, { ...membership, role: "admin" as "owner" }, "company-a", "delete_company", now)).toBe(false);
     expect(canAccessCompany(principal, { ...membership, role: "superuser" as "owner" }, "company-a", "read", now)).toBe(false);
     expect(() => requireCompanyAccess(principal, membership, "company-b", "read", now)).toThrow("Company access is not authorized");
   });
