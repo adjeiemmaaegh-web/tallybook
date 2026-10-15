@@ -32,8 +32,14 @@ export async function loadActiveBusinessProfileId(database: TallybookDB) {
 }
 
 export async function persistActiveBusinessProfileId(id: string, database: TallybookDB) {
-  setActiveBusinessProfileId(id);
+  // The company selector is local workspace state, never proof of account
+  // ownership. Refuse stale or forged identifiers even in offline-only mode.
+  if (!id.trim() || !await database.businessProfiles.get(id))
+    throw new Error("That company is no longer available on this device.");
+  // Persist first: failed storage writes must not switch the in-memory
+  // company and lock the currently unlocked staff session.
   await database.appMeta.put({ key: "activeBusinessProfileId", value: id, updatedAt: new Date().toISOString() });
+  setActiveBusinessProfileId(id);
 }
 
 export async function getLocalCompanyProfiles(database: TallybookDB) {

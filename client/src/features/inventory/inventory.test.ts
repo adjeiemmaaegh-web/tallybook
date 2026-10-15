@@ -118,6 +118,8 @@ describe("inventory ledger", () => {
     const database = makeDatabase();
     await initializeDatabase(database);
     await database.businessProfiles.put({ id: "company-two", name: "Catering", country: "Ghana", currency: "GHS", businessType: "Food or restaurant", phone: "", email: "", address: "", createdAt: date, updatedAt: date });
+    // Explicitly create both workspaces: a selector must not create a company.
+    await database.businessProfiles.put({ id: "primary", name: "Main Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "", createdAt: date, updatedAt: date });
     setActiveBusinessProfileId("primary");
     await persistActiveBusinessProfileId("primary", database);
     const mainProduct = await createProduct({ ...productValues, name: "Main soap", sku: "MAIN-1" }, "GHS", database);
