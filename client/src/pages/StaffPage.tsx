@@ -217,7 +217,7 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
           </div>
         </div> : <div className="settings-card-body settings-stack">
           {people.length === 0 ? <p className="settings-empty-note">Start by creating the first owner account below. You can unlock it here afterwards.</p> : <>
-            <label className="settings-field"><span>Staff member</span><select aria-label="Staff member" value={chosen} onChange={(event) => setChosen(event.target.value)} disabled={busy}>{<option value="">Choose your account</option>}{people.filter((person) => !person.disabledAt).map((person) => <option key={person.id} value={person.id}>{person.name} ({person.role})</option>)}</select></label>
+            <label className="settings-field"><span>Staff member</span><select aria-label="Staff member" value={chosen} onChange={(event) => setChosen(event.target.value)} disabled={busy}><option value="">Choose your account</option>{people.filter((person) => !person.disabledAt).map((person) => <option key={person.id} value={person.id}>{person.name} ({person.role})</option>)}</select></label>
             <label className="settings-field"><span>Staff PIN</span><input aria-label="Staff PIN" type="password" inputMode="numeric" autoComplete="off" placeholder="Enter 6–12 digits" value={unlockPin} onChange={(event) => setUnlockPin(event.target.value)} disabled={busy}/></label>
             <div className="settings-inline-actions">
               <button type="button" className="settings-btn settings-btn-primary" disabled={busy || !chosen || !validUnlockPin} onClick={unlockWithPin}><KeyRound size={17}/>Unlock with PIN</button>
