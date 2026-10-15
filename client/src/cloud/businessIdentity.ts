@@ -23,9 +23,10 @@ export async function createBusiness(name: string, requestId: string): Promise<C
   return data as CloudBusiness;
 }
 
-/** Only an existing owner can assign another authenticated user. RLS/RPC checks
- * are authoritative; possession of a business ID never grants membership. */
-export async function linkUserToBusiness(businessId: string, userId: string): Promise<void> {
-  const { error } = await getSupabaseClient().rpc("add_business_attendant", { target_business: businessId, target_user: userId });
-  if (error) throw new Error("Only the business owner can assign an existing account to this business.");
+/** Deprecated insecure direct assignment route. Run 3 requires a targeted
+ * invitation, authenticated recipient redemption and audit in one SQL txn.
+ * Never revive add_business_attendant from client code.
+ */
+export async function linkUserToBusiness(_businessId: string, _userId: string): Promise<void> {
+  throw new Error("Direct membership assignment is disabled. Use a targeted Run 3 invitation.");
 }
