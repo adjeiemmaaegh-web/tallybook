@@ -6,11 +6,14 @@
 export const RUN8_VERIFIED_RECEIPT_KEY='verifiedBackupReceiptV2';
 export const RUN8_VERIFIED_RECEIPT_KIND='tallybook-verified-local-file-v2';
 function validDate(x){
- return typeof x==='string'&&x.length<=48&&
-  /^\d{4}-\d{2}-\d{2}T/.test(x)&&Number.isFinite(Date.parse(x));
+ return typeof x==='string'&&
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x)&&
+  Number.isFinite(Date.parse(x))&&new Date(x).toISOString()===x;
 }
 export function serializeRun8VerifiedReceipt(value){
  if(!value||typeof value!=='object'||Array.isArray(value)||
+    Object.keys(value).length!==5||
+    Object.keys(value).some(k=>!['kind','companyId','createdAt','verifiedAt','sha256'].includes(k))||
     value.kind!==RUN8_VERIFIED_RECEIPT_KIND||
     typeof value.companyId!=='string'||!value.companyId.trim()||
     value.companyId.length>200||
