@@ -88,8 +88,10 @@ export function createRun5TenantPostgresStore(pool){
             returning company_id`,[companyId,collection,id,expectedRevision]));
         },
         async readRecords({companyId,domain,recordId,limit}){
-          const rows=await tx.listRows(companyId,domain,limit,null);
-          const filtered=recordId===null?rows:rows.filter(row=>row?.id===recordId);
+          const rows=recordId===null
+            ?await tx.listRows(companyId,domain,limit,null)
+            :[await tx.getRow(companyId,domain,recordId)].filter(Boolean);
+          const filtered=rows;
           return filtered.map(row=>({
             companyId:row.companyId,domain:row.collection,recordId:row.id,
             data:row.payload,revision:row.revision
