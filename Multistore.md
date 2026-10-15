@@ -130,3 +130,15 @@ Review found that the PostgreSQL ownership-transfer UPDATE verified only the clo
 
 ### Round 1 server-only scope adapter draft
 Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security/STAGE9_ROUND1_STORE_DEVICE_SCHEMA.sql`, and native SQL reader tests. The SQL is review-only and deliberately not installed: it introduces canonical store scopes and expiring, revocable store/device grants, private to the trusted server. Real issuance and account-to-local binding remain required before any data access. These modules are not connected to HTTP financial writes or local IndexedDB; implementation is NOT ready to claim Round 1 complete.
+
+## Round 1 continuation — owner-approved store/device enrollment lifecycle (2026-10-15)
+
+**Branch:** `stage9/round1-enrollment-lifecycle-20261015`; **implemented/tested code commit:** `d43da289b6020219279a3c8be1048a05521cb8bd` (branched from `cea840632e8b4f03ceabe7ae899d0d7c5bfe3da2`).
+
+- Added server-only `server/storeDeviceEnrollment.mjs`: active authenticated owner issues a 10-minute one-use invitation to an existing member for an active store; the independently authenticated target can redeem once for an 8-hour scoped device-grant handle, or the current owner can revoke it. Token only stored as SHA-256 digest; all actions auditable and wrapped in a serializable transaction.
+- Added `server/storeDeviceEnrollmentPostgres.mjs` and `server/storeDeviceEnrollmentCoordinator.mjs`. The coordinator reuses the trusted Supabase getUser/session verification; mutations also re-check and lock the server-owned `auth.sessions` row **inside** the transaction, reducing revocation race risk.
+- Added an **unapplied** SQL contract at `docs/security/STAGE9_ROUND1_ENROLLMENT_SCHEMA_REVIEW.sql`, and three native regression test modules. **19/19 focused native Node 22.16.0 tests executed and passed** using transactional/SQL doubles. The seven newly committed code/test/schema file Git blob hashes matched the locally tested files (7/7). The underlying existing Supabase resolver was also mirrored from its exact Git blob.
+- Security boundary: grants remain expiring bearer handles **without cryptographic hardware/device proof**; per-store member assignment, authoritative PostgreSQL integration, encrypted recovery, and protected route/write-path wiring are still missing. These new modules remain inactive, and SQL was not run or deployed.
+- **Unverified:** live Supabase/PostgreSQL serialization/RLS, Node 24/Windows, full repository native/Vitest/TypeScript/build/Playwright, browser IndexedDB migration, multiple devices, revocation under real concurrency.
+- Detailed notes and next implementation steps: `docs/security/STAGE9_ROUND1_ENROLLMENT_REVIEW_2026-10-15.md`. Release status unchanged: **Round 1 PARTIAL; Stage 9 NO-GO/INCOMPLETE**. No staging, production, cloud migration, payment or live financial authorization.
+
