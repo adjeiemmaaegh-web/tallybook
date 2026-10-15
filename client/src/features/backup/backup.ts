@@ -21,6 +21,8 @@ import { withCrossTabDataLock } from "./crossTabDataLock.mjs";
 import { assertImportableLegacyBackupMetadata, portableBackupMetadata } from "./backupMetadataPolicy.mjs";
 import {normalizeRun8BackupTables,RUN8_BACKUP_TABLES} from "./run8BackupCompatibility.mjs";
 import {assertRun8UnambiguousJSON} from "./run8JSONPreflight.mjs";
+import {RUN8_VERIFIED_RECEIPT_KEY,RUN8_VERIFIED_RECEIPT_KIND,
+ serializeRun8VerifiedReceipt,parseRun8VerifiedReceipt} from "./run8VerifiedReceipt.mjs";
 import { assertPlainBackupSize } from "./backupResourceLimits.mjs";
 import { beginBackupRestoreJournal, recoverPendingBackupRestoreWhileLocked, readAssistantRestoreSnapshot, writeAssistantRestoreSnapshot } from "./restoreRecovery";
 import type { SaleReversal } from "@/features/assistant/reversals";
@@ -104,41 +106,60 @@ const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevice
 const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
-export async function getLastBackupAt(database: TallybookDB = db): Promise<string | null> {
-  await database.open();
-  return (await database.appMeta.get("lastBackupAt"))?.value ?? null;
-}
-
-export async function getLastBackupCompanyId(database: TallybookDB = db): Promise<string | null> {
-  await database.open();
-  return (await database.appMeta.get("lastBackupCompanyId"))?.value ?? null;
-}
-
-/** The company saved in the exported file is the authority for the receipt.
- * A tab/company switch between file generation and metadata update must NOT
- * make another company appear to have a recent backup.
- * This timestamp records an export attempt, NOT independent proof of saved
- * bytes or successful restore.
+/** Historical lastBackupAt/lastBackupCompanyId rows are NOT evidence that
+ * a file was saved. Only the Run 8 reselected-file marker is trustworthy as
+ * evidence of a local verification step, not of independent disaster recovery.
  */
+export async function getVerifiedBackupReceipt(database:TallybookDB=db){
+  await database.open();
+  const row=await database.appMeta.get(RUN8_VERIFIED_RECEIPT_KEY);
+  if(!row)return null;
+  try{
+    const receipt=parseRun8VerifiedReceipt(row.value);
+    if(!await database.businessProfiles.get(receipt.companyId))return null;
+    return receipt;
+  }catch{return null;} // Corrupt evidence cannot grant backup readiness.
+}
+export async function getLastBackupAt(database:TallybookDB=db):Promise<string|null>{
+  return (await getVerifiedBackupReceipt(database))?.createdAt??null;
+}
+export async function getLastBackupCompanyId(database:TallybookDB=db):Promise<string|null>{
+  return (await getVerifiedBackupReceipt(database))?.companyId??null;
+}
 export function recordBackupExportedAt(
-  value = new Date().toISOString(),
-  database: TallybookDB = db,
-  exportedCompanyId = getActiveBusinessProfileId()
-): Promise<string> {
-  return withCrossTabDataLock('shared', async () => {
+  value=new Date().toISOString(),database:TallybookDB=db,
+  exportedCompanyId=getActiveBusinessProfileId(),verifiedSha256?:string
+):Promise<string>{
+  return withCrossTabDataLock('shared',async()=>{
     await database.open();
     if(!exportedCompanyId?.trim()||exportedCompanyId!==getActiveBusinessProfileId()||
        typeof value!=='string'||!Number.isFinite(Date.parse(value)))
-      throw new Error('Company or backup timestamp changed before export recording.');
+      throw Error('Company or backup timestamp changed before export recording.');
+    if(verifiedSha256!==undefined&&!/^[0-9a-f]{64}$/.test(verifiedSha256))
+      throw Error('Invalid encrypted backup-file fingerprint.');
     await database.transaction('rw',[database.appMeta,database.businessProfiles,database.staffMembers],async()=>{
       if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
-        throw new Error('Recover the interrupted restore before recording a backup.');
+        throw Error('Recover the interrupted restore before recording a backup.');
       if(exportedCompanyId!==getActiveBusinessProfileId()||
          !await database.businessProfiles.get(exportedCompanyId))
-        throw new Error('The exported company is no longer selected or available.');
+        throw Error('The exported company is no longer selected or available.');
       await requirePermission('staff',database,exportedCompanyId);
+      // Kept only as legacy diagnostic metadata; neither one alone grants
+      // destructive company-clear readiness.
       await database.appMeta.put({key:'lastBackupAt',value,updatedAt:value});
       await database.appMeta.put({key:'lastBackupCompanyId',value:exportedCompanyId,updatedAt:value});
+      if(verifiedSha256){
+        const verifiedAt=new Date().toISOString();
+        const receipt=serializeRun8VerifiedReceipt({
+          kind:RUN8_VERIFIED_RECEIPT_KIND,companyId:exportedCompanyId,
+          createdAt:value,verifiedAt,sha256:verifiedSha256
+        });
+        await database.appMeta.put({key:RUN8_VERIFIED_RECEIPT_KEY,
+          value:receipt,updatedAt:verifiedAt});
+      }else{
+        // An older or unverified export must never inherit prior V2 proof.
+        await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
+      }
     });
     return value;
   });
@@ -511,6 +532,9 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
       await database.table(key).bulkPut(rows);
     }
     await database.appMeta.put({ key: "activeBusinessProfileId", value: companyId, updatedAt: new Date().toISOString() });
+    // A restored ledger has a new local revision; old file verification must
+    // not be presented as a fresh backup of the restored contents.
+    await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
     if (restoreMarker) await database.appMeta.delete(RESTORE_JOURNAL_KEY); // Commit decision: atomic with ledger data.
     });
   } catch (error) {
