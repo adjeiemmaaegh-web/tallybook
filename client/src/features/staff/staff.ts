@@ -237,6 +237,7 @@ export async function changeStaffStatus(id:string,disable:boolean,database:Tally
     if(member.role==='owner')throw new Error('Cannot disable owner.');
     assertStaffMutationActor(company,actor);
     await database.staffMembers.update(id,{disabledAt:disable?new Date().toISOString():undefined});
+    invalidateSupervisorApprovals(company);
     await database.staffAudits.add({id:nanoid(),businessProfileId:company,staffId:actor.id,action:disable?'staff.disabled':'staff.enabled',createdAt:new Date().toISOString(),details:id});
     assertStaffMutationActor(company,actor);
   }));
@@ -252,6 +253,7 @@ export async function setStaffPermissions(id:string,permissions:StaffPermission[
       throw new Error('Cannot grant permissions outside the selected staff role.');
     assertStaffMutationActor(company,actor);
     await database.staffMembers.update(id,{permissions:[...permissions]});
+    invalidateSupervisorApprovals(company);
     await database.staffAudits.add({id:nanoid(),businessProfileId:company,staffId:actor.id,action:'staff.permissions.changed',createdAt:new Date().toISOString(),details:id});
     assertStaffMutationActor(company,actor);
   }));
@@ -266,6 +268,7 @@ export async function changeStaffRole(id:string,role:Exclude<StaffRole,'owner'>,
     if(!member||member.businessProfileId!==company||member.role==='owner')throw new Error('Cannot change owner role.');
     assertStaffMutationActor(company,actor);
     await database.staffMembers.update(id,{role,permissions:undefined});
+    invalidateSupervisorApprovals(company);
     await database.staffAudits.add({id:nanoid(),businessProfileId:company,staffId:actor.id,action:'staff.role.changed',createdAt:new Date().toISOString(),details:`${id}=${role}`});
     assertStaffMutationActor(company,actor);
   }));
@@ -281,6 +284,7 @@ export async function resetStaffPin(id:string,newPin:string,database:TallybookDB
     if(!member||member.businessProfileId!==company||member.role==='owner')throw new Error('Only non-owner PINs can be reset here.');
     assertStaffMutationActor(company,actor);
     await database.staffMembers.update(id,{salt,pinHash});
+    invalidateSupervisorApprovals(company);
     await database.staffAudits.add({id:nanoid(),businessProfileId:company,staffId:actor.id,action:'staff.pin.reset',createdAt:new Date().toISOString(),details:id});
     assertStaffMutationActor(company,actor);
   }));
@@ -377,6 +381,7 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
     if(!current||current.id!==member.id||currentStaffId(company)!==member.id)throw new Error('Staff session changed during shift close.');
     const shift=await database.staffShifts.get(shiftId);
     if(!shift||shift.businessProfileId!==member.businessProfileId||shift.staffId!==member.id||shift.closedAt)throw new Error('Open shift not found.');
+    assertStaffShift({staff:current,shift,companyId:company});
     const cash=calculateTrackedShiftCash(shift,await getShiftCashRows(database,member.businessProfileId));
     const closedAt=new Date().toISOString();
     const varianceMinor=countedCashMinor-cash.expectedCashMinor;
@@ -384,6 +389,8 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
     if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==member.id)throw new Error('Staff session changed during shift close.');
     await database.staffShifts.update(shiftId,{closedAt,countedCashMinor,expectedCashMinor:cash.expectedCashMinor,varianceMinor});
     await database.staffAudits.add({id:nanoid(),businessProfileId:member.businessProfileId,staffId:member.id,action:'shift.closed',createdAt:closedAt,details:`${shiftId}; variance=${varianceMinor}`});
+    if(currentStaffId(company)!==member.id||getActiveBusinessProfileId()!==company)
+      throw new Error('Staff session changed before shift close committed.');
     return {...cash,countedCashMinor,varianceMinor};
   }));
 }
@@ -409,17 +416,40 @@ export async function approveCheckoutDiscount(approverId: string, pin: string, s
     failedAttempts.set(throttleKey,{count,until:count>=5?Date.now()+300000:0});
     throw new Error('Supervisor PIN is incorrect.');
   }
-  const activeAgain = await requirePermission('sell', database, company);
-  const latestApprover = await database.staffMembers.get(approverId);
-  if (getActiveBusinessProfileId() !== company)
-    throw new Error('Company changed during supervisor approval.');
-  assertSupervisorApprovalFresh(approver, latestApprover, company, active.id,
-    currentStaffId(company), activeAgain, Boolean(latestApprover && staffCan(latestApprover, 'discount')));
+  // The verified PIN does not authorize a detached in-memory approval by
+  // itself: re-read both actors and the live cashier shift under the retail
+  // lock, and commit an audit record before publishing the one-use approval.
+  const result = await withCoordinatedRetailWrite(() =>
+    database.transaction('rw', [database.staffMembers,database.staffShifts,database.staffAudits], async()=>{
+      const activeAgain=await requirePermission('sell',database,company);
+      const latestApprover=await database.staffMembers.get(approverId);
+      if(getActiveBusinessProfileId()!==company)
+        throw new Error('Company changed during supervisor approval.');
+      assertSupervisorApprovalFresh(approver,latestApprover,company,active.id,
+        currentStaffId(company),activeAgain,Boolean(latestApprover&&staffCan(latestApprover,'discount')));
+      const shift=await database.staffShifts.where('staffId').equals(active.id)
+        .filter(x=>x.businessProfileId===company&&!x.closedAt).first();
+      assertStaffShift({staff:activeAgain,shift,companyId:company});
+      const issuedAt=Date.now();
+      const expiresAt=issuedAt+120000;
+      const generation=sessionGenerations.get(company)??0;
+      await database.staffAudits.add({id:nanoid(),businessProfileId:company,
+        staffId:approverId,action:'discount.supervisor.approved',
+        createdAt:new Date(issuedAt).toISOString(),
+        details:JSON.stringify({cashierId:active.id,shiftId:shift!.id,
+          submissionKey,amountMinor,subtotalMinor})});
+      if(currentStaffId(company)!==active.id||
+         (sessionGenerations.get(company)??0)!==generation||
+         getActiveBusinessProfileId()!==company)
+        throw new Error('Staff session changed during supervisor approval.');
+      return {expiresAt,generation};
+    })
+  );
   failedAttempts.delete(throttleKey);
-  const expiresAt = Date.now() + 120000;
-  discountApprovals.set(`${company}:${submissionKey}`,{company,approverId,cashierId:active.id,
-    cashierGeneration:sessionGenerations.get(company)??0,amountMinor,subtotalMinor,expiresAt});
-  return {approverId:approver.id,expiresAt};
+  discountApprovals.set(`${company}:${submissionKey}`,{
+    company,approverId,cashierId:active.id,cashierGeneration:result.generation,
+    amountMinor,subtotalMinor,expiresAt:result.expiresAt});
+  return {approverId:approver.id,expiresAt:result.expiresAt};
 }
 export function consumeCheckoutDiscountApproval(submissionKey:string, amountMinor:number, subtotalMinor:number, company=getActiveBusinessProfileId()) {
   const key = `${company}:${submissionKey}`;
