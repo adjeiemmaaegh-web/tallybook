@@ -37,7 +37,7 @@ describe("Stage 9 local backup and restore", () => {
     const expense = await createExpense({ category: "transport", amount: "6.50", expenseDate: "2026-08-27", note: "Supplier delivery", currency: "GHS", submissionKey: "backup-expense" }, db);
     expect(await getLastBackupAt(db)).toBeNull();
     const exportedAt = "2026-08-27T18:00:00.000Z";
-    await recordBackupExportedAt(exportedAt, db);
+    await recordBackupExportedAt(exportedAt, db, 'primary', 'a'.repeat(64));
     expect(await getLastBackupAt(db)).toBe(exportedAt);
     const exported = parseBackup(stringifyBackup(await createBackup(db)));
     expect(exported.records.expenses[0].currency).toBe("GHS");
