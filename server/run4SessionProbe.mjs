@@ -1,7 +1,8 @@
 /** Run 4 protected read-only session lookup. OFF by default. */
 import {isDirectTls} from './syncAccessRoutes.mjs';
 import {createSupabaseOwnershipSessionResolver,createPostgresAuthSessionReader} from './supabaseOwnershipSession.mjs';
-export function makeRun4SessionProbe({resolver,enabled=false,allowedOrigin}={}){
+export function makeRun4SessionProbe({resolver,enabled=false,allowedOrigin,clock=Date.now}={}){
+  const attempts=new Map();
   const ready=enabled===true&&typeof resolver==='function'&&
     typeof allowedOrigin==='string'&&allowedOrigin.startsWith('https://');
   return async (req,res)=>{
@@ -16,6 +17,16 @@ export function makeRun4SessionProbe({resolver,enabled=false,allowedOrigin}={}){
        !!req.get('cookie')){
       res.status(403).json({error:'Session not verified'});return;
     }
+    const now=clock();
+    if(!Number.isSafeInteger(now)||now<=0){res.status(503).json({error:'Probe unavailable'});return;}
+    const address=String(req.socket?.remoteAddress??'unknown');
+    const previous=attempts.get(address);
+    const cell=previous&&now-previous.start<60000?previous:{start:now,count:0};
+    cell.count++;attempts.set(address,cell);
+    if(attempts.size>2048)for(const [key,value] of attempts){
+      if(now-value.start>=60000)attempts.delete(key);
+    }
+    if(cell.count>30){res.status(429).json({error:'Too many session checks'});return;}
     try{
       const actor=await resolver(authorization.slice(7));
       if(actor?.active!==true||typeof actor.userId!=='string'||
@@ -41,6 +52,6 @@ export function installRun4SessionProbe({app,authClient,privatePool,
   const resolver=createSupabaseOwnershipSessionResolver({
     authClient,sessionReader:createPostgresAuthSessionReader(privatePool),clock});
   app.post('/api/run4/session/verify',
-    makeRun4SessionProbe({resolver,enabled:true,allowedOrigin}));
+    makeRun4SessionProbe({resolver,enabled:true,allowedOrigin,clock}));
   return Object.freeze({enabled:true});
 }
