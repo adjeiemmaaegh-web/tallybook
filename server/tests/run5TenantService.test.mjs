@@ -12,8 +12,8 @@ function fixture(features={}){
  let user=owner;const events=[];
  const tx={
   assertActiveSession:async()=>live,
-  getCompany:async c=>({id:c,ownerId:owner}),
-  getMembership:async(c,u)=>hasMember?{companyId:c,userId:u,role:u===owner?'owner':'attendant',status:'active'}:null,
+  getCompany:async c=>({id:c,ownerId:c===company?owner:attendee}),
+  getMembership:async(c,u)=>hasMember&&c===company?{companyId:c,userId:u,role:u===owner?'owner':'attendant',status:'active'}:null,
   activateTenantScope:async()=>{scopeCount++;return true;},
   readRecords:async({companyId,domain})=>[{companyId:wrongRows?other:companyId,
     domain,recordId:row,data:{companyId:wrongRows?other:companyId},revision:1}],
