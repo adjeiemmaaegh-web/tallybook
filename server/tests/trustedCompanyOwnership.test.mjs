@@ -24,7 +24,7 @@ function fixture() {
     const nextBindings = new Map([...bindings].map(([k,v])=>[k,{...v}]));
     const result = await fn({
       getCompany:async id=>id==='co'?{id,status:'active',ownerId:nextOwner}:null,
-      putCompanyOwner:async (id,userId)=>{if(id!=='co')throw Error('missing company');nextOwner=userId;},
+      putCompanyOwner:async (id,userId,expectedOwnerId)=>{if(id!=='co'||nextOwner!==expectedOwnerId)throw Error('stale owner');nextOwner=userId;},
       getMembership:async(c,u)=>{ membershipReads.push([c,u]); return nextMembers.get(c+':'+u); },
       putMembership:async m=>{nextMembers.set(m.companyId+':'+m.userId,m);},
       getRecovery:async id=>nextProofs.get(id),

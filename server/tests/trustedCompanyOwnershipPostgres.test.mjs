@@ -31,7 +31,7 @@ test('ownership database adapter commits and releases one serialized transaction
 test('database adapter rolls back and releases on failure',async()=>{
   const x=mockPool(),store=createPostgresCompanyOwnershipStore(x.pool);
   await assert.rejects(store.transaction(async tx=>{
-    await tx.putCompanyOwner('co','owner');
+    await tx.putCompanyOwner('co','owner','prior');
     throw Error('audit failure');
   }),/audit failure/);
   assert.equal(x.calls.at(-1).sql,'ROLLBACK');
@@ -56,14 +56,14 @@ test('zero-row database mutation rolls back as a conflict',async()=>{
     return {rows:[],rowCount:0};
   };
   await assert.rejects(createPostgresCompanyOwnershipStore(x.pool).transaction(
-    tx=>tx.putCompanyOwner('missing','u')),/conflict/);
+    tx=>tx.putCompanyOwner('missing','u','prior')),/conflict/);
   assert.equal(x.calls.at(-1).sql,'ROLLBACK');
   assert.equal(x.released(),1);
 });
 test('transfer updates existing local binding owner in the same transaction',async()=>{
   const x=mockPool();
   await createPostgresCompanyOwnershipStore(x.pool).transaction(async tx=>{
-    await tx.putCompanyOwner('company','next-owner');
+    await tx.putCompanyOwner('company','next-owner','prior');
     await tx.updateBindingOwner('company','next-owner');
   });
   const update=x.calls.find(c=>c.sql.includes('update public.company_local_bindings'));
@@ -101,4 +101,16 @@ test('existing cloud-company binding is detected even for a different local ID',
   const lookup=x.calls.find(c=>c.sql.startsWith('select')&&c.sql.includes('company_local_bindings'));
   assert.deepEqual(lookup.params,['cloud']);
   assert.equal(x.calls.at(-1).sql,'COMMIT');
+});
+
+test('conditional owner change uses prior owner as a database predicate', async () => {
+ const x=mockPool();
+ await createPostgresCompanyOwnershipStore(x.pool).transaction(async tx=>{
+  await assert.rejects(tx.putCompanyOwner('co','new'),/Expected owner required/);
+  await tx.putCompanyOwner('co','new','old');
+ });
+ const writes=x.calls.filter(c=>c.sql.startsWith('update public.businesses'));
+ assert.equal(writes.length,1);
+ assert.match(writes[0].sql,/where id=\$1 and owner_id=\$3/);
+ assert.deepEqual(writes[0].params,['co','new','old']);
 });

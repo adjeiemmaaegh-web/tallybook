@@ -35,8 +35,9 @@ export function createPostgresCompanyOwnershipStore(pool) {
             const q=await client.query('update public.business_members set role=$3 where business_id=$1 and user_id=$2 returning business_id',[m.companyId,m.userId,m.role]);
             exactlyOne(q);
           },
-          async putCompanyOwner(companyId,userId) {
-            const q=await client.query('update public.businesses set owner_id=$2, updated_at=now() where id=$1 returning id',[companyId,userId]);
+          async putCompanyOwner(companyId,userId,expectedOwnerId) {
+            if(typeof expectedOwnerId !== 'string' || !expectedOwnerId) throw Error('Expected owner required');
+            const q=await client.query('update public.businesses set owner_id=$2, updated_at=now() where id=$1 and owner_id=$3 returning id',[companyId,userId,expectedOwnerId]);
             exactlyOne(q);
           },
           async getRecovery(id) {

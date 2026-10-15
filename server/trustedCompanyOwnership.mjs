@@ -81,7 +81,7 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
             !Number.isSafeInteger(proof?.expiresAt) || proof.expiresAt <= now) deny();
         await tx.putMembership(immutable({...target,role:'owner'}));
         await tx.putMembership(immutable({...currentOwnerMembership,role:'attendant'}));
-        await tx.putCompanyOwner(companyId,newOwnerId);
+        await tx.putCompanyOwner(companyId,newOwnerId,userId);
         // A local binding, when present, follows the authoritative owner.
         // No existing binding is created implicitly during a transfer.
         await tx.updateBindingOwner(companyId,newOwnerId);

@@ -116,3 +116,7 @@ At the end of each development round, **update this same `Multistore.md`** with 
 - Updated the read to lock and inspect any binding matching the cloud company ID; report the actual existing local company ID and reject inconsistent multiple rows. The database primary key remains the authoritative concurrency defense.
 - Added a native Node regression for attempted rebind with a different local ID and parameterized lookup.
 - GitHub-backed source review only; the new regression and full acceptance suite remain unexecuted. No database migration, live writes, production promotion, or feature activation. Round 1 remains partial; release NO-GO.
+
+## Round 1 continuation — conditional ownership updates (2026-10-15)
+
+Review found that the PostgreSQL ownership-transfer UPDATE verified only the cloud company ID, rather than also verifying the expected former owner. The service now passes the validated former owner to the adapter. The SQL operation checks both company ID and previous owner ID and requires exactly one row; otherwise its transaction fails closed. Updated the pure service transaction test double to enforce the same rule and added a native SQL predicate regression. The change affects inactive server-side ownership recovery only, not production data or schema. Full Node, Windows, TypeScript, browser and database integration tests are still deferred, and the release remains NO-GO.
