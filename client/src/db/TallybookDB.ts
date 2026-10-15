@@ -16,7 +16,7 @@ export const DATABASE_NAME = "tallybook-db";
 export const DATABASE_SCHEMA_VERSION = 28;
 
 export interface AppMetaRecord {
-  key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal";
+  key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
   value: string;
   updatedAt: string;
 }
