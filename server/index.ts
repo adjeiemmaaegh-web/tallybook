@@ -13,6 +13,7 @@ import { createEncryptedBackupVault } from "./syncBackupVault.mjs";
 import { selectServerTransport } from "./syncHttps.mjs";
 import { createAccessActions, isDirectTls } from "./syncAccessRoutes.mjs";
 import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
+import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -27,6 +28,8 @@ async function startServer() {
   // separately reviewed server-only coordinator and isolated test DB must be
   // explicitly injected before allowing Run 2 ownership mutations.
   mountRun2OwnershipRoutes(app,express.json,{enabled:false});
+  // Run 3 stays review-only until a private isolated runtime is approved.
+  installRun3MembershipRuntime({app,jsonParser:express.json,enabled:false});
 
   // Serve static files from dist/public in production
   const staticPath =
