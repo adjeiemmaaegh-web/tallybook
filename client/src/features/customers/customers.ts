@@ -50,8 +50,13 @@ export function customerFormValues(customer?: Customer | null): CustomerFormValu
 
 export async function getCustomerSnapshot(database: TallybookDB = db): Promise<CustomerSnapshot> {
   const activeId = getActiveBusinessProfileId();
-  const allCustomers = (await database.customers.orderBy("name").toArray()).filter((customer) => customer.businessProfileId === activeId);
+  const allCustomers = await database.transaction("r",[database.customers,database.staffMembers],async()=>{
+    await requirePermission("sell",database,activeId);
+    return (await database.customers.orderBy("name").toArray())
+      .filter((customer) => customer.businessProfileId === activeId);
+  });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
+  await requirePermission("sell",database,activeId);
   return { customers: allCustomers.filter((customer) => !customer.archivedAt), archivedCustomers: allCustomers.filter((customer) => Boolean(customer.archivedAt)) };
 }
 
