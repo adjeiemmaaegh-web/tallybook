@@ -50,7 +50,7 @@ test('revoked reviewer authorization and revoked Supabase session deny inside tr
 });
 test('only verified independent restore evidence with actual digest receipts is usable',async()=>{
  for(const variant of [
-  {status:'revoked'},{status:'used'},{ownerId:'reviewer'},{reviewerId:'elsewhere'},
+  {status:'pending'},{status:'revoked'},{status:'used'},{ownerId:'reviewer'},{reviewerId:'elsewhere'},
   {localCompanyId:'wrong'},{backupManifestSha256:null},{restoreReceiptSha256:'bad'},
   {verifiedAtEpochMs:1001},{verifiedAtEpochMs:-999999999},
   {companyId:'foreign'},{kind:'approved-transfer'},{recipientId:'foreign'},
