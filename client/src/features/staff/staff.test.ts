@@ -74,9 +74,9 @@ describe('Stage 6 local staff security',()=>{
     await openShift(0,database);
     await expect(approveCheckoutDiscount(supervisor.id,'000000','discount-key-001',100,500,database)).rejects.toThrow(/incorrect/);
     await approveCheckoutDiscount(supervisor.id,'222222','discount-key-001',100,500,database);
-    expect(consumeCheckoutDiscountApproval('discount-key-001',99,500)).toBeNull();
-    expect(consumeCheckoutDiscountApproval('discount-key-001',100,500)).toBe(supervisor.id);
-    expect(consumeCheckoutDiscountApproval('discount-key-001',100,500)).toBeNull();
+    expect(await consumeCheckoutDiscountApproval('discount-key-001',99,500,'primary',database)).toBeNull();
+    expect(await consumeCheckoutDiscountApproval('discount-key-001',100,500,'primary',database)).toBe(supervisor.id);
+    expect(await consumeCheckoutDiscountApproval('discount-key-001',100,500,'primary',database)).toBeNull();
     lockStaff('primary');expect(currentStaffId('primary')).toBeNull();
   });
 
