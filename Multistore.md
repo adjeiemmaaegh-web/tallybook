@@ -201,3 +201,10 @@ Evidence and required recovery/owner-link/database/CI gates: `docs/release/RUN2_
 ### Run 2 reviewer self-approval gap closed (15 October 2026)
 
 The trusted recovery issuer now rejects an approved ownership-transfer reviewer who is also the transfer recipient. A corresponding reviewer/recipient inequality constraint was added to the **review-only, unapplied** verified-evidence SQL schema. One negative native regression was authored. All **53** checked-in focused test cases passed in an isolated V8 compatibility harness at source/test checkpoint `f512e718c0a37b0a659666a34c4d1d7bdacd331f`; **native Node/CI/real PostgreSQL/Supabase acceptance has not been executed**. Details: `docs/release/RUN2_JWT_EXPIRY_CONTINUATION_2026-10-15.md`. No live DB changes or deployment. **Run 2 OPEN / NOT PASSED.**
+
+
+## V19 Run 3 — entire cloud-membership source increment (15 October 2026)
+
+Per the owner's updated cadence, Run 3 source development proceeded while Run 2 independent acceptance remains open. Starting point: draft Run 2 `939e06de8eb313b64211beeb1c94e26859b4af5b`; separate review branch `v19/run3-cloud-membership-20261015`. Implemented canonical `owner|attendant` targeted invites, independent recipient redemption, member/invitation revocation, owner listing, atomic private SQL audit, strict service tenant/session checks, review-only RLS and legacy-RPC lockdown SQL, default-disabled private API and opt-in UI with cloud company selector. No local POS/IndexedDB record changes.
+
+Run 3 authored **23 native-style focused cases**; isolated V8/mocked tests passed **23/23** (12 service, 5 SQL adapter, 6 HTTP). This is **not** native Node/CI or real PostgreSQL/Supabase acceptance. Vitest, types/build, full CI, live two-account RLS and Windows/browser tests remain deferred. Gated test-only real RLS probe was prepared but not executed. See `docs/release/RUN3_CLOUD_MEMBERSHIP_FULL_INCREMENT_2026-10-15.md`. Source work delivered; endpoints and SQL are unapplied/default-off. **Run 2 OPEN/NOT PASSED; Run 3 OPEN/NOT PASSED; Stage 9 PARTIAL; commercial release NO-GO.** No production DB/payment/deployment or `main` merge.
