@@ -19,6 +19,12 @@ export function createPostgresStoreDeviceEnrollmentStore(pool) {
         await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
         started = true;
         const tx = Object.freeze({
+          async assertActiveSession(sessionId,userId,now) {
+            const rows = await client.query(
+              'select id from auth.sessions where id=$1::uuid and user_id=$2::uuid and (not_after is null or not_after>to_timestamp($3::double precision/1000)) for share',
+              [sessionId,userId,now]);
+            return rows?.rows?.length === 1;
+          },
           async getCompany(id) {
             const rows = await client.query('select id,owner_id from public.businesses where id=$1::uuid for share', [id]);
             if (rows?.rows?.length !== 1) return null;
