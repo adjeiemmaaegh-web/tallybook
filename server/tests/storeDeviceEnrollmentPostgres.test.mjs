@@ -7,11 +7,13 @@ const U='55555555-5555-4555-8555-555555555555';
 const INV='11111111-1111-4111-8111-111111111111';
 const GRANT='22222222-2222-4222-8222-222222222222';
 const currentTime = 100_000;
+const SESSION='88888888-8888-4888-8888-888888888888';
 function fixture(override) {
  const calls=[];let released=false;
  const query=async (sql,values)=> {
   calls.push({sql:sql.trim(),values});
   if(typeof override === 'function') return override(sql,values);
+  if (/^select id from auth.sessions/.test(sql.trim())) return {rows:[{id:SESSION}],rowCount:1};
   if (/^select id,owner_id/.test(sql.trim())) return {rows:[{id:ID,owner_id:U}],rowCount:1};
   if (/^select business_id,user_id/.test(sql.trim())) return {rows:[{business_id:ID,user_id:U,role:'owner'}],rowCount:1};
   if (/^select id,company_id,status/.test(sql.trim())) return {rows:[{id:'store1',company_id:ID,status:'active'}],rowCount:1};
@@ -26,6 +28,7 @@ function fixture(override) {
 test('transaction uses SERIALIZABLE, exact parameterized reads and COMMIT + release',async()=>{
  const f=fixture();
  await f.store.transaction(async tx=>{
+  assert.equal(await tx.assertActiveSession(SESSION,U,currentTime),true);
   assert.deepEqual(await tx.getCompany(ID),{id:ID,ownerId:U});
   assert.deepEqual(await tx.getMembership(ID,U),{companyId:ID,userId:U,role:'owner',status:'active'});
   assert.deepEqual(await tx.getStore(ID,'store1'),{id:'store1',companyId:ID,status:'active'});
@@ -73,4 +76,11 @@ test('review SQL must not cast TEXT device-grant IDs as UUID and never inline ca
  const q=f.calls.filter(x=>x.sql.includes('company_device_grants'));
  assert.equal(q.length,2);
  for(const item of q){assert.ok(!item.sql.includes('id=$2::uuid'));assert.ok(item.sql.includes('id=$2'));assert.deepEqual(item.values,[ID,GRANT]);}
+});
+
+test('live auth session is locked by ID, user and expiry inside the transaction',async()=>{
+ const f=fixture();await f.store.transaction(async tx=>assert.equal(await tx.assertActiveSession(SESSION,U,currentTime),true));
+ const q=f.calls.find(x=>x.sql.includes('from auth.sessions'));
+ assert.deepEqual(q.values,[SESSION,U,currentTime]);assert.match(q.sql,/for share/);
+ const gone=fixture(()=>({rows:[],rowCount:0}));await gone.store.transaction(async tx=>assert.equal(await tx.assertActiveSession(SESSION,U,currentTime),false));
 });
