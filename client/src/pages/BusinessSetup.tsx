@@ -1,7 +1,7 @@
 /** Tallybook Africa design reminder: setup is a compact cobalt record card—one business, clear labels, solid readable surfaces, and no unnecessary account step. */
 import { TaxSettings } from "@/components/TaxSettings";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, CircleAlert, PencilLine, Plus, Save, Smartphone, Store, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowRight, Building2, Check, ChevronRight, CircleAlert, PencilLine, Plus, Save, ShieldCheck, Smartphone, Store, ToggleLeft, ToggleRight, UsersRound } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { businessProfileSchema, businessTypes, countries, currencies, toBusinessProfileFormValues, type BusinessProfileInput } from "@/features/business/businessProfile";
 import { addMobileMoneyProvider, getMobileMoneyProviders, setMobileMoneyProviderActive, type MobileMoneyProvider } from "@/features/payments/mobileMoney";
+import "./SettingsWorkspace.css";
 
 function CompaniesWorkspace() {
   const { profile, companies, activeCompanyId, lastBackupCompanyId, createCompany, switchCompany, clearCompany } = useBusinessProfile();
@@ -43,8 +44,16 @@ function CompaniesWorkspace() {
     finally { setBusy(false); }
   };
 
-  return <div className="business-setup-page company-management-page">
-    <section className="setup-hero"><p className="eyebrow"><span className="eyebrow-dot" />Local companies</p><h1>Choose the company you are working in.</h1><p>Each company has its own customers, sales, stock, purchases, expenses, and reports on this phone.</p><div className="setup-hero-meta"><span className="stamp stamp-ready"><Check className="h-3.5 w-3.5" aria-hidden="true" />On this device</span><span>No cloud account or automatic upload.</span></div></section>
+  return <div className="business-setup-page company-management-page settings-business-page">
+    <section className="setup-hero settings-hero" aria-labelledby="company-workspace-title">
+      <div className="settings-hero-main">
+        <p className="settings-eyebrow">SETTINGS <ChevronRight size={14} aria-hidden="true"/> COMPANY WORKSPACES</p>
+        <h1 id="company-workspace-title">Your companies</h1>
+        <p>Choose the business you are working in. Each company keeps its own customers, sales, stock, purchases, expenses, and reports on this device.</p>
+        <div className="settings-hero-note"><ShieldCheck size={19} aria-hidden="true"/><span><strong>Separate local records.</strong> Switching businesses does not combine their information or upload it to the cloud.</span></div>
+        <div className="settings-business-actions"><Link href="/business"><ArrowRight size={16} aria-hidden="true"/>Back to business details</Link></div>
+      </div><div className="settings-hero-symbol" aria-hidden="true"><Building2 size={64} strokeWidth={1.35}/></div>
+    </section>
     <section className="business-form-shell company-list-shell" aria-labelledby="company-list-title"><div className="form-ledger-head"><div><p className="ledger-kicker">Your companies</p><h2 id="company-list-title">Switch without mixing records.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">CO</span><span>{companies.length} saved</span></div></div><ul className="company-list" aria-label="Local companies">{companies.map((company) => <li key={company.id} className={company.id === activeCompanyId ? "company-list-item company-list-item-active" : "company-list-item"}><div><strong>{company.name}</strong><span>{company.country} · {company.currency} · {company.businessType}</span></div>{company.id === activeCompanyId ? <span className="stamp stamp-ready">Active</span> : <button className="link-action" type="button" onClick={() => void switchCompany(company.id)} disabled={busy}>Use this company</button>}</li>)}</ul></section>
     <section className="business-form-shell" aria-labelledby="add-company-title"><div className="form-ledger-head"><div><p className="ledger-kicker">New local workspace</p><h2 id="add-company-title">Add another company.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">NEW</span><span>Local only</span></div></div><form className="business-form company-create-form" onSubmit={addCompany} noValidate><label><span>Company name</span><Input value={name} onChange={(event) => setName(event.target.value)} placeholder="For example, Ama’s Catering" minLength={2} maxLength={120} required /></label><label><span>Business type</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value)}>{businessTypes.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><div className="form-grid-two"><label><span>Country</span><select value={country} onChange={(event) => changeCountry(event.target.value)}>{countries.map((item) => <option key={item.value} value={item.value}>{item.value}</option>)}</select></label><label><span>Currency</span><select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div><div className="form-save-row"><p className="form-save-note" role="status" aria-live="polite">{notice ?? "The new company starts with an empty local ledger."}</p><button className="primary-action" type="submit" disabled={busy || name.trim().length < 2}><Plus className="h-4 w-4" aria-hidden="true" />Add company</button></div></form></section>
     {profile ? <section className="business-form-shell company-clear-shell" aria-labelledby="clear-company-title"><div className="form-ledger-head"><div><p className="ledger-kicker">Danger zone</p><h2 id="clear-company-title">Clear this company from this phone.</h2><p>This permanently removes only the active company’s local records from this device. Make a fresh Backup first if you may need them later.</p></div><div className="form-ledger-stamp"><span className="workspace-marker">CLEAR</span><span>Cannot undo</span></div></div><p className="clear-backup-status" role="status">{lastBackupCompanyId === profile.id ? "Fresh backup recorded for this company." : <>A fresh backup for this company is required first. <Link href="/backup">Open Backup</Link></>}</p><label><span>Type “{profile.name}” to confirm</span><Input value={clearName} onChange={(event) => setClearName(event.target.value)} placeholder={profile.name} autoComplete="off" disabled={busy} /></label><button className="danger-action" type="button" onClick={() => void clearActive()} disabled={busy || lastBackupCompanyId !== profile.id || clearName.trim() !== profile.name.trim()}>Clear {profile.name} from this phone</button></section> : null}
@@ -71,7 +80,7 @@ export default function BusinessSetup() {
     return () => { subscribed = false; };
   }, [profile]);
 
-  const title = profile ? "Your business record" : "Set up your business";
+  const title = profile ? "Business setup" : "Set up your business";
   const subtitle = profile ? "Keep the details you use every day clear and up to date." : "Add the essentials once. They stay on this device and can be changed whenever you need.";
   const countryOptions = useMemo(() => countries, []);
 
@@ -120,28 +129,34 @@ export default function BusinessSetup() {
   };
 
   return (
-    <div className="business-setup-page">
-      <section className="setup-hero">
-        <div className="setup-hero-tally" aria-hidden="true"><span /><span /><span /></div>
-        <p className="eyebrow"><span className="eyebrow-dot" />Your business record</p>
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-        <div className="setup-hero-meta"><span className="stamp stamp-ready"><Check className="h-3.5 w-3.5" aria-hidden="true" />On this device</span><span>One simple profile for your daily ledger.</span></div>
-        <div className="setup-progress" aria-label="Business setup record has three sections"><span className="tally-status"><i /><i /><i />Three record sections</span><span>Business · Trading · Contact</span></div>
+    <div className="business-setup-page settings-business-page">
+      <section className="setup-hero settings-hero" aria-labelledby="business-setup-title">
+        <div className="settings-hero-main settings-business-headline">
+          <p className="settings-eyebrow">SETTINGS <ChevronRight size={14} aria-hidden="true" /> BUSINESS PROFILE</p>
+          <h1 id="business-setup-title">{title}</h1>
+          <p>{subtitle}</p>
+          <div className="settings-hero-note"><ShieldCheck size={19} aria-hidden="true" /><span><strong>Saved on this device.</strong> Your business details remain local; keep your own backup for recovery.</span></div>
+          <div className="settings-business-actions">
+            <Link href="/business?view=companies"><Building2 size={16} aria-hidden="true" />Manage companies</Link>
+            <Link href="/staff"><UsersRound size={16} aria-hidden="true" />Staff &amp; permissions</Link>
+          </div>
+          <div className="setup-progress" aria-label="Business setup contains three sections"><span>Business identity</span><span>Trading &amp; payments</span><span>Contact information</span></div>
+        </div>
+        <div className="settings-hero-symbol" aria-hidden="true"><Store size={64} strokeWidth={1.35}/></div>
       </section>
 
       {status === "error" ? <div className="attention-note setup-attention" role="alert"><div><strong>We could not read your business details.</strong><p>{error ?? "Try reloading the page before adding details."}</p></div></div> : null}
 
       <section className="business-form-shell" aria-labelledby="business-details-title">
-        <div className="form-ledger-head"><div><p className="ledger-kicker">Business details</p><h2 id="business-details-title">The details that belong on every record.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">BIZ</span><span>Record 01</span></div></div>
+        <div className="form-ledger-head"><div><p className="ledger-kicker">BUSINESS PROFILE</p><h2 id="business-details-title">Your business details</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">BIZ</span><span>Record 01</span></div></div>
         <Form {...form}>
           <form className="business-form" onSubmit={onSubmit} noValidate>
-            <div className="form-section"><div className="form-section-title"><span>01</span><div><h3>About your business</h3><p>Use the name your customers know.</p></div></div>
+            <div className="form-section"><div className="form-section-title"><span>01</span><div><h3>Business identity</h3><p>Choose the name customers know and the type of business you operate.</p></div></div>
               <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Business name</FormLabel><FormControl><Input autoComplete="organization" placeholder="For example, Ama’s Shop" {...field} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="businessType" render={({ field }) => <FormItem><FormLabel>Business type</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Choose a business type" /></SelectTrigger></FormControl><SelectContent>{businessTypes.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
             </div>
 
-            <div className="form-section"><div className="form-section-title"><span>02</span><div><h3>Where and how you trade</h3><p>This keeps future prices and reports easy to read.</p></div></div>
+            <div className="form-section"><div className="form-section-title"><span>02</span><div><h3>Trading &amp; payments</h3><p>Set the country, currency, and payment methods used for your records.</p></div></div>
               <div className="form-grid-two"><FormField control={form.control} name="country" render={({ field }) => <FormItem><FormLabel>Country</FormLabel><Select value={field.value} onValueChange={(value) => { field.onChange(value); const match = countryOptions.find((country) => country.value === value); if (match && !form.getFieldState("currency").isDirty) form.setValue("currency", match.currency, { shouldDirty: true, shouldValidate: true }); }}><FormControl><SelectTrigger><SelectValue placeholder="Choose country" /></SelectTrigger></FormControl><SelectContent>{countryOptions.map((country) => <SelectItem key={country.value} value={country.value}>{country.value}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
               <FormField control={form.control} name="currency" render={({ field }) => <FormItem><FormLabel>Currency</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Choose currency" /></SelectTrigger></FormControl><SelectContent>{currencies.map((currency) => <SelectItem key={currency} value={currency}>{currency}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} /></div>
               <FormField control={form.control} name="preferredPaymentMethod" render={({ field }) => <FormItem><FormLabel>Usual payment method</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="mobile">Mobile Money (MoMo)</SelectItem><SelectItem value="cash">Cash</SelectItem><SelectItem value="card">Card</SelectItem></SelectContent></Select><FormMessage /></FormItem>} />
@@ -152,7 +167,7 @@ export default function BusinessSetup() {
               <p>Record payments received through these providers. Online payment collection requires a separate verified connection.</p>
             </div>
 
-            <div className="form-section"><div className="form-section-title"><span>03</span><div><h3>Contact details</h3><p>Optional for now. Add only what you want to keep in your record.</p></div></div>
+            <div className="form-section"><div className="form-section-title"><span>03</span><div><h3>Contact information</h3><p>Optional details for your records. Update them whenever you need.</p></div></div>
               <div className="form-grid-two"><FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Phone number <em>Optional</em></FormLabel><FormControl><Input autoComplete="tel" inputMode="tel" placeholder="For example, +233 20 000 0000" {...field} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="email" render={({ field }) => <FormItem><FormLabel>Email address <em>Optional</em></FormLabel><FormControl><Input autoComplete="email" inputMode="email" placeholder="For example, hello@business.com" {...field} /></FormControl><FormMessage /></FormItem>} /></div>
               <FormField control={form.control} name="address" render={({ field }) => <FormItem><FormLabel>Address <em>Optional</em></FormLabel><FormControl><Textarea autoComplete="street-address" placeholder="A short location or address" {...field} /></FormControl><FormMessage /></FormItem>} />
