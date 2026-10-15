@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
 /** Tallybook Africa Stage 7: supplier and purchase records are local, immutable after completion, and atomically linked to positive stock movements. */
@@ -89,7 +90,8 @@ export async function createSupplier(values: SupplierFormValues, database: Tally
     const input = supplierFormSchema.parse(values);
     const normalizedName = normalizeName(input.name);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const existing = await database.suppliers.where("normalizedName").equals(normalizedName)
         .and((supplier) => supplier.businessProfileId === activeId && !supplier.archivedAt).first();
@@ -107,7 +109,8 @@ export async function updateSupplier(supplierId: string, values: SupplierFormVal
   return withCoordinatedRetailWrite(async () => {
     const input = supplierFormSchema.parse(values);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const supplier = await database.suppliers.get(supplierId);
       if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("This supplier is no longer active.");
@@ -127,7 +130,8 @@ export async function updateSupplier(supplierId: string, values: SupplierFormVal
 export async function archiveSupplier(supplierId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const supplier = await database.suppliers.get(supplierId);
       if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("This supplier is already archived or unavailable.");
@@ -151,7 +155,8 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
   const input = purchaseFormSchema.parse(values); const submissionKey = input.submissionKey ?? nanoid(18);
   if (new Set(input.lines.map((line) => line.productId)).size !== input.lines.length) throw new Error("Add each product only once to a purchase.");
   if (new Date(input.purchaseDate + "T00:00:00Z").toISOString().slice(0, 10) !== input.purchaseDate) throw new Error("Choose a valid purchase date.");
-  return database.transaction("rw", [database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
     const shift=await activeStaffShift(staff,database);

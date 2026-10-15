@@ -112,17 +112,45 @@ export async function getLastBackupCompanyId(database: TallybookDB = db): Promis
   return (await database.appMeta.get("lastBackupCompanyId"))?.value ?? null;
 }
 
-export async function recordBackupExportedAt(value = new Date().toISOString(), database: TallybookDB = db): Promise<string> {
-  await database.open();
-  const companyId = getActiveBusinessProfileId();
-  await database.transaction("rw", database.appMeta, async () => {
-    await database.appMeta.put({ key: "lastBackupAt", value, updatedAt: value });
-    await database.appMeta.put({ key: "lastBackupCompanyId", value: companyId, updatedAt: value });
+/** The company saved in the exported file is the authority for the receipt.
+ * A tab/company switch between file generation and metadata update must NOT
+ * make another company appear to have a recent backup.
+ * This timestamp records an export attempt, NOT independent proof of saved
+ * bytes or successful restore.
+ */
+export function recordBackupExportedAt(
+  value = new Date().toISOString(),
+  database: TallybookDB = db,
+  exportedCompanyId = getActiveBusinessProfileId()
+): Promise<string> {
+  return withCrossTabDataLock('shared', async () => {
+    await database.open();
+    if(!exportedCompanyId?.trim()||exportedCompanyId!==getActiveBusinessProfileId()||
+       typeof value!=='string'||!Number.isFinite(Date.parse(value)))
+      throw new Error('Company or backup timestamp changed before export recording.');
+    await database.transaction('rw',[database.appMeta,database.businessProfiles,database.staffMembers],async()=>{
+      if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
+        throw new Error('Recover the interrupted restore before recording a backup.');
+      if(exportedCompanyId!==getActiveBusinessProfileId()||
+         !await database.businessProfiles.get(exportedCompanyId))
+        throw new Error('The exported company is no longer selected or available.');
+      await requirePermission('staff',database,exportedCompanyId);
+      await database.appMeta.put({key:'lastBackupAt',value,updatedAt:value});
+      await database.appMeta.put({key:'lastBackupCompanyId',value:exportedCompanyId,updatedAt:value});
+    });
+    return value;
   });
-  return value;
 }
 
-export async function createBackup(database: TallybookDB = db): Promise<TallybookBackup> {
+/** Export is a TWO-DATABASE read. Hold the exclusive origin-wide Web Lock
+ * across main IndexedDB and assistant queries so no cooperating writer can
+ * change either snapshot halfway through the export. If Web Locks are absent
+ * fail closed rather than claim a coherent portable backup. */
+export function createBackup(database: TallybookDB = db): Promise<TallybookBackup> {
+  return withCrossTabDataLock('exclusive',()=>createBackupWhileLocked(database));
+}
+
+async function createBackupWhileLocked(database: TallybookDB): Promise<TallybookBackup> {
   await database.open();
   const activeId = getActiveBusinessProfileId();
   const records = await database.transaction("r", database.tables, async () => {
@@ -136,8 +164,16 @@ export async function createBackup(database: TallybookDB = db): Promise<Tallyboo
     }));
     return Object.fromEntries(entries) as BackupRecords;
   });
+  // These three assistant queries now run while the same exclusive lock is
+  // held as the main retail read. The source tables are left untouched.
   const assistant = { workflows: await listStoredWorkflows(activeId), aliases: await listStoredAliases(activeId), history: await listAllAssistantHistoryForBackup(activeId) };
+  if(activeId!==getActiveBusinessProfileId())
+    throw new Error("Company changed during coordinated backup. No export was created.");
   await requirePermission("staff", database, activeId);
+  // A backup must not escape after a competing interrupted restore, including
+  // failures between the main DB and assistant DB reads.
+  if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
+    throw new Error("An interrupted restore needs recovery before backup export.");
   return { kind: BACKUP_KIND, formatVersion: BACKUP_FORMAT_VERSION, createdAt: new Date().toISOString(), databaseSchemaVersion: DATABASE_SCHEMA_VERSION, assistant, records };
 }
 

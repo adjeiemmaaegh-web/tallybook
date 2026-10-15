@@ -1,4 +1,5 @@
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
@@ -36,7 +37,8 @@ export async function recognizeUnpaidPurchase(purchaseId: string, submissionKey:
 async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submissionKey: string, database: TallybookDB = db) {
   validKey(submissionKey);
   const company = getActiveBusinessProfileId();
-  return database.transaction('rw', [database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction('rw', [database.appMeta, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
     const purchase = await database.purchases.get(purchaseId);
@@ -80,7 +82,8 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
   if (input.kind === 'credit' && input.method !== undefined) throw new Error('A supplier credit is not a cash payment.');
   if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.length > 120)) throw new Error('Supplier reference is too long.');
   const company = getActiveBusinessProfileId();
-  return database.transaction('rw', [database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction('rw', [database.appMeta, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
     const purchase = await database.purchases.get(input.purchaseId);

@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { requirePermission } from "@/features/staff/staff";
 /** Optional Stage 2 catalogue features, persisted locally without altering the existing sale ledger. */
 import { nanoid } from "nanoid";
@@ -30,7 +31,8 @@ function validateImage(value: string | undefined) {
 export async function setCatalogueOptions(productId: string, options: CatalogueOptions, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.products, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const product = await database.products.get(productId);
       if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("Product is unavailable.");
@@ -59,7 +61,8 @@ export async function saveStockCountSession(productIds: string[], database: Tall
     const preview = await prepareStockCount(productIds, database);
     const now = new Date().toISOString();
     const session: StockCountSession = { ...preview, businessProfileId: preview.companyId, id: nanoid(16), status: "draft", updatedAt: now };
-    await database.transaction("rw", [database.stockCountSessions, database.staffMembers], async () => {
+    await database.transaction("rw", [database.appMeta, database.stockCountSessions, database.staffMembers], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, preview.companyId);
       const existing = await database.stockCountSessions.where("businessProfileId").equals(preview.companyId).toArray();
       if (existing.some(item => item.status === "draft")) throw new Error("Resume or complete your saved stock count before starting another.");
@@ -71,7 +74,8 @@ export async function saveStockCountSession(productIds: string[], database: Tall
 export async function updateStockCountSession(id: string, counts: Record<string, number>, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.stockCountSessions, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.staffMembers], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const session = await database.stockCountSessions.get(id);
       if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock count cannot be edited.");
@@ -85,7 +89,8 @@ export async function updateStockCountSession(id: string, counts: Record<string,
 export async function postSavedStockCount(id: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const session = await database.stockCountSessions.get(id);
       if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock-count session is unavailable or already posted.");
@@ -101,7 +106,8 @@ export async function registerBatch(productId: string, batchCode: string, quanti
     if (!whole(quantity) || !quantity || !batchCode.trim() || batchCode.length > 64) throw new Error("Invalid batch information.");
     if (expiryDate && (!/^\d{4}-\d{2}-\d{2}$/.test(expiryDate) || !Number.isFinite(Date.parse(expiryDate + "T00:00:00Z")) || new Date(expiryDate + "T00:00:00Z").toISOString().slice(0, 10) !== expiryDate)) throw new Error("Invalid expiry date.");
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.products, database.inventoryBatches, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.inventoryBatches, database.staffMembers], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const product = await database.products.get(productId);
       if (!product || product.businessProfileId !== company || product.archivedAt || product.itemKind === "service") throw new Error("Batch product is unavailable.");

@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tactile Ledger sales reminder: a completed sale is one all-or-nothing local transaction; a failed sale writes nothing. */
 import { calculateTax, taxPolicyKey, type TaxSnapshot } from "./tax";
 import { nanoid } from "nanoid";
@@ -161,7 +162,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = getActiveBusinessProfileId();
 
-  return database.transaction("rw", [database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const nowDate = new Date();
     const now = nowDate.toISOString();
     const cashier = await requirePermission("sell",database,activeId);
