@@ -5,6 +5,7 @@
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { assistantLocalDB, type StoredWorkflow, type StoredAlias, type AssistantHistoryRecord } from '@/features/assistant/assistantLocalStore';
 import { withCrossTabDataLock } from './crossTabDataLock.mjs';
+import {classifyPendingAssistantRecovery} from './run7RecoveryDecision.mjs';
 import { RESTORE_JOURNAL_KEY, RESTORE_JOURNAL_KIND, RESTORE_JOURNAL_VERSION, parseRestoreJournal, serializeRestoreJournal, assistantSnapshotsEqual, validateAssistantSnapshot } from './restoreJournal.mjs';
 
 export interface AssistantRestoreSnapshot {
@@ -108,12 +109,12 @@ export async function recoverPendingBackupRestoreWhileLocked(database: Tallybook
   // was authorized to make. Another tab's unexpected assistant writes must
   // remain intact and leave the journal available for deliberate recovery.
   const current = await readAssistantRestoreSnapshot(journal.companyId);
-  if (!assistantSnapshotsEqual(current, journal.before)) {
-    if (!journal.after || !assistantSnapshotsEqual(current, journal.after))
-      throw new Error('Pending recovery found unexpected assistant edits. Preserve this device and recovery journal; manual reconciliation is required.');
-    // This second comparison takes place within the assistant RW transaction
-    // to avoid a read-then-write race against another assistant writer.
-    await writeAssistantRestoreSnapshot(journal.companyId, journal.before, journal.after);
+  const decision = classifyPendingAssistantRecovery(journal,current);
+  if(decision.requiresAssistantWrite){
+    // The write CAS compares current assistant rows with the exact authorized
+    // postimage inside the assistant's write transaction. Concurrent edits
+    // must fail closed, retaining the retail recovery marker.
+    await writeAssistantRestoreSnapshot(journal.companyId,journal.before,journal.after);
   }
   await database.transaction('rw', database.appMeta, async () => {
     const current = await database.appMeta.get(RESTORE_JOURNAL_KEY);
