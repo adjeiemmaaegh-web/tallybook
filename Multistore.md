@@ -158,3 +158,18 @@ Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security
 
 **Production constraints:** No silent legacy-company binding, cloud sign-in requirement for offline-only customers, unauthorized global refunds/tax, live SQL re-application, production/staging deployment, financial sync/payments or merge. The owner must separately approve restricted environment tests and activation. **V19 Run 2 NOT PASSED; Stage 9 Round 1 PARTIAL; overall release NO-GO.**
 
+
+
+## V19 Run 2 — transaction-bound independent recovery verification (2026-10-15)
+
+**Branch:** `v19/run2-transactional-recovery-20261015`, stacked on Stage 9 review head `359ea1666225d802629f868c52af48ef283f2b02`. This is still a **draft**, and not a passing V19 run or deployed change.
+
+- **Root cause:** the former recovery issuer trusted reviewer/evidence callbacks checked *outside* the approval-issuance transaction. Its proof/authorization could become stale before writing the approval.
+- **Code:** recovery issuance now requires a fresh live `auth.sessions` row lock, an active authorized reviewer row, and the exact independently reviewed evidence row lock within the SAME SERIALIZABLE transaction. The record is consumed conditionally with the approval and audit; duplicate/revoked/stale/foreign proof fails closed. Server coordination no longer accepts injected callback-based reviewer/evidence claims.
+- **Review-only schema:** `docs/security/STAGE9_RUN2_VERIFIED_RECOVERY_SCHEMA_REVIEW.sql` proposes restrictive RLS-protected reviewer/evidence tables and restore-manifest/receipt/transfer-review digests; **not applied** to Supabase or any real database. Such digests are only record identifiers, not evidence that a genuine restore was performed. Legitimate external verification and reviewer enrollment remain missing.
+- **Executed focused QA:** local Linux Node 22.16.0 **20/20 passed, zero failures/skips** across four Run-2-focused test files. The three unchanged core dependencies and all eight changed source/test/schema files matched exact GitHub Git-blob hashes in the local test mirror. Log SHA-256 `d23d7873033236de555a445eea92e5180993a0d0220e1768ffcb74df9ba79d5d`. These tests used SQL doubles/memory transactions, not real Supabase/PostgreSQL or Windows.
+- **Detailed evidence:** `docs/release/RUN2_TRANSACTIONAL_RECOVERY_EVIDENCE_REVIEW_2026-10-15.md`; owner V19 handover crosswalk remains `docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md`. No changes to 47 release blocker statuses or 82 acceptance unit statuses.
+- **Still required for Run 2:** independent proof creation and real backup/restore drill; owner confirmation and recoverable account-link UI; approved disposable database/RLS concurrency tests; real private server/Edge endpoint and rate-limit/CSRF controls; full exact-head native/client/types/build/browser/offline/audit acceptance. GitHub Actions budget/runner pre-job failures remain unresolved.
+
+**Status:** V19 **Run 2 NOT PASSED**; Stage 9 Round 1 **PARTIAL**; commercial release **NO-GO**. Do not advance to V19 Run 3 or enable any live cloud/financial function.
+
