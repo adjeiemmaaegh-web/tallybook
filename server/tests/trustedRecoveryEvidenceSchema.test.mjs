@@ -14,8 +14,8 @@ test('verified evidence enforces independent reviewer and digest receipt shape',
   assert.match(sql,/backup_manifest_sha256\s+~\s+'\^\[a-f0-9\]\{64\}\$'/);
   assert.match(sql,/restore_receipt_sha256\s+~\s+'\^\[a-f0-9\]\{64\}\$'/);
   assert.match(sql,/transfer_review_sha256\s+~\s+'\^\[a-f0-9\]\{64\}\$'/);
-  assert.match(sql,/status text not null default 'pending' check \\(status in \\('pending','verified','consumed','revoked'\\)\\)/);
-  assert.match(sql,/status='pending' and verified_at is null/);
-  assert.match(sql,/status in \\('verified','consumed'\\) and verified_at is not null/);
+  assert.ok(sql.includes("status text not null default 'pending' check (status in ('pending','verified','consumed','revoked'))"));
+  assert.ok(sql.includes("status='pending' and verified_at is null"));
+  assert.ok(sql.includes("status in ('verified','consumed') and verified_at is not null"));
   assert.doesNotMatch(sql,/default 'verified'/);
 });
