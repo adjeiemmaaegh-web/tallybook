@@ -71,9 +71,11 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
       member.status!=='active'||!['owner','attendant'].includes(member.role))deny();
     if(member.role==='owner'&&business.ownerId!==actor.userId)deny();
     if(member.role==='attendant'&&business.ownerId===actor.userId)deny();
-    // Finance, backups, assistant history and sync metadata are owner-only
-    // for both reads and writes until Run 6 introduces finer staff grants.
-    if((kind==='owner'||OWNER_ONLY.has(collection))&&member.role!=='owner')deny();
+    // Attendants see only operational product/stock records. All customer,
+    // payment, sale, supplier, assistant, backup and sync records are owner-only
+    // until Run 6 introduces independently verified staff authorization.
+    if(member.role!=='owner'&&(kind!=='read'||
+       !['products','inventory'].includes(collection)))deny();
     // Tenant RLS GUCs are installed only AFTER live session and membership
     // checks, in the same SQL transaction, never from HTTP request headers.
     if(await tx.activateTenantScope(actor.userId,companyId)!==true)deny();
