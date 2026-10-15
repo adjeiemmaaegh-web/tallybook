@@ -1,7 +1,7 @@
 /** Tallybook Africa design reminder: setup is a compact cobalt record card—one business, clear labels, solid readable surfaces, and no unnecessary account step. */
 import { TaxSettings } from "@/components/TaxSettings";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Building2, Check, ChevronRight, CircleAlert, PencilLine, Plus, Save, ShieldCheck, Smartphone, Store, ToggleLeft, ToggleRight, UsersRound } from "lucide-react";
+import { ArrowRight, Building2, ChevronRight, CircleAlert, PencilLine, Plus, Save, ShieldCheck, Smartphone, Store, ToggleLeft, ToggleRight, UsersRound } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -36,6 +36,19 @@ function CompaniesWorkspace() {
   };
 
   const changeCountry = (value: string) => { setCountry(value); const match = countries.find((item) => item.value === value); if (match) setCurrency(match.currency); };
+  const activateCompany = async (companyId: string) => {
+    if (busy || companyId === activeCompanyId) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await switchCompany(companyId);
+      toast.success("Active company changed. Other companies’ records remain separate.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "We could not switch company.");
+    } finally {
+      setBusy(false);
+    }
+  };
   const clearActive = async () => {
     if (!profile || clearName.trim() !== profile.name.trim()) { toast.error("Type the active company name exactly to confirm."); return; }
     setBusy(true); setNotice(null);
@@ -54,7 +67,7 @@ function CompaniesWorkspace() {
         <div className="settings-business-actions"><Link href="/business"><ArrowRight size={16} aria-hidden="true"/>Back to business details</Link></div>
       </div><div className="settings-hero-symbol" aria-hidden="true"><Building2 size={64} strokeWidth={1.35}/></div>
     </section>
-    <section className="business-form-shell company-list-shell" aria-labelledby="company-list-title"><div className="form-ledger-head"><div><p className="ledger-kicker">Your companies</p><h2 id="company-list-title">Switch without mixing records.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">CO</span><span>{companies.length} saved</span></div></div><ul className="company-list" aria-label="Local companies">{companies.map((company) => <li key={company.id} className={company.id === activeCompanyId ? "company-list-item company-list-item-active" : "company-list-item"}><div><strong>{company.name}</strong><span>{company.country} · {company.currency} · {company.businessType}</span></div>{company.id === activeCompanyId ? <span className="stamp stamp-ready">Active</span> : <button className="link-action" type="button" onClick={() => void switchCompany(company.id)} disabled={busy}>Use this company</button>}</li>)}</ul></section>
+    <section className="business-form-shell company-list-shell" aria-labelledby="company-list-title"><div className="form-ledger-head"><div><p className="ledger-kicker">Your companies</p><h2 id="company-list-title">Switch without mixing records.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">CO</span><span>{companies.length} saved</span></div></div><ul className="company-list" aria-label="Local companies">{companies.map((company) => <li key={company.id} className={company.id === activeCompanyId ? "company-list-item company-list-item-active" : "company-list-item"}><div><strong>{company.name}</strong><span>{company.country} · {company.currency} · {company.businessType}</span></div>{company.id === activeCompanyId ? <span className="stamp stamp-ready">Active</span> : <button className="link-action" type="button" onClick={() => void activateCompany(company.id)} disabled={busy}>Use this company</button>}</li>)}</ul></section>
     <section className="business-form-shell" aria-labelledby="add-company-title"><div className="form-ledger-head"><div><p className="ledger-kicker">New local workspace</p><h2 id="add-company-title">Add another company.</h2></div><div className="form-ledger-stamp"><span className="workspace-marker">NEW</span><span>Local only</span></div></div><form className="business-form company-create-form" onSubmit={addCompany} noValidate><label><span>Company name</span><Input value={name} onChange={(event) => setName(event.target.value)} placeholder="For example, Ama’s Catering" minLength={2} maxLength={120} required /></label><label><span>Business type</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value)}>{businessTypes.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><div className="form-grid-two"><label><span>Country</span><select value={country} onChange={(event) => changeCountry(event.target.value)}>{countries.map((item) => <option key={item.value} value={item.value}>{item.value}</option>)}</select></label><label><span>Currency</span><select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div><div className="form-save-row"><p className="form-save-note" role="status" aria-live="polite">{notice ?? "The new company starts with an empty local ledger."}</p><button className="primary-action" type="submit" disabled={busy || name.trim().length < 2}><Plus className="h-4 w-4" aria-hidden="true" />Add company</button></div></form></section>
     {profile ? <section className="business-form-shell company-clear-shell" aria-labelledby="clear-company-title"><div className="form-ledger-head"><div><p className="ledger-kicker">Danger zone</p><h2 id="clear-company-title">Clear this company from this phone.</h2><p>This permanently removes only the active company’s local records from this device. Make a fresh Backup first if you may need them later.</p></div><div className="form-ledger-stamp"><span className="workspace-marker">CLEAR</span><span>Cannot undo</span></div></div><p className="clear-backup-status" role="status">{lastBackupCompanyId === profile.id ? "Fresh backup recorded for this company." : <>A fresh backup for this company is required first. <Link href="/backup">Open Backup</Link></>}</p><label><span>Type “{profile.name}” to confirm</span><Input value={clearName} onChange={(event) => setClearName(event.target.value)} placeholder={profile.name} autoComplete="off" disabled={busy} /></label><button className="danger-action" type="button" onClick={() => void clearActive()} disabled={busy || lastBackupCompanyId !== profile.id || clearName.trim() !== profile.name.trim()}>Clear {profile.name} from this phone</button></section> : null}
     <Link className="back-link" href="/business">Back to business details</Link>
