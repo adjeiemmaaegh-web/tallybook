@@ -72,6 +72,7 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
   const [chosen, setChosen] = useState("");
   const [resetPins, setResetPins] = useState<Record<string, string>>({});
   const [confirmDisable, setConfirmDisable] = useState<string | null>(null);
+  const [confirmRoleChange, setConfirmRoleChange] = useState<string | null>(null);
   const [float, setFloat] = useState("0");
   const [count, setCount] = useState("");
   const [cashPreview, setCashPreview] = useState<{ expectedCashMinor: number; movementMinor: number } | null>(null);
@@ -110,7 +111,7 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
 
   useEffect(() => {
     void refresh();
-    const onSession = () => { setAudit([]); void refresh(); };
+    const onSession = () => { setAudit([]); setUnlockPin(""); setNewPin(""); setResetPins({}); void refresh(); };
     window.addEventListener(STAFF_SESSION_CHANGED, onSession);
     return () => {
       ++loadGeneration.current;
@@ -209,7 +210,7 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
         </div>
         {unlocked ? <div className="settings-card-body">
           <div className="settings-identity"><span className="settings-avatar">{activeMember?.name.slice(0, 1).toUpperCase() ?? "✓"}</span><div><strong>{activeMember?.name ?? "Verified staff"}</strong><span>{activeMember?.role ?? "Staff"} · Signed in on this device</span></div><StaffStatus active /></div>
-          <button type="button" className="settings-btn settings-btn-outline" onClick={() => { lockStaff(companyId); setUnlocked(false); setAudit([]); }} disabled={busy}><LockKeyhole size={16}/>Lock this session</button>
+          <button type="button" className="settings-btn settings-btn-outline" onClick={() => { lockStaff(companyId); setUnlocked(false); setAudit([]); setNewPin(""); setUnlockPin(""); setResetPins({}); }} disabled={busy}><LockKeyhole size={16}/>Lock this session</button>
           <div className="settings-inline-actions">
             <button type="button" className="settings-btn settings-btn-subtle" disabled={busy} onClick={() => void run(() => enrollStaffAuthenticator(), "Device unlock registered.")}><Fingerprint size={17}/>Register device unlock</button>
             {activeMember?.hasAuthenticator && <button type="button" className="settings-btn settings-btn-subtle" disabled={busy} onClick={() => void run(() => revokeStaffAuthenticator(activeMember.id), "Device unlock removed.")}>Remove device unlock</button>}
@@ -220,7 +221,7 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
             <label className="settings-field"><span>Staff PIN</span><input aria-label="Staff PIN" type="password" inputMode="numeric" autoComplete="off" placeholder="Enter 6–12 digits" value={unlockPin} onChange={(event) => setUnlockPin(event.target.value)} disabled={busy}/></label>
             <div className="settings-inline-actions">
               <button type="button" className="settings-btn settings-btn-primary" disabled={busy || !chosen || !validUnlockPin} onClick={unlockWithPin}><KeyRound size={17}/>Unlock with PIN</button>
-              <button type="button" className="settings-btn settings-btn-outline" disabled={busy || !chosen || !people.find((person) => person.id === chosen)?.hasAuthenticator} onClick={() => void run(() => unlockStaffWithAuthenticator(chosen), "Staff session unlocked.")}><Fingerprint size={17}/>Use device unlock</button>
+              <button type="button" className="settings-btn settings-btn-outline" disabled={busy || !chosen || !people.find((person) => person.id === chosen)?.hasAuthenticator} onClick={() => void run(async () => { await unlockStaffWithAuthenticator(chosen); setUnlockPin(""); }, "Staff session unlocked.")}><Fingerprint size={17}/>Use device unlock</button>
             </div>
           </>}
         </div>}
@@ -260,14 +261,21 @@ function StaffWorkspace({ companyId }: { companyId: string }) {
             </div>
             {editable && <div className="settings-team-editor">
               <div className="settings-team-actions">
-                {person.disabledAt ? <button type="button" className="settings-btn settings-btn-outline" disabled={busy} onClick={() => void run(() => changeStaffStatus(person.id, true), person.name + " enabled.")}>Enable account</button> :
+                {person.disabledAt ? <button type="button" className="settings-btn settings-btn-outline" disabled={busy} onClick={() => void run(() => changeStaffStatus(person.id, false), person.name + " enabled.")}>Enable account</button> :
                   confirmDisable === person.id ? <><span className="settings-confirm-text">Disable {person.name}?</span>
-                    <button type="button" className="settings-btn settings-btn-danger" disabled={busy} onClick={() => { setConfirmDisable(null); void run(() => changeStaffStatus(person.id, false), person.name + " disabled."); }}>Confirm disable</button>
+                    <button type="button" className="settings-btn settings-btn-danger" disabled={busy} onClick={() => { setConfirmDisable(null); void run(() => changeStaffStatus(person.id, true), person.name + " disabled."); }}>Confirm disable</button>
                     <button type="button" className="settings-btn settings-btn-subtle" onClick={() => setConfirmDisable(null)}>Cancel</button></> :
                   <button type="button" className="settings-btn settings-btn-outline" disabled={busy} onClick={() => setConfirmDisable(person.id)}><ShieldOff size={16}/>Disable account</button>}
-                <button type="button" className="settings-btn settings-btn-subtle" disabled={busy} onClick={() => void run(() => changeStaffRole(person.id, person.role === "cashier" ? "supervisor" : "cashier"), "Staff role updated.")}>
+                {confirmRoleChange === person.id ? <>
+                  <span className="settings-confirm-text">Change {person.name} to {person.role === "cashier" ? "supervisor" : "cashier"}? This resets custom permissions to the new role defaults.</span>
+                  <button type="button" className="settings-btn settings-btn-primary" disabled={busy} onClick={() => {
+                    setConfirmRoleChange(null);
+                    void run(() => changeStaffRole(person.id, person.role === "cashier" ? "supervisor" : "cashier"), "Staff role updated.");
+                  }}>Confirm role change</button>
+                  <button type="button" className="settings-btn settings-btn-subtle" onClick={() => setConfirmRoleChange(null)}>Cancel</button>
+                </> : <button type="button" className="settings-btn settings-btn-subtle" disabled={busy} onClick={() => setConfirmRoleChange(person.id)}>
                   {person.role === "cashier" ? "Promote to supervisor" : "Change to cashier"}
-                </button>
+                </button>}
               </div>
               <details className="settings-team-details"><summary><ShieldCheck size={16}/>Role permissions <ChevronRight size={15} aria-hidden="true"/></summary>
                 <p className="settings-field-hint">Permissions can only be reduced or restored within this person's role. Changes take effect on this device.</p>
