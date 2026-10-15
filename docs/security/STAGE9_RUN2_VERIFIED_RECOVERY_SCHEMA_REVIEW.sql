@@ -66,9 +66,12 @@ create table if not exists public.company_recovery_verified_evidence (
     (status='pending' and backup_manifest_sha256 is null and
       restore_receipt_sha256 is null and transfer_review_sha256 is null)
     or (status in ('verified','consumed') and
-      ((kind='verified-restore' and backup_manifest_sha256 ~ '^[a-f0-9]{64}$' and
+      ((kind='verified-restore' and backup_manifest_sha256 is not null and
+        restore_receipt_sha256 is not null and
+        backup_manifest_sha256 ~ '^[a-f0-9]{64}$' and
         restore_receipt_sha256 ~ '^[a-f0-9]{64}$')
-        or (kind='approved-transfer' and transfer_review_sha256 ~ '^[a-f0-9]{64}$')))
+        or (kind='approved-transfer' and transfer_review_sha256 is not null and
+           transfer_review_sha256 ~ '^[a-f0-9]{64}$')))
     or status='revoked'
   )
 );
