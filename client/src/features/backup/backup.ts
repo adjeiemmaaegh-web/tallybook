@@ -122,7 +122,15 @@ export async function recordBackupExportedAt(value = new Date().toISOString(), d
   return value;
 }
 
-export async function createBackup(database: TallybookDB = db): Promise<TallybookBackup> {
+/** Export is a TWO-DATABASE read. Hold the exclusive origin-wide Web Lock
+ * across main IndexedDB and assistant queries so no cooperating writer can
+ * change either snapshot halfway through the export. If Web Locks are absent
+ * fail closed rather than claim a coherent portable backup. */
+export function createBackup(database: TallybookDB = db): Promise<TallybookBackup> {
+  return withCrossTabDataLock('exclusive',()=>createBackupWhileLocked(database));
+}
+
+async function createBackupWhileLocked(database: TallybookDB): Promise<TallybookBackup> {
   await database.open();
   const activeId = getActiveBusinessProfileId();
   const records = await database.transaction("r", database.tables, async () => {
@@ -136,8 +144,16 @@ export async function createBackup(database: TallybookDB = db): Promise<Tallyboo
     }));
     return Object.fromEntries(entries) as BackupRecords;
   });
+  // These three assistant queries now run while the same exclusive lock is
+  // held as the main retail read. The source tables are left untouched.
   const assistant = { workflows: await listStoredWorkflows(activeId), aliases: await listStoredAliases(activeId), history: await listAllAssistantHistoryForBackup(activeId) };
+  if(activeId!==getActiveBusinessProfileId())
+    throw new Error("Company changed during coordinated backup. No export was created.");
   await requirePermission("staff", database, activeId);
+  // A backup must not escape after a competing interrupted restore, including
+  // failures between the main DB and assistant DB reads.
+  if(await database.appMeta.get(RESTORE_JOURNAL_KEY))
+    throw new Error("An interrupted restore needs recovery before backup export.");
   return { kind: BACKUP_KIND, formatVersion: BACKUP_FORMAT_VERSION, createdAt: new Date().toISOString(), databaseSchemaVersion: DATABASE_SCHEMA_VERSION, assistant, records };
 }
 
