@@ -177,3 +177,14 @@ Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security
 ### Run 2 verification follow-up — pending evidence safeguards (2026-10-15)
 
 Source review caught an unsafe evidence-table default and corrected it before any deployment: newly created recovery evidence now starts as `pending`, with a separate explicit review transition required for `verified` status. The issuer rejects pending/revoked/consumed records; SQL schema guards check that there is no implicit verification. The rerun recorded **20/20 focused Node 22 tests passing**, log SHA-256 `393f70e3d4de869368494c3429c8151371b487d66a4a162bdfef634497d36f4d`. No genuine evidence issuance, independent backup/restore drill, reviewer provisioning, real PostgreSQL migration or full release QA was executed. **Run 2 NOT PASSED; Stage 9 Round 1 PARTIAL; commercial release NO-GO.**
+
+
+## V19 Run 2 continuation — ownership session revocation inside transactions (2026-10-15)
+
+**Root cause:** Before this increment, local-company cloud binding and owner transfer relied solely on the outer Supabase session resolver, leaving a revocation gap before an otherwise authorized SERIALIZABLE database mutation. Recovery-approval issuance had already been strengthened, but binding/transfer had not.
+
+**Correction:** The trusted ownership service now requires `sessionId` with `userId` from server-verified Supabase Auth; before reading the company or its membership, it calls a live `auth.sessions` row check **inside the same serializable transaction**. The PostgreSQL ownership adapter reuses the existing expiry-aware parameterized `FOR SHARE` session lookup from the recovery-approval adapter. This does not accept a browser-selected company/owner or confer access without an approved recovery record.
+
+**Verification scope:** Added six unexecuted native regression cases across ownership service, transaction adapter and private coordinator. Executed **8/8 isolated JavaScript V8 behavior checks against exact committed code** (six negative/SQL, two positive; first harness's stale reference errors were corrected) and **5/5 isolated syntax parses** of changed JS/test files. These are not the full Node/Vitest/type/build/browser/real-DB test matrix and are not acceptance evidence for the final branch SHA. Prior recovery-evidence 20/20 local Node results apply to an earlier commit only.
+
+**Release controls:** V19 Run 2 **OPEN / NOT PASSED**; Stage 9 Round 1 **PARTIAL**; 47-blocker / 82-acceptance-unit historical registers unchanged. No migration, live Supabase access, production route, cloud sync, payment, staging, merge to `main` or deployment authorization.
