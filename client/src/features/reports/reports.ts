@@ -124,6 +124,7 @@ export async function getReportsSnapshot(period: ReportPeriod, now = new Date(),
   const debts = debtRows(sales, repayments, reversals, customers);
   const receivedMinor = [...filteredPayments, ...filteredRepayments].reduce((sum, payment) => sum + payment.amountMinor, 0) + filteredReversals.reduce((sum, reversal) => sum + reversal.reversedReceivedMinor + (sales.find(sale => sale.id === reversal.originalSaleId)?.walletAppliedMinor ?? 0), 0) + walletTransfers.filter(t=>inRange(t.createdAt,range)).reduce((sum,t)=>sum+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0);
   assertCompanyScope(company, getActiveBusinessProfileId());
+  await requirePermission("reports",database,company);
   return { range, sales: salesRows(filteredSales, customerById), payments: paymentRows(filteredPayments, filteredRepayments, customerById), debts, inventory: inventoryRows(products), totals: { salesMinor: filteredSales.reduce((sum, sale) => sum + sale.totalMinor, 0) + filteredReversals.reduce((sum, reversal) => sum + reversal.reversedSaleTotalMinor, 0), receivedMinor, outstandingDebtMinor: debts.reduce((sum, debt) => sum + debt.outstandingMinor, 0), transactionCount: filteredSales.length } };
 }
 
@@ -150,6 +151,7 @@ export async function getDashboardSummary(now = new Date(), database: TallybookD
     return { dateKey: localDateKey(day), label: readableDay(day), salesMinor: daySales.reduce((sum, sale) => sum + sale.totalMinor, 0), transactions: daySales.length };
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
+  await requirePermission("reports",database,company);
   return { generatedAt: now.toISOString(), todaySalesMinor: today.totals.salesMinor, todayMoneyReceivedMinor: today.totals.receivedMinor, outstandingDebtMinor: today.totals.outstandingDebtMinor, todayTransactions: today.totals.transactionCount, lowStockProducts: today.inventory.filter((product) => product.isLowStock), recentSales: today.sales.slice(0, 5), bestSeller, recentActivity, trend };
 }
 
@@ -163,6 +165,7 @@ export async function getBusinessHealthSummary(period: ReportPeriod, now = new D
     return { category, label: expenseCategoryLabels[category], amountMinor: categoryExpenses.reduce((sum, expense) => sum + expense.amountMinor, 0), count: categoryExpenses.length };
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
+  await requirePermission("reports",database,company);
   return {
     generatedAt: now.toISOString(), range: reports.range, salesMinor: reports.totals.salesMinor, moneyCollectedMinor: reports.totals.receivedMinor,
     outstandingDebtMinor: reports.totals.outstandingDebtMinor, expensesMinor: filteredExpenses.reduce((sum, expense) => sum + expense.amountMinor, 0),
@@ -185,6 +188,7 @@ export async function getEndOfDaySummary(now = new Date(), database: TallybookDB
     receivedMinor: method === "credit" ? 0 : todayPayments.filter((payment) => payment.method === method).reduce((sum, payment) => sum + payment.amountMinor, 0) + todayRepayments.filter((repayment) => repayment.method === method).reduce((sum, repayment) => sum + repayment.amountMinor, 0),
   }));
   assertCompanyScope(company, getActiveBusinessProfileId());
+  await requirePermission("reports",database,company);
   return {
     generatedAt: now.toISOString(),
     dateLabel: new Intl.DateTimeFormat(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(now),

@@ -71,8 +71,12 @@ function detail(purchase: Purchase, lines: PurchaseLine[]): PurchaseDetail { ret
 
 export async function getPurchasesSnapshot(database: TallybookDB = db): Promise<PurchasesSnapshot> {
   const activeId = getActiveBusinessProfileId();
-  const [allSupplierRecords, allPurchases, allLines] = await database.transaction("r", [database.suppliers, database.purchases, database.purchaseLines], async () => Promise.all([database.suppliers.toArray(), database.purchases.orderBy("createdAt").reverse().toArray(), database.purchaseLines.toArray()]));
+  const [allSupplierRecords, allPurchases, allLines] = await database.transaction("r", [database.suppliers, database.purchases, database.purchaseLines, database.staffMembers], async () => {
+    await requirePermission("inventory",database,activeId);
+    return Promise.all([database.suppliers.toArray(), database.purchases.orderBy("createdAt").reverse().toArray(), database.purchaseLines.toArray()]);
+  });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
+  await requirePermission("inventory",database,activeId);
   const allSuppliers = allSupplierRecords.filter((supplier) => supplier.businessProfileId === activeId).sort((left, right) => left.name.localeCompare(right.name));
   const purchases = allPurchases.filter((purchase) => purchase.businessProfileId === activeId);
   const lines = allLines.filter((line) => line.businessProfileId === activeId);

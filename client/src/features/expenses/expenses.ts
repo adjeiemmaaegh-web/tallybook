@@ -93,6 +93,12 @@ export async function createExpense(values: CreateExpenseInput, database: Tallyb
 }
 
 export async function listExpenses(database: TallybookDB = db) {
-  const records = await database.expenses.where("businessProfileId").equals(getActiveBusinessProfileId()).toArray();
+  const company=getActiveBusinessProfileId();
+  const records=await database.transaction("r",[database.expenses,database.staffMembers],async()=>{
+    await requirePermission("reports",database,company);
+    return database.expenses.where("businessProfileId").equals(company).toArray();
+  });
+  if(company!==getActiveBusinessProfileId())throw Error("Company changed during expense review.");
+  await requirePermission("reports",database,company);
   return records.sort((left, right) => right.expenseDate.localeCompare(left.expenseDate) || right.createdAt.localeCompare(left.createdAt));
 }
