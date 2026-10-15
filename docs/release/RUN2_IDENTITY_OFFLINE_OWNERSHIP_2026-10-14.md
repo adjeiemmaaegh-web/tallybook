@@ -19,3 +19,9 @@ The current default `GoogleSignInPage.tsx` uses Supabase OAuth/session APIs, whi
 - CI types/client/browser/offline tests must pass on the **exact final Run 2 commit**.
 
 No production OAuth switch, schema migration, cloud write, deployment, payment or destructive data operation was performed.
+
+## Run 2 continuation — transaction-bound recovery evidence (2026-10-15)
+
+A separate review-only increment implements transaction-bound, one-use recovery evidence consumption under a private PostgreSQL adapter. The issuer now requires current Supabase `auth.sessions` status and an active independent reviewer inside the same SERIALIZABLE transaction as ownership approval, conditional evidence consumption, and reviewer audit. The proposed additive SQL defaults new evidence to `pending`; merely inserting SHA-256-shaped receipt strings does **not** constitute a verified backup/restore drill. See `docs/release/RUN2_TRANSACTIONAL_RECOVERY_EVIDENCE_REVIEW_2026-10-15.md`.
+
+Focused Node 22.16.0 regression tests: **20/20 pass** on isolated SQL/memory doubles. This is *not* the full V19 CI suite or real Supabase/PostgreSQL integration. The privileged reviewer/evidence promotion mechanism, genuine independently verified restore evidence, opt-in API, explicit local account binding, exact-head full test matrix and two-account/tenant acceptance remain missing. **Run 2 OPEN / NOT PASSED; Stage 9 Round 1 PARTIAL; NO-GO.** No changes to production or release registers.
