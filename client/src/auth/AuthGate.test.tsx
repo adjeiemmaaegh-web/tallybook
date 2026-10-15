@@ -4,7 +4,7 @@ import {AuthGate} from './AuthGate';
 import {useRun4CloudSession} from './useRun4CloudSession';
 
 const mock=vi.hoisted(()=>({location:'/',retry:vi.fn(),state:{
- status:'checking',userId:null,expiresAtEpochMs:null,generation:0}}));
+ status:'checking' as string,userId:null as string|null,expiresAtEpochMs:null as number|null,generation:0}}));
 vi.mock('wouter',()=>({
  useLocation:()=>[mock.location,vi.fn()],
  Redirect:({to}:{to:string})=><span>Redirect to {to}</span>
