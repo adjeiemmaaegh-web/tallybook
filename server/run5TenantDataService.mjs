@@ -81,6 +81,7 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
     if(!validId(input?.companyId)||!validCollection(collection)||
        (id!==null&&!validRecord(id)))deny();
   };
+  const SAFE_METADATA_WRITES=new Set(['assistant']);
   const withScope=async ({session,companyId},collection,kind,callback)=>{
     context({companyId},collection);
     const actor=await principal(session);
@@ -122,6 +123,7 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
     list:listScoped,
     async put(input){
       const {companyId,collection,id,payload,expectedRevision}=input;
+      if(!SAFE_METADATA_WRITES.has(collection))deny();
       context(input,collection,id);
       if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)deny();
       assertScope(payload,companyId);
@@ -136,6 +138,7 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
     },
     async remove(input){
       const {companyId,collection,id,expectedRevision}=input;
+      if(!SAFE_METADATA_WRITES.has(collection))deny();
       context(input,collection,id);
       if(!Number.isSafeInteger(expectedRevision)||expectedRevision<1)deny();
       return withScope(input,collection,'write',async(tx,auth)=>{
@@ -152,6 +155,8 @@ export function createRun5TenantDataService({resolveSession,store,clock=Date.now
     },
     async importRows(input){
       const {companyId,collection,rows}=input??{};
+      // No generic import of finance, stock or customer records in Run 5.
+      if(!SAFE_METADATA_WRITES.has(collection))deny();
       context(input,collection);
       if(!Array.isArray(rows)||rows.length<1||rows.length>MAX_IMPORT)deny();
       const seen=new Set();
