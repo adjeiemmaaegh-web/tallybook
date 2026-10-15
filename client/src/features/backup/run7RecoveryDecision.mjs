@@ -4,7 +4,7 @@
  * unexpected assistant edits.
  */
 import {assistantSnapshotsEqual} from './restoreJournal.mjs';
-const deny=()=>{throw Error('Assistant recovery state is ambiguous. Preserve this device and journal for manual reconciliation.');};
+const deny=()=>{throw Error('Pending recovery found unexpected assistant edits; assistant recovery state is ambiguous. Preserve this device and journal for manual reconciliation.');};
 export function classifyPendingAssistantRecovery(journal,current){
   if(!journal||typeof journal!=='object'||!current||typeof current!=='object'||
     !journal.before||!['backup-restore','company-clear',undefined].includes(journal.operation))
