@@ -14,6 +14,22 @@ export async function getCurrentBusiness(businessId?: string): Promise<CloudBusi
   return data as CloudBusiness | null;
 }
 
+/** Read only the businesses exposed by canonical membership RLS.
+ * Choosing a cloud business never switches or binds a local IndexedDB company.
+ */
+export async function listAccessibleCloudBusinesses(): Promise<CloudBusiness[]> {
+  const client = getSupabaseClient();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) throw new Error("Sign in before listing cloud businesses.");
+  const { data, error } = await client.from("businesses")
+    .select("id,name,owner_id,created_at,updated_at").order("created_at").limit(100);
+  if (error || !Array.isArray(data)) throw new Error("Could not list your cloud businesses.");
+  if (data.some(row => typeof row?.id !== "string" ||
+      typeof row?.name !== "string" || typeof row?.owner_id !== "string"))
+    throw new Error("Invalid cloud membership list.");
+  return data as CloudBusiness[];
+}
+
 /** The caller supplies a stable UUID so a retried creation cannot duplicate a shop. */
 export async function createBusiness(name: string, requestId: string): Promise<CloudBusiness> {
   if (!name.trim() || name.trim().length > 80) throw new Error("Enter a business name of 1–80 characters.");
