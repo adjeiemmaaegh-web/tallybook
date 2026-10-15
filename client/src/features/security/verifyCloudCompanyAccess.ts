@@ -38,6 +38,10 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
     throw new Error("Company access is not authorized.");
   if (session.expires_at <= 0 || session.expires_at > Math.floor(Number.MAX_SAFE_INTEGER / 1000))
     throw new Error("Company access is not authorized.");
+  if (session.expires_at * 1000 <= Date.now()) throw new Error("Company access is not authorized.");
+  const initiatingToken = session.access_token;
+  if (typeof initiatingToken !== "string" || initiatingToken.length < 20)
+    throw new Error("Company access is not authorized.");
   const principal: VerifiedCompanyPrincipal = {
     userId: userData.user.id,
     expiresAtEpochMs: session.expires_at * 1000,
@@ -67,8 +71,11 @@ export async function verifyCloudCompanyAccess(companyId: string, action: Compan
   // A sign-out or user change may occur while membership is being fetched.
   // Recheck the current authenticated account before returning this snapshot.
   // Callers must still repeat authorization at each sensitive service write.
+  const { data: finalUser, error: finalUserError } = await client.auth.getUser();
   const { data: finalSession, error: finalSessionError } = await client.auth.getSession();
-  if (finalSessionError || !finalSession.session ||
+  if (finalUserError || finalUser.user?.id !== principal.userId ||
+      finalSessionError || !finalSession.session ||
+      finalSession.session.access_token !== initiatingToken ||
       finalSession.session.user.id !== principal.userId ||
       typeof finalSession.session.expires_at !== "number" ||
       !Number.isSafeInteger(finalSession.session.expires_at) ||
