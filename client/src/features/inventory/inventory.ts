@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger design reminder: stock is never silently overwritten—every quantity change leaves a clear local movement record. */
@@ -171,7 +172,8 @@ export async function createCategory(values: CategoryFormValues, database: Tally
     const now = new Date().toISOString();
     const normalizedName = normalizeName(input.name);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.categories, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.categories, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.categories.where("normalizedName").equals(normalizedName).and((category) => category.businessProfileId === activeId && !category.archivedAt).first();
     if (duplicate) throw new Error("A category with this name already exists.");
@@ -206,7 +208,8 @@ export async function createProduct(values: ProductFormValues, currency: string,
     const normalizedName = normalizeName(input.name);
     const initialStock = Number(input.initialStock);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
     if (duplicate) throw new Error("An active product with this name already exists.");
@@ -236,7 +239,8 @@ export async function updateProduct(productId: string, values: ProductFormValues
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
     const input = productFormSchema.parse(values);
-    return database.transaction("rw", [database.products, database.categories, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, company);
     const existing = await database.products.get(productId);
     if (!existing || existing.businessProfileId !== company || existing.archivedAt) throw new Error("This product is no longer active.");
@@ -262,7 +266,8 @@ export async function updateProduct(productId: string, values: ProductFormValues
 export async function archiveProduct(productId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.products, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is already archived or unavailable.");
@@ -283,7 +288,8 @@ export async function adjustStock(productId: string, values: StockAdjustmentValu
 async function adjustStockWhileLocked(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
   const input = stockAdjustmentSchema.parse(values);
   const company = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is unavailable for adjustment.");
