@@ -30,7 +30,7 @@ export function createRun5TenantService({resolveSession,store,clock=Date.now,fea
       if(!Number.isSafeInteger(limit)||limit<1||limit>200)deny();
       return transact({session,companyId,domain,recordId,action:'read'},
         async(tx,ctx)=>Object.freeze({companyId,domain,rows:assertRun5ScopedRows(
-          await tx.readRecords({companyId,domain,recordId,limit}),companyId,{max:limit})}));
+          await tx.readRecords({companyId,domain,recordId,limit}),companyId,{max:limit,domain})}));
     },
     async writeMetadata({session,companyId,domain,recordId,data,expectedRevision=0}){
       if(!['catalog','assistant'].includes(domain)||!uuid.test(recordId??'')||
@@ -68,7 +68,7 @@ export function createRun5TenantService({resolveSession,store,clock=Date.now,fea
       if(features.backup!==true)deny();
       return transact({session,companyId,domain,action:'backup'},async(tx,ctx)=>{
         const rows=assertRun5ScopedRows(await tx.readRecords({
-          companyId,domain,recordId:null,limit:200}),companyId,{max:200});
+          companyId,domain,recordId:null,limit:200}),companyId,{max:200,domain});
         await audit(tx,ctx);
         return Object.freeze({companyId,domain,rows,complete:false});
       });
@@ -93,7 +93,7 @@ export function createRun5TenantService({resolveSession,store,clock=Date.now,fea
       if(features.assistant!==true)deny();
       return transact({session,companyId,domain,action:'assistant'},async(tx,ctx)=>{
         const context=assertRun5ScopedRows(await tx.readRecords({
-          companyId,domain,recordId:null,limit:50}),companyId,{max:50});
+          companyId,domain,recordId:null,limit:50}),companyId,{max:50,domain});
         await audit(tx,ctx);
         return Object.freeze({companyId,domain,context,externalInferenceEnabled:false});
       });
