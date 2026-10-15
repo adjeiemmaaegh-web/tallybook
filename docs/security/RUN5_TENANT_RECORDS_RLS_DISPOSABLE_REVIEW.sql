@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS public.company_tenant_records (
     'catalog','inventory','orders','customers','sales','payments','suppliers',
     'purchases','expenses','receivables','wallet','staff','stores','assistant',
     'audit','products','sale-lines','ledger','reports','backups','sync')),
-  record_id text NOT NULL CHECK (record_id ~ '^[A-Za-z0-9:_-]{1,128}
-  revision integer NOT NULL CHECK(revision>0),
+  record_id text NOT NULL CHECK (record_id ~ '^[A-Za-z0-9:_-]{1,128}$'),
+  revision bigint NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
   payload jsonb NOT NULL CHECK(jsonb_typeof(payload)='object' AND
     octet_length(payload::text)<=32768),
   updated_at timestamptz NOT NULL DEFAULT now(),
