@@ -87,3 +87,26 @@ test('file receipt never stores the entire encrypted file or passphrase',()=>{
  assert.doesNotMatch(receipt,/passphrase|localStorage|sessionStorage/);
  assert.match(receipt,/sha256:receipt\.sha256/);
 });
+
+test('legacy lastBackupAt is not treated as a verified-file readiness signal',()=>{
+ const b=backup();
+ const getter=b.slice(b.indexOf('export async function getVerifiedBackupReceipt'),
+   b.indexOf('export function recordBackupExportedAt'));
+ assert.match(getter,/RUN8_VERIFIED_RECEIPT_KEY/);
+ assert.match(getter,/parseRun8VerifiedReceipt/);
+ assert.doesNotMatch(getter,/database\.appMeta\.get\("lastBackupAt"\)/);
+});
+test('verification recording consumes the exact successful file SHA-256',()=>{
+ const code=page();
+ assert.match(code,/recordBackupExportedAt\([\s\S]*?proof\.createdAt,db,proof\.companyId,proof\.sha256\)/);
+ assert.match(backup(),/serializeRun8VerifiedReceipt\(/);
+ assert.match(backup(),/verifiedSha256/);
+});
+test('restoring or deleting a business cannot keep its stale verified-file marker',()=>{
+ const b=backup();
+ assert.match(b,/await database\.appMeta\.delete\(RUN8_VERIFIED_RECEIPT_KEY\)/);
+ const clear=source('client/src/features/business/activeCompany.ts');
+ assert.match(clear,/parseRun8VerifiedReceipt/);
+ assert.match(clear,/proof\.companyId===companyId/);
+ assert.match(clear,/database\.appMeta\.delete\(RUN8_VERIFIED_RECEIPT_KEY\)/);
+});
