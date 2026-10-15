@@ -23,8 +23,9 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
 
   const authenticatedUser = async session => {
     const principal = await resolveSession(session);
-    if (principal?.active !== true || !validUuid(principal.userId)) denied();
-    return principal.userId;
+    if (principal?.active !== true || !validUuid(principal.userId) ||
+        !validUuid(principal.sessionId)) denied();
+    return Object.freeze({userId:principal.userId,sessionId:principal.sessionId});
   };
   const getNow = () => {
     const now = clock();
@@ -32,7 +33,7 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
     return now;
   };
   const assertMethods = tx => {
-    for (const method of ['getCompany','getMembership','getStore','getInvitation',
+    for (const method of ['assertActiveSession','getCompany','getMembership','getStore','getInvitation',
       'insertInvitation','consumeInvitation','insertGrant','getGrant','revokeGrant','appendAudit']) {
       if (typeof tx?.[method] !== 'function') denied();
     }
@@ -60,7 +61,8 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
     /** Owner authorizes a specific member to enroll in an existing active store. */
     async issueInvite({session, companyId, storeId, targetUserId}) {
       if (!validUuid(companyId) || !validUuid(targetUserId) || !validStoreId(storeId)) denied();
-      const actorId = await authenticatedUser(session);
+      const actor = await authenticatedUser(session);
+      const actorId = actor.userId;
       const now = getNow();
       const token = randomInvite();
       if (typeof token !== 'string' || !INVITE_RE.test(token)) denied();
@@ -71,6 +73,7 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
         tokenDigest,expiresAt:now+INVITATION_LIFETIME_MS,status:'unused',createdAt:now});
       await store.transaction(async tx => {
         assertMethods(tx);
+        if (await tx.assertActiveSession(actor.sessionId,actorId,now) !== true) denied();
         const company = await assertCompanyAndStore(tx, companyId, storeId);
         await requireOwner(tx, company, actorId);
         await requireMember(tx, companyId, targetUserId);
@@ -85,13 +88,15 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
     /** Intended member independently signs in, then consumes the one-use token. */
     async redeemInvite({session, token}) {
       if (typeof token !== 'string' || !INVITE_RE.test(token)) denied();
-      const actorId = await authenticatedUser(session);
+      const actor = await authenticatedUser(session);
+      const actorId = actor.userId;
       const now = getNow();
       const tokenDigest = digest(token);
       const grantId = randomGrantId();
       if (!validUuid(grantId)) denied();
       return store.transaction(async tx => {
         assertMethods(tx);
+        if (await tx.assertActiveSession(actor.sessionId,actorId,now) !== true) denied();
         const invite = await tx.getInvitation(tokenDigest);
         if (!invite || invite.tokenDigest !== tokenDigest || invite.status !== 'unused' ||
             invite.targetUserId !== actorId || !validUuid(invite.companyId) ||
@@ -119,10 +124,12 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
     /** Owner can revoke any grant within their company, with audit. */
     async revokeGrant({session, companyId, grantId}) {
       if (!validUuid(companyId) || !validUuid(grantId)) denied();
-      const actorId = await authenticatedUser(session);
+      const actor = await authenticatedUser(session);
+      const actorId = actor.userId;
       const now = getNow();
       return store.transaction(async tx => {
         assertMethods(tx);
+        if (await tx.assertActiveSession(actor.sessionId,actorId,now) !== true) denied();
         const grant = await tx.getGrant(companyId, grantId);
         if (!grant || grant.id !== grantId || grant.companyId !== companyId ||
             !validStoreId(grant.storeId) || grant.status !== 'active') denied();
