@@ -104,3 +104,10 @@ Following the owner's superseding directive, V19 **Run 4** was implemented as a 
 Run 4 implements cloud-only, verified Supabase AuthGate; sign-in/out/account switching; fail-closed timer/refresh, revoked-session and pending-operation handling; protected read-only private auth.sessions probe with default-off runtime; and guarantees offline ledger routes remain usable without cloud auth. Related Run 2/3 cloud request clients reject responses after account/token changes. Authored **22** controller plus **7** server native-style cases, with **29/29** passed in isolated V8 harness, and 10 authored, unexecuted React/Vitest cases. See `docs/release/RUN4_AUTH_SESSION_FULL_INCREMENT_2026-10-16.md` for exact limitations.
 
 **Run 2 NOT PASSED; Run 3 NOT PASSED; Run 4 NOT PASSED. Stage 9 partial; commercial NO-GO.** Cloud server runtime, live DB, staging, payments and deployments remain unauthorized. Next development run under owner's cadence: V19 Run 5, tenant-scoped authorization.
+
+
+## 16 October 2026 — owner-authorized Run 5 full-source increment
+
+The owner's newer whole-run coding rule authorizes implementing the whole source scope of successive V19 runs despite deferred external test execution, without falsely marking acceptance PASS. Draft `v19/run5-tenant-service-authorization-20261016` continues from Run 4 and adds canonical live-session/member tenant guards around cloud data reads, optimistic owner-only metadata writes, report/export, backup/import/assistant/sync preview APIs, private serializable Postgres/RLS audit, disabled-by-default HTTP composition and unmounted read-only client. The proposed disposable-only schema is unapplied; generic financial/cloud POS writes remain intentionally forbidden. `docs/release/RUN5_TENANT_AUTH_FULL_INCREMENT_2026-10-16.md` documents 57/57 isolated V8 mock checks and all actual native/database/browser/deployment QA deferred.
+
+**Runs 2–5 acceptance OPEN / NOT PASSED; commercial NO-GO.** The development cadence amendment does not override accepted SHA, real Supabase RLS testing, offline preservation, independent QA or separate production approvals. Next source development Run 6.
