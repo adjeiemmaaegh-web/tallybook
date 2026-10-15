@@ -88,3 +88,10 @@ Cross-cutting: company-configured refund restrictions, Ghana/GHS and payment-met
 - No live payments, deployment, financial replication, staging, cloud schema change, branch merge or destructive operation is authorized by this roadmap reconciliation.
 
 **Decision:** V19 **Run 2 OPEN / NOT PASSED**. Stage 9 **Round 1 PARTIAL**. Overall V19 and Stage 9 commercial release **NO-GO / INCOMPLETE**.
+
+
+## Owner amendment — complete-run development, deferred acceptance (15 October 2026)
+
+The owner has explicitly changed the **development cadence**: implement an entire V19 run in one increment and, when test infrastructure is unavailable, record each unexecuted test for later rather than stopping source development. The earlier instruction in this historic crosswalk that forbade even *starting* Run 3 source development while Run 2 acceptance was open is superseded **for implementation scheduling only**. Acceptance and release tracking remain evidence-based and sequential: no Run 2 or Run 3 PASS may be claimed while their actual gates remain open, and no untested feature may be activated in production.
+
+Under this revised cadence, draft Run 3 source was developed on `v19/run3-cloud-membership-20261015`, based on draft Run 2 head `939e06de8eb313b64211beeb1c94e26859b4af5b`. Run 3 implements canonical owner/attendant invitations, one-use redemption, revoke/list operations, private PostgreSQL adapter, opt-in routes/UI, guarded isolated RLS review SQL, and authored negative tests. The exact evidence and deferred QA are in `docs/release/RUN3_CLOUD_MEMBERSHIP_FULL_INCREMENT_2026-10-15.md`. **Run 2 NOT PASSED; Run 3 NOT PASSED; Stage 9 partial; commercial NO-GO.**
