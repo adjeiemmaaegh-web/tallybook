@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createTrustedCompanyOwnershipService} from '../trustedCompanyOwnership.mjs';
 
-function fixture() {
+function fixture({expiresAtEpochMs=2000,now=1000}={}) {
   const members = new Map([
     ['co:alice',{companyId:'co',userId:'alice',role:'owner',status:'active'}],
     ['co:bob',{companyId:'co',userId:'bob',role:'attendant',status:'active'}],
@@ -12,8 +12,8 @@ function fixture() {
     ['transfer',{id:'transfer',companyId:'co',ownerId:'alice',recipientId:'bob',kind:'approved-transfer',status:'unused',expiresAt:2000}],
   ]);
   const audits = [];
-  const membershipReads = [];
-  let ownerId = 'alice';
+  const membershipReads = [], sessionReads = [];
+  let ownerId = 'alice', sessionActive = true;
   const bindings = new Map();
   // Clone-on-write models atomic transaction rollback, including audit/recovery.
   const store = {async transaction(fn) {
@@ -23,6 +23,10 @@ function fixture() {
     let nextOwner = ownerId;
     const nextBindings = new Map([...bindings].map(([k,v])=>[k,{...v}]));
     const result = await fn({
+      assertActiveSession:async(sessionId,userId,now)=>{
+        sessionReads.push([sessionId,userId,now]);
+        return sessionActive && sessionId === 'sid-'+userId && now===1000;
+      },
       getCompany:async id=>id==='co'?{id,status:'active',ownerId:nextOwner}:null,
       putCompanyOwner:async (id,userId,expectedOwnerId)=>{if(id!=='co'||nextOwner!==expectedOwnerId)throw Error('stale owner');nextOwner=userId;},
       getMembership:async(c,u)=>{ membershipReads.push([c,u]); return nextMembers.get(c+':'+u); },
@@ -42,10 +46,12 @@ function fixture() {
     return result;
   }};
   const service = createTrustedCompanyOwnershipService({
-    sessionResolver:async session => session==='alice'||session==='bob'?{userId:session,active:true}:null,
-    store,clock:()=>1000,
+    sessionResolver:async session => session==='alice'||session==='bob'
+      ?{userId:session,sessionId:'sid-'+session,active:true,expiresAtEpochMs}:null,
+    store,clock:()=>now,
   });
-  return {service,members,proofs,audits,bindings,membershipReads,getOwnerId:()=>ownerId};
+  return {service,members,proofs,audits,bindings,membershipReads,sessionReads,
+    revokeSession:()=>{sessionActive=false;},getOwnerId:()=>ownerId};
 }
 test('verified server backup proof permits one inert binding review, never grants access',async()=>{
   const f=fixture();
@@ -121,4 +127,47 @@ test('owner transfer demotes the same validated owner membership, without a seco
   assert.deepEqual(f.members.get('co:alice'),{companyId:'co',userId:'alice',role:'attendant',status:'active'});
   assert.equal(f.proofs.get('transfer').status,'consumed');
   assert.equal(f.audits.length,1);
+});
+
+test('revoked session is denied inside both ownership transactions before business records are read',async()=>{
+  for(const kind of ['bind','transfer']){
+    const f=fixture();
+    f.revokeSession();
+    const request=kind==='bind'
+      ? f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'})
+      : f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
+    await assert.rejects(request,/Company ownership operation denied/);
+    assert.deepEqual(f.sessionReads,[['sid-alice','alice',1000]]);
+    assert.equal(f.membershipReads.length,0);
+    assert.equal(f.bindings.size,0);
+    assert.equal(f.getOwnerId(),'alice');
+    assert.equal(f.audits.length,0);
+    assert.equal(f.proofs.get(kind==='bind'?'restore':'transfer').status,'unused');
+  }
+});
+
+test('session verification requires the same authenticated user and live session identifier',async()=>{
+  const f=fixture();
+  await f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'});
+  assert.deepEqual(f.sessionReads,[['sid-alice','alice',1000]]);
+});
+
+test('JWT expiry at transaction time denies binding and owner transfer even if auth.sessions remains active',async()=>{
+  for(const kind of ['bind','transfer']){
+    const f=fixture({expiresAtEpochMs:1000});
+    const request=kind==='bind'
+      ?f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'})
+      :f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
+    await assert.rejects(request,/Company ownership operation denied/);
+    assert.equal(f.sessionReads.length,0);
+    assert.equal(f.membershipReads.length,0);
+    assert.equal(f.bindings.size,0);
+    assert.equal(f.audits.length,0);
+    assert.equal(f.getOwnerId(),'alice');
+  }
+});
+test('missing JWT expiry metadata is never accepted from a custom session resolver',async()=>{
+  const f=fixture({expiresAtEpochMs:null});
+  await assert.rejects(f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'}),/Company ownership operation denied/);
+  assert.equal(f.sessionReads.length,0);
 });

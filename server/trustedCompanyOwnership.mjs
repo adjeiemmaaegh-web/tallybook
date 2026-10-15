@@ -20,20 +20,28 @@ export function createTrustedCompanyOwnershipService({sessionResolver, store, cl
   async function actor(session) {
     // resolve actor using a server-side validated and unrevoked session.
     const result = await sessionResolver(session);
-    if (!valid(result?.userId) || result?.active !== true) deny();
-    return result.userId;
+    if (!valid(result?.userId) || !valid(result?.sessionId) ||
+        result?.active !== true || !Number.isSafeInteger(result?.expiresAtEpochMs) ||
+        result.expiresAtEpochMs <= 0) deny();
+    return Object.freeze({userId:result.userId,sessionId:result.sessionId,
+      expiresAtEpochMs:result.expiresAtEpochMs});
   }
   async function operate(session, companyId, action) {
-    const userId = await actor(session);
+    const principal = await actor(session);
     if (!valid(companyId)) deny();
     return store.transaction(async tx => {
-      if (!tx || !['getCompany','getMembership','putMembership','putCompanyOwner','getRecovery','consumeRecovery','appendAudit','getBinding','putBinding','updateBindingOwner']
+      if (!tx || !['assertActiveSession','getCompany','getMembership','putMembership','putCompanyOwner','getRecovery','consumeRecovery','appendAudit','getBinding','putBinding','updateBindingOwner']
           .every(k => typeof tx[k] === 'function')) deny();
       const now = clock();
-      if (!Number.isSafeInteger(now) || now <= 0) deny();
+      // A token may expire after the outer getUser() call while awaiting a lock.
+      if (!Number.isSafeInteger(now) || now <= 0 || now >= principal.expiresAtEpochMs) deny();
+      // A prior getUser() result is insufficient for a privileged mutation.
+      // This check shares the live auth.sessions row lock with recovery approval,
+      // and must be executed inside the same serializable transaction as writes.
+      if (await tx.assertActiveSession(principal.sessionId,principal.userId,now) !== true) deny();
       const company = await tx.getCompany(companyId);
       if (company?.id !== companyId || company?.status !== 'active' || !valid(company?.ownerId)) deny();
-      return action(tx,userId,company,now);
+      return action(tx,principal.userId,company,now);
     });
   }
   return Object.freeze({

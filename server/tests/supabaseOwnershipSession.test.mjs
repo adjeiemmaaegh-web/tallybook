@@ -21,7 +21,7 @@ function fixture(){
 test('server-verified Supabase account must have active authoritative auth.session',async()=>{
   const f=fixture();
   const result=await f.resolver(token());
-  assert.deepEqual(result,{userId,sessionId:sid,active:true});
+  assert.deepEqual(result,{userId,sessionId:sid,active:true,expiresAtEpochMs:3600000});
   assert.equal(f.calls[0][0],'auth');
   assert.deepEqual(f.calls[1],['session',sid,userId,1000]);
 });
@@ -63,4 +63,10 @@ test('private database reader uses parameterized auth.sessions lookup',async()=>
 test('missing trusted authentication dependencies reject at construction',()=>{
   assert.throws(()=>createSupabaseOwnershipSessionResolver({}),/not authorized/);
   assert.throws(()=>createPostgresAuthSessionReader(null),/not authorized/);
+});
+
+test('verified token expiry is carried into the privileged transaction context',async()=>{
+  const f=fixture();
+  const result=await f.resolver(token({exp:2}));
+  assert.equal(result.expiresAtEpochMs,2000);
 });

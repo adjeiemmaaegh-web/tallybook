@@ -158,3 +158,46 @@ Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security
 
 **Production constraints:** No silent legacy-company binding, cloud sign-in requirement for offline-only customers, unauthorized global refunds/tax, live SQL re-application, production/staging deployment, financial sync/payments or merge. The owner must separately approve restricted environment tests and activation. **V19 Run 2 NOT PASSED; Stage 9 Round 1 PARTIAL; overall release NO-GO.**
 
+
+
+## V19 Run 2 — transaction-bound independent recovery verification (2026-10-15)
+
+**Branch:** `v19/run2-transactional-recovery-20261015`, stacked on Stage 9 review head `359ea1666225d802629f868c52af48ef283f2b02`. This is still a **draft**, and not a passing V19 run or deployed change.
+
+- **Root cause:** the former recovery issuer trusted reviewer/evidence callbacks checked *outside* the approval-issuance transaction. Its proof/authorization could become stale before writing the approval.
+- **Code:** recovery issuance now requires a fresh live `auth.sessions` row lock, an active authorized reviewer row, and the exact independently reviewed evidence row lock within the SAME SERIALIZABLE transaction. The record is consumed conditionally with the approval and audit; duplicate/revoked/stale/foreign proof fails closed. Server coordination no longer accepts injected callback-based reviewer/evidence claims.
+- **Review-only schema:** `docs/security/STAGE9_RUN2_VERIFIED_RECOVERY_SCHEMA_REVIEW.sql` defaults newly inserted evidence to **pending**, not verified; it proposes restrictive RLS-protected reviewer/evidence tables and restore-manifest/receipt/transfer-review digests; **not applied** to Supabase or any real database. Such digests are only record identifiers, not evidence that a genuine restore was performed. Legitimate external verification and reviewer enrollment remain missing.
+- **Executed focused QA:** local Linux Node 22.16.0 **20/20 passed, zero failures/skips** across four Run-2-focused test files. The three unchanged core dependencies and all eight changed source/test/schema files matched exact GitHub Git-blob hashes in the local test mirror. Updated rerun log SHA-256 `393f70e3d4de869368494c3429c8151371b487d66a4a162bdfef634497d36f4d`. These tests used SQL doubles/memory transactions, not real Supabase/PostgreSQL or Windows.
+- **Detailed evidence:** `docs/release/RUN2_TRANSACTIONAL_RECOVERY_EVIDENCE_REVIEW_2026-10-15.md`; owner V19 handover crosswalk remains `docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md`. No changes to 47 release blocker statuses or 82 acceptance unit statuses.
+- **Still required for Run 2:** independent proof creation and real backup/restore drill; owner confirmation and recoverable account-link UI; approved disposable database/RLS concurrency tests; real private server/Edge endpoint and rate-limit/CSRF controls; full exact-head native/client/types/build/browser/offline/audit acceptance. GitHub Actions budget/runner pre-job failures remain unresolved.
+
+**Status:** V19 **Run 2 NOT PASSED**; Stage 9 Round 1 **PARTIAL**; commercial release **NO-GO**. Do not advance to V19 Run 3 or enable any live cloud/financial function.
+
+
+### Run 2 verification follow-up — pending evidence safeguards (2026-10-15)
+
+Source review caught an unsafe evidence-table default and corrected it before any deployment: newly created recovery evidence now starts as `pending`, with a separate explicit review transition required for `verified` status. The issuer rejects pending/revoked/consumed records; SQL schema guards check that there is no implicit verification. The rerun recorded **20/20 focused Node 22 tests passing**, log SHA-256 `393f70e3d4de869368494c3429c8151371b487d66a4a162bdfef634497d36f4d`. No genuine evidence issuance, independent backup/restore drill, reviewer provisioning, real PostgreSQL migration or full release QA was executed. **Run 2 NOT PASSED; Stage 9 Round 1 PARTIAL; commercial release NO-GO.**
+
+
+## V19 Run 2 continuation — ownership session revocation inside transactions (2026-10-15)
+
+**Root cause:** Before this increment, local-company cloud binding and owner transfer relied solely on the outer Supabase session resolver, leaving a revocation gap before an otherwise authorized SERIALIZABLE database mutation. Recovery-approval issuance had already been strengthened, but binding/transfer had not.
+
+**Correction:** The trusted ownership service now requires `sessionId` with `userId` from server-verified Supabase Auth; before reading the company or its membership, it calls a live `auth.sessions` row check **inside the same serializable transaction**. The PostgreSQL ownership adapter reuses the existing expiry-aware parameterized `FOR SHARE` session lookup from the recovery-approval adapter. This does not accept a browser-selected company/owner or confer access without an approved recovery record.
+
+**Verification scope:** Added six unexecuted native regression cases across ownership service, transaction adapter and private coordinator. Executed **8/8 isolated JavaScript V8 behavior checks against exact committed code** (six negative/SQL, two positive; first harness's stale reference errors were corrected) and **5/5 isolated syntax parses** of changed JS/test files. These are not the full Node/Vitest/type/build/browser/real-DB test matrix and are not acceptance evidence for the final branch SHA. Prior recovery-evidence 20/20 local Node results apply to an earlier commit only.
+
+**Release controls:** V19 Run 2 **OPEN / NOT PASSED**; Stage 9 Round 1 **PARTIAL**; 47-blocker / 82-acceptance-unit historical registers unchanged. No migration, live Supabase access, production route, cloud sync, payment, staging, merge to `main` or deployment authorization.
+
+
+## V19 Run 2 continuation — transaction-time JWT expiry (15 October 2026)
+
+Review-only security hardening was committed to draft PR #13: the verified Supabase JWT expiration is now propagated by `server/supabaseOwnershipSession.mjs`, and the private company-binding, owner-transfer and recovery-approval services deny authorization when the transaction starts at or after the JWT deadline, even if `auth.sessions` has not yet expired. The previous transaction-bound session lock remains mandatory.
+
+Four new `node:test` regression cases were authored; **native Node execution remains unverified**. Six isolated V8 checks of proposed source passed before commit; the **52 checked-in test cases** across six native-test modules were executed on exact source/test checkpoint `159adbed868ef9503553ce0744b4fcb8d704eba3` through a **V8 compatibility harness**, passing **52/52** after harness repairs. This is **not** Node/CI, real Supabase/PostgreSQL, backup/restore or release acceptance. GitHub Actions run `38773123967` failed before steps; the exact final-head full suite remains unexecuted.
+
+Evidence and required recovery/owner-link/database/CI gates: `docs/release/RUN2_JWT_EXPIRY_CONTINUATION_2026-10-15.md`. No live database migration, connection, HTTP route, payment, cloud activation, deployment or merge to `main`. Historic 47 blocker / 82 acceptance-unit statuses are unchanged. **V19 Run 2 OPEN / NOT PASSED; Stage 9 Round 1 PARTIAL; commercial release NO-GO.**
+
+### Run 2 reviewer self-approval gap closed (15 October 2026)
+
+The trusted recovery issuer now rejects an approved ownership-transfer reviewer who is also the transfer recipient. A corresponding reviewer/recipient inequality constraint was added to the **review-only, unapplied** verified-evidence SQL schema. One negative native regression was authored. All **53** checked-in focused test cases passed in an isolated V8 compatibility harness at source/test checkpoint `f512e718c0a37b0a659666a34c4d1d7bdacd331f`; **native Node/CI/real PostgreSQL/Supabase acceptance has not been executed**. Details: `docs/release/RUN2_JWT_EXPIRY_CONTINUATION_2026-10-15.md`. No live DB changes or deployment. **Run 2 OPEN / NOT PASSED.**

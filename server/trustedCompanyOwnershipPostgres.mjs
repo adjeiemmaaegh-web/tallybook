@@ -20,6 +20,9 @@ export function createPostgresCompanyOwnershipStore(pool) {
         const approvalMethods = createRecoveryApprovalTransactionMethods(client);
         const tx = Object.freeze({
           ...approvalMethods,
+          // Use the same private auth.sessions FOR SHARE check as recovery
+          // issuance, under this ownership operation's SERIALIZABLE transaction.
+          assertActiveSession: approvalMethods.assertReviewerSession,
           async getCompany(id) {
             const q = await client.query('select id, owner_id from public.businesses where id=$1 for update',[id]);
             return q.rows.length === 1

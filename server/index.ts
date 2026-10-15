@@ -12,6 +12,7 @@ import { uploadEncryptedBackup } from "./syncBackupUpload.mjs";
 import { createEncryptedBackupVault } from "./syncBackupVault.mjs";
 import { selectServerTransport } from "./syncHttps.mjs";
 import { createAccessActions, isDirectTls } from "./syncAccessRoutes.mjs";
+import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -21,6 +22,11 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
 
+
+  // The HTTP surface is present for development but stays fail-closed. A
+  // separately reviewed server-only coordinator and isolated test DB must be
+  // explicitly injected before allowing Run 2 ownership mutations.
+  mountRun2OwnershipRoutes(app,express.json,{enabled:false});
 
   // Serve static files from dist/public in production
   const staticPath =
