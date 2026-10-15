@@ -19,7 +19,7 @@ export function resolveCloudMembership(userId, companyId, member, business) {
   }
   if (member.role === 'attendant') {
     if (business.owner_id === userId) deny();
-    return Object.freeze({userId, companyId, role:'staff'});
+    return Object.freeze({userId, companyId, role:'attendant'});
   }
   deny();
 }
