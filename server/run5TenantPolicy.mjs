@@ -65,7 +65,8 @@ const ownershipKeys=new Set(['companyId','businessProfileId','organizationId','t
 function assertNestedTenant(value,companyId,depth=0,seen=new WeakSet()){
   if(depth>24)deny();
   if(value===null||typeof value==='string'||typeof value==='boolean')return;
-  if(typeof value==='number'&&Number.isFinite(value))return;
+  // Financial metadata uses integer minor units; reject fractional/unsafe numbers.
+  if(typeof value==='number'&&Number.isSafeInteger(value))return;
   if(!value||typeof value!=='object'||seen.has(value))deny();
   seen.add(value);
   try{
