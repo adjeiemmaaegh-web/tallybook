@@ -19,6 +19,9 @@ export function createRun5TenantService({resolveSession,store,clock=Date.now,fea
       const company=await tx.getCompany(companyId);
       const membership=await tx.getMembership(companyId,principal.userId);
       const verified=requireRun5Access({principal,company,membership,request,now});
+      // The selected tenant is installed ONLY after authenticated identity,
+      // expiry, live auth.sessions and canonical membership checks pass.
+      if(await tx.activateTenantScope(verified.userId,companyId)!==true)deny();
       return task(tx,verified);
     });
   }
