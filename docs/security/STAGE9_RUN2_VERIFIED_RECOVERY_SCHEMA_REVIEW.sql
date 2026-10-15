@@ -26,6 +26,8 @@ create table if not exists public.company_recovery_verified_evidence (
   owner_id uuid not null references auth.users(id),
   reviewer_id uuid not null references public.company_recovery_reviewers(user_id),
   kind text not null check (kind in ('verified-restore','approved-transfer')),
+  requested_at timestamptz not null default now(),
+  backup_artifact_id text check (char_length(backup_artifact_id) between 1 and 128),
   recipient_id uuid references auth.users(id),
   local_company_id text check (char_length(local_company_id) between 1 and 128),
   -- Evidence is UNVERIFIED by default; only a separately approved and audited
@@ -43,13 +45,70 @@ create table if not exists public.company_recovery_verified_evidence (
   check (recipient_id is null or reviewer_id <> recipient_id),
   constraint evidence_kind_fields check (
     (kind='verified-restore' and local_company_id is not null and recipient_id is null
-      and backup_manifest_sha256 ~ '^[a-f0-9]{64}$'
-      and restore_receipt_sha256 ~ '^[a-f0-9]{64}$'
-      and transfer_review_sha256 is null)
-    or
-    (kind='approved-transfer' and recipient_id is not null and local_company_id is null
-      and backup_manifest_sha256 is null and restore_receipt_sha256 is null
-      and transfer_review_sha256 ~ '^[a-f0-9]{64}$')
+      and backup_artifact_id is not null and transfer_review_sha256 is null)
+    or (kind='approved-transfer' and recipient_id is not null and local_company_id is null
+      and backup_artifact_id is null and backup_manifest_sha256 is null
+      and restore_receipt_sha256 is null)
+  ),
+  constraint evidence_digest_lifecycle check (
+    (status='pending' and backup_manifest_sha256 is null and
+      restore_receipt_sha256 is null and transfer_review_sha256 is null)
+    or (status in ('verified','consumed') and
+      ((kind='verified-restore' and backup_manifest_sha256 ~ '^[a-f0-9]{64}
+);
+-- Auditable, append-only record of case decisions.
+create table if not exists public.company_recovery_evidence_audit (
+  id bigint generated always as identity primary key,
+  evidence_id text not null references public.company_recovery_verified_evidence(id),
+  company_id uuid not null references public.businesses(id),
+  actor_id uuid not null references auth.users(id),
+  action text not null check (action in ('requested','verified','revoked')),
+  created_at timestamptz not null
+);
+create index if not exists company_recovery_evidence_company_status_idx
+  on public.company_recovery_verified_evidence(company_id,status,verified_at);
+
+alter table public.company_recovery_evidence_audit enable row level security;
+alter table public.company_recovery_evidence_audit force row level security;
+alter table public.company_recovery_reviewers enable row level security;
+alter table public.company_recovery_reviewers force row level security;
+alter table public.company_recovery_verified_evidence enable row level security;
+alter table public.company_recovery_verified_evidence force row level security;
+revoke all on public.company_recovery_evidence_audit from public,anon,authenticated;
+revoke all on public.company_recovery_reviewers from public,anon,authenticated;
+revoke all on public.company_recovery_verified_evidence from public,anon,authenticated;
+-- No browser client access or public reviewer provisioning is authorized.
+-- A real test-DB migration, privileges and rollback plan need separate approval.
+ and
+        restore_receipt_sha256 ~ '^[a-f0-9]{64}
+);
+create index if not exists company_recovery_evidence_company_status_idx
+  on public.company_recovery_verified_evidence(company_id,status,verified_at);
+
+alter table public.company_recovery_reviewers enable row level security;
+alter table public.company_recovery_reviewers force row level security;
+alter table public.company_recovery_verified_evidence enable row level security;
+alter table public.company_recovery_verified_evidence force row level security;
+revoke all on public.company_recovery_reviewers from public,anon,authenticated;
+revoke all on public.company_recovery_verified_evidence from public,anon,authenticated;
+-- No browser client access or public reviewer provisioning is authorized.
+-- A real test-DB migration, privileges and rollback plan need separate approval.
+)
+        or (kind='approved-transfer' and transfer_review_sha256 ~ '^[a-f0-9]{64}
+);
+create index if not exists company_recovery_evidence_company_status_idx
+  on public.company_recovery_verified_evidence(company_id,status,verified_at);
+
+alter table public.company_recovery_reviewers enable row level security;
+alter table public.company_recovery_reviewers force row level security;
+alter table public.company_recovery_verified_evidence enable row level security;
+alter table public.company_recovery_verified_evidence force row level security;
+revoke all on public.company_recovery_reviewers from public,anon,authenticated;
+revoke all on public.company_recovery_verified_evidence from public,anon,authenticated;
+-- No browser client access or public reviewer provisioning is authorized.
+-- A real test-DB migration, privileges and rollback plan need separate approval.
+)))
+    or status='revoked'
   )
 );
 create index if not exists company_recovery_evidence_company_status_idx
