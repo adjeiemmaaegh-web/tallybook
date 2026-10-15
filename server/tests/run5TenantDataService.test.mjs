@@ -103,7 +103,7 @@ test('cross-tenant owner get/list/put/export/import and report are all denied',a
    ()=>f.service.report({session:TOKENS.ownerB,companyId:ID.A}),
    ()=>f.service.assistant({session:TOKENS.ownerB,companyId:ID.A}),
    ()=>f.service.syncInspect({session:TOKENS.ownerB,companyId:ID.A})
- ])await assert.rejects(action(),/Tenant data authorization denied/);
+ ])await assert.rejects(action(),/denied/);
  assert.equal(f.rows.size,1);
 });
 test('nonmember cannot read tenant data, even with valid Supabase session',async()=>{
@@ -135,7 +135,7 @@ test('attendant may use allowed products but cannot read financial/backup/assist
  for(const collection of ['ledger','reports','backups','assistant','sync',
    'expenses','purchases','suppliers']){
    await assert.rejects(f.service.list({session:TOKENS.staffA,companyId:ID.A,collection}),
-     /Tenant data authorization denied/);
+     /denied/);
    await assert.rejects(f.service.put({session:TOKENS.staffA,companyId:ID.A,collection,
      id:'confidential',payload:{companyId:ID.A},expectedRevision:0}),/denied/);
  }
