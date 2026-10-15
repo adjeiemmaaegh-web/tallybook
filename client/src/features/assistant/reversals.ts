@@ -1,4 +1,5 @@
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
 import { nanoid } from "nanoid";
 import type { TallybookDB } from "@/db/TallybookDB";
@@ -52,7 +53,8 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments], async () => {
+  return database.transaction("rw", [database.appMeta, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
     const existingByKey = await database.saleReversals.where("submissionKey").equals(submissionKey).and((item) => item.businessProfileId === activeId).first();
