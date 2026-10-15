@@ -9,21 +9,23 @@ const OWNER='55555555-5555-4555-8555-555555555555';
 const MEMBER='66666666-6666-4666-8666-666666666666';
 const OTHER='77777777-7777-4777-8777-777777777777';
 const TOKEN='a'.repeat(64);
+const SESSION='88888888-8888-4888-8888-888888888888';
 const SERVICE_ERR=/enrollment denied/;
 
 function fixture(options={}) {
- let time=100_000, owner=OWNER, storeStatus='active', memberActive=true;
+ let time=100_000, owner=OWNER, storeStatus='active', memberActive=true, sessionActive=true;
  const calls=[], invitationByDigest=new Map(),grantById=new Map(),audit=[];
  const state=()=>({invitationByDigest,grantById,audit,calls});
  const deepCopy=()=>({invitationByDigest:new Map(invitationByDigest),grantById:new Map(grantById),audit:[...audit]});
  const service=createStoreDeviceEnrollmentService({
-  resolveSession:async session=>({userId:session,active:session!==OTHER}),
+  resolveSession:async session=>({userId:session,sessionId:SESSION,active:session!==OTHER}),
   clock:()=>time,
   randomInvite:()=>TOKEN,
   randomGrantId:(()=>{let n=0; return ()=>[A,B,C][n++]??A;})(),
   store:{async transaction(work){
     calls.push('begin');const snapshot=deepCopy();
     const tx={
+     assertActiveSession:async(sessionId,userId)=>sessionActive && sessionId===SESSION && userId!==OTHER,
      getCompany:async id=>({id,ownerId:owner}),
      getMembership:async(id,userId)=>userId===owner?{companyId:id,userId,role:'owner',status:'active'}:
        userId===MEMBER&&memberActive?{companyId:id,userId,role:'attendant',status:'active'}:null,
@@ -44,7 +46,7 @@ function fixture(options={}) {
  });
  return {service,state,issue:()=>service.issueInvite({session:OWNER,companyId:COMPANY,storeId:'store-a',targetUserId:MEMBER}),
   redeem:()=>service.redeemInvite({session:MEMBER,token:TOKEN}),
-  now:x=>{time=x},owner:x=>{owner=x},disableStore:()=>{storeStatus='disabled'},disableMember:()=>{memberActive=false}};
+  now:x=>{time=x},owner:x=>{owner=x},disableStore:()=>{storeStatus='disabled'},disableMember:()=>{memberActive=false},revokeSession:()=>{sessionActive=false}};
 }
 
 test('owner-issued invitation is scoped to company, store, target and a 10-min token',async()=>{
@@ -106,5 +108,18 @@ test('grant insert and audit failures roll back proof consumption, grant and aud
 test('unknown invitation and invalid/weak token always fail closed',async()=>{
  const f=fixture();for(const token of ['abc','0'.repeat(64),'ABC','x'.repeat(64)]){
   await assert.rejects(f.service.redeemInvite({session:MEMBER,token}),SERVICE_ERR);
+ }
+});
+
+test('revoked server-side auth session during issuance, redemption or revocation fails closed',async()=>{
+ for(const action of ['issue','redeem','revoke']) {
+  const f=fixture();let grant;
+  if(action!=='issue')await f.issue();
+  if(action==='revoke')grant=await f.redeem();
+  f.revokeSession();
+  if(action==='issue')await assert.rejects(f.issue(),SERVICE_ERR);
+  if(action==='redeem')await assert.rejects(f.redeem(),SERVICE_ERR);
+  if(action==='revoke')await assert.rejects(f.service.revokeGrant({session:OWNER,companyId:COMPANY,grantId:grant.grantId}),SERVICE_ERR);
+  assert.ok(f.state().calls.includes('rollback'));
  }
 });
