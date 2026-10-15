@@ -100,7 +100,10 @@ export default function BackupPage() {
   };
 
   const readBackup = async (file: File | undefined) => {
-    if (!file) return;
+    if(!file)return;
+    // A cancelled or rejected second import must never leave the previous
+    // file armed as the next destructive restore candidate.
+    setPendingBackup(null);setSummary(null);setMessage(null);
     try {
       assertBackupImportFileSize(file.size); // Before loading potentially oversized data into memory.
       const text = await file.text();
