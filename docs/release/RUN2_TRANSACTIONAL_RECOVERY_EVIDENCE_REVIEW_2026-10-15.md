@@ -1,0 +1,65 @@
+# V19 Run 2 — transactional trusted recovery evidence continuation
+
+**Date:** 2026-10-15  
+**Branch:** `v19/run2-transactional-recovery-20261015`  
+**Parent:** `stage9/round1-enrollment-lifecycle-20261015` at `359ea1666225d802629f868c52af48ef283f2b02`; that branch preserves the earlier integrated Stage 9 security fixes.  
+**Code/test checkpoint:** `ed55973542f7fa8fd62da4aca11adacab8c5629a`, followed by this documentation.  
+**V19 Run 2:** **OPEN / NOT PASSED**. **Stage 9:** **NO-GO / INCOMPLETE**.
+
+## Root cause / design review
+
+The previous `createTrustedRecoveryIssuer` checked an external `verifyRecovery()` callback and reviewer flag **before** the PostgreSQL SERIALIZABLE transaction that created an ownership approval. Without an independently locked, transaction-local evidence and reviewer record, a previously valid reviewer or receipt could be revoked, changed or reused between review and approval.
+
+This continuation replaces the callback-only trust assertion with a database-bound private verification contract. **A backup receipt digest is not proof that a genuine restore was independently verified.** A separate trusted human/restore evidence issuance process is still essential.
+
+## Implemented
+
+1. `server/trustedRecoveryIssuer.mjs`: resolves an authenticated reviewer, then rechecks and locks the **live Supabase session**, **active reviewer authorization**, and **exact company-specific verified evidence** within one serializable transaction. Checks current cloud owner/membership, independent reviewer (not the owner), matching destination/local company or transfer recipient, 24-hour evidence age, restore manifest/receipt or transfer-review digests, no prior issued approval; inserts a ten-minute approval, conditionally consumes the evidence, and records an approval audit atomically.
+2. `server/recoveryApprovalPostgres.mjs`: parameterized `auth.sessions FOR SHARE` check, active reviewer row `FOR SHARE`, verified evidence `FOR UPDATE`, and conditional `status='verified' → 'consumed'` update requiring exactly one affected row. These methods share the transaction from `createPostgresCompanyOwnershipStore`; rollback removes any partial approval, consumption or audit.
+3. `server/companyOwnershipCoordinator.mjs`: no longer accepts externally injected boolean-like reviewer/evidence authority callbacks. Instead it composes the existing Supabase Auth/session resolver and the private PostgreSQL transaction adapter directly. Missing schema / missing private privileges / missing reviewer records **fail closed**, without a production feature flag being changed.
+4. `docs/security/STAGE9_RUN2_VERIFIED_RECOVERY_SCHEMA_REVIEW.sql`: proposed **unapplied** private tables `company_recovery_reviewers` and `company_recovery_verified_evidence`, with owner-independent reviewer status, typed restore-vs-transfer evidence receipts, restrictive RLS and explicit `anon`/`authenticated` grants revoked. No public insertion endpoint and **no automatic reviewer or evidence record provisioning**.
+5. Replaced the focused regression tests for the issuer, coordinator, and SQL adapter; added schema guard tests. No financial, checkout, inventory or cloud synchronization write-path changes were made.
+
+## Local execution — genuine results, restricted scope
+
+In a local mirror using **Linux Node.js 22.16.0**, ran:
+
+```bash
+node --test server/tests/*.test.mjs
+```
+
+**20 passed / 0 failed / 0 skipped.** This command ran the four Run-2-focused native test modules in the review workspace, **not all test modules from the full Tallybook repository**. Checks include reviewer and session revocation, stale/foreign evidence, wrong recipient, independent reviewer, mandatory SHA-256-shaped receipts, one-use replay prevention, conditional PostgreSQL operations, simulated rollback after insertion/audit failure, coordinator transaction composition and source-SQL RLS rules.
+
+Local TAP log SHA-256: `d23d7873033236de555a445eea92e5180993a0d0220e1768ffcb74df9ba79d5d`.
+
+Verified local Git blob hashes of the **exact changed GitHub source/test/SQL files**:
+
+| Path | Git blob SHA |
+| --- | --- |
+| `server/trustedRecoveryIssuer.mjs` | `383a4fd2e1fce19b1e2007cb36b40b2b58fca335` |
+| `server/recoveryApprovalPostgres.mjs` | `89e43aa2a64603ffd8ba1edf81698c755f86879f` |
+| `server/companyOwnershipCoordinator.mjs` | `2b6dbb6f170a411c1f4a35bd827621c03777b92e` |
+| `server/tests/trustedRecoveryIssuer.test.mjs` | `159748b2fa5c3b8fffda7761ba5dd16a5f90bb7f` |
+| `server/tests/recoveryApprovalPostgres.test.mjs` | `1d1d501da79b1a89f1cb52d248cb035fd1241a16` |
+| `server/tests/companyOwnershipCoordinator.test.mjs` | `a9a6aed1451d8c4a51966e98fd9e6dd7e660d70c` |
+| `server/tests/trustedRecoveryEvidenceSchema.test.mjs` | `29bf7797643008cad56b0b9dd38bd1935106516f` |
+| `docs/security/STAGE9_RUN2_VERIFIED_RECOVERY_SCHEMA_REVIEW.sql` | `4cf190d0275c0d66df6d266f491bca13f29f5045` |
+
+The unchanged test dependencies `server/trustedCompanyOwnership.mjs`, `server/trustedCompanyOwnershipPostgres.mjs` and `server/supabaseOwnershipSession.mjs` were mirrored with matching source-branch Git blob SHAs `774f493cdf6cc119bdc176f47d5ce113be3c7efe`, `c05b085ea48d9812fb12e7fa7c70df9e71cbcfb0`, and `c2d1fc84c5c4aefce12c1d718f01c726abf36951`.
+
+## Not implemented, not verified, not authorized
+
+- **No real reviewer or recovery-evidence issuance process:** no independent verified owner proof, actual backup/restore drill, physical reviewer, account-link UI, or operational reviewer provisioning was performed. An arbitrary 64-character digest is not evidence of successful recovery.
+- SQL schema is **not deployed** and has **not been tested on PostgreSQL**. The existing Supabase migrations `20261014113009` and `20261014115304` were already applied per the owner's handover; do **not** rerun, alter or seed the live database. No Supabase credentials/service-role key used.
+- **No HTTP routes** or protected cloud writes activated. Full V19 client Vitest, all native Node tests, Node 24/Windows, semantic TypeScript, build, Playwright/offline/browser/Dexie, GitHub Actions exact-head CI, real RLS, cross-tenant concurrent database operations and rollback under actual process failures **not run**.
+- The code does not guarantee an immutable reviewer/evidence issuance trail or exact owner recovery without separately implemented trusted verifier, legitimate review records and real serializable DB acceptance.
+
+## Required to close V19 Run 2
+
+1. Design, independently review and test trusted issuance/provisioning of reviewer authorizations and cryptographically tied restoration receipts. Real backup export, independent restore drill, human owner acknowledgement, reviewer independence, expiry/revocation and audit must be verifiable rather than client-asserted.
+2. In an **explicitly approved disposable project**, reconcile migration history, deploy only reviewed additive schema, test real privileged transaction adapter, forged/cross-tenant/revoked sessions, RLS, simultaneous approvals, audit rollback and serializable retries. No live environment changes.
+3. Design and review the private server/Edge Function direct-TLS authentication and CSRF/origin/rate-limited routes. Do not expose a service-role key to the browser.
+4. Verify browser IndexedDB preservation and deterministic backup/restore of local company records, explicit account binding, two real isolated accounts/companies and no accidental cloud-account claim.
+5. Restore actual CI/approved runner execution and pass entire exact-final-head Node/pnpm/Vitest/build/Playwright/offline/audit suite, then document results in 47-blocker and 82-unit registers. Only then consider marking **Run 2 PASS** or beginning Run 3.
+
+**Decision:** Run 2 is **NOT PASSED**, Stage 9 Round 1 remains **PARTIAL**, commercial release **NO-GO**. No merge to `main`, staging, production deployment, payment, financial sync, or destructive data mutation.
