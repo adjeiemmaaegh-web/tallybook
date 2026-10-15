@@ -142,3 +142,19 @@ Introduced `server/storeDeviceBoundaryPostgres.mjs`, SQL contract `docs/security
 - **Unverified:** live Supabase/PostgreSQL serialization/RLS, Node 24/Windows, full repository native/Vitest/TypeScript/build/Playwright, browser IndexedDB migration, multiple devices, revocation under real concurrency.
 - Detailed notes and next implementation steps: `docs/security/STAGE9_ROUND1_ENROLLMENT_REVIEW_2026-10-15.md`. Release status unchanged: **Round 1 PARTIAL; Stage 9 NO-GO/INCOMPLETE**. No staging, production, cloud migration, payment or live financial authorization.
 
+
+
+## V19 full 20-run handover added to Stage 9 roadmap (2026-10-15)
+
+**New required dependency reference:** `docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md`, reconciled against the authoritative [FULL_20_RUN_HANDOVER_2026-10-15.md](https://github.com/adjeiemmaaegh-web/tallybook/blob/security/auth-company-boundary-20261013/docs/release/FULL_20_RUN_HANDOVER_2026-10-15.md) (document blob SHA `69d85f15b3959a899f6b398acbb8678d073260b9`).
+
+**IMPORTANT: Different numbering.** The *nine Stage 9 rounds (0–8)* are a multi-store implementation breakdown. They are **not equivalent to, and cannot replace**, the owner's *20 sequential V19 development/acceptance runs (1–20)*. V19 Run 1 previously passed at its historical SHA; V19 **Run 2 remains OPEN and NOT PASSED**. Its requirements must be implemented, actually tested and rerun at the exact final commit before declaring Run 2 PASS or advancing to V19 Run 3. Source preparation on other Stage 9 review branches does not constitute any accepted V19 run.
+
+**New crosswalk and mandatory backlog:** The alignment file preserves every V19 run (2 identity/ownership; 3 membership; 4 authentication; 5 tenant access; 6 staff; 7 crash atomicity; 8 backups/migrations; 9 inventory costing; 10 receivables; 11 refunds; 12 supplier/tax; 13 multi-store; 14 sync; 15 payment sandbox; 16 public commerce; 17 assistant/BI; 18 hardening; 19 hardware/UAT; 20 staging/release), maps them to Stage 9 rounds, and names the evidence required to close each gate.
+
+**Immediate acceptance priority:** Restore actual CI or reproduce it on a trusted local/Windows runner, complete server-vouched backup/restore ownership proof and direct-TLS-only private integration, validate real Supabase owner/attendant/RLS and two-account/two-company isolation on disposable test resources, preserve the offline local businesses, and run complete exact-head client/native/types/build/Playwright/offline/audit checks. In particular, PR #12's **19/19 focused mock-based native passes** do *not* pass V19 Run 2 or Stage 9 Round 1.
+
+**Registers unchanged:** 47 V19 blockers (3 implemented-and-tested, 35 implemented-unverified, 6 missing, 3 blocked) and 82 acceptance units (1 implemented-and-tested, 60 implemented-unverified, 18 missing, 3 blocked), verified against the security branch's release JSON. The handover's pinned implementation `4488b050` has since become security branch head `60c4c77` via a **documentation-only** commit; do not conflate either with the Stage 9 branch or assume successful tests at the newer SHA.
+
+**Production constraints:** No silent legacy-company binding, cloud sign-in requirement for offline-only customers, unauthorized global refunds/tax, live SQL re-application, production/staging deployment, financial sync/payments or merge. The owner must separately approve restricted environment tests and activation. **V19 Run 2 NOT PASSED; Stage 9 Round 1 PARTIAL; overall release NO-GO.**
+
