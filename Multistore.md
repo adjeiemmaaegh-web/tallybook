@@ -120,3 +120,10 @@ At the end of each development round, **update this same `Multistore.md`** with 
 ## Round 1 continuation — conditional ownership updates (2026-10-15)
 
 Review found that the PostgreSQL ownership-transfer UPDATE verified only the cloud company ID, rather than also verifying the expected former owner. The service now passes the validated former owner to the adapter. The SQL operation checks both company ID and previous owner ID and requires exactly one row; otherwise its transaction fails closed. Updated the pure service transaction test double to enforce the same rule and added a native SQL predicate regression. The change affects inactive server-side ownership recovery only, not production data or schema. Full Node, Windows, TypeScript, browser and database integration tests are still deferred, and the release remains NO-GO.
+
+## Round 1 server-side store/device authorization foundation (2026-10-15)
+
+- Added `server/storeDeviceAuthorization.mjs`: server-only fail-closed authorizer that independently resolves an active identity and demands a fresh authoritative membership, active store, active device grant, company/store/device/user matches, grant expiry, and role-specific operation. It never reads local browser state and denies unrecognized actions. Owner may access management/stock; attendant is scoped to reads and a future sale capability.
+- Added `server/tests/storeDeviceAuthorization.test.mjs` with positive, negative, revocation, wrong-tenant/device, expiry and no-cache cases, and `docs/security/STAGE9_ROUND1_STORE_DEVICE_AUTHORIZATION.md`.
+- **Not yet connected:** authoritative device-grant table, trusted grant-issuance endpoint, verified local binding UI, and service-level write-path enforcement. Client UI AuthGate cannot by itself isolate local IndexedDB account data. The new security code is inert and must not be represented as full completed Round 1.
+- Tests were written but have not been executed on the combined branch. Full acceptance remains owner-PC deferred. No live DB modification or production deploy. Release NO-GO.
