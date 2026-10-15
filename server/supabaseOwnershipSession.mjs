@@ -38,7 +38,9 @@ export function createSupabaseOwnershipSessionResolver({authClient,sessionReader
     let active=false;
     try{active=await sessionReader.isSessionActive(claims.session_id,userId,now);}catch{denied();}
     if(active!==true)denied();
-    return Object.freeze({userId,active:true,sessionId:claims.session_id});
+    // Preserve the validated JWT deadline for the subsequent privileged SQL transaction.
+    return Object.freeze({userId,active:true,sessionId:claims.session_id,
+      expiresAtEpochMs:claims.exp*1000});
   };
 }
 /** Reads the live Supabase Auth session in a PRIVATE database context.
