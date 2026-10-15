@@ -96,8 +96,8 @@ describe('Run 8 saved-data migration and transactional rollback',()=>{
  it('corrupted backup rejected before any restore journal or row mutation',async()=>{
   const d=await fixture();
   const raw=JSON.parse(stringifyBackup(await createBackup(d)));
-  raw.records.businessProfiles[0].id='another-company';
-  expect(()=>parseBackup(JSON.stringify(raw))).toThrow();
+  raw.records.customers.push({id:'foreign-customer',businessProfileId:'different-business'});
+  expect(()=>parseBackup(JSON.stringify(raw))).toThrow(/another company/);
   expect(await d.businessProfiles.get(company)).toBeDefined();
   expect(await d.appMeta.get(RESTORE_JOURNAL_KEY)).toBeUndefined();
   d.close();
