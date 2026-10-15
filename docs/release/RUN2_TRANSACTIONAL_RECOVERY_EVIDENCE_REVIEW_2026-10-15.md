@@ -63,3 +63,21 @@ The unchanged test dependencies `server/trustedCompanyOwnership.mjs`, `server/tr
 5. Restore actual CI/approved runner execution and pass entire exact-final-head Node/pnpm/Vitest/build/Playwright/offline/audit suite, then document results in 47-blocker and 82-unit registers. Only then consider marking **Run 2 PASS** or beginning Run 3.
 
 **Decision:** Run 2 is **NOT PASSED**, Stage 9 Round 1 remains **PARTIAL**, commercial release **NO-GO**. No merge to `main`, staging, production deployment, payment, financial sync, or destructive data mutation.
+
+
+## Additional Run 2 continuation — transaction-bound session for binding and owner transfer
+
+**Follow-up checkpoint:** 2026-10-15, review branch `v19/run2-transactional-recovery-20261015`. The original recovery-evidence 20/20 native test result above applies only to its documented prior checkpoint and **does not validate these newer ownership edits**.
+
+**Bug found:** `createTrustedCompanyOwnershipService` previously validated Supabase credentials using a server session resolver before entering its SERIALIZABLE ownership transaction, but never revalidated the session there. A session revoked during that interval could still pass the subsequent company-owner/membership checks and perform binding or transfer.
+
+**Code correction:**
+- `server/trustedCompanyOwnership.mjs` now requires a verified `sessionId` as well as `userId`; rejects absent/malformed session identity; and calls `tx.assertActiveSession(sessionId,userId,now)` **before company reads or writes** inside the same transaction. All binding and transfer operations inherit this requirement.
+- `server/trustedCompanyOwnershipPostgres.mjs` exposes the existing `recoveryApprovalPostgres.assertReviewerSession` implementation as `assertActiveSession`. That implementation performs a parameterized, expiry-aware `auth.sessions` lookup with `FOR SHARE`, ensuring revocation/deletion must contend with the transaction's lock rather than solely relying on an earlier preflight check. No duplicate access-check SQL was introduced.
+- Added **six new native regression cases** across the pure ownership service, private PostgreSQL adapter, and coordinator tests: revoked sessions during bind/transfer, same-user/session/time predicates, exact SQL locking, missing/duplicate session rows, and revocation after an otherwise successful outer Supabase check.
+
+**Additional isolated execution performed:** Eight targeted behavioral checks against the *exact retrieved committed JavaScript source* were run in an isolated JavaScript V8 environment (six denial/SQL cases and two positive bind/transfer cases): **8/8 passed** after correcting two faulty test-harness references. These checks are **not the Node test suite** and do not certify PostgreSQL concurrency, Supabase Auth, RLS, the application build or real business use. **The six newly authored Node tests are not yet executed**, nor has the complete final-head CI suite run. Do not report these source-level checks as formal V19 acceptance.
+
+**Outstanding** remains unchanged: real verified restore evidence and independent reviewer workflow; safe explicit account-to-offline-company linking, default-off protected private endpoint, real isolated two-user/two-company database/browser/backup trials, concurrency/crash recovery and the entire exact-final-SHA Node/Vitest/TypeScript/build/Playwright/offline/audit set.
+
+**Gate:** V19 **RUN 2 OPEN / NOT PASSED**; Stage 9 Round 1 **PARTIAL**; all commercial-release critical gates **NO-GO**. No live Supabase writes, migrations, payments, cloud replication or main-branch merge performed.
