@@ -61,7 +61,7 @@ describe('Run 7 consistent main plus assistant export',()=>{
     const database=await fixture();
     const backup=await createBackup(database);
     const companyId=backup.records.businessProfiles[0].id;
-    await recordBackupExportedAt(backup.createdAt,database,companyId);
+    await recordBackupExportedAt(backup.createdAt,database,companyId,'a'.repeat(64));
     expect(await getLastBackupCompanyId(database)).toBe(companyId);
     expect(await getLastBackupAt(database)).toBe(backup.createdAt);
   });
