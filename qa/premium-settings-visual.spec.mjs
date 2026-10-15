@@ -45,7 +45,7 @@ test("staff owner-first setup, separate masked PIN fields, permissions, shift an
   await expect(page.getByRole("heading", { name: "Staff & permissions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Create your first owner" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create owner account" })).toBeDisabled();
-  const newPin = page.getByRole("textbox", {name:"New staff PIN"});
+  const newPin = page.getByLabel("New staff PIN");
   await expect(newPin).toHaveAttribute("type","password");
   await page.getByRole("textbox", {name:"Staff name"}).fill("Settings QA Owner");
   await newPin.fill("12345678");
@@ -53,7 +53,7 @@ test("staff owner-first setup, separate masked PIN fields, permissions, shift an
   await expect(page.getByText("Settings QA Owner").first()).toBeVisible();
 
   await page.getByRole("combobox",{name:"Staff member"}).selectOption({label:"Settings QA Owner (owner)"});
-  const unlockPin = page.getByRole("textbox",{name:"Staff PIN"});
+  const unlockPin = page.getByLabel("Staff PIN");
   await expect(unlockPin).toHaveAttribute("type","password");
   await unlockPin.fill("12345678");
   await page.getByRole("button",{name:"Unlock with PIN"}).click();
@@ -61,7 +61,7 @@ test("staff owner-first setup, separate masked PIN fields, permissions, shift an
   await expect(page.getByRole("heading",{name:"Add a staff member"})).toBeVisible();
 
   await page.getByRole("textbox",{name:"Staff name"}).fill("Settings QA Cashier");
-  await page.getByRole("textbox",{name:"New staff PIN"}).fill("87654321");
+  await page.getByLabel("New staff PIN").fill("87654321");
   await page.getByRole("button",{name:"Add team member"}).click();
   await expect(page.getByText("Settings QA Cashier")).toBeVisible();
   await page.getByText("Role permissions").click();
