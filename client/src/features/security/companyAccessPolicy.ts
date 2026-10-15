@@ -9,7 +9,7 @@
  * Legacy offline workspace selection remains separate until an owner-approved
  * identity-to-local-data migration is implemented and verified.
  */
-export type CompanyAccessRole = "owner" | "admin" | "staff";
+export type CompanyAccessRole = "owner" | "attendant";
 export type CompanyAccessAction = "read" | "write" | "manage_members" | "delete_company";
 
 export interface VerifiedCompanyPrincipal {
@@ -26,8 +26,9 @@ export interface AuthoritativeCompanyMembership {
 
 const roleActions: Readonly<Record<CompanyAccessRole, ReadonlySet<CompanyAccessAction>>> = {
   owner: new Set(["read", "write", "manage_members", "delete_company"]),
-  admin: new Set(["read", "write", "manage_members"]),
-  staff: new Set(["read", "write"]),
+  // The canonical cloud role is attendant; actual domain writes are
+  // independently denied by Run 5 until Run 6 staff permissions exist.
+  attendant: new Set(["read"]),
 };
 
 export function canAccessCompany(
