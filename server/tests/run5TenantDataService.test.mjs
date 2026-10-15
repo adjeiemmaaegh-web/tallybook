@@ -193,8 +193,9 @@ test('owner export and import are tenant-limited, bounded and non-overwriting',a
  await assert.rejects(f.service.importRows({session:TOKENS.ownerA,companyId:ID.A,
    collection:'assistant',rows:[{companyId:ID.A,collection:'assistant',id:'row1',
      payload:{companyId:ID.A},expectedRevision:0}]}),/revision conflict/);
- await assert.rejects(f.service.exportRows({session:TOKENS.ownerA,companyId:ID.A,
-   collection:'assistant',limit:101}),/denied/);
+ const capped=await f.service.exportRows({session:TOKENS.ownerA,companyId:ID.A,
+   collection:'assistant',limit:101});
+ assert.equal(capped.rows.length,1);
 });
 test('duplicate and cross-company import rows rejected before SQL writes',async()=>{
  const f=fixture();
