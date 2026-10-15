@@ -19,7 +19,21 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='tallybook_run5_private') THEN
     CREATE ROLE tallybook_run5_private NOLOGIN NOBYPASSRLS;
   END IF;
-END $$;
+END $;
+
+-- This is a NOLOGIN membership role, not a Supabase service-role key.
+-- The separately approved backend login must be granted this role explicitly,
+-- and must not be a role available to anon/authenticated connections.
+GRANT USAGE ON SCHEMA public TO tallybook_run5_private;
+GRANT SELECT ON public.businesses,public.business_members TO tallybook_run5_private;
+-- Canonical Run 3 tenant tables have RLS; provide narrowly scoped private
+-- SELECT policies so the dedicated service can perform real owner/member
+-- checks BEFORE SET LOCAL ROLE and so RLS EXISTS predicates can evaluate.
+-- Do NOT add these broad service-role read policies to browser roles.
+CREATE POLICY run5_private_company_lookup ON public.businesses
+  FOR SELECT TO tallybook_run5_private USING (true);
+CREATE POLICY run5_private_membership_lookup ON public.business_members
+  FOR SELECT TO tallybook_run5_private USING (true);
 
 CREATE TABLE IF NOT EXISTS public.company_tenant_records (
   company_id uuid NOT NULL REFERENCES public.businesses(id),
@@ -27,7 +41,91 @@ CREATE TABLE IF NOT EXISTS public.company_tenant_records (
     'catalog','inventory','orders','customers','sales','payments','suppliers',
     'purchases','expenses','receivables','wallet','staff','stores','assistant',
     'audit','products','sale-lines','ledger','reports','backups','sync')),
-  record_id text NOT NULL CHECK (char_length(record_id) BETWEEN 1 AND 128),
+  record_id text NOT NULL CHECK (record_id ~ '^[A-Za-z0-9:_-]{1,128}
+  revision integer NOT NULL CHECK(revision>0),
+  payload jsonb NOT NULL CHECK(jsonb_typeof(payload)='object' AND
+    octet_length(payload::text)<=32768),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (company_id,collection,record_id)
+);
+CREATE INDEX IF NOT EXISTS company_tenant_records_page_idx
+  ON public.company_tenant_records(company_id,collection,record_id);
+
+CREATE TABLE IF NOT EXISTS public.company_tenant_data_audit (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  company_id uuid NOT NULL REFERENCES public.businesses(id),
+  actor_id uuid NOT NULL REFERENCES auth.users(id),
+  operation text NOT NULL CHECK(operation IN
+    ('read','write','delete','import','report','export','backup','assistant','sync')),
+  collection text NOT NULL,
+  record_id text,
+  at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS company_tenant_audit_scope_idx
+  ON public.company_tenant_data_audit(company_id,at,id);
+
+ALTER TABLE public.company_tenant_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_tenant_records FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.company_tenant_data_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_tenant_data_audit FORCE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.company_tenant_records FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON public.company_tenant_data_audit FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON public.company_tenant_records FROM tallybook_run5_private;
+REVOKE ALL ON public.company_tenant_data_audit FROM tallybook_run5_private;
+
+-- The server *must* validate Supabase getUser(), live auth.sessions and
+-- canonical membership within the SERIALIZABLE transaction before setting
+-- these transaction-local GUCs. Browser roles have no access to either table.
+-- This policy is not suitable for a role that clients can SET ROLE into.
+DROP POLICY IF EXISTS run5_private_tenant_record_scope ON public.company_tenant_records;
+CREATE POLICY run5_private_tenant_record_scope
+  ON public.company_tenant_records FOR ALL TO tallybook_run5_private
+  USING (
+    company_id::text=current_setting('tallybook.run5_company_id',true)
+    AND EXISTS (
+      SELECT 1 FROM public.business_members m
+      JOIN public.businesses b ON b.id=m.business_id
+      WHERE m.business_id=company_id
+        AND m.user_id::text=current_setting('tallybook.run5_actor_id',true)
+        AND m.role IN ('owner','attendant')
+        AND (m.role<>'owner' OR b.owner_id=m.user_id)
+    )
+  )
+  WITH CHECK (
+    company_id::text=current_setting('tallybook.run5_company_id',true)
+    AND EXISTS (
+      SELECT 1 FROM public.business_members m
+      JOIN public.businesses b ON b.id=m.business_id
+      WHERE m.business_id=company_id
+        AND m.user_id::text=current_setting('tallybook.run5_actor_id',true)
+        AND m.role='owner' AND b.owner_id=m.user_id
+    )
+  );
+DROP POLICY IF EXISTS run5_private_tenant_audit_scope ON public.company_tenant_data_audit;
+CREATE POLICY run5_private_tenant_audit_scope
+  ON public.company_tenant_data_audit FOR INSERT TO tallybook_run5_private
+  WITH CHECK (
+    company_id::text=current_setting('tallybook.run5_company_id',true)
+    AND actor_id::text=current_setting('tallybook.run5_actor_id',true)
+  );
+
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.company_tenant_records TO tallybook_run5_private;
+GRANT INSERT ON public.company_tenant_data_audit TO tallybook_run5_private;
+GRANT USAGE ON SEQUENCE public.company_tenant_data_audit_id_seq TO tallybook_run5_private;
+-- Explicitly NO UPDATE/DELETE grants for audit. No browser table privileges.
+-- The private execution role must not own or bypass RLS. Validate the actual
+-- auth.sessions, businesses and business_members read grants independently.
+
+-- Disposable test-project checks (do not blindly trust policy definitions):
+-- 1. Verify authenticated/anon CRUD on both tables returns 403/zero rows.
+-- 2. Check private role without GUC returns zero rows, no writes.
+-- 3. Check company A vs B and owner vs attendant against real accounts/RLS.
+-- 4. Concurrent owner revoke/transfer must deny stale member after locks.
+-- 5. SQL row-version clashes and audit errors must rollback fully.
+-- 6. Validate all pre-existing local-only financial tables are NOT cloud
+--    replicated through this schema; later Runs 6-14 own those invariants.
+),
   revision integer NOT NULL CHECK(revision>0),
   payload jsonb NOT NULL CHECK(jsonb_typeof(payload)='object'),
   updated_at timestamptz NOT NULL DEFAULT now(),
