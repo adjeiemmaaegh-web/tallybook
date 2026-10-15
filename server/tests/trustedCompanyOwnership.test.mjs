@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createTrustedCompanyOwnershipService} from '../trustedCompanyOwnership.mjs';
 
-function fixture() {
+function fixture({expiresAtEpochMs=2000,now=1000}={}) {
   const members = new Map([
     ['co:alice',{companyId:'co',userId:'alice',role:'owner',status:'active'}],
     ['co:bob',{companyId:'co',userId:'bob',role:'attendant',status:'active'}],
@@ -47,8 +47,8 @@ function fixture() {
   }};
   const service = createTrustedCompanyOwnershipService({
     sessionResolver:async session => session==='alice'||session==='bob'
-      ?{userId:session,sessionId:'sid-'+session,active:true}:null,
-    store,clock:()=>1000,
+      ?{userId:session,sessionId:'sid-'+session,active:true,expiresAtEpochMs}:null,
+    store,clock:()=>now,
   });
   return {service,members,proofs,audits,bindings,membershipReads,sessionReads,
     revokeSession:()=>{sessionActive=false;},getOwnerId:()=>ownerId};
@@ -150,4 +150,24 @@ test('session verification requires the same authenticated user and live session
   const f=fixture();
   await f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'});
   assert.deepEqual(f.sessionReads,[['sid-alice','alice',1000]]);
+});
+
+test('JWT expiry at transaction time denies binding and owner transfer even if auth.sessions remains active',async()=>{
+  for(const kind of ['bind','transfer']){
+    const f=fixture({expiresAtEpochMs:1000});
+    const request=kind==='bind'
+      ?f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'})
+      :f.service.transferOwner({session:'alice',companyId:'co',newOwnerId:'bob',recoveryId:'transfer'});
+    await assert.rejects(request,/Company ownership operation denied/);
+    assert.equal(f.sessionReads.length,0);
+    assert.equal(f.membershipReads.length,0);
+    assert.equal(f.bindings.size,0);
+    assert.equal(f.audits.length,0);
+    assert.equal(f.getOwnerId(),'alice');
+  }
+});
+test('missing JWT expiry metadata is never accepted from a custom session resolver',async()=>{
+  const f=fixture({expiresAtEpochMs:null});
+  await assert.rejects(f.service.bindExistingCompany({session:'alice',cloudCompanyId:'co',localCompanyId:'local',recoveryId:'restore'}),/Company ownership operation denied/);
+  assert.equal(f.sessionReads.length,0);
 });
