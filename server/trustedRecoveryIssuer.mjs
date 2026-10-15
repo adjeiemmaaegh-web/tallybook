@@ -15,13 +15,16 @@ export function createTrustedRecoveryIssuer({resolveReviewer,store,clock=Date.no
         (kind==='verified-restore'&&(!valid(localCompanyId)||recipientId!==null))||
         (kind==='approved-transfer'&&(!valid(recipientId)||localCompanyId!==null)))denied();
       const reviewer=await resolveReviewer(reviewSession);
-      if(!valid(reviewer?.userId)||!valid(reviewer?.sessionId)||reviewer?.active!==true)denied();
+      if(!valid(reviewer?.userId)||!valid(reviewer?.sessionId)||reviewer?.active!==true||!Number.isSafeInteger(reviewer?.expiresAtEpochMs)||
+        reviewer.expiresAtEpochMs<=0)denied();
       return store.transaction(async tx=>{
         if(!tx||!['assertReviewerSession','assertAuthorizedReviewer','getVerifiedEvidence',
           'consumeVerifiedEvidence','getCompany','getMembership','getRecovery','putRecovery',
           'appendApprovalAudit'].every(k=>typeof tx[k]==='function'))denied();
         const now=clock();
-        if(!Number.isSafeInteger(now)||now<=0||now>Number.MAX_SAFE_INTEGER-600000)denied();
+        // The authenticated JWT deadline must still be valid at the locked review step.
+        if(!Number.isSafeInteger(now)||now<=0||now>Number.MAX_SAFE_INTEGER-600000||
+          now>=reviewer.expiresAtEpochMs)denied();
         // These are locked database reads, never claims in reviewer/session JSON.
         if(await tx.assertReviewerSession(reviewer.sessionId,reviewer.userId,now)!==true ||
            await tx.assertAuthorizedReviewer(reviewer.userId)!==true)denied();
