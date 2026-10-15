@@ -1,0 +1,58 @@
+-- TALLYBOOK V19 RUN 2 / STAGE 9 ROUND 1. REVIEW-ONLY. DO NOT APPLY TO PRODUCTION.
+-- This is a proposed private schema, NOT an assertion that a restore drill passed.
+-- A separately reviewed, authenticated human/backup verification workflow must
+-- produce evidence. Neither browser IndexedDB nor account email proves ownership.
+-- Pre-existing migration 20261014113009 / reviewer audit 20261014115304 already
+-- exist in the named Supabase project: DO NOT REAPPLY THOSE MIGRATIONS.
+
+-- Provision reviewers only through independently approved privileged operations.
+-- No route, service or seed that creates an authorized reviewer is supplied here.
+create table if not exists public.company_recovery_reviewers (
+  user_id uuid primary key references auth.users(id),
+  status text not null check (status in ('active','revoked')),
+  authorized_by uuid not null references auth.users(id),
+  authorized_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  check ((status='active' and revoked_at is null) or (status='revoked' and revoked_at is not null)),
+  check (user_id <> authorized_by)
+);
+
+-- External restoration review must bind both the original backup manifest and
+-- independent restore-check receipt by a real reviewer, not submitted booleans.
+-- Do NOT infer that SHA-256 strings alone prove backup or restore authenticity.
+create table if not exists public.company_recovery_verified_evidence (
+  id text primary key check (char_length(id) between 1 and 128),
+  company_id uuid not null references public.businesses(id),
+  owner_id uuid not null references auth.users(id),
+  reviewer_id uuid not null references public.company_recovery_reviewers(user_id),
+  kind text not null check (kind in ('verified-restore','approved-transfer')),
+  recipient_id uuid references auth.users(id),
+  local_company_id text check (char_length(local_company_id) between 1 and 128),
+  status text not null default 'verified' check (status in ('verified','consumed','revoked')),
+  verified_at timestamptz not null,
+  backup_manifest_sha256 text,
+  restore_receipt_sha256 text,
+  transfer_review_sha256 text,
+  check (reviewer_id <> owner_id),
+  constraint evidence_kind_fields check (
+    (kind='verified-restore' and local_company_id is not null and recipient_id is null
+      and backup_manifest_sha256 ~ '^[a-f0-9]{64}$'
+      and restore_receipt_sha256 ~ '^[a-f0-9]{64}$'
+      and transfer_review_sha256 is null)
+    or
+    (kind='approved-transfer' and recipient_id is not null and local_company_id is null
+      and backup_manifest_sha256 is null and restore_receipt_sha256 is null
+      and transfer_review_sha256 ~ '^[a-f0-9]{64}$')
+  )
+);
+create index if not exists company_recovery_evidence_company_status_idx
+  on public.company_recovery_verified_evidence(company_id,status,verified_at);
+
+alter table public.company_recovery_reviewers enable row level security;
+alter table public.company_recovery_reviewers force row level security;
+alter table public.company_recovery_verified_evidence enable row level security;
+alter table public.company_recovery_verified_evidence force row level security;
+revoke all on public.company_recovery_reviewers from public,anon,authenticated;
+revoke all on public.company_recovery_verified_evidence from public,anon,authenticated;
+-- No browser client access or public reviewer provisioning is authorized.
+-- A real test-DB migration, privileges and rollback plan need separate approval.
