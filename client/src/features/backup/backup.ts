@@ -19,6 +19,7 @@ import { assistantLocalDB, listAllAssistantHistoryForBackup, listStoredAliases, 
 import { RESTORE_JOURNAL_KEY } from "./restoreJournal.mjs";
 import { withCrossTabDataLock } from "./crossTabDataLock.mjs";
 import { assertImportableLegacyBackupMetadata, portableBackupMetadata } from "./backupMetadataPolicy.mjs";
+import {normalizeRun8BackupTables,RUN8_BACKUP_TABLES} from "./run8BackupCompatibility.mjs";
 import { assertPlainBackupSize } from "./backupResourceLimits.mjs";
 import { beginBackupRestoreJournal, recoverPendingBackupRestoreWhileLocked, readAssistantRestoreSnapshot, writeAssistantRestoreSnapshot } from "./restoreRecovery";
 import type { SaleReversal } from "@/features/assistant/reversals";
@@ -405,28 +406,22 @@ export function parseBackup(text: string): TallybookBackup {
   if (typeof parsed.databaseSchemaVersion !== "number" || !Number.isInteger(parsed.databaseSchemaVersion) || parsed.databaseSchemaVersion < 1) throw new Error("This backup has an unsupported database schema version.");
   if (parsed.databaseSchemaVersion > DATABASE_SCHEMA_VERSION) throw new Error("This backup needs a newer version of Tallybook before it can be restored.");
   if (!isRecord(parsed.records)) throw new Error("This backup is missing its local record section.");
-  const records = parsed.records;
-  for (const key of recordKeys) {
-    const tableRecords = records[key];
-    if ((extendedKeys as readonly string[]).includes(key) && tableRecords === undefined && parsed.databaseSchemaVersion < 26) continue;
-    if (key === "mobileMoneyProviders" && tableRecords === undefined && parsed.databaseSchemaVersion <= 7) continue;
-    if ((key === "suppliers" || key === "purchases" || key === "purchaseLines") && tableRecords === undefined && parsed.databaseSchemaVersion <= 8) continue;
-    if (key === "expenses" && tableRecords === undefined && parsed.databaseSchemaVersion <= 9) continue;
-    if (key === "saleReversals" && tableRecords === undefined && parsed.databaseSchemaVersion <= 11) continue;
-    if ((key === "stockCountSessions" || key === "inventoryBatches") && tableRecords === undefined && parsed.databaseSchemaVersion < 14) continue;
-    if (key === "quotations" && tableRecords === undefined && parsed.databaseSchemaVersion < 15) continue;
-    if ((key === "customerBenefits" || key === "customerPolicies") && tableRecords === undefined && parsed.databaseSchemaVersion < 16) continue;
-    if (key === "walletTransfers" && tableRecords === undefined && parsed.databaseSchemaVersion < 17) continue;
-    if (key === "inventoryCostEvents" && tableRecords === undefined && parsed.databaseSchemaVersion < 26) continue;
-    if (key === "supplierPayableEntries" && tableRecords === undefined && parsed.databaseSchemaVersion < 27) continue;
-    if (key === "cashPartialReturns" && tableRecords === undefined && parsed.databaseSchemaVersion < 28) continue;
-    if (key === "commerceOrders" && tableRecords === undefined && parsed.databaseSchemaVersion < 25) continue;
-    if (["staffMembers", "staffShifts", "staffAudits"].includes(key) && tableRecords === undefined && parsed.databaseSchemaVersion < 18) continue;
-    if (!Array.isArray(tableRecords) || !tableRecords.every(isRecord) || !hasUniqueIds(tableRecords)) throw new Error(`This backup has invalid ${key} records.`);
-    if (key === "expenses" && !tableRecords.every(hasValidExpenseRecord)) throw new Error("This backup has invalid expense records.");
+  // Normalize optional historical tables only if they did not yet exist.
+  // Reject unknown future table names and missing already-introduced tables.
+  const normalizedTables=normalizeRun8BackupTables(
+    parsed.records,parsed.databaseSchemaVersion,DATABASE_SCHEMA_VERSION
+  );
+  if(RUN8_BACKUP_TABLES.length!==recordKeys.length ||
+     RUN8_BACKUP_TABLES.some((key,index)=>key!==recordKeys[index]))
+    throw new Error("Backup schema compatibility policy is out of sync.");
+  for(const key of recordKeys){
+    const rows=normalizedTables[key];
+    if(!rows.every(isRecord)||!hasUniqueIds(rows))
+      throw new Error(`This backup has invalid ${key} records.`);
+    if(key==="expenses"&&!rows.every(hasValidExpenseRecord))
+      throw new Error("This backup has invalid expense records.");
   }
-  for (const key of extendedKeys) records[key] ??= [];
-  const backup = { ...parsed, records: { ...records, mobileMoneyProviders: records.mobileMoneyProviders ?? [], suppliers: records.suppliers ?? [], purchases: records.purchases ?? [], purchaseLines: records.purchaseLines ?? [], supplierPayableEntries: records.supplierPayableEntries ?? [], expenses: records.expenses ?? [], saleReversals: records.saleReversals ?? [], cashPartialReturns: records.cashPartialReturns ?? [], stockCountSessions: records.stockCountSessions ?? [], inventoryBatches: records.inventoryBatches ?? [], quotations: records.quotations ?? [], customerBenefits: records.customerBenefits ?? [], customerPolicies: records.customerPolicies ?? [], walletTransfers: records.walletTransfers ?? [], staffMembers: records.staffMembers ?? [], staffShifts: records.staffShifts ?? [], staffAudits: records.staffAudits ?? [], commerceOrders: records.commerceOrders ?? [], inventoryCostEvents: records.inventoryCostEvents ?? [] } } as unknown as TallybookBackup;
+  const backup={...parsed,records:normalizedTables} as unknown as TallybookBackup;
   assertImportableLegacyBackupMetadata(backup.records.appMeta); // Allow old metadata only for reading, never applying.
   validateCompanyRecords(backup.records, backup.assistant);
   return backup;
