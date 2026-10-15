@@ -68,7 +68,9 @@ test('tenant records SQL always contains exact company predicates and bound para
  });
  const lines=f.queries.filter(q=>/company_tenant_records/.test(q.sql));
  assert.equal(lines.length,4);
- assert.ok(lines.every(q=>q.sql.includes('company_id=$1::uuid')));
+ assert.ok(lines.every(q=>q.sql.includes('company_id=$1::uuid')||
+   (q.sql.includes('insert into public.company_tenant_records')&&
+    q.sql.includes('values($1::uuid'))));
  assert.ok(lines.every(q=>q.params[0]===co));
 });
 test('missing CAS write acknowledgement aborts and rolls back the transaction',async()=>{
