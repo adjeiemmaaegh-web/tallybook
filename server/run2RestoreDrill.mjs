@@ -20,9 +20,10 @@ function normalize(data){
   if(data.assistant!==undefined)out.assistant=data.assistant;
   return {id,digest:digest(JSON.stringify(out))};
 }
-export async function performIndependentRestoreDrill({backupText,companyId,makeIsolatedStore}){
+export async function performIndependentRestoreDrill({backupText,companyId,backupArtifactId=null,makeIsolatedStore}){
   if(typeof backupText!=='string'||Buffer.byteLength(backupText)>12*1024*1024||
      typeof makeIsolatedStore!=='function')denied();
+  if(backupArtifactId!==null&&(typeof backupArtifactId!=='string'||!/^[A-Za-z0-9:_-]{1,128}$/.test(backupArtifactId)))denied();
   let backup;
   try{backup=JSON.parse(backupText);}catch{denied();}
   const expected=normalize(backup);
@@ -35,7 +36,7 @@ export async function performIndependentRestoreDrill({backupText,companyId,makeI
     await store.import(backup);
     const actual=normalize(await store.snapshot());
     if(actual.id!==expected.id||actual.digest!==expected.digest)denied();
-    return Object.freeze({companyId,backupManifestSha256:digest(backupText),
+    return Object.freeze({companyId,backupArtifactId,backupManifestSha256:digest(backupText),
       restoreReceiptSha256:digest(expected.digest+':'+actual.digest),
       verifiedAtEpochMs:Date.now()});
   }finally{await store.destroy();}
