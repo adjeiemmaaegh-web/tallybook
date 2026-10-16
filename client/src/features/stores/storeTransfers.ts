@@ -5,12 +5,13 @@ import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
-import { postPairedStoreTransfer } from "./storeStockLedger";
+import { postPairedStoreTransfer, readStoreBalances, reservedSourceUnits } from "./storeStockLedger";
 import { requireStage9Capability } from "./stage9ReleaseScope";
 
 export interface StoreTransferRequest {
   id: string; businessProfileId: string; sourceStoreId: string; destinationStoreId: string;
-  productId: string; quantity: number; status: "requested" | "cancelled" | "completed"; completedAt?: string; completionKey?: string; transferId?: string;
+  productId: string; quantity: number; status: "requested" | "dispatched" | "cancelled" | "completed"; completedAt?: string; completionKey?: string; transferId?: string;
+  submissionKey?:string; dispatchKey?:string; dispatchedAt?:string; dispatchedByStaffId?:string; reversesRequestId?:string;
   requestedByStaffId: string; createdAt: string; cancelledAt?: string;
 }
 export function validateTransferRequest(source: string, destination: string, product: string, quantity: number) {
@@ -54,6 +55,7 @@ export async function cancelStoreTransfer(requestId: string, database: Tallybook
       if (!record || record.businessProfileId !== company || getActiveBusinessProfileId() !== company) throw new Error("Request not found in company.");
       if (record.status === "cancelled") return record;
       if (record.status === "completed") throw new Error("Completed transfers cannot be cancelled.");
+      if (record.status === "dispatched") throw new Error("Dispatched stock must be physically returned and separately confirmed before cancelling.");
       const updated: StoreTransferRequest = { ...record, status: "cancelled", cancelledAt: new Date().toISOString() };
       await database.storeTransferRequests.put(updated);
       if (actor) await database.staffAudits.add({id:nanoid(), businessProfileId:company, staffId:actor.id, action:"store.transfer.cancelled", createdAt:updated.cancelledAt!, details:requestId});
@@ -97,14 +99,11 @@ export async function completeStoreTransfer(requestId:string,submissionKey:strin
           throw new Error("Completed transfer does not reconcile to saved stock legs.");
         return request;
       }
-      if(request.status!=="requested") throw new Error("Cancelled request cannot be executed.");
-      if(staff.role!=="owner"){
-        for(const storeId of [request.sourceStoreId,request.destinationStoreId]) {
-          const assignment=await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
-            .equals([company,staff.id,storeId]).first();
-          if(!assignment) throw new Error("Staff not assigned to both transfer stores.");
-        }
-      }
+      if(request.status!=="dispatched"||!request.dispatchKey||!request.dispatchedByStaffId||!request.dispatchedAt)
+        throw new Error("Store transfer must be dispatched and recorded before physical receipt.");
+      if(staff.role!=="owner"&&!await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+        .equals([company,staff.id,request.destinationStoreId]).first())
+        throw new Error("Receiving staff is not assigned to the destination store.");
       if(getActiveBusinessProfileId()!==company || currentStaffId(company)!==staff.id)
         throw new Error("Company or staff session changed before transfer.");
       const now=new Date().toISOString();
