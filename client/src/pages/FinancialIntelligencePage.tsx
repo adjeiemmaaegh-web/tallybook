@@ -27,6 +27,21 @@ export default function FinancialIntelligencePage(){
   </section>
   {loading&&<p role="status">Calculating from saved records…</p>}{error&&<p role="alert">{error}</p>}
   {summary && !loading && <section className="report-sheet" aria-label="Historical cost reconciliation"><h2>Recorded sales and their costs</h2><p>Recorded tax after reversals: <strong>{fmt(summary.recordedTaxMinor)}</strong></p><p>Sales excluding recorded tax: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>{summary.cogsMinor === undefined ? <p>{summary.unavailable.cogs} Cost totals remain unavailable until the missing evidence is reconciled.</p> : <><p>Cost of goods sold, after reversals: <strong>{fmt(summary.cogsMinor)}</strong></p><p>Sales excluding recorded tax less cost: <strong>{fmt(summary.salesLessCostMinor!)}</strong></p><p>Costs are reconstructed from saved receipts and FIFO allocations. This amount is before expenses and any unconfigured tax obligations.</p></>}</section>}
+  {summary?.supplierCashAudit&&!loading&&<section className="report-sheet" aria-label="Supplier cash reconciliation">
+    <h2>Supplier cash and expense conservation</h2>
+    <p>Manually recorded supplier payments in the company's currency: <strong>{summary.supplierCashAudit.localSupplierPaymentsMinor}</strong> minor units.</p>
+    <p>Collections less recorded expenses and local-currency supplier payments: <strong>{summary.supplierCashAudit.collectionsLessExpensesAndLocalSupplierPaymentsMinor}</strong> minor units.</p>
+    <p>Purchases with unknown payable status: {summary.supplierCashAudit.unknownSupplierLiabilityPurchases}.</p>
+    {summary.supplierCashAudit.foreignSupplierPaymentsExcluded&&<p role="status">Supplier payments in other currencies are excluded from this cash net; no foreign exchange rate is invented.</p>}
+    <p>These are manual payment attestations, not verified bank or provider transfers. Supplier payments are not counted again as operating expenses.</p>
+  </section>}
+  {summary?.recordedTaxEvidence&&!loading&&<section className="report-sheet" aria-label="Recorded tax reconciliation">
+    <h2>Recorded tax evidence, not a tax filing</h2>
+    <p>Gross saved tax: {summary.recordedTaxEvidence.grossRecordedTaxMinor} minor units; full reversal tax: {summary.recordedTaxEvidence.fullReversalTaxMinor}; partial cash refund tax: {summary.recordedTaxEvidence.partialCashRefundTaxMinor}.</p>
+    <p>Full-history net recorded tax: <strong>{summary.recordedTaxEvidence.netRecordedTaxMinor}</strong> minor units.</p>
+    <p>Sales without tax evidence: {summary.recordedTaxEvidence.unknownTaxSales}. Older tax/refund evidence remains unverified where missing.</p>
+    <p>Tax is {summary.recordedTaxEvidence.currentTaxConfigured?'currently configured':'currently off'} for future sales. These amounts do not establish statutory tax payable, recoverable input tax, exemptions or filing obligations.</p>
+  </section>}
   {summary?.returnPolicyEvidence&&!loading&&
     <section className="report-sheet" aria-label="Return policy evidence">
       <h2>Company return policy and saved refund history</h2>
