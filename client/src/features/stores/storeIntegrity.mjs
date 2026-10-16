@@ -61,8 +61,9 @@ export function auditStoreRecords(companyId, stores, assignments, observations, 
     if (!id(row?.id) || transferIds.has(row.id) || !sameCompany(row, companyId) ||
         !storeIndex.has(row.sourceStoreId) || !storeIndex.has(row.destinationStoreId) || row.sourceStoreId === row.destinationStoreId ||
         !productIndex.has(row.productId) || !staffIndex.has(row.requestedByStaffId) || !quantity(row.quantity) || row.quantity === 0 ||
-        !['requested', 'cancelled'].includes(row.status) || !date(row.createdAt) ||
-        (row.status === 'cancelled' ? !date(row.cancelledAt) : row.cancelledAt !== undefined))
+        !['requested', 'cancelled', 'completed'].includes(row.status) || !date(row.createdAt) ||
+        (row.status === 'cancelled' ? !date(row.cancelledAt) : row.cancelledAt !== undefined) ||
+        (row.status === 'completed' ? (!id(row.transferId) || !id(row.completionKey) || !date(row.completedAt)) : row.completedAt !== undefined))
       report('store-transfer-invalid', row?.id);
     if (id(row?.id)) transferIds.add(row.id);
   }
