@@ -65,6 +65,8 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     reconcileSupplierPayable(purchase,[...entries,result]);
     await database.supplierPayableEntries.add(result);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: 'supplier.liability.recognized', createdAt, details: purchaseId });
+    if(getActiveBusinessProfileId()!==company)
+      throw new Error('Company switched before supplier recognition committed.');
     return result;
   });
 }
@@ -122,6 +124,8 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before committing supplier settlement.');
     await database.supplierPayableEntries.add(entry);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: input.kind === 'payment' ? 'supplier.payment.recorded' : 'supplier.credit.recorded', createdAt, details: purchase.id });
+    if(getActiveBusinessProfileId()!==company)
+      throw new Error('Company switched before supplier settlement committed.');
     return entry;
   });
 }
