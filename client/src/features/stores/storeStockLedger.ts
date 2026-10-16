@@ -5,6 +5,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { currentStaffId, requirePermission } from "@/features/staff/staff";
+import { reconstructInventoryCost } from "@/features/inventory/costLedger";
 import { requireStage9Capability } from "./stage9ReleaseScope";
 
 /** Company-wide stock and cost remain the financial totals. The per-store
@@ -100,7 +101,7 @@ export async function activateStoreInventory(
     if (!Array.isArray(allocations) || allocations.length>100000)
       throw new Error("Invalid opening store allocation list.");
     return database.transaction("rw",[
-      database.appMeta,database.businessProfiles,database.products,database.inventoryBatches,
+      database.appMeta,database.businessProfiles,database.products,database.inventoryBatches,database.inventoryCostEvents,
       database.storeLocations,database.storeStockEntries,database.storeStockModes,
       database.staffMembers,database.staffAudits
     ],async()=>{
@@ -132,6 +133,13 @@ export async function activateStoreInventory(
       for(const [productId,quantity] of expected) {
         if((totals.get(productId)??0)!==quantity)
           throw new Error("Opening store quantities must exactly equal each company product stock balance.");
+      }
+      for(const product of stock){
+        const events=await database.inventoryCostEvents.where("[businessProfileId+productId]").equals([company,product.id]).toArray();
+        if(!events.length && product.stockQuantity>0)
+          throw new Error("Reconcile historical product cost evidence before activating store quantities.");
+        if(events.length && reconstructInventoryCost(events,company,product.id).quantity!==product.stockQuantity)
+          throw new Error("Company inventory cost quantity does not reconcile before store allocation.");
       }
       // Batch FIFO / expiry is company-global. Store FIFO provenance cannot
       // be invented: reject ambiguous tracked batches at activation.
