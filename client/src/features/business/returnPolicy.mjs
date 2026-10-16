@@ -42,7 +42,7 @@ export function validateReturnPolicyHistory(history){
     r.reason.length>240||
     (r.actorStaffId!==undefined&&
       (typeof r.actorStaffId!=='string'||!r.actorStaffId.trim()))||
-    (prior&&instant(r.effectiveAt)<instant(prior.effectiveAt)))
+    (prior&&instant(r.effectiveAt)<=instant(prior.effectiveAt)))
    issue('Invalid company return policy revision history.');
   instant(r.effectiveAt);
   prior=r;
@@ -61,7 +61,7 @@ export function appendCompanyReturnPolicy(history,settings,now,reason,actorStaff
      (typeof actorStaffId!=='string'||!actorStaffId.trim())))
   issue('Invalid return policy settings or reason.');
  const date=instant(now);
- if(date<instant(prior.effectiveAt))issue('Return policy revision cannot predate saved history.');
+ if(date<=instant(prior.effectiveAt))issue('Return policy revision must follow saved history at a later instant.');
  if(history?.length>=4096)issue('Return policy revision journal is full.');
  const candidate=Object.freeze({
   revision:prior.revision+1,effectiveAt:now,
