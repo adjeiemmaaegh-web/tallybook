@@ -39,6 +39,7 @@ import type { WalletTransfer } from "@/features/customers/walletTransfers";
 import type { CustomerBenefitEntry, CustomerPolicy } from "@/features/customers/customerBenefits";
 import type { Quotation } from "@/features/customers/quotations";
 import { calculateOrderTotal, type CommerceOrder } from "@/features/commerce/commerce";
+import {auditRun16PortableCommerce,type Run16CommerceHold,type Run16OrderEvent} from "@/features/commerce/run16Rules.mjs";
 import type { StaffMember, StaffShift, StaffAudit } from "@/features/staff/staff";
 import type { StockCountSession, InventoryBatch } from "@/features/inventory/stage2Inventory";
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
@@ -83,6 +84,8 @@ export interface BackupRecords {
   staffShifts: StaffShift[];
   staffAudits: StaffAudit[];
   commerceOrders: CommerceOrder[];
+  commerceHolds: Run16CommerceHold[];
+  commerceDeliveryEvents: Run16OrderEvent[];
   syncConsents: import("@/features/sync/syncFoundation").SyncConsent[];
   syncOutbox: import("@/features/sync/syncFoundation").SyncOutboxEvent[];
   syncConflicts: import("@/features/sync/reconciliation").SyncConflict[];
@@ -111,7 +114,7 @@ export interface BackupSummary {
 }
 
 const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries"] as const;
-const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "inventoryCostEvents", ...extendedKeys] as const;
+const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "commerceHolds", "commerceDeliveryEvents", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
 /** Historical lastBackupAt/lastBackupCompanyId rows are NOT evidence that
@@ -364,12 +367,24 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     sales:records.sales,reversals:records.saleReversals
   },records.businessProfiles[0].currency);
   for (const order of records.commerceOrders) {
-    if (!["draft", "prepared", "ready", "cancelled"].includes(order.status) ||
+    if (!["draft", "prepared", "ready", "reserved", "packed", "dispatched", "delivered", "return-requested", "cancelled"].includes(order.status) ||
         typeof order.customerName !== "string" || !order.customerName.trim() || order.customerName.length > 120 ||
         typeof order.createdAt !== "string" || !Number.isFinite(Date.parse(order.createdAt)) ||
         typeof order.updatedAt !== "string" || !Number.isFinite(Date.parse(order.updatedAt)) ||
         !Array.isArray(order.lines) || order.lines.some(line => !index("products").has(line.productId)) ||
         calculateOrderTotal(order.lines) !== order.totalMinor) throw new Error("Invalid commerce order in backup.");
+  }
+  auditRun16PortableCommerce(records.commerceOrders,records.commerceHolds,
+    records.commerceDeliveryEvents,records.products,companyId);
+  for(const order of records.commerceOrders){
+    if(order.saleId){
+      const sale=records.sales.find(s=>s.id===order.saleId);
+      if(!sale||sale.businessProfileId!==companyId||sale.commerceOrderId!==order.id||
+        sale.storeId!==order.storeId||
+        (order.status==="cancelled"&&!records.saleReversals.some(r=>r.originalSaleId===sale.id)))
+        throw Error("Saved commerce order sale linkage does not reconcile.");
+    }else if(["packed","dispatched","delivered","return-requested"].includes(order.status))
+      throw Error("Unpaid commerce order cannot be dispatched or delivered.");
   }
   for (const member of records.staffMembers) {
     if (!["owner","supervisor","cashier"].includes(member.role) || typeof member.name !== 'string' || !member.name.trim() ||
