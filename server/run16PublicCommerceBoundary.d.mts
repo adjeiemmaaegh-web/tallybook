@@ -11,6 +11,12 @@ export interface Run16PublicDraft {
  deliveryMethod:"pickup"|"delivery";deliveryNotes:string;items:ReadonlyArray<Run16PublicLine>;
  paymentPerformed:false;stockReserved:false
 }
+export function createRun16CatalogueSnapshot(config:{
+ companyId:string;revision:number;currency:string;publicEnabled:true
+},products:unknown[]):Readonly<{
+ companyId:string;revision:number;currency:string;publicEnabled:true;offerDigest:string;
+ items:ReadonlyArray<Readonly<{id:string;name:string;priceMinor:number;available:number;active:true}>>
+}>;
 export function signRun16CatalogueGrant(
  snapshot:{companyId:string;revision:number;offerDigest:string},key:string,now?:number
 ):Readonly<Run16SignedCatalogueGrant>;
