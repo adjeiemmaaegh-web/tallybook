@@ -13,6 +13,8 @@ import type { Purchase, PurchaseLine, Supplier } from "@/features/purchases/purc
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
 import { reconcileCreditLedger, inspectReceivableCurrency } from "@/features/sales/creditLedger.mjs";
+import {auditRun10CompanyReceivables} from "@/features/reports/run10ReceivablesAudit.mjs";
+import {auditRun10PrepaidCashConservation} from "@/features/reports/run10PrepaidCashAudit.mjs";
 import { expenseCategories, localExpenseDate, type Expense } from "@/features/expenses/expenses";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assistantLocalDB, listAllAssistantHistoryForBackup, listStoredAliases, listStoredWorkflows } from "@/features/assistant/assistantLocalStore";
@@ -331,6 +333,20 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       records.repayments.filter(row => row.customerId === customerId),
     );
   }
+  // Full-history customer-level conservation: never let one customer's
+  // overpayment disappear behind a different customer's valid receivables.
+  // No old unallocated repayment is silently assigned to a particular sale.
+  auditRun10CompanyReceivables({
+    company:companyId,customers:records.customers,sales:records.sales,
+    repayments:records.repayments,reversals:records.saleReversals
+  });
+  // Wallet cash is NOT a second collection on wallet-funded checkout.
+  // Validate all transfers, actual stored-value debits, and reversal credits
+  // before any main-ledger or assistant restore transaction can start.
+  auditRun10PrepaidCashConservation({
+    transfers:records.walletTransfers,benefits:records.customerBenefits,
+    sales:records.sales,reversals:records.saleReversals
+  },records.businessProfiles[0].currency);
   for (const order of records.commerceOrders) {
     if (!["draft", "prepared", "ready", "cancelled"].includes(order.status) ||
         typeof order.customerName !== "string" || !order.customerName.trim() || order.customerName.length > 120 ||
