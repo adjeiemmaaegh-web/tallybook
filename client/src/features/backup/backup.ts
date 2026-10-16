@@ -12,6 +12,7 @@ import type { CustomerActivity, Payment, Receipt, Sale, SaleLine } from "@/featu
 import type { Purchase, PurchaseLine, Supplier } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
+import {auditRun12RecordedTax} from '@/features/reports/run12RecordedTaxAudit.mjs';
 import { reconcileCreditLedger, inspectReceivableCurrency } from "@/features/sales/creditLedger.mjs";
 import {auditCompanyReturnPolicyEvidence} from '@/features/business/returnPolicyAudit.mjs';
 import {auditRun10CompanyReceivables} from "@/features/reports/run10ReceivablesAudit.mjs";
@@ -294,6 +295,9 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     }
   }
   reconcileSupplierPayables(records.purchases, records.supplierPayableEntries);
+  // Record-only tax audit: never invent statutory obligations for old sales.
+  auditRun12RecordedTax(records.sales,records.saleReversals,records.cashPartialReturns,
+    records.businessProfiles[0]);
   // Currency snapshots are additive: absence means UNKNOWN on old records,
   // never the current profile currency. Invalid new snapshots are rejected.
   const supportedCurrencyEvidence = (value: string | undefined) => value === undefined || /^[A-Z]{3}$/.test(value);

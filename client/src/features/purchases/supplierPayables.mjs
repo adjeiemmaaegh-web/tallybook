@@ -5,16 +5,23 @@
  * Payments are offline, manually attested events, not provider confirmations.
  */
 const MAX_MINOR = Number.MAX_SAFE_INTEGER;
+const validCurrency = x => typeof x === 'string' && /^[A-Z]{3}$/.test(x);
+const canonicalInstant = value => typeof value === 'string' &&
+ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) &&
+ Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0; }
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
 
 /** Build the as-of balance for exactly one company-scoped purchase. */
 export function reconcileSupplierPayable(purchase, entries) {
   if (!purchase || !identity(purchase.id) || !identity(purchase.businessProfileId) ||
-      !identity(purchase.supplierId) || !validAmount(purchase.totalCostMinor) || !Array.isArray(entries)) {
+      !identity(purchase.supplierId) || !validAmount(purchase.totalCostMinor) ||
+      !validCurrency(purchase.currency) || !canonicalInstant(purchase.createdAt) ||
+      !Array.isArray(entries)) {
     throw new Error('Supplier purchase requires reconciliation.');
   }
   const seenIds = new Set();
+  const purchaseCreated = Date.parse(purchase.createdAt);
   const seenKeys = new Set();
   let recognized = false, settledMinor = 0, paidMinor = 0, creditedMinor = 0;
   // IndexedDB index reads use primary-key order, not event time. Recognition
@@ -26,12 +33,16 @@ export function reconcileSupplierPayable(purchase, entries) {
     if (!row || !identity(row.id) || !identity(row.submissionKey) || seenIds.has(row.id) || seenKeys.has(row.submissionKey) ||
         row.businessProfileId !== purchase.businessProfileId || row.purchaseId !== purchase.id ||
         row.supplierId !== purchase.supplierId || !identity(purchase.currency) || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||
-        typeof row.createdAt !== 'string' || !Number.isFinite(Date.parse(row.createdAt))) {
+        !canonicalInstant(row.createdAt) || Date.parse(row.createdAt) < purchaseCreated ||
+        (row.reference !== undefined && (typeof row.reference !== 'string' || row.reference.length > 120)) ||
+        (row.staffId !== undefined && !identity(row.staffId)) ||
+        (row.shiftId !== undefined && !identity(row.shiftId))) {
       throw new Error('Supplier payable contains a duplicate, foreign or malformed entry.');
     }
     seenIds.add(row.id); seenKeys.add(row.submissionKey);
     if (row.kind === 'recognition') {
-      if (recognized || row.amountMinor !== purchase.totalCostMinor || row.method !== undefined) {
+      if (recognized || row.amountMinor !== purchase.totalCostMinor || row.method !== undefined ||
+          row.reference !== undefined) {
         throw new Error('Supplier payable has invalid or repeated recognition.');
       }
       recognized = true;

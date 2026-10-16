@@ -1,4 +1,5 @@
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
+import {withCoordinatedRetailWrite} from '@/features/backup/coordinatedRetailWrite';
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tallybook Africa Stage 8 design reminder: expenses are small, immutable local facts; they never alter stock, purchases, sales, collections, debt, or product prices. */
 import { nanoid } from "nanoid";
@@ -65,17 +66,24 @@ function parseExpenseAmount(amount: string, currency: string) {
 }
 
 export async function createExpense(values: CreateExpenseInput, database: TallybookDB = db) {
-  const staff=await requirePermission("inventory", database);
-  const shift=await activeStaffShift(staff,database);
+  const company=getActiveBusinessProfileId();
   const input = expenseFormSchema.parse(values);
   validateExpenseDate(input.expenseDate);
   if (!/^[A-Z]{3}$/.test(values.currency)) throw new Error("Use a valid three-letter expense currency.");
   const amountMinor = parseExpenseAmount(input.amount, values.currency);
   const now = new Date().toISOString();
   const submissionKey = values.submissionKey ?? nanoid(18);
-  return database.transaction("rw", database.expenses, database.staffAudits, database.appMeta, async () => {
+  return withCoordinatedRetailWrite(()=>database.transaction("rw",
+    [database.expenses,database.staffAudits,database.appMeta,database.staffMembers,database.staffShifts,database.businessProfiles], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
-    const activeId = getActiveBusinessProfileId();
+    const activeId = company;
+    const staff=await requirePermission("inventory",database,company);
+    const shift=await activeStaffShift(staff,database);
+    if(getActiveBusinessProfileId()!==company)
+      throw Error('Company changed before expense authorization.');
+    const profile=await database.businessProfiles.get(company);
+    if(profile && profile.currency!==values.currency)
+      throw Error('Expense currency does not match the active company.');
     const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
     if (existing) {
       if (existing.category !== input.category || existing.amountMinor !== amountMinor || existing.currency !== values.currency ||
@@ -88,10 +96,13 @@ export async function createExpense(values: CreateExpenseInput, database: Tallyb
       note: input.note?.trim() || undefined, submissionKey, createdAt: now,
       ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}),
     };
+    if(getActiveBusinessProfileId()!==company)
+      throw Error('Company changed before recording the expense.');
+    await requirePermission("inventory",database,company);
     await database.expenses.add(expense);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'expense.recorded',createdAt:now,details:expense.id});
     return expense;
-  });
+  }));
 }
 
 export async function listExpenses(database: TallybookDB = db) {
