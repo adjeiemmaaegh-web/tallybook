@@ -286,7 +286,7 @@ export class TallybookDB extends Dexie {
     // v31: simulated-only merchant-side payment QA evidence. NEVER receipts or cash.
     this.version(31).stores({
       paymentSandboxIntents:"id, businessProfileId, submissionKey, status, createdAt, &[businessProfileId+submissionKey]",
-      paymentSandboxEvents:"id, businessProfileId, intentId, createdAt, [businessProfileId+intentId]"
+      paymentSandboxEvents:"id, businessProfileId, intentId, createdAt, [businessProfileId+intentId], &[businessProfileId+intentId+sequence]"
     });;
   }
 }
