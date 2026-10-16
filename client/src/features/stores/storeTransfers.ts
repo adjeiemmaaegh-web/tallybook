@@ -89,8 +89,13 @@ export async function completeStoreTransfer(requestId:string,submissionKey:strin
       if(!request || request.businessProfileId!==company)
         throw new Error("Transfer request missing or belongs to another company.");
       if(request.status==="completed"){
-        if(request.completionKey===submissionKey) return request;
-        throw new Error("Transfer already completed with a different confirmation.");
+        if(request.completionKey!==submissionKey) throw new Error("Transfer already completed with a different confirmation.");
+        if(!request.transferId)throw new Error("Completed transfer has no saved journal identity.");
+        const legs=await database.storeStockEntries.where("transferId").equals(request.transferId).toArray();
+        if(legs.length!==2 || !legs.some(e=>e.kind==="transfer-out"&&e.productId===request.productId&&e.quantityDelta===-request.quantity&&e.storeId===request.sourceStoreId) ||
+          !legs.some(e=>e.kind==="transfer-in"&&e.productId===request.productId&&e.quantityDelta===request.quantity&&e.storeId===request.destinationStoreId))
+          throw new Error("Completed transfer does not reconcile to saved stock legs.");
+        return request;
       }
       if(request.status!=="requested") throw new Error("Cancelled request cannot be executed.");
       if(staff.role!=="owner"){
