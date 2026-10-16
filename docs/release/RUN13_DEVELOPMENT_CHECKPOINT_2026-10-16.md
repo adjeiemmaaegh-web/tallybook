@@ -33,3 +33,9 @@ Added `run13StockConservation.d.mts` for the pure module's TypeScript boundary a
 The source was reviewed for obvious integration assumptions only. Without a test/build environment, compilation, IndexedDB behavior and release correctness remain unverified.
 
 **Run 13 remains IN DEVELOPMENT. The stage is not delivered or accepted.**
+
+
+## Continuation — proposed transfer journal reducer
+Added `run13TransferJournal.mjs` with `run13TransferJournal.d.mts` to validate hypothetical append-only transfer events. It rejects duplicate event IDs and submission keys, mismatched company identity, invalid timestamps and quantities, conflicting same-key intents, and moves exceeding allocated store stock. The reducer uses `run13StockConservation.mjs` so proposed movements conserve quantities. It **does not** verify saved staff/store assignments, bind request IDs to persisted requests, write any Dexie table, approve physical delivery, or authorize payment/checkout. No live transfer posting was enabled.
+
+One attempt to commit additional test cases was blocked by the connector. Those cases are not in the repository; no tests were executed. The earlier ten authored cases remain unexecuted. Run 13 is still **partial source development, not delivered**.
