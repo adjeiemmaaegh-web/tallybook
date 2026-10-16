@@ -3,7 +3,7 @@
  * Customer JSON NEVER authorizes inventory, settlement or private record reads.
  * No public route is registered and no public API keys exist in this run.
  */
-import {createHmac,timingSafeEqual} from "node:crypto";
+import {createHmac,createHash,timingSafeEqual} from "node:crypto";
 const ID=/^[A-Za-z0-9:_-]{1,128}$/;
 const SHA=/^[a-f0-9]{64}$/;
 const deny=()=>{throw Error("Public commerce request unavailable or invalid.");};
@@ -26,6 +26,38 @@ function payloadValid(value){
  return value;
 }
 const digest=(key,value)=>createHmac("sha256",configKey(key)).update(value).digest("hex");
+/** A trusted server-only source may project opt-in public offerings. Every
+ * default is private. Never exposes costs, staff, supplier, credit or tax data.
+ */
+export function createRun16CatalogueSnapshot(config,rawProducts) {
+ if(!config||config.publicEnabled!==true||!ID.test(config.companyId??"")||
+   !Number.isSafeInteger(config.revision)||config.revision<1||
+   typeof config.currency!=="string"||!/^[A-Z]{3}$/.test(config.currency)||
+   !Array.isArray(rawProducts)||rawProducts.length>10000)deny();
+ const items=[],seen=new Set();
+ for(const p of rawProducts){
+   if(!p||p.businessProfileId!==config.companyId||p.publicListed!==true||
+      p.archivedAt||!ID.test(p.id??"")||!safeText(p.name,120)||
+      !Number.isSafeInteger(p.sellingPriceMinor)||p.sellingPriceMinor<0||
+      p.sellingPriceMinor>1_000_000_000||
+      !Number.isSafeInteger(p.stockQuantity)||p.stockQuantity<0||
+      p.stockQuantity>9999999||seen.has(p.id)) {
+     if(p?.publicListed===true)deny();
+     continue;
+   }
+   seen.add(p.id);
+   items.push(Object.freeze({id:p.id,name:p.name,priceMinor:p.sellingPriceMinor,
+     available:p.itemKind==="service"?9999:Math.min(p.stockQuantity,9999),
+     active:true}));
+ }
+ if(items.length>1000)deny();
+ items.sort((x,y)=>x.id.localeCompare(y.id));
+ const offerDigest=createHash("sha256").update(JSON.stringify({
+   companyId:config.companyId,revision:config.revision,currency:config.currency,items
+ })).digest("hex");
+ return Object.freeze({companyId:config.companyId,revision:config.revision,
+   currency:config.currency,publicEnabled:true,offerDigest,items:Object.freeze(items)});
+}
 export function signRun16CatalogueGrant(snapshot,key,now=Date.now()){
  if(!Number.isSafeInteger(now)||!snapshot||!ID.test(snapshot.companyId??"")||
    !Number.isSafeInteger(snapshot.revision)||snapshot.revision<1||
