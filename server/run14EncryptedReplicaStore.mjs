@@ -59,7 +59,17 @@ export function createRun14EncryptedReplicaStore(filename) {
   async function guard(fn) {
     const dir=await lstat(dirname(path));
     if(!dir.isDirectory()||(dir.mode&0o022)!==0)deny("Replica journal directory is unsafe.");
-    const lock=await open(lockName,constants.O_WRONLY|constants.O_EXCL|constants.O_CREAT|constants.O_NOFOLLOW,0o600);
+    let lock;
+    for(let attempt=0;attempt<20;attempt++){
+      try{lock=await open(lockName,constants.O_WRONLY|constants.O_EXCL|constants.O_CREAT|constants.O_NOFOLLOW,0o600);break;}
+      catch(error){
+        if(error.code!=="EEXIST"||attempt===19)throw error;
+        // A stale lock is NEVER automatically broken; bounded contention
+        // permits cooperating readers and writers to finish safely.
+        await new Promise(resolve=>setTimeout(resolve,25));
+      }
+    }
+    if(!lock)deny("Replica journal lock could not be acquired.");
     const original=await lock.stat();
     if(!original.isFile()||original.nlink!==1||(original.mode&0o077)!==0){
       await lock.close();deny("Unsafe replica lock.");
