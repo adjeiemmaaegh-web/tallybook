@@ -15,7 +15,9 @@ import { reconcileSaleCosts } from "./costReconciliation";
 import type {Run9InventoryValuation} from './run9InventoryValuation.mjs';
 import type {Run9PurchaseCostEvidence} from './run9PurchaseCostAudit.mjs';
 import { assertSavedSaleTenderReconciliation } from "./saleTenderReconciliation.mjs";
-import { reconcilePrepaidLiability } from "./prepaidLiabilityReconciliation.mjs";
+import {auditRun10CompanyReceivables,type Run10ReceivableAudit} from './run10ReceivablesAudit.mjs';
+import {auditRun10PrepaidCashConservation,type Run10PrepaidCashAudit} from './run10PrepaidCashAudit.mjs';
+import type {Customer} from '@/features/customers/customers';
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
@@ -25,7 +27,7 @@ import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
 export interface FinancialRange { start: Date; end: Date; label: string }
-export interface FinancialInputs { sales: Sale[]; payments: Payment[]; repayments: DebtRepayment[]; expenses: Expense[]; reversals: SaleReversal[]; cashReturns?: CashPartialSaleReturn[]; saleLines?: SaleLine[]; walletTransfers?: WalletTransfer[]; customerBenefits?: CustomerBenefitEntry[]; walletCurrency?: string; purchases?: Purchase[]; supplierPayableEntries?: SupplierPayableEntry[] }
+export interface FinancialInputs { sales: Sale[]; payments: Payment[]; repayments: DebtRepayment[]; expenses: Expense[]; reversals: SaleReversal[]; customers?:Customer[]; company?:string; cashReturns?: CashPartialSaleReturn[]; saleLines?: SaleLine[]; walletTransfers?: WalletTransfer[]; customerBenefits?: CustomerBenefitEntry[]; walletCurrency?: string; purchases?: Purchase[]; supplierPayableEntries?: SupplierPayableEntry[] }
 export interface FinancialSummary {
   recordedTaxMinor: number;
   salesExcludingRecordedTaxMinor: number;
@@ -34,6 +36,10 @@ export interface FinancialSummary {
   /** AS-OF full saved stock, not a period cash or profit flow. */
   inventoryValuation?:Run9InventoryValuation;
   purchaseCostEvidence?:Run9PurchaseCostEvidence;
+  /** Full-history per-customer customer-credit conservation; not a period inflow. */
+  receivableAudit?:Run10ReceivableAudit;
+  /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
+  prepaidCashAudit?:Run10PrepaidCashAudit;
   range: FinancialRange;
   revenueMinor: number;
   saleCount: number;
@@ -128,7 +134,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   if (input.customerBenefits !== undefined && (input.walletTransfers === undefined || !input.walletCurrency))
     throw new Error('Prepaid liability report needs complete transfer and currency evidence.');
   const prepaidLiability = input.customerBenefits !== undefined
-    ? reconcilePrepaidLiability({transfers: input.walletTransfers!, benefits: input.customerBenefits,
+    ? auditRun10PrepaidCashConservation({transfers: input.walletTransfers!, benefits: input.customerBenefits,
       sales: input.sales, reversals: input.reversals}, input.walletCurrency!)
     : undefined;
   const partialReturns = input.cashReturns ?? [];
@@ -148,9 +154,21 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   const debtCollectionsMinor=total(repayments,p=>p.amountMinor);
   const collectionsMinor=saleCollectionsMinor+debtCollectionsMinor+walletNetCashMinor;
   const expensesMinor=total(expenses,e=>e.amountMinor);
-  // Sales with no customer are not receivables. Repayments must not drive debt negative.
+  // Live reports supply the complete company customer snapshot; never let
+  // one customer's over-repayment cancel another's valid balance.
+  // Standalone direct-call legacy summaries without customers remain
+  // arithmetic-only and MUST NOT be treated as audited saved ledgers.
+  if((input.customers===undefined)!==(input.company===undefined))
+    throw new Error('Customer credit reporting requires company and customer identities together.');
+  const receivableAudit=input.customers!==undefined
+    ? auditRun10CompanyReceivables({
+        company:input.company!,customers:input.customers,
+        sales:input.sales,repayments:input.repayments,reversals:input.reversals
+      })
+    : undefined;
   const customerSales=input.sales.filter(s=>Boolean(s.customerId));
-  const receivables=total(customerSales,s=>s.outstandingMinor)+total(input.reversals,r=>r.reversedOutstandingMinor)-total(input.repayments,p=>p.amountMinor);
+  const receivables=receivableAudit?.outstandingMinor??
+    (total(customerSales,s=>s.outstandingMinor)+total(input.reversals,r=>r.reversedOutstandingMinor)-total(input.repayments,p=>p.amountMinor));
   // Rebuild the daily/category display from independent saved-event postings,
   // using exact integer arithmetic. A final net amount must never disguise an
   // overflowing daily balance, or a missing period row.
@@ -170,16 +188,19 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
     : supplierReconciliation.unknownPurchases
       ? `${supplierReconciliation.unknownPurchases} purchase(s) have unverified liability status. Recognized balances and manually recorded payments are separated by saved currency; no balance is assumed for those purchases.`
       : "Explicitly recognized liabilities reconcile by saved currency. Recorded payments are manual attestations, not bank/provider confirmation; no opening liabilities or unrecorded settlements are inferred.";
-  return {supplierReconciliation, ...(prepaidLiability ? {prepaidLiabilityMinor:prepaidLiability.liabilityMinor, prepaidLiabilityCustomers:prepaidLiability.customerCount} : {}), recordedTaxMinor,salesExcludingRecordedTaxMinor,range,revenueMinor,saleCount:sales.length,collectionsMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,expensesMinor,netRecordedCashMovementMinor:collectionsMinor-expensesMinor,currentReceivablesMinor:receivables,expenseByCategory:periodDisplay.expenseByCategory,daily:periodDisplay.daily,unavailable:{cogs:"Historical sale-line unit costs have not been established and reconciled with V9 inventory.",grossProfit:"Requires verified cost of goods sold, including purchase, return and batch costing.",tax:"Recorded single-rate tax is shown separately; historical unconfigured tax, exemptions, compound levies and statutory filing are not established.",supplierPayables:supplierLimitations}};
+  return {supplierReconciliation, ...(receivableAudit?{receivableAudit}:{}),
+    ...(prepaidLiability ? {prepaidLiabilityMinor:prepaidLiability.liabilityMinor,
+      prepaidLiabilityCustomers:prepaidLiability.customerCount,
+      prepaidCashAudit:prepaidLiability} : {}), recordedTaxMinor,salesExcludingRecordedTaxMinor,range,revenueMinor,saleCount:sales.length,collectionsMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,expensesMinor,netRecordedCashMovementMinor:collectionsMinor-expensesMinor,currentReceivablesMinor:receivables,expenseByCategory:periodDisplay.expenseByCategory,daily:periodDisplay.daily,unavailable:{cogs:"Historical sale-line unit costs have not been established and reconciled with V9 inventory.",grossProfit:"Requires verified cost of goods sold, including purchase, return and batch costing.",tax:"Recorded single-rate tax is shown separately; historical unconfigured tax, exemptions, compound levies and statutory filing are not established.",supplierPayables:supplierLimitations}};
 }
 export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),start?:string,end?:string,database:TallybookDB=db):Promise<FinancialSummary> {
   const company=getActiveBusinessProfileId();
-  const records=await database.transaction("r",[database.businessProfiles,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
+  const records=await database.transaction("r",[database.businessProfiles,database.customers,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
     await requirePermission("reports", database, company);
-    return Promise.all([database.businessProfiles.get(company),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
+    return Promise.all([database.businessProfiles.get(company),database.customers.toArray(),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
-  const [profile,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
+  const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
   const range = financialRange(period,now,start,end);
@@ -187,7 +208,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   // selected period. A valid tax snapshot alone cannot certify cash collections.
   assertSavedSaleTenderReconciliation(scoped(sales), scoped(payments));
   assertSingleCurrencyFinancialEvidence({sales:scoped(sales),repayments:scoped(repayments),expenses:scoped(expenses),walletTransfers:scoped(walletTransfers),cashReturns:scoped(cashReturns)},profile.currency);
-  const summary = summarizeFinancials({sales:scoped(sales),payments:scoped(payments),repayments:scoped(repayments),expenses:scoped(expenses),reversals:scoped(reversals),cashReturns:scoped(cashReturns),saleLines:scoped(lines),walletTransfers:scoped(walletTransfers),customerBenefits:scoped(customerBenefits),walletCurrency:profile.currency,purchases:scoped(purchases),supplierPayableEntries:scoped(supplierEntries)},range);
+  const summary = summarizeFinancials({company,customers:scoped(customers),sales:scoped(sales),payments:scoped(payments),repayments:scoped(repayments),expenses:scoped(expenses),reversals:scoped(reversals),cashReturns:scoped(cashReturns),saleLines:scoped(lines),walletTransfers:scoped(walletTransfers),customerBenefits:scoped(customerBenefits),walletCurrency:profile.currency,purchases:scoped(purchases),supplierPayableEntries:scoped(supplierEntries)},range);
   const costs = reconcileSaleCosts(company,{sales:scoped(sales),reversals:scoped(reversals),cashReturns:scoped(cashReturns),events:scoped(events),products:scoped(products),lines:scoped(lines),movements:scoped(movements),
     purchases:scoped(purchases),purchaseLines:scoped(purchaseLines),
     expectedCurrency:profile.currency},range);
@@ -223,6 +244,18 @@ export function financialCsv(summary:FinancialSummary):string {
     ...(summary.prepaidLiabilityMinor !== undefined ? [['Prepaid wallet liability as-of (minor units)',summary.prepaidLiabilityMinor],['Customers with prepaid balance',summary.prepaidLiabilityCustomers ?? 0]] as (string | number)[][] : []),['Recorded expenses',summary.expensesMinor],
     ['Collections minus recorded expenses (excludes supplier payments)',summary.netRecordedCashMovementMinor],
     ['Current customer receivables',summary.currentReceivablesMinor],
+    ...(summary.receivableAudit?[
+      ['Sale-linked customer repayments (as-of)',summary.receivableAudit.allocatedRepaymentMinor],
+      ['Legacy unallocated customer repayments (as-of)',summary.receivableAudit.unallocatedRepaymentMinor],
+      ['Customers currently owing saved credit (as-of)',summary.receivableAudit.indebtedCustomers],
+      ['Customers with unverified historical credit currency',summary.receivableAudit.historicalUnknownCurrencyCustomers]
+    ] as (string|number)[][]:[]),
+    ...(summary.prepaidCashAudit?[
+      ['Recorded prepaid deposits across full history',summary.prepaidCashAudit.depositedMinor],
+      ['Recorded prepaid cash refunds across full history',summary.prepaidCashAudit.refundedMinor],
+      ['Prepaid consumed in wallet sales across full history',summary.prepaidCashAudit.spentMinor],
+      ['Original wallet spend restored on reversal',summary.prepaidCashAudit.reversedWalletSpendMinor]
+    ] as (string|number)[][]:[]),
     ['Verified COGS after reversals',summary.cogsMinor ?? `Unavailable: ${summary.unavailable.cogs}`],
     ...(summary.inventoryValuation ? [
       ['Known historical-cost stock assets, minor units (AS-OF; not replacement cost)',summary.inventoryValuation.knownValueMinor],
