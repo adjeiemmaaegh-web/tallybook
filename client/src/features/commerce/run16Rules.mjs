@@ -65,13 +65,14 @@ export function allowedRun16DeliveryTransition(status,action,hasSale){
 export function validateRun16DeliveryEvidence(entry){
  if(!plain(entry)||!id(entry.id)||!id(entry.businessProfileId)||!id(entry.orderId)||
     !id(entry.actorStaffId)||!id(entry.submissionKey)||!instant(entry.createdAt)||
+    !Number.isSafeInteger(entry.sequence)||entry.sequence<1||entry.sequence>10000||
     !["reserve","release","pos-consume","pack","dispatch","deliver","return-request","cancel"].includes(entry.action)||
     typeof entry.note!=="string"||entry.note.length>500||
     !["draft","prepared","ready","reserved","packed","dispatched","delivered","cancelled","return-requested"].includes(entry.fromStatus)||
     !RUN16_LOCAL_COMMERCE_STATES.includes(entry.toStatus)||
     entry.financialPostingPerformed!==false||
     Object.keys(entry).sort().join(",")!==
-    "action,actorStaffId,businessProfileId,createdAt,financialPostingPerformed,fromStatus,id,note,orderId,submissionKey,toStatus")
+    "action,actorStaffId,businessProfileId,createdAt,financialPostingPerformed,fromStatus,id,note,orderId,sequence,submissionKey,toStatus")
    fail("Invalid store order delivery audit event.");
  return Object.freeze({...entry});
 }
@@ -79,6 +80,7 @@ export function auditRun16PortableCommerce(orders,holds,events,products,company)
  if(![orders,holds,events,products].every(Array.isArray)||!id(company))
    fail("Damaged commerce backup evidence.");
  const orderMap=new Map(),productMap=new Map(),held=new Map(),eventKeys=new Set();
+ const orderEventMap=new Map();
  for(const product of products)if(product.businessProfileId===company)productMap.set(product.id,product);
  for(const order of orders){
   if(!plain(order)||!id(order.id)||order.businessProfileId!==company||
@@ -109,6 +111,20 @@ export function auditRun16PortableCommerce(orders,holds,events,products,company)
      eventKeys.has(event.id)||eventKeys.has(event.submissionKey))
     fail("Duplicated or orphan commerce delivery evidence.");
   eventKeys.add(event.id);eventKeys.add(event.submissionKey);
+  const ownEvents=orderEventMap.get(event.orderId)??[];
+  ownEvents.push(event);orderEventMap.set(event.orderId,ownEvents);
+ }
+ for(const [orderId,list] of orderEventMap){
+   list.sort((a,b)=>a.sequence-b.sequence);
+   let previous;
+   for(let i=0;i<list.length;i++){
+     const event=list[i];
+     if(event.sequence!==i+1||(previous!==undefined&&event.fromStatus!==previous))
+       fail("Commerce delivery history has a gap or status fork.");
+     previous=event.toStatus;
+   }
+   if(previous!==orderMap.get(orderId).status)
+     fail("Commerce delivery history does not reconcile to saved order status.");
  }
  return Object.freeze({orders:orders.length,holds:holds.length,events:events.length,
   financialPostingPerformed:false,publiclyPublished:false});
