@@ -9,7 +9,7 @@ import {setSyncConsent} from "@/features/sync/syncFoundation";
 import {registerLocalSyncDevice,listLocalSyncDevices,type LocalSyncDevice} from "@/features/sync/deviceRegistry";
 import {queueRun14Evidence,pendingRun14Envelopes,inspectRun14InboxItem,
  type Run14SourceTable,type Run14QueuedEnvelope} from "@/features/sync/run14LocalRelay";
-import {sendOneRun14Event,pullOneRun14Page,RUN14_NETWORK_RELEASE_ENABLED} from "@/features/sync/run14RelayTransport";
+import {sendOneRun14Event,pullOneRun14Page,requestRun14Capability,RUN14_NETWORK_RELEASE_ENABLED} from "@/features/sync/run14RelayTransport";
 
 const tables:Array<{key:Run14SourceTable;label:string}>=[
  {key:"sales",label:"Sales"},
@@ -31,6 +31,7 @@ export function Run14EncryptedRelayPanel({companyId}:{companyId:string}){
  const [passphrase,setPassphrase]=useState("");
  const [endpoint,setEndpoint]=useState("");
  const [capability,setCapability]=useState("");
+ const [capabilityScope,setCapabilityScope]=useState<"sync:replicate:write"|"sync:replicate:read">("sync:replicate:write");
  const [session,setSession]=useState("");
  const [pending,setPending]=useState<Run14QueuedEnvelope[]>([]);
  const [inboxCount,setInboxCount]=useState(0);
@@ -126,11 +127,21 @@ export function Run14EncryptedRelayPanel({companyId}:{companyId:string}){
   <label className="block text-sm">Active server session
    <input type="password" autoComplete="off" className="block w-full rounded border p-2" value={session} onChange={e=>setSession(e.target.value)}/>
   </label>
+  <label className="block text-sm">Requested capability scope
+    <select className="block w-full rounded border p-2" value={capabilityScope} onChange={e=>{setCapabilityScope(e.target.value as typeof capabilityScope);setCapability("");}}>
+      <option value="sync:replicate:write">Upload an encrypted event</option>
+      <option value="sync:replicate:read">Read encrypted event pages</option>
+    </select>
+  </label>
+  <button className="rounded border p-2" type="button" disabled={busy||!RUN14_NETWORK_RELEASE_ENABLED||!deviceId||!endpoint||!session} onClick={()=>void perform(async()=>{
+     const token=await requestRun14Capability(endpoint,companyId,deviceId,session,capabilityScope);
+     setCapability(token);setMessage("Short-lived server-authenticated capability issued in memory.");
+  })}>Request short-lived server capability</button>
   <div className="flex flex-wrap gap-2">
-   <button className="rounded border p-2" type="button" disabled={busy||!RUN14_NETWORK_RELEASE_ENABLED||!pending.length||!endpoint||!capability||!session} onClick={()=>void perform(async()=>{
+   <button className="rounded border p-2" type="button" disabled={busy||!RUN14_NETWORK_RELEASE_ENABLED||capabilityScope!=="sync:replicate:write"||!pending.length||!endpoint||!capability||!session} onClick={()=>void perform(async()=>{
     const next=pending[0];await sendOneRun14Event(db,companyId,next.id,endpoint,{capability,session});
    })}>Send one encrypted copy</button>
-   <button className="rounded border p-2" type="button" disabled={busy||!RUN14_NETWORK_RELEASE_ENABLED||!deviceId||passphrase.length<16||!endpoint||!capability||!session} onClick={()=>void perform(async()=>{
+   <button className="rounded border p-2" type="button" disabled={busy||!RUN14_NETWORK_RELEASE_ENABLED||capabilityScope!=="sync:replicate:read"||!deviceId||passphrase.length<16||!endpoint||!capability||!session} onClick={()=>void perform(async()=>{
     await pullOneRun14Page(db,companyId,deviceId,endpoint,{capability,session},passphrase);
    })}>Pull and verify one encrypted page</button>
   </div>
