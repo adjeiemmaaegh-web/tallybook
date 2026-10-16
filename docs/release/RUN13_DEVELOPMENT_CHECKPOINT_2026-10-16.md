@@ -53,3 +53,17 @@ Read-only source inspection of `sales.ts`, `purchases.ts`, `costLedger.ts`, `bac
 Added `run13StockEventAudit.mjs` and declaration. The pure read-only auditor checks malformed or duplicate immutable store events; rejects cross-company identities, negative balances, allocation excesses, and incomplete/mismatched paired transfers; and always declares `authoritative: false`. It has no Dexie side effects.
 
 **Still missing for complete Run 13**: store ledger schema and upgrade, safe opening allocation protocol, transfer posting with same-transaction authorization and recovery barrier, store-scoped stock/FIFO on every sale/purchase/refund/adjustment, restore/backup atomic validation, management reporting and UI controls. None are represented as finished. No tests, CI or builds executed, per owner hold. This is not a run-completion handover; commercial release NO-GO.
+
+
+## Consolidated source review, 2026-10-16 (testing deferred)
+The latest continuation strengthens the saved transfer-request path to invoke the existing Run 7 recovery barrier inside its write transaction and to reject changes in company/staff context. Non-owner staff must have an assignment to the source store. It also strengthens `run13StockEventAudit.mjs`: allocations must precede proposed transfer legs, and repeated store/product opening allocations are rejected. `run13AttendantScope.mjs` and its declaration provide pure permission/assignment checks but intentionally do **not** authorize a live posting.
+
+### Explicit unresolved functionality (do not mark this run delivered)
+- Authoritative per-store opening balances require a safe, audited company-stock migration; no such migration has been committed.
+- Stock transfer journal is only proposed/read-only. No same-transaction double-entry transfer posting or atomic receipt confirmation.
+- Sale, purchase, correction, FIFO-cost, full-reversal and cash-partial-return write paths still post at company scope, not store scope.
+- No new store journal tables are included in portable backup or crash-restoration preflight.
+- No integrated end-user screen for authoritative store transfer receipt and reporting has been delivered.
+- No device synchronization guarantees; server authorizations and offline per-store checkout remain deferred.
+
+**Status: unfinished source development; do not enter Run 14 as if Run 13 were complete.** Testing remains owner-deferred. Commercial release NO-GO.
