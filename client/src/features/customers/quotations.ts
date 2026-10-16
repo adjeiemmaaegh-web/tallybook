@@ -101,12 +101,12 @@ export async function previewQuotationConversion(id: string, database: Tallybook
  * Stock, payments, receipt and customer debt are written solely by completeSale.
  * A stable submission key prevents duplicates if conversion is retried after interruption.
  */
-export async function convertQuotationToSale(id: string, payment: Pick<CompleteSaleInput, 'paymentMethod' | 'amountPaid' | 'discount'> & {expectedTotalMinor: number}, database: TallybookDB = db) {
+export async function convertQuotationToSale(id: string, payment: Pick<CompleteSaleInput, 'paymentMethod' | 'amountPaid' | 'discount' | 'storeId'> & {expectedTotalMinor: number}, database: TallybookDB = db) {
   // Acquire the cross-tab shared lock before opening the IndexedDB write transaction.
   return withCrossTabDataLock("shared", () => convertQuotationToSaleWhileLocked(id, payment, database));
 }
 
-async function convertQuotationToSaleWhileLocked(id: string, payment: Pick<CompleteSaleInput, 'paymentMethod' | 'amountPaid' | 'discount'> & {expectedTotalMinor: number}, database: TallybookDB = db) {
+async function convertQuotationToSaleWhileLocked(id: string, payment: Pick<CompleteSaleInput, 'paymentMethod' | 'amountPaid' | 'discount' | 'storeId'> & {expectedTotalMinor: number}, database: TallybookDB = db) {
   const activeId = getActiveBusinessProfileId();
   return database.transaction('rw', database.tables, async () => {
   await requirePermission("sell", database, activeId);
@@ -117,7 +117,7 @@ async function convertQuotationToSaleWhileLocked(id: string, payment: Pick<Compl
   if (!Number.isSafeInteger(payment.expectedTotalMinor) || payment.expectedTotalMinor < 0) throw new Error('A reviewed current total is required.');
   const preview = await previewQuotationConversion(id, database);
   if (preview.currentTotalMinor !== payment.expectedTotalMinor) throw new Error('Catalogue prices changed after preview. Review the quotation again before recording a sale.');
-  const result = await completeSale({taxReviewKey: preview.taxReviewKey, lines: quote.lines.map(({productId,quantity}) => ({productId,quantity})), customerId: quote.customerId, currency: quote.currency, paymentMethod: payment.paymentMethod, amountPaid: payment.amountPaid, discount: payment.discount, submissionKey: `quote-${quote.id}`}, database);
+  const result = await completeSale({...(payment.storeId?{storeId:payment.storeId}:{}),taxReviewKey: preview.taxReviewKey, lines: quote.lines.map(({productId,quantity}) => ({productId,quantity})), customerId: quote.customerId, currency: quote.currency, paymentMethod: payment.paymentMethod, amountPaid: payment.amountPaid, discount: payment.discount, submissionKey: `quote-${quote.id}`}, database);
   // The quotation link and the sale/cost/stock writes share one transaction.
   // A failed link write rolls the entire checkout back.
   await database.transaction('rw', database.quotations, async () => {
