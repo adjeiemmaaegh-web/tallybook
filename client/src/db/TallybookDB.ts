@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 30;
+export const DATABASE_SCHEMA_VERSION = 31;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -68,6 +68,8 @@ export class TallybookDB extends Dexie {
   syncReplicaInbox!: Table<import("@/features/sync/run14LocalRelay").Run14InboxCopy, string>;
   syncReplicaCursors!: Table<import("@/features/sync/run14LocalRelay").Run14Cursor, string>;
   syncReplicaConflicts!: Table<import("@/features/sync/run14RelayTransport").Run14RelayConflict, string>;
+  paymentSandboxIntents!: Table<import("@/features/payments/run15MockContract.mjs").Run15MockIntent, string>;
+  paymentSandboxEvents!: Table<import("@/features/payments/run15MockContract.mjs").Run15MockEvent, string>;
 
   storeLocations!: Table<import("@/features/stores/storeDirectory").StoreLocation, string>;
   storeAssignments!: Table<import("@/features/stores/storeDirectory").StoreAssignment, string>;
@@ -280,7 +282,12 @@ export class TallybookDB extends Dexie {
       syncReplicaInbox:"id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
       syncReplicaCursors:"businessProfileId, updatedAt",
       syncReplicaConflicts:"id, businessProfileId, eventId, status, detectedAt, [businessProfileId+status]"
-    });
+    })
+    // v31: simulated-only merchant-side payment QA evidence. NEVER receipts or cash.
+    this.version(31).stores({
+      paymentSandboxIntents:"id, businessProfileId, submissionKey, status, createdAt, &[businessProfileId+submissionKey]",
+      paymentSandboxEvents:"id, businessProfileId, intentId, createdAt, [businessProfileId+intentId]"
+    });;
   }
 }
 
