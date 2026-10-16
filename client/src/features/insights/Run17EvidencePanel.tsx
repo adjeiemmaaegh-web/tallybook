@@ -9,6 +9,7 @@ import {getRun17ReviewStates,recordRun17Review,RUN17_REVIEW_WRITES_ENABLED} from
 import type {Run17Finding,Run17Report} from "./run17Evidence.mjs";
 import type {Run17ReviewState} from "./run17ReviewAudit.mjs";
 import {db} from "@/db/TallybookDB";
+import {exportRun17Csv} from "./run17Csv.mjs";
 
 export function Run17EvidencePanel({companyId,currency,period}:{companyId:string;currency:string;period:Run17Period}){
  const [report,setReport]=useState<Run17Report|null>(null);
@@ -47,8 +48,22 @@ export function Run17EvidencePanel({companyId,currency,period}:{companyId:string
      <h2 className="text-xl font-semibold">Assistant-supported operating review</h2>
      <p className="text-sm">Read-only rules over records on this device, not generative claims. No prediction, fraud verdict, bank reconciliation, automatic reorder, customer messaging, AI inference or financial posting.</p>
    </header>
-   <button type="button" className="rounded border p-2" disabled={loading||busy}
-      onClick={()=>void refresh()}>Refresh verified local evidence</button>
+   <div className="flex flex-wrap gap-2">
+     <button type="button" className="rounded border p-2" disabled={loading||busy}
+       onClick={()=>void refresh()}>Refresh verified local evidence</button>
+     <button type="button" className="rounded border p-2" disabled={loading||busy||!report}
+       onClick={()=>{
+         if(!report||report.companyId!==getActiveBusinessProfileId())return;
+         try{
+           const csv=exportRun17Csv(report);
+           const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+           const url=URL.createObjectURL(blob);
+           const anchor=document.createElement("a");anchor.href=url;
+           anchor.download="tallybook-run17-local-evidence-"+report.asOf.slice(0,10)+".csv";
+           anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+         }catch(e){setError(e instanceof Error?e.message:"Could not prepare local evidence export.");}
+       }}>Export source-linked CSV (local only)</button>
+   </div>
    {loading?<p role="status">Reading company evidence…</p>:null}
    {error?<p role="alert" className="rounded border p-2">{error}</p>:null}
    {report&&!loading?<><div className="grid gap-3 sm:grid-cols-2">
@@ -65,6 +80,12 @@ export function Run17EvidencePanel({companyId,currency,period}:{companyId:string
        <p>{report.summary.pendingDispatchedTransferCount} dispatched transfer requests awaiting recorded receipt</p>
        <small>Dispatch age alone cannot prove loss or staff wrongdoing.</small></div>
     </div>
+    {report.stores.length>0?<section className="space-y-2">
+      <h3 className="font-semibold">Saved invoices by store</h3>
+      <p className="text-sm">Gross saved invoice amounts only; not payment, profit or verified physical stock. Historical unattributed sales remain separate.</p>
+      <ul className="text-sm list-disc pl-5">{report.stores.map(s=>
+       <li key={s.storeId}>{s.storeName}: {s.recordedSaleCount} invoices ({fm(s.grossRecordedInvoiceMinor)} gross recorded), {s.fullyReversedSaleCount} fully reversed.</li>)}</ul>
+    </section>:null}
     <section className="space-y-2"><h3 className="font-semibold">Observed unit volume</h3>
       <p className="text-sm">Excludes receipts with full reversals or partial-return events; incomplete history and stock-outs can bias unit volumes. Not a demand forecast.</p>
       {report.topObservedUnits.length?<ol className="list-decimal pl-5 text-sm">
