@@ -54,6 +54,7 @@ export async function reserveRun16Order(
  ],async()=>{
    await assertRun7RetailWriteReady(database.appMeta);
    const actor=await actorWith(database,company,"sell");
+   if(actor.role!=="owner")throw Error("Only the unlocked company owner may attest opening customer stock commitments.");
    const order=await database.commerceOrders.get(orderId);
    if(!order||order.businessProfileId!==company)
      throw Error("Order unavailable in this company.");
