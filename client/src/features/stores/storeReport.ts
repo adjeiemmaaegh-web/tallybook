@@ -17,7 +17,7 @@ export async function getLocalStoreReport(database: TallybookDB = db) {
       storeId: store.id, name: store.name, status: store.status,
       assignedStaff: assignments.filter(a => a.storeId === store.id).length,
       physicalObservations: counts.filter(a => a.storeId === store.id).length,
-      openTransferRequests: requests.filter(a => a.status === "requested" && (a.sourceStoreId === store.id || a.destinationStoreId === store.id)).length,
+      openTransferRequests: requests.filter(a => ["requested","dispatched"].includes(a.status) && (a.sourceStoreId === store.id || a.destinationStoreId === store.id)).length,
     }));
   });
 }
