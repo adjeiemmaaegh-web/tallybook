@@ -244,11 +244,12 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       }
     }
     const savedProfile=await database.businessProfiles.get(activeId);
-    if(!savedProfile)throw new Error('The active company profile is unavailable.');
-    const returnPolicyAtSale=saleReturnPolicySnapshot(savedProfile.returnPolicyHistory);
+    // Historical pre-setup sale entrypoints remain valid, but cannot gain
+    // refund authority: absent business profile is explicitly default OFF.
+    const returnPolicyAtSale=saleReturnPolicySnapshot(savedProfile?.returnPolicyHistory);
     if(Date.parse(returnPolicyAtSale.effectiveAt)>Date.parse(now))
       throw new Error('Company return policy effective time is ahead of sale posting; verify the device clock.');
-    const policy = savedProfile.taxPolicy;
+    const policy = savedProfile?.taxPolicy;
     if ((policy?.enabled || input.taxReviewKey !== undefined) && input.taxReviewKey !== taxPolicyKey(policy)) throw new Error("Tax settings changed or have not been reviewed. Reload checkout and review the total.");
     const tax = calculateTax(subtotalMinor - discountMinor, policy);
     const totalMinor = tax?.totalMinor ?? subtotalMinor - discountMinor;
