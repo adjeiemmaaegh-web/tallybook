@@ -35,7 +35,8 @@ export function TaxSettings() {
       <label>Tax name<input className="border p-2" value={label} onChange={e => setLabel(e.target.value)} maxLength={40} required /></label>
       <label>Rate (%)<input aria-label="Tax rate percent" className="border p-2" inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Enter your applicable rate" /></label>
       <label>Prices<select aria-label="Tax price mode" value={mode} onChange={e => setMode(e.target.value as TaxPolicy["priceMode"])}><option value="">Choose a pricing rule</option><option value="exclusive">Tax added to prices</option><option value="inclusive">Tax already included in prices</option></select></label>
-      <p>Calculated after discounts, rounded once per receipt to the nearest minor currency unit (half up). Old receipts retain their saved amounts. Exempt items, compound levies and tax filing are not supported.</p>
+      <p>Calculated after discounts, rounded once per receipt to the nearest minor currency unit (half up). Each new receipt preserves whether tax was OFF or which registered single-rate policy was applied; later settings do not rewrite old receipts. Historical receipts without this evidence remain unverified.</p>
+      <p>Choose rates and registration status using your own qualified tax advice. Exempt items, multiple/compound levies, withholding, input-tax credits and statutory tax filing are not supported; Tallybook does not infer a country's tax rate.</p>
       {message ? <p role="status">{message}</p> : null}
       <button className="primary-action" disabled={busy} type="submit">{busy ? "Saving…" : "Save tax settings"}</button>
     </form>
