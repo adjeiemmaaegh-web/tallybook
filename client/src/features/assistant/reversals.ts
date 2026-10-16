@@ -63,7 +63,7 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
