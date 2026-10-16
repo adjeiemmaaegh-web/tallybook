@@ -493,7 +493,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
     // Run 17 analytic questions never execute an AI-generated financial plan.
     // Only respond when no sale, credit, reversal or other confirmation is open.
     if (!draft && !pending && !batchState &&
-      /\\b(?:business pulse|operational alerts|business exceptions|business anomalies|analytics evidence|run 17 insights|what needs attention in (?:my|the) business|operating review)\\b/i.test(canonicalText)) {
+      /\b(?:business pulse|operational alerts|business exceptions|business anomalies|analytics evidence|run 17 insights|what needs attention in (?:my|the) business|operating review)\b/i.test(canonicalText)) {
       const report=await getRun17Evidence("last7",options.now?.()??new Date(),database);
       const urgent=report.findings.filter(f=>f.severity==="attention");
       const rows=report.findings.slice(0,6).map(item=>({
