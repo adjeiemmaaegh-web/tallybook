@@ -19,6 +19,7 @@ export interface Run17Report {
     financialReconciliation:false;predictionPerformed:false;
   }>;
   topObservedUnits:ReadonlyArray<Run17ObservedProduct>;
+  stores:ReadonlyArray<Readonly<{storeId:string;storeName:string;grossRecordedInvoiceMinor:number;recordedSaleCount:number;fullyReversedSaleCount:number}>>;
   findings:ReadonlyArray<Run17Finding>;incompleteFindingCount:number;
   automaticAction:false;financialPostingPerformed:false;remoteDataUsed:false;
 }
