@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import type { TallybookDB } from "@/db/TallybookDB";
 import { db } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -70,7 +71,7 @@ export async function reservedSourceUnits(database:TallybookDB,company:string,pr
 export async function postStoreStockDelta(
   database:TallybookDB, company:string, productId:string, storeId:string|undefined,
   quantityDelta:number, sourceId:string, kind:StoreStockKind,
-  now:string, companyBefore:number, companyAfter:number,
+  now:string, companyBefore:number, companyAfter:number, consumingCommerceOrderId?:string,
 ) {
   requireCompany(company);
   const mode=await database.storeStockModes.get(company);
@@ -90,7 +91,8 @@ export async function postStoreStockDelta(
   if (total!==companyBefore) throw new Error("Store stock allocation needs reconciliation before another posting.");
   const atStore=balances.get(storeId)??0;
   if (!whole(atStore+quantityDelta)) throw new Error("Insufficient stock or store capacity.");
-  if(quantityDelta<0 && atStore+quantityDelta<await reservedSourceUnits(database,company,productId,storeId))
+  if(quantityDelta<0 && atStore+quantityDelta<await reservedSourceUnits(database,company,productId,storeId) +
+     await reservedRun16Units(database,company,productId,storeId,now,consumingCommerceOrderId))
     throw new Error("Stock is reserved for an outstanding dispatched transfer.");
   const sequence=await database.storeStockEntries.where("[businessProfileId+productId]").equals([company,productId]).count()+1;
   const entry:StoreStockEntry={id:nanoid(18),businessProfileId:company,storeId,productId,sequence,
@@ -232,7 +234,8 @@ export async function postPairedStoreTransfer(
   let total=0;for(const n of balances.values()) total=add(total,n);
   if(total!==product.stockQuantity) throw new Error("Company/store stock does not reconcile.");
   if((balances.get(source.id)??0)<request.quantity ||
-    (balances.get(source.id)??0)-request.quantity<await reservedSourceUnits(database,company,product.id,source.id,request.id) ||
+    (balances.get(source.id)??0)-request.quantity<await reservedSourceUnits(database,company,product.id,source.id,request.id)+
+      await reservedRun16Units(database,company,product.id,source.id,now) ||
     !whole((balances.get(destination.id)??0)+request.quantity))
     throw new Error("Store transfer stock insufficient or destination overflow.");
   const transferId=nanoid(18);
@@ -266,7 +269,7 @@ export async function getAttendantStoreAvailability(
   if(!storeId)throw new Error("Select a store before checking stock.");
   return database.transaction("r",[
     database.storeStockModes,database.storeStockEntries,database.storeLocations,
-    database.storeAssignments,database.products,database.staffMembers,database.storeTransferRequests
+    database.storeAssignments,database.products,database.staffMembers,database.storeTransferRequests,database.commerceHolds
   ],async()=>{
     const actor=await requirePermission("sell",database,company);
     const actorId=currentStaffId(company);
@@ -286,7 +289,8 @@ export async function getAttendantStoreAvailability(
       for(const value of balances.values())total=add(total,value);
       if(total!==product.stockQuantity)throw new Error("Company and store inventory do not reconcile.");
       const reserved=await reservedSourceUnits(database,company,product.id,storeId);
-      const available=(balances.get(storeId)??0)-reserved;
+      const available=(balances.get(storeId)??0)-reserved-
+        await reservedRun16Units(database,company,product.id,storeId,new Date().toISOString());
       if(!whole(available))throw new Error("Dispatched reservations exceed store stock.");
       result.push({productId:product.id,quantity:available});
     }
