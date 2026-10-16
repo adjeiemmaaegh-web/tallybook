@@ -16,8 +16,9 @@ export function validateDirectorySnapshot(input) {
   if ([input.organizations, input.memberships, input.devices].some(arr => arr.length > 10000)) throw new Error('Directory exceeds supported capacity');
   const orgs = new Map(), members = new Map(), devices = new Map();
   for (const org of input.organizations) {
-    if (!isObject(org) || !valid(org.id) || !['active', 'disabled'].includes(org.status) || orgs.has(org.id)) throw new Error('Invalid organization record');
-    orgs.set(org.id, Object.freeze({id: org.id, status: org.status}));
+    if (!isObject(org) || !valid(org.id) || !['active', 'disabled'].includes(org.status) ||
+        (org.replicationOptIn!==undefined && typeof org.replicationOptIn!=='boolean') || orgs.has(org.id)) throw new Error('Invalid organization record');
+    orgs.set(org.id, Object.freeze({id: org.id, status: org.status, replicationOptIn:org.replicationOptIn===true}));
   }
   for (const m of input.memberships) {
     if (!isObject(m) || !valid(m.orgId) || !valid(m.actorId) || !orgs.has(m.orgId) ||
