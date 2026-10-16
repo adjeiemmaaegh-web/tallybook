@@ -11,7 +11,7 @@ import { requireStage9Capability } from "./stage9ReleaseScope";
 export interface StoreTransferRequest {
   id: string; businessProfileId: string; sourceStoreId: string; destinationStoreId: string;
   productId: string; quantity: number; status: "requested" | "dispatched" | "cancelled" | "completed"; completedAt?: string; completionKey?: string; transferId?: string;
-  submissionKey?:string; dispatchKey?:string; dispatchedAt?:string; dispatchedByStaffId?:string; reversesRequestId?:string;
+  submissionKey?:string; dispatchKey?:string; dispatchedAt?:string; dispatchedByStaffId?:string; reversesRequestId?:string; returnProofKey?:string; returnedAt?:string; returnedByStaffId?:string;
   requestedByStaffId: string; createdAt: string; cancelledAt?: string;
 }
 export function validateTransferRequest(source: string, destination: string, product: string, quantity: number) {
@@ -181,6 +181,101 @@ export async function dispatchStoreTransfer(requestId:string,dispatchKey:string,
       await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:actor.id,
         action:"store.transfer.dispatched",createdAt:now,details:requestId});
       return saved;
+    });
+  });
+}
+
+/** Confirm physically undelivered dispatched goods have returned to source
+ * before releasing the reservation. No inventory movement was posted yet.
+ */
+export async function returnUndeliveredDispatch(
+ requestId:string,returnProofKey:string,physicallyReturned:true,database:TallybookDB=db
+) {
+  requireStage9Capability("executeStoreTransfer");
+  if(physicallyReturned!==true||!/^[A-Za-z0-9:_-]{8,100}$/.test(returnProofKey))
+    throw new Error("Explicit physical-return confirmation and unique key required.");
+  return withCoordinatedRetailWrite(async()=>{
+    const company=getActiveBusinessProfileId();
+    return database.transaction("rw",[
+      database.appMeta,database.storeTransferRequests,database.storeLocations,
+      database.staffMembers,database.storeAssignments,database.staffAudits
+    ],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
+      const actor=await requirePermission("inventory",database,company);
+      if(!actor||currentStaffId(company)!==actor.id)
+        throw new Error("Unlock inventory-authorized return staff.");
+      const request=await database.storeTransferRequests.get(requestId);
+      if(!request||request.businessProfileId!==company)
+        throw new Error("Transfer request unavailable.");
+      if(request.status==="cancelled") {
+        if(request.returnProofKey===returnProofKey&&request.returnedAt)return request;
+        throw new Error("Transfer was cancelled under different evidence.");
+      }
+      if(request.status!=="dispatched")
+        throw new Error("Only dispatched, not received, stock can be returned without a stock movement.");
+      if(actor.role!=="owner"&&!await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+         .equals([company,actor.id,request.sourceStoreId]).first())
+        throw new Error("Confirming staff is not assigned to source store.");
+      if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor.id)
+        throw new Error("Company or staff changed before dispatch return.");
+      const now=new Date().toISOString();
+      const updated:StoreTransferRequest={...request,status:"cancelled",cancelledAt:now,
+        returnProofKey,returnedAt:now,returnedByStaffId:actor.id};
+      await database.storeTransferRequests.put(updated);
+      await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:actor.id,
+        action:"store.transfer.dispatch-returned",createdAt:now,details:requestId});
+      return updated;
+    });
+  });
+}
+/** Post-receipt reversals are new, oppositely directed auditable transfers.
+ * Never delete or edit the original completed transfer legs.
+ */
+export async function requestStoreTransferReversal(
+ originalRequestId:string,submissionKey:string,database:TallybookDB=db
+) {
+  requireStage9Capability("executeStoreTransfer");
+  if(!originalRequestId||!/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
+    throw new Error("Invalid transfer reversal request.");
+  return withCoordinatedRetailWrite(async()=>{
+    const company=getActiveBusinessProfileId();
+    return database.transaction("rw",[
+      database.appMeta,database.storeTransferRequests,database.storeLocations,
+      database.products,database.staffMembers,database.storeAssignments,database.staffAudits
+    ],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
+      const actor=await requirePermission("inventory",database,company);
+      if(!actor||currentStaffId(company)!==actor.id)
+        throw new Error("Unlock inventory-authorized transfer reversal staff.");
+      const original=await database.storeTransferRequests.get(originalRequestId);
+      if(!original||original.businessProfileId!==company||original.status!=="completed"||!original.transferId)
+        throw new Error("Only a completed transfer can be reversed.");
+      const prior=await database.storeTransferRequests.where("businessProfileId").equals(company)
+        .filter(row=>row.reversesRequestId===originalRequestId).first();
+      if(prior){
+        if(prior.submissionKey===submissionKey)return prior;
+        throw new Error("Reversal already requested for this completed transfer.");
+      }
+      const source=await database.storeLocations.get(original.destinationStoreId);
+      const target=await database.storeLocations.get(original.sourceStoreId);
+      const product=await database.products.get(original.productId);
+      if(!source||!target||source.status!=="active"||target.status!=="active"||
+        source.businessProfileId!==company||target.businessProfileId!==company||
+        !product||product.businessProfileId!==company||product.archivedAt)
+        throw new Error("Return transfer requires active stores and product.");
+      if(actor.role!=="owner"&&!await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+        .equals([company,actor.id,source.id]).first())
+        throw new Error("Staff is not assigned to the reversing source store.");
+      const now=new Date().toISOString();
+      const request:StoreTransferRequest={id:nanoid(18),businessProfileId:company,
+        sourceStoreId:source.id,destinationStoreId:target.id,
+        productId:original.productId,quantity:original.quantity,status:"requested",
+        requestedByStaffId:actor.id,createdAt:now,submissionKey,
+        reversesRequestId:originalRequestId};
+      await database.storeTransferRequests.add(request);
+      await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:actor.id,
+        action:"store.transfer.reversal-requested",createdAt:now,details:originalRequestId});
+      return request;
     });
   });
 }
