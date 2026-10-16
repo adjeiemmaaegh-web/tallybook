@@ -36,7 +36,7 @@ export function reconcileSupplierPayable(purchase, entries) {
         !canonicalInstant(row.createdAt) || Date.parse(row.createdAt) < purchaseCreated ||
         (row.reference !== undefined && (typeof row.reference !== 'string' || row.reference.length > 120)) ||
         (row.staffId !== undefined && !identity(row.staffId)) ||
-        (row.shiftId !== undefined && !identity(row.shiftId)) {
+        (row.shiftId !== undefined && !identity(row.shiftId))) {
       throw new Error('Supplier payable contains a duplicate, foreign or malformed entry.');
     }
     seenIds.add(row.id); seenKeys.add(row.submissionKey);
