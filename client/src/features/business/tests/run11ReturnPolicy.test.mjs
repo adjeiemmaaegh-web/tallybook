@@ -142,5 +142,8 @@ test('unsupported return kind or recording before sale date is rejected',()=>{
  const h=history(),old=sale(h);
  assert.throws(()=>authorizeReturnPolicy(h,old,'giftCard',later),/Unsupported/);
  assert.throws(()=>authorizeReturnPolicy(h,old,'full','2026-10-16T09:00:00.000Z'),
- /cannot predate/);
+ /later instant/);
+});
+test('a second policy revision in the identical millisecond is rejected as chronologically ambiguous',()=>{
+ assert.throws(()=>appendCompanyReturnPolicy(history(),enabled,t,'Same instant'),/later instant/);
 });
