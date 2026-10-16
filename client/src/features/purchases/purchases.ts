@@ -155,8 +155,13 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
   const input = purchaseFormSchema.parse(values); const submissionKey = input.submissionKey ?? nanoid(18);
   if (new Set(input.lines.map((line) => line.productId)).size !== input.lines.length) throw new Error("Add each product only once to a purchase.");
   if (new Date(input.purchaseDate + "T00:00:00Z").toISOString().slice(0, 10) !== input.purchaseDate) throw new Error("Choose a valid purchase date.");
-  return database.transaction("rw", [database.appMeta, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
+    const business=await database.businessProfiles.get(activeId);
+    if(business?.currency!==undefined&&business.currency!==currency)
+      throw new Error('Purchase currency differs from active company currency; foreign stock costs require a separately approved FX model.');
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error('Company switched before purchase cost posting.');
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
     const shift=await activeStaffShift(staff,database);
