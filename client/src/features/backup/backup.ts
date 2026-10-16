@@ -40,6 +40,7 @@ import type { CustomerBenefitEntry, CustomerPolicy } from "@/features/customers/
 import type { Quotation } from "@/features/customers/quotations";
 import { calculateOrderTotal, type CommerceOrder } from "@/features/commerce/commerce";
 import {auditRun16PortableCommerce,type Run16CommerceHold,type Run16OrderEvent} from "@/features/commerce/run16Rules.mjs";
+import {reconcileRun17Reviews,type Run17ReviewEvent} from "@/features/insights/run17ReviewAudit.mjs";
 import type { StaffMember, StaffShift, StaffAudit } from "@/features/staff/staff";
 import type { StockCountSession, InventoryBatch } from "@/features/inventory/stage2Inventory";
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
@@ -86,6 +87,7 @@ export interface BackupRecords {
   commerceOrders: CommerceOrder[];
   commerceHolds: Run16CommerceHold[];
   commerceDeliveryEvents: Run16OrderEvent[];
+  run17ReviewEvents: Run17ReviewEvent[];
   syncConsents: import("@/features/sync/syncFoundation").SyncConsent[];
   syncOutbox: import("@/features/sync/syncFoundation").SyncOutboxEvent[];
   syncConflicts: import("@/features/sync/reconciliation").SyncConflict[];
@@ -114,7 +116,7 @@ export interface BackupSummary {
 }
 
 const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries"] as const;
-const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "commerceHolds", "commerceDeliveryEvents", "inventoryCostEvents", ...extendedKeys] as const;
+const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "commerceHolds", "commerceDeliveryEvents", "run17ReviewEvents", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
 /** Historical lastBackupAt/lastBackupCompanyId rows are NOT evidence that
@@ -390,6 +392,17 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     const matches=records.commerceOrders.filter(o=>o.id===sale.commerceOrderId&&o.saleId===sale.id);
     if(matches.length!==1||sale.businessProfileId!==companyId)
       throw Error("Sale refers to missing or duplicated commerce reservation evidence.");
+  }
+  // Run 17 review notes are advisory history, not a financial posting.
+  // Preserve full order and unique company-scope identity; never fabricate
+  // review rows for backups produced before schema v33.
+  reconcileRun17Reviews(records.run17ReviewEvents,companyId);
+  const reviewStaffIds=new Set(records.staffMembers.map(member=>member.id));
+  for(const row of records.run17ReviewEvents){
+    if(!reviewStaffIds.has(row.staffId))
+      throw new Error("Insight review author is missing from this company backup.");
+    if(Date.parse(row.createdAt)>Date.parse(backup.createdAt))
+      throw new Error("Insight review occurs after the exported file timestamp.");
   }
   for (const member of records.staffMembers) {
     if (!["owner","supervisor","cashier"].includes(member.role) || typeof member.name !== 'string' || !member.name.trim() ||
