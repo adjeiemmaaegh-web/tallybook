@@ -215,7 +215,7 @@ async function startServer() {
 
   // Run 14 optional encrypted relay. NOT enabled by default. Source-only until
   // independent tenant/device/session tests, TLS and owner deployment approval.
-  const run14Enabled=process.env.TALLYBOOK_RUN14_ENCRYPTED_RELAY_ENABLED==="true";
+  const run14Enabled=process.env.NODE_ENV!=="production" && process.env.TALLYBOOK_RUN14_ENCRYPTED_RELAY_ENABLED==="true";
   const run14ConfigReady=Boolean(process.env.TALLYBOOK_RUN14_REPLICA_FILE &&
     process.env.TALLYBOOK_SYNC_SESSION_FILE &&
     process.env.TALLYBOOK_SYNC_DIRECTORY_FILE &&
