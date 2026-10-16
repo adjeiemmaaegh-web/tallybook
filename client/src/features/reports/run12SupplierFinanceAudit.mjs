@@ -55,18 +55,19 @@ export function auditRun12SupplierFinance({
    if(!entry.reference?.trim())unsupportedCreditNotes++;
   }
  }
- let operatingExpenseCount=0;
+ let operatingExpenseCount=0,expensesWithUnknownCurrency=0,expensesInOtherCurrency=0;
  for(const expense of expenses){
   if(!ident(expense?.id)||expense.businessProfileId!==company||
      !minor(expense.amountMinor)||expense.amountMinor===0||
      !isValidFinancialPostingTimestamp(expense.createdAt)||
      typeof expense.expenseDate!=='string'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(expense.expenseDate))
    fail('invalid or foreign operating expense');
-  if(expense.currency!==companyCurrency){
-   // A live single-currency report must never silently relabel a saved
-   // different or UNKNOWN expense as today's business denomination.
-   fail('operating expense currency is missing or differs from company currency');
-  }
+  // Historic company currency changes and old pre-snapshot expenses may
+  // carry other/unknown denominations. Preserve them in backup history
+  // and DISCLOSE the uncertainty; never sum into current-currency cash.
+  if(expense.currency===undefined)expensesWithUnknownCurrency++;
+  else if(!cur(expense.currency))fail('malformed expense currency evidence');
+  else if(expense.currency!==companyCurrency)expensesInOtherCurrency++;
   const expenseDay=Date.parse(expense.expenseDate+'T12:00:00Z');
   if(!Number.isFinite(expenseDay)||new Date(expenseDay).toISOString().slice(0,10)!==expense.expenseDate)
    fail('invalid expense calendar date');
@@ -106,6 +107,7 @@ export function auditRun12SupplierFinance({
     Number(periodSupplierPaymentsInCompanyCurrencyMinor),
   otherCurrencyPayments,
   recordedOperatingExpenseCount:operatingExpenseCount,
+  expensesWithUnknownCurrency,expensesInOtherCurrency,
   /** Never merge manual cash records and credits into an unqualified net. */
   providerSettlementVerified:false,
   potentialExpensePaymentOverlapUnresolved:true
