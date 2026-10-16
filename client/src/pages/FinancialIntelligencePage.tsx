@@ -27,6 +27,16 @@ export default function FinancialIntelligencePage(){
   </section>
   {loading&&<p role="status">Calculating from saved records…</p>}{error&&<p role="alert">{error}</p>}
   {summary && !loading && <section className="report-sheet" aria-label="Historical cost reconciliation"><h2>Recorded sales and their costs</h2><p>Recorded tax after reversals: <strong>{fmt(summary.recordedTaxMinor)}</strong></p><p>Sales excluding recorded tax: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>{summary.cogsMinor === undefined ? <p>{summary.unavailable.cogs} Cost totals remain unavailable until the missing evidence is reconciled.</p> : <><p>Cost of goods sold, after reversals: <strong>{fmt(summary.cogsMinor)}</strong></p><p>Sales excluding recorded tax less cost: <strong>{fmt(summary.salesLessCostMinor!)}</strong></p><p>Costs are reconstructed from saved receipts and FIFO allocations. This amount is before expenses and any unconfigured tax obligations.</p></>}</section>}
+  {summary?.returnPolicyEvidence&&!loading&&
+    <section className="report-sheet" aria-label="Return policy evidence">
+      <h2>Company return policy and saved refund history</h2>
+      <p>Verified policy-backed refunds: <strong>{summary.returnPolicyEvidence.verifiedRefunds}</strong>.</p>
+      <p>Older refund records with unverified policy authority: <strong>{summary.returnPolicyEvidence.legacyRefunds}</strong>.
+        These financial records remain visible, but Tallybook does not claim their original terms are known.</p>
+      <p>Sales predating saved refund terms: <strong>{summary.returnPolicyEvidence.salesWithoutHistoricalTerms}</strong>.
+        New refunds from those sales require a separately reviewed legacy reconciliation process.</p>
+      <p>Active company policy revision: {summary.returnPolicyEvidence.activeRevision}.</p>
+    </section>}
   {summary?.receivableAudit&&!loading&&
     <section className="report-sheet" aria-label="Customer credit integrity">
       <h2>Customer receivables (as-of now)</h2>
