@@ -189,7 +189,8 @@ export async function expireRun16Order(orderId:string,database:TallybookDB=db) {
       !["reserved","packed"].includes(order.status))
      throw Error("Only unfulfilled local orders may expire.");
    const now=time(),holds=await database.commerceHolds.where("orderId").equals(orderId).toArray();
-   if(!holds.length||holds.some(h=>h.businessProfileId!==company||h.status!=="active"||
+   if(!order.reservationExpiresAt||Date.parse(order.reservationExpiresAt)>Date.parse(now)||
+      holds.some(h=>h.businessProfileId!==company||h.status!=="active"||
       Date.parse(h.expiresAt)>Date.parse(now)))
      throw Error("Reservation is not entirely expired.");
    for(const hold of holds)await database.commerceHolds.put({...hold,status:"released",
@@ -276,7 +277,8 @@ export async function recordRun16Delivery(
      const profile=await database.businessProfiles.get(company);
      const policy=currentCompanyReturnPolicy(profile?.returnPolicyHistory);
      if(!policy.enabled||!(policy.allowFullReversal||policy.allowCashPartial)||
-        !sale?.returnPolicyAtSale?.enabled)
+        !sale?.returnPolicyAtSale?.enabled||
+        !(sale.returnPolicyAtSale.allowFullReversal||sale.returnPolicyAtSale.allowCashPartial))
        throw Error("Business return policy does not allow a return review for this sale.");
    }
    const next=allowedRun16DeliveryTransition(order.status,action,linked);
