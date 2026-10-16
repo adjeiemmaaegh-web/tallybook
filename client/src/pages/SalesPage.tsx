@@ -166,7 +166,12 @@ export default function SalesPage() {
 
   useEffect(() => { if (paymentPlan === "full") setAmountPaid(String(suggestedPaid)); }, [paymentPlan, suggestedPaid]);
 
-  const availableUnits = (product:InventorySnapshot["products"][number])=>storeMode && product.itemKind!=="service" ? (storeAvailable?.[product.id]??0) : product.stockQuantity;
+  const availableUnits = (product:InventorySnapshot["products"][number])=>{
+    const baseline=storeMode&&product.itemKind!=="service"?(storeAvailable?.[product.id]??0):product.stockQuantity;
+    const chosen=eligibleCommerceOrders.find(o=>o.id===saleCommerceOrderId);
+    const held=chosen?.lines.find(line=>line.productId===product.id)?.quantity??0;
+    return baseline+(chosen&&chosen.status==="reserved"&&Date.parse(chosen.reservationExpiresAt??"")>Date.now()?held:0);
+  };
   const addProduct = () => { const quantity = Number(quantityToAdd); const product = productById.get(productToAdd); if (!product) return toast.info("Choose a product to add."); if (!Number.isInteger(quantity) || quantity < 1) return toast.error("Enter a whole quantity of at least 1."); setCart((current) => { const existing = current.find((line) => line.productId === product.id); const nextQuantity = (existing?.quantity ?? 0) + quantity; if (nextQuantity > availableUnits(product)) { toast.error(`${product.name} has only ${availableUnits(product)} available at this store.`); return current; } return existing ? current.map((line) => line.productId === product.id ? { ...line, quantity: nextQuantity } : line) : [...current, { productId: product.id, quantity }]; }); setProductToAdd(""); setQuantityToAdd("1"); };
   const addScannedCode = (rawCode: string) => {
     const code = rawCode.trim().toLocaleLowerCase();
