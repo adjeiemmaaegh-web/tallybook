@@ -231,7 +231,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for (const key of recordKeys) {
     if (key === "appMeta" || key === "businessProfiles") continue;
     for (const record of records[key] as unknown as Record<string, unknown>[]) {
-      if (key !== "syncConsents" && (typeof record.id !== "string" || !record.id.trim())) throw new Error(`Invalid ${key} record ID.`);
+      if (!["syncConsents","storeStockModes"].includes(key) && (typeof record.id !== "string" || !record.id.trim())) throw new Error(`Invalid ${key} record ID.`);
       const legacyChild = ["saleLines", "payments", "receipts", "customerActivities", "purchaseLines"].includes(key);
       if (key === "stockCountSessions") {
         if (record.companyId !== companyId || !Array.isArray(record.lines) || !["draft", "posted"].includes(String(record.status))) throw new Error("Invalid stock-count session ownership or contents.");
