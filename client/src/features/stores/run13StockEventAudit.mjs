@@ -14,6 +14,8 @@ export function auditStoreStockEvents({companyId, stores, products, entries}) {
     fail("Store stock evidence unavailable.");
   const storeIds = new Set(), productById = new Map(), balances = new Map();
   const seenEvent = new Set(), seenKey = new Set(), transferPairs = new Map();
+  const allocatedSlots = new Set();
+  let transfersStarted = false;
   for (const store of stores) {
     if (!id(store?.id) || store.businessProfileId !== companyId || storeIds.has(store.id))
       fail("Invalid store identity.");
@@ -34,7 +36,13 @@ export function auditStoreStockEvents({companyId, stores, products, entries}) {
         !["allocation","transfer-out","transfer-in"].includes(e.kind))
       fail("Malformed, duplicated or cross-company stock event.");
     seenEvent.add(e.id); seenKey.add(e.submissionKey);
-    if (e.kind==="allocation" && e.quantityDelta<0) fail("Opening allocation cannot be negative.");
+    if (e.kind==="allocation") {
+      if (transfersStarted) fail("Opening allocations must precede transfer events.");
+      if (e.quantityDelta<0) fail("Opening allocation cannot be negative.");
+      const allocationSlot = slot(e.storeId,e.productId);
+      if (allocatedSlots.has(allocationSlot)) fail("Duplicate opening allocation for store product.");
+      allocatedSlots.add(allocationSlot);
+    } else transfersStarted = true;
     if (e.kind!=="allocation" && (!id(e.transferId) || e.quantityDelta===0 ||
         (e.kind==="transfer-out" && e.quantityDelta>=0) ||
         (e.kind==="transfer-in" && e.quantityDelta<=0)))
