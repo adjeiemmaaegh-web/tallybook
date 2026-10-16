@@ -36,7 +36,9 @@ export function validateReturnPolicyHistory(history){
   if(!own(r,['revision','effectiveAt','enabled','allowFullReversal',
     'allowCashPartial','maxAgeDays','reason','actorStaffId'])||
     !Number.isSafeInteger(r.revision)||r.revision!==i+1||
-    !validSettings(r)||typeof r.reason!=='string'||!r.reason.trim()||
+    !validSettings({enabled:r.enabled,allowFullReversal:r.allowFullReversal,
+      allowCashPartial:r.allowCashPartial,maxAgeDays:r.maxAgeDays})||
+    typeof r.reason!=='string'||!r.reason.trim()||
     r.reason.length>240||
     (r.actorStaffId!==undefined&&
       (typeof r.actorStaffId!=='string'||!r.actorStaffId.trim()))||
