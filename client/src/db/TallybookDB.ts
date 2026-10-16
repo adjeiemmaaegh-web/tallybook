@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 28;
+export const DATABASE_SCHEMA_VERSION = 29;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -69,6 +69,8 @@ export class TallybookDB extends Dexie {
   storeAssignments!: Table<import("@/features/stores/storeDirectory").StoreAssignment, string>;
   storeTransferRequests!: Table<import("@/features/stores/storeTransfers").StoreTransferRequest, string>;
   storeStockObservations!: Table<import("@/features/stores/storeStockCounts").StoreStockObservation, string>;
+  storeStockModes!: Table<import("@/features/stores/storeStockLedger").StoreStockMode, string>;
+  storeStockEntries!: Table<import("@/features/stores/storeStockLedger").StoreStockEntry, string>;
 
   commerceOrders!: Table<import("@/features/commerce/commerce").CommerceOrder, string>;
 
@@ -266,6 +268,8 @@ export class TallybookDB extends Dexie {
     this.version(27).stores({ supplierPayableEntries: "id, businessProfileId, purchaseId, supplierId, kind, createdAt, &[businessProfileId+submissionKey]" });
     // v28: strictly limited, immutable, offline cash partial-return journal.
     this.version(28).stores({ cashPartialReturns: "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]" });
+    // Run 13: migration adds tables only; no historical store allocations are inferred.
+    this.version(29).stores({ storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId]" });
   }
 }
 
