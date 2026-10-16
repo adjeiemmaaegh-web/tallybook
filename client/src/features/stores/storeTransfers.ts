@@ -18,13 +18,21 @@ export function validateTransferRequest(source: string, destination: string, pro
   if (!source || !destination || source === destination) throw new Error("Select two different stores.");
   if (!product || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 9_999_999) throw new Error("Transfer quantity must be a positive whole number.");
 }
-export async function requestStoreTransfer(sourceStoreId: string, destinationStoreId: string, productId: string, quantity: number, database: TallybookDB = db) {
+export async function requestStoreTransfer(sourceStoreId: string, destinationStoreId: string, productId: string, quantity: number, database: TallybookDB = db, submissionKey = nanoid(18)) {
   return withCoordinatedRetailWrite(async () => {
     validateTransferRequest(sourceStoreId, destinationStoreId, productId, quantity);
+    if(!/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))throw new Error("Invalid transfer request submission identity.");
     const company = getActiveBusinessProfileId();
     return database.transaction("rw", [database.appMeta, database.storeTransferRequests, database.storeLocations, database.storeAssignments, database.products, database.staffMembers, database.staffAudits], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       const member = await requirePermission("staff", database, company);
+      const existing=await database.storeTransferRequests.where("[businessProfileId+submissionKey]").equals([company,submissionKey]).first();
+      if(existing){
+        if(existing.sourceStoreId!==sourceStoreId||existing.destinationStoreId!==destinationStoreId||
+          existing.productId!==productId||existing.quantity!==quantity)
+          throw new Error("Transfer request key was previously used for different stock intent.");
+        return existing;
+      }
       const staffId = member?.id ?? currentStaffId(company);
       if (!staffId) throw new Error("Active staff identity required.");
       if (getActiveBusinessProfileId() !== company) throw new Error("Company changed.");
@@ -38,7 +46,7 @@ export async function requestStoreTransfer(sourceStoreId: string, destinationSto
       }
       if (getActiveBusinessProfileId() !== company || currentStaffId(company) !== staffId)
         throw new Error("Company or staff session changed during request.");
-      const entry: StoreTransferRequest = { id: nanoid(), businessProfileId: company, sourceStoreId, destinationStoreId, productId, quantity, status: "requested", requestedByStaffId: staffId, createdAt: new Date().toISOString() };
+      const entry: StoreTransferRequest = { id: nanoid(), businessProfileId: company, sourceStoreId, destinationStoreId, productId, quantity, status: "requested", requestedByStaffId: staffId, submissionKey, createdAt: new Date().toISOString() };
       await database.storeTransferRequests.add(entry);
       await database.staffAudits.add({id:nanoid(), businessProfileId:company, staffId, action:"store.transfer.requested", createdAt:entry.createdAt, details:entry.id});
       return entry;
