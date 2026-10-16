@@ -5,10 +5,11 @@ import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
+import { postPairedStoreTransfer } from "./storeStockLedger";
 
 export interface StoreTransferRequest {
   id: string; businessProfileId: string; sourceStoreId: string; destinationStoreId: string;
-  productId: string; quantity: number; status: "requested" | "cancelled";
+  productId: string; quantity: number; status: "requested" | "cancelled" | "completed"; completedAt?: string; completionKey?: string; transferId?: string;
   requestedByStaffId: string; createdAt: string; cancelledAt?: string;
 }
 export function validateTransferRequest(source: string, destination: string, product: string, quantity: number) {
@@ -51,6 +52,7 @@ export async function cancelStoreTransfer(requestId: string, database: Tallybook
       const record = await database.storeTransferRequests.get(requestId);
       if (!record || record.businessProfileId !== company || getActiveBusinessProfileId() !== company) throw new Error("Request not found in company.");
       if (record.status === "cancelled") return record;
+      if (record.status === "completed") throw new Error("Completed transfers cannot be cancelled.");
       const updated: StoreTransferRequest = { ...record, status: "cancelled", cancelledAt: new Date().toISOString() };
       await database.storeTransferRequests.put(updated);
       if (actor) await database.staffAudits.add({id:nanoid(), businessProfileId:company, staffId:actor.id, action:"store.transfer.cancelled", createdAt:updated.cancelledAt!, details:requestId});
@@ -63,4 +65,50 @@ export async function listStoreTransferRequests(database: TallybookDB = db) {
   const records = await database.storeTransferRequests.where("businessProfileId").equals(company).toArray();
   if (getActiveBusinessProfileId() !== company || records.some(r => r.businessProfileId !== company)) throw new Error("Company changed while loading transfers.");
   return records.sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Same-device, atomic paired transfer posting. This is not remote delivery
+ * or multi-device inventory synchronization. */
+export async function completeStoreTransfer(requestId:string,submissionKey:string,database:TallybookDB=db) {
+  return withCoordinatedRetailWrite(async()=>{
+    const company=getActiveBusinessProfileId();
+    if(!requestId || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
+      throw new Error("Provide a valid transfer request and confirmation key.");
+    return database.transaction("rw",[
+      database.appMeta,database.storeStockModes,database.storeStockEntries,database.storeLocations,
+      database.storeAssignments,database.storeTransferRequests,database.products,
+      database.staffMembers,database.staffAudits
+    ],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
+      const staff=await requirePermission("inventory",database,company);
+      if(!staff || currentStaffId(company)!==staff.id)
+        throw new Error("Unlock inventory-authorized staff before completing transfer.");
+      const request=await database.storeTransferRequests.get(requestId);
+      if(!request || request.businessProfileId!==company)
+        throw new Error("Transfer request missing or belongs to another company.");
+      if(request.status==="completed"){
+        if(request.completionKey===submissionKey) return request;
+        throw new Error("Transfer already completed with a different confirmation.");
+      }
+      if(request.status!=="requested") throw new Error("Cancelled request cannot be executed.");
+      if(staff.role!=="owner"){
+        for(const storeId of [request.sourceStoreId,request.destinationStoreId]) {
+          const assignment=await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+            .equals([company,staff.id,storeId]).first();
+          if(!assignment) throw new Error("Staff not assigned to both transfer stores.");
+        }
+      }
+      if(getActiveBusinessProfileId()!==company || currentStaffId(company)!==staff.id)
+        throw new Error("Company or staff session changed before transfer.");
+      const now=new Date().toISOString();
+      const transferId=await postPairedStoreTransfer(database,company,request,staff.id,submissionKey,now);
+      const saved:StoreTransferRequest={...request,status:"completed",completedAt:now,completionKey:submissionKey,transferId};
+      await database.storeTransferRequests.put(saved);
+      await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
+        action:"store.transfer.completed",createdAt:now,details:request.id});
+      if(getActiveBusinessProfileId()!==company || currentStaffId(company)!==staff.id)
+        throw new Error("Company or staff session changed during transfer.");
+      return saved;
+    });
+  });
 }
