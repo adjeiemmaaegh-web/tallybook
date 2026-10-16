@@ -1,8 +1,12 @@
 import { allocationCost, reconstructInventoryCost, type InventoryCostEvent } from "@/features/inventory/costLedger";
+import {assertRun9ReturnCostCompleteness} from './run9CostReturnAudit.mjs';
+import {assertRun9PurchaseCostCompleteness,type Run9PurchaseCostEvidence} from './run9PurchaseCostAudit.mjs';
+import {summarizeRun9InventoryValuation,type Run9InventoryValuation} from './run9InventoryValuation.mjs';
 import type { Product, InventoryMovement } from "@/features/inventory/inventory";
 import type { Sale, SaleLine } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
 import type { CashPartialSaleReturn } from "@/features/sales/cashPartialReturnPosting";
+import type {Purchase,PurchaseLine} from '@/features/purchases/purchases';
 
 function add(a: number, b: number) {
   if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b) || !Number.isSafeInteger(a + b)) throw new Error("Cost reconciliation exceeds safe integer limits.");
@@ -13,11 +17,39 @@ function add(a: number, b: number) {
 export function reconcileSaleCosts(company: string, input: {
   products: Product[]; events: InventoryCostEvent[]; movements: InventoryMovement[];
   sales: Sale[]; lines: SaleLine[]; reversals: SaleReversal[]; cashReturns?: CashPartialSaleReturn[];
-}, range: { start: Date; end: Date }): { cogsMinor?: number; unavailableSales: number } {
-  for (const rows of [input.products, input.events, input.movements, input.sales, input.lines, input.reversals, input.cashReturns ?? []]) {
+  purchases:Purchase[];purchaseLines:PurchaseLine[];expectedCurrency?:string;
+}, range: { start: Date; end: Date }): {
+  cogsMinor?:number;unavailableSales:number;
+  inventoryValuation:Run9InventoryValuation;
+  purchaseCostEvidence:Run9PurchaseCostEvidence
+} {
+  for (const rows of [input.products, input.events, input.movements, input.sales, input.lines, input.reversals, input.cashReturns ?? [],input.purchases,input.purchaseLines]) {
     if (rows.some(row => row.businessProfileId !== company) || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error("Cost reconciliation contains duplicate or foreign records.");
   }
+  // Source records must prove inverse FIFO restorations BOTH ways: existence
+  // of one reversal event is not evidence that every full-return line was
+  // restored. Check this before generating any financial period result.
+  assertRun9ReturnCostCompleteness({
+    events:input.events,lines:input.lines,reversals:input.reversals,
+    cashReturns:input.cashReturns ?? []
+  });
+  const purchaseCostEvidence=assertRun9PurchaseCostCompleteness({
+    company,purchases:input.purchases,purchaseLines:input.purchaseLines,
+    movements:input.movements,events:input.events,
+    expectedCurrency:input.expectedCurrency
+  });
   const events = new Map(input.events.map(event => [event.id, event]));
+  const eventsByProduct=new Map<string,InventoryCostEvent[]>();
+  for(const event of input.events){
+    const history=eventsByProduct.get(event.productId)??[];
+    history.push(event);eventsByProduct.set(event.productId,history);
+  }
+  const linesById=new Map(input.lines.map(line=>[line.id,line]));
+  const linesBySale=new Map<string,SaleLine[]>();
+  for(const line of input.lines){
+    const saleLines=linesBySale.get(line.saleId)??[];
+    saleLines.push(line);linesBySale.set(line.saleId,saleLines);
+  }
   const movements = new Map(input.movements.map(movement => [movement.id, movement]));
   const productIds = new Set(input.products.map(product => product.id));
   for (const event of input.events) {
@@ -27,7 +59,7 @@ export function reconcileSaleCosts(company: string, input: {
     const movement = movements.get(event.sourceId);
     if (!movement || movement.productId !== event.productId || movement.quantityDelta !== event.quantityDelta || movement.createdAt !== event.createdAt || movement.resultingQuantity - movement.previousQuantity !== event.quantityDelta) throw new Error("Inventory cost evidence does not match its stock movement.");
     if (event.kind === "issue" && event.saleId) {
-      const line = input.lines.find(line => line.id === event.saleLineId);
+      const line=linesById.get(event.saleLineId ?? '');
       if (!line || line.costEventId !== event.id || line.saleId !== event.saleId) throw new Error("Cost allocation refers to a missing sale line.");
     }
     if (event.kind === "reversal") {
@@ -38,14 +70,18 @@ export function reconcileSaleCosts(company: string, input: {
       if ((full ? 1 : 0) + (partial ? 1 : 0) !== 1) throw new Error("Cost reversal has no uniquely matched full or partial return evidence.");
     }
   }
-  for (const product of input.products) {
-    const history = input.events.filter(event => event.productId === product.id);
-    if (!history.length) continue;
-    if (reconstructInventoryCost(history, company, product.id).quantity !== product.stockQuantity) throw new Error("Current stock does not reconcile with cost history.");
-  }
+  const costStates=input.products.map(product=>{
+    const history=eventsByProduct.get(product.id)??[];
+    if(!history.length)return null; // A legacy balance is not a cost receipt.
+    const state=reconstructInventoryCost(history,company,product.id);
+    if(state.quantity!==product.stockQuantity)
+      throw new Error("Current stock does not reconcile with cost history.");
+    return state;
+  });
+  const inventoryValuation=summarizeRun9InventoryValuation(input.products,costStates);
   const saleCosts = new Map<string, number | undefined>();
   for (const sale of input.sales) {
-    const lines = input.lines.filter(line => line.saleId === sale.id);
+    const lines=linesBySale.get(sale.id)??[];
     let total = 0, known = lines.length > 0;
     for (const line of lines) {
       if (line.stockTracked === false && line.costStatus === "verified" && line.cogsMinor === 0 && !line.costEventId) continue;
@@ -84,5 +120,6 @@ export function reconcileSaleCosts(company: string, input: {
     if (value === undefined) unavailableSales++;
     else cogsMinor = add(cogsMinor, value * posting.sign);
   }
-  return { cogsMinor: unavailableSales ? undefined : cogsMinor, unavailableSales };
+  return { cogsMinor: unavailableSales ? undefined : cogsMinor,
+    unavailableSales,inventoryValuation,purchaseCostEvidence };
 }

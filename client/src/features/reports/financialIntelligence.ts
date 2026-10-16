@@ -12,12 +12,14 @@ import type { SaleReversal } from "@/features/assistant/reversals";
 import type { CashPartialSaleReturn } from "@/features/sales/cashPartialReturnPosting";
 import { reconcileCashPartialReturns } from "@/features/sales/cashPartialReturn.mjs";
 import { reconcileSaleCosts } from "./costReconciliation";
+import type {Run9InventoryValuation} from './run9InventoryValuation.mjs';
+import type {Run9PurchaseCostEvidence} from './run9PurchaseCostAudit.mjs';
 import { assertSavedSaleTenderReconciliation } from "./saleTenderReconciliation.mjs";
 import { reconcilePrepaidLiability } from "./prepaidLiabilityReconciliation.mjs";
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
-import type { Purchase } from "@/features/purchases/purchases";
+import type { Purchase,PurchaseLine } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 
@@ -29,6 +31,9 @@ export interface FinancialSummary {
   salesExcludingRecordedTaxMinor: number;
   cogsMinor?: number;
   salesLessCostMinor?: number;
+  /** AS-OF full saved stock, not a period cash or profit flow. */
+  inventoryValuation?:Run9InventoryValuation;
+  purchaseCostEvidence?:Run9PurchaseCostEvidence;
   range: FinancialRange;
   revenueMinor: number;
   saleCount: number;
@@ -169,12 +174,12 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
 }
 export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),start?:string,end?:string,database:TallybookDB=db):Promise<FinancialSummary> {
   const company=getActiveBusinessProfileId();
-  const records=await database.transaction("r",[database.businessProfiles,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
+  const records=await database.transaction("r",[database.businessProfiles,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
     await requirePermission("reports", database, company);
-    return Promise.all([database.businessProfiles.get(company),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
+    return Promise.all([database.businessProfiles.get(company),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
-  const [profile,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,supplierEntries,customerBenefits]=records;
+  const [profile,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
   const range = financialRange(period,now,start,end);
@@ -183,7 +188,13 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   assertSavedSaleTenderReconciliation(scoped(sales), scoped(payments));
   assertSingleCurrencyFinancialEvidence({sales:scoped(sales),repayments:scoped(repayments),expenses:scoped(expenses),walletTransfers:scoped(walletTransfers),cashReturns:scoped(cashReturns)},profile.currency);
   const summary = summarizeFinancials({sales:scoped(sales),payments:scoped(payments),repayments:scoped(repayments),expenses:scoped(expenses),reversals:scoped(reversals),cashReturns:scoped(cashReturns),saleLines:scoped(lines),walletTransfers:scoped(walletTransfers),customerBenefits:scoped(customerBenefits),walletCurrency:profile.currency,purchases:scoped(purchases),supplierPayableEntries:scoped(supplierEntries)},range);
-  const costs = reconcileSaleCosts(company,{sales:scoped(sales),reversals:scoped(reversals),cashReturns:scoped(cashReturns),events:scoped(events),products:scoped(products),lines:scoped(lines),movements:scoped(movements)},range);
+  const costs = reconcileSaleCosts(company,{sales:scoped(sales),reversals:scoped(reversals),cashReturns:scoped(cashReturns),events:scoped(events),products:scoped(products),lines:scoped(lines),movements:scoped(movements),
+    purchases:scoped(purchases),purchaseLines:scoped(purchaseLines),
+    expectedCurrency:profile.currency},range);
+  // Independently reconstructed FIFO stock assets belong to a distinct
+  // AS-OF section. Unknown receipt costs are never today's editable unit price.
+  summary.inventoryValuation=costs.inventoryValuation;
+  summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
     summary.cogsMinor = costs.cogsMinor;
     summary.salesLessCostMinor = summary.salesExcludingRecordedTaxMinor - costs.cogsMinor;
@@ -213,6 +224,16 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Collections minus recorded expenses (excludes supplier payments)',summary.netRecordedCashMovementMinor],
     ['Current customer receivables',summary.currentReceivablesMinor],
     ['Verified COGS after reversals',summary.cogsMinor ?? `Unavailable: ${summary.unavailable.cogs}`],
+    ...(summary.inventoryValuation ? [
+      ['Known historical-cost stock assets, minor units (AS-OF; not replacement cost)',summary.inventoryValuation.knownValueMinor],
+      ['Stock units with unknown receipt cost (AS-OF)',summary.inventoryValuation.unknownCostUnits],
+      ['Products with incomplete cost evidence (AS-OF)',summary.inventoryValuation.unverifiedProducts],
+      ['Supplier invoices with verified receipt cost evidence (AS-OF)',summary.purchaseCostEvidence?.verifiedPurchases ?? 0],
+      ['Legacy supplier invoices with unverified receipt cost evidence (AS-OF)',summary.purchaseCostEvidence?.legacyUnverifiedPurchases ?? 0],
+      ['Full stock value from verified receipts (AS-OF)',summary.inventoryValuation.complete
+        ? summary.inventoryValuation.totalValueMinor ?? 0
+        : 'Unavailable: some stock units have no historical purchase or opening cost']
+    ] as (string|number)[][] : []),
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
