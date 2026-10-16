@@ -132,8 +132,9 @@ export async function getSupplierPayables(database: TallybookDB = db) {
     await requirePermission('reports',database,company);
     const purchases = await database.purchases.where('businessProfileId').equals(company).toArray();
     const entries = await database.supplierPayableEntries.where('businessProfileId').equals(company).toArray();
+    const purchasesById=new Map(purchases.map(row=>[row.id,row]));
     for (const entry of entries) {
-      const purchase = purchases.find(row => row.id === entry.purchaseId);
+      const purchase = purchasesById.get(entry.purchaseId);
       if (!purchase || !validCurrency(purchase.currency) || entry.currency !== purchase.currency) throw new Error('Supplier ledger has orphaned or wrong-currency entries.');
     }
     const supplierIds=new Set((await database.suppliers.where('businessProfileId').equals(company).toArray()).map(x=>x.id));
