@@ -211,7 +211,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
     const normalizedName = normalizeName(input.name);
     const initialStock = Number(input.initialStock);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
@@ -294,7 +294,7 @@ export async function adjustStock(productId: string, values: StockAdjustmentValu
 async function adjustStockWhileLocked(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
   const input = stockAdjustmentSchema.parse(values);
   const company = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
+  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
