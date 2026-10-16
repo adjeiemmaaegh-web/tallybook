@@ -42,8 +42,8 @@ export function reservationBalance(holds,company,productId,storeId,now,excludeOr
   keys.add(h.id);keys.add(h.submissionKey);
   if(h.status!=="active"||h.orderId===excludeOrderId||Date.parse(h.expiresAt)<=Date.parse(now))continue;
   if(storeId!==undefined&&h.storeId!==storeId)continue;
-  if(storeId===undefined&&h.storeId!==undefined)
-    fail("Cannot reconcile store-specific reservation into unstored company scope.");
+  if(storeId!==undefined&&h.storeId===undefined)
+    fail("Unassigned company reservation blocks store-scoped allocation.");
   reserved+=h.quantity;
   if(!Number.isSafeInteger(reserved)||reserved>9_999_999)fail("Reserved stock overflow.");
  }
