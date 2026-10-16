@@ -4,6 +4,7 @@ import {afterEach,expect,it,vi} from 'vitest';
 import {TallybookDB,initializeDatabase} from '@/db/TallybookDB';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {saveBusinessProfile} from '@/features/business/businessProfile';
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import {createProduct} from '@/features/inventory/inventory';
 import {completeSale} from '@/features/sales/sales';
 import {getCashReturnReview} from './cashReturnReview.ts';
@@ -15,6 +16,7 @@ async function setup() {
   const database=new TallybookDB(`cash-review-${crypto.randomUUID()}`);opened.push(database);
   await initializeDatabase(database);
   await saveBusinessProfile({name:'Refund preview',country:'Ghana',currency:'GHS',businessType:'Retail'},database);
+  await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Test fixture owner opt-in',database);
   const product=await createProduct({name:'Rice',categoryId:'uncategorized',sellingPrice:'10',costPrice:'1',initialStock:'3',lowStockThreshold:'0'},'GHS',database);
   const original=await completeSale({lines:[{productId:product.id,quantity:2}],discount:'0',paymentMethod:'cash',amountPaid:'20',currency:'GHS',submissionKey:'review-sale-001'},database);
   return {database,original,product};
