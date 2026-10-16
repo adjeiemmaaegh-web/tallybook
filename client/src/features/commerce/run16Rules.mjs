@@ -114,6 +114,8 @@ export function auditRun16PortableCommerce(orders,holds,events,products,company)
   const ownEvents=orderEventMap.get(event.orderId)??[];
   ownEvents.push(event);orderEventMap.set(event.orderId,ownEvents);
  }
+ for(const order of orders)if(["reserved","packed","dispatched","delivered","return-requested"].includes(order.status)&&!orderEventMap.has(order.id))
+   fail("Committed commerce lifecycle lacks immutable ordered transition evidence.");
  for(const [orderId,list] of orderEventMap){
    list.sort((a,b)=>a.sequence-b.sequence);
    let previous;
