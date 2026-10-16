@@ -6,6 +6,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { postPairedStoreTransfer } from "./storeStockLedger";
+import { requireStage9Capability } from "./stage9ReleaseScope";
 
 export interface StoreTransferRequest {
   id: string; businessProfileId: string; sourceStoreId: string; destinationStoreId: string;
@@ -70,6 +71,7 @@ export async function listStoreTransferRequests(database: TallybookDB = db) {
 /** Same-device, atomic paired transfer posting. This is not remote delivery
  * or multi-device inventory synchronization. */
 export async function completeStoreTransfer(requestId:string,submissionKey:string,database:TallybookDB=db) {
+  requireStage9Capability("executeStoreTransfer");
   return withCoordinatedRetailWrite(async()=>{
     const company=getActiveBusinessProfileId();
     if(!requestId || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
