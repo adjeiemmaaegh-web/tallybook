@@ -11,7 +11,9 @@ import { retrieveEncryptedBackup } from "./syncBackupTransport.mjs";
 import { uploadEncryptedBackup } from "./syncBackupUpload.mjs";
 import { createEncryptedBackupVault } from "./syncBackupVault.mjs";
 import { selectServerTransport } from "./syncHttps.mjs";
-import { createAccessActions, isDirectTls } from "./syncAccessRoutes.mjs";
+import { createAccessActions, isDirectTls, createAccessLimiter } from "./syncAccessRoutes.mjs";
+import {createRun14EncryptedReplicaStore} from "./run14EncryptedReplicaStore.mjs";
+import {stageRun14EncryptedEvent,listRun14EncryptedEvents} from "./run14EncryptedRelayBoundary.mjs";
 import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
 import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
 import {installRun4SessionProbe} from "./run4SessionProbe.mjs";
@@ -208,6 +210,56 @@ async function startServer() {
       });
       res.status(result.status==='conflict'?409:result.status==='stored'?201:200).json(result);
     } catch {res.status(403).json({error:"Event staging denied or invalid."});}
+  });
+
+  // Run 14 optional encrypted relay. NOT enabled by default. Source-only until
+  // independent tenant/device/session tests, TLS and owner deployment approval.
+  const run14Enabled=process.env.TALLYBOOK_RUN14_ENCRYPTED_RELAY_ENABLED==="true";
+  const run14ConfigReady=Boolean(process.env.TALLYBOOK_RUN14_REPLICA_FILE &&
+    process.env.TALLYBOOK_SYNC_SESSION_FILE &&
+    process.env.TALLYBOOK_SYNC_DIRECTORY_FILE &&
+    process.env.TALLYBOOK_SYNC_VERIFY_SECRET &&
+    process.env.TALLYBOOK_SYNC_SESSION_SECRET);
+  const run14Limiter=createAccessLimiter({limit:40,windowMs:60_000});
+  const run14RequestHeaders=(req:any)=>({
+    authorization:req.header("authorization")??undefined,
+    organizationId:req.header("x-tallybook-org-id")??undefined,
+    deviceId:req.header("x-tallybook-device-id")??undefined,
+    session:req.header("x-tallybook-session")??undefined,
+  });
+  const run14Config=()=>{
+    if(!run14Enabled||!run14ConfigReady)throw Error("Run 14 relay is disabled.");
+    return {
+      capabilitySecret:process.env.TALLYBOOK_SYNC_VERIFY_SECRET,
+      sessionSecret:process.env.TALLYBOOK_SYNC_SESSION_SECRET,
+      sessionStore:createReadOnlyFileSessionStore(process.env.TALLYBOOK_SYNC_SESSION_FILE!),
+      directory:createReadOnlyFileDirectory(process.env.TALLYBOOK_SYNC_DIRECTORY_FILE!),
+      relay:createRun14EncryptedReplicaStore(process.env.TALLYBOOK_RUN14_REPLICA_FILE!),
+    };
+  };
+  app.post("/api/sync/replication/events",express.json({limit:"96kb",type:"application/json"}),async(req,res)=>{
+    res.setHeader("Cache-Control","no-store");res.setHeader("X-Content-Type-Options","nosniff");
+    if(!run14Enabled||!run14ConfigReady){res.status(503).json({error:"Encrypted relay disabled."});return;}
+    if(!isDirectTls(req)||!run14Limiter.allow("write:"+(req.socket.remoteAddress??"unknown"))){
+      res.status(403).json({error:"Encrypted relay denied."});return;
+    }
+    try{
+      const receipt=await stageRun14EncryptedEvent(run14RequestHeaders(req),req.body,run14Config());
+      res.status(receipt.status==="stored"?201:receipt.status==="duplicate"?200:409).json(receipt);
+    }catch{res.status(403).json({error:"Encrypted relay denied or invalid."});}
+  });
+  app.get("/api/sync/replication/events",async(req,res)=>{
+    res.setHeader("Cache-Control","no-store");res.setHeader("X-Content-Type-Options","nosniff");
+    if(!run14Enabled||!run14ConfigReady){res.status(503).json({error:"Encrypted relay disabled."});return;}
+    if(!isDirectTls(req)||!run14Limiter.allow("read:"+(req.socket.remoteAddress??"unknown"))){
+      res.status(403).json({error:"Encrypted relay denied."});return;
+    }
+    const raw=req.query.after;
+    if(typeof raw!=="string"||!/^(0|[1-9][0-9]{0,8})$/.test(raw)){
+      res.status(400).json({error:"Invalid replica cursor."});return;
+    }
+    try{res.status(200).json(await listRun14EncryptedEvents(run14RequestHeaders(req),Number(raw),run14Config()));}
+    catch{res.status(403).json({error:"Encrypted relay denied or unavailable."});}
   });
 
   // Secure-by-default sync gateway: no remote reads/writes until durable backend is ready.
