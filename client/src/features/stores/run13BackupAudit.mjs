@@ -37,7 +37,11 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
        seenIds.has(e.id)||seenKeys.has(e.submissionKey))
       deny("Invalid or duplicated store stock evidence.");
     seenIds.add(e.id);seenKeys.add(e.submissionKey);
-    if(!(e.kind==="opening"&&e.sourceId.startsWith("opening:"))) {
+    if(e.kind==="opening"&&e.sourceId.startsWith("opening:")) {
+      const expected="opening:"+company+":"+e.storeId+":"+e.productId;
+      if(e.sourceId!==expected || e.createdAt!==modes[0].activatedAt)
+        deny("Opening allocation lacks exact company/store activation evidence.");
+    } else {
       if(e.kind!=="transfer-in"&&e.kind!=="transfer-out") {
         const movement=movementById.get(e.sourceId);
         if(!movement||movement.businessProfileId!==company||movement.productId!==e.productId||
