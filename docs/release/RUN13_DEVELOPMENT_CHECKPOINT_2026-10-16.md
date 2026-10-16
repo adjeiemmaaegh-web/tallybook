@@ -1,3 +1,5 @@
+> **Run 13 source-development closure, 2026-10-16:** This file preserves earlier partial checkpoints as historical notes. The consolidated delivered source increment and its deferred QA status are recorded in [RUN13_MULTISTORE_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md](./RUN13_MULTISTORE_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md). The later increment includes IndexedDB v29, atomic owner-confirmed store ledger, reservation/dispatch/receipt/reverse-transfer source paths, checkout/purchase/refund integration, backup preflight, UI and local reporting. All stage-9 activation and execution release flags remain disabled; **no tests or builds executed, no production merge, release NO-GO**. Earlier "incomplete" statements below describe historical checkpoint states rather than the latest development scope. Acceptance and live activation have **not** been approved.
+
 # Tallybook V19 — Run 13 source-development checkpoint (NOT COMPLETE)
 
 Date: 2026-10-16
