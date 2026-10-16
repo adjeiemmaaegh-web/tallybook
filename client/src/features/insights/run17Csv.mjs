@@ -27,6 +27,8 @@ export function exportRun17Csv(report) {
     "Excluded from observed product volume until net unit provenance established",""],
   ["Metric","stores","Sales missing store attribution",report.summary.storeOriginUnknownSaleCount,
     "Never guess a legacy sale's source location",""],
+  ["Metric","findings","Additional findings not displayed",report.incompleteFindingCount,
+    "Only first 100 findings are shown; review underlying source records",""],
  ];
  for(const store of report.stores)rows.push(["Store",store.storeId,store.storeName,
    store.grossRecordedInvoiceMinor,
