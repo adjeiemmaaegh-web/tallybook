@@ -118,3 +118,69 @@ export async function completeStoreTransfer(requestId:string,submissionKey:strin
     });
   });
 }
+
+/** Dispatch reserves units at source; it does not silently move or sell them.
+ * The separate receiving action posts both stock legs atomically.
+ */
+export async function dispatchStoreTransfer(requestId:string,dispatchKey:string,database:TallybookDB=db) {
+  requireStage9Capability("executeStoreTransfer");
+  return withCoordinatedRetailWrite(async()=>{
+    const company=getActiveBusinessProfileId();
+    if(!requestId||!/^[A-Za-z0-9:_-]{8,100}$/.test(dispatchKey))
+      throw new Error("Invalid store dispatch identity.");
+    return database.transaction("rw",[
+      database.appMeta,database.storeStockModes,database.storeStockEntries,
+      database.storeTransferRequests,database.storeLocations,database.products,
+      database.storeAssignments,database.staffMembers,database.staffAudits
+    ],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
+      const actor=await requirePermission("inventory",database,company);
+      if(!actor||currentStaffId(company)!==actor.id)
+        throw new Error("Unlock inventory-authorized dispatch staff.");
+      const request=await database.storeTransferRequests.get(requestId);
+      if(!request||request.businessProfileId!==company)
+        throw new Error("Request unavailable in this company.");
+      if(request.status==="dispatched"||request.status==="completed") {
+        if(request.dispatchKey===dispatchKey&&request.dispatchedAt)return request;
+        throw new Error("Transfer is already dispatched under different evidence.");
+      }
+      if(request.status!=="requested")throw new Error("Cancelled transfer cannot be dispatched.");
+      if(!await database.storeStockModes.get(company))
+        throw new Error("Store stock must be explicitly activated first.");
+      const duplicate=await database.storeTransferRequests.where("businessProfileId").equals(company)
+        .filter(r=>r.id!==request.id&&r.dispatchKey===dispatchKey).first();
+      if(duplicate)throw new Error("Dispatch confirmation key already belongs to another request.");
+      const [source,destination,product]=await Promise.all([
+        database.storeLocations.get(request.sourceStoreId),
+        database.storeLocations.get(request.destinationStoreId),
+        database.products.get(request.productId)
+      ]);
+      if(!source||!destination||source.id===destination.id||
+         source.businessProfileId!==company||destination.businessProfileId!==company||
+         source.status!=="active"||destination.status!=="active"||
+         !product||product.businessProfileId!==company||product.archivedAt||
+         product.itemKind==="service"||!Number.isSafeInteger(request.quantity)||
+         request.quantity<=0||request.quantity>9999999)
+        throw new Error("Transfer source, destination or stock product is invalid.");
+      if(actor.role!=="owner"&&!await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+        .equals([company,actor.id,source.id]).first())
+        throw new Error("Dispatch staff is not assigned to the source store.");
+      const balances=await readStoreBalances(database,company,product.id);
+      const total=[...balances.values()].reduce((sum,n)=>sum+n,0);
+      if(!Number.isSafeInteger(total)||total!==product.stockQuantity)
+        throw new Error("Reconcile company and store stock before dispatch.");
+      const reserved=await reservedSourceUnits(database,company,product.id,source.id);
+      if((balances.get(source.id)??0)-reserved<request.quantity)
+        throw new Error("Insufficient unreserved source stock to dispatch.");
+      if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor.id)
+        throw new Error("Company or dispatch staff session changed.");
+      const now=new Date().toISOString();
+      const saved:StoreTransferRequest={...request,status:"dispatched",dispatchedAt:now,
+        dispatchedByStaffId:actor.id,dispatchKey};
+      await database.storeTransferRequests.put(saved);
+      await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:actor.id,
+        action:"store.transfer.dispatched",createdAt:now,details:requestId});
+      return saved;
+    });
+  });
+}
