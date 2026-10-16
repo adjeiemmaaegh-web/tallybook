@@ -293,7 +293,7 @@ export class TallybookDB extends Dexie {
     // Run 16: never reassign historical orders or claim prior stock reservations.
     this.version(32).stores({
       commerceHolds:"id, businessProfileId, orderId, productId, storeId, status, expiresAt, &[businessProfileId+submissionKey], &[businessProfileId+orderId+productId], [businessProfileId+productId]",
-      commerceDeliveryEvents:"id, businessProfileId, orderId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+orderId]"
+      commerceDeliveryEvents:"id, businessProfileId, orderId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+orderId], &[businessProfileId+orderId+sequence]"
     });
   }
 }
