@@ -41,6 +41,8 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed before supplier liability authorization.');
     const purchase = await database.purchases.get(purchaseId);
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase is missing, foreign or has no verified currency snapshot; reconcile it before recognizing debt.');
     validAmount(purchase.totalCostMinor);
@@ -52,8 +54,12 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
       throw new Error('Supplier submission key was reused for another operation.');
     }
     if (entries.length) throw new Error('Supplier liability was already recognized or needs reconciliation.');
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed during supplier liability recognition.');
     const createdAt = new Date().toISOString();
     const result: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId, currency: purchase.currency, kind: 'recognition', amountMinor: purchase.totalCostMinor, submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed before supplier liability was recorded.');
     await database.supplierPayableEntries.add(result);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: 'supplier.liability.recognized', createdAt, details: purchaseId });
     return result;
@@ -86,6 +92,8 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed before supplier liability authorization.');
     const purchase = await database.purchases.get(input.purchaseId);
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase currency and ownership need reconciliation.');
     const rows = await database.supplierPayableEntries.where('purchaseId').equals(purchase.id).toArray();
@@ -97,9 +105,13 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
       throw new Error('Supplier submission key was reused for different details.');
     }
     if (balance.outstandingMinor === null) throw new Error('Confirm an unpaid supplier liability before recording a settlement.');
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed during supplier settlement authorization.');
     if (input.amountMinor > balance.outstandingMinor) throw new Error('Supplier settlement exceeds the remaining liability.');
     const createdAt = new Date().toISOString();
     const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(input.reference?.trim() ? {reference:input.reference.trim()} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
+    if (getActiveBusinessProfileId() !== company)
+      throw new Error('Company changed before supplier settlement was recorded.');
     await database.supplierPayableEntries.add(entry);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: input.kind === 'payment' ? 'supplier.payment.recorded' : 'supplier.credit.recorded', createdAt, details: purchase.id });
     return entry;
