@@ -4,5 +4,6 @@ export function auditRun13StoreBackup(
  entries: Array<{id:string;businessProfileId:string;storeId:string;productId:string;sourceId:string;submissionKey:string;sequence:number;quantityDelta:number;createdAt:string;kind:string;transferId?:string}>,
  products: Array<{id:string;businessProfileId:string;stockQuantity:number;itemKind?:string}>,
  stores: Array<{id:string;businessProfileId:string}>,
- requests: Array<{id:string;businessProfileId:string;status:string;transferId?:string;completionKey?:string;completedAt?:string;productId:string;sourceStoreId:string;destinationStoreId:string;quantity:number}>
+ requests: Array<{id:string;businessProfileId:string;status:string;transferId?:string;completionKey?:string;completedAt?:string;productId:string;sourceStoreId:string;destinationStoreId:string;quantity:number}>,
+ movements:Array<{id:string;businessProfileId:string;productId:string;quantityDelta:number;createdAt:string}>
 ): {active:boolean;entryCount:number;transferCount?:number};
