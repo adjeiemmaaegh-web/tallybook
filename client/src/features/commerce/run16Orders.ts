@@ -28,7 +28,8 @@ async function actorWith(database:TallybookDB,company:string,permission:"sell"|"
 }
 async function appendEvent(database:TallybookDB,company:string,order:CommerceOrder,
  action:Run16OrderEvent["action"],next:string,staffId:string,note:string,submissionKey:string,now:string) {
- const event:Run16OrderEvent={id:nanoid(18),businessProfileId:company,orderId:order.id,
+ const sequence=await database.commerceDeliveryEvents.where("[businessProfileId+orderId]").equals([company,order.id]).count()+1;
+ const event:Run16OrderEvent={id:nanoid(18),businessProfileId:company,orderId:order.id,sequence,
  actorStaffId:staffId,submissionKey,action,fromStatus:order.status,toStatus:next,
  createdAt:now,note,financialPostingPerformed:false};
  validateRun16DeliveryEvidence(event);
