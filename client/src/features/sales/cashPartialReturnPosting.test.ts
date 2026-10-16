@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { TallybookDB, initializeDatabase } from '@/db/TallybookDB';
 import { setActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { saveBusinessProfile } from '@/features/business/businessProfile';
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import { createProduct } from '@/features/inventory/inventory';
 import { completeSale } from '@/features/sales/sales';
 import { recordConfirmedCashPartialReturn } from './cashPartialReturnPosting';
@@ -19,6 +20,7 @@ async function fixture() {
   const database=new TallybookDB(`partial-cash-${crypto.randomUUID()}`);openDB.push(database);
   await initializeDatabase(database);
   await saveBusinessProfile({name:'Cash return test',country:'Ghana',currency:'GHS',businessType:'Retail'},database);
+  await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Test fixture owner opt-in',database);
   const product=await createProduct({name:'Rice',categoryId:'uncategorized',sellingPrice:'10',costPrice:'1',initialStock:'3',lowStockThreshold:'0'},'GHS',database);
   const original=await completeSale({lines:[{productId:product.id,quantity:2}],discount:'0',paymentMethod:'cash',amountPaid:'20',currency:'GHS',submissionKey:'original-sale-1'},database);
   return {database,product,original};
