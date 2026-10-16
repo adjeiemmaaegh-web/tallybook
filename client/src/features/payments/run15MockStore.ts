@@ -32,7 +32,10 @@ export async function createRun15MockIntent(input:{
   ],async()=>{
     await assertRun7RetailWriteReady(database.appMeta);
     const staff=await owner(database,input.companyId);
-    if(!await database.businessProfiles.get(input.companyId))throw Error("Company profile missing.");
+    const profile=await database.businessProfiles.get(input.companyId);
+    if(!profile)throw Error("Company profile missing.");
+    if(input.currency!==profile.currency)
+      throw Error("Simulated gateway intent currency must match active company currency.");
     const existing=await database.paymentSandboxIntents.where("[businessProfileId+submissionKey]")
       .equals([input.companyId,input.submissionKey]).first();
     if(existing){
