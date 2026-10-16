@@ -575,7 +575,8 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     // SAME restore transaction; never resume an old remote acknowledgement
     // against a freshly restored company database.
     for(const table of [database.syncReplicaOutbox,database.syncReplicaInbox,
-      database.syncReplicaCursors,database.syncReplicaConflicts])
+      database.syncReplicaCursors,database.syncReplicaConflicts,
+      database.paymentSandboxIntents,database.paymentSandboxEvents])
       await table.where("businessProfileId").equals(companyId).delete();
     // Device-local assistant audit is intentionally excluded from portable backups.
     // Retain this existing audit history instead of silently deleting it on restore.
