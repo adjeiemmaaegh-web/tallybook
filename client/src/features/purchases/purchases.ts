@@ -4,6 +4,7 @@ import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
 /** Tallybook Africa Stage 7: supplier and purchase records are local, immutable after completion, and atomically linked to positive stock movements. */
 import { nanoid } from "nanoid";
+import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { INVENTORY_BUSINESS_ID, normalizeName, parseAmountToMinor, type InventoryMovement, type Product } from "@/features/inventory/inventory";
@@ -27,6 +28,7 @@ export interface Supplier {
 }
 
 export interface Purchase {
+  storeId?: string;
   id: string;
   businessProfileId: string;
   supplierId: string;
@@ -62,7 +64,7 @@ const positiveQuantity = z.string().trim().regex(/^\d+$/, "Quantity must be a wh
 const cost = z.string().trim().regex(/^\d+(?:[.,]\d{1,2})?$/, "Unit cost must be a valid amount.");
 
 export const supplierFormSchema = z.object({ name: nameSchema, phone: optionalText(40, "Phone"), email: optionalText(120, "Email"), address: optionalText(240, "Address"), notes: optionalText(240, "Notes") });
-export const purchaseFormSchema = z.object({ supplierId: z.string().min(1, "Choose a supplier."), purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a purchase date."), note: optionalText(240, "Note"), lines: z.array(z.object({ productId: z.string().min(1, "Choose a product."), quantity: positiveQuantity, unitCost: cost })).min(1, "Add at least one product."), submissionKey: z.string().trim().min(8).max(80).optional() });
+export const purchaseFormSchema = z.object({ storeId: z.string().min(1).max(200).optional(), supplierId: z.string().min(1, "Choose a supplier."), purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a purchase date."), note: optionalText(240, "Note"), lines: z.array(z.object({ productId: z.string().min(1, "Choose a product."), quantity: positiveQuantity, unitCost: cost })).min(1, "Add at least one product."), submissionKey: z.string().trim().min(8).max(80).optional() });
 export type SupplierFormValues = z.infer<typeof supplierFormSchema>;
 export type PurchaseFormValues = z.infer<typeof purchaseFormSchema>;
 
@@ -155,7 +157,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
   const input = purchaseFormSchema.parse(values); const submissionKey = input.submissionKey ?? nanoid(18);
   if (new Set(input.lines.map((line) => line.productId)).size !== input.lines.length) throw new Error("Add each product only once to a purchase.");
   if (new Date(input.purchaseDate + "T00:00:00Z").toISOString().slice(0, 10) !== input.purchaseDate) throw new Error("Choose a valid purchase date.");
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
@@ -168,7 +170,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
       const stored = savedLines.map(line => ({productId:line.productId,quantity:line.quantity,unitCostMinor:line.unitCostMinor}))
         .sort((a,b)=>a.productId.localeCompare(b.productId));
       if (existing.currency !== undefined && existing.currency !== currency) throw new Error("Purchase submission key has a different currency snapshot.");
-      if (existing.supplierId!==input.supplierId || existing.purchaseDate!==input.purchaseDate || (existing.note??'')!==(clean(input.note)??'') ||
+      if ((existing.storeId??undefined)!==(input.storeId??undefined) || existing.supplierId!==input.supplierId || existing.purchaseDate!==input.purchaseDate || (existing.note??'')!==(clean(input.note)??'') ||
         JSON.stringify(submitted)!==JSON.stringify(stored)) throw new Error("Purchase submission key was reused for different details.");
       if(getActiveBusinessProfileId()!==activeId)
         throw new Error('Company switched during original purchase retry.');
@@ -195,12 +197,13 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     const purchaseId = nanoid(14);
     const lines = input.lines.map((line, index) => { const unitCostMinor = parseAmountToMinor(line.unitCost, currency); const quantity = Number(line.quantity); return { id: nanoid(14), purchaseId, productId: line.productId, businessProfileId: activeId, productName: resolvedProducts[index].name, quantity, unitCostMinor, lineTotalMinor: unitCostMinor * quantity } satisfies PurchaseLine; });
     const totalCostMinor = checkedMinorSum(lines, "lineTotalMinor");
-    const purchase: Purchase = { id: purchaseId, businessProfileId: activeId, supplierId: supplier.id, supplierName: supplier.name, purchaseDate: input.purchaseDate, totalCostMinor, currency, note: clean(input.note), submissionKey, createdAt: now, ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    const purchase: Purchase = { ...(input.storeId?{storeId:input.storeId}:{}), id: purchaseId, businessProfileId: activeId, supplierId: supplier.id, supplierName: supplier.name, purchaseDate: input.purchaseDate, totalCostMinor, currency, note: clean(input.note), submissionKey, createdAt: now, ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
     const movements: InventoryMovement[] = lines.map((line, index) => { const product = resolvedProducts[index]; const resultingQuantity = product.stockQuantity + line.quantity; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, purchaseId, movementType: "purchase", quantityDelta: line.quantity, previousQuantity: product.stockQuantity, resultingQuantity, note: `Purchase from ${supplier.name}`, createdAt: now }; });
     if (movements.some(m => !Number.isSafeInteger(m.previousQuantity) || m.previousQuantity < 0 || !Number.isSafeInteger(m.resultingQuantity) || m.resultingQuantity > 9_999_999)) throw new Error("Purchase stock quantity exceeds supported limits or needs reconciliation.");
     await database.purchases.add(purchase); await database.purchaseLines.bulkAdd(lines);
     for (const [index, line] of lines.entries()) await appendInventoryCostChange(database, resolvedProducts[index], line.quantity, { sourceId: movements[index].id, createdAt: now, purchaseId }, { unitCostMinor: line.unitCostMinor });
     await Promise.all(resolvedProducts.map((product, index) => database.products.put({ ...product, stockQuantity: movements[index].resultingQuantity, updatedAt: now })));
+    for (const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,input.storeId,movement.quantityDelta,movement.id,"purchase",now,movement.previousQuantity,movement.resultingQuantity);
     await database.inventoryMovements.bulkAdd(movements);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'purchase.completed',createdAt:now,details:purchase.id});
     return purchase;
