@@ -67,3 +67,20 @@ The latest continuation strengthens the saved transfer-request path to invoke th
 - No device synchronization guarantees; server authorizations and offline per-store checkout remain deferred.
 
 **Status: unfinished source development; do not enter Run 14 as if Run 13 were complete.** Testing remains owner-deferred. Commercial release NO-GO.
+
+
+## Run 13 latest source addition — store stock ledger draft (2026-10-16)
+
+**Committed source head before this documentation:** `263bfaaf728c7e6c4700ca3794ca425f70c1b3ce`.
+
+Added `client/src/features/stores/storeStockLedger.ts`, containing draft local store-stock models and helpers: `StoreStockEntry`, `StoreStockMode`, `activateStoreInventory`, `readStoreBalances`, `postStoreStockDelta`, `getCompanyStoreInventory`, and `postPairedStoreTransfer`. The code proposes owner-confirmed exact opening allocations, store-level quantity replay, company stock conservation and paired physical transfer legs. It is not yet connected to a complete transactional, backup-safe, application-visible workflow.
+
+**Source-review findings / current blockers:**
+- `TallybookDB.ts` remains at schema v28 and does not declare `storeStockModes` or `storeStockEntries`. Attempted schema update was blocked and NOT committed. As written, using the new module against the current database would fail. Do not activate it.
+- The new draft ledger is not yet integrated with company-level sales, purchasing, full sale reversal, partial cash refunds, manual stock adjustment and FIFO provenance. Attempted integration changes were blocked and NOT committed.
+- Transfer-request completion, request lifecycle, safe actor/store authorization and user interface controls still require integration; existing transfer requests remain non-posting.
+- The portable backup table list and the explicit historical backup-compatibility registry remain unchanged; the new store journal has no safe backup/restore representation yet.
+- There is no completed cross-device stock synchronization or real-world multi-device attendant checkout.
+- No tests, semantic type checks, compilation, builds, browser runs or CI jobs were executed, per owner instruction. This source inspection cannot certify correctness.
+
+**Precise status:** Store-stock ledger source drafted and committed. Run 13 is **NOT development-complete**, **NOT accepted**, and **NOT safe to activate**. Keep the release NO-GO and retain existing production flags disabled. This entry documents actual committed work rather than implying attempted edits succeeded.
