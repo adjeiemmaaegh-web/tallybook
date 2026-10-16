@@ -270,11 +270,13 @@ export async function updateProduct(productId: string, values: ProductFormValues
 export async function archiveProduct(productId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers, database.storeStockModes], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is already archived or unavailable.");
+    if (await database.storeStockModes.get(company) && product.stockQuantity!==0)
+      throw new Error("Transfer or reconcile all store units before archiving stock.");
     const archived = { ...product, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     assertCompanyScope(company, getActiveBusinessProfileId());
     await database.products.put(archived);
@@ -299,6 +301,8 @@ async function adjustStockWhileLocked(productId: string, values: StockAdjustment
     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is unavailable for adjustment.");
     if (product.itemKind === "service") throw new Error("Services cannot have physical stock adjustments.");
     if (!Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < 0) throw new Error("Stock needs reconciliation before adjustment.");
+    if (input.movementType==="correction" && await database.storeStockModes.get(company))
+      throw new Error("Company-wide stock correction is disabled after store activation. Record a store increase or decrease.");
     const requested = Number(input.quantity);
     const quantityDelta = input.movementType === "increase" ? requested : input.movementType === "decrease" ? -requested : requested - product.stockQuantity;
     const resultingQuantity = product.stockQuantity + quantityDelta;
