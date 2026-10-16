@@ -67,6 +67,7 @@ export class TallybookDB extends Dexie {
   syncReplicaOutbox!: Table<import("@/features/sync/run14LocalRelay").Run14QueuedEnvelope, string>;
   syncReplicaInbox!: Table<import("@/features/sync/run14LocalRelay").Run14InboxCopy, string>;
   syncReplicaCursors!: Table<import("@/features/sync/run14LocalRelay").Run14Cursor, string>;
+  syncReplicaConflicts!: Table<import("@/features/sync/run14RelayTransport").Run14RelayConflict, string>;
 
   storeLocations!: Table<import("@/features/stores/storeDirectory").StoreLocation, string>;
   storeAssignments!: Table<import("@/features/stores/storeDirectory").StoreAssignment, string>;
@@ -277,7 +278,8 @@ export class TallybookDB extends Dexie {
     this.version(30).stores({
       syncReplicaOutbox:"id, businessProfileId, deviceId, operationId, status, [businessProfileId+status], &[businessProfileId+deviceId+sequence], &[businessProfileId+operationId]",
       syncReplicaInbox:"id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
-      syncReplicaCursors:"businessProfileId, updatedAt"
+      syncReplicaCursors:"businessProfileId, updatedAt",
+      syncReplicaConflicts:"id, businessProfileId, eventId, status, detectedAt, [businessProfileId+status]"
     });
   }
 }
