@@ -12,7 +12,6 @@ const ident=v=>typeof v==='string'&&v.length>0&&v.length<=100&&v.trim()===v;
 const minor=v=>Number.isSafeInteger(v)&&v>=0;
 const cur=v=>typeof v==='string'&&/^[A-Z]{3}$/.test(v);
 const add=(a,b)=>{const n=a+BigInt(b);if(n>BigInt(Number.MAX_SAFE_INTEGER))fail('unsafe supplier monetary aggregate');return n;};
-const inRange=(at,range)=>at>=range.start.getTime()&&at<range.end.getTime();
 export function auditRun12SupplierFinance({
  company,companyCurrency,suppliers,purchases,entries,expenses,range
 }={}){
@@ -56,8 +55,9 @@ export function auditRun12SupplierFinance({
   }
  }
  let operatingExpenseCount=0,expensesWithUnknownCurrency=0,expensesInOtherCurrency=0;
+ const expenseIds=new Set();
  for(const expense of expenses){
-  if(!ident(expense?.id)||expense.businessProfileId!==company||
+  if(!ident(expense?.id)||expenseIds.has(expense.id)||expense.businessProfileId!==company||
      !minor(expense.amountMinor)||expense.amountMinor===0||
      !isValidFinancialPostingTimestamp(expense.createdAt)||
      typeof expense.expenseDate!=='string'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(expense.expenseDate))
@@ -71,6 +71,7 @@ export function auditRun12SupplierFinance({
   const expenseDay=Date.parse(expense.expenseDate+'T12:00:00Z');
   if(!Number.isFinite(expenseDay)||new Date(expenseDay).toISOString().slice(0,10)!==expense.expenseDate)
    fail('invalid expense calendar date');
+  expenseIds.add(expense.id);
   operatingExpenseCount++;
   // The existing operating expense report owns local-calendar period rules.
   // We do not override its range computation using UTC noon.
