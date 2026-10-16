@@ -134,6 +134,31 @@ describe('Run12 actual IndexedDB supplier and original tax evidence',()=>{
    .rejects.toThrow(/currency differs/);
   expect(await f.database.expenses.count()).toBe(0);
  });
+ it('old purchase submission key remains idempotent after the owner changes company currency',async()=>{
+  const f=await fixture();
+  const input={supplierId:f.supplier.id,purchaseDate:'2026-10-16',
+    lines:[{productId:f.product.id,quantity:'2',unitCost:'3'}],
+    submissionKey:'run12-saved-ghs-purchase-0001'};
+  const original=await completePurchase(input,'GHS',f.database);
+  await saveBusinessProfile({name:'Run 12 Test Retail',country:'Ghana',
+    currency:'USD',businessType:'Retail shop',phone:'',email:'',address:''},f.database);
+  expect((await completePurchase(input,'GHS',f.database)).id).toBe(original.id);
+  await expect(completePurchase({...input,submissionKey:'run12-new-ghs-purchase-0002'},'GHS',f.database))
+    .rejects.toThrow(/currency differs/);
+  expect(await f.database.purchases.count()).toBe(1);
+ });
+ it('old recorded expense may be replayed unchanged but new foreign-currency expense is refused',async()=>{
+  const f=await fixture();
+  const input={category:'rent' as const,amount:'4',expenseDate:'2026-10-15',
+    currency:'GHS',submissionKey:'run12-old-ghs-expense-0001'};
+  const original=await createExpense(input,f.database);
+  await saveBusinessProfile({name:'Run 12 Test Retail',country:'Ghana',
+    currency:'USD',businessType:'Retail shop',phone:'',email:'',address:''},f.database);
+  expect((await createExpense(input,f.database)).id).toBe(original.id);
+  await expect(createExpense({...input,submissionKey:'run12-new-ghs-expense-0002'},f.database))
+    .rejects.toThrow(/currency differs/);
+  expect(await f.database.expenses.count()).toBe(1);
+ });
  it('retains an original invoice with owner-configured registered exclusive tax evidence',async()=>{
   const f=await fixture(tax),saved=await sale(f,true);
   expect(saved.sale).toMatchObject({
