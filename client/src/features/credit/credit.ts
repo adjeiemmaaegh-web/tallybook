@@ -1,5 +1,6 @@
 import { requirePermission } from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
+import {withCoordinatedRetailWrite} from "@/features/backup/coordinatedRetailWrite";
 /** Tactile Ledger Stage 6: debt is derived from completed customer sales minus immutable repayment records, never typed as a mutable balance. */
 import { nanoid } from "nanoid";
 import { activeStaffShift } from "@/features/staff/staff";
@@ -86,6 +87,8 @@ export async function getCustomerDebtSummary(customerId: string, currency: strin
     database.repayments.where("customerId").equals(customerId).and((repayment) => repayment.businessProfileId === activeId).toArray(),
     database.saleReversals.where("customerId").equals(customerId).and((reversal) => reversal.businessProfileId === activeId).toArray(),
   ]));
+  if (getActiveBusinessProfileId()!==activeId)
+    throw new Error("Company changed while reading customer credit history.");
   const totals = debtFromRecords(sales, repayments, reversals);
   const activities: DebtActivity[] = [
     ...sales.map((sale) => ({ id: `sale-${sale.id}`, type: "sale" as const, createdAt: sale.createdAt, saleId: sale.id, totalMinor: sale.totalMinor, amountPaidMinor: sale.amountPaidMinor, outstandingMinor: sale.outstandingMinor, receiptNumber: sale.receiptNumber })),
@@ -114,15 +117,23 @@ export async function getCustomerRepaymentTargets(customerId: string, currency: 
       database.repayments.where("customerId").equals(customerId).and(row => row.businessProfileId === activeId).toArray(),
       database.saleReversals.where("customerId").equals(customerId).and(row => row.businessProfileId === activeId).toArray(),
     ]);
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error("Company changed while reading repayment targets.");
     return getRepaymentTargetsFromLedger(sales, reversals, repayments, {customerId, businessProfileId: activeId, currency});
   });
 }
 
 export async function recordRepayment(values: RecordRepaymentInput, database: TallybookDB = db) {
+  // Coordinate before opening the write transaction, never wait for Web
+  // Locks from inside Dexie. Run 7 recovery/backup exclusivity then applies
+  // to sale-linked customer money just like other retail posting paths.
+  return withCoordinatedRetailWrite(async()=>{
   const input = recordRepaymentSchema.parse(values);
   const activeId = getActiveBusinessProfileId();
   return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error("Company switched before recording customer repayment.");
     const staff = await requirePermission("sell", database, activeId);
     const shift = await activeStaffShift(staff, database);
     if (staff?.role === "cashier" && !shift) throw new Error("Open a shift before recording repayments.");
@@ -169,8 +180,11 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     }
     if (amountMinor > balance) throw new Error(`Repayment cannot exceed the outstanding balance of ${formatMinorAmount(balance, input.currency)}.`);
     const repayment: DebtRepayment = { id: nanoid(14), businessProfileId: activeId, customerId: customer.id, amountMinor, currency: input.currency, method: input.method, note: input.note?.trim() || undefined, submissionKey, createdAt: now, ...(canonicalAllocations ? {saleAllocations: canonicalAllocations} : {}), ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error("Company switched during customer repayment authorization.");
     await database.repayments.add(repayment);
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});
     return repayment;
+  });
   });
 }
