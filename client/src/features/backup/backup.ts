@@ -570,6 +570,13 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     const oldCounts = (await database.stockCountSessions.toArray()).filter(row => row.companyId === companyId);
     if (oldCounts.length) await database.stockCountSessions.bulkDelete(oldCounts.map(row => row.id));
     for (const table of scopedTables) await table.where("businessProfileId").equals(companyId).delete();
+    // Run 14 encrypted device-local caches are NOT portable ledger evidence.
+    // Reset queues, encrypted inbox, conflict notices and relay cursor in the
+    // SAME restore transaction; never resume an old remote acknowledgement
+    // against a freshly restored company database.
+    for(const table of [database.syncReplicaOutbox,database.syncReplicaInbox,
+      database.syncReplicaCursors,database.syncReplicaConflicts])
+      await table.where("businessProfileId").equals(companyId).delete();
     // Device-local assistant audit is intentionally excluded from portable backups.
     // Retain this existing audit history instead of silently deleting it on restore.
     // Company deletion and any eventual retention policy are separate owner decisions.
@@ -577,7 +584,12 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     await database.businessProfiles.put(normalized.businessProfiles[0]);
     for (const key of recordKeys) if (key !== "businessProfiles" && key !== "appMeta") {
       // Importing a file never grants fresh consent to send records off-device.
-      const rows = key === "syncConsents" ? normalized.syncConsents.map(row => ({ ...row, enabled: false, updatedAt: new Date().toISOString() })) : normalized[key];
+      const rows = key === "syncConsents"
+        ? normalized.syncConsents.map(row => ({ ...row, enabled: false, updatedAt: new Date().toISOString() }))
+        : key === "syncDevices"
+        ? normalized.syncDevices.map(row => ({...row,status:"revoked" as const,
+            revokedAt:new Date().toISOString(),updatedAt:new Date().toISOString()}))
+        : normalized[key];
       await database.table(key).bulkPut(rows);
     }
     await database.appMeta.put({ key: "activeBusinessProfileId", value: companyId, updatedAt: new Date().toISOString() });
