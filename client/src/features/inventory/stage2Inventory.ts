@@ -94,6 +94,8 @@ export async function postSavedStockCount(id: string, database: TallybookDB = db
       await requirePermission("inventory", database, company);
       const session = await database.stockCountSessions.get(id);
       if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock-count session is unavailable or already posted.");
+      if((await database.commerceHolds.where("businessProfileId").equals(company).toArray()).some(h=>h.status==="active"&&Date.parse(h.expiresAt)>Date.now()))
+        throw new Error("Active customer reservations must be fulfilled or released before stock count posting.");
       const result = await postStockCount(session, database);
       await database.stockCountSessions.put({ ...session, status: "posted", postedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       return result;
