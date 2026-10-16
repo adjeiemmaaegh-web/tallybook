@@ -70,7 +70,9 @@ export function reconcileSupplierPayables(purchases, entries) {
     }
     allIds.add(entry.id); allKeys.add(entry.submissionKey);
     if (!purchasesById.has(entry.purchaseId)) throw new Error('Supplier payable event refers to a missing purchase.');
-    byPurchase.set(entry.purchaseId, [...(byPurchase.get(entry.purchaseId) ?? []), entry]);
+    const group=byPurchase.get(entry.purchaseId)??[];
+    group.push(entry);
+    byPurchase.set(entry.purchaseId,group);
   }
   let unknownPurchases = 0;
   const balances = new Map();
