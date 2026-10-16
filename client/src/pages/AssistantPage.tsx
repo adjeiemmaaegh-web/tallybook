@@ -10,7 +10,7 @@ import { VOICE_LANGUAGES, defaultVoiceLanguage, rememberVoiceLanguage, useVoiceI
 
 interface Turn { id: number; from: "user" | "assistant"; reply?: AssistantReply; text?: string }
 
-const STARTERS = ["How much does Adwoa owe?", "How many crates of eggs are left?", "Show today's sales", "Record 2 crates of eggs sold to walk-in customer, paid cash"];
+const STARTERS = ["What needs attention in my business?", "How much does Adwoa owe?", "How many crates of eggs are left?", "Show today's sales", "Record 2 crates of eggs sold to walk-in customer, paid cash"];
 
 function replyIcon(kind: AssistantReply["kind"]) {
   if (kind === "success") return <CircleCheck className="h-4 w-4 shrink-0 text-baobab" aria-hidden="true" />;
