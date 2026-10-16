@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 31;
+export const DATABASE_SCHEMA_VERSION = 32;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -79,6 +79,8 @@ export class TallybookDB extends Dexie {
   storeStockEntries!: Table<import("@/features/stores/storeStockLedger").StoreStockEntry, string>;
 
   commerceOrders!: Table<import("@/features/commerce/commerce").CommerceOrder, string>;
+  commerceHolds!: Table<import("@/features/commerce/run16Rules.mjs").Run16CommerceHold, string>;
+  commerceDeliveryEvents!: Table<import("@/features/commerce/run16Rules.mjs").Run16OrderEvent, string>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -287,6 +289,11 @@ export class TallybookDB extends Dexie {
     this.version(31).stores({
       paymentSandboxIntents:"id, businessProfileId, submissionKey, status, createdAt, &[businessProfileId+submissionKey]",
       paymentSandboxEvents:"id, businessProfileId, intentId, createdAt, [businessProfileId+intentId], &[businessProfileId+intentId+sequence]"
+    });
+    // Run 16: never reassign historical orders or claim prior stock reservations.
+    this.version(32).stores({
+      commerceHolds:"id, businessProfileId, orderId, productId, storeId, status, expiresAt, &[businessProfileId+submissionKey], &[businessProfileId+orderId+productId], [businessProfileId+productId]",
+      commerceDeliveryEvents:"id, businessProfileId, orderId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+orderId]"
     });
   }
 }
