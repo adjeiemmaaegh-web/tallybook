@@ -27,6 +27,30 @@ export default function FinancialIntelligencePage(){
   </section>
   {loading&&<p role="status">Calculating from saved records…</p>}{error&&<p role="alert">{error}</p>}
   {summary && !loading && <section className="report-sheet" aria-label="Historical cost reconciliation"><h2>Recorded sales and their costs</h2><p>Recorded tax after reversals: <strong>{fmt(summary.recordedTaxMinor)}</strong></p><p>Sales excluding recorded tax: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>{summary.cogsMinor === undefined ? <p>{summary.unavailable.cogs} Cost totals remain unavailable until the missing evidence is reconciled.</p> : <><p>Cost of goods sold, after reversals: <strong>{fmt(summary.cogsMinor)}</strong></p><p>Sales excluding recorded tax less cost: <strong>{fmt(summary.salesLessCostMinor!)}</strong></p><p>Costs are reconstructed from saved receipts and FIFO allocations. This amount is before expenses and any unconfigured tax obligations.</p></>}</section>}
+  {summary?.receivableAudit&&!loading&&
+    <section className="report-sheet" aria-label="Customer credit integrity">
+      <h2>Customer receivables (as-of now)</h2>
+      <p>Outstanding customer credit: <strong>{fmt(summary.receivableAudit.outstandingMinor)}</strong>
+       {' '}across {summary.receivableAudit.indebtedCustomers} owing customer(s).</p>
+      <p>Repayments linked to specific saved credit sales: <strong>{fmt(summary.receivableAudit.allocatedRepaymentMinor)}</strong>.</p>
+      <p>Historical payments recorded only against customers: <strong>{fmt(summary.receivableAudit.unallocatedRepaymentMinor)}</strong>.
+       {' '}Their sale-level allocation remains unknown; Tallybook does not assign one automatically.</p>
+      {summary.receivableAudit.historicalUnknownCurrencyCustomers>0&&
+       <p role="status">{summary.receivableAudit.historicalUnknownCurrencyCustomers} customer(s) hold older money with unverified currency.
+       A new cross-currency collection is not authorized by this report.</p>}
+      <p>This is full saved-history customer debt, not period revenue or cash collected.</p>
+    </section>}
+  {summary?.prepaidCashAudit&&!loading&&
+    <section className="report-sheet" aria-label="Prepaid cash and wallet conservation">
+      <h2>Prepaid funds and stored-value liability (as-of now)</h2>
+      <p>Recorded external prepaid deposits: <strong>{fmt(summary.prepaidCashAudit.depositedMinor)}</strong>.</p>
+      <p>Recorded external cash refunds: <strong>{fmt(summary.prepaidCashAudit.refundedMinor)}</strong>.</p>
+      <p>Wallet spent in saved sales: <strong>{fmt(summary.prepaidCashAudit.spentMinor)}</strong>;
+       {' '}reversed wallet spending: <strong>{fmt(summary.prepaidCashAudit.reversedWalletSpendMinor)}</strong>.</p>
+      <p>Current stored-value liability: <strong>{fmt(summary.prepaidCashAudit.liabilityMinor)}</strong>.</p>
+      <p>These are locally recorded postings, not bank/provider-confirmed transfers.
+       Wallet spending is not counted as additional cash received.</p>
+    </section>}
   {summary?.inventoryValuation&&!loading&&
     <section className="report-sheet" aria-label="Inventory costing evidence">
       <h2>Inventory at saved FIFO receipt costs (as-of now)</h2>

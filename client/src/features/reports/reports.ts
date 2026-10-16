@@ -10,6 +10,7 @@ import type { Product } from "@/features/inventory/inventory";
 import { paymentMethodLabel, type Payment, type PaymentMethod, type Sale } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
 import { reconcileCreditLedger } from "@/features/sales/creditLedger.mjs";
+import {auditRun10CompanyReceivables} from "./run10ReceivablesAudit.mjs";
 
 export const reportPeriods = ["today", "last7", "all"] as const;
 export type ReportPeriod = (typeof reportPeriods)[number];
@@ -108,7 +109,14 @@ async function sourceRecords(database: TallybookDB) {
   const activeId = getActiveBusinessProfileId();
   const [allSales, allPayments, allRepayments, allReversals, allCustomers, allProducts, allSaleLines, allExpenses, allWalletTransfers] = await database.transaction("r", [database.sales, database.payments, database.repayments, database.saleReversals, database.customers, database.products, database.saleLines, database.expenses, database.walletTransfers], async () => Promise.all([database.sales.toArray(), database.payments.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.customers.toArray(), database.products.toArray(), database.saleLines.toArray(), database.expenses.toArray(), database.walletTransfers.toArray()]));
   assertCompanyScope(activeId, getActiveBusinessProfileId());
-  return { sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), reversals: allReversals.filter((reversal) => reversal.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId), walletTransfers: allWalletTransfers.filter((t) => t.businessProfileId === activeId) };
+  const snapshot={ sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), reversals: allReversals.filter((reversal) => reversal.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId), walletTransfers: allWalletTransfers.filter((t) => t.businessProfileId === activeId) };
+  // The dashboard, debt table and end-of-day report must not mask one
+  // customer's overpayment behind another customer's unpaid credit.
+  auditRun10CompanyReceivables({company:activeId,customers:snapshot.customers,
+    sales:snapshot.sales,repayments:snapshot.repayments,
+    reversals:snapshot.reversals});
+  assertCompanyScope(activeId,getActiveBusinessProfileId());
+  return snapshot;
 }
 
 export async function getReportsSnapshot(period: ReportPeriod, now = new Date(), database: TallybookDB = db): Promise<ReportsSnapshot> {
