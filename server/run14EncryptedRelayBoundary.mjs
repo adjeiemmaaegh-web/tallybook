@@ -17,6 +17,8 @@ async function verify(headers,config,scope){
   const directory=typeof config.directory.authorizeSnapshot==="function"
     ? await config.directory.authorizeSnapshot():config.directory;
   await authorizeSyncInspect({...claims,scope:"sync:inspect"},directory,actorId);
+  if((await directory.getOrganization(claims.orgId))?.replicationOptIn!==true)
+    fail(); // independently provisioned server consent, not a local browser toggle
   return claims;
 }
 export async function stageRun14EncryptedEvent(headers,raw,config){
