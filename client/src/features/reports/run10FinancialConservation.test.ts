@@ -139,7 +139,8 @@ describe('Run 10 saved-company receivables and prepaid cash reconciliation',()=>
    submissionKey:'run10-deposit-0003'},db);
   await db.walletTransfers.update(transfer.id,{amountMinor:999});
   await expect(summary(db)).rejects.toThrow(/Prepaid wallet|Prepaid cash conservation/);
-  expect(()=>parseBackup(stringifyBackup(await createBackup(db)))).toThrow();
+  const backup=await createBackup(db);
+  expect(()=>parseBackup(stringifyBackup(backup))).toThrow();
  });
  it('rejects a foreign currency collection with no persisted overpayment',async()=>{
   const{db,a,product}=await fixture();
