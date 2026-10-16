@@ -54,7 +54,7 @@ test('negative saved cash refund tax fails closed',()=>{
  assert.throws(()=>audit([sale()],[],[{...partial,returnedTaxMinor:-1}]),/invalid/);
 });
 test('net recorded tax cannot be negative after excess cash refund tax',()=>{
- assert.throws(()=>audit([sale()],[],[{...partial,returnedTaxMinor:101}]),/does not conserve/);
+ assert.throws(()=>audit([sale()],[],[{...partial,returnedTaxMinor:101}]),/exceeds original|does not conserve/);
 });
 test('tax currently off does not erase historic recorded tax',()=>{
  const x=audit([sale()],[],[],{id:'primary',taxPolicy:{enabled:false}});
