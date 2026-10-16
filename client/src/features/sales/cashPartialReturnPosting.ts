@@ -7,6 +7,7 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
  * unknown tax evidence and credit sales fail closed pending an agreed policy.
  */
 import { nanoid } from 'nanoid';
+import { postStoreStockDelta } from '@/features/stores/storeStockLedger';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { requirePermission, activeStaffShift } from '@/features/staff/staff';
@@ -75,7 +76,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
   const company = getActiveBusinessProfileId();
   return database.transaction('rw', [database.appMeta, database.businessProfiles, database.staffMembers, database.staffShifts, database.staffAudits,
     database.sales, database.saleLines, database.payments, database.receipts, database.saleReversals, database.cashPartialReturns,
-    database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches], async () => {
+    database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
     const shift = await activeStaffShift(staff,database);
@@ -148,6 +149,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       const movement: InventoryMovement = {id:movementId,businessProfileId:company,productId:product.id,movementType:'reversal',
         quantityDelta:item.quantity,previousQuantity:product.stockQuantity,resultingQuantity:product.stockQuantity+item.quantity,
         note:`Partial cash refund of ${sale.receiptNumber}`,createdAt:now};
+      await postStoreStockDelta(database,company,product.id,sale.storeId,item.quantity,movement.id,"refund",now,product.stockQuantity,movement.resultingQuantity);
       await database.inventoryMovements.add(movement);
       await database.products.put({...product,stockQuantity:movement.resultingQuantity,updatedAt:now});
       savedLines.push({saleLineId:originalLine.id,productId:product.id,quantity:item.quantity,movementId,costEventId:event.id});
