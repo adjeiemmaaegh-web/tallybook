@@ -105,9 +105,11 @@ test('supplier payment in another purchase currency is shown separately, not add
  assert.equal(r.periodSupplierPaymentsInCompanyCurrencyMinor,0);
  assert.deepEqual(r.otherCurrencyPayments,[{currency:'USD',amountMinor:1100}]);
 });
-test('malformed calendar date and unsafe amount fail before publishing finance',()=>{
+test('malformed calendar date, duplicate expenses and unsafe amount fail before finance',()=>{
  assert.throws(()=>audit({expenses:[{...expense,expenseDate:'2026-02-30'}]}),
  /calendar date/);
+ assert.throws(()=>audit({expenses:[expense,{...expense}]}),
+ /invalid or foreign operating expense/);
  assert.throws(()=>audit({entries:[recognition,{...payment,amountMinor:
  Number.MAX_SAFE_INTEGER+1}]}),/unsafe/);
 });
