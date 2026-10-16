@@ -37,7 +37,8 @@ export function reservationBalance(holds,company,productId,storeId,now,excludeOr
  const keys=new Set();
  for(const h of holds){
   validateRun16Hold(h);
-  if(h.businessProfileId!==company||h.productId!==productId)continue;
+  if(h.businessProfileId!==company||h.productId!==productId)
+    fail("A store reservation query returned cross-company or wrong-product evidence.");
   if(keys.has(h.id)||keys.has(h.submissionKey))fail("Duplicate order hold or submission identity.");
   keys.add(h.id);keys.add(h.submissionKey);
   if(h.status!=="active"||h.orderId===excludeOrderId||Date.parse(h.expiresAt)<=Date.parse(now))continue;
