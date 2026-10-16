@@ -55,7 +55,7 @@ export function auditRun12SupplierFinance({
    if(!entry.reference?.trim())unsupportedCreditNotes++;
   }
  }
- let recordedExpensesInPeriod=0n,legacyExpenseCurrencies=0;
+ let operatingExpenseCount=0;
  for(const expense of expenses){
   if(!ident(expense?.id)||expense.businessProfileId!==company||
      !minor(expense.amountMinor)||expense.amountMinor===0||
@@ -63,7 +63,6 @@ export function auditRun12SupplierFinance({
      typeof expense.expenseDate!=='string'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(expense.expenseDate))
    fail('invalid or foreign operating expense');
   if(expense.currency!==companyCurrency){
-   legacyExpenseCurrencies++;
    // A live single-currency report must never silently relabel a saved
    // different or UNKNOWN expense as today's business denomination.
    fail('operating expense currency is missing or differs from company currency');
@@ -71,6 +70,7 @@ export function auditRun12SupplierFinance({
   const expenseDay=Date.parse(expense.expenseDate+'T12:00:00Z');
   if(!Number.isFinite(expenseDay)||new Date(expenseDay).toISOString().slice(0,10)!==expense.expenseDate)
    fail('invalid expense calendar date');
+  operatingExpenseCount++;
   // The existing operating expense report owns local-calendar period rules.
   // We do not override its range computation using UTC noon.
  }
@@ -83,14 +83,18 @@ export function auditRun12SupplierFinance({
   else if(row.amountMinor>0)
    otherCurrencyPayments.push({currency:row.currency,amountMinor:row.amountMinor});
  }
- const recognized=supplier.recognizedByCurrency.reduce((sum,row)=>add(sum,row.amountMinor),0n);
- const paid=supplier.paidToDateByCurrency.reduce((sum,row)=>add(sum,row.amountMinor),0n);
- const credited=supplier.creditedToDateByCurrency.reduce((sum,row)=>add(sum,row.amountMinor),0n);
- const outstanding=supplier.outstandingByCurrency.reduce((sum,row)=>add(sum,row.amountMinor),0n);
- // These totals are only an integer checksum: not a currency-converted sum.
- // They must not be presented as a money amount if multiple currencies exist.
- if(recognized!==paid+credited+outstanding)
-   fail('supplier payable recognition/payment/credit/residual conservation failed');
+ // Monetary conservation is validated PER denomination. Adding GHS and USD
+ // together would invent a false financial amount, even for a checksum.
+ const map=rows=>new Map(rows.map(row=>[row.currency,BigInt(row.amountMinor)]));
+ const paidBy=map(supplier.paidToDateByCurrency);
+ const creditsBy=map(supplier.creditedToDateByCurrency);
+ const dueBy=map(supplier.outstandingByCurrency);
+ for(const row of supplier.recognizedByCurrency){
+  const known=BigInt(row.amountMinor);
+  if(known!==(paidBy.get(row.currency)??0n)+
+     (creditsBy.get(row.currency)??0n)+(dueBy.get(row.currency)??0n))
+   fail('supplier payable recognition, payments, credits and due do not conserve by currency');
+ }
  return Object.freeze({
   unknownPurchases:supplier.unknownPurchases,
   recognizedPurchases:purchases.length-supplier.unknownPurchases,
@@ -101,7 +105,7 @@ export function auditRun12SupplierFinance({
   periodSupplierPaymentsInCompanyCurrencyMinor:
     Number(periodSupplierPaymentsInCompanyCurrencyMinor),
   otherCurrencyPayments,
-  recordedOperatingExpenseCount:expenses.length,
+  recordedOperatingExpenseCount:operatingExpenseCount,
   /** Never merge manual cash records and credits into an unqualified net. */
   providerSettlementVerified:false,
   potentialExpensePaymentOverlapUnresolved:true
