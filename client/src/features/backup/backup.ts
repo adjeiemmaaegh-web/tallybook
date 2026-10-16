@@ -408,7 +408,16 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   }
   reconcileCashPartialReturns(records.sales, records.saleLines, records.payments, records.cashPartialReturns, records.saleReversals);
   assertCashReturnLedgerLinks(records.sales, records.saleLines, records.cashPartialReturns, records.inventoryMovements, records.inventoryCostEvents);
-  reconcileSaleCosts(companyId, { cashReturns: records.cashPartialReturns, products: records.products, events: records.inventoryCostEvents, movements: records.inventoryMovements, sales: records.sales, lines: records.saleLines.map(line => ({ ...line, businessProfileId: line.businessProfileId ?? companyId })), reversals: records.saleReversals }, { start: new Date(0), end: new Date(8_640_000_000_000_000) });
+  reconcileSaleCosts(companyId, {
+    cashReturns:records.cashPartialReturns,products:records.products,
+    events:records.inventoryCostEvents,movements:records.inventoryMovements,
+    sales:records.sales,
+    lines:records.saleLines.map(line=>({...line,businessProfileId:line.businessProfileId??companyId})),
+    reversals:records.saleReversals,
+    purchases:records.purchases,
+    purchaseLines:records.purchaseLines.map(line=>({...line,businessProfileId:line.businessProfileId??companyId})),
+    expectedCurrency:records.businessProfiles[0].currency
+  },{start:new Date(0),end:new Date(8_640_000_000_000_000)});
   if (assistant) {
     for (const key of ["workflows", "aliases", "history"] as const) {
       if (!Array.isArray(assistant[key]) || !hasUniqueIds(assistant[key])) throw new Error(`Invalid assistant ${key} records.`);
