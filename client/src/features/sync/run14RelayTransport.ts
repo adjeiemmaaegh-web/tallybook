@@ -68,6 +68,23 @@ function verifyReceipt(receipt:Run14RelayReceipt,event:Run14QueuedEnvelope,statu
       (status===409&&receipt.status==="conflict"&&["event-id-reuse","operation-id-reuse"].includes(receipt.reason??""))))
    throw Error("Relay receipt was not authenticated for this exact queued ciphertext.");
 }
+async function confirmLocalRelayPermission(database:TallybookDB,company:string,deviceId:string) {
+  if(company!==getActiveBusinessProfileId())throw Error("Company switched before encrypted relay transfer.");
+  return database.transaction("r",[
+    database.appMeta,database.businessProfiles,database.syncConsents,
+    database.syncDevices,database.staffMembers
+  ],async()=>{
+    await assertRun7RetailWriteReady(database.appMeta);
+    await requirePermission("staff",database,company);
+    if(!await database.businessProfiles.get(company)||
+       (await database.syncConsents.get(company))?.enabled!==true)
+      throw Error("Local company synchronization consent is disabled.");
+    const device=await database.syncDevices.get(deviceId);
+    if(!device||device.businessProfileId!==company||device.status!=="active")
+      throw Error("Local device enrollment has been revoked.");
+    if(company!==getActiveBusinessProfileId())throw Error("Company changed during relay authorization.");
+  });
+}
 async function recordConflict(database:TallybookDB,company:string,event:Run14QueuedEnvelope,reason:Run14RelayConflict["reason"]) {
  await withCoordinatedRetailWrite(async()=>database.transaction("rw",[
    database.appMeta,database.businessProfiles,database.syncConsents,
@@ -104,6 +121,7 @@ export async function sendOneRun14Event(
  if(!item)throw Error("Requested replica is not pending.");
  if(pending.some(e=>e.deviceId===item.deviceId&&e.sequence<item.sequence))
    throw Error("An earlier encrypted event must be delivered first.");
+ await confirmLocalRelayPermission(database,company,item.deviceId);
  const response=await transport(url,{method:"POST",mode:"cors",redirect:"error",
    credentials:"omit",cache:"no-store",
    headers:{...credentialsHeaders(credentials,company,item.deviceId),"content-type":"application/json"},
@@ -151,6 +169,7 @@ export async function pullOneRun14Page(
  const after=cursor?.nextCursor??0;
  if(!Number.isSafeInteger(after)||after<0)throw Error("Corrupt local replica cursor.");
  const target=new URL(base);target.searchParams.set("after",String(after));
+ await confirmLocalRelayPermission(database,company,deviceId);
  const response=await transport(target.href,{method:"GET",mode:"cors",redirect:"error",
    credentials:"omit",cache:"no-store",headers:credentialsHeaders(credentials,company,deviceId)});
  if(response.status!==200)throw Error("Encrypted replica read was not authorized.");
