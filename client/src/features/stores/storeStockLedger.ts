@@ -13,7 +13,7 @@ export type StoreStockKind = "opening" | "sale" | "purchase" | "refund" | "adjus
 export interface StoreStockEntry {
   id: string; businessProfileId: string; storeId: string; productId: string;
   kind: StoreStockKind; quantityDelta: number; sourceId: string; submissionKey: string;
-  createdAt: string; transferId?: string;
+  createdAt: string; sequence: number; transferId?: string;
 }
 export interface StoreStockMode {
   businessProfileId: string; activatedAt: string; activatedByStaffId: string;
@@ -35,8 +35,9 @@ export async function readStoreBalances(database:TallybookDB,company:string,prod
   const rows=await database.storeStockEntries.where("[businessProfileId+productId]").equals([company,productId]).toArray();
   const seenIds=new Set<string>(), seenSubmissions=new Set<string>();
   const balances=new Map<string,number>();
-  for (const row of rows.sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id))) {
+  for (const row of rows.sort((a,b)=>a.sequence-b.sequence)) {
     if (row.businessProfileId!==company || row.productId!==productId || !row.storeId ||
+        !Number.isSafeInteger(row.sequence) || row.sequence!==seenIds.size+1 ||
         !Number.isSafeInteger(row.quantityDelta) || !["opening","sale","purchase","refund","adjustment","transfer-out","transfer-in"].includes(row.kind) ||
         seenIds.has(row.id) || seenSubmissions.has(row.submissionKey))
       throw new Error("Corrupt or duplicate store stock entry.");
@@ -73,8 +74,14 @@ export async function postStoreStockDelta(
   if (total!==companyBefore) throw new Error("Store stock allocation needs reconciliation before another posting.");
   const atStore=balances.get(storeId)??0;
   if (!whole(atStore+quantityDelta)) throw new Error("Insufficient stock or store capacity.");
-  const entry:StoreStockEntry={id:nanoid(18),businessProfileId:company,storeId,productId,
+  const sequence=await database.storeStockEntries.where("[businessProfileId+productId]").equals([company,productId]).count()+1;
+  const entry:StoreStockEntry={id:nanoid(18),businessProfileId:company,storeId,productId,sequence,
     kind,quantityDelta,sourceId,submissionKey:`store:${kind}:${sourceId}`,createdAt:now};
+  const actorId=currentStaffId(company);
+  const actor=actorId ? await database.staffMembers.get(actorId) : undefined;
+  if (!actor || actor.businessProfileId!==company || actor.disabledAt) throw new Error("Unlock authorized store staff.");
+  if (actor.role!=="owner" && !await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,actorId,storeId]).first())
+    throw new Error("Staff is not assigned to this store.");
   await database.storeStockEntries.add(entry);
   requireCompany(company);
   return entry;
@@ -132,9 +139,11 @@ export async function activateStoreInventory(
           throw new Error("Tracked batches require store-specific provenance before activation.");
       }
       const now=new Date().toISOString();
+      const openingSequences=new Map<string,number>();
       for(const a of checked) await database.storeStockEntries.add({
         id:nanoid(18),businessProfileId:company,storeId:a.storeId,productId:a.productId,
         kind:"opening",quantityDelta:a.quantity,
+        sequence:(openingSequences.set(a.productId,(openingSequences.get(a.productId)??0)+1),openingSequences.get(a.productId)!),
         sourceId:`opening:${company}:${a.storeId}:${a.productId}`,
         submissionKey:`opening:${a.storeId}:${a.productId}`,createdAt:now
       });
@@ -198,15 +207,17 @@ export async function postPairedStoreTransfer(
     !whole((balances.get(destination.id)??0)+request.quantity))
     throw new Error("Store transfer stock insufficient or destination overflow.");
   const transferId=nanoid(18);
+  const sequence=await database.storeStockEntries.where("[businessProfileId+productId]").equals([company,product.id]).count();
   const legs:StoreStockEntry[]=[
     {id:nanoid(18),businessProfileId:company,storeId:source.id,productId:product.id,
-      kind:"transfer-out",quantityDelta:-request.quantity,sourceId:request.id,
+      kind:"transfer-out",quantityDelta:-request.quantity,sequence:sequence+1,sourceId:request.id,
       submissionKey:`transfer-out:${submissionKey}`,createdAt:now,transferId},
     {id:nanoid(18),businessProfileId:company,storeId:destination.id,productId:product.id,
-      kind:"transfer-in",quantityDelta:request.quantity,sourceId:request.id,
+      kind:"transfer-in",quantityDelta:request.quantity,sequence:sequence+2,sourceId:request.id,
       submissionKey:`transfer-in:${submissionKey}`,createdAt:now,transferId},
   ];
-  if(!staffId) throw new Error("Verified transfer actor required.");
+  const actor=staffId ? await database.staffMembers.get(staffId) : undefined;
+  if(!actor || actor.businessProfileId!==company || actor.disabledAt || actor.role==="cashier" || currentStaffId(company)!==staffId) throw new Error("Verified inventory-authorized transfer actor required.");
   requireCompany(company);
   await database.storeStockEntries.bulkAdd(legs);
   return transferId;
