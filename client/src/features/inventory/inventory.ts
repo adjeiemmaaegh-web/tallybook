@@ -271,11 +271,13 @@ export async function updateProduct(productId: string, values: ProductFormValues
 export async function archiveProduct(productId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers, database.storeStockModes], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.staffMembers, database.storeStockModes, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
     if (!product || product.businessProfileId !== company || product.archivedAt) throw new Error("This product is already archived or unavailable.");
+    if((await database.commerceHolds.where("[businessProfileId+productId]").equals([company,productId]).toArray()).some(h=>h.status==="active"&&Date.parse(h.expiresAt)>Date.now()))
+      throw new Error("This product has customer reservations and cannot be archived.");
     if (await database.storeStockModes.get(company) && product.stockQuantity!==0)
       throw new Error("Transfer or reconcile all store units before archiving stock.");
     const archived = { ...product, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
