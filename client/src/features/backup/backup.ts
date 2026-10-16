@@ -14,6 +14,8 @@ import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables
 import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
 import { reconcileCreditLedger, inspectReceivableCurrency } from "@/features/sales/creditLedger.mjs";
 import {auditCompanyReturnPolicyEvidence} from '@/features/business/returnPolicyAudit.mjs';
+import {auditRun12SaleTaxHistory} from '@/features/reports/run12SaleTaxAudit.mjs';
+import {auditRun12SupplierFinance} from '@/features/reports/run12SupplierFinanceAudit.mjs';
 import {auditRun10CompanyReceivables} from "@/features/reports/run10ReceivablesAudit.mjs";
 import {auditRun10PrepaidCashConservation} from "@/features/reports/run10PrepaidCashAudit.mjs";
 import { expenseCategories, localExpenseDate, type Expense } from "@/features/expenses/expenses";
@@ -294,6 +296,15 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     }
   }
   reconcileSupplierPayables(records.purchases, records.supplierPayableEntries);
+  // Independently check original supplier ownership and purchase-versus-
+  // settlement chronology before ANY restore mutation. A supplier credit note
+  // is not a bank payment, and other-currency expenses remain unconverted.
+  auditRun12SupplierFinance({
+    company:companyId,companyCurrency:records.businessProfiles[0].currency,
+    suppliers:records.suppliers,purchases:records.purchases,
+    entries:records.supplierPayableEntries,expenses:records.expenses,
+    range:{start:new Date(0),end:new Date(8_640_000_000_000_000)}
+  });
   // Currency snapshots are additive: absence means UNKNOWN on old records,
   // never the current profile currency. Invalid new snapshots are rejected.
   const supportedCurrencyEvidence = (value: string | undefined) => value === undefined || /^[A-Z]{3}$/.test(value);
@@ -411,6 +422,9 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     const value = allocationCost(event);
     if (value !== line.cogsMinor || line.costStatus !== (value === undefined ? "unavailable" : "verified")) throw new Error("Backup sale cost total does not match receipt allocations.");
   }
+  // Verify explicit OFF/registered invoice policy snapshots across every
+  // saved sale. Older pre-snapshot receipts are kept legacy-unverified.
+  auditRun12SaleTaxHistory(records.sales);
   for (const sale of records.sales) {
     validateTaxSnapshot(sale);
     if (sale.costStatus === undefined) continue;
