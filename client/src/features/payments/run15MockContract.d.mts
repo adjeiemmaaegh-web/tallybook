@@ -7,7 +7,7 @@ export interface Run15MockIntent {
 }
 export interface Run15MockEvent {
  id:string;intentId:string;businessProfileId:string;action:"timeout"|"succeed"|"fail"|"refund"|"chargeback";
- amountMinor:number;createdAt:string;mockOnly:true;
+ amountMinor:number;createdAt:string;sequence:number;mockOnly:true;
  financialPostingPerformed:false;authoritativeSettlement:false
 }
 export const RUN15_PROVIDER_NAME:"mock-only";
