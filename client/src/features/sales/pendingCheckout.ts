@@ -12,7 +12,7 @@ export function loadPendingCheckout(companyId: string): PendingCheckout | null {
     if (!value || typeof value !== "object") return null;
     const p = value as Partial<PendingCheckout>;
     const i = p.intent;
-    if (p.version !== 1 || p.companyId !== companyId || !i || typeof p.savedAt !== "string" || !Number.isFinite(Date.parse(p.savedAt)) || typeof i.submissionKey !== "string" || !i.submissionKey || !Array.isArray(i.lines) || !i.lines.length || !i.lines.every(x => typeof x.productId === "string" && x.productId.length > 0 && Number.isSafeInteger(x.quantity) && x.quantity > 0) || (i.storeId !== undefined && (typeof i.storeId !== "string" || !i.storeId || i.storeId.length>200)) || typeof i.currency !== "string" || typeof i.paymentMethod !== "string" || typeof i.amountPaid !== "string" || typeof i.discount !== "string") return null;
+    if (p.version !== 1 || p.companyId !== companyId || !i || typeof p.savedAt !== "string" || !Number.isFinite(Date.parse(p.savedAt)) || typeof i.submissionKey !== "string" || !i.submissionKey || !Array.isArray(i.lines) || !i.lines.length || !i.lines.every(x => typeof x.productId === "string" && x.productId.length > 0 && Number.isSafeInteger(x.quantity) && x.quantity > 0) || (i.storeId !== undefined && (typeof i.storeId !== "string" || !i.storeId || i.storeId.length>200)) || (i.commerceOrderId !== undefined && (typeof i.commerceOrderId !== "string" || !i.commerceOrderId || i.commerceOrderId.length>128)) || typeof i.currency !== "string" || typeof i.paymentMethod !== "string" || typeof i.amountPaid !== "string" || typeof i.discount !== "string") return null;
     return p as PendingCheckout;
   } catch { return null; }
 }
