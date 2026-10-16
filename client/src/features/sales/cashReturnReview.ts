@@ -2,16 +2,20 @@ import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { prepareCashReturnReview, type CashReturnReview } from './cashReturnReview.mjs';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
+import {authorizeReturnPolicy} from '@/features/business/returnPolicy.mjs';
 
 /** A consistent local snapshot, NOT approval or permission to pay out cash. */
 export async function getCashReturnReview(originalSaleId: string, database: TallybookDB = db): Promise<CashReturnReview> {
   const company = getActiveBusinessProfileId();
   if (!company || typeof originalSaleId !== 'string' || !originalSaleId.trim()) throw new Error('Select a saved sale for return review.');
-  return database.transaction('r', [database.sales, database.saleLines, database.payments, database.receipts,
+  return database.transaction('r', [database.businessProfiles, database.sales, database.saleLines, database.payments, database.receipts,
     database.cashPartialReturns, database.saleReversals, database.products, database.inventoryCostEvents,
     database.inventoryBatches, database.inventoryMovements], async () => {
     const sale = await database.sales.get(originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('This sale is not available in the active company.');
+    const companyProfile=await database.businessProfiles.get(company);
+    if(!companyProfile)throw new Error('The selected company has no saved return policy.');
+    authorizeReturnPolicy(companyProfile.returnPolicyHistory,sale,'partialCash',new Date().toISOString());
     const [saleLines, payments, receipts, priorReturns, fullReversals] = await Promise.all([
       database.saleLines.where('saleId').equals(sale.id).toArray(),
       database.payments.where('saleId').equals(sale.id).toArray(),
