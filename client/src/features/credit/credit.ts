@@ -1,6 +1,7 @@
 import { requirePermission } from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {withCoordinatedRetailWrite} from "@/features/backup/coordinatedRetailWrite";
+import {auditRun10CompanyReceivables} from "@/features/reports/run10ReceivablesAudit.mjs";
 /** Tactile Ledger Stage 6: debt is derived from completed customer sales minus immutable repayment records, never typed as a mutable balance. */
 import { nanoid } from "nanoid";
 import { activeStaffShift } from "@/features/staff/staff";
@@ -180,10 +181,19 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     }
     if (amountMinor > balance) throw new Error(`Repayment cannot exceed the outstanding balance of ${formatMinorAmount(balance, input.currency)}.`);
     const repayment: DebtRepayment = { id: nanoid(14), businessProfileId: activeId, customerId: customer.id, amountMinor, currency: input.currency, method: input.method, note: input.note?.trim() || undefined, submissionKey, createdAt: now, ...(canonicalAllocations ? {saleAllocations: canonicalAllocations} : {}), ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    // Re-audit the proposed posting against the saved FULL customer ledger
+    // while holding the same write transaction. Every supplied allocation is
+    // checked and historical customer-only payments remain unallocated.
+    auditRun10CompanyReceivables({
+      company:activeId,customers:[customer],sales,
+      repayments:[...repayments,repayment],reversals
+    });
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");
     await database.repayments.add(repayment);
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error("Company switched before customer repayment committed.");
     return repayment;
   });
   });
