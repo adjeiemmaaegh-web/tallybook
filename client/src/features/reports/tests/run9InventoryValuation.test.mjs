@@ -4,7 +4,7 @@ import {summarizeRun9InventoryValuation} from '../run9InventoryValuation.mjs';
 const rice={id:'rice',stockQuantity:5,costPriceMinor:999};
 const known={historyAvailable:true,quantity:5,knownValueMinor:800,unknownCostUnits:0};
 const riceOnly=(state=known)=>summarizeRun9InventoryValuation([rice],[state]);
-test('fully reconstructed FIFO cost is complete without today's editable product price',()=>{
+test('fully reconstructed FIFO cost is complete without current editable product price',()=>{
  assert.deepEqual(riceOnly(),{
   knownValueMinor:800,unknownCostUnits:0,unverifiedProducts:0,
   trackedProducts:1,complete:true,totalValueMinor:800
