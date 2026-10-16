@@ -13,6 +13,7 @@ import type { Purchase, PurchaseLine, Supplier } from "@/features/purchases/purc
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
 import { reconcileCreditLedger, inspectReceivableCurrency } from "@/features/sales/creditLedger.mjs";
+import {auditCompanyReturnPolicyEvidence} from '@/features/business/returnPolicyAudit.mjs';
 import {auditRun10CompanyReceivables} from "@/features/reports/run10ReceivablesAudit.mjs";
 import {auditRun10PrepaidCashConservation} from "@/features/reports/run10PrepaidCashAudit.mjs";
 import { expenseCategories, localExpenseDate, type Expense } from "@/features/expenses/expenses";
@@ -422,6 +423,11 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     if ((ret.staffId && !index("staffMembers").has(ret.staffId)) ||
         (ret.shiftId && !index("staffShifts").has(ret.shiftId))) throw new Error("Cash return references an absent staff member or shift.");
   }
+  // Check original sale policy snapshots and refund-time owner decisions.
+  // Old refunds without snapshots remain flagged legacy rather than being
+  // rewritten to match the current company terms.
+  auditCompanyReturnPolicyEvidence(records.businessProfiles[0],
+    records.sales,records.saleReversals,records.cashPartialReturns);
   reconcileCashPartialReturns(records.sales, records.saleLines, records.payments, records.cashPartialReturns, records.saleReversals);
   assertCashReturnLedgerLinks(records.sales, records.saleLines, records.cashPartialReturns, records.inventoryMovements, records.inventoryCostEvents);
   reconcileSaleCosts(companyId, {

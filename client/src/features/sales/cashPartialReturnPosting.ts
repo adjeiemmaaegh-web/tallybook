@@ -12,11 +12,14 @@ import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { requirePermission, activeStaffShift } from '@/features/staff/staff';
 import { restorePartialInventoryCost } from '@/features/inventory/costLedger';
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
+import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
 import { reconcileCashPartialReturns } from './cashPartialReturn.mjs';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
 import type { InventoryMovement } from '@/features/inventory/inventory';
 
 export interface CashPartialSaleReturn {
+  /** Immutable owner-configured policy revision and sale-time entitlement. */
+  policyEvidence?:ReturnPolicyEvidence;
   id: string;
   businessProfileId: string;
   originalSaleId: string;
@@ -83,6 +86,10 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       throw new Error('This cash return was already recorded; inspect the saved return before handing out money again.');
     const sale = await database.sales.get(values.originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('The original sale is unavailable in this company.');
+    const companyProfile=await database.businessProfiles.get(company);
+    if(!companyProfile)throw new Error('Company return policy is unavailable.');
+    const now=new Date().toISOString();
+    const policyEvidence=authorizeReturnPolicy(companyProfile.returnPolicyHistory,sale,'partialCash',now);
     const lines = await database.saleLines.where('saleId').equals(sale.id).toArray();
     const payments = await database.payments.where('saleId').equals(sale.id).toArray();
     const receipts = await database.receipts.where('saleId').equals(sale.id).toArray();
@@ -113,7 +120,6 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     assertCashReturnStockLinks(sale, lines, prior,
       pastMovements.filter((row): row is NonNullable<typeof row> => Boolean(row)),
       [...originalIssues, ...pastCosts].filter((row): row is NonNullable<typeof row> => Boolean(row)));
-    const now = new Date().toISOString();
     const savedLines:CashPartialSaleReturn['lines'] = [];
     const products = new Set<string>();
     for (const item of plan.lines) {
@@ -146,7 +152,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       await database.products.put({...product,stockQuantity:movement.resultingQuantity,updatedAt:now});
       savedLines.push({saleLineId:originalLine.id,productId:product.id,quantity:item.quantity,movementId,costEventId:event.id});
     }
-    const recorded:CashPartialSaleReturn = {id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
+    const recorded:CashPartialSaleReturn = {policyEvidence,id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
       originalReceiptNumber:sale.receiptNumber,currency:sale.currency!,submissionKey:values.submissionKey,createdAt:now,returnSequence:prior.length+1,
       refundMethod:'cash',disposition:'restockable',refundedMinor:plan.draftAmountMinor,
       returnedTaxableMinor:plan.draftTaxableMinor,returnedTaxMinor:plan.draftTaxMinor,

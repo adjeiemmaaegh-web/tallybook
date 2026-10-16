@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {TallybookDB,initializeDatabase} from '@/db/TallybookDB';
 import {saveBusinessProfile} from '@/features/business/businessProfile';
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {createProduct} from '@/features/inventory/inventory';
 import {createSupplier,completePurchase} from '@/features/purchases/purchases';
@@ -24,6 +25,7 @@ async function fixture(stock='2',costPrice='1'){
  await initializeDatabase(database);
  await saveBusinessProfile({name:'Run 9 FIFO Shop',country:'Ghana',
   currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+ await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Run 9 reversal fixture explicit opt-in',database);
  const product=await createProduct({name:'Rice',categoryId:'uncategorized',
   sellingPrice:'10',costPrice,initialStock:stock,lowStockThreshold:'1'},'GHS',database);
  return{database,product};

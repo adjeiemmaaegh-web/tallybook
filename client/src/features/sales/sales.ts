@@ -3,6 +3,7 @@ import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tactile Ledger sales reminder: a completed sale is one all-or-nothing local transaction; a failed sale writes nothing. */
 import { calculateTax, taxPolicyKey, type TaxSnapshot } from "./tax";
+import {saleReturnPolicySnapshot,type ReturnPolicySnapshot} from '@/features/business/returnPolicy.mjs';
 import { nanoid } from "nanoid";
 import { mergeCheckoutQuantities } from "./checkoutQuantities";
 import { calculateCheckoutLines } from "./checkoutMoney.mjs";
@@ -23,6 +24,8 @@ export type PaymentMethod = (typeof paymentMethods)[number];
 
 export interface Sale {
   tax?: TaxSnapshot;
+  /** Immutable snapshot of company return terms at original checkout. */
+  returnPolicyAtSale?:ReturnPolicySnapshot;
   id: string;
   businessProfileId: string;
   customerId?: string;
@@ -240,7 +243,13 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
         throw new Error('Discount exceeds this customer’s approved maximum discount percentage.');
       }
     }
-    const policy = (await database.businessProfiles.get(activeId))?.taxPolicy;
+    const savedProfile=await database.businessProfiles.get(activeId);
+    // Historical pre-setup sale entrypoints remain valid, but cannot gain
+    // refund authority: absent business profile is explicitly default OFF.
+    const returnPolicyAtSale=saleReturnPolicySnapshot(savedProfile?.returnPolicyHistory);
+    if(Date.parse(returnPolicyAtSale.effectiveAt)>Date.parse(now))
+      throw new Error('Company return policy effective time is ahead of sale posting; verify the device clock.');
+    const policy = savedProfile?.taxPolicy;
     if ((policy?.enabled || input.taxReviewKey !== undefined) && input.taxReviewKey !== taxPolicyKey(policy)) throw new Error("Tax settings changed or have not been reviewed. Reload checkout and review the total.");
     const tax = calculateTax(subtotalMinor - discountMinor, policy);
     const totalMinor = tax?.totalMinor ?? subtotalMinor - discountMinor;
@@ -280,7 +289,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const mobileMoneyProvider = mobileMoneyProviderId ? await database.mobileMoneyProviders.get(mobileMoneyProviderId) : undefined;
     if (mobileMoneyProviderId && (!mobileMoneyProvider || mobileMoneyProvider.businessProfileId !== activeId || !mobileMoneyProvider.active)) throw new Error("Choose a saved Mobile Money provider before recording this payment.");
 
-    const sale: Sale = { ...(tax ? { tax } : {}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, ...(cashier ? {staffId:cashier.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    const sale: Sale = { ...(tax ? { tax } : {}),returnPolicyAtSale, id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, ...(cashier ? {staffId:cashier.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
     const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
     const payment: Payment | undefined = amountPaidMinor > 0 && input.paymentMethod !== "wallet" ? { id: nanoid(14), saleId: sale.id, businessProfileId: activeId, customerId: customer?.id, method: input.paymentMethod, amountMinor: amountPaidMinor, ...(input.paymentMethod === "mobile" && mobileMoneyProvider ? { mobileMoneyProviderId: mobileMoneyProvider.id, mobileMoneyProviderName: mobileMoneyProvider.name, mobileMoneyReference } : {}), createdAt: now } : undefined;

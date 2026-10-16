@@ -7,9 +7,12 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { formatMinorAmount, type InventoryMovement } from "@/features/inventory/inventory";
 import { appendInventoryCostChange, restoreInventoryCost } from "@/features/inventory/costLedger";
 import { assertDebtReversalIsUnallocatedPaymentSafe } from "@/features/sales/reversalDebtGuard.mjs";
+import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
 
 export interface SaleReversalLine { productId: string; productName: string; quantity: number; restoredQuantity: number }
 export interface SaleReversal {
+  /** Immutable sale-time and decision-time company policy evidence. */
+  policyEvidence?:ReturnPolicyEvidence;
   id: string;
   businessProfileId: string;
   originalSaleId: string;
@@ -40,6 +43,12 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const activeId = getActiveBusinessProfileId();
   const sale = await latestReversibleSale(database, activeId);
   if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+  const profile=await database.businessProfiles.get(activeId);
+  if(!profile)throw new Error('The selected company has no saved refund policy.');
+  // Advisory read-only preview; the posting transaction reauthorizes against
+  // the latest revision and checks staff/shift/financial safety independently.
+  authorizeReturnPolicy(profile.returnPolicyHistory,sale,'full',new Date().toISOString());
+  if(getActiveBusinessProfileId()!==activeId)throw new Error('Company changed during reversal review.');
   const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
   const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
   const named = lines.map((line, index) => ({ productName: products[index]?.name ?? line.productName ?? "Unknown product", quantity: line.quantity }));
@@ -53,7 +62,7 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
@@ -61,6 +70,10 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (existingByKey) return existingByKey;
     const sale = await latestReversibleSale(database, activeId);
     if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+    const currentProfile=await database.businessProfiles.get(activeId);
+    if(!currentProfile)throw new Error('Company return policy is unavailable.');
+    const now=new Date().toISOString();
+    const policyEvidence=authorizeReturnPolicy(currentProfile.returnPolicyHistory,sale,'full',now);
     if (sale.customerId && sale.outstandingMinor > 0) {
       const debts = await database.sales.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       const reversals = await database.saleReversals.where("businessProfileId").equals(activeId).and(row => row.customerId === sale.customerId).toArray();
@@ -72,7 +85,6 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
     if (products.some((product) => !product || product.businessProfileId !== activeId)) throw new Error("A product from this sale is no longer available in this company.");
     const resolvedProducts = products as NonNullable<typeof products[number]>[];
-    const now = new Date().toISOString();
     // Historical sale lines may contain the same product more than once. Restore
     // each product once using the sum of its lines, not repeated stale snapshots.
     const restoreByProduct = new Map<string, number>();
@@ -123,7 +135,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
         await database.inventoryBatches.put(batch);
       }
     }
-    const reversal: SaleReversal = { id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
+    const reversal: SaleReversal = {policyEvidence, id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
     if (sale.customerId) {
       const linked = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
         .filter(entry => entry.businessProfileId === activeId &&
@@ -141,6 +153,9 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
           createdAt: now });
       }
     }
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error('Company changed before completing the full reversal.');
+    await requirePermission('refund',database,activeId);
     await database.saleReversals.add(reversal);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'sale.reversed',createdAt:now,details:reversal.id});
     await Promise.all(Array.from(restoredStock, async ([productId, stockQuantity]) => {

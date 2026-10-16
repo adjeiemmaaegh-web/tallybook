@@ -1,5 +1,6 @@
 /** Tallybook Africa design reminder: setup is a compact cobalt record card—one business, clear labels, solid readable surfaces, and no unnecessary account step. */
 import { TaxSettings } from "@/components/TaxSettings";
+import {CompanyReturnPolicySettings} from '@/components/CompanyReturnPolicySettings';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, CircleAlert, PencilLine, Plus, Save, Smartphone, Store, ToggleLeft, ToggleRight } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -164,6 +165,7 @@ export default function BusinessSetup() {
       </section>
 
       {profile ? <TaxSettings key={`${profile.id}:${profile.updatedAt}`} /> : null}
+      {profile ? <CompanyReturnPolicySettings key={profile.id} /> : null}
       <section className="business-form-shell mobile-money-settings" aria-labelledby="mobile-money-settings-title">
         <div className="form-ledger-head"><div><p className="ledger-kicker">Mobile Money</p><h2 id="mobile-money-settings-title">Providers you accept at checkout.</h2><p>Choose your own provider names. Tallybook does not lock this list to a country or network.</p></div><div className="form-ledger-stamp"><Smartphone className="h-4 w-4" aria-hidden="true" /><span>Local setup</span></div></div>
         {!profile ? <div className="mobile-money-settings-note"><CircleAlert className="h-4 w-4" aria-hidden="true" /><p>Save your business details first, then add the providers you accept.</p></div> : <>

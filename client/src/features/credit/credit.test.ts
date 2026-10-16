@@ -9,6 +9,8 @@ import { completeSale, getCustomerSaleSummary } from "@/features/sales/sales";
 import { executeLatestSaleReversal } from "@/features/assistant/reversals";
 import { setCustomerPolicy } from "@/features/customers/customerBenefits";
 import { getReportsSnapshot } from "@/features/reports/reports";
+import {saveBusinessProfile} from '@/features/business/businessProfile';
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 
 const names = new Set<string>();
 const databases: Dexie[] = [];
@@ -23,6 +25,14 @@ function makeDatabase() {
 
 async function creditSale(database: TallybookDB, customerName = "Credit Customer") {
   await initializeDatabase(database);
+  // Legacy credit integration cases explicitly use a company that has opted
+  // into supported full-sale reversals before creating the original sale.
+  if(!await database.businessProfiles.get('primary')){
+    await saveBusinessProfile({name:'Credit test business',country:'Ghana',
+      currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+    await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,
+      allowCashPartial:false,maxAgeDays:30},'Credit reversal fixture owner opt-in',database);
+  }
   const customer = await createCustomer({ name: customerName, phone: `+233 20 555 ${String(sequence).padStart(4, "0")}`, email: "", address: "", notes: "", status: "active" }, database);
   const product = await createProduct({ name: `Credit item for ${customerName}`, sku: "", categoryId: "uncategorized", sellingPrice: "20.00", costPrice: "", initialStock: "5", lowStockThreshold: "1" }, "GHS", database);
   const sale = await completeSale({ lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id, discount: "0", paymentMethod: "credit", amountPaid: "0", currency: "GHS" }, database);

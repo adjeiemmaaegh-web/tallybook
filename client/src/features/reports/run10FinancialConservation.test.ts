@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {TallybookDB,initializeDatabase} from '@/db/TallybookDB';
 import {saveBusinessProfile} from '@/features/business/businessProfile';
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {createCustomer} from '@/features/customers/customers';
 import {createProduct} from '@/features/inventory/inventory';
@@ -21,6 +22,7 @@ async function fixture(){
   dbs.push(db);await initializeDatabase(db);
   await saveBusinessProfile({name:'Run10 Ledger',country:'Ghana',
     currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},db);
+  await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Run 10 wallet reversal fixture opt-in',db);
   const a=await createCustomer({name:'Debtor Alpha',phone:'0241101101',
     email:'',address:'',notes:'',status:'active'},db);
   const b=await createCustomer({name:'Debtor Beta',phone:'0241101102',
