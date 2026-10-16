@@ -250,6 +250,15 @@ export function financialCsv(summary:FinancialSummary):string {
   const supplierRows: (string | number)[][] = supplier ? [
     [], ["Supplier evidence", "Minor units or count"],
     ["Purchases of unknown liability status", supplier.unknownPurchases],
+    ...(summary.supplierFinanceAudit ? [
+      ["Saved supplier invoices with recognized liability",summary.supplierFinanceAudit.recognizedPurchases],
+      ["Manually attested supplier payments",summary.supplierFinanceAudit.manuallyAttestedPayments],
+      ["Supplier payments without external reference",summary.supplierFinanceAudit.paymentsWithoutReferences],
+      ["Supplier credit notes without external reference",summary.supplierFinanceAudit.supplierCreditsWithoutReferences],
+      ["Historical expenses without saved currency",summary.supplierFinanceAudit.expensesWithUnknownCurrency],
+      ["Historical expenses in another currency",summary.supplierFinanceAudit.expensesInOtherCurrency],
+      ["Manual supplier payments in company currency this period",summary.supplierFinanceAudit.periodSupplierPaymentsInCompanyCurrencyMinor]
+    ] as (string|number)[][]:[]),
     ...supplier.outstandingByCurrency.map(row => [`Recognized payable as-of, ${row.currency}`,row.amountMinor]),
     ...supplier.periodPaymentsByCurrency.map(row => [`Manual supplier payments in period, ${row.currency}`,row.amountMinor]),
     ...supplier.creditedToDateByCurrency.map(row => [`Supplier credits as-of, ${row.currency}`,row.amountMinor]),
@@ -258,6 +267,11 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Tallybook management report',summary.range.label],['Metric','Minor units'],
     ['Net saved sales',summary.revenueMinor],['Recorded tax after reversals',summary.recordedTaxMinor],
     ['Sales excluding recorded tax',summary.salesExcludingRecordedTaxMinor],['Sales count',summary.saleCount],
+    ...(summary.taxEvidence ? [
+      ['Sales with saved registered tax policy',summary.taxEvidence.configuredChargedSales],
+      ['Sales with explicit tax OFF at checkout',summary.taxEvidence.explicitNoTaxSales],
+      ['Historical sales with unverified tax configuration',summary.taxEvidence.legacyUnverifiedSales]
+    ] as (string|number)[][] : []),
     ['Money collected including prepaid deposits less refunds',summary.collectionsMinor],
     ['Net prepaid cash movement',summary.walletNetCashMinor],
     ...(summary.prepaidLiabilityMinor !== undefined ? [['Prepaid wallet liability as-of (minor units)',summary.prepaidLiabilityMinor],['Customers with prepaid balance',summary.prepaidLiabilityCustomers ?? 0]] as (string | number)[][] : []),['Recorded expenses',summary.expensesMinor],
@@ -295,7 +309,7 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
-    ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier outflows are reported separately by saved currency and excluded from collections-minus-expenses. Unverified historical liabilities and legal tax rules are not inferred.'],
+    ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier payments and operating expenses may duplicate the same real-world payout; they are never netted together without external disbursement evidence. Historical liabilities, tax filing obligations and legal tax rates are not inferred.'],
   ];
   return rows.map(row=>row.map(csvCell).join(',')).join('\r\n');
 }
