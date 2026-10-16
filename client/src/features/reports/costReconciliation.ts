@@ -1,4 +1,6 @@
 import { allocationCost, reconstructInventoryCost, type InventoryCostEvent } from "@/features/inventory/costLedger";
+import {assertRun9ReturnCostCompleteness} from './run9CostReturnAudit.mjs';
+import {summarizeRun9InventoryValuation,type Run9InventoryValuation} from './run9InventoryValuation.mjs';
 import type { Product, InventoryMovement } from "@/features/inventory/inventory";
 import type { Sale, SaleLine } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
@@ -13,10 +15,20 @@ function add(a: number, b: number) {
 export function reconcileSaleCosts(company: string, input: {
   products: Product[]; events: InventoryCostEvent[]; movements: InventoryMovement[];
   sales: Sale[]; lines: SaleLine[]; reversals: SaleReversal[]; cashReturns?: CashPartialSaleReturn[];
-}, range: { start: Date; end: Date }): { cogsMinor?: number; unavailableSales: number } {
+}, range: { start: Date; end: Date }): {
+  cogsMinor?:number;unavailableSales:number;
+  inventoryValuation:Run9InventoryValuation
+} {
   for (const rows of [input.products, input.events, input.movements, input.sales, input.lines, input.reversals, input.cashReturns ?? []]) {
     if (rows.some(row => row.businessProfileId !== company) || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error("Cost reconciliation contains duplicate or foreign records.");
   }
+  // Source records must prove inverse FIFO restorations BOTH ways: existence
+  // of one reversal event is not evidence that every full-return line was
+  // restored. Check this before generating any financial period result.
+  assertRun9ReturnCostCompleteness({
+    events:input.events,lines:input.lines,reversals:input.reversals,
+    cashReturns:input.cashReturns ?? []
+  });
   const events = new Map(input.events.map(event => [event.id, event]));
   const movements = new Map(input.movements.map(movement => [movement.id, movement]));
   const productIds = new Set(input.products.map(product => product.id));
@@ -38,11 +50,15 @@ export function reconcileSaleCosts(company: string, input: {
       if ((full ? 1 : 0) + (partial ? 1 : 0) !== 1) throw new Error("Cost reversal has no uniquely matched full or partial return evidence.");
     }
   }
-  for (const product of input.products) {
-    const history = input.events.filter(event => event.productId === product.id);
-    if (!history.length) continue;
-    if (reconstructInventoryCost(history, company, product.id).quantity !== product.stockQuantity) throw new Error("Current stock does not reconcile with cost history.");
-  }
+  const costStates=input.products.map(product=>{
+    const history=input.events.filter(event=>event.productId===product.id);
+    if(!history.length)return null; // A legacy balance is not a cost receipt.
+    const state=reconstructInventoryCost(history,company,product.id);
+    if(state.quantity!==product.stockQuantity)
+      throw new Error("Current stock does not reconcile with cost history.");
+    return state;
+  });
+  const inventoryValuation=summarizeRun9InventoryValuation(input.products,costStates);
   const saleCosts = new Map<string, number | undefined>();
   for (const sale of input.sales) {
     const lines = input.lines.filter(line => line.saleId === sale.id);
@@ -84,5 +100,6 @@ export function reconcileSaleCosts(company: string, input: {
     if (value === undefined) unavailableSales++;
     else cogsMinor = add(cogsMinor, value * posting.sign);
   }
-  return { cogsMinor: unavailableSales ? undefined : cogsMinor, unavailableSales };
+  return { cogsMinor: unavailableSales ? undefined : cogsMinor,
+    unavailableSales,inventoryValuation };
 }
