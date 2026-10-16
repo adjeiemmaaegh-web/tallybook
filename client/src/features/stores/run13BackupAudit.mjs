@@ -44,8 +44,6 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
       if(openings.has(k)||e.quantityDelta<0||e.transferId!==undefined)
         deny("Duplicate or invalid opening store stock.");
       openings.add(k);
-    } else if(!openings.has(slot(e.storeId,e.productId)) && e.quantityDelta<0) {
-      deny("Store stock cannot issue before allocation or receipt.");
     }
     if(e.kind==="transfer-in"||e.kind==="transfer-out") {
       if(!id(e.transferId)||e.quantityDelta===0)deny("Missing transfer identity.");
