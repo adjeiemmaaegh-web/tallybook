@@ -211,13 +211,14 @@ export async function getCompanyStoreInventory(database:TallybookDB=db) {
  */
 export async function postPairedStoreTransfer(
   database:TallybookDB,company:string,request:{
-    id:string;sourceStoreId:string;destinationStoreId:string;productId:string;quantity:number
+    id:string;sourceStoreId:string;destinationStoreId:string;productId:string;quantity:number;status:"dispatched"
   }, staffId:string, submissionKey:string, now:string
 ) {
   requireStage9Capability("executeStoreTransfer");
   requireCompany(company);
   if (!await database.storeStockModes.get(company)) throw new Error("Activate company store stock before transferring.");
   if (!whole(request.quantity) || request.quantity<1 || !submissionKey.trim()) throw new Error("Invalid transfer.");
+  if(request.status!=="dispatched")throw new Error("Transfer dispatch evidence required before receipt.");
   const [source,destination,product]=await Promise.all([
     database.storeLocations.get(request.sourceStoreId),
     database.storeLocations.get(request.destinationStoreId),database.products.get(request.productId)
