@@ -18,6 +18,7 @@ import { assertSavedSaleTenderReconciliation } from "./saleTenderReconciliation.
 import {auditRun10CompanyReceivables,type Run10ReceivableAudit} from './run10ReceivablesAudit.mjs';
 import {auditRun10PrepaidCashConservation,type Run10PrepaidCashAudit} from './run10PrepaidCashAudit.mjs';
 import type {Customer} from '@/features/customers/customers';
+import {auditCompanyReturnPolicyEvidence,type CompanyReturnPolicyEvidenceSummary} from '@/features/business/returnPolicyAudit.mjs';
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
@@ -36,6 +37,7 @@ export interface FinancialSummary {
   /** AS-OF full saved stock, not a period cash or profit flow. */
   inventoryValuation?:Run9InventoryValuation;
   purchaseCostEvidence?:Run9PurchaseCostEvidence;
+  returnPolicyEvidence?:CompanyReturnPolicyEvidenceSummary;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
   receivableAudit?:Run10ReceivableAudit;
   /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
@@ -214,6 +216,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     expectedCurrency:profile.currency},range);
   // Independently reconstructed FIFO stock assets belong to a distinct
   // AS-OF section. Unknown receipt costs are never today's editable unit price.
+  summary.returnPolicyEvidence=auditCompanyReturnPolicyEvidence(profile,scoped(sales),scoped(reversals),scoped(cashReturns));
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
@@ -244,6 +247,12 @@ export function financialCsv(summary:FinancialSummary):string {
     ...(summary.prepaidLiabilityMinor !== undefined ? [['Prepaid wallet liability as-of (minor units)',summary.prepaidLiabilityMinor],['Customers with prepaid balance',summary.prepaidLiabilityCustomers ?? 0]] as (string | number)[][] : []),['Recorded expenses',summary.expensesMinor],
     ['Collections minus recorded expenses (excludes supplier payments)',summary.netRecordedCashMovementMinor],
     ['Current customer receivables',summary.currentReceivablesMinor],
+    ...(summary.returnPolicyEvidence?[
+      ['Refunds with verified company policy snapshots',summary.returnPolicyEvidence.verifiedRefunds],
+      ['Historical refunds with unverified policy evidence',summary.returnPolicyEvidence.legacyRefunds],
+      ['Historical sales lacking original refund terms',summary.returnPolicyEvidence.salesWithoutHistoricalTerms],
+      ['Current company refund policy revision',summary.returnPolicyEvidence.activeRevision]
+    ] as (string|number)[][]:[]),
     ...(summary.receivableAudit?[
       ['Sale-linked customer repayments (as-of)',summary.receivableAudit.allocatedRepaymentMinor],
       ['Legacy unallocated customer repayments (as-of)',summary.receivableAudit.unallocatedRepaymentMinor],
