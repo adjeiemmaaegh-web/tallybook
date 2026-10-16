@@ -59,6 +59,7 @@ export async function reserveRun16Order(
    const oldHolds=await database.commerceHolds.where("orderId").equals(orderId).toArray();
    if(order.status==="reserved"||order.status==="packed"){
      if(order.reservationKey===submissionKey&&order.storeId===storeId&&
+        Boolean(order.reservationExpiresAt)&&Date.parse(order.reservationExpiresAt!)>Date.now()&&
         oldHolds.every(h=>h.status==="active"&&Date.parse(h.expiresAt)>Date.now()))
        return order;
      throw Error("Order already reserved with different or expired intent.");
@@ -214,6 +215,14 @@ export async function consumeRun16OrderForSale(
    throw Error("Order reservation expired, changed, or already sold.");
  const holds=await database.commerceHolds.where("orderId").equals(order.id).toArray();
  const stockLines=order.lines.filter(x=>x.quantity>0);
+ const stocked=[];
+ for(const line of stockLines){
+   const candidate=await database.products.get(line.productId);
+   if(!candidate||candidate.businessProfileId!==company)throw Error("Original order product is missing.");
+   if(candidate.itemKind!=="service")stocked.push(line.productId);
+ }
+ if(holds.length!==stocked.length||new Set(holds.map(h=>h.productId)).size!==holds.length)
+   throw Error("Reserved product set does not match the exact immutable POS cart.");
  for(const line of stockLines){
    const product=await database.products.get(line.productId);
    if(!product||product.businessProfileId!==company)throw Error("Reserved product no longer belongs to company.");
