@@ -89,7 +89,7 @@ export async function updateStockCountSession(id: string, counts: Record<string,
 export async function postSavedStockCount(id: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes], async () => {
+    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.commerceHolds], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const session = await database.stockCountSessions.get(id);
