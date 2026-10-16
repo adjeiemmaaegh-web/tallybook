@@ -221,6 +221,10 @@ export async function postPairedStoreTransfer(
   ];
   const actor=staffId ? await database.staffMembers.get(staffId) : undefined;
   if(!actor || actor.businessProfileId!==company || actor.disabledAt || actor.role==="cashier" || currentStaffId(company)!==staffId) throw new Error("Verified inventory-authorized transfer actor required.");
+  if(actor.role!=="owner")for(const storeId of [source.id,destination.id]){
+    if(!await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,staffId,storeId]).first())
+      throw new Error("Transfer actor is not assigned to both stores.");
+  }
   requireCompany(company);
   await database.storeStockEntries.bulkAdd(legs);
   return transferId;
