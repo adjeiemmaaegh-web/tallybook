@@ -19,11 +19,14 @@ import {auditRun10CompanyReceivables,type Run10ReceivableAudit} from './run10Rec
 import {auditRun10PrepaidCashConservation,type Run10PrepaidCashAudit} from './run10PrepaidCashAudit.mjs';
 import type {Customer} from '@/features/customers/customers';
 import {auditCompanyReturnPolicyEvidence,type CompanyReturnPolicyEvidenceSummary} from '@/features/business/returnPolicyAudit.mjs';
+import {auditRun12SupplierFinance,type Run12SupplierFinancialAudit} from './run12SupplierFinanceAudit.mjs';
+import {auditRun12SaleTaxHistory,type Run12SaleTaxHistory} from './run12SaleTaxAudit.mjs';
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
 import type { Purchase,PurchaseLine } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
+import type {Supplier} from '@/features/purchases/purchases';
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
@@ -38,6 +41,10 @@ export interface FinancialSummary {
   inventoryValuation?:Run9InventoryValuation;
   purchaseCostEvidence?:Run9PurchaseCostEvidence;
   returnPolicyEvidence?:CompanyReturnPolicyEvidenceSummary;
+  /** Original tax policy snapshots: off is explicit; legacy absence unknown. */
+  taxEvidence?:Run12SaleTaxHistory;
+  /** Original-currency supplier disbursements separate from operating expense. */
+  supplierFinanceAudit?:Run12SupplierFinancialAudit;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
   receivableAudit?:Run10ReceivableAudit;
   /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
@@ -197,12 +204,12 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
 }
 export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),start?:string,end?:string,database:TallybookDB=db):Promise<FinancialSummary> {
   const company=getActiveBusinessProfileId();
-  const records=await database.transaction("r",[database.businessProfiles,database.customers,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
+  const records=await database.transaction("r",[database.businessProfiles,database.customers,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.suppliers,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
     await requirePermission("reports", database, company);
-    return Promise.all([database.businessProfiles.get(company),database.customers.toArray(),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
+    return Promise.all([database.businessProfiles.get(company),database.customers.toArray(),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.suppliers.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
-  const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
+  const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,suppliers,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
   const range = financialRange(period,now,start,end);
@@ -217,6 +224,16 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   // Independently reconstructed FIFO stock assets belong to a distinct
   // AS-OF section. Unknown receipt costs are never today's editable unit price.
   summary.returnPolicyEvidence=auditCompanyReturnPolicyEvidence(profile,scoped(sales),scoped(reversals),scoped(cashReturns));
+  // Saved tax-off evidence and the original registered single-rate terms,
+  // not the active tax settings, govern original invoice verification.
+  summary.taxEvidence=auditRun12SaleTaxHistory(scoped(sales));
+  // Supplier claims and manual outflows remain separate from operating
+  // expenses and do not establish bank/provider settlement.
+  summary.supplierFinanceAudit=auditRun12SupplierFinance({
+    company,companyCurrency:profile.currency,suppliers:scoped(suppliers),
+    purchases:scoped(purchases),entries:scoped(supplierEntries),
+    expenses:scoped(expenses),range
+  });
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
