@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 29;
+export const DATABASE_SCHEMA_VERSION = 30;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -64,6 +64,9 @@ export class TallybookDB extends Dexie {
   syncOutbox!: Table<import("@/features/sync/syncFoundation").SyncOutboxEvent, string>;
   syncConflicts!: Table<import("@/features/sync/reconciliation").SyncConflict, string>;
   syncDevices!: Table<import("@/features/sync/deviceRegistry").LocalSyncDevice, string>;
+  syncReplicaOutbox!: Table<import("@/features/sync/run14LocalRelay").Run14QueuedEnvelope, string>;
+  syncReplicaInbox!: Table<import("@/features/sync/run14LocalRelay").Run14InboxCopy, string>;
+  syncReplicaCursors!: Table<import("@/features/sync/run14LocalRelay").Run14Cursor, string>;
 
   storeLocations!: Table<import("@/features/stores/storeDirectory").StoreLocation, string>;
   storeAssignments!: Table<import("@/features/stores/storeDirectory").StoreAssignment, string>;
@@ -270,6 +273,12 @@ export class TallybookDB extends Dexie {
     this.version(28).stores({ cashPartialReturns: "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]" });
     // Run 13: migration adds tables only; no historical store allocations are inferred.
     this.version(29).stores({ storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]", storeTransferRequests: "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status], &[businessProfileId+submissionKey], &[businessProfileId+dispatchKey], &[businessProfileId+completionKey], &[businessProfileId+returnProofKey], &[businessProfileId+reversesRequestId]" });
+    // v30: quarantined, independently encrypted, opt-in replica envelopes only.
+    this.version(30).stores({
+      syncReplicaOutbox:"id, businessProfileId, deviceId, operationId, status, [businessProfileId+status], &[businessProfileId+deviceId+sequence], &[businessProfileId+operationId]",
+      syncReplicaInbox:"id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
+      syncReplicaCursors:"businessProfileId, updatedAt"
+    });
   }
 }
 
