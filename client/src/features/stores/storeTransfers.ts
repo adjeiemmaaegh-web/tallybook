@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
+import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 
 export interface StoreTransferRequest {
   id: string; businessProfileId: string; sourceStoreId: string; destinationStoreId: string;
@@ -18,7 +19,8 @@ export async function requestStoreTransfer(sourceStoreId: string, destinationSto
   return withCoordinatedRetailWrite(async () => {
     validateTransferRequest(sourceStoreId, destinationStoreId, productId, quantity);
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.storeTransferRequests, database.storeLocations, database.products, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.storeTransferRequests, database.storeLocations, database.storeAssignments, database.products, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const member = await requirePermission("staff", database, company);
       const staffId = member?.id ?? currentStaffId(company);
       if (!staffId) throw new Error("Active staff identity required.");
@@ -27,6 +29,12 @@ export async function requestStoreTransfer(sourceStoreId: string, destinationSto
       if ([source,destination].some(s => !s || s.businessProfileId !== company || s.status !== "active")) throw new Error("Both stores must be active in the same company.");
       if (!product || product.businessProfileId !== company || product.archivedAt || product.itemKind === "service") throw new Error("Valid stock product required.");
       if (!actor || actor.businessProfileId !== company || actor.disabledAt) throw new Error("Staff identity invalid.");
+      if (actor.role !== "owner") {
+        const sourceAssignment = await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company, staffId, sourceStoreId]).first();
+        if (!sourceAssignment) throw new Error("Staff is not assigned to the source store.");
+      }
+      if (getActiveBusinessProfileId() !== company || currentStaffId(company) !== staffId)
+        throw new Error("Company or staff session changed during request.");
       const entry: StoreTransferRequest = { id: nanoid(), businessProfileId: company, sourceStoreId, destinationStoreId, productId, quantity, status: "requested", requestedByStaffId: staffId, createdAt: new Date().toISOString() };
       await database.storeTransferRequests.add(entry);
       await database.staffAudits.add({id:nanoid(), businessProfileId:company, staffId, action:"store.transfer.requested", createdAt:entry.createdAt, details:entry.id});
@@ -37,7 +45,8 @@ export async function requestStoreTransfer(sourceStoreId: string, destinationSto
 export async function cancelStoreTransfer(requestId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.storeTransferRequests, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.storeTransferRequests, database.staffMembers, database.staffAudits], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       const actor = await requirePermission("staff", database, company);
       const record = await database.storeTransferRequests.get(requestId);
       if (!record || record.businessProfileId !== company || getActiveBusinessProfileId() !== company) throw new Error("Request not found in company.");
