@@ -5,6 +5,7 @@ import { db } from "@/db/TallybookDB";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { getLocalSyncStatus, type SyncStatusSnapshot } from "@/features/sync/syncStatus";
+import {Run14EncryptedRelayPanel} from "@/features/sync/Run14EncryptedRelayPanel";
 
 export default function SyncStatusPage() {
   const { profile, activeCompanyId } = useBusinessProfile();
@@ -43,6 +44,7 @@ export default function SyncStatusPage() {
       <p className="text-sm">Read-only diagnostics for this business on this device. Automatic record upload is not configured.</p>
     </header>
     <CloudBusinessPanel />
+    {activeCompanyId?<Run14EncryptedRelayPanel key={activeCompanyId} companyId={activeCompanyId}/>:null}
     {!profile ? <p role="status">Set up a business to inspect its local sync records. <Link href="/business" className="underline">Business setup</Link></p> : <>
       <button type="button" className="rounded border px-4 py-3 font-semibold" onClick={() => void refresh()} disabled={loading}>{loading ? "Checking…" : "Refresh status"}</button>
       {error ? <div role="alert" className="rounded border p-4"><strong>Synchronization records need attention.</strong><p>{error}</p></div> :
