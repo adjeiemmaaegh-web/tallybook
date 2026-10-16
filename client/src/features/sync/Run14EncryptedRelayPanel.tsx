@@ -9,7 +9,7 @@ import {setSyncConsent} from "@/features/sync/syncFoundation";
 import {registerLocalSyncDevice,listLocalSyncDevices,type LocalSyncDevice} from "@/features/sync/deviceRegistry";
 import {queueRun14Evidence,pendingRun14Envelopes,inspectRun14InboxItem,
  type Run14SourceTable,type Run14QueuedEnvelope} from "@/features/sync/run14LocalRelay";
-import {sendOneRun14Event,pullOneRun14Page,requestRun14Capability,RUN14_NETWORK_RELEASE_ENABLED} from "@/features/sync/run14RelayTransport";
+import {sendOneRun14Event,pullOneRun14Page,requestRun14Capability,markRun14ConflictReviewed,RUN14_NETWORK_RELEASE_ENABLED,type Run14RelayConflict} from "@/features/sync/run14RelayTransport";
 
 const tables:Array<{key:Run14SourceTable;label:string}>=[
  {key:"sales",label:"Sales"},
@@ -36,6 +36,9 @@ export function Run14EncryptedRelayPanel({companyId}:{companyId:string}){
  const [pending,setPending]=useState<Run14QueuedEnvelope[]>([]);
  const [inboxCount,setInboxCount]=useState(0);
  const [conflictCount,setConflictCount]=useState(0);
+ const [conflicts,setConflicts]=useState<Run14RelayConflict[]>([]);
+ const [reviewConflictId,setReviewConflictId]=useState("");
+ const [reviewNotes,setReviewNotes]=useState("");
  const [inspectCursor,setInspectCursor]=useState("");
  const [inspection,setInspection]=useState("");
  const [busy,setBusy]=useState(false);
@@ -46,12 +49,12 @@ export function Run14EncryptedRelayPanel({companyId}:{companyId:string}){
      db.syncConsents.get(companyId),listLocalSyncDevices(db,companyId),
      pendingRun14Envelopes(companyId,db),
      db.syncReplicaInbox.where("businessProfileId").equals(companyId).count(),
-     db.syncReplicaConflicts.where("businessProfileId").equals(companyId).count(),
+     db.syncReplicaConflicts.where("[businessProfileId+status]").equals([companyId,"unresolved"]).toArray(),
    ]);
    if(companyId!==getActiveBusinessProfileId())throw Error("Company changed.");
    setConsent(preference?.enabled===true);
    setDevices(registered);setPending(queued);
-   setInboxCount(received);setConflictCount(conflicts);
+   setInboxCount(received);setConflicts(conflicts);setConflictCount(conflicts.length);
  },[companyId]);
  useEffect(()=>{setDevices([]);setDeviceId("");setPassphrase("");
    setEndpoint("");setCapability("");setSession("");
@@ -153,5 +156,21 @@ export function Run14EncryptedRelayPanel({companyId}:{companyId:string}){
     setInspection(data.recordKind+" / "+data.recordId+" (read-only copy, never applied)");
   })}>Decrypt selected copy for read-only review</button>
   {inspection?<p className="text-sm" role="status">{inspection}</p>:null}
+  <div className="rounded border p-3 space-y-2">
+    <h3 className="font-semibold">Unresolved encrypted relay conflicts</h3>
+    <p className="text-sm">Reviewing a conflict only records an owner audit; it never applies or discards business records.</p>
+    <label className="block text-sm">Conflict
+      <select className="block w-full rounded border p-2" value={reviewConflictId} onChange={e=>setReviewConflictId(e.target.value)}>
+        <option value="">Select conflict</option>{conflicts.map(item=><option value={item.id} key={item.id}>{item.eventId} · {item.reason}</option>)}
+      </select>
+    </label>
+    <label className="block text-sm">Owner review notes
+      <textarea rows={2} className="block w-full rounded border p-2" maxLength={500} value={reviewNotes} onChange={e=>setReviewNotes(e.target.value)} placeholder="Explain source identity and how you verified the divergence"/>
+    </label>
+    <button className="rounded border p-2" type="button" disabled={busy||!reviewConflictId||reviewNotes.trim().length<8} onClick={()=>void perform(async()=>{
+      await markRun14ConflictReviewed(db,companyId,reviewConflictId,reviewNotes);
+      setReviewConflictId("");setReviewNotes("");
+    })}>Record owner review (no remote changes)</button>
+  </div>
  </section>;
 }
