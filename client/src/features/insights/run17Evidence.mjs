@@ -69,7 +69,7 @@ export function deriveRun17Evidence(input){
     deny("orphan partial return evidence");
   if(Date.parse(returned.createdAt)<=Date.parse(asOf))partiallyReturned.add(returned.originalSaleId);
  }
- const selectedIds=new Set(selected.map(x=>x.id));
+
  const eligibleSales=new Set(selected.filter(s=>!fullReversed.has(s.id)&&!partiallyReturned.has(s.id)).map(s=>s.id));
  const byProduct=new Map();
  for(const line of lines){
@@ -85,7 +85,17 @@ export function deriveRun17Evidence(input){
  for(const s of selected)grossMinor=safeAdd(grossMinor,s.totalMinor);
  const selectedFull=selected.filter(s=>fullReversed.has(s.id)).length;
  const selectedPart=selected.filter(s=>partiallyReturned.has(s.id)).length;
- const findings=[];
+  const perStore=new Map(stores.map(s=>[s.id,{storeId:s.id,storeName:s.name,
+    grossRecordedInvoiceMinor:0,recordedSaleCount:0,fullyReversedSaleCount:0}]));
+  for(const sale of selected){
+    if(!sale.storeId)continue;
+    const row=perStore.get(sale.storeId);
+    if(!row)deny("sale refers to missing company store");
+    row.recordedSaleCount++;
+    row.grossRecordedInvoiceMinor=safeAdd(row.grossRecordedInvoiceMinor,sale.totalMinor);
+    if(fullReversed.has(sale.id))row.fullyReversedSaleCount++;
+  }
+  const findings=[];
  for(const product of products){
   if(product.archivedAt||product.itemKind==="service")continue;
   if(!qty(product.stockQuantity)||!qty(product.lowStockThreshold))
@@ -121,6 +131,14 @@ export function deriveRun17Evidence(input){
    if(!["draft","prepared","ready","reserved","packed","dispatched","delivered","return-requested","cancelled"].includes(order.status)||
      !isDate(order.createdAt)||!isDate(order.updatedAt))deny("invalid customer order lifecycle");
    if(order.saleId&&!saleMap.has(order.saleId))deny("customer order references unavailable original sale");
+   if(order.saleId&&["reserved","packed"].includes(order.status)&&
+      cutoff-Date.parse(order.updatedAt)>24*3600*1000)
+     findings.push(finding("fulfillment",order.id,"review","Saved POS order awaiting preparation",
+       "The local order links to a saved POS receipt but still shows "+order.status+
+       " more than 24 hours after its last recorded change. Delivery and settlement are not inferred.",
+       "Review merchant fulfillment notes and the original receipt before contacting the customer.",
+       "/commerce",[source("commerceOrders",order.id),source("sales",order.saleId)],
+       [order.status,order.updatedAt,order.saleId]));
    if(order.status==="return-requested")
      findings.push(finding("return-request",order.id,"review","Customer return request needs policy review",
        "An order is marked return-requested. No refund, stock restock or customer credit adjustment has occurred merely because of this status.",
@@ -169,6 +187,7 @@ export function deriveRun17Evidence(input){
     financialReconciliation:false,predictionPerformed:false,
   }),
   topObservedUnits:Object.freeze(ranked),
+  stores:Object.freeze([...perStore.values()].sort((a,b)=>a.storeName.localeCompare(b.storeName))),
   findings:Object.freeze(findings.sort((a,b)=>{
     const rank=x=>x.severity==="attention"?0:x.severity==="review"?1:2;
     return rank(a)-rank(b)||a.id.localeCompare(b.id);
