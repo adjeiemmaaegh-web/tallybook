@@ -5,6 +5,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { currentStaffId, requirePermission } from "@/features/staff/staff";
+import { requireStage9Capability } from "./stage9ReleaseScope";
 
 /** Company-wide stock and cost remain the financial totals. The per-store
  * quantity journal partitions physical units; it never creates inventory
@@ -93,6 +94,7 @@ export async function postStoreStockDelta(
 export async function activateStoreInventory(
   allocations:OpeningStoreQuantity[], database:TallybookDB=db
 ) {
+  requireStage9Capability("authoritativeStoreStock");
   return withCoordinatedRetailWrite(async()=>{
     const company=getActiveBusinessProfileId();
     if (!Array.isArray(allocations) || allocations.length>100000)
@@ -188,6 +190,7 @@ export async function postPairedStoreTransfer(
     id:string;sourceStoreId:string;destinationStoreId:string;productId:string;quantity:number
   }, staffId:string, submissionKey:string, now:string
 ) {
+  requireStage9Capability("executeStoreTransfer");
   requireCompany(company);
   if (!await database.storeStockModes.get(company)) throw new Error("Activate company store stock before transferring.");
   if (!whole(request.quantity) || request.quantity<1 || !submissionKey.trim()) throw new Error("Invalid transfer.");
