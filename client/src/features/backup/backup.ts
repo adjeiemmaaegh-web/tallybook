@@ -1,6 +1,7 @@
 import { taxPolicySchema, validateTaxSnapshot } from "@/features/sales/tax";
 import { allocationCost, reconstructInventoryCost, type InventoryCostEvent } from "@/features/inventory/costLedger";
 import { lockStaff, requirePermission } from "@/features/staff/staff";
+import { auditRun13StoreBackup } from "@/features/stores/run13BackupAudit.mjs";
 /** Stage 9: portable backups are versioned local files; retail restore is atomic, assistant restore uses durable crash recovery. Never cloud sync. */
 import { DATABASE_SCHEMA_VERSION, db, initializeDatabase, type AppMetaRecord, type TallybookDB } from "@/db/TallybookDB";
 import type { BusinessProfile } from "@/features/business/businessProfile";
@@ -90,6 +91,8 @@ export interface BackupRecords {
   storeAssignments: import("@/features/stores/storeDirectory").StoreAssignment[];
   storeTransferRequests: import("@/features/stores/storeTransfers").StoreTransferRequest[];
   storeStockObservations: import("@/features/stores/storeStockCounts").StoreStockObservation[];
+  storeStockModes: import("@/features/stores/storeStockLedger").StoreStockMode[];
+  storeStockEntries: import("@/features/stores/storeStockLedger").StoreStockEntry[];
 }
 
 export interface TallybookBackup {
@@ -107,7 +110,7 @@ export interface BackupSummary {
   counts: Record<Exclude<keyof BackupRecords, "appMeta">, number>;
 }
 
-const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations"] as const;
+const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries"] as const;
 const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
@@ -246,10 +249,11 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   records.syncOutbox.forEach(validateOutboxEvent);
   records.syncDevices.forEach(validateLocalSyncDevice);
   for (const conflict of records.syncConflicts) if (!["payload-mismatch", "operation-collision", "unknown-event"].includes(conflict.reason) || !["unresolved", "reviewed"].includes(conflict.status) || !conflict.eventId || !conflict.operationId || !Number.isFinite(Date.parse(conflict.detectedAt))) throw new Error("Invalid sync conflict snapshot.");
+  auditRun13StoreBackup(companyId,records.storeStockModes,records.storeStockEntries,records.products,records.storeLocations,records.storeTransferRequests);
   for (const store of records.storeLocations) if (normalizeStoreName(store.name) !== store.normalizedName || !["active", "closed"].includes(store.status)) throw new Error("Invalid store snapshot.");
   for (const request of records.storeTransferRequests) {
     validateTransferRequest(request.sourceStoreId, request.destinationStoreId, request.productId, request.quantity);
-    if (!["requested", "cancelled"].includes(request.status)) throw new Error("Invalid transfer request status.");
+    if (!["requested", "cancelled", "completed"].includes(request.status)) throw new Error("Invalid transfer request status.");
   }
   for (const observation of records.storeStockObservations) {
     validateStoreStockCount(observation.observedQuantity, observation.note);
