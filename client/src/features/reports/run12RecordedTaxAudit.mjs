@@ -25,7 +25,7 @@ export function auditRun12RecordedTax(sales,reversals,partialReturns,profile){
    throw Error('Run 12 tax snapshot lacks a valid recorded rate or amount.');
   recordedSales++;recordedGrossTax+=BigInt(t.taxMinor);
  }
- const used=new Set();
+ const used=new Set(),returnedTaxBySale=new Map(),partialRefundBySale=new Map();
  let reversedTax=0n,partialRefundTax=0n,legacyRefunds=0;
  for(const [rows,kind] of [[reversals,'full'],[partialReturns,'partial']]){
   for(const row of rows){
@@ -35,15 +35,26 @@ export function auditRun12RecordedTax(sales,reversals,partialReturns,profile){
       !safe(kind==='full' ? -row.reversedSaleTotalMinor : row.refundedMinor))
     throw Error('Run 12 tax refund has orphan, foreign or invalid posting evidence.');
    if(kind==='full'){
+    if((partialRefundBySale.get(sale.id)??0)>0)
+     throw Error('Run 12 full reversal conflicts with prior cash partial return.');
     if(used.has(sale.id))throw Error('Run 12 duplicate full reversal tax evidence.');
     used.add(sale.id);
     if(sale.tax===undefined){legacyRefunds++;continue;}
     reversedTax+=BigInt(sale.tax.taxMinor);
    }else{
+    if(used.has(sale.id))
+     throw Error('Run 12 cash partial return conflicts with full reversal.');
     if(sale.tax===undefined){legacyRefunds++;continue;}
     const tax=row.returnedTaxMinor;
     if(tax===undefined){legacyRefunds++;continue;}
     if(!safe(tax))throw Error('Run 12 cash refund tax amount is invalid.');
+    const returned=(returnedTaxBySale.get(sale.id)??0)+tax;
+    const cash=(partialRefundBySale.get(sale.id)??0)+row.refundedMinor;
+    if(!Number.isSafeInteger(returned)||!Number.isSafeInteger(cash)||
+       returned>sale.tax.taxMinor||cash>sale.totalMinor)
+      throw Error('Run 12 cash refund exceeds original sale tax or tender.');
+    returnedTaxBySale.set(sale.id,returned);
+    partialRefundBySale.set(sale.id,cash);
     partialRefundTax+=BigInt(tax);
    }
   }
