@@ -82,10 +82,9 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
   await sale(database,product.id,2);
   clock('2026-01-03T10:00:00.000Z');
   await executeLatestSaleReversal('GHS',database,'run9-missing-restoration');
-  const saved=await database.inventoryCostEvents.where('kind').equals('reversal').first();
   // Delete only disposable fixture's cost record; retained money and stock
   // still need a hard fail, never an inferred zero cost.
-  const reversal=saved??(await database.inventoryCostEvents.toArray()).find(e=>e.kind==='reversal');
+  const reversal=(await database.inventoryCostEvents.toArray()).find(e=>e.kind==='reversal');
   expect(reversal).toBeDefined();
   await database.inventoryCostEvents.delete(reversal!.id);
   await expect(report(database)).rejects.toThrow(/cost evidence|restoration/);
