@@ -401,8 +401,8 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for(const row of records.run17ReviewEvents){
     if(!reviewStaffIds.has(row.staffId))
       throw new Error("Insight review author is missing from this company backup.");
-    if(Date.parse(row.createdAt)>Date.parse(backup.createdAt))
-      throw new Error("Insight review occurs after the exported file timestamp.");
+    if(!Number.isFinite(Date.parse(row.createdAt)))
+      throw new Error("Insight review has invalid event chronology.");
   }
   for (const member of records.staffMembers) {
     if (!["owner","supervisor","cashier"].includes(member.role) || typeof member.name !== 'string' || !member.name.trim() ||
