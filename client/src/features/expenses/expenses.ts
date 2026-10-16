@@ -86,9 +86,6 @@ async function createExpenseWhileLocked(values:CreateExpenseInput,database:Tally
     const activeId=company;
     const staff=await requirePermission('inventory',database,activeId);
     const shift=await activeStaffShift(staff,database);
-    const profile=await database.businessProfiles.get(activeId);
-    if(profile?.currency!==undefined&&profile.currency!==values.currency)
-      throw new Error('Expense currency differs from active company currency; no FX conversion is assumed.');
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error('Company changed while authorizing an expense.');
     const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
@@ -96,8 +93,13 @@ async function createExpenseWhileLocked(values:CreateExpenseInput,database:Tally
       if (existing.category !== input.category || existing.amountMinor !== amountMinor || existing.currency !== values.currency ||
           existing.expenseDate !== input.expenseDate || (existing.note ?? "") !== (input.note?.trim() ?? ""))
         throw new Error("This submission key was already used for a different expense. Review the saved record before retrying.");
+      if(getActiveBusinessProfileId()!==activeId)
+        throw new Error('Company changed during original expense replay.');
       return existing;
     }
+    const profile=await database.businessProfiles.get(activeId);
+    if(profile?.currency!==undefined&&profile.currency!==values.currency)
+      throw new Error('Expense currency differs from active company currency; no FX conversion is assumed.');
     const expense: Expense = {
       id: nanoid(14), businessProfileId: activeId, category: input.category, amountMinor, currency: values.currency, expenseDate: input.expenseDate,
       note: input.note?.trim() || undefined, submissionKey, createdAt: now,
