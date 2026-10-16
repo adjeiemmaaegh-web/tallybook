@@ -23,3 +23,13 @@ This module is NOT wired to a financial/stock posting command. It does not alter
 
 ## Quality declaration
 No tests were run. No CI status is being interpreted as a Run 13 test outcome. No release blockers or acceptance units are closed. This is a limited **source checkpoint**, not a completed Run 13 stage and not a release.
+
+
+## Continuation — read-only planning integration
+Added `client/src/features/stores/run13StorePlanning.ts`, which reads company-scoped stores and stock products in one read transaction, performs report permission checks, and refuses company changes or foreign records. Hypothetical store allocations and transfer plans are never persisted. The planning output says `plannedOnly: true`, `authoritative: false`, and `companyStockUnchanged: true`. Physical observations and transfer requests are still not usable as authoritative stock postings.
+
+Added `run13StockConservation.d.mts` for the pure module's TypeScript boundary and `run13StockConservation.test.ts` with ten authored **unexecuted** positive and negative regression cases. These cases have NOT passed or failed; no runner was invoked.
+
+The source was reviewed for obvious integration assumptions only. Without a test/build environment, compilation, IndexedDB behavior and release correctness remain unverified.
+
+**Run 13 remains IN DEVELOPMENT. The stage is not delivered or accepted.**
