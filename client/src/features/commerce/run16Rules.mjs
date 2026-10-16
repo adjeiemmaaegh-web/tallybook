@@ -25,8 +25,8 @@ export function validateRun16Hold(h){
     (h.status==="released"&&!["order-cancelled","hold-expired"].includes(h.reason))||
     !instant(h.updatedAt)||Date.parse(h.updatedAt)<Date.parse(h.createdAt)||
     !money(h.unitPriceMinor)||!id(h.submissionKey)||
-    Object.keys(h).sort().join(",")!==
-    "businessProfileId,createdAt,expiresAt,id,orderId,productId,quantity,reason,status,storeId,submissionKey,unitPriceMinor,updatedAt".split(",").sort().join(","))
+    !["businessProfileId","createdAt","expiresAt","id","orderId","productId","quantity","reason","status","storeId","submissionKey","unitPriceMinor","updatedAt"].filter(key=>key!=="storeId"||h.storeId!==undefined).every(key=>Object.prototype.hasOwnProperty.call(h,key))||
+    Object.keys(h).some(key=>!["businessProfileId","createdAt","expiresAt","id","orderId","productId","quantity","reason","status","storeId","submissionKey","unitPriceMinor","updatedAt"].includes(key)))
    fail("Invalid commerce reservation evidence.");
  return Object.freeze({...h});
 }
