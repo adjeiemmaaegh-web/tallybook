@@ -5,6 +5,7 @@ import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger design reminder: stock is never silently overwritten—every quantity change leaves a clear local movement record. */
 import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
+import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -211,7 +212,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
     const normalizedName = normalizeName(input.name);
     const initialStock = Number(input.initialStock);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
@@ -311,6 +312,8 @@ async function adjustStockWhileLocked(productId: string, values: StockAdjustment
     const batches = await database.inventoryBatches.where("productId").equals(productId).and(b => b.businessProfileId === company).toArray();
     if (quantityDelta && batches.length) throw new Error("Reconcile batches before changing tracked stock.");
     const now = new Date().toISOString();
+    if(quantityDelta<0 && resultingQuantity<await reservedRun16Units(database,company,productId,undefined,now))
+      throw new Error("Customer orders reserve these stock units. Resolve reservations before reducing stock.");
     const movement: InventoryMovement = { id: nanoid(14), businessProfileId: company, productId, movementType: input.movementType, quantityDelta, previousQuantity: product.stockQuantity, resultingQuantity, note: cleanOptional(input.note), createdAt: now };
     assertCompanyScope(company, getActiveBusinessProfileId());
     await appendInventoryCostChange(database, product, quantityDelta, { sourceId: movement.id, createdAt: now });
