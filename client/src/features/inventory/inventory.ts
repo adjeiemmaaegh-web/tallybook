@@ -4,6 +4,7 @@ import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { requirePermission } from "@/features/staff/staff";
 /** Tactile Ledger design reminder: stock is never silently overwritten—every quantity change leaves a clear local movement record. */
 import { nanoid } from "nanoid";
+import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -82,6 +83,7 @@ const optionalAmount = (label: string) => requiredAmount(label).optional().or(z.
 export const categoryFormSchema = z.object({ name: nameSchema });
 
 export const productFormSchema = z.object({
+  storeId: z.string().min(1).max(200).optional(),
   name: nameSchema,
   sku: optionalText(48, "Reference"),
   barcode: optionalText(64, "Barcode"),
@@ -93,6 +95,7 @@ export const productFormSchema = z.object({
 });
 
 export const stockAdjustmentSchema = z.object({
+  storeId: z.string().min(1).max(200).optional(),
   movementType: z.enum(["increase", "decrease", "correction"]),
   quantity: nonNegativeInteger("Quantity"),
   note: optionalText(160, "Note"),
@@ -208,7 +211,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
     const normalizedName = normalizeName(input.name);
     const initialStock = Number(input.initialStock);
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.products.where("normalizedName").equals(normalizedName).and((product) => product.businessProfileId === activeId && !product.archivedAt).first();
@@ -227,6 +230,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
       await assertUniqueProductCodes(database, activeId, input.sku, input.barcode);
       assertCompanyScope(activeId, getActiveBusinessProfileId());
       await database.products.add(product);
+      if (initialStock) await postStoreStockDelta(database,activeId,product.id,input.storeId,initialStock,initialMovement.id,"opening",now,0,initialStock);
       await database.inventoryMovements.add(initialMovement);
       await appendInventoryCostChange(database, product, initialStock, { sourceId: initialMovement.id, createdAt: now }, { opening: true, unitCostMinor: product.costPriceMinor });
       assertCompanyScope(activeId, getActiveBusinessProfileId());
@@ -288,7 +292,7 @@ export async function adjustStock(productId: string, values: StockAdjustmentValu
 async function adjustStockWhileLocked(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
   const input = stockAdjustmentSchema.parse(values);
   const company = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
@@ -307,6 +311,7 @@ async function adjustStockWhileLocked(productId: string, values: StockAdjustment
     assertCompanyScope(company, getActiveBusinessProfileId());
     await appendInventoryCostChange(database, product, quantityDelta, { sourceId: movement.id, createdAt: now });
     await database.products.put({ ...product, stockQuantity: resultingQuantity, updatedAt: now });
+    if (quantityDelta) await postStoreStockDelta(database,company,productId,input.storeId,quantityDelta,movement.id,"adjustment",now,product.stockQuantity,resultingQuantity);
     await database.inventoryMovements.add(movement);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:staff.businessProfileId,staffId:staff.id,action:'inventory.adjusted',createdAt:now,details:movement.id});
     assertCompanyScope(company, getActiveBusinessProfileId());
