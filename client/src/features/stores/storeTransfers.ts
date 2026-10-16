@@ -6,6 +6,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
 import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { postPairedStoreTransfer, readStoreBalances, reservedSourceUnits } from "./storeStockLedger";
+import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import { requireStage9Capability } from "./stage9ReleaseScope";
 
 export interface StoreTransferRequest {
@@ -88,7 +89,7 @@ export async function completeStoreTransfer(requestId:string,submissionKey:strin
       throw new Error("Provide a valid transfer request and confirmation key.");
     return database.transaction("rw",[
       database.appMeta,database.storeStockModes,database.storeStockEntries,database.storeLocations,
-      database.storeAssignments,database.storeTransferRequests,database.products,
+      database.storeAssignments,database.storeTransferRequests,database.commerceHolds,database.products,
       database.staffMembers,database.staffAudits
     ],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
@@ -138,7 +139,7 @@ export async function dispatchStoreTransfer(requestId:string,dispatchKey:string,
       throw new Error("Invalid store dispatch identity.");
     return database.transaction("rw",[
       database.appMeta,database.storeStockModes,database.storeStockEntries,
-      database.storeTransferRequests,database.storeLocations,database.products,
+      database.storeTransferRequests,database.commerceHolds,database.storeLocations,database.products,
       database.storeAssignments,database.staffMembers,database.staffAudits
     ],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
@@ -178,7 +179,8 @@ export async function dispatchStoreTransfer(requestId:string,dispatchKey:string,
       if(!Number.isSafeInteger(total)||total!==product.stockQuantity)
         throw new Error("Reconcile company and store stock before dispatch.");
       const reserved=await reservedSourceUnits(database,company,product.id,source.id);
-      if((balances.get(source.id)??0)-reserved<request.quantity)
+      const committed=await reservedRun16Units(database,company,product.id,source.id,new Date().toISOString());
+      if((balances.get(source.id)??0)-reserved-committed<request.quantity)
         throw new Error("Insufficient unreserved source stock to dispatch.");
       if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor.id)
         throw new Error("Company or dispatch staff session changed.");
