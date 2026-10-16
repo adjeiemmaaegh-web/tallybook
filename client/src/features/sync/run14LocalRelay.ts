@@ -144,7 +144,8 @@ export async function importRun14Page(
   if(!page||page.organizationId!==company||page.financialReplicationEnabled!==false||
     !Number.isSafeInteger(page.after)||page.after<0||
     !Number.isSafeInteger(page.nextCursor)||page.nextCursor!==page.after+page.events?.length||
-    !Array.isArray(page.events)||page.events.length>20||typeof page.hasMore!=="boolean")
+    !Array.isArray(page.events)||page.events.length>20||typeof page.hasMore!=="boolean"||
+    (page.hasMore&&page.events.length===0))
     throw Error("Replica server page is malformed.");
   for(const envelope of page.events) {
     validateRun14Envelope(envelope);
@@ -163,13 +164,20 @@ export async function importRun14Page(
     const all=await database.syncReplicaInbox.where("businessProfileId").equals(company).toArray();
     const byDevice=new Map<string,{sequence:number;digest:string}>();
     const known=new Map<string,string>();
-    for(const row of all.sort((a,b)=>a.serverCursor-b.serverCursor)) {
+    for(const [index,row] of all.sort((a,b)=>a.serverCursor-b.serverCursor).entries()) {
       const e=row.envelope;validateRun14Envelope(e);
       if(row.businessProfileId!==company||e.organizationId!==company||
-        row.financialApplied!==false)throw Error("Remote replica inbox integrity failure.");
+        row.financialApplied!==false||row.verifiedBy!=="aes-256-gcm"||
+        row.serverCursor!==index+1||row.id!==company+":"+(index+1)||
+        known.has(e.eventId))throw Error("Remote replica inbox integrity failure.");
+      const prior=byDevice.get(e.deviceId);
+      if(e.sequence!==(prior?.sequence??0)+1||
+        e.previousDigest!==(prior?.digest??RUN14_EMPTY_CHAIN_DIGEST))
+        throw Error("Previously recorded replica device chain is damaged.");
       known.set(e.eventId,e.ciphertextSha256);
       byDevice.set(e.deviceId,{sequence:e.sequence,digest:e.ciphertextSha256});
     }
+    if(all.length!==page.after)throw Error("Local replica inbox cursor disagrees with immutable stored entries.");
     for(let i=0;i<page.events.length;i++) {
       const e=page.events[i],original=byDevice.get(e.deviceId);
       if(known.has(e.eventId))throw Error("Remote server replayed an already recorded event ID.");
