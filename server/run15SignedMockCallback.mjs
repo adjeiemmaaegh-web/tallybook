@@ -5,12 +5,13 @@
  */
 import {createHmac,timingSafeEqual} from "node:crypto";
 const ID=/^[A-Za-z0-9:_-]{8,100}$/;
+const COMPANY=/^[A-Za-z0-9:_-]{1,128}$/;
 const HEX=/^[0-9a-f]{64}$/;
 const deny=()=>{throw Error("Invalid sandbox-only signed callback.");};
 const canonical=input=>{
   if(!input||typeof input!=="object"||Array.isArray(input)||
     Object.keys(input).sort().join(",")!=="action,amountMinor,businessProfileId,createdAt,eventId,intentId,mockOnly,provider"||
-    !ID.test(input.businessProfileId??"")||!ID.test(input.eventId??"")||
+    !COMPANY.test(input.businessProfileId??"")||!ID.test(input.eventId??"")||
     !ID.test(input.intentId??"")||
     !["timeout","succeed","fail","refund","chargeback"].includes(input.action)||
     !Number.isSafeInteger(input.amountMinor)||input.amountMinor<0||
