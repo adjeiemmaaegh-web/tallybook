@@ -54,6 +54,7 @@ export function CompanyReturnPolicySettings(){
    <p className="ledger-kicker">Business-controlled refunds</p>
    <h2 id="return-policy-title">Choose your company's return policy.</h2>
    <p>Refunds are OFF until this company explicitly enables them. Other businesses have independent policies.</p>
+   <p>Configure the system to reflect your own terms, subject to applicable consumer laws and mandatory legal remedies. This setting cannot override customers' legal rights.</p>
   </div><div className="form-ledger-stamp"><span className="workspace-marker">RET</span>
    <span>Revision {saved.revision}</span></div></div>
   <form className="business-form" onSubmit={event=>void save(event)}>
