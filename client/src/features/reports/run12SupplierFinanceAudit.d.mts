@@ -11,6 +11,8 @@ export interface Run12SupplierFinancialAudit {
  readonly periodSupplierPaymentsInCompanyCurrencyMinor:number;
  readonly otherCurrencyPayments:Array<{currency:string;amountMinor:number}>;
  readonly recordedOperatingExpenseCount:number;
+ readonly expensesWithUnknownCurrency:number;
+ readonly expensesInOtherCurrency:number;
  readonly providerSettlementVerified:false;
  readonly potentialExpensePaymentOverlapUnresolved:true;
 }
