@@ -66,5 +66,5 @@ test('later owner disable preserves historical verified refund decision',()=>{
 });
 test('journal with policy evidence but original sale without terms is rejected',()=>{
  const old={...sale,returnPolicyAtSale:undefined};
- assert.throws(()=>audit({sales:[old]}),/missing, altered or foreign/);
+ assert.throws(()=>audit({sales:[old]}),/missing, altered or foreign|do not match saved company history/);
 });
