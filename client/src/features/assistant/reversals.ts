@@ -43,6 +43,12 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const activeId = getActiveBusinessProfileId();
   const sale = await latestReversibleSale(database, activeId);
   if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+  const profile=await database.businessProfiles.get(activeId);
+  if(!profile)throw new Error('The selected company has no saved refund policy.');
+  // Advisory read-only preview; the posting transaction reauthorizes against
+  // the latest revision and checks staff/shift/financial safety independently.
+  authorizeReturnPolicy(profile.returnPolicyHistory,sale,'full',new Date().toISOString());
+  if(getActiveBusinessProfileId()!==activeId)throw new Error('Company changed during reversal review.');
   const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
   const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
   const named = lines.map((line, index) => ({ productName: products[index]?.name ?? line.productName ?? "Unknown product", quantity: line.quantity }));
