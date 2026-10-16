@@ -49,7 +49,7 @@ export async function reserveRun16Order(
    database.appMeta,database.businessProfiles,database.products,database.commerceOrders,
    database.commerceHolds,database.commerceDeliveryEvents,database.storeLocations,
    database.storeStockModes,database.storeStockEntries,database.storeTransferRequests,
-   database.staffMembers,database.staffAudits
+   database.storeAssignments,database.staffMembers,database.staffAudits
  ],async()=>{
    await assertRun7RetailWriteReady(database.appMeta);
    const actor=await actorWith(database,company,"sell");
@@ -237,6 +237,7 @@ export async function recordRun16Delivery(
  orderId:string,action:"pack"|"dispatch"|"deliver"|"requestReturn",
  submissionKey:string,note:string,database:TallybookDB=db
 ):Promise<CommerceOrder>{
+ requireCommerceCapability("fulfillOrders");
  const company=getActiveBusinessProfileId();requireCompany(company);
  if(!ID.test(orderId)||!ID.test(submissionKey)||typeof note!=="string"||
     !note.trim()||note.length>500)
