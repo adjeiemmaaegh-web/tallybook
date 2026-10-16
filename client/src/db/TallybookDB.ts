@@ -269,7 +269,7 @@ export class TallybookDB extends Dexie {
     // v28: strictly limited, immutable, offline cash partial-return journal.
     this.version(28).stores({ cashPartialReturns: "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]" });
     // Run 13: migration adds tables only; no historical store allocations are inferred.
-    this.version(29).stores({ storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]" });
+    this.version(29).stores({ storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]", storeTransferRequests: "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status], &[businessProfileId+submissionKey], &[businessProfileId+dispatchKey], &[businessProfileId+completionKey], &[businessProfileId+returnProofKey], &[businessProfileId+reversesRequestId]" });
   }
 }
 
