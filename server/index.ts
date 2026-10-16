@@ -14,6 +14,7 @@ import { selectServerTransport } from "./syncHttps.mjs";
 import { createAccessActions, isDirectTls, createAccessLimiter } from "./syncAccessRoutes.mjs";
 import {createRun14EncryptedReplicaStore} from "./run14EncryptedReplicaStore.mjs";
 import {stageRun14EncryptedEvent,listRun14EncryptedEvents} from "./run14EncryptedRelayBoundary.mjs";
+import {issueRun14ReplicaCapability} from "./run14EncryptedCapabilityIssuer.mjs";
 import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
 import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
 import {installRun4SessionProbe} from "./run4SessionProbe.mjs";
@@ -237,6 +238,22 @@ async function startServer() {
       relay:createRun14EncryptedReplicaStore(process.env.TALLYBOOK_RUN14_REPLICA_FILE!),
     };
   };
+  app.post("/api/sync/replication/capability",express.json({limit:"2kb",type:"application/json"}),async(req,res)=>{
+    res.setHeader("Cache-Control","no-store");res.setHeader("X-Content-Type-Options","nosniff");
+    if(!run14Enabled||!run14ConfigReady){res.status(503).json({error:"Relay identity disabled."});return;}
+    if(!isDirectTls(req)||!run14Limiter.allow("capability:"+(req.socket.remoteAddress??"unknown"))){
+      res.status(403).json({error:"Relay identity denied."});return;
+    }
+    try{
+      const config=run14Config();
+      const issued=await issueRun14ReplicaCapability(req.body,{
+        secret:config.capabilitySecret,sessionSecret:config.sessionSecret,
+        session:req.header("x-tallybook-session")??undefined,
+        sessionStore:config.sessionStore,directory:config.directory
+      });
+      res.status(201).json(issued);
+    }catch{res.status(403).json({error:"Relay capability denied."});}
+  });
   app.post("/api/sync/replication/events",express.json({limit:"96kb",type:"application/json"}),async(req,res)=>{
     res.setHeader("Cache-Control","no-store");res.setHeader("X-Content-Type-Options","nosniff");
     if(!run14Enabled||!run14ConfigReady){res.status(503).json({error:"Encrypted relay disabled."});return;}
