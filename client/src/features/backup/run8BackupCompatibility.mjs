@@ -10,7 +10,7 @@ export const RUN8_BACKUP_TABLES=Object.freeze([
  'supplierPayableEntries','expenses','saleReversals','cashPartialReturns',
  'stockCountSessions','inventoryBatches','quotations','customerBenefits',
  'customerPolicies','walletTransfers','staffMembers','staffShifts',
- 'staffAudits','commerceOrders','commerceHolds','commerceDeliveryEvents','inventoryCostEvents',
+ 'staffAudits','commerceOrders','commerceHolds','commerceDeliveryEvents','run17ReviewEvents','inventoryCostEvents',
  'syncConsents','syncOutbox','syncConflicts','syncDevices',
  'storeLocations','storeAssignments','storeTransferRequests',
  'storeStockObservations', 'storeStockModes', 'storeStockEntries'
@@ -23,7 +23,7 @@ const later=Object.freeze({
  quotations:15,customerBenefits:16,customerPolicies:16,
  walletTransfers:17,
  staffMembers:18,staffShifts:18,staffAudits:18,
- commerceOrders:25,commerceHolds:32,commerceDeliveryEvents:32,inventoryCostEvents:26,
+ commerceOrders:25,commerceHolds:32,commerceDeliveryEvents:32,run17ReviewEvents:33,inventoryCostEvents:26,
  supplierPayableEntries:27,cashPartialReturns:28,
  syncConsents:26,syncOutbox:26,syncConflicts:26,syncDevices:26,
  storeLocations:26,storeAssignments:26,
