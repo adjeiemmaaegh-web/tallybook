@@ -63,7 +63,7 @@ export async function queueRun14Evidence(input:{
 },database:TallybookDB=db):Promise<Run14QueuedEnvelope> {
   const {companyId,deviceId,sourceTable,recordId,passphrase}=input;
   companyScope(companyId);
-  if(!id.test(deviceId)||!id.test(recordId)||!Object.hasOwn(kinds,sourceTable))
+  if(!id.test(deviceId)||!id.test(recordId)||!Object.prototype.hasOwnProperty.call(kinds,sourceTable))
     throw Error("Unsupported source evidence scope.");
   const operationId=input.operationId??nanoid(18);
   if(!id.test(operationId))throw Error("Invalid immutable operation ID.");
