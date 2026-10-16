@@ -44,7 +44,7 @@ function credentialsHeaders(credentials:Run14RelayCredentials,company:string,dev
     credentials.session.length>4096)
   throw Error("Missing authenticated encrypted relay credentials.");
  return {"authorization":"Bearer "+credentials.capability,
-   "x-tallybook-session":credentials.session,
+   "x-tallybook-session":"Bearer "+credentials.session,
    "x-tallybook-org-id":company,"x-tallybook-device-id":deviceId};
 }
 async function strictJSON<T>(response:Response,url:string,maxBytes:number):Promise<T>{
@@ -180,4 +180,36 @@ export async function pullOneRun14Page(
    throw Error("Invalid encrypted replica pagination.");
  for(const event of page.events)validateRun14Envelope(event);
  return importRun14Page(database,company,deviceId,page,passphrase);
+}
+
+/** Obtain a five-minute, server-issued device capability from an independently
+ * verified human session. The returned token exists only in caller memory.
+ */
+export async function requestRun14Capability(
+ endpoint:string,company:string,deviceId:string,
+ session:string,scope:"sync:replicate:read"|"sync:replicate:write",
+ transport:Run14RelayTransport=fetch
+):Promise<string> {
+ if(!RUN14_NETWORK_RELEASE_ENABLED)throw Error("Run 14 capabilities remain release-gated.");
+ const base=validateRun14RelayEndpoint(endpoint);
+ if(company!==getActiveBusinessProfileId()||!ID.test(deviceId)||
+    !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(session)||session.length>4096)
+   throw Error("Invalid scoped capability request.");
+ const target=new URL(base);target.pathname="/api/sync/replication/capability";
+ const response=await transport(target.href,{method:"POST",mode:"cors",redirect:"error",
+   credentials:"omit",cache:"no-store",headers:{
+    "content-type":"application/json","x-tallybook-session":"Bearer "+session},
+   body:JSON.stringify({organizationId:company,deviceId,scope})});
+ if(response.status!==201)throw Error("Trusted server did not issue a scoped capability.");
+ const result=await strictJSON<{capability:string;organizationId:string;deviceId:string;
+   scope:string;expiresAt:string}>(response,target.href,2048);
+ if(!result||result.organizationId!==company||result.deviceId!==deviceId||
+    result.scope!==scope||typeof result.capability!=="string"||
+    !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(result.capability)||
+    result.capability.length>4096||
+    !Number.isFinite(Date.parse(result.expiresAt))||
+    Date.parse(result.expiresAt)<=Date.now()||
+    Date.parse(result.expiresAt)>Date.now()+5*60_000+1000)
+   throw Error("Malformed or expired server relay capability.");
+ return result.capability;
 }
