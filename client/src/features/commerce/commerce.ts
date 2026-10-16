@@ -5,14 +5,14 @@ import { requirePermission } from "@/features/staff/staff";
 
 /** Device-local order requests only. Never an accepted sale, payment or stock reservation. */
 export interface CommerceOrderLine { productId: string; name: string; quantity: number; unitPriceMinor: number; }
-export interface CommerceOrder { id: string; businessProfileId: string; createdAt: string; updatedAt: string; status: "draft" | "prepared" | "ready" | "cancelled"; customerName: string; lines: CommerceOrderLine[]; totalMinor: number; }
+export interface CommerceOrder { id: string; businessProfileId: string; createdAt: string; updatedAt: string; status: "draft" | "prepared" | "ready" | "reserved" | "packed" | "dispatched" | "delivered" | "return-requested" | "cancelled"; customerName: string; lines: CommerceOrderLine[]; totalMinor: number; storeId?:string; saleId?:string; reservationKey?:string; reservationExpiresAt?:string; cancellationKey?:string; dispatchedAt?:string; deliveredAt?:string; deliveryMethod?:"pickup"|"delivery"; customerContact?:string; deliveryInstructions?:string; }
 export interface CatalogueItem { id: string; name: string; sku?: string; priceMinor: number; itemKind: "stock" | "service"; }
 /** Internal preparation only: these states never imply payment, stock allocation or delivery. */
 export function nextPreparationStatus(current: CommerceOrder["status"], action: "prepare" | "ready" | "cancel"): CommerceOrder["status"] {
   const allowed: Record<CommerceOrder["status"], Partial<Record<typeof action, CommerceOrder["status"]>>> = {
     draft: { prepare: "prepared", cancel: "cancelled" },
     prepared: { ready: "ready", cancel: "cancelled" },
-    ready: { cancel: "cancelled" }, cancelled: {},
+    ready: { cancel: "cancelled" }, reserved:{}, packed:{}, dispatched:{}, delivered:{}, "return-requested":{}, cancelled: {},
   };
   const next = allowed[current]?.[action];
   if (!next) throw new Error("Invalid order preparation transition.");
@@ -24,7 +24,7 @@ export function publishableCatalogue(items: CatalogueItem[]): CatalogueItem[] {
     Number.isSafeInteger(item.priceMinor) && item.priceMinor >= 0 && item.priceMinor <= 1_000_000_000 &&
     (item.itemKind === "stock" || item.itemKind === "service"));
 }
-export const COMMERCE_RELEASE_SCOPE = Object.freeze({ catalogue: true, localDraftOrders: true, publicStorefront: false, onlinePayments: false, reserveStock: false, fulfillOrders: false, automaticSync: false });
+export const COMMERCE_RELEASE_SCOPE = Object.freeze({ catalogue: true, localDraftOrders: true, publicStorefront: false, onlinePayments: false, reserveStock: false, fulfillOrders: false, automaticSync: false, localPublicPreview:true, authorizedPOSLink:true });
 export function requireCommerceCapability(name: keyof typeof COMMERCE_RELEASE_SCOPE) { if (!COMMERCE_RELEASE_SCOPE[name]) throw new Error(`Online commerce feature unavailable: ${name}`); }
 function companyId() { const id = getActiveBusinessProfileId(); if (!id || typeof id !== "string") throw new Error("Select a company first."); return id; }
 export function calculateOrderTotal(lines: CommerceOrderLine[]): number {
