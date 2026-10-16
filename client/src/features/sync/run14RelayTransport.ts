@@ -4,7 +4,7 @@
  */
 import type {TallybookDB} from "@/db/TallybookDB";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
-import {requirePermission} from "@/features/staff/staff";
+import {requirePermission,currentStaffId} from "@/features/staff/staff";
 import {withCoordinatedRetailWrite} from "@/features/backup/coordinatedRetailWrite";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {pendingRun14Envelopes,stripRun14LocalState,importRun14Page,
@@ -14,7 +14,7 @@ import {validateRun14Envelope} from "./run14Crypto";
 export interface Run14RelayConflict {
  id:string;businessProfileId:string;eventId:string;
  reason:"event-id-reuse"|"operation-id-reuse"|"receipt-mismatch";
- detectedAt:string;status:"unresolved";
+ detectedAt:string;status:"unresolved"|"reviewed";reviewedAt?:string;reviewedByStaffId?:string;notes?:string;
 }
 export interface Run14RelayCredentials {capability:string;session:string}
 export type Run14RelayTransport=(url:string,init:RequestInit)=>Promise<Response>;
@@ -214,4 +214,39 @@ export async function requestRun14Capability(
     Date.parse(result.expiresAt)>Date.now()+5*60_000+1000)
    throw Error("Malformed or expired server relay capability.");
  return result.capability;
+}
+
+/** Owner review does not erase conflict evidence, overwrite remote events,
+ * replay a ledger posting, or mark a cryptographic fork "resolved".
+ */
+export async function markRun14ConflictReviewed(
+ database:TallybookDB,company:string,conflictId:string,notes:string
+):Promise<Run14RelayConflict> {
+ if(company!==getActiveBusinessProfileId()||typeof conflictId!=="string"||
+    !conflictId.startsWith(company+":")||typeof notes!=="string"||
+    notes.trim().length<8||notes.length>500||/[\u0000-\u001f]/.test(notes))
+   throw Error("Reviewed conflict needs a complete owner explanation.");
+ return withCoordinatedRetailWrite(async()=>database.transaction("rw",[
+   database.appMeta,database.businessProfiles,database.staffMembers,
+   database.staffAudits,database.syncReplicaConflicts
+ ],async()=>{
+   await assertRun7RetailWriteReady(database.appMeta);
+   const actor=await requirePermission("staff",database,company);
+   if(!actor||actor.role!=="owner"||currentStaffId(company)!==actor.id)
+     throw Error("Only unlocked company owner can review remote relay conflicts.");
+   const entry=await database.syncReplicaConflicts.get(conflictId);
+   if(!entry||entry.businessProfileId!==company)
+     throw Error("Encrypted relay conflict does not belong to selected company.");
+   if(entry.status==="reviewed")return entry;
+   const now=new Date().toISOString();
+   const reviewed:Run14RelayConflict={...entry,status:"reviewed",reviewedAt:now,
+      reviewedByStaffId:actor.id,notes:notes.trim()};
+   await database.syncReplicaConflicts.put(reviewed);
+   await database.staffAudits.add({id:crypto.randomUUID(),businessProfileId:company,
+      staffId:actor.id,createdAt:now,action:"sync.encrypted-replica-conflict-reviewed",
+      details:entry.eventId});
+   if(company!==getActiveBusinessProfileId()||currentStaffId(company)!==actor.id)
+     throw Error("Owner session changed while reviewing sync conflict.");
+   return reviewed;
+ }));
 }
