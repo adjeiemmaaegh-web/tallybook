@@ -22,6 +22,8 @@ import {auditCompanyReturnPolicyEvidence,type CompanyReturnPolicyEvidenceSummary
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
+import {auditRun12SupplierCashConservation,type Run12SupplierCashAudit} from './run12SupplierCashAudit.mjs';
+import {auditRun12RecordedTax,type Run12RecordedTaxEvidence} from './run12RecordedTaxAudit.mjs';
 import type { Purchase,PurchaseLine } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
@@ -38,6 +40,10 @@ export interface FinancialSummary {
   inventoryValuation?:Run9InventoryValuation;
   purchaseCostEvidence?:Run9PurchaseCostEvidence;
   returnPolicyEvidence?:CompanyReturnPolicyEvidenceSummary;
+  /** Local-currency supplier cash separated from expenses; foreign currencies excluded. */
+  supplierCashAudit?:Run12SupplierCashAudit;
+  /** Full-history saved single-rate tax evidence; never a statutory tax filing. */
+  recordedTaxEvidence?:Run12RecordedTaxEvidence;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
   receivableAudit?:Run10ReceivableAudit;
   /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
@@ -217,6 +223,9 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   // Independently reconstructed FIFO stock assets belong to a distinct
   // AS-OF section. Unknown receipt costs are never today's editable unit price.
   summary.returnPolicyEvidence=auditCompanyReturnPolicyEvidence(profile,scoped(sales),scoped(reversals),scoped(cashReturns));
+  summary.recordedTaxEvidence=auditRun12RecordedTax(scoped(sales),scoped(reversals),scoped(cashReturns),profile);
+  if(summary.supplierReconciliation)
+    summary.supplierCashAudit=auditRun12SupplierCashConservation(summary,summary.supplierReconciliation,profile.currency);
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
@@ -246,6 +255,20 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Net prepaid cash movement',summary.walletNetCashMinor],
     ...(summary.prepaidLiabilityMinor !== undefined ? [['Prepaid wallet liability as-of (minor units)',summary.prepaidLiabilityMinor],['Customers with prepaid balance',summary.prepaidLiabilityCustomers ?? 0]] as (string | number)[][] : []),['Recorded expenses',summary.expensesMinor],
     ['Collections minus recorded expenses (excludes supplier payments)',summary.netRecordedCashMovementMinor],
+    ...(summary.supplierCashAudit?[
+      ['Local supplier payments in period (minor units)',summary.supplierCashAudit.localSupplierPaymentsMinor],
+      ['Collections less expenses and local supplier payments',summary.supplierCashAudit.collectionsLessExpensesAndLocalSupplierPaymentsMinor],
+      ['Foreign supplier payment currencies excluded from cash net',summary.supplierCashAudit.foreignCurrencySupplierPayments.length],
+      ['Supplier purchases with unknown liability',summary.supplierCashAudit.unknownSupplierLiabilityPurchases]
+    ] as (string|number)[][]:[]),
+    ...(summary.recordedTaxEvidence?[
+      ['Saved sales with recorded tax',summary.recordedTaxEvidence.recordedTaxSales],
+      ['Historical sales without tax evidence',summary.recordedTaxEvidence.unknownTaxSales],
+      ['Full-history gross recorded tax',summary.recordedTaxEvidence.grossRecordedTaxMinor],
+      ['Full-history reversed tax',summary.recordedTaxEvidence.fullReversalTaxMinor],
+      ['Full-history partial cash return tax',summary.recordedTaxEvidence.partialCashRefundTaxMinor],
+      ['Full-history net recorded tax (not statutory liability)',summary.recordedTaxEvidence.netRecordedTaxMinor]
+    ] as (string|number)[][]:[]),
     ['Current customer receivables',summary.currentReceivablesMinor],
     ...(summary.returnPolicyEvidence?[
       ['Refunds with verified company policy snapshots',summary.returnPolicyEvidence.verifiedRefunds],
