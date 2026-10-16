@@ -39,6 +39,17 @@ export function reconcileSaleCosts(company: string, input: {
     expectedCurrency:input.expectedCurrency
   });
   const events = new Map(input.events.map(event => [event.id, event]));
+  const eventsByProduct=new Map<string,InventoryCostEvent[]>();
+  for(const event of input.events){
+    const history=eventsByProduct.get(event.productId)??[];
+    history.push(event);eventsByProduct.set(event.productId,history);
+  }
+  const linesById=new Map(input.lines.map(line=>[line.id,line]));
+  const linesBySale=new Map<string,SaleLine[]>();
+  for(const line of input.lines){
+    const saleLines=linesBySale.get(line.saleId)??[];
+    saleLines.push(line);linesBySale.set(line.saleId,saleLines);
+  }
   const movements = new Map(input.movements.map(movement => [movement.id, movement]));
   const productIds = new Set(input.products.map(product => product.id));
   for (const event of input.events) {
@@ -48,7 +59,7 @@ export function reconcileSaleCosts(company: string, input: {
     const movement = movements.get(event.sourceId);
     if (!movement || movement.productId !== event.productId || movement.quantityDelta !== event.quantityDelta || movement.createdAt !== event.createdAt || movement.resultingQuantity - movement.previousQuantity !== event.quantityDelta) throw new Error("Inventory cost evidence does not match its stock movement.");
     if (event.kind === "issue" && event.saleId) {
-      const line = input.lines.find(line => line.id === event.saleLineId);
+      const line=linesById.get(event.saleLineId ?? '');
       if (!line || line.costEventId !== event.id || line.saleId !== event.saleId) throw new Error("Cost allocation refers to a missing sale line.");
     }
     if (event.kind === "reversal") {
@@ -60,7 +71,7 @@ export function reconcileSaleCosts(company: string, input: {
     }
   }
   const costStates=input.products.map(product=>{
-    const history=input.events.filter(event=>event.productId===product.id);
+    const history=eventsByProduct.get(product.id)??[];
     if(!history.length)return null; // A legacy balance is not a cost receipt.
     const state=reconstructInventoryCost(history,company,product.id);
     if(state.quantity!==product.stockQuantity)
@@ -70,7 +81,7 @@ export function reconcileSaleCosts(company: string, input: {
   const inventoryValuation=summarizeRun9InventoryValuation(input.products,costStates);
   const saleCosts = new Map<string, number | undefined>();
   for (const sale of input.sales) {
-    const lines = input.lines.filter(line => line.saleId === sale.id);
+    const lines=linesBySale.get(sale.id)??[];
     let total = 0, known = lines.length > 0;
     for (const line of lines) {
       if (line.stockTracked === false && line.costStatus === "verified" && line.cogsMinor === 0 && !line.costEventId) continue;
