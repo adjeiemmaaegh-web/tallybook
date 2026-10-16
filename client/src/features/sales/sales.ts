@@ -7,6 +7,8 @@ import {snapshotSaleTaxConfiguration,type Run12SaleTaxConfiguration} from '@/fea
 import {saleReturnPolicySnapshot,type ReturnPolicySnapshot} from '@/features/business/returnPolicy.mjs';
 import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
+import {reservedRun16Units} from "@/features/commerce/run16Availability";
+import {consumeRun16OrderForSale} from "@/features/commerce/run16Orders";
 import { mergeCheckoutQuantities } from "./checkoutQuantities";
 import { calculateCheckoutLines } from "./checkoutMoney.mjs";
 import { checkedMinorSum, checkedCreditExposure, reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWriteCurrency } from "./creditLedger.mjs";
@@ -26,6 +28,7 @@ export type PaymentMethod = (typeof paymentMethods)[number];
 
 export interface Sale {
   storeId?: string;
+  commerceOrderId?:string;
   tax?: TaxSnapshot;
   /** Captured on new checkouts: OFF is explicit, legacy absence remains unverified. */
   taxConfigurationAtSale?:Run12SaleTaxConfiguration;
@@ -108,12 +111,12 @@ export interface CustomerActivity {
 }
 
 export interface SaleCartLineInput { productId: string; quantity: number; }
-export interface CompleteSaleInput { storeId?: string; taxReviewKey?: string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; submissionKey?: string; redeemPoints?: number; }
+export interface CompleteSaleInput { commerceOrderId?:string; storeId?: string; taxReviewKey?: string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; submissionKey?: string; redeemPoints?: number; }
 export interface SaleSnapshot { sales: Sale[]; lines: SaleLine[]; payments: Payment[]; receipts: Receipt[]; }
 
 const lineSchema = z.object({ productId: z.string().min(1), quantity: z.number().int().min(1).max(9_999_999) });
 const validMoneyValue = (value: string) => /^\d+(?:\.\d{1,2})?$/.test(normalizeMoneyInput(value));
-export const completeSaleSchema = z.object({ storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
+export const completeSaleSchema = z.object({ commerceOrderId:z.string().min(1).max(128).optional(), storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
 
 export function paymentMethodLabel(method: PaymentMethod) {
   if (method === "mobile") return "Mobile Money";
@@ -170,7 +173,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = getActiveBusinessProfileId();
 
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const nowDate = new Date();
     const now = nowDate.toISOString();
@@ -191,7 +194,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       const sameLines = existingLines.length === expectedLines.size && existingLines.every((line) =>
         expectedLines.get(line.productId) === line.quantity
       );
-      const samePayment = (existingSale.storeId??undefined)===(input.storeId??undefined) && existingSale.currency === input.currency && existingSale.paymentMethod === input.paymentMethod &&
+      const samePayment = (existingSale.commerceOrderId??undefined)===(input.commerceOrderId??undefined) && (existingSale.storeId??undefined)===(input.storeId??undefined) && existingSale.currency === input.currency && existingSale.paymentMethod === input.paymentMethod &&
         existingSale.amountPaidMinor === parseAmount(input.amountPaid, input.currency) &&
         existingSale.discountMinor - (existingSale.loyaltyRedeemedMinor ?? 0) === parseAmount(input.discount, input.currency) &&
         (existingSale.loyaltyRedeemedPoints ?? 0) === (input.redeemPoints ?? 0) &&
@@ -224,6 +227,26 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if (products.some((product) => !product || product.businessProfileId !== activeId || product.archivedAt)) throw new Error("One or more products are no longer available for sale.");
     const productById = new Map(products.filter((product): product is Product => Boolean(product)).map((product) => [product.id, product]));
     for (const line of requestedLines) { const product = productById.get(line.productId)!; if (product.itemKind !== "service" && line.quantity > product.stockQuantity) throw new Error(`${product.name} has only ${product.stockQuantity} units available.`); }
+    // Run 16: a merchant-reviewed reservation is a stock commitment, not a
+    // payment. Only this SAME transaction can consume it and save the receipt.
+    const linkedOrder=input.commerceOrderId?await database.commerceOrders.get(input.commerceOrderId):undefined;
+    if(input.commerceOrderId){
+      if(!linkedOrder||linkedOrder.businessProfileId!==activeId||linkedOrder.saleId||
+        linkedOrder.status!=="reserved"||linkedOrder.storeId!==input.storeId||
+        !linkedOrder.reservationExpiresAt||Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
+        throw new Error("Commerce reservation is invalid, expired, already sold, or assigned to another store.");
+      const savedLineMap=new Map(linkedOrder.lines.map(line=>[line.productId,line.quantity]));
+      if(savedLineMap.size!==requestedLines.length ||
+         requestedLines.some(line=>savedLineMap.get(line.productId)!==line.quantity))
+        throw new Error("POS quantities must match the original reserved customer order.");
+    }
+    for(const line of requestedLines){
+      const product=productById.get(line.productId)!;
+      if(product.itemKind==="service")continue;
+      const reserved=await reservedRun16Units(database,activeId,product.id,input.storeId,now,input.commerceOrderId);
+      if(line.quantity>product.stockQuantity-reserved)
+        throw new Error("Stock is committed to other customer orders; sell only unreserved units.");
+    }
     const customer = input.customerId ? await database.customers.get(input.customerId) : undefined;
     if (input.customerId && (!customer || customer.businessProfileId !== activeId || customer.archivedAt)) throw new Error("Choose an active customer or complete this as a walk-in sale.");
 
@@ -310,10 +333,14 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const mobileMoneyProvider = mobileMoneyProviderId ? await database.mobileMoneyProviders.get(mobileMoneyProviderId) : undefined;
     if (mobileMoneyProviderId && (!mobileMoneyProvider || mobileMoneyProvider.businessProfileId !== activeId || !mobileMoneyProvider.active)) throw new Error("Choose a saved Mobile Money provider before recording this payment.");
 
-    const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, ...(cashier ? {staffId:cashier.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, ...(cashier ? {staffId:cashier.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
     const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
-    for (const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,input.storeId,movement.quantityDelta,movement.id,"sale",now,movement.previousQuantity,movement.resultingQuantity);
+    if(linkedOrder){
+      if(!cashier)throw Error("Unlock staff before selling a reserved customer order.");
+      await consumeRun16OrderForSale(database,activeId,linkedOrder,sale.id,now,cashier.id);
+    }
+    for (const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,input.storeId,movement.quantityDelta,movement.id,"sale",now,movement.previousQuantity,movement.resultingQuantity,input.commerceOrderId);
     const payment: Payment | undefined = amountPaidMinor > 0 && input.paymentMethod !== "wallet" ? { id: nanoid(14), saleId: sale.id, businessProfileId: activeId, customerId: customer?.id, method: input.paymentMethod, amountMinor: amountPaidMinor, ...(input.paymentMethod === "mobile" && mobileMoneyProvider ? { mobileMoneyProviderId: mobileMoneyProvider.id, mobileMoneyProviderName: mobileMoneyProvider.name, mobileMoneyReference } : {}), createdAt: now } : undefined;
     const receipt: Receipt = { id: nanoid(14), saleId: sale.id, businessProfileId: activeId, receiptNumber: sale.receiptNumber, issuedAt: now };
     const activity: CustomerActivity | undefined = customer ? { id: nanoid(14), customerId: customer.id, saleId: sale.id, businessProfileId: activeId, activityType: "sale", totalMinor, amountPaidMinor, outstandingMinor, createdAt: now } : undefined;
