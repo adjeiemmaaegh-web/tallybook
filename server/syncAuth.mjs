@@ -8,7 +8,7 @@ export function validateSyncClaims(claims, now = Date.now()) {
   if (claims.v !== 1 || claims.aud !== 'tallybook-sync' || !ID.test(claims.orgId ?? '') || !ID.test(claims.deviceId ?? '') ||
       !Number.isSafeInteger(claims.exp) || claims.exp * 1000 <= now || claims.exp * 1000 > now + 15 * 60_000 ||
       !Number.isSafeInteger(claims.iat) || claims.iat * 1000 > now + 30_000 || claims.iat > claims.exp ||
-      !['sync:inspect', 'sync:stage', 'backup:write'].includes(claims.scope)) throw new Error('Invalid or expired sync capability');
+      !['sync:inspect', 'sync:stage', 'backup:write', 'sync:replicate:write', 'sync:replicate:read'].includes(claims.scope)) throw new Error('Invalid or expired sync capability');
   return Object.freeze({ orgId: claims.orgId, deviceId: claims.deviceId, scope: claims.scope });
 }
 
