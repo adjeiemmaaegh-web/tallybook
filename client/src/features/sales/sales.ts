@@ -247,6 +247,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       }
     }
     const savedProfile=await database.businessProfiles.get(activeId);
+    if(savedProfile?.currency!==undefined&&savedProfile.currency!==input.currency)
+      throw new Error('Sale currency differs from the active company currency; no implicit FX conversion is supported.');
     // Historical pre-setup sale entrypoints remain valid, but cannot gain
     // refund authority: absent business profile is explicitly default OFF.
     const returnPolicyAtSale=saleReturnPolicySnapshot(savedProfile?.returnPolicyHistory);
