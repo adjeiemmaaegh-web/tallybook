@@ -49,6 +49,8 @@ export function deriveRun17Evidence(input){
  const productIds=new Set(products.map(x=>x.id));
  const saleMap=new Map(sales.map(x=>[x.id,x]));
  const orderMap=new Map(orders.map(x=>[x.id,x]));
+ for(const store of stores)if(typeof store.name!=="string"||!store.name.trim()||
+    !["active","closed"].includes(store.status))deny("store directory needs reconciliation");
  const storeIds=new Set(stores.map(x=>x.id));
  const selected=[],fullReversed=new Set(),partiallyReturned=new Set();
  for(const sale of sales){
@@ -97,6 +99,7 @@ export function deriveRun17Evidence(input){
   }
   const findings=[];
  for(const product of products){
+  if(typeof product.name!=="string"||!product.name.trim())deny("invalid saved product name");
   if(product.archivedAt||product.itemKind==="service")continue;
   if(!qty(product.stockQuantity)||!qty(product.lowStockThreshold))
     deny("invalid inventory balance or low-stock threshold");
