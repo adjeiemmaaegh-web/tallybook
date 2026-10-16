@@ -253,7 +253,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for (const store of records.storeLocations) if (normalizeStoreName(store.name) !== store.normalizedName || !["active", "closed"].includes(store.status)) throw new Error("Invalid store snapshot.");
   for (const request of records.storeTransferRequests) {
     validateTransferRequest(request.sourceStoreId, request.destinationStoreId, request.productId, request.quantity);
-    if (!["requested", "cancelled", "completed"].includes(request.status)) throw new Error("Invalid transfer request status.");
+    if (!["requested", "dispatched", "cancelled", "completed"].includes(request.status)) throw new Error("Invalid transfer request status.");
   }
   for (const observation of records.storeStockObservations) {
     validateStoreStockCount(observation.observedQuantity, observation.note);
