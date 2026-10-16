@@ -14,7 +14,7 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
     deny("Invalid store stock activation evidence.");
   if(!modes.length) {
     if(entries.length)deny("Orphan store stock journal without activation.");
-    if(requests.some(r=>r.status==="completed"))deny("Completed transfer missing stock activation.");
+    if(requests.some(r=>r.status==="completed"||r.status==="dispatched"))deny("Active transfer missing stock activation.");
     return {active:false,entryCount:0};
   }
   const movementById=new Map(movements.map(m=>[m.id,m]));
@@ -68,6 +68,64 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
     if(!whole(after))deny("Store stock event produces invalid physical balance.");
     balances.set(key,after);
   }
+  const requestById=new Map(),identities=new Set(),dispatchedKeys=new Set(),
+    receivedKeys=new Set(),returnKeys=new Set(),reversalSources=new Set();
+  const validDate=value=>typeof value==="string"&&Number.isFinite(Date.parse(value));
+  for(const r of requests) {
+    if(!id(r?.id)||r.businessProfileId!==company||requestById.has(r.id)||
+       !["requested","dispatched","completed","cancelled"].includes(r.status))
+      deny("Invalid or duplicated store transfer request.");
+    requestById.set(r.id,r);
+    if(r.submissionKey!==undefined) {
+      if(!id(r.submissionKey)||identities.has(r.submissionKey))
+        deny("Duplicate transfer request submission identity.");
+      identities.add(r.submissionKey);
+    }
+    if(r.dispatchKey!==undefined) {
+      if(!id(r.dispatchKey)||dispatchedKeys.has(r.dispatchKey))deny("Duplicate dispatch identity.");
+      dispatchedKeys.add(r.dispatchKey);
+    }
+    if(r.completionKey!==undefined) {
+      if(!id(r.completionKey)||receivedKeys.has(r.completionKey))deny("Duplicate transfer receipt identity.");
+      receivedKeys.add(r.completionKey);
+    }
+    if(r.returnProofKey!==undefined) {
+      if(!id(r.returnProofKey)||returnKeys.has(r.returnProofKey))deny("Duplicate dispatch return identity.");
+      returnKeys.add(r.returnProofKey);
+    }
+    const dispatched= r.dispatchedAt!==undefined;
+    if(dispatched && (!validDate(r.dispatchedAt)||!id(r.dispatchKey)||!id(r.dispatchedByStaffId)))
+      deny("Transfer dispatch evidence invalid.");
+    if((r.status==="dispatched"||r.status==="completed")&&!dispatched)
+      deny("Active transfer has no physical dispatch.");
+    if(r.status==="requested" && (dispatched||r.cancelledAt!==undefined||r.completedAt!==undefined))
+      deny("Requested transfer has unexpected financial activity.");
+    if(r.status==="completed" && (!validDate(r.completedAt)||!id(r.completionKey)||!id(r.transferId)||
+       Date.parse(r.completedAt)<Date.parse(r.dispatchedAt)))
+      deny("Completed transfer lacks receipt evidence.");
+    if(r.status!=="completed" && r.completedAt!==undefined)
+      deny("Uncompleted transfer cannot have receipt evidence.");
+    if(r.status==="cancelled") {
+      if(!validDate(r.cancelledAt))deny("Cancelled transfer lacks time.");
+      if(dispatched&&(!validDate(r.returnedAt)||!id(r.returnProofKey)||!id(r.returnedByStaffId)||
+         Date.parse(r.returnedAt)<Date.parse(r.dispatchedAt)))
+        deny("Dispatched stock cancellation lacks return proof.");
+      if(!dispatched&&(r.returnedAt!==undefined||r.returnProofKey!==undefined))
+        deny("Unshipped transfer cannot have a physical return record.");
+    }
+    if(r.reversesRequestId!==undefined) {
+      if(!id(r.reversesRequestId)||reversalSources.has(r.reversesRequestId))
+        deny("Duplicate original reversal request.");
+      reversalSources.add(r.reversesRequestId);
+    }
+  }
+  for(const r of requests) if(r.reversesRequestId) {
+    const previous=requestById.get(r.reversesRequestId);
+    if(!previous||previous.status!=="completed"||previous.sourceStoreId!==r.destinationStoreId||
+       previous.destinationStoreId!==r.sourceStoreId||
+       previous.productId!==r.productId||previous.quantity!==r.quantity)
+      deny("Reverse transfer must match one completed opposite stock movement.");
+  }
   const completed=new Map();
   for(const r of requests) if(r.status==="completed") {
     if(!id(r.id)||!id(r.transferId)||!id(r.completionKey)||!Number.isFinite(Date.parse(r.completedAt)))
@@ -94,6 +152,13 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
     const total=(totals.get(productId)||0)+value;
     if(!whole(total))deny("Store stock totals overflow.");
     totals.set(productId,total);
+  }
+  const reserved=new Map();
+  for(const r of requests)if(r.status==="dispatched") {
+    const k=slot(r.sourceStoreId,r.productId),next=(reserved.get(k)||0)+r.quantity;
+    if(!whole(r.quantity)||r.quantity<1||!whole(next)||next>(balances.get(k)||0))
+      deny("Dispatched reservations exceed source-store physical stock.");
+    reserved.set(k,next);
   }
   for(const p of products) if(p.itemKind!=="service") {
     if(!whole(p.stockQuantity)||(totals.get(p.id)||0)!==p.stockQuantity)
