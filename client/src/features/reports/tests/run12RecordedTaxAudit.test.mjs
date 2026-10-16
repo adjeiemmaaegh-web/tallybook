@@ -60,3 +60,16 @@ test('tax currently off does not erase historic recorded tax',()=>{
  const x=audit([sale()],[],[],{id:'primary',taxPolicy:{enabled:false}});
  assert.equal(x.currentTaxConfigured,false);assert.equal(x.netRecordedTaxMinor,100);
 });
+test('partial refunds for one sale cannot cumulatively exceed original saved tax',()=>{
+ assert.throws(()=>audit([sale()],[],[partial,{...partial,returnedTaxMinor:51}]),
+ /exceeds original/);
+});
+test('full reversal and partial cash refund cannot both claim the same original tax',()=>{
+ assert.throws(()=>audit([sale()],[reversal],[partial]),/conflicts with full reversal|conflicts with prior/);
+});
+test('two partial cash refunds cannot exceed original saved cash tender',()=>{
+ assert.throws(()=>audit([sale()],[],[
+ {...partial,refundedMinor:800,returnedTaxMinor:50},
+ {...partial,refundedMinor:800,returnedTaxMinor:50}
+ ]),/exceeds original/);
+});
