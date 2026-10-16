@@ -229,3 +229,40 @@ export async function postPairedStoreTransfer(
   await database.storeStockEntries.bulkAdd(legs);
   return transferId;
 }
+
+/** Attendant-only read of the selected store's reconciled sellable units.
+ * Advisory presentation only; completeSale rechecks within its write transaction.
+ */
+export async function getAttendantStoreAvailability(
+  storeId:string,database:TallybookDB=db
+):Promise<Array<{productId:string;quantity:number}>> {
+  const company=getActiveBusinessProfileId();
+  if(!storeId)throw new Error("Select a store before checking stock.");
+  return database.transaction("r",[
+    database.storeStockModes,database.storeStockEntries,database.storeLocations,
+    database.storeAssignments,database.products,database.staffMembers
+  ],async()=>{
+    const actor=await requirePermission("sell",database,company);
+    const actorId=currentStaffId(company);
+    if(!actor||!actorId||actor.id!==actorId)throw new Error("Unlock a store attendant.");
+    if(!await database.storeStockModes.get(company))throw new Error("Store inventory is not activated.");
+    const store=await database.storeLocations.get(storeId);
+    if(!store||store.businessProfileId!==company||store.status!=="active")
+      throw new Error("Selected store is inactive.");
+    if(actor.role!=="owner"&&!await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+        .equals([company,actorId,storeId]).first())
+      throw new Error("Attendant not assigned to this store.");
+    const products=await database.products.where("businessProfileId").equals(company).toArray();
+    const result:Array<{productId:string;quantity:number}>=[];
+    for(const product of products.filter(x=>!x.archivedAt&&x.itemKind!=="service")){
+      const balances=await readStoreBalances(database,company,product.id);
+      let total=0;
+      for(const value of balances.values())total=add(total,value);
+      if(total!==product.stockQuantity)throw new Error("Company and store inventory do not reconcile.");
+      result.push({productId:product.id,quantity:balances.get(storeId)??0});
+    }
+    requireCompany(company);
+    if(currentStaffId(company)!==actorId)throw new Error("Store attendant session changed.");
+    return result;
+  });
+}
