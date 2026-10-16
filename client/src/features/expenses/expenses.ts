@@ -1,4 +1,5 @@
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
+import {withCrossTabDataLock} from '@/features/backup/crossTabDataLock.mjs';
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tallybook Africa Stage 8 design reminder: expenses are small, immutable local facts; they never alter stock, purchases, sales, collections, debt, or product prices. */
 import { nanoid } from "nanoid";
@@ -65,31 +66,52 @@ function parseExpenseAmount(amount: string, currency: string) {
 }
 
 export async function createExpense(values: CreateExpenseInput, database: TallybookDB = db) {
-  const staff=await requirePermission("inventory", database);
-  const shift=await activeStaffShift(staff,database);
+  // Acquire the Web Lock BEFORE opening IndexedDB. All authorization and
+  // currency checks below happen inside the same expense write transaction.
+  return withCrossTabDataLock('shared',()=>createExpenseWhileLocked(values,database));
+}
+async function createExpenseWhileLocked(values:CreateExpenseInput,database:TallybookDB) {
+  const company=getActiveBusinessProfileId();
   const input = expenseFormSchema.parse(values);
   validateExpenseDate(input.expenseDate);
   if (!/^[A-Z]{3}$/.test(values.currency)) throw new Error("Use a valid three-letter expense currency.");
   const amountMinor = parseExpenseAmount(input.amount, values.currency);
   const now = new Date().toISOString();
   const submissionKey = values.submissionKey ?? nanoid(18);
-  return database.transaction("rw", database.expenses, database.staffAudits, database.appMeta, async () => {
+  return database.transaction("rw",[
+    database.expenses,database.staffAudits,database.appMeta,
+    database.businessProfiles,database.staffMembers,database.staffShifts
+  ], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
-    const activeId = getActiveBusinessProfileId();
+    const activeId=company;
+    const staff=await requirePermission('inventory',database,activeId);
+    const shift=await activeStaffShift(staff,database);
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error('Company changed while authorizing an expense.');
     const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
     if (existing) {
       if (existing.category !== input.category || existing.amountMinor !== amountMinor || existing.currency !== values.currency ||
           existing.expenseDate !== input.expenseDate || (existing.note ?? "") !== (input.note?.trim() ?? ""))
         throw new Error("This submission key was already used for a different expense. Review the saved record before retrying.");
+      if(getActiveBusinessProfileId()!==activeId)
+        throw new Error('Company changed during original expense replay.');
       return existing;
     }
+    const profile=await database.businessProfiles.get(activeId);
+    if(profile?.currency!==undefined&&profile.currency!==values.currency)
+      throw new Error('Expense currency differs from active company currency; no FX conversion is assumed.');
     const expense: Expense = {
-      id: nanoid(14), businessProfileId: getActiveBusinessProfileId(), category: input.category, amountMinor, currency: values.currency, expenseDate: input.expenseDate,
+      id: nanoid(14), businessProfileId: activeId, category: input.category, amountMinor, currency: values.currency, expenseDate: input.expenseDate,
       note: input.note?.trim() || undefined, submissionKey, createdAt: now,
       ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}),
     };
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error('Company changed before expense posting.');
+    await requirePermission('inventory',database,activeId);
     await database.expenses.add(expense);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'expense.recorded',createdAt:now,details:expense.id});
+    if(getActiveBusinessProfileId()!==activeId)
+      throw new Error('Company changed before committing recorded expense.');
     return expense;
   });
 }

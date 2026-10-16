@@ -19,6 +19,8 @@ import {auditRun10CompanyReceivables,type Run10ReceivableAudit} from './run10Rec
 import {auditRun10PrepaidCashConservation,type Run10PrepaidCashAudit} from './run10PrepaidCashAudit.mjs';
 import type {Customer} from '@/features/customers/customers';
 import {auditCompanyReturnPolicyEvidence,type CompanyReturnPolicyEvidenceSummary} from '@/features/business/returnPolicyAudit.mjs';
+import {auditRun12SupplierFinance,type Run12SupplierFinancialAudit} from './run12SupplierFinanceAudit.mjs';
+import {auditRun12SaleTaxHistory,type Run12SaleTaxHistory} from './run12SaleTaxAudit.mjs';
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
@@ -38,6 +40,10 @@ export interface FinancialSummary {
   inventoryValuation?:Run9InventoryValuation;
   purchaseCostEvidence?:Run9PurchaseCostEvidence;
   returnPolicyEvidence?:CompanyReturnPolicyEvidenceSummary;
+  /** Original tax policy snapshots: off is explicit; legacy absence unknown. */
+  taxEvidence?:Run12SaleTaxHistory;
+  /** Original-currency supplier disbursements separate from operating expense. */
+  supplierFinanceAudit?:Run12SupplierFinancialAudit;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
   receivableAudit?:Run10ReceivableAudit;
   /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
@@ -197,12 +203,12 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
 }
 export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),start?:string,end?:string,database:TallybookDB=db):Promise<FinancialSummary> {
   const company=getActiveBusinessProfileId();
-  const records=await database.transaction("r",[database.businessProfiles,database.customers,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
+  const records=await database.transaction("r",[database.businessProfiles,database.customers,database.sales,database.payments,database.repayments,database.expenses,database.saleReversals,database.cashPartialReturns,database.walletTransfers,database.inventoryCostEvents,database.products,database.saleLines,database.inventoryMovements,database.suppliers,database.purchases,database.purchaseLines,database.supplierPayableEntries,database.customerBenefits,database.staffMembers],async()=>{
     await requirePermission("reports", database, company);
-    return Promise.all([database.businessProfiles.get(company),database.customers.toArray(),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
+    return Promise.all([database.businessProfiles.get(company),database.customers.toArray(),database.sales.toArray(),database.payments.toArray(),database.repayments.toArray(),database.expenses.toArray(),database.saleReversals.toArray(),database.cashPartialReturns.toArray(),database.walletTransfers.toArray(),database.inventoryCostEvents.toArray(),database.products.toArray(),database.saleLines.toArray(),database.inventoryMovements.toArray(),database.suppliers.toArray(),database.purchases.toArray(),database.purchaseLines.toArray(),database.supplierPayableEntries.toArray(),database.customerBenefits.toArray()]);
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
-  const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
+  const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,suppliers,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
   const range = financialRange(period,now,start,end);
@@ -217,6 +223,16 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   // Independently reconstructed FIFO stock assets belong to a distinct
   // AS-OF section. Unknown receipt costs are never today's editable unit price.
   summary.returnPolicyEvidence=auditCompanyReturnPolicyEvidence(profile,scoped(sales),scoped(reversals),scoped(cashReturns));
+  // Saved tax-off evidence and the original registered single-rate terms,
+  // not the active tax settings, govern original invoice verification.
+  summary.taxEvidence=auditRun12SaleTaxHistory(scoped(sales));
+  // Supplier claims and manual outflows remain separate from operating
+  // expenses and do not establish bank/provider settlement.
+  summary.supplierFinanceAudit=auditRun12SupplierFinance({
+    company,companyCurrency:profile.currency,suppliers:scoped(suppliers),
+    purchases:scoped(purchases),entries:scoped(supplierEntries),
+    expenses:scoped(expenses),range
+  });
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
@@ -234,6 +250,15 @@ export function financialCsv(summary:FinancialSummary):string {
   const supplierRows: (string | number)[][] = supplier ? [
     [], ["Supplier evidence", "Minor units or count"],
     ["Purchases of unknown liability status", supplier.unknownPurchases],
+    ...(summary.supplierFinanceAudit ? [
+      ["Saved supplier invoices with recognized liability",summary.supplierFinanceAudit.recognizedPurchases],
+      ["Manually attested supplier payments",summary.supplierFinanceAudit.manuallyAttestedPayments],
+      ["Supplier payments without external reference",summary.supplierFinanceAudit.paymentsWithoutReferences],
+      ["Supplier credit notes without external reference",summary.supplierFinanceAudit.supplierCreditsWithoutReferences],
+      ["Historical expenses without saved currency",summary.supplierFinanceAudit.expensesWithUnknownCurrency],
+      ["Historical expenses in another currency",summary.supplierFinanceAudit.expensesInOtherCurrency],
+      ["Manual supplier payments in company currency this period",summary.supplierFinanceAudit.periodSupplierPaymentsInCompanyCurrencyMinor]
+    ] as (string|number)[][]:[]),
     ...supplier.outstandingByCurrency.map(row => [`Recognized payable as-of, ${row.currency}`,row.amountMinor]),
     ...supplier.periodPaymentsByCurrency.map(row => [`Manual supplier payments in period, ${row.currency}`,row.amountMinor]),
     ...supplier.creditedToDateByCurrency.map(row => [`Supplier credits as-of, ${row.currency}`,row.amountMinor]),
@@ -242,6 +267,11 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Tallybook management report',summary.range.label],['Metric','Minor units'],
     ['Net saved sales',summary.revenueMinor],['Recorded tax after reversals',summary.recordedTaxMinor],
     ['Sales excluding recorded tax',summary.salesExcludingRecordedTaxMinor],['Sales count',summary.saleCount],
+    ...(summary.taxEvidence ? [
+      ['Sales with saved registered tax policy',summary.taxEvidence.configuredChargedSales],
+      ['Sales with explicit tax OFF at checkout',summary.taxEvidence.explicitNoTaxSales],
+      ['Historical sales with unverified tax configuration',summary.taxEvidence.legacyUnverifiedSales]
+    ] as (string|number)[][] : []),
     ['Money collected including prepaid deposits less refunds',summary.collectionsMinor],
     ['Net prepaid cash movement',summary.walletNetCashMinor],
     ...(summary.prepaidLiabilityMinor !== undefined ? [['Prepaid wallet liability as-of (minor units)',summary.prepaidLiabilityMinor],['Customers with prepaid balance',summary.prepaidLiabilityCustomers ?? 0]] as (string | number)[][] : []),['Recorded expenses',summary.expensesMinor],
@@ -279,7 +309,7 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
-    ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier outflows are reported separately by saved currency and excluded from collections-minus-expenses. Unverified historical liabilities and legal tax rules are not inferred.'],
+    ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier payments and operating expenses may duplicate the same real-world payout; they are never netted together without external disbursement evidence. Historical liabilities, tax filing obligations and legal tax rates are not inferred.'],
   ];
   return rows.map(row=>row.map(csvCell).join(',')).join('\r\n');
 }

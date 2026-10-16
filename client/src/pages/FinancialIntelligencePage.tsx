@@ -27,6 +27,32 @@ export default function FinancialIntelligencePage(){
   </section>
   {loading&&<p role="status">Calculating from saved records…</p>}{error&&<p role="alert">{error}</p>}
   {summary && !loading && <section className="report-sheet" aria-label="Historical cost reconciliation"><h2>Recorded sales and their costs</h2><p>Recorded tax after reversals: <strong>{fmt(summary.recordedTaxMinor)}</strong></p><p>Sales excluding recorded tax: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>{summary.cogsMinor === undefined ? <p>{summary.unavailable.cogs} Cost totals remain unavailable until the missing evidence is reconciled.</p> : <><p>Cost of goods sold, after reversals: <strong>{fmt(summary.cogsMinor)}</strong></p><p>Sales excluding recorded tax less cost: <strong>{fmt(summary.salesLessCostMinor!)}</strong></p><p>Costs are reconstructed from saved receipts and FIFO allocations. This amount is before expenses and any unconfigured tax obligations.</p></>}</section>}
+  {summary?.taxEvidence&&!loading&&
+    <section className="report-sheet" aria-label="Original tax policy evidence">
+      <h2>Tax configured at each original sale</h2>
+      <p>Receipts with verified registered single-rate policy: <strong>{summary.taxEvidence.configuredChargedSales}</strong>.</p>
+      <p>Receipts recording tax OFF at checkout: <strong>{summary.taxEvidence.explicitNoTaxSales}</strong>.</p>
+      <p>Historical receipts without a saved configuration: <strong>{summary.taxEvidence.legacyUnverifiedSales}</strong>.
+       These are not assumed exempt, untaxed, or registered by inference.</p>
+      <p>Today's tax settings do not rewrite old invoices. Tax filing, country-specific exemptions and statutory rates are not verified by this report.</p>
+    </section>}
+  {summary?.supplierFinanceAudit&&!loading&&
+    <section className="report-sheet" aria-label="Supplier liability and manual settlement evidence">
+      <h2>Supplier liability and recorded settlements</h2>
+      <p>Recognized supplier invoices: <strong>{summary.supplierFinanceAudit.recognizedPurchases}</strong>;
+       {' '}invoices with unknown unpaid status: <strong>{summary.supplierFinanceAudit.unknownPurchases}</strong>.</p>
+      <p>Manually recorded supplier payment events: <strong>{summary.supplierFinanceAudit.manuallyAttestedPayments}</strong>.
+       {' '}Missing supporting references: {summary.supplierFinanceAudit.paymentsWithoutReferences}.</p>
+      <p>Supplier credit notes without supporting references: {summary.supplierFinanceAudit.supplierCreditsWithoutReferences}.
+       Credit notes reduce debt without creating a cash payment.</p>
+      {summary.supplierFinanceAudit.periodSupplierPaymentsByCurrency.map(row=>
+       <p key={row.currency}>Manual supplier payments this period ({row.currency} minor units): <strong>{row.amountMinor.toLocaleString()}</strong></p>)}
+      {(summary.supplierFinanceAudit.expensesWithUnknownCurrency>0||
+        summary.supplierFinanceAudit.expensesInOtherCurrency>0)&&
+       <p role="status">Unverified historical expense currencies: {summary.supplierFinanceAudit.expensesWithUnknownCurrency};
+        {' '}expenses in another currency: {summary.supplierFinanceAudit.expensesInOtherCurrency}. No conversion is inferred.</p>}
+      <p>Supplier payments are not added to the separate expense total: the same outside-world payout could have been entered in both places. These saved entries are not bank/provider settlement confirmations or complete cash flow.</p>
+    </section>}
   {summary?.returnPolicyEvidence&&!loading&&
     <section className="report-sheet" aria-label="Return policy evidence">
       <h2>Company return policy and saved refund history</h2>
@@ -73,7 +99,7 @@ export default function FinancialIntelligencePage(){
       <p>Older supplier receipts without complete cost-layer proof: <strong>{summary.purchaseCostEvidence?.legacyUnverifiedPurchases??0}</strong>. No purchase prices are inferred for these records.</p>
       <p>This is a current stock position, not a flow for the selected reporting period.</p>
     </section>}
-  {summary&&!loading&&<><section className="reports-total-strip"><div><span>Net recorded sales</span><strong>{fmt(summary.revenueMinor)}</strong></div><div><span>Money collected</span><strong>{fmt(summary.collectionsMinor)}</strong></div><div><span>Recorded expenses</span><strong>{fmt(summary.expensesMinor)}</strong></div><div><span>Collections less expenses*</span><strong>{fmt(summary.netRecordedCashMovementMinor)}</strong></div></section><p className="report-boundary">* Not full cash flow or profit: supplier payments are shown separately by saved currency and excluded from this balance; other outflows may be missing. Customer receivables are current across all dates: {fmt(summary.currentReceivablesMinor)}. {summary.prepaidLiabilityMinor !== undefined && <>Recognized prepaid wallet liability as-of full history: {fmt(summary.prepaidLiabilityMinor)} across {summary.prepaidLiabilityCustomers} customer(s). This is money owed as stored value, not additional sales revenue.</>}</p>
+  {summary&&!loading&&<><section className="reports-total-strip"><div><span>Net recorded sales</span><strong>{fmt(summary.revenueMinor)}</strong></div><div><span>Money collected</span><strong>{fmt(summary.collectionsMinor)}</strong></div><div><span>Recorded expenses</span><strong>{fmt(summary.expensesMinor)}</strong></div><div><span>Collections less expenses*</span><strong>{fmt(summary.netRecordedCashMovementMinor)}</strong></div></section><p className="report-boundary">* Not full cash flow or profit: supplier payments are shown separately by saved currency, excluded from this balance and may overlap recorded expenses; external disbursement matching remains unverified. Customer receivables are current across all dates: {fmt(summary.currentReceivablesMinor)}. {summary.prepaidLiabilityMinor !== undefined && <>Recognized prepaid wallet liability as-of full history: {fmt(summary.prepaidLiabilityMinor)} across {summary.prepaidLiabilityCustomers} customer(s). This is money owed as stored value, not additional sales revenue.</>}</p>
     <div className="reports-grid"><section className="report-sheet"><h2>Daily activity</h2>{summary.daily.length===0?<p>No records in this period.</p>:<div className="report-row-list">{summary.daily.map(x=><div key={x.day}><strong>{x.day}</strong><span>Collected {fmt(x.collectionsMinor)} · Expenses {fmt(x.expensesMinor)}</span><b>{fmt(x.revenueMinor)}</b></div>)}</div>}</section><section className="report-sheet"><h2>Expense categories</h2>{summary.expenseByCategory.length===0?<p>No recorded expenses.</p>:<div className="report-row-list">{summary.expenseByCategory.map(x=><div key={x.category}><strong>{x.category}</strong><b>{fmt(x.amountMinor)}</b></div>)}</div>}</section><section className="report-sheet"><h2>Collections breakdown</h2><div className="report-row-list"><div><strong>At-sale payments</strong><b>{fmt(summary.saleCollectionsMinor)}</b></div><div><strong>Debt repayments</strong><b>{fmt(summary.debtCollectionsMinor)}</b></div><div><strong>Sales recorded</strong><b>{summary.saleCount}</b></div></div></section><section className="report-sheet"><h2>Pending accounting integrations</h2><p>Historical COGS: {summary.unavailable.cogs}</p><p>Profit: {summary.unavailable.grossProfit}</p><p>Tax: {summary.unavailable.tax}</p><p>Supplier payables: {summary.unavailable.supplierPayables}</p>{summary.supplierReconciliation && <><p>Purchases with unverified liability: {summary.supplierReconciliation.unknownPurchases}</p>{summary.supplierReconciliation.outstandingByCurrency.map(row=><p key={`due-${row.currency}`}>Recognized payable as-of ({row.currency} minor units): {row.amountMinor.toLocaleString()}</p>)}{summary.supplierReconciliation.periodPaymentsByCurrency.map(row=><p key={`settlement-${row.currency}`}>Manually recorded supplier payments in period ({row.currency} minor units): {row.amountMinor.toLocaleString()}</p>)}</>}</section></div>
   </>}
   </main>;
