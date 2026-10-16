@@ -176,6 +176,18 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const now = nowDate.toISOString();
     const cashier = await requirePermission("sell",database,activeId);
     const shift = cashier ? await database.staffShifts.where("staffId").equals(cashier.id).filter(x => x.businessProfileId === cashier.businessProfileId && !x.closedAt).first() : undefined;
+    const storeMode=await database.storeStockModes.get(activeId);
+    if(storeMode) {
+      if(!input.storeId)throw new Error("Select a store before recording this sale.");
+      const store=await database.storeLocations.get(input.storeId);
+      if(!store||store.businessProfileId!==activeId||store.status!=="active")
+        throw new Error("Selling store is no longer active in the selected company.");
+      if(!cashier)throw new Error("Unlock an authorized store attendant.");
+      if(cashier.role!=="owner" &&
+         !await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+          .equals([activeId,cashier.id,input.storeId]).first())
+        throw new Error("Attendant is not assigned to the selling store.");
+    } else if(input.storeId)throw new Error("Store stock has not been activated for this company.");
     if (cashier?.role === "cashier" && !shift) throw new Error("Open a cashier shift before completing sales.");
     const submissionKey = input.submissionKey ?? nanoid(18);
     const existingSale = await database.sales.where("submissionKey").equals(submissionKey).and((sale) => sale.businessProfileId === activeId).first();
