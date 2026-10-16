@@ -6,6 +6,7 @@ export function selectServerTransport(config: {
   production?: boolean;
   accessEnabled?: boolean;
   backupUploadEnabled?: boolean;
+  encryptedRelayEnabled?: boolean;
   certFile?: string;
   keyFile?: string;
 }, app: RequestListener): { server: HttpServer | HttpsServer; scheme: 'http' | 'https' };
