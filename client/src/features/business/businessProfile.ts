@@ -1,6 +1,7 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 /** Tactile Ledger design reminder: a business profile is one clear local record, validated before it becomes part of the owner’s ledger. */
 import { taxPolicySchema } from "@/features/sales/tax";
+import type {ReturnPolicyRevision} from './returnPolicy.mjs';
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { nanoid } from "nanoid";
@@ -58,6 +59,8 @@ export const businessProfileSchema = z.object({
 export type BusinessProfileInput = z.infer<typeof businessProfileSchema>;
 
 export interface BusinessProfile extends BusinessProfileInput {
+  /** Company-owner configured append-only return policy revisions. Legacy omission means disabled. */
+  returnPolicyHistory?:ReturnPolicyRevision[];
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -102,6 +105,8 @@ export async function saveBusinessProfile(input: BusinessProfileInput, database:
     const profile: BusinessProfile = {
       id: activeId,
       taxPolicy: values.taxPolicy ?? existing?.taxPolicy,
+      // General company-details forms cannot rewrite or erase refund governance.
+      returnPolicyHistory:existing?.returnPolicyHistory,
       name: values.name.trim(),
       country: values.country,
       currency: values.currency,
