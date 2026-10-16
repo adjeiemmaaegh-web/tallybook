@@ -29,10 +29,10 @@ export function validateRun15MockEvent(x) {
   if(!x||typeof x!=="object"||Array.isArray(x)||
     !validKey(x.id)||!validKey(x.intentId)||!COMPANY.test(x.businessProfileId??"")||
     !["timeout","succeed","fail","refund","chargeback"].includes(x.action)||
-    !date(x.createdAt)||!minor(x.amountMinor)||x.mockOnly!==true||
+    !date(x.createdAt)||!minor(x.amountMinor)||!Number.isSafeInteger(x.sequence)||x.sequence<1||x.sequence>10000||x.mockOnly!==true||
     x.financialPostingPerformed!==false||x.authoritativeSettlement!==false||
     Object.keys(x).sort().join(",")!==
-    "action,amountMinor,authoritativeSettlement,businessProfileId,createdAt,financialPostingPerformed,id,intentId,mockOnly")
+    "action,amountMinor,authoritativeSettlement,businessProfileId,createdAt,financialPostingPerformed,id,intentId,mockOnly,sequence")
     fail("Invalid mocked payment event.");
   if(x.action==="refund" ? x.amountMinor<1 : x.amountMinor!==0)
     fail("Mock event amount does not match action.");
@@ -93,6 +93,7 @@ export function auditRun15MockTimeline(intent,events) {
   let current=origin;
   const accepted=[];
   for(const event of events) {
+    if(event.sequence!==accepted.length+1)fail("Mock payment event sequence is missing or out of order.");
     const result=applyRun15MockEvent(current,event,accepted);
     if(result.replayed)fail("Duplicate event stored in mock journal.");
     current=result.intent;accepted.push(event);
