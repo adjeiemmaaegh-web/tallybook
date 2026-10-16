@@ -6,7 +6,7 @@ export interface Run16CommerceHold {
  reason:"owner-confirmed"|"pos-consumed"|"order-cancelled"|"hold-expired";
 }
 export interface Run16OrderEvent {
- id:string;businessProfileId:string;orderId:string;actorStaffId:string;submissionKey:string;
+ id:string;businessProfileId:string;orderId:string;actorStaffId:string;submissionKey:string;sequence:number;
  action:"reserve"|"release"|"pos-consume"|"pack"|"dispatch"|"deliver"|"return-request"|"cancel";
  fromStatus:string;toStatus:string;createdAt:string;note:string;financialPostingPerformed:false;
 }
