@@ -116,7 +116,7 @@ export async function stageRun16PublicRequest(grant,raw,settings){
  if(allowed!==true)deny();
  const trusted=await settings.catalogue.read(token.companyId);
  if(!trusted||trusted.companyId!==token.companyId||trusted.revision!==token.revision||
-   trusted.offerDigest!==token.offerDigest||trusted.publicEnabled!==true||
+   trusted.offerDigest!==token.offerDigest||!/^[A-Z]{3}$/.test(trusted.currency??"")||trusted.publicEnabled!==true||
    !Array.isArray(trusted.items))deny();
  const offerMap=new Map(trusted.items.map(x=>[x.id,x]));
  let total=0;
@@ -134,7 +134,7 @@ export async function stageRun16PublicRequest(grant,raw,settings){
  // Journal must itself enforce unique [company,requestKey], quote revision,
  // server-derived totals and pending-review status in one durable transaction.
  const result=await settings.journal.stage({
-   companyId:token.companyId,requestKey:requested.requestKey,customerName:requested.customerName,
+   companyId:token.companyId,currency:trusted.currency,requestKey:requested.requestKey,customerName:requested.customerName,
    customerContact:requested.customerContact,deliveryMethod:requested.deliveryMethod,
    deliveryNotes:requested.deliveryNotes,lines,totalMinor:total,
    status:"pending-merchant-review",stockReserved:false,paymentPerformed:false,
