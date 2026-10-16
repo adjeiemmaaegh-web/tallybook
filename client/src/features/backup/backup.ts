@@ -381,10 +381,15 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       const sale=records.sales.find(s=>s.id===order.saleId);
       if(!sale||sale.businessProfileId!==companyId||sale.commerceOrderId!==order.id||
         sale.storeId!==order.storeId||
-        (order.status==="cancelled"&&!records.saleReversals.some(r=>r.originalSaleId===sale.id)))
+        order.status==="cancelled")
         throw Error("Saved commerce order sale linkage does not reconcile.");
     }else if(["packed","dispatched","delivered","return-requested"].includes(order.status))
       throw Error("Unpaid commerce order cannot be dispatched or delivered.");
+  }
+  for(const sale of records.sales)if(sale.commerceOrderId){
+    const matches=records.commerceOrders.filter(o=>o.id===sale.commerceOrderId&&o.saleId===sale.id);
+    if(matches.length!==1||sale.businessProfileId!==companyId)
+      throw Error("Sale refers to missing or duplicated commerce reservation evidence.");
   }
   for (const member of records.staffMembers) {
     if (!["owner","supervisor","cashier"].includes(member.role) || typeof member.name !== 'string' || !member.name.trim() ||
