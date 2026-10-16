@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { calculateTax, taxPolicyKey, type TaxPolicy } from "./tax";
 import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
+import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { createProduct } from "@/features/inventory/inventory";
 import { completeSale, getSaleSnapshot } from "./sales";
@@ -21,6 +22,10 @@ async function fixture(taxPolicy?: TaxPolicy) {
   setActiveBusinessProfileId("primary");lockStaff("primary");
   const db = new TallybookDB(`tax-${crypto.randomUUID()}`);databases.push(db);await initializeDatabase(db);
   await saveBusinessProfile({...profile, taxPolicy},db);
+  // Explicit Run 11 company opt-in is required for the existing positive
+  // tax/full-reversal regression. This is test-only, not a product default.
+  await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,
+    allowCashPartial:false,maxAgeDays:30},'Tax reversal regression opt-in',db);
   const product=await createProduct({name:"Rice",categoryId:"uncategorized",sellingPrice:"10",costPrice:"1",initialStock:"3",lowStockThreshold:"1"},"GHS",db);
   const input={lines:[{productId:product.id,quantity:1}],discount:"2",amountPaid:"9",paymentMethod:"cash" as const,currency:"GHS",submissionKey:"tax-checkout-01",taxReviewKey:taxPolicyKey(taxPolicy)};
   return {db,product,input};
