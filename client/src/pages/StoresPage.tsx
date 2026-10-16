@@ -2,6 +2,7 @@ import { STAGE9_RELEASE_SCOPE } from "@/features/stores/stage9ReleaseScope";
 import { requestStoreTransfer, listStoreTransferRequests, cancelStoreTransfer, completeStoreTransfer, type StoreTransferRequest } from "@/features/stores/storeTransfers";
 import { activateStoreInventory, getCompanyStoreInventory, type OpeningStoreQuantity } from "@/features/stores/storeStockLedger";
 import { getLocalStoreReport } from "@/features/stores/storeReport";
+import { getRun13StoreTransactionActivity } from "@/features/stores/run13StoreTransactionActivity";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
@@ -29,14 +30,15 @@ export default function StoresPage() {
   const [openingConfirmed,setOpeningConfirmed]=useState(false);
   const [transfers, setTransfers] = useState<StoreTransferRequest[]>([]);
   const [report, setReport] = useState<Array<{storeId:string;name:string;assignedStaff:number;physicalObservations:number;openTransferRequests:number}>>([]);
+  const [transactionActivity,setTransactionActivity]=useState<Awaited<ReturnType<typeof getRun13StoreTransactionActivity>>|null>(null);
   const [destinationStoreId, setDestinationStoreId] = useState("");
   const [transferQty, setTransferQty] = useState("");
   const [counts, setCounts] = useState<StoreStockObservation[]>([]);
   const refresh = useCallback(async () => {
-    setError(""); setStores([]); setAssignments([]); setStaff([]); setCounts([]); setProducts([]); setTransfers([]); setReport([]); setStoreBalances(null);
+    setError(""); setStores([]); setAssignments([]); setStaff([]); setCounts([]); setProducts([]); setTransfers([]); setReport([]); setStoreBalances(null); setTransactionActivity(null);
     const company = activeCompanyId;
     try { const [locations, users, entries, stockProducts] = await Promise.all([listStores(db), listStaff(db), listStoreAssignments(db), db.products.where("businessProfileId").equals(company).toArray()]);
-      if (company === getActiveBusinessProfileId()) { setTransfers(await listStoreTransferRequests(db)); try {setReport(await getLocalStoreReport(db));} catch {setReport([]);} setStores(locations); setStaff(users); setAssignments(entries); setProducts(stockProducts.filter(p=>!p.archivedAt && p.itemKind!=="service").map(p=>({id:p.id,name:p.name,stockQuantity:p.stockQuantity}))); try {setStoreBalances(await getCompanyStoreInventory(db));} catch {setStoreBalances(null);} }
+      if (company === getActiveBusinessProfileId()) { setTransfers(await listStoreTransferRequests(db)); try {setReport(await getLocalStoreReport(db));} catch {setReport([]);} try {setTransactionActivity(await getRun13StoreTransactionActivity(db));} catch {setTransactionActivity(null);} setStores(locations); setStaff(users); setAssignments(entries); setProducts(stockProducts.filter(p=>!p.archivedAt && p.itemKind!=="service").map(p=>({id:p.id,name:p.name,stockQuantity:p.stockQuantity}))); try {setStoreBalances(await getCompanyStoreInventory(db));} catch {setStoreBalances(null);} }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Cannot load store directory."); }
   }, [activeCompanyId]);
   useEffect(() => { void refresh(); }, [refresh]);
@@ -103,6 +105,11 @@ export default function StoresPage() {
       <ul className="space-y-2 text-sm">{transfers.slice(0,20).map(t=><li key={t.id} className="rounded border p-2">{stores.find(s=>s.id===t.sourceStoreId)?.name ?? "Store"} → {stores.find(s=>s.id===t.destinationStoreId)?.name ?? "Store"}: {t.quantity} units · {t.status} {t.status==="requested" && <button className="underline ml-2" disabled={working} onClick={()=>void perform(()=>cancelStoreTransfer(t.id,db))}>Cancel request</button>} {t.status==="requested" && <button className="underline ml-2" disabled={working||!STAGE9_RELEASE_SCOPE.executeStoreTransfer} onClick={()=>{if(window.confirm("Confirm physical dispatch and receipt of this transfer? No remote inventory synchronization will occur."))void perform(()=>completeStoreTransfer(t.id,crypto.randomUUID(),db));}}>Complete transfer (disabled pending acceptance)</button>}</li>)}</ul>
     </section>
     <section className="space-y-2 rounded border p-4" aria-label="Local store activity report"><h2 className="text-lg font-semibold">Local store activity</h2><p className="text-sm">Counts and requests only; not consolidated sales or authoritative stock.</p><ul>{report.map(r=><li key={r.storeId} className="border-b py-2">{r.name}: {r.assignedStaff} staff, {r.physicalObservations} observations, {r.openTransferRequests} open transfer requests</li>)}</ul></section>
+    <section className="rounded border p-4 space-y-2" aria-label="Store transaction activity">
+      <h2 className="text-lg font-semibold">Store-linked invoice and procurement activity</h2>
+      <p className="text-sm">Read-only saved invoice totals, supplier purchase costs, and return counts. This is not cash settlement, profit, tax remittance or cross-device financial consolidation.</p>
+      {transactionActivity?<><ul className="text-sm">{transactionActivity.rows.map(r=><li key={r.storeId} className="border-b py-2">{r.storeName}: {r.saleCount} sales ({r.grossSaleInvoiceMinor} invoice minor units), {r.purchaseCount} purchases ({r.grossPurchaseCostMinor} cost minor units), {r.fullSaleReversalCount} full reversals, {r.cashPartialReturnCount} partial returns · {r.currency??"Currency unverified"}</li>)}</ul><p className="text-sm">Historical transactions without store attribution: {transactionActivity.unattributedHistoricalSales} sales and {transactionActivity.unattributedHistoricalPurchases} purchases.</p></>:<p className="text-sm">Invoice activity unavailable or not authorized for this staff session.</p>}
+    </section>
     <p className="text-sm">Assignments are stored only on this device. <Link href="/staff" className="underline">Manage staff</Link>. Remote attendant sales, transfers and owner-wide dashboards require Stage 8 sync completion and cross-device verification.</p>
   </section>;
 }
