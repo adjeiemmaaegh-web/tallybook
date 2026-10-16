@@ -1,5 +1,6 @@
 import { STAGE9_RELEASE_SCOPE } from "@/features/stores/stage9ReleaseScope";
-import { requestStoreTransfer, listStoreTransferRequests, cancelStoreTransfer, type StoreTransferRequest } from "@/features/stores/storeTransfers";
+import { requestStoreTransfer, listStoreTransferRequests, cancelStoreTransfer, completeStoreTransfer, type StoreTransferRequest } from "@/features/stores/storeTransfers";
+import { activateStoreInventory, getCompanyStoreInventory, type OpeningStoreQuantity } from "@/features/stores/storeStockLedger";
 import { getLocalStoreReport } from "@/features/stores/storeReport";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
@@ -22,17 +23,20 @@ export default function StoresPage() {
   const [countStoreId, setCountStoreId] = useState("");
   const [countProductId, setCountProductId] = useState("");
   const [countQuantity, setCountQuantity] = useState("");
-  const [products, setProducts] = useState<Array<{id: string; name: string}>>([]);
+  const [products, setProducts] = useState<Array<{id: string; name: string; stockQuantity:number}>>([]);
+  const [storeBalances,setStoreBalances]=useState<Awaited<ReturnType<typeof getCompanyStoreInventory>> | null>(null);
+  const [openingAllocations,setOpeningAllocations]=useState<Record<string,string>>({});
+  const [openingConfirmed,setOpeningConfirmed]=useState(false);
   const [transfers, setTransfers] = useState<StoreTransferRequest[]>([]);
   const [report, setReport] = useState<Array<{storeId:string;name:string;assignedStaff:number;physicalObservations:number;openTransferRequests:number}>>([]);
   const [destinationStoreId, setDestinationStoreId] = useState("");
   const [transferQty, setTransferQty] = useState("");
   const [counts, setCounts] = useState<StoreStockObservation[]>([]);
   const refresh = useCallback(async () => {
-    setError(""); setStores([]); setAssignments([]); setStaff([]); setCounts([]); setProducts([]); setTransfers([]); setReport([]);
+    setError(""); setStores([]); setAssignments([]); setStaff([]); setCounts([]); setProducts([]); setTransfers([]); setReport([]); setStoreBalances(null);
     const company = activeCompanyId;
     try { const [locations, users, entries, stockProducts] = await Promise.all([listStores(db), listStaff(db), listStoreAssignments(db), db.products.where("businessProfileId").equals(company).toArray()]);
-      if (company === getActiveBusinessProfileId()) { setTransfers(await listStoreTransferRequests(db)); try {setReport(await getLocalStoreReport(db));} catch {setReport([]);} setStores(locations); setStaff(users); setAssignments(entries); setProducts(stockProducts.filter(p=>!p.archivedAt && p.itemKind!=="service").map(p=>({id:p.id,name:p.name}))); }
+      if (company === getActiveBusinessProfileId()) { setTransfers(await listStoreTransferRequests(db)); try {setReport(await getLocalStoreReport(db));} catch {setReport([]);} setStores(locations); setStaff(users); setAssignments(entries); setProducts(stockProducts.filter(p=>!p.archivedAt && p.itemKind!=="service").map(p=>({id:p.id,name:p.name,stockQuantity:p.stockQuantity}))); try {setStoreBalances(await getCompanyStoreInventory(db));} catch {setStoreBalances(null);} }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Cannot load store directory."); }
   }, [activeCompanyId]);
   useEffect(() => { void refresh(); }, [refresh]);
@@ -71,6 +75,21 @@ export default function StoresPage() {
       <p className="text-sm font-semibold">Recent observations ({counts.length})</p>
       <ul className="space-y-1 text-sm">{counts.slice(0,10).map(c=><li key={c.id}>{products.find(p=>p.id===c.productId)?.name ?? "Product"}: {c.observedQuantity} observed · {new Date(c.observedAt).toLocaleString()}</li>)}</ul>
     </section>
+    <section className="space-y-3 rounded border p-4" aria-label="Store stock allocation and totals">
+      <h2 className="text-lg font-semibold">Store inventory allocation</h2>
+      <p className="text-sm">Store stock must be assigned explicitly from physical counts and equal the company's saved quantity for each product. Observations do not allocate stock. This capability stays disabled until integration acceptance.</p>
+      {storeBalances?.active ? <div>
+        <strong>Recorded local store balances</strong>
+        <ul className="text-sm">{storeBalances.balances.map(row=><li key={row.storeId+":"+row.productId}>{stores.find(s=>s.id===row.storeId)?.name ?? "Store"} / {products.find(p=>p.id===row.productId)?.name ?? row.productId}: {row.quantity} units</li>)}</ul>
+      </div> : <>
+        <div className="max-h-64 space-y-2 overflow-y-auto">{products.filter(p=>p.stockQuantity>0).flatMap(product=>stores.filter(s=>s.status==="active").map(store=><label key={product.id+":"+store.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span>{product.name} ({product.stockQuantity} company units) / {store.name}</span><input className="w-32 rounded border p-2" type="number" min="0" max={product.stockQuantity} step="1" value={openingAllocations[JSON.stringify([store.id,product.id])]??""} onChange={e=>setOpeningAllocations(prev=>({...prev,[JSON.stringify([store.id,product.id])]:e.target.value}))} /></label>))}</div>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={openingConfirmed} onChange={e=>setOpeningConfirmed(e.target.checked)}/>I confirm the physical opening quantities and exact company-stock reconciliation.</label>
+        <button type="button" className="rounded border px-4 py-3" disabled={working||!openingConfirmed||!STAGE9_RELEASE_SCOPE.authoritativeStoreStock} onClick={()=>void perform(async()=>{
+          const allocations:OpeningStoreQuantity[]=Object.entries(openingAllocations).filter(([,amount])=>amount!==""&&Number(amount)>0).map(([key,amount])=>{const [storeId,productId]=JSON.parse(key) as [string,string];return {storeId,productId,quantity:Number(amount)};});
+          await activateStoreInventory(allocations,db);setOpeningConfirmed(false);
+        })}>Activate reviewed opening stock (disabled pending acceptance)</button>
+      </>}
+    </section>
     <section className="space-y-3 rounded border p-4" aria-label="Store transfer requests">
       <h2 className="text-lg font-semibold">Transfer requests (no inventory movement)</h2>
       <p className="text-sm">Requests are planning records only. They do not reserve or transfer stock, change prices or post accounting entries.</p>
@@ -81,7 +100,7 @@ export default function StoresPage() {
         <label>Requested quantity<input required type="number" min="1" max="9999999" step="1" className="block w-full rounded border p-3" value={transferQty} onChange={e=>setTransferQty(e.target.value)}/></label>
         <button disabled={working} className="rounded border px-4 py-3">Create request</button>
       </form>
-      <ul className="space-y-2 text-sm">{transfers.slice(0,20).map(t=><li key={t.id} className="rounded border p-2">{stores.find(s=>s.id===t.sourceStoreId)?.name ?? "Store"} → {stores.find(s=>s.id===t.destinationStoreId)?.name ?? "Store"}: {t.quantity} units · {t.status} {t.status==="requested" && <button className="underline ml-2" disabled={working} onClick={()=>void perform(()=>cancelStoreTransfer(t.id,db))}>Cancel request</button>}</li>)}</ul>
+      <ul className="space-y-2 text-sm">{transfers.slice(0,20).map(t=><li key={t.id} className="rounded border p-2">{stores.find(s=>s.id===t.sourceStoreId)?.name ?? "Store"} → {stores.find(s=>s.id===t.destinationStoreId)?.name ?? "Store"}: {t.quantity} units · {t.status} {t.status==="requested" && <button className="underline ml-2" disabled={working} onClick={()=>void perform(()=>cancelStoreTransfer(t.id,db))}>Cancel request</button>} {t.status==="requested" && <button className="underline ml-2" disabled={working||!STAGE9_RELEASE_SCOPE.executeStoreTransfer} onClick={()=>{if(window.confirm("Confirm physical dispatch and receipt of this transfer? No remote inventory synchronization will occur."))void perform(()=>completeStoreTransfer(t.id,crypto.randomUUID(),db));}}>Complete transfer (disabled pending acceptance)</button>}</li>)}</ul>
     </section>
     <section className="space-y-2 rounded border p-4" aria-label="Local store activity report"><h2 className="text-lg font-semibold">Local store activity</h2><p className="text-sm">Counts and requests only; not consolidated sales or authoritative stock.</p><ul>{report.map(r=><li key={r.storeId} className="border-b py-2">{r.name}: {r.assignedStaff} staff, {r.physicalObservations} observations, {r.openTransferRequests} open transfer requests</li>)}</ul></section>
     <p className="text-sm">Assignments are stored only on this device. <Link href="/staff" className="underline">Manage staff</Link>. Remote attendant sales, transfers and owner-wide dashboards require Stage 8 sync completion and cross-device verification.</p>
