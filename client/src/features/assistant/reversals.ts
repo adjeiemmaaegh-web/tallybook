@@ -2,6 +2,7 @@ import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { activeStaffShift, requirePermission } from "@/features/staff/staff";
 import { nanoid } from "nanoid";
+import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import type { TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { formatMinorAmount, type InventoryMovement } from "@/features/inventory/inventory";
@@ -62,7 +63,7 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
@@ -162,6 +163,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       const product = resolvedProducts.find(item => item.id === productId)!;
       await database.products.put({ ...product, stockQuantity, updatedAt: now });
     }));
+    for(const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,sale.storeId,movement.quantityDelta,movement.id,"refund",now,movement.previousQuantity,movement.resultingQuantity);
     await database.inventoryMovements.bulkAdd(movements);
     void currency;
     return reversal;
