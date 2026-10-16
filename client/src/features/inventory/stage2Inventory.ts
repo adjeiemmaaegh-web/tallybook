@@ -89,7 +89,7 @@ export async function updateStockCountSession(id: string, counts: Record<string,
 export async function postSavedStockCount(id: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.stockCountSessions, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const session = await database.stockCountSessions.get(id);
@@ -106,11 +106,12 @@ export async function registerBatch(productId: string, batchCode: string, quanti
     if (!whole(quantity) || !quantity || !batchCode.trim() || batchCode.length > 64) throw new Error("Invalid batch information.");
     if (expiryDate && (!/^\d{4}-\d{2}-\d{2}$/.test(expiryDate) || !Number.isFinite(Date.parse(expiryDate + "T00:00:00Z")) || new Date(expiryDate + "T00:00:00Z").toISOString().slice(0, 10) !== expiryDate)) throw new Error("Invalid expiry date.");
     const company = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.products, database.inventoryBatches, database.staffMembers], async () => {
+    return database.transaction("rw", [database.appMeta, database.products, database.inventoryBatches, database.staffMembers, database.storeStockModes], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("inventory", database, company);
       const product = await database.products.get(productId);
       if (!product || product.businessProfileId !== company || product.archivedAt || product.itemKind === "service") throw new Error("Batch product is unavailable.");
+      if(await database.storeStockModes.get(company))throw new Error("Batch provenance must be assigned to stores before registering new batches.");
       const batches = await database.inventoryBatches.where("productId").equals(productId).toArray();
       if (batches.some(b => b.businessProfileId === company && normalizeProductCode(b.batchCode) === normalizeProductCode(batchCode))) throw new Error("Batch code already exists for this product.");
       if (batches.filter(b => b.businessProfileId === company).reduce((sum, b) => sum + b.quantity, 0) + quantity > product.stockQuantity) throw new Error("Tracked batch quantities cannot exceed physical stock. Receive stock before registering a batch.");
