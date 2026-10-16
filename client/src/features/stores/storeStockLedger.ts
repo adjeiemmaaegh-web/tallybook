@@ -211,7 +211,7 @@ export async function getCompanyStoreInventory(database:TallybookDB=db) {
  */
 export async function postPairedStoreTransfer(
   database:TallybookDB,company:string,request:{
-    id:string;sourceStoreId:string;destinationStoreId:string;productId:string;quantity:number;status:"dispatched"
+    id:string;sourceStoreId:string;destinationStoreId:string;productId:string;quantity:number;status:string
   }, staffId:string, submissionKey:string, now:string
 ) {
   requireStage9Capability("executeStoreTransfer");
