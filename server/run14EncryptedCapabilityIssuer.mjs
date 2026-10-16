@@ -20,6 +20,8 @@ export async function issueRun14ReplicaCapability(request,config) {
   const directory=typeof config.directory.authorizeSnapshot==="function"
     ? await config.directory.authorizeSnapshot():config.directory;
   await authorizeSyncInspect({orgId:organizationId,deviceId,scope:"sync:inspect"},directory,actorId);
+  if((await directory.getOrganization(organizationId))?.replicationOptIn!==true)
+    deny(); // never issue remote replica permission from local consent alone
   const now=typeof config.clock==="function"?config.clock():Date.now();
   if(!Number.isSafeInteger(now)||now<0)deny();
   const iat=Math.floor(now/1000),exp=iat+300;
