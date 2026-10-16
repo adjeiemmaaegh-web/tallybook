@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 32;
+export const DATABASE_SCHEMA_VERSION = 33;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -81,6 +81,7 @@ export class TallybookDB extends Dexie {
   commerceOrders!: Table<import("@/features/commerce/commerce").CommerceOrder, string>;
   commerceHolds!: Table<import("@/features/commerce/run16Rules.mjs").Run16CommerceHold, string>;
   commerceDeliveryEvents!: Table<import("@/features/commerce/run16Rules.mjs").Run16OrderEvent, string>;
+  run17ReviewEvents!: Table<import("@/features/insights/run17ReviewAudit.mjs").Run17ReviewEvent, string>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -294,6 +295,10 @@ export class TallybookDB extends Dexie {
     this.version(32).stores({
       commerceHolds:"id, businessProfileId, orderId, productId, storeId, status, expiresAt, &[businessProfileId+submissionKey], &[businessProfileId+orderId+productId], [businessProfileId+productId]",
       commerceDeliveryEvents:"id, businessProfileId, orderId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+orderId], &[businessProfileId+orderId+sequence]"
+    });
+    // Run 17: append-only human advisory-review evidence, never retail mutation.
+    this.version(33).stores({
+      run17ReviewEvents:"id, businessProfileId, findingId, staffId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+findingId], &[businessProfileId+findingId+sequence]"
     });
   }
 }
