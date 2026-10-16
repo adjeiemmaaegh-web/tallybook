@@ -94,6 +94,8 @@ export function authorizeReturnPolicy(history,sale,kind,now){
  if(when<soldAt)issue('Refund cannot predate the original sale.');
  const salePolicy=checkSaleReturnPolicySnapshot(history,sale?.returnPolicyAtSale);
  const active=saleReturnPolicySnapshot(history);
+ if(instant(salePolicy.effectiveAt)>soldAt||instant(active.effectiveAt)>when)
+  issue('Refund policy was not yet effective at the relevant posting time.');
  if(!salePolicy.enabled||!active.enabled||
     (kind==='full'&&(!salePolicy.allowFullReversal||!active.allowFullReversal))||
     (kind==='partialCash'&&(!salePolicy.allowCashPartial||!active.allowCashPartial)))
