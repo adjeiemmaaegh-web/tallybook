@@ -51,6 +51,8 @@ async function strictJSON<T>(response:Response,url:string,maxBytes:number):Promi
  if(!response||response.redirected||response.type==="opaque"||
     response.url!==url||!/^application\/json(?:\s*;|\s*$)/i.test(response.headers.get("content-type")??""))
     throw Error("Untrusted encrypted relay response.");
+ const announced=response.headers.get("content-length");
+ if(announced!==null&&Number(announced)>maxBytes)throw Error("Untrusted encrypted relay response exceeds size limit.");
  const text=await response.text();
  if(new TextEncoder().encode(text).byteLength>maxBytes)throw Error("Oversized encrypted relay response.");
  let result:unknown;try{result=JSON.parse(text);}catch{throw Error("Malformed encrypted relay JSON.");}
