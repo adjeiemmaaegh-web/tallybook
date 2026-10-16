@@ -71,9 +71,12 @@ export async function applyRun15MockAction(input:{
     if(!intent||intent.businessProfileId!==input.companyId)
       throw Error("Mock intent does not belong to current company.");
     const existing=await database.paymentSandboxEvents.get(input.eventId);
+    const history=await database.paymentSandboxEvents.where("[businessProfileId+intentId]")
+      .equals([input.companyId,input.intentId]).sortBy("sequence");
     const event:Run15MockEvent={
       id:input.eventId,intentId:input.intentId,businessProfileId:input.companyId,
       action:input.action,amountMinor:input.action==="refund"?(input.amountMinor??0):0,
+      sequence:existing?.sequence??history.length+1,
       createdAt:existing?.createdAt??new Date().toISOString(),mockOnly:true,
       financialPostingPerformed:false,authoritativeSettlement:false
     };
@@ -83,9 +86,7 @@ export async function applyRun15MockAction(input:{
         throw Error("Mock webhook event ID already committed with different intent.");
       return intent; // Exact duplicate: no mutation, no retail ledger posting.
     }
-    const events=await database.paymentSandboxEvents
-      .where("[businessProfileId+intentId]")
-      .equals([input.companyId,input.intentId]).sortBy("createdAt");
+    const events=history;
     if(events.some(e=>e.id===event.id))
       throw Error("Stored mock event identity duplicated.");
     const source=await database.paymentSandboxIntents.get(input.intentId);
@@ -131,7 +132,7 @@ export async function inspectRun15MockSandbox(database:TallybookDB=db):Promise<{
     }
     for(const intent of intents){
       const historical=auditRun15MockTimeline({...intent,status:"pending",refundedMinor:0},
-        events.filter(e=>e.intentId===intent.id).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id)));
+        events.filter(e=>e.intentId===intent.id).sort((a,b)=>a.sequence-b.sequence));
       if(intent.status!==historical.intent.status||
         intent.refundedMinor!==historical.intent.refundedMinor)
         throw Error("Mock sandbox event ledger requires reconciliation.");
