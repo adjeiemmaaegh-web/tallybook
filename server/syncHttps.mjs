@@ -17,7 +17,7 @@ export function selectServerTransport(config, app) {
   if (mode !== 'http' && mode !== 'https') throw new Error('Invalid server transport mode');
   if (mode === 'http') {
     if (config.production) throw new Error('Production requires directly configured HTTPS');
-    if (config.accessEnabled || config.backupUploadEnabled) throw new Error('Sensitive routes require HTTPS');
+    if (config.accessEnabled || config.backupUploadEnabled || config.encryptedRelayEnabled) throw new Error('Sensitive routes require HTTPS');
     return { server: createHttpServer(app), scheme: 'http' };
   }
   const cert = loadSecretFile(config.certFile, 'TLS certificate');
