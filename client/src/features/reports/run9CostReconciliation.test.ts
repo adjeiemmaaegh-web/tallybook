@@ -55,6 +55,47 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
   });
   expect(financialCsv(summary)).toContain('Known historical-cost stock assets');
  });
+ it('verifies supplier purchase invoice unit costs before reporting or exporting stock assets',async()=>{
+  const{database,product}=await fixture();
+  clock('2026-01-02T10:00:00.000Z');
+  const supplier=await createSupplier({name:'Audited supplier'},database);
+  await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
+   lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
+  const s=await report(database);
+  expect(s.purchaseCostEvidence).toMatchObject({verifiedPurchases:1,legacyUnverifiedPurchases:0});
+  expect(s.inventoryValuation).toMatchObject({knownValueMinor:800,complete:true});
+ });
+ it('rejects supplier cost-event unit-cost tampering without rewriting invoice',async()=>{
+  const{database,product}=await fixture();
+  clock('2026-01-02T10:00:00.000Z');
+  const supplier=await createSupplier({name:'Audited supplier'},database);
+  const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
+   lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
+  const event=(await database.inventoryCostEvents.toArray())
+   .find(x=>x.purchaseId===purchase.id)!;
+  await database.inventoryCostEvents.update(event.id,{unitCostMinor:999});
+  await expect(report(database)).rejects.toThrow(/Supplier receipt cost evidence/);
+  const snapshot=await createBackup(database);
+  expect(()=>parseBackup(stringifyBackup(snapshot))).toThrow(/Supplier receipt cost evidence/);
+ });
+ it('rejects altered invoice totals even if FIFO cost layers are still unchanged',async()=>{
+  const{database,product}=await fixture();
+  clock('2026-01-02T10:00:00.000Z');
+  const supplier=await createSupplier({name:'Audited supplier'},database);
+  const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
+   lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
+  await database.purchases.update(purchase.id,{totalCostMinor:999});
+  await expect(report(database)).rejects.toThrow(/Supplier receipt cost evidence/);
+ });
+ it('rejects foreign purchase-currency evidence rather than converting stock assets silently',async()=>{
+  const{database,product}=await fixture();
+  clock('2026-01-02T10:00:00.000Z');
+  const supplier=await createSupplier({name:'Audited supplier'},database);
+  const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
+   lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
+  await database.purchases.update(purchase.id,{currency:'USD'});
+  await expect(report(database)).rejects.toThrow(/currency/);
+ });
  it('never invents FIFO value for unknown opening receipt cost',async()=>{
   const{database,product}=await fixture('2','');
   const summary=await report(database);
