@@ -32,7 +32,7 @@ export function auditRun12RecordedTax(sales,reversals,partialReturns,profile){
    const sale=original.get(row?.originalSaleId);
    if(!sale||row.businessProfileId!==profile.id||
       !instant(row.createdAt)||Date.parse(row.createdAt)<Date.parse(sale.createdAt)||
-      !safe(row.refundMinor??row.totalMinor??0))
+      !safe(kind==='full' ? -row.reversedSaleTotalMinor : row.refundedMinor))
     throw Error('Run 12 tax refund has orphan, foreign or invalid posting evidence.');
    if(kind==='full'){
     if(used.has(sale.id))throw Error('Run 12 duplicate full reversal tax evidence.');
@@ -41,7 +41,7 @@ export function auditRun12RecordedTax(sales,reversals,partialReturns,profile){
     reversedTax+=BigInt(sale.tax.taxMinor);
    }else{
     if(sale.tax===undefined){legacyRefunds++;continue;}
-    const tax=row.taxRefundMinor;
+    const tax=row.returnedTaxMinor;
     if(tax===undefined){legacyRefunds++;continue;}
     if(!safe(tax))throw Error('Run 12 cash refund tax amount is invalid.');
     partialRefundTax+=BigInt(tax);
