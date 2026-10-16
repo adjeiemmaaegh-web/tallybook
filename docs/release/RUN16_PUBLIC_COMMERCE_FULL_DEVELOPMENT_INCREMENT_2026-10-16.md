@@ -3,7 +3,7 @@
 **Date:** 2026-10-16 (Asia/Dubai)  
 **Branch:** `v19/run16-public-commerce-development-20261016`  
 **Run 15 source parent:** `v19/run15-payment-sandbox-development-20261016` at `f94aa45d8a99803f60c68be267b3bd9a915a16f8`.  
-**Reviewed source head before this report:** `638ed4650d3085a87ee8d63b752dec88c9284b04`.  
+**Final reviewed source head before this documentation update:** `08fd18460cc912130ba52b2ff13792ad6acae1e6`.  
 **Delivery status:** **RUN 16 SOURCE-DEVELOPMENT INCREMENT DELIVERED — NOT EXECUTED / NOT ACCEPTED**.  
 **Commercial release:** **NO-GO**. The owner's instruction suspends executable QA; no Node/Vitest, browser, semantic TypeScript, build, GitHub Actions, live provider, external deployment, remote tenant, public site or staging tests were run. Do not describe this as a working public store until those checks and approvals occur.
 
@@ -31,7 +31,7 @@ An anonymously accessible production public storefront requires separate owner-a
 
 - Corrected hold validation so optional `storeId` is not required for unscoped single-company stock; where a store is selected, unscoped reservation evidence is rejected rather than silently allocated.
 - Added exact owner attestation and selected-store staff/ownership validation in the same coordinated transaction; refused cross-tenant or wrong-product hold query results.
-- Linked checkout intent and replay to the original reserved order; confirmed the POS enforces exact item quantities and saved unit prices and blocks competing unreserved sales.
+- Linked checkout intent and replay to the original reserved order; inspected the POS requirement for exact item quantities and original unit prices, and added live reservation subtraction to the legacy company-wide POS availability display as well as store-scoped POS. Both views fail closed when commitment totals cannot be read, while authoritative validation remains inside the write transaction.
 - Prevented transfer dispatch, manual stock decreases, bulk import/stock-count posting and archiving from bypassing active customer reservations.
 - Added persistent ordered delivery sequence and unique per-company/order/sequence index; restore preflight rejects missing or forked delivery records, unresolved sale links and order states without history.
 - Corrected service-only reservation expiry (no physical hold rows) and same-key expired-replay acceptance.
