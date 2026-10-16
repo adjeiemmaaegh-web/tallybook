@@ -111,3 +111,34 @@ test('Run 12 does not add automatic payment gateway, legal rate preset or schema
   assert.doesNotMatch(v,/fetch\(|localStorage\.|indexedDB\.|navigator\.locks/);
  }
 });
+
+test('new purchase FX is blocked after original duplicate-submission retry resolution',()=>{
+ const x=read('features/purchases/purchases.ts');
+ const a=x.indexOf('const existing = await database.purchases.where("submissionKey")');
+ const b=x.indexOf('const business=await database.businessProfiles.get(activeId)',a);
+ const c=x.indexOf('const supplier = await database.suppliers.get(input.supplierId)',b);
+ assert.ok(a>=0&&b>a&&c>b);
+ assert.match(x,/Purchase currency differs from active company currency/);
+ assert.match(x,/database\.appMeta, database\.businessProfiles, database\.suppliers/);
+});
+test('new expense FX is blocked after exact saved expense replay validation',()=>{
+ const x=expense();
+ const a=x.indexOf('const existing = await database.expenses.where("submissionKey")');
+ const b=x.indexOf('const profile=await database.businessProfiles.get(activeId)',a);
+ const c=x.indexOf('const expense: Expense =',b);
+ assert.ok(a>=0&&b>a&&c>b);
+ assert.match(x,/Expense currency differs from active company currency/);
+});
+test('sale currency is checked against original company before committing tax/cash',()=>{
+ const x=read('features/sales/sales.ts');
+ const a=x.indexOf('const savedProfile=await database.businessProfiles.get(activeId)');
+ const b=x.indexOf('const taxConfigurationAtSale=snapshotSaleTaxConfiguration(policy)',a);
+ assert.ok(a>=0&&b>a);
+ assert.match(x,/Sale currency differs from the active company currency/);
+});
+test('grouped historical supplier entries avoid repeated quadratic array copies',()=>{
+ const x=read('features/purchases/supplierPayables.mjs');
+ assert.match(x,/const group=byPurchase\.get\(entry\.purchaseId\)\?\?\[\]/);
+ assert.match(x,/group\.push\(entry\)/);
+ assert.doesNotMatch(x,/byPurchase\.set\(entry\.purchaseId, \[\.\.\./);
+});
