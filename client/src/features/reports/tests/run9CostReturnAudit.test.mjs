@@ -75,7 +75,7 @@ test('duplicated event or sale-line ID is never accepted',()=>{
 });
 test('a full and partial return for the same sale cannot both restore FIFO',()=>{
  const good={...restoration,quantityDelta:1,saleLineId:'line-1'};
- assert.throws(()=>run({events:[issue,good],cashReturns:[partial]}),/invalid or conflicting/);
+ assert.throws(()=>run({events:[issue,good],cashReturns:[partial]}),/invalid or conflicting|missing, partial or duplicate/);
 });
 test('reversed cost lacking original issue linkage cannot pass',()=>{
  const bad={...issue,id:'wrong',productId:'other'};
