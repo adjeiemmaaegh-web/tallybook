@@ -237,7 +237,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
         throw new Error("Commerce reservation is invalid, expired, already sold, or assigned to another store.");
       const savedLineMap=new Map(linkedOrder.lines.map(line=>[line.productId,line.quantity]));
       if(savedLineMap.size!==requestedLines.length ||
-         requestedLines.some(line=>savedLineMap.get(line.productId)!==line.quantity))
+         requestedLines.some(line=>savedLineMap.get(line.productId)!==line.quantity||
+           linkedOrder.lines.find(saved=>saved.productId===line.productId)?.unitPriceMinor!==productById.get(line.productId)!.sellingPriceMinor))
         throw new Error("POS quantities must match the original reserved customer order.");
     }
     for(const line of requestedLines){
