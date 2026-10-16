@@ -45,11 +45,15 @@ export async function listCatalogue(database: TallybookDB = db): Promise<Catalog
   if (id !== companyId()) throw new Error("Company changed; reload catalogue.");
   return publishableCatalogue(products.filter(p => !p.archivedAt).map(p => ({ id: p.id, name: p.name, sku: p.sku, priceMinor: p.sellingPriceMinor, itemKind: p.itemKind === "service" ? "service" : "stock" })));
 }
-export async function createDraftOrder(customerName: string, requested: Array<{productId:string;quantity:number}>, database: TallybookDB = db): Promise<CommerceOrder> {
+export async function createDraftOrder(customerName: string, requested: Array<{productId:string;quantity:number}>, database: TallybookDB = db, options?:{deliveryMethod?:"pickup"|"delivery";customerContact?:string;deliveryInstructions?:string}): Promise<CommerceOrder> {
   requireCommerceCapability("localDraftOrders");
   const company = companyId();
   const name = customerName.trim();
   if (!name || name.length > 120) throw new Error("Enter a customer name (up to 120 characters).");
+  if(options&&(options.deliveryMethod!==undefined&&!["pickup","delivery"].includes(options.deliveryMethod)||
+    options.customerContact!==undefined&&(typeof options.customerContact!=="string"||options.customerContact.length>100)||
+    options.deliveryInstructions!==undefined&&(typeof options.deliveryInstructions!=="string"||options.deliveryInstructions.length>300)))
+    throw Error("Invalid customer contact or requested delivery instructions.");
   if (!Array.isArray(requested) || !requested.length || requested.length > 100 || new Set(requested.map(r => r.productId)).size !== requested.length) throw new Error("Select distinct products.");
   return withCoordinatedRetailWrite(() => database.transaction("rw", [database.products, database.commerceOrders, database.staffMembers, database.staffAudits], async () => {
     const actor = await requirePermission("sell", database, company);
@@ -63,7 +67,11 @@ export async function createDraftOrder(customerName: string, requested: Array<{p
     }
     const totalMinor = calculateOrderTotal(lines);
     const now = new Date().toISOString();
-    const order: CommerceOrder = {id:crypto.randomUUID(), businessProfileId:company, status:"draft", createdAt:now, updatedAt:now, customerName:name,lines,totalMinor};
+    const order: CommerceOrder = {id:crypto.randomUUID(), businessProfileId:company, status:"draft", createdAt:now, updatedAt:now, customerName:name,
+      ...(options?.deliveryMethod?{deliveryMethod:options.deliveryMethod}:{}),
+      ...(options?.customerContact?.trim()?{customerContact:options.customerContact.trim()}:{}),
+      ...(options?.deliveryInstructions?.trim()?{deliveryInstructions:options.deliveryInstructions.trim()}:{}),
+      lines,totalMinor};
     await database.commerceOrders.add(order);
     if (actor) await database.staffAudits.add({ id: crypto.randomUUID(), businessProfileId: company, staffId: actor.id, action: "commerce.draft.created", createdAt: now, details: order.id });
     return order;
