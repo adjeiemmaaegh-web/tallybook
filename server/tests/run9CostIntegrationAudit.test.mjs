@@ -75,3 +75,11 @@ test('source changes do not add a schema migration or new payment flows',()=>{
  assert.doesNotMatch(cost(),/database\.transaction\("rw"/);
  assert.doesNotMatch(read('features/reports/run9InventoryValuation.mjs'),/fetch\(|localStorage/);
 });
+
+test('cost events and sale lines are pre-indexed for low-resource report reconstruction',()=>{
+ const x=cost();
+ assert.match(x,/eventsByProduct=new Map/);
+ assert.match(x,/eventsByProduct\.get\(product\.id\)/);
+ assert.match(x,/linesBySale\.get\(sale\.id\)/);
+ assert.match(x,/linesById\.get\(event\.saleLineId/);
+});
