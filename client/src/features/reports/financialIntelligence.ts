@@ -12,6 +12,7 @@ import type { SaleReversal } from "@/features/assistant/reversals";
 import type { CashPartialSaleReturn } from "@/features/sales/cashPartialReturnPosting";
 import { reconcileCashPartialReturns } from "@/features/sales/cashPartialReturn.mjs";
 import { reconcileSaleCosts } from "./costReconciliation";
+import type {Run9InventoryValuation} from './run9InventoryValuation.mjs';
 import { assertSavedSaleTenderReconciliation } from "./saleTenderReconciliation.mjs";
 import { reconcilePrepaidLiability } from "./prepaidLiabilityReconciliation.mjs";
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
@@ -29,6 +30,8 @@ export interface FinancialSummary {
   salesExcludingRecordedTaxMinor: number;
   cogsMinor?: number;
   salesLessCostMinor?: number;
+  /** AS-OF full saved stock, not a period cash or profit flow. */
+  inventoryValuation?:Run9InventoryValuation;
   range: FinancialRange;
   revenueMinor: number;
   saleCount: number;
@@ -184,6 +187,9 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   assertSingleCurrencyFinancialEvidence({sales:scoped(sales),repayments:scoped(repayments),expenses:scoped(expenses),walletTransfers:scoped(walletTransfers),cashReturns:scoped(cashReturns)},profile.currency);
   const summary = summarizeFinancials({sales:scoped(sales),payments:scoped(payments),repayments:scoped(repayments),expenses:scoped(expenses),reversals:scoped(reversals),cashReturns:scoped(cashReturns),saleLines:scoped(lines),walletTransfers:scoped(walletTransfers),customerBenefits:scoped(customerBenefits),walletCurrency:profile.currency,purchases:scoped(purchases),supplierPayableEntries:scoped(supplierEntries)},range);
   const costs = reconcileSaleCosts(company,{sales:scoped(sales),reversals:scoped(reversals),cashReturns:scoped(cashReturns),events:scoped(events),products:scoped(products),lines:scoped(lines),movements:scoped(movements)},range);
+  // Independently reconstructed FIFO stock assets belong to a distinct
+  // AS-OF section. Unknown receipt costs are never today's editable unit price.
+  summary.inventoryValuation=costs.inventoryValuation;
   if (costs.cogsMinor !== undefined) {
     summary.cogsMinor = costs.cogsMinor;
     summary.salesLessCostMinor = summary.salesExcludingRecordedTaxMinor - costs.cogsMinor;
@@ -213,6 +219,14 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Collections minus recorded expenses (excludes supplier payments)',summary.netRecordedCashMovementMinor],
     ['Current customer receivables',summary.currentReceivablesMinor],
     ['Verified COGS after reversals',summary.cogsMinor ?? `Unavailable: ${summary.unavailable.cogs}`],
+    ...(summary.inventoryValuation ? [
+      ['Known historical-cost stock assets, minor units (AS-OF; not replacement cost)',summary.inventoryValuation.knownValueMinor],
+      ['Stock units with unknown receipt cost (AS-OF)',summary.inventoryValuation.unknownCostUnits],
+      ['Products with incomplete cost evidence (AS-OF)',summary.inventoryValuation.unverifiedProducts],
+      ['Full stock value from verified receipts (AS-OF)',summary.inventoryValuation.complete
+        ? summary.inventoryValuation.totalValueMinor ?? 0
+        : 'Unavailable: some stock units have no historical purchase or opening cost']
+    ] as (string|number)[][] : []),
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
