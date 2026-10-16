@@ -26,7 +26,6 @@ import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEviden
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
 import type { Purchase,PurchaseLine } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
-import type {Supplier} from '@/features/purchases/purchases';
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
