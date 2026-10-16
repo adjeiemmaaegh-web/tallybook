@@ -29,8 +29,9 @@ export async function postStockCount(preview: StockCountPreview, database: Tally
     if (preview.companyId !== companyId || !preview.lines.length) throw new Error("Stock count belongs to a different business or is empty.");
     if (new Set(preview.lines.map(l => l.productId)).size !== preview.lines.length) throw new Error("Duplicate stock-count lines.");
     const now = new Date().toISOString();
-    return database.transaction("rw", [database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes], async () => {
       const actor = await requirePermission("inventory", database, companyId);
+      if(await database.storeStockModes.get(companyId))throw new Error("Company-wide stock counts are disabled after store activation. Adjust stock by store.");
       const products = await database.products.bulkGet(preview.lines.map(l => l.productId));
       const updates: Product[] = [];
       const movements: InventoryMovement[] = [];
@@ -85,8 +86,9 @@ export async function importProductCatalogCsv(csv: string, database: TallybookDB
   return withCoordinatedRetailWrite(async () => {
     const rows = previewCatalogImport(csv);
     const companyId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.products, database.categories, database.inventoryMovements, database.inventoryCostEvents, database.staffMembers, database.staffAudits, database.storeStockModes], async () => {
       const actor = await requirePermission("inventory", database, companyId);
+      if(await database.storeStockModes.get(companyId))throw new Error("Bulk stock import is unavailable after store activation. Create items with explicit store allocation.");
       const existing = await database.products.where("businessProfileId").equals(companyId).toArray();
       const active = existing.filter(product => !product.archivedAt);
       const names = new Set(active.map(product => product.normalizedName));
