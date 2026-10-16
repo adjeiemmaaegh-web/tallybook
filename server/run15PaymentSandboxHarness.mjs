@@ -5,7 +5,7 @@
 import {createPaymentGateway} from "./paymentGateway.mjs";
 import {verifyRun15MockCallback} from "./run15SignedMockCallback.mjs";
 const deny=()=>{throw Error("Mock payment sandbox operation denied.");};
-const ID=/^[A-Za-z0-9:_-]{1,128}$/;
+const ID=/^[A-Za-z0-9_-]{1,100}$/;
 export function createRun15MockSandboxHarness({key,environment="local-test"}={}) {
  if(!["local-test","local-development"].includes(environment)||
    typeof key!=="string"||Buffer.byteLength(key)<32)deny();
@@ -28,6 +28,9 @@ export function createRun15MockSandboxHarness({key,environment="local-test"}={})
   applySignedMockEvent(body,signature,companyId,now=Date.now()) {
     if(!ID.test(companyId??""))deny();
     const event=verifyRun15MockCallback(body,signature,key,{companyId,now});
+    // The simulator uses submissionKey as its intent identity; never infer
+    // merchant settlement identifiers from a simulated callback.
+    if(!ID.test(event.intentId)||!ID.test(event.eventId))deny();
     const token=JSON.stringify([event.businessProfileId,event.eventId]);
     const fingerprint=JSON.stringify([event.intentId,event.action,event.amountMinor]);
     const previous=accepted.get(token);
