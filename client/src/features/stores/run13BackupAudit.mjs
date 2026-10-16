@@ -5,8 +5,8 @@ const deny=message=>{throw Error(message);};
 const id=x=>typeof x==="string"&&x.length>0&&x.length<=200;
 const whole=x=>Number.isSafeInteger(x)&&x>=0&&x<=9999999;
 const slot=(s,p)=>JSON.stringify([s,p]);
-export function auditRun13StoreBackup(company,modes,entries,products,stores,requests) {
-  if(!id(company)||![modes,entries,products,stores,requests].every(Array.isArray))
+export function auditRun13StoreBackup(company,modes,entries,products,stores,requests,movements) {
+  if(!id(company)||![modes,entries,products,stores,requests,movements].every(Array.isArray))
     deny("Malformed store backup evidence.");
   if(modes.length>1 || modes.some(m=>m.businessProfileId!==company ||
       m.evidence!=="owner-confirmed-opening-allocations" || !id(m.activatedByStaffId) ||
@@ -17,6 +17,8 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
     if(requests.some(r=>r.status==="completed"))deny("Completed transfer missing stock activation.");
     return {active:false,entryCount:0};
   }
+  const movementById=new Map(movements.map(m=>[m.id,m]));
+  if(movementById.size!==movements.length)deny("Duplicate company inventory movement identity.");
   const storeById=new Map(stores.map(s=>[s.id,s]));
   const productById=new Map(products.map(p=>[p.id,p]));
   const seenIds=new Set(),seenKeys=new Set(),sequence=new Map(),
@@ -35,6 +37,14 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
        seenIds.has(e.id)||seenKeys.has(e.submissionKey))
       deny("Invalid or duplicated store stock evidence.");
     seenIds.add(e.id);seenKeys.add(e.submissionKey);
+    if(!(e.kind==="opening"&&e.sourceId.startsWith("opening:"))) {
+      if(e.kind!=="transfer-in"&&e.kind!=="transfer-out") {
+        const movement=movementById.get(e.sourceId);
+        if(!movement||movement.businessProfileId!==company||movement.productId!==e.productId||
+           movement.quantityDelta!==e.quantityDelta||movement.createdAt!==e.createdAt)
+          deny("Store stock entry is not linked to original company inventory movement.");
+      }
+    }
     const group=JSON.stringify([e.businessProfileId,e.productId]);
     const nextSequence=(sequence.get(group)||0)+1;
     if(e.sequence!==nextSequence)deny("Store stock journal sequence must be complete and ordered.");
