@@ -19,6 +19,7 @@ import { parseCountAnswer, parseNewNameAnswer, parsePersonAnswer, parsePhoneAnsw
 import { parseCommand, parseCostAnswer, parseCustomerAnswer, parseItemAnswer, parseMoneyAnswer, parseNameAnswer, parsePaymentAnswer, parseQuantityAnswer } from "./intentParser";
 import { activityReply, bestSellingProductReply, customersWhoSoldToReply, customerBalanceReply, inventoryReply, lowStockReply, salesReply, supplierPurchasesReply, topDebtorsReply } from "./queries";
 import { periodSalesComparison, reorderInsight, slowMoversInsight } from "./insights";
+import {getRun17Evidence} from "@/features/insights/run17Service";
 import { answer, customerLabel, failure, helpReply, info, notUnderstood, question, resolveRecord, say, unsupported, type ChoiceOption } from "./replies";
 import { displayMention, prepareText, sanitizeInput } from "./text";
 import { notFoundActions, advanceBatch, advanceTransaction, executeBatch, executeCompoundSale, executePending, friendlyError, isSlowSave, newDraft, type Draft, type DraftIntent, type Pending, type Slot, type Step, type TransactionContext } from "./transactions";
@@ -108,6 +109,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
   registerAssistantTool({ id: "sales-comparison", description: "Compare this month with last month", mode: "read", run: async (_input, ctx) => periodSalesComparison(ctx.database, ctx.now) });
   registerAssistantTool({ id: "reorder-suggestions", description: "Estimate reorder quantities from recent sales", mode: "read", run: async (_input, ctx) => reorderInsight(ctx.database, ctx.now) });
   registerAssistantTool({ id: "slow-movers", description: "Find stocked products with no recent sales", mode: "read", run: async (_input, ctx) => slowMoversInsight(ctx.database, ctx.now) });
+  registerAssistantTool({ id: "run17-operating-review", description: "Inspect local evidence-backed business exceptions and source records; read only", mode: "read",
+    run: async (_input, ctx) => getRun17Evidence("last7",ctx.now,ctx.database) });
   const serial = <T,>(work: () => Promise<T>): Promise<T> => { const run = queue.then(work, work); queue = run.catch(() => undefined); return run; };
   const memory = createConversationMemory(() => options.now?.() ?? new Date());
   const quotationDraft = createQuotationDraftSession(database, options.currency, () => options.now?.() ?? new Date());
@@ -485,6 +488,32 @@ export function createAssistant(options: AssistantOptions): Assistant {
     // Answer only when no financial draft or confirmation is pending.
     if (!draft && !pending && !batchState && isQuotationRequest(canonicalText)) {
       return respondToQuotationRequest(canonicalText, database, options.currency);
+    }
+
+    // Run 17 analytic questions never execute an AI-generated financial plan.
+    // Only respond when no sale, credit, reversal or other confirmation is open.
+    if (!draft && !pending && !batchState &&
+      /\\b(?:business pulse|operational alerts|business exceptions|business anomalies|analytics evidence|run 17 insights|what needs attention in (?:my|the) business|operating review)\\b/i.test(canonicalText)) {
+      const report=await getRun17Evidence("last7",options.now?.()??new Date(),database);
+      const urgent=report.findings.filter(f=>f.severity==="attention");
+      const rows=report.findings.slice(0,6).map(item=>({
+        primary:item.title,secondary:item.evidence,
+        amount:item.confidence==="limited"?"Incomplete evidence":"Review only"
+      }));
+      return answer(
+        urgent.length
+          ? urgent.length+" operating findings need human review. These are saved-device observations, not proof of loss, fraud, a forecast or financial settlement."
+          : "No attention-level operating findings in this local snapshot. This does not prove that all records are complete.",
+        {details:[
+          {label:"Period",value:"Last 7 days"},
+          {label:"Recorded sale invoices",value:report.summary.recordedSaleCount+" (gross invoice minor units "+report.summary.grossRecordedInvoiceMinor+")"},
+          {label:"Full reversals / partial-return affected",value:report.summary.fullyReversedSaleCount+" / "+report.summary.partialReturnAffectedSaleCount},
+          {label:"Unreceived store transfers",value:String(report.summary.pendingDispatchedTransferCount)},
+          {label:"Source",value:"Local saved company records; no remote model or settlement verification"}
+        ],rows,moreText:report.incompleteFindingCount?"More findings were omitted from this reply. Open Insights for the source-linked review.":"Open Insights to verify individual source records before acting.",
+        link:{label:"Review evidence in Insights",href:"/insights"},
+        intent:"INSIGHTS_QUERY",confidence:1}
+      );
     }
 
     // Application-level follow-ups are resolved before business parsing, but only while no financial draft is open.
