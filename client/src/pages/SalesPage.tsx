@@ -52,6 +52,7 @@ export default function SalesPage() {
   const [saleCommerceOrderId,setSaleCommerceOrderId]=useState("");
   const [eligibleCommerceOrders,setEligibleCommerceOrders]=useState<CommerceOrder[]>([]);
   const [storeAvailable, setStoreAvailable] = useState<Record<string,number>|null>(null);
+  const [companyCommerceReserved,setCompanyCommerceReserved]=useState<Record<string,number>|null>(null);
   const [customerDisplayOpen, setCustomerDisplayOpen] = useState(false);
   useEffect(() => { setCustomerDisplayOpen(false); }, [activeCompanyId]);
   const [productQuery, setProductQuery] = useState("");
@@ -167,7 +168,8 @@ export default function SalesPage() {
   useEffect(() => { if (paymentPlan === "full") setAmountPaid(String(suggestedPaid)); }, [paymentPlan, suggestedPaid]);
 
   const availableUnits = (product:InventorySnapshot["products"][number])=>{
-    const baseline=storeMode&&product.itemKind!=="service"?(storeAvailable?.[product.id]??0):product.stockQuantity;
+    const baseline=product.itemKind==="service"?product.stockQuantity:storeMode?
+      (storeAvailable?.[product.id]??0):Math.max(0,product.stockQuantity-(companyCommerceReserved?.[product.id]??product.stockQuantity));
     const chosen=eligibleCommerceOrders.find(o=>o.id===saleCommerceOrderId);
     const held=chosen?.lines.find(line=>line.productId===product.id)?.quantity??0;
     return baseline+(chosen&&chosen.status==="reserved"&&Date.parse(chosen.reservationExpiresAt??"")>Date.now()?held:0);
@@ -223,6 +225,20 @@ export default function SalesPage() {
         !o.saleId&&o.reservationExpiresAt&&Date.parse(o.reservationExpiresAt)>Date.now()));})
       .catch(()=>{if(live)toast.error("Reserved orders could not be loaded.");});
     return ()=>{live=false;};
+  },[activeCompanyId,sales]);
+  useEffect(()=>{let live=true;setCompanyCommerceReserved(null);
+    if(!activeCompanyId)return;
+    void db.commerceHolds.where("businessProfileId").equals(activeCompanyId).toArray().then(rows=>{
+      if(!live)return;
+      const now=Date.now(),counts:Record<string,number>={};
+      for(const hold of rows)if(hold.status==="active"&&Date.parse(hold.expiresAt)>now){
+        const quantity=(counts[hold.productId]??0)+hold.quantity;
+        if(!Number.isSafeInteger(quantity))throw Error("Customer reservation amounts require reconciliation.");
+        counts[hold.productId]=quantity;
+      }
+      setCompanyCommerceReserved(counts);
+    }).catch(()=>{if(live){setCompanyCommerceReserved(null);toast.error("Customer stock reservations could not be reviewed.");}});
+    return()=>{live=false;};
   },[activeCompanyId,sales]);
   const complete = async () => {
     if (completionLock.current) return toast.info("This sale is already being recorded. Please wait for the receipt.");
