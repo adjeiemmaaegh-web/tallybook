@@ -170,7 +170,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = getActiveBusinessProfileId();
 
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const nowDate = new Date();
     const now = nowDate.toISOString();
