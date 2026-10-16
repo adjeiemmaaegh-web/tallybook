@@ -7,7 +7,7 @@
 const MAX_MINOR = Number.MAX_SAFE_INTEGER;
 const validCurrency = x => typeof x === 'string' && /^[A-Z]{3}$/.test(x);
 const canonicalInstant = value => typeof value === 'string' &&
- /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/.test(value) &&
+ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) &&
  Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0; }
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
