@@ -13,7 +13,7 @@ export const RUN8_BACKUP_TABLES=Object.freeze([
  'staffAudits','commerceOrders','inventoryCostEvents',
  'syncConsents','syncOutbox','syncConflicts','syncDevices',
  'storeLocations','storeAssignments','storeTransferRequests',
- 'storeStockObservations'
+ 'storeStockObservations', 'storeStockModes', 'storeStockEntries'
 ]);
 const later=Object.freeze({
  mobileMoneyProviders:8,
@@ -27,7 +27,8 @@ const later=Object.freeze({
  supplierPayableEntries:27,cashPartialReturns:28,
  syncConsents:26,syncOutbox:26,syncConflicts:26,syncDevices:26,
  storeLocations:26,storeAssignments:26,
- storeTransferRequests:26,storeStockObservations:26
+ storeTransferRequests:26,storeStockObservations:26,
+ storeStockModes:29,storeStockEntries:29
 });
 const deny=message=>{throw Error(message);};
 const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
