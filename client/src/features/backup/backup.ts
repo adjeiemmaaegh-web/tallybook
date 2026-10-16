@@ -249,7 +249,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   records.syncOutbox.forEach(validateOutboxEvent);
   records.syncDevices.forEach(validateLocalSyncDevice);
   for (const conflict of records.syncConflicts) if (!["payload-mismatch", "operation-collision", "unknown-event"].includes(conflict.reason) || !["unresolved", "reviewed"].includes(conflict.status) || !conflict.eventId || !conflict.operationId || !Number.isFinite(Date.parse(conflict.detectedAt))) throw new Error("Invalid sync conflict snapshot.");
-  auditRun13StoreBackup(companyId,records.storeStockModes,records.storeStockEntries,records.products,records.storeLocations,records.storeTransferRequests);
+  auditRun13StoreBackup(companyId,records.storeStockModes,records.storeStockEntries,records.products,records.storeLocations,records.storeTransferRequests,records.inventoryMovements);
   for (const store of records.storeLocations) if (normalizeStoreName(store.name) !== store.normalizedName || !["active", "closed"].includes(store.status)) throw new Error("Invalid store snapshot.");
   for (const request of records.storeTransferRequests) {
     validateTransferRequest(request.sourceStoreId, request.destinationStoreId, request.productId, request.quantity);
