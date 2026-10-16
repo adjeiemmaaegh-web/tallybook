@@ -1,10 +1,12 @@
 import { allocationCost, reconstructInventoryCost, type InventoryCostEvent } from "@/features/inventory/costLedger";
 import {assertRun9ReturnCostCompleteness} from './run9CostReturnAudit.mjs';
+import {assertRun9PurchaseCostCompleteness,type Run9PurchaseCostEvidence} from './run9PurchaseCostAudit.mjs';
 import {summarizeRun9InventoryValuation,type Run9InventoryValuation} from './run9InventoryValuation.mjs';
 import type { Product, InventoryMovement } from "@/features/inventory/inventory";
 import type { Sale, SaleLine } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
 import type { CashPartialSaleReturn } from "@/features/sales/cashPartialReturnPosting";
+import type {Purchase,PurchaseLine} from '@/features/purchases/purchases';
 
 function add(a: number, b: number) {
   if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b) || !Number.isSafeInteger(a + b)) throw new Error("Cost reconciliation exceeds safe integer limits.");
@@ -15,11 +17,13 @@ function add(a: number, b: number) {
 export function reconcileSaleCosts(company: string, input: {
   products: Product[]; events: InventoryCostEvent[]; movements: InventoryMovement[];
   sales: Sale[]; lines: SaleLine[]; reversals: SaleReversal[]; cashReturns?: CashPartialSaleReturn[];
+  purchases:Purchase[];purchaseLines:PurchaseLine[];expectedCurrency?:string;
 }, range: { start: Date; end: Date }): {
   cogsMinor?:number;unavailableSales:number;
-  inventoryValuation:Run9InventoryValuation
+  inventoryValuation:Run9InventoryValuation;
+  purchaseCostEvidence:Run9PurchaseCostEvidence
 } {
-  for (const rows of [input.products, input.events, input.movements, input.sales, input.lines, input.reversals, input.cashReturns ?? []]) {
+  for (const rows of [input.products, input.events, input.movements, input.sales, input.lines, input.reversals, input.cashReturns ?? [],input.purchases,input.purchaseLines]) {
     if (rows.some(row => row.businessProfileId !== company) || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error("Cost reconciliation contains duplicate or foreign records.");
   }
   // Source records must prove inverse FIFO restorations BOTH ways: existence
@@ -28,6 +32,11 @@ export function reconcileSaleCosts(company: string, input: {
   assertRun9ReturnCostCompleteness({
     events:input.events,lines:input.lines,reversals:input.reversals,
     cashReturns:input.cashReturns ?? []
+  });
+  const purchaseCostEvidence=assertRun9PurchaseCostCompleteness({
+    company,purchases:input.purchases,purchaseLines:input.purchaseLines,
+    movements:input.movements,events:input.events,
+    expectedCurrency:input.expectedCurrency
   });
   const events = new Map(input.events.map(event => [event.id, event]));
   const movements = new Map(input.movements.map(movement => [movement.id, movement]));
@@ -101,5 +110,5 @@ export function reconcileSaleCosts(company: string, input: {
     else cogsMinor = add(cogsMinor, value * posting.sign);
   }
   return { cogsMinor: unavailableSales ? undefined : cogsMinor,
-    unavailableSales,inventoryValuation };
+    unavailableSales,inventoryValuation,purchaseCostEvidence };
 }
