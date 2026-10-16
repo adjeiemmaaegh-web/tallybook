@@ -21,7 +21,8 @@ export function auditRun13StoreBackup(company,modes,entries,products,stores,requ
   const productById=new Map(products.map(p=>[p.id,p]));
   const seenIds=new Set(),seenKeys=new Set(),sequence=new Map(),
     balances=new Map(),openings=new Set(),transfers=new Map();
-  for(const e of entries) {
+  const ordered=[...entries].sort((a,b)=>String(a?.productId).localeCompare(String(b?.productId)) || Number(a?.sequence)-Number(b?.sequence));
+  for(const e of ordered) {
     if(!id(e?.id)||!id(e?.storeId)||!id(e?.productId)||!id(e?.sourceId)||
        !id(e?.submissionKey)||e.businessProfileId!==company||
        !storeById.has(e.storeId)||storeById.get(e.storeId).businessProfileId!==company||
