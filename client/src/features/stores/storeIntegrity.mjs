@@ -61,9 +61,10 @@ export function auditStoreRecords(companyId, stores, assignments, observations, 
     if (!id(row?.id) || transferIds.has(row.id) || !sameCompany(row, companyId) ||
         !storeIndex.has(row.sourceStoreId) || !storeIndex.has(row.destinationStoreId) || row.sourceStoreId === row.destinationStoreId ||
         !productIndex.has(row.productId) || !staffIndex.has(row.requestedByStaffId) || !quantity(row.quantity) || row.quantity === 0 ||
-        !['requested', 'cancelled', 'completed'].includes(row.status) || !date(row.createdAt) ||
+        !['requested', 'dispatched', 'cancelled', 'completed'].includes(row.status) || !date(row.createdAt) ||
         (row.status === 'cancelled' ? !date(row.cancelledAt) : row.cancelledAt !== undefined) ||
-        (row.status === 'completed' ? (!id(row.transferId) || !id(row.completionKey) || !date(row.completedAt)) : row.completedAt !== undefined))
+        (row.status === 'completed' ? (!id(row.transferId) || !id(row.completionKey) || !date(row.completedAt)) : row.completedAt !== undefined) ||
+        ((row.status === 'dispatched'||row.status === 'completed'||(row.status === 'cancelled'&&row.dispatchedAt)) ? (!id(row.dispatchKey)||!date(row.dispatchedAt)||!id(row.dispatchedByStaffId)) : row.dispatchedAt!==undefined))
       report('store-transfer-invalid', row?.id);
     if (id(row?.id)) transferIds.add(row.id);
   }
