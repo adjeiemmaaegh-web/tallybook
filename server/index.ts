@@ -307,6 +307,7 @@ async function startServer() {
     production: process.env.NODE_ENV === "production",
     accessEnabled: process.env.TALLYBOOK_SYNC_ACCESS_ENABLED === "true",
     backupUploadEnabled: process.env.TALLYBOOK_SYNC_BACKUP_UPLOAD_ENABLED === "true",
+    encryptedRelayEnabled: process.env.TALLYBOOK_RUN14_ENCRYPTED_RELAY_ENABLED === "true",
     certFile: process.env.TALLYBOOK_TLS_CERT_FILE,
     keyFile: process.env.TALLYBOOK_TLS_KEY_FILE,
   }, app);
