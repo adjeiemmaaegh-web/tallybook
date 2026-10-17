@@ -38,3 +38,14 @@ export function createRun19EvidencePayload(input:{
  results:ReadonlyArray<Run19Result>;
 }):Readonly<Run19EvidencePayload>;
 export function verifyRun19EvidencePayload(value:unknown):Readonly<Run19EvidencePayload>;
+
+export interface Run19CombinedCoverage {
+ readonly sourceSha:string;readonly campaigns:number;
+ readonly coverageGaps:ReadonlyArray<Readonly<{caseId:string;platforms:ReadonlyArray<"Windows"|"Android">}>>;
+ readonly reportedFailures:ReadonlyArray<string>;
+ readonly observations:ReadonlyArray<Readonly<{caseId:string;platform:"Windows"|"Android";recordedPass:number;recordedFail:number}>>;
+ readonly screenshotsIndependentlyInspected:false;readonly realDeviceProvenBySoftware:false;
+ readonly independentReviewerSigned:false;readonly ownerAccepted:false;
+ readonly releaseDecision:"NO-GO";readonly note:string
+}
+export function run19CrossDeviceCoverage(payloads:ReadonlyArray<Run19EvidencePayload>):Readonly<Run19CombinedCoverage>;
