@@ -304,7 +304,13 @@ export class TallybookDB extends Dexie {
     // within one company. Index-only migration preserves every original
     // wallet transfer and never rewrites amounts, currencies or beneficiaries.
     this.version(34).stores({
-      walletTransfers:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]"
+      walletTransfers:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+      sales:"id, businessProfileId, customerId, receiptNumber, createdAt, outstandingMinor, paymentMethod, submissionKey, &[businessProfileId+submissionKey]",
+      repayments:"id, businessProfileId, customerId, createdAt, method, submissionKey, &[businessProfileId+submissionKey]",
+      purchases:"id, businessProfileId, supplierId, purchaseDate, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+      expenses:"id, businessProfileId, expenseDate, category, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+      saleReversals:"id, businessProfileId, originalSaleId, customerId, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+      customerBenefits:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]"
     });
   }
 }
