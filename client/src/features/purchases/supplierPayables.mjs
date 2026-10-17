@@ -7,11 +7,16 @@
 const MAX_MINOR = Number.MAX_SAFE_INTEGER;
 function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0; }
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
+const currency = value => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
+const timestamp = value => typeof value === 'string' &&
+  /^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d{1,3})?(?:Z|[+-]\\d\\d:\\d\\d)$/.test(value) &&
+  Number.isFinite(Date.parse(value));
 
 /** Build the as-of balance for exactly one company-scoped purchase. */
 export function reconcileSupplierPayable(purchase, entries) {
   if (!purchase || !identity(purchase.id) || !identity(purchase.businessProfileId) ||
-      !identity(purchase.supplierId) || !validAmount(purchase.totalCostMinor) || !Array.isArray(entries)) {
+      !identity(purchase.supplierId) || !validAmount(purchase.totalCostMinor) ||
+      !currency(purchase.currency) || !timestamp(purchase.createdAt) || !Array.isArray(entries)) {
     throw new Error('Supplier purchase requires reconciliation.');
   }
   const seenIds = new Set();
@@ -25,13 +30,15 @@ export function reconcileSupplierPayable(purchase, entries) {
   for (const row of ordered) {
     if (!row || !identity(row.id) || !identity(row.submissionKey) || seenIds.has(row.id) || seenKeys.has(row.submissionKey) ||
         row.businessProfileId !== purchase.businessProfileId || row.purchaseId !== purchase.id ||
-        row.supplierId !== purchase.supplierId || !identity(purchase.currency) || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||
-        typeof row.createdAt !== 'string' || !Number.isFinite(Date.parse(row.createdAt))) {
+        row.supplierId !== purchase.supplierId || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||
+        !timestamp(row.createdAt) || Date.parse(row.createdAt) < Date.parse(purchase.createdAt) ||
+        (row.reference !== undefined && (typeof row.reference !== 'string' || row.reference.length > 120))) {
       throw new Error('Supplier payable contains a duplicate, foreign or malformed entry.');
     }
     seenIds.add(row.id); seenKeys.add(row.submissionKey);
     if (row.kind === 'recognition') {
-      if (recognized || row.amountMinor !== purchase.totalCostMinor || row.method !== undefined) {
+      if (recognized || row.amountMinor !== purchase.totalCostMinor ||
+          row.method !== undefined || row.reference !== undefined) {
         throw new Error('Supplier payable has invalid or repeated recognition.');
       }
       recognized = true;
@@ -41,6 +48,7 @@ export function reconcileSupplierPayable(purchase, entries) {
         throw new Error('Supplier payment has no valid tender method.');
       }
       if (row.kind === 'credit' && row.method !== undefined) throw new Error('Supplier credit must not claim a tender method.');
+      if (row.kind === 'credit' && row.reference === '') throw new Error('Supplier credit reference may not be empty.');
       if (row.amountMinor > MAX_MINOR - settledMinor) throw new Error('Supplier ledger exceeds safe monetary limits.');
       settledMinor += row.amountMinor;
       if (settledMinor > purchase.totalCostMinor) throw new Error('Supplier settlement exceeds the recognized liability.');
