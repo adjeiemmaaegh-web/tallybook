@@ -67,3 +67,12 @@ Backup restore now persists a durable `appMeta.restoreRecoveryJournal` marker be
 ## 11 October 2026 — journal stale-write protection (source-implemented, client-unverified)
 
 New recovery journals store exact before/after assistant snapshots and reject concurrent changes outside that pair of states. The assistant apply step also checks its expected preimage in the same assistant IndexedDB write transaction. If startup reports **unexpected assistant edits**, preserve the browser profile, both database files, recovery marker and prior backups; stop other tabs from writing. A qualified operator must reconcile the data and journal before attempting another recovery. Do **not** delete the journal or repeatedly clear local data. Older saved markers without an expected postimage remain readable, but a changed assistant state cannot be replayed automatically without risking newer writes; such markers intentionally fail closed. This is **not** a proof of full two-database atomicity or cross-tab safety. Dexie multi-tab, quota, browser interruption, real client/build checks have not run. See `docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md`.
+
+
+## 17 October 2026 — Run 20 final source-development operations addendum
+
+Source `v19/run20-operations-release-development-20261017` introduces an owner-only **More tools → Release operations** (`/release-operations`) view with nonmutating recovery-marker, schema metadata, verified local backup receipt, browser storage, and optional company-scoped financial-integrity diagnostics. It stages 20 exact-source evidence worksheet gates and a hash-bound offline NO-GO export. No new staging endpoint or monitoring collector is activated.
+
+Owner-operated future tools (NOT executed): `scripts/run20-inspect-source-config.mjs` to inspect local source flags (read-only), `scripts/run20-verify-release-worksheet.mjs --file <file> --sha <exact-git-sha>` and `scripts/RUN20_WINDOWS_RELEASE_EVIDENCE_VERIFY.cmd` for only file hashes/shape. Neither is a replacement for complete exact-head tests, physical UAT, independent issue closure or authenticated owner signoff. See `RUN20_STAGING_OPERATIONS_ROLLBACK_2026-10-17.md`, `RUN20_FULL_TRACEABILITY_AND_BLOCKERS_2026-10-17.md`, and `RUN20_FINAL_SOURCE_DEVELOPMENT_AND_NO_GO_2026-10-17.md`.
+
+**No external account, staging, payments, cloud financial sync, public commerce, production deployment, or `main` merge is authorized; V19 remains NO-GO.**
