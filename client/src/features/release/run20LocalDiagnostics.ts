@@ -13,7 +13,7 @@ export interface Run20Diagnostics{
   createdAt:string;sha256:string|null
  }|null;backupIsForSelectedCompany:boolean;
  deviceStorageBytes:{usage:number|null;quota:number|null}|null;
- onlineFlag:boolean|null;integrity:{
+ onlineFlag:boolean|null;integrityCoverage:"legacy-core-only";integrity:{
   status:"clear"|"attention";recordsChecked:number;issueCount:number;
   issueCodes:string[]
  }|null;
@@ -67,6 +67,7 @@ export async function getRun20Diagnostics(
    quota:Number.isFinite(storage.quota)?storage.quota!:null
   }:null,
   onlineFlag:typeof navigator!=="undefined"?navigator.onLine:null,
+  integrityCoverage:"legacy-core-only",
   integrity:integrity?{
    status:integrity.status,recordsChecked:integrity.recordsChecked,
    issueCount:integrity.issues.length,
