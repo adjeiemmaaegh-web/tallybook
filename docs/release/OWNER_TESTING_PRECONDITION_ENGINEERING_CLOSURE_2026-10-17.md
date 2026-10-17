@@ -2,7 +2,7 @@
 
 **Reviewed:** 2026-10-17  
 **Source branch:** `v19/run20-operations-release-development-20261017`  
-**Reviewed post-correction commit:** `4fd249c3cb0e232ce576fb6997b4aa8e70fbc8eb`  
+**First reviewed post-correction commit:** `4fd249c3cb0e232ce576fb6997b4aa8e70fbc8eb`; additional coverage warning source commit `74a5ed1503f09bf79a688e1e9258d4f1981ae220`.  
 **Classification:** PARTIAL SOURCE INSPECTION AND REPAIR. **NOT A FULL REPOSITORY AUDIT, NOT SEMANTIC TYPECHECKED, NOT EXECUTED OR ACCEPTED.**  
 **Release:** NO-GO / INCOMPLETE.
 
@@ -17,6 +17,7 @@ The product owner should not be expected to debug our code during real-device UA
 | LEGACY-CURRENCY-ANALYTICS | `client/src/features/insights/run17Evidence.mjs`, `.d.mts`, `Run17EvidencePanel.tsx`, `run17Csv.mjs`: optional currency missing on legitimate historic `Sale` records previously caused entire Run 17 report to throw. Now such records are explicitly excluded from currency-bound numbers and observed unit totals, with separate coverage count, UI warning and CSV disclosure. Explicit conflicting currency still fails closed. | Edited and committed | NOT RUN |
 | BACKUP-REAL-SIZE-CAP | `client/src/features/backup/run18ImportAdmission.mjs`: after reading a file, independently check its actual UTF-8 byte count against the same device-memory admission budget, not just the global 96 MiB maximum. Preserve no-truncation and no-destructive-restore behavior. | Edited and committed | NOT RUN |
 | COMMERCE-INVALID-CANCEL-UI | `client/src/pages/CommercePage.tsx`: the legacy draft-cancellation button previously appeared even on reserved, dispatched and delivered orders, where draft transition must reject. It now appears only in draft, prepared and ready states. Specialized cancellation and return-review paths remain separate. | Edited and committed | NOT RUN |
+| INTEGRITY-COVERAGE-LABEL | `client/src/features/release/run20LocalDiagnostics.ts` and `client/src/pages/Run20OperationsPage.tsx`: displayed audit is now explicitly labelled legacy-core-only; missing Run 13–17 table coverage cannot silently imply complete integrity. | Edited and committed | NOT RUN |
 
 **Do not count any item above as a PASS** until the exact corrected source executes through semantic TypeScript, matching fixture tests, browser integration, migrations and affected financial/backup recovery paths.
 
