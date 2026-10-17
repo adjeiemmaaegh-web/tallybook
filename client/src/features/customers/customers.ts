@@ -2,6 +2,7 @@ import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailW
 import { requirePermission } from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {reconcileCreditLedger} from "@/features/sales/creditLedger.mjs";
+import {reconcilePrepaidLiability} from "@/features/reports/prepaidLiabilityReconciliation.mjs";
 /** Tactile Ledger customer reminder: people records stay local, and financial figures are never invented before a real transaction exists. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -105,8 +106,8 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
   return withCoordinatedRetailWrite(async () => {
     const activeId = getActiveBusinessProfileId();
     return database.transaction("rw", [
-      database.appMeta,database.customers,database.sales,database.saleReversals,
-      database.repayments,database.customerBenefits,database.staffMembers
+      database.appMeta,database.businessProfiles,database.customers,database.sales,database.saleReversals,
+      database.repayments,database.customerBenefits,database.walletTransfers,database.staffMembers
     ], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("staff", database, activeId);
@@ -116,15 +117,25 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
       // A customer with outstanding credit cannot be archived: repayment
       // entrypoints intentionally require an active customer. Preserve both
       // the customer identity and debt instead of stranding the collection.
-      const [sales,repayments,reversals,benefits]=await Promise.all([
+      const [sales,repayments,reversals,benefits,transfers]=await Promise.all([
         database.sales.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
         database.repayments.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
         database.saleReversals.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
-        database.customerBenefits.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray()
+        database.customerBenefits.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
+        database.walletTransfers.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray()
       ]);
       const debt=reconcileCreditLedger(sales,reversals,repayments);
       if(debt.outstandingMinor>0)
         throw new Error("Customer has outstanding receivables. Record and reconcile repayments before archiving.");
+      if(transfers.length||benefits.some(row=>row.kind==="wallet")||
+         sales.some(sale=>(sale.walletAppliedMinor??0)>0)){
+        const profile=await database.businessProfiles.get(activeId);
+        if(!profile?.currency||!/^[A-Z]{3}$/.test(profile.currency))
+          throw new Error("Company wallet currency must be verified before archiving.");
+        const verified=reconcilePrepaidLiability({transfers,benefits,sales,reversals},profile.currency);
+        if(verified.liabilityMinor!==0)
+          throw new Error("Customer has remaining wallet funds. Resolve verified prepaid liability before archiving.");
+      }
       // Wallet deposits and loyalty entitlements remain customer liabilities,
       // not abandoned just because a profile is hidden. A corrupted negative
       // or overflowing balance is not a zero available entitlement.
