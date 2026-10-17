@@ -16,7 +16,7 @@ import {run19CrossDeviceCoverage,type Run19EvidencePayload,
 type Draft={status:Exclude<Run20GateStatus,"not-run">;reviewerRole:string;note:string;evidenceFile:string};
 const emptyDraft=():Draft=>({status:"blocked",reviewerRole:"owner",note:"",evidenceFile:""});
 const roles=["owner","finance-reviewer","security-reviewer","device-reviewer","operations-reviewer"];
-const readable=e=>e instanceof Error?e.message:"Unable to review local release evidence.";
+const readable=(e:unknown)=>e instanceof Error?e.message:"Unable to review local release evidence.";
 
 export default function Run20OperationsPage(){
  const [company,setCompany]=useState("");
@@ -185,7 +185,7 @@ export default function Run20OperationsPage(){
         <Link href="/device-uat" className="rounded border p-2">Real-device evidence</Link>
       </div>
       {diagnostics?<dl className="grid gap-3 text-sm sm:grid-cols-2">
-       <div><dt>Saved application schema</dt><dd className="font-semibold">{diagnostics.schemaVersion}</dd></div>
+       <div><dt>Saved application schema metadata</dt><dd className="font-semibold">{diagnostics.schemaVersion??"Unavailable — investigate before upgrade"} (supported source schema {diagnostics.supportedSchemaVersion})</dd></div>
        <div><dt>Unresolved recovery marker</dt><dd className="font-semibold">{diagnostics.recoveryJournalPresent?"Present — stop writes, preserve storage":"Not found in current metadata; not crash proof"}</dd></div>
        <div><dt>Verified local backup-file receipt</dt><dd>{diagnostics.backupReceipt?new Date(diagnostics.backupReceipt.createdAt).toLocaleString():"None for this company"}</dd></div>
        <div><dt>Backup custody</dt><dd>Off-device retention and restoration still require independent owner verification</dd></div>
