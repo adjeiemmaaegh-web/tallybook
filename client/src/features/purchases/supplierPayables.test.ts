@@ -2,7 +2,7 @@ import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import { initializeDatabase, TallybookDB, DATABASE_SCHEMA_VERSION } from '@/db/TallybookDB';
 import { createProduct } from '@/features/inventory/inventory';
-import { createSupplier, completePurchase } from '@/features/purchases/purchases';
+import { createSupplier, completePurchase, archiveSupplier } from '@/features/purchases/purchases';
 import { getSupplierPayables, recognizeUnpaidPurchase, recordSupplierSettlement } from '@/features/purchases/supplierPayables.ts';
 
 const records: TallybookDB[] = [];
@@ -63,4 +63,24 @@ describe('v27 explicitly recognized supplier payables',()=>{
     await expect(recognizeUnpaidPurchase(purchase.id,'legacy-recognition-001',current)).rejects.toThrow(/currency/);
     expect((await getSupplierPayables(current)).unknownPurchases).toBe(1);
   });
+});
+
+it('prevents supplier archival until all purchase liabilities have explicit recognition and zero outstanding',async()=>{
+  const {database,supplier,purchase}=await setup();
+  const before=await database.suppliers.get(supplier.id);
+  await expect(archiveSupplier(supplier.id,database)).rejects.toThrow(/unpaid or unverified/);
+  expect((await database.suppliers.get(supplier.id))?.archivedAt).toBeUndefined();
+  await recognizeUnpaidPurchase(purchase.id,'archive-recognition-001',database);
+  await expect(archiveSupplier(supplier.id,database)).rejects.toThrow(/unpaid or unverified/);
+  expect(await database.supplierPayableEntries.count()).toBe(1);
+  await recordSupplierSettlement({
+    purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:purchase.totalCostMinor,
+    submissionKey:'archive-settlement-001'
+  },database);
+  const archived=await archiveSupplier(supplier.id,database);
+  expect(archived.archivedAt).toBeTruthy();
+  expect(archived.createdAt).toBe(before?.createdAt);
+  expect((await getSupplierPayables(database)).outstandingByCurrency)
+    .toEqual([{currency:'GHS',amountMinor:0}].filter(row=>row.amountMinor!==0));
+  await expect(archiveSupplier(supplier.id,database)).rejects.toThrow(/already archived/);
 });
