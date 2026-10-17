@@ -99,6 +99,6 @@ test("ambiguous sibling .ts and .mjs and missing imports are detected",t=>{
  write(x.root,"client/src/ambiguous.mjs","export const value=2;\n");
  const out=x.audit(x.commit());
  assert.notEqual(out.status,0);
- assert.match(out.stdout,/Ambiguous \\.ts\\/\\.mjs import/);
+ assert.match(out.stdout,/Ambiguous \.ts\/\.mjs import/);
  assert.match(out.stdout,/Missing local import/);
 });
