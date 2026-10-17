@@ -19,12 +19,13 @@
 ## Remaining developer obligations — NOT passed
 
 - **Exact-HEAD semantic TypeScript, production build, native/client/IndexedDB integration tests and real Chromium/Edge offline browser tests:** not executed inside the assistant container because the connected repository is not mounted; the runtime's `git ls-remote` could not resolve GitHub and the required pinned Node/pnpm dependencies are not available as a checked-out workspace.
-- **CI evidence:** if an authorized GitHub Actions workflow is triggered, its actual run and job logs must be independently inspected before any PASS may be recorded. A queued workflow or successful commit is not a result.
+- **CI attempt made, but blocked:** On commit `cb204d3ac8d59e9ca5834074910be271446c73f9` the existing [Release validation workflow](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/39000398606) actually triggered (GitHub run `39000398606`). GitHub reports `completed / failure`, with one `validate` job `117301906044`, an **empty executed-step summary**, **no workflow artifacts**, and job log retrieval returned a `BlobNotFound` 404. This DOES NOT establish any failing or passing client, native, TypeScript, build or browser assertion; the cause of this runner-level failure is not visible from the available evidence. Do not mark tests executed or QA accepted.
+- **Focused new regression source:** `qa/run17-legacy-currency-coverage.test.mjs` and `qa/run18-import-memory-boundary.test.mjs` were added for the two confirmed fixes. `client/src/features/release/run20CrossRunAudit.test.ts` is the new client IndexedDB suite. All remain **UNEXECUTED** until the workflow can run successfully on the corrected exact SHA.
 - **Release-scope design:** Run 13 authoritative store-stock and transfers, Run 16 public-commerce reservations/fulfillment, Run 14 cloud sync and Run 15 live provider payments remain intentionally disabled by source capability gates. Do not represent them as enabled features without full integration, safeguards, independent acceptance and separate deployment/provider authorization.
 - **Financial conservation, historical 82 acceptance units / 47 blocker dispositions, migration/restore, staff/RLS, security/backup and hardware acceptance** all still need exact-source runnable evidence. Source audit is not a substitute for those gates.
 
 ## Owner-testing boundary
 
-**Engineering handoff:** NOT YET READY FOR FINAL OWNER HARDWARE/UAT. Owner must not have to discover source-level integration failures on live hardware. Use disposable/sample databases only for future QA. No staging, live payments, public publication, cloud financial transport, main-branch merge or production deployment is approved.
+**Engineering handoff:** NOT YET READY FOR FINAL OWNER HARDWARE/UAT. Developer CI must be made runnable and source errors/failures corrected first. Owner must not have to discover source-level integration failures on live hardware. Use disposable/sample databases only for future QA. No staging, live payments, public publication, cloud financial transport, main-branch merge or production deployment is approved.
 
 **Commercial release:** NO-GO / INCOMPLETE.
