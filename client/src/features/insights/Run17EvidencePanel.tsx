@@ -69,10 +69,10 @@ export function Run17EvidencePanel({companyId,currency,period}:{companyId:string
    {report&&!loading?<><div className="grid gap-3 sm:grid-cols-2">
       <div className="rounded border p-3"><strong>Saved invoice totals</strong>
        <p>{fm(report.summary.grossRecordedInvoiceMinor)}</p>
-       <small>Gross saved sale totals for this period, before full/partial returns; not cash received or profit.</small></div>
+       <small>Gross recorded invoice totals for currency-attributed receipts only, before full/partial returns; not cash received or profit.</small></div>
       <div className="rounded border p-3"><strong>Sale source coverage</strong>
        <p>{report.summary.recordedSaleCount} saved sales · {report.summary.fullyReversedSaleCount} fully reversed · {report.summary.partialReturnAffectedSaleCount} with partial-return evidence</p>
-       <small>Store origin unknown on {report.summary.storeOriginUnknownSaleCount} selected sales.</small></div>
+       <small>Store origin unknown on {report.summary.storeOriginUnknownSaleCount} selected sales; {report.summary.legacyCurrencyUnverifiedSaleCount} historical sales excluded for missing saved currency.</small></div>
       <div className="rounded border p-3"><strong>Local commerce status</strong>
        <p>{report.summary.localOrderCount} saved orders · {report.summary.deliveredOrderCount} currently marked delivered</p>
        <small>Delivery status does not confirm funds settled.</small></div>
