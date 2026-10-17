@@ -45,7 +45,9 @@ export async function auditRun20CrossRunLinks(database:TallybookDB=db):Promise<R
      database.staffMembers.where("businessProfileId").equals(company).toArray(),
      database.storeStockModes.get(company)
    ]);
-   const arrays=[products,movements,stores,transfers,entries,orders,holds,events,reviews,sales,staff];
+   const arrays:ReadonlyArray<ReadonlyArray<{businessProfileId:string}>>=[
+     products,movements,stores,transfers,entries,orders,holds,events,reviews,sales,staff
+   ];
    if(arrays.some(rows=>rows.some(row=>row.businessProfileId!==company)))
      throw Error("Foreign-company record found in scoped integrity snapshot.");
    const checks:Array<{code:CheckCode;status:"clear"|"attention";detail:string}>=[];
