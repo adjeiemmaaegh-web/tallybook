@@ -27,6 +27,16 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+  // Run 18 source hardening: safe-by-default headers, independent of
+  // whether optional cloud/relay routes are ever activated.
+  app.disable("x-powered-by");
+  app.use((_req,res,next)=>{
+    res.setHeader("X-Content-Type-Options","nosniff");
+    res.setHeader("X-Frame-Options","DENY");
+    res.setHeader("Referrer-Policy","no-referrer");
+    res.setHeader("Permissions-Policy","geolocation=(), camera=(self), microphone=(self)");
+    next();
+  });
 
 
   // The HTTP surface is present for development but stays fail-closed. A
