@@ -5,7 +5,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
  RUN19_CASES,run19DefaultResults,run19Summary,validateRun19Result,
- createRun19EvidencePayload,verifyRun19EvidencePayload
+ createRun19EvidencePayload,verifyRun19EvidencePayload,run19CrossDeviceCoverage
 } from "../client/src/features/qa/run19Acceptance.mjs";
 import {
  exportRun19Envelope,importRun19Envelope
@@ -72,4 +72,30 @@ test("unknown external source fields cannot silently enter protected evidence",(
  assert.throws(()=>validateRun19Result({...rows[0],customerPIN:"999999"},"Windows"),/invalid/i);
  const report=createRun19EvidencePayload(base());
  assert.throws(()=>verifyRun19EvidencePayload({...report,productionApproved:true}),/Unsupported/i);
+});
+
+test("Windows cannot claim Android-only PASS or waive a Windows case",()=>{
+ const android=RUN19_CASES.find(c=>c.platform==="Android");
+ const windows=RUN19_CASES.find(c=>c.platform==="Windows");
+ assert.ok(android&&windows);
+ assert.throws(()=>validateRun19Result({
+  caseId:android.id,status:"pass",note:"Pretended Android install worked on Windows desktop.",
+  observedAt:"2026-10-17T11:00:00.000Z",evidenceFile:"android-absent.png"
+ },"Windows"),/another operating system/i);
+ assert.throws(()=>validateRun19Result({
+  caseId:windows.id,status:"not-applicable",
+  note:"This check is mandatory on the selected Windows device.",
+  observedAt:"2026-10-17T11:00:00.000Z",evidenceFile:""
+ },"Windows"),/device-relevant/i);
+});
+test("platform-combined coverage never approves release from manually claimed observations",()=>{
+ const win=createRun19EvidencePayload(base());
+ const android=createRun19EvidencePayload({...base(),devicePlatform:"Android",
+  deviceClass:"Disposable Android phone"});
+ const combined=run19CrossDeviceCoverage([win,android]);
+ assert.equal(combined.campaigns,2);
+ assert.ok(combined.coverageGaps.length>0);
+ assert.equal(combined.independentReviewerSigned,false);
+ assert.equal(combined.releaseDecision,"NO-GO");
+ assert.throws(()=>run19CrossDeviceCoverage([win,{...android,sourceSha:"b".repeat(40)}]),/source|tampered/i);
 });
