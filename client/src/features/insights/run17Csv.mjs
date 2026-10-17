@@ -23,6 +23,7 @@ export function exportRun17Csv(report) {
     "Not net revenue, customer cash received or bank settlement",""],
   ["Metric","sales","Saved sales",report.summary.recordedSaleCount,"Includes reversed receipts",""],
   ["Metric","returns","Full reversals",report.summary.fullyReversedSaleCount,"No cash claim",""],
+  ["Metric","legacy-currency","Sales excluded without currency evidence",report.summary.legacyCurrencyUnverifiedSaleCount,"Historical gross amount and units cannot be safely inferred",""],
   ["Metric","returns","Partial-return affected sales",report.summary.partialReturnAffectedSaleCount,
     "Excluded from observed product volume until net unit provenance established",""],
   ["Metric","stores","Sales missing store attribution",report.summary.storeOriginUnknownSaleCount,
