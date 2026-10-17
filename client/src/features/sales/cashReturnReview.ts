@@ -1,5 +1,6 @@
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
+import { requirePermission, currentStaffId } from '@/features/staff/staff';
 import { prepareCashReturnReview, type CashReturnReview } from './cashReturnReview.mjs';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
 import {authorizeReturnPolicy} from '@/features/business/returnPolicy.mjs';
@@ -10,7 +11,9 @@ export async function getCashReturnReview(originalSaleId: string, database: Tall
   if (!company || typeof originalSaleId !== 'string' || !originalSaleId.trim()) throw new Error('Select a saved sale for return review.');
   return database.transaction('r', [database.businessProfiles, database.sales, database.saleLines, database.payments, database.receipts,
     database.cashPartialReturns, database.saleReversals, database.products, database.inventoryCostEvents,
-    database.inventoryBatches, database.inventoryMovements], async () => {
+    database.inventoryBatches, database.inventoryMovements, database.staffMembers], async () => {
+    const actor=await requirePermission('refund',database,company);
+    const originalActorId=currentStaffId(company);
     const sale = await database.sales.get(originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('This sale is not available in the active company.');
     const companyProfile=await database.businessProfiles.get(company);
@@ -34,7 +37,11 @@ export async function getCashReturnReview(originalSaleId: string, database: Tall
       database.inventoryMovements.bulkGet(priorRows.map(row => row.movementId)),
       database.inventoryCostEvents.bulkGet(priorRows.map(row => row.costEventId)),
     ]);
-    if (getActiveBusinessProfileId() !== company) throw new Error('Company changed during return review.');
+    if (getActiveBusinessProfileId() !== company || currentStaffId(company)!==originalActorId)
+      throw new Error('Company or refund-review session changed during return review.');
+    const stillAuthorized=await requirePermission('refund',database,company);
+    if(stillAuthorized?.id!==actor?.id)
+      throw new Error('Return reviewer authorization changed; unlock again.');
     assertCashReturnStockLinks(sale, saleLines, priorReturns,
       priorMovements.filter((item): item is NonNullable<typeof item> => Boolean(item)),
       [...costEvents, ...priorCostEvents].filter((item): item is NonNullable<typeof item> => Boolean(item)));
