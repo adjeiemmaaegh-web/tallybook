@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       devOptions: { enabled: true, type: "module" },
       manifest: {
         name: "Tallybook — Business Ledger",
@@ -32,20 +32,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         navigateFallback: "/index.html",
         globPatterns: ["**/*.{js,css,html,svg,png,webp,jpg,jpeg}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts",
-              expiration: {
-                maxEntries: 12,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
+        // Offline app-shell precache includes split route chunks. Do not
+        // cache or request Google Fonts or third-party scripts by default.
+        runtimeCaching: [],
       },
     }),
   ],
