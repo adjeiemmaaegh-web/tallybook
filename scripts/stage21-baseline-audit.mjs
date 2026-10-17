@@ -96,8 +96,11 @@ visit(root);
 const candidates=["",".ts",".tsx",".mts",".cts",".d.ts",".d.mts",".js",".jsx",".mjs",".cjs",".json",
  ".css",".scss",".svg",".png",".webp",".jpg",".jpeg","/index.ts","/index.tsx",
  "/index.js","/index.mjs","/index.jsx","/index.d.mts"];
+// Static imports/exports are line anchored so quoted synthetic QA strings
+// and inline comments do not create fabricated path failures. This remains
+// a lightweight source preflight, not an AST-based TypeScript resolution check.
 const matches=[
- /\b(?:import|export)\s+(?:[^"'()]*?\s+from\s*)?["']([^"']+)["']/g,
+ /(?:^|[\r\n])[ \t]*(?:import|export)\s+(?:[^"'()\r\n]*?\s+from\s*)?["']([^"']+)["']/gm,
  /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
  /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g
 ];
