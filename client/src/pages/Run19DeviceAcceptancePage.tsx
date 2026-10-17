@@ -7,7 +7,7 @@ import {Link} from "wouter";
 import {db} from "@/db/TallybookDB";
 import {useBusinessProfile} from "@/contexts/BusinessProfileContext";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
-import {requirePermission,currentStaffId} from "@/features/staff/staff";
+import {requirePermission,currentStaffId,STAFF_SESSION_CHANGED} from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {RUN19_CASES,run19DefaultResults,run19Summary,validateRun19Result,
  createRun19EvidencePayload,type Run19Status,type Run19Result} from "@/features/qa/run19Acceptance.mjs";
@@ -63,12 +63,30 @@ export default function Run19DeviceAcceptancePage(){
  useEffect(()=>{
   let active=true;
   setAuthorized(false);setAuthError("");setResults(run19DefaultResults());
-  setDrafts({});setProbe(null);setScanInput("");setArea("All areas");
+  setDrafts({});setChoices({});setProbe(null);setScanInput("");setArea("All areas");
+  setSourceSha("");setDevicePlatform("Windows");setDeviceClass("");setBrowser("");
+  setOs("");setOperatorLabel("");setSampleConfirmed(false);
+  setNoPaymentsConfirmed(false);setNoDeployConfirmed(false);
   setMessage("");setError("");
-  if(!ownerKey){setAuthError("Select a company and unlock the owner first.");return;}
-  void requireOwnerForRun19(ownerKey).then(()=>{if(active)setAuthorized(true);})
-    .catch(e=>{if(active)setAuthError(cleanError(e));});
-  return()=>{active=false;};
+  const refresh=()=>{
+    if(!ownerKey){if(active){setAuthorized(false);setAuthError("Select a company and unlock the owner first.");}return;}
+    void requireOwnerForRun19(ownerKey).then(()=>{if(active){setAuthorized(true);setAuthError("");}})
+      .catch(e=>{if(active){
+        setAuthorized(false);setAuthError(cleanError(e));setResults(run19DefaultResults());
+        setDrafts({});setScanInput("");setProbe(null);
+      }});
+  };
+  const onFocus=()=>{if(document.visibilityState==="visible")refresh();};
+  window.addEventListener(STAFF_SESSION_CHANGED,refresh);
+  window.addEventListener("focus",onFocus);
+  document.addEventListener("visibilitychange",onFocus);
+  refresh();
+  return()=>{
+    active=false;
+    window.removeEventListener(STAFF_SESSION_CHANGED,refresh);
+    window.removeEventListener("focus",onFocus);
+    document.removeEventListener("visibilitychange",onFocus);
+  };
  },[ownerKey]);
  const counts=useMemo(()=>run19Summary(results,devicePlatform),[results,devicePlatform]);
  const filtered=useMemo(()=>RUN19_CASES.filter(row=>area==="All areas"||row.area===area),[area]);
@@ -76,7 +94,8 @@ export default function Run19DeviceAcceptancePage(){
   if(!authorized)throw Error("Owner-only device acceptance is locked.");
   await requireOwnerForRun19(ownerKey);
  },[authorized,ownerKey]);
- const record=(caseId:string)=>{
+ const record=async(caseId:string)=>{
+  try{await current();}catch(e){setError(cleanError(e));return;}
   setError("");setMessage("");
   const currentStatus=choices[caseId]??defaultChoice;
   const draft=drafts[caseId]??{note:"",evidenceFile:""};
@@ -280,7 +299,7 @@ export default function Run19DeviceAcceptancePage(){
        </label>
        <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded border p-2"
-          onClick={()=>record(test.id)}>Record observed outcome</button>
+          onClick={()=>void record(test.id)}>Record observed outcome</button>
         <button type="button" className="rounded border p-2"
           onClick={()=>resetCase(test.id)}>Reset to not run</button>
        </div>
