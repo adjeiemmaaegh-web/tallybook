@@ -89,6 +89,15 @@ test("deletion of original issue, duplicate ID and dirty worktree all fail close
  const missing=x.audit(sha);
  assert.notEqual(missing.status,0);
  assert.match(missing.stdout,/Missing frozen blockers ID/);
+ write(x.root,"docs/release/blockers.json",JSON.stringify({
+  release:"V19",decision:"NO-GO / INCOMPLETE",
+  blockers:[...x.blockers.map(id=>({id,status:"implemented-unverified"})),
+    {id:x.blockers[0],status:"implemented-unverified"}]
+ }));
+ sha=x.commit();
+ const repeated=x.audit(sha);
+ assert.notEqual(repeated.status,0);
+ assert.match(repeated.stdout,/Duplicate\\/malformed blockers entry/);
  write(x.root,"uncommitted.txt","untracked unsanitized fixture");
  assert.match(x.audit(sha).stdout,/Worktree contains uncommitted changes/);
 });
