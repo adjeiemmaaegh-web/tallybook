@@ -91,4 +91,37 @@ describe('Stage 4 wallet and loyalty financial safeguards',()=>{
   expect((await db.walletTransfers.count())).toBe(2);
  });
 
+ it('upgrades pre-v34 wallet evidence without rewriting funds or dropping old unique keys',async()=>{
+  const name=`stage22-wallet-migration-${Date.now()}-${++i}`;
+  names.push(name);
+  const old=new Dexie(name);
+  old.version(33).stores({
+    appMeta:'key, updatedAt',
+    businessProfiles:'id, name, country, currency, businessType, updatedAt',
+    walletTransfers:'id, businessProfileId, customerId, kind, createdAt, &submissionKey'
+  });
+  await old.open();
+  const saved={id:'old-wallet-entry-001',businessProfileId:'primary',
+    customerId:'old-customer-001',kind:'deposit',currency:'GHS',
+    amountMinor:800,method:'cash',reference:'original-offline-cash',
+    benefitEntryId:'old-benefit-001',submissionKey:'original-wallet-key-001',
+    createdAt:'2026-10-10T12:00:00.000Z'};
+  await old.table('walletTransfers').add(saved);
+  old.close();
+  const upgraded=new TallybookDB(name);dbs.push(upgraded);
+  await upgraded.open();
+  const restored=await upgraded.walletTransfers.get(saved.id);
+  expect(restored).toMatchObject(saved);
+  expect((await upgraded.walletTransfers.where('[businessProfileId+submissionKey]')
+    .equals(['primary',saved.submissionKey]).count())).toBe(1);
+  await upgraded.walletTransfers.add({
+    ...saved,id:'other-business-wallet-001',businessProfileId:'second-company'
+  });
+  expect(await upgraded.walletTransfers.count()).toBe(2);
+  await expect(upgraded.walletTransfers.add({
+    ...saved,id:'duplicate-primary-wallet-001'
+  })).rejects.toThrow();
+  expect((await upgraded.walletTransfers.get(saved.id))?.amountMinor).toBe(800);
+ });
+
 });
