@@ -192,11 +192,19 @@ export default function Run20OperationsPage(){
        <div><dt>Browser storage estimate</dt><dd>{diagnostics.deviceStorageBytes?
         `${diagnostics.deviceStorageBytes.usage??"unknown"} / ${diagnostics.deviceStorageBytes.quota??"unknown"} bytes`:"Unavailable"}</dd></div>
        <div><dt>Browser online flag</dt><dd>{diagnostics.onlineFlag===null?"Unknown":diagnostics.onlineFlag?"Browser flag online, no server verification":"Browser flag offline"}</dd></div>
-       <div><dt>Optional legacy-core integrity audit (not full Run 13–17 coverage)</dt><dd>{diagnostics.integrity?
+       <div><dt>Optional legacy-core integrity audit (separately scoped)</dt><dd>{diagnostics.integrity?
          `${diagnostics.integrity.status}; ${diagnostics.integrity.issueCount} findings in ${diagnostics.integrity.recordsChecked} records`:
          "Not performed in this view"}</dd></div>
-       <div><dt>Acceptance</dt><dd>No independent security, finance or device signoff recorded; store-stock, commerce holds/delivery and Run 17 review journal require separate audits</dd></div>
+       <div><dt>Run 13–17 source relationship audit</dt>
+        <dd>{diagnostics.crossRun?
+          `${diagnostics.crossRun.status}; ${diagnostics.crossRun.checkedRecordCount} saved rows examined`:
+          "Not performed in this view"}</dd></div>
+       <div><dt>Acceptance</dt><dd>Local source checks are not complete financial, security, physical-inventory or independent-device acceptance.</dd></div>
       </dl>:null}
+      {diagnostics?.crossRun?.checks.map(check=>
+        <p key={check.code} role={check.status==="attention"?"alert":"status"} className="text-sm">
+          {check.code}: {check.status} — {check.detail}
+        </p>)}
       {diagnostics?.integrity?.issueCodes.length?<p className="text-sm" role="alert">
        Review source issue categories before another live operation: {diagnostics.integrity.issueCodes.join(", ")}
       </p>:null}
