@@ -65,7 +65,7 @@ export async function recordCustomerBenefit(input: {customerId:string;kind:Benef
       const actor=await requirePermission('staff',database,businessProfileId);
       const customer=await database.customers.get(input.customerId);
       if(!customer||customer.businessProfileId!==businessProfileId||customer.archivedAt) throw new Error('Customer is unavailable.');
-      const prior=await database.customerBenefits.where('submissionKey').equals(input.submissionKey).first();
+      const prior=await database.customerBenefits.where('[businessProfileId+submissionKey]').equals([businessProfileId,input.submissionKey]).first();
       if(prior){if(prior.businessProfileId!==businessProfileId||prior.customerId!==input.customerId||prior.kind!==input.kind||prior.delta!==input.delta||prior.reason!==input.reason.trim())throw new Error('Submission key reused with different benefit details.');return prior;}
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId).and(e=>e.businessProfileId===businessProfileId&&e.kind===input.kind).toArray();
       const balance=existing.reduce((s,e)=>s+e.delta,0)+input.delta;
