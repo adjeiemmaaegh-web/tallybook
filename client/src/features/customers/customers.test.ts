@@ -115,6 +115,19 @@ describe("customer records", () => {
     expect((await archiveCustomer(customer.id,database)).archivedAt).toBeTruthy();
   });
 
+  it("rejects orphan prepaid benefits even when their arithmetic looks like a positive balance",async()=>{
+    setActiveBusinessProfileId("primary");
+    const database=makeDatabase();await initializeDatabase(database);
+    await saveBusinessProfile({name:"Audit Wallet Shop",country:"Ghana",currency:"GHS",businessType:"Retail"},database);
+    const customer=await createCustomer(customerInput,database);
+    await database.customerBenefits.add({id:"orphan-wallet-benefit-001",businessProfileId:"primary",
+      customerId:customer.id,kind:"wallet",delta:100,reason:"Unlinked synthetic deposit",
+      submissionKey:"orphan-wallet-deposit-001",createdAt:new Date().toISOString()});
+    await expect(archiveCustomer(customer.id,database))
+      .rejects.toThrow(/Prepaid wallet|wallet|reconcil/i);
+    expect((await database.customers.get(customer.id))?.archivedAt).toBeUndefined();
+  });
+
   it("migrates a Stage 3 business profile into the Stage 4 customer schema without removing existing data", async () => {
     const name = `tallybook-customer-migration-${Date.now()}-${++sequence}`;
     databaseNames.add(name);
