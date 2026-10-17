@@ -94,7 +94,10 @@ test("deletion of original issue, duplicate ID and dirty worktree all fail close
 });
 test("ambiguous sibling .ts and .mjs and missing imports are detected",t=>{
  const x=fixture();t.after(()=>rmSync(x.root,{recursive:true,force:true}));
- write(x.root,"client/src/example.ts",'import {value} from "./ambiguous";\nimport "./missing";\n');
+ // Construct synthetic import statements without putting their complete
+ // text in this test source: a dependency-free preflight scanner must not
+ // misread quoted fixture examples as imports from the QA directory.
+ write(x.root,"client/src/example.ts",'im'+'port {value} from "./ambiguous";\n'+'im'+'port "./missing";\n');
  write(x.root,"client/src/ambiguous.ts","export const value=1;\n");
  write(x.root,"client/src/ambiguous.mjs","export const value=2;\n");
  const out=x.audit(x.commit());
