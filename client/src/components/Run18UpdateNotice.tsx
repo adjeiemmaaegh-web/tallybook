@@ -20,8 +20,7 @@ export function Run18UpdateNotice(){
      onClick={()=>{setBusy(true);setError("");
        void applyRun18ApprovedUpdate().catch(e=>{
          setError(e instanceof Error?e.message:"Could not activate the offline update.");
-         setBusy(false);
-       });
+       }).finally(()=>setBusy(false));
      }}>{busy?"Applying local app update…":"Apply update and reload when ready"}</button>
  </section>;
 }
