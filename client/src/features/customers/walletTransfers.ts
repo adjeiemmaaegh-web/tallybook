@@ -75,8 +75,11 @@ export async function recordWalletTransfer(input: {
 }
 export async function getWalletTransfers(customerId:string,database:TallybookDB=db) {
   const businessProfileId=getActiveBusinessProfileId();
-  const transfers=await database.walletTransfers.where('customerId').equals(customerId)
-    .and(row=>row.businessProfileId===businessProfileId).reverse().sortBy('createdAt');
+  const transfers=await database.transaction('r',[database.walletTransfers,database.staffMembers],async()=>{
+    await requirePermission('sell',database,businessProfileId);
+    return database.walletTransfers.where('customerId').equals(customerId)
+      .and(row=>row.businessProfileId===businessProfileId).reverse().sortBy('createdAt');
+  });
   if(getActiveBusinessProfileId()!==businessProfileId || transfers.some(row=>row.businessProfileId!==businessProfileId || row.customerId!==customerId))
     throw new Error('Company changed while loading prepaid transfers.');
   return transfers;
