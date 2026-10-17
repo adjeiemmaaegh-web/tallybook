@@ -24,7 +24,7 @@ export async function readRun18BoundedBackupFile(file,deviceMemoryGiB){
  assertRun18ImportAdmission(file.size,deviceMemoryGiB);
  const text=await file.text();
  // File.size is metadata, and a mocked/modified file need not match it.
- if(typeof text!=="string"||utf8ExceedsLimit(text,MAX_ENCRYPTED_BACKUP_BYTES))
-   throw Error("Backup file contents exceed the safe memory limit. No records were imported.");
+ if(typeof text!=="string"||utf8ExceedsLimit(text,run18ImportMemoryLimit(deviceMemoryGiB)))
+   throw Error("Actual backup bytes exceed this device\'s admitted memory budget. No records were imported or truncated.");
  return text;
 }
