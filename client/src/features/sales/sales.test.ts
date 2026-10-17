@@ -5,6 +5,7 @@ import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/T
 import { setCustomerPolicy } from "@/features/customers/customerBenefits";
 import { createCustomer } from "@/features/customers/customers";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
+import {setActiveBusinessProfileId} from "@/features/business/activeCompany";
 import { createProduct, getInventorySnapshot } from "@/features/inventory/inventory";
 import { addMobileMoneyProvider } from "@/features/payments/mobileMoney";
 import { completeSale, getCustomerSaleSummary, getSaleSnapshot } from "@/features/sales/sales";
@@ -31,12 +32,38 @@ async function createMobileMoneyProviderFixture(database: TallybookDB, name = "M
 }
 
 afterEach(async () => {
+  setActiveBusinessProfileId("primary");
   openDatabases.splice(0).forEach((database) => database.close());
   await Promise.all([...databaseNames].map((name) => new Dexie(name).delete()));
   databaseNames.clear();
 });
 
 describe("atomic sales", () => {
+  it("commits distinct exact-sales for the same retry key in independent companies",async()=>{
+    setActiveBusinessProfileId("primary");
+    const database=makeDatabase();await initializeDatabase(database);
+    await saveBusinessProfile({name:"Primary Retail",country:"Ghana",currency:"GHS",businessType:"Retail shop"},database);
+    const primaryProduct=await createProductFixture(database,"Primary rice","4","10.00");
+    const submissionKey="cross-company-sale-001";
+    const first=await completeSale({lines:[{productId:primaryProduct.id,quantity:1}],
+      discount:"0",paymentMethod:"cash",amountPaid:"10",currency:"GHS",submissionKey},database);
+    setActiveBusinessProfileId("second-company");
+    await saveBusinessProfile({name:"Second Retail",country:"Ghana",currency:"GHS",businessType:"Retail shop"},database);
+    const secondProduct=await createProductFixture(database,"Second rice","4","10.00");
+    const second=await completeSale({lines:[{productId:secondProduct.id,quantity:1}],
+      discount:"0",paymentMethod:"cash",amountPaid:"10",currency:"GHS",submissionKey},database);
+    expect(second.sale.id).not.toBe(first.sale.id);
+    expect(await database.sales.count()).toBe(2);
+    expect((await completeSale({lines:[{productId:secondProduct.id,quantity:1}],
+      discount:"0",paymentMethod:"cash",amountPaid:"10",currency:"GHS",submissionKey},database)).sale.id)
+      .toBe(second.sale.id);
+    expect((await database.products.get(primaryProduct.id))?.stockQuantity).toBe(3);
+    expect((await database.products.get(secondProduct.id))?.stockQuantity).toBe(3);
+    expect(await database.payments.count()).toBe(2);
+    setActiveBusinessProfileId("primary");
+    expect((await getSaleSnapshot(database)).sales).toHaveLength(1);
+  });
+
   it("enforces customer discount limits without changing stock or financial records", async () => {
     const database = makeDatabase();
     await initializeDatabase(database);
