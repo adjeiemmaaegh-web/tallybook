@@ -12,7 +12,7 @@ export interface Run17ObservedProduct {
 export interface Run17Report {
   companyId:string;currency:string;period:"today"|"last7"|"all";asOf:string;scopeLabel:string;
   summary:Readonly<{
-    grossRecordedInvoiceMinor:number;recordedSaleCount:number;
+    grossRecordedInvoiceMinor:number;recordedSaleCount:number;legacyCurrencyUnverifiedSaleCount:number;
     fullyReversedSaleCount:number;partialReturnAffectedSaleCount:number;
     storeOriginUnknownSaleCount:number;localOrderCount:number;
     pendingDispatchedTransferCount:number;deliveredOrderCount:number;
