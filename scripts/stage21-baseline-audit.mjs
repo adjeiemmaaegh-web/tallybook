@@ -34,27 +34,43 @@ if(dirty)fail.push("Worktree contains uncommitted changes; source provenance is 
 const pkg=json("package.json");
 const trace=json("docs/release/traceability.json");
 const issues=json("docs/release/blockers.json");
+const frozen=json("docs/release/stage21-original-id-manifest.json");
 const lockExists=existsSync(file("pnpm-lock.yaml"));
 if(!lockExists)fail.push("Missing pnpm lockfile");
 if(pkg?.packageManager!=="pnpm@10.34.0")fail.push("Unsupported or unpinned pnpm toolchain");
 if(read(".node-version").trim()!=="24.19.0")fail.push("Node 24.19.0 pin not preserved");
 const statuses=new Set(["implemented-unverified","implemented-and-tested","missing","blocked"]);
-function registry(rows,title,required){
- if(!Array.isArray(rows)||rows.length!==required){
-  fail.push(title+" contains "+(rows?.length??"no")+" entries, expected "+required);
-  return {count:rows?.length??0,byStatus:{}};
+function registry(rows,title,originalIds){
+ if(!Array.isArray(originalIds)||!originalIds.length||
+    originalIds.some(id=>typeof id!=="string")||
+    new Set(originalIds).size!==originalIds.length){
+  fail.push(title+" frozen original ID manifest is invalid");
+  return {count:rows?.length??0,byStatus:{},originalMissing:[],addedIds:[]};
  }
- const ids=new Set(),byStatus={};
+ if(!Array.isArray(rows)){
+  fail.push(title+" original register is unavailable or not an array");
+  return {count:0,byStatus:{},originalMissing:[...originalIds],addedIds:[]};
+ }
+ const ids=new Set(),byStatus={},historical=new Set(originalIds);
  for(const row of rows){
-  if(!row||typeof row.id!=="string"||ids.has(row.id)||!statuses.has(row.status))
+  if(!row||typeof row.id!=="string"||ids.has(row.id)||!statuses.has(row.status)){
    fail.push("Duplicate/malformed "+title+" entry: "+String(row?.id));
+   continue;
+  }
   ids.add(row.id);
   byStatus[row.status]=(byStatus[row.status]??0)+1;
  }
- return {count:rows.length,byStatus};
+ const originalMissing=originalIds.filter(id=>!ids.has(id));
+ for(const id of originalMissing)fail.push("Missing frozen "+title+" ID: "+id);
+ const addedIds=[...ids].filter(id=>!historical.has(id)).sort();
+ return {count:rows.length,byStatus,originalCount:originalIds.length,
+  originalMissing,addedIds};
 }
-const acceptance=registry(trace?.units,"acceptance",82);
-const blockers=registry(issues?.blockers,"blockers",47);
+if(frozen?.kind!=="tallybook-v19-stage21-original-ledger-ids"||
+   frozen?.originalAcceptanceCount!==82||frozen?.originalBlockerCount!==47)
+ fail.push("Stage 21 frozen 82/47 ID manifest metadata is invalid");
+const acceptance=registry(trace?.units,"acceptance",frozen?.acceptanceIds);
+const blockers=registry(issues?.blockers,"blockers",frozen?.blockerIds);
 if(trace?.decision!=="NO-GO")fail.push("Acceptance ledger unexpectedly leaves NO-GO");
 if(!String(issues?.decision??"").includes("NO-GO"))fail.push("Issue ledger unexpectedly leaves NO-GO");
 
