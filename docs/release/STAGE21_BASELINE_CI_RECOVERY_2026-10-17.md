@@ -47,6 +47,17 @@ A genuine GitHub release-validation push run was triggered on the corrected bran
 - Follow-up external/account checks for the GitHub owner, not merchant hardware UAT: GitHub repository **Settings → Actions → General**, account **Billing and licensing / Actions usage and budgets**, GitHub Actions service status or GitHub Support quoting the run/job IDs. No assumption of an exhausted quota or billing denial is justified without the actual account evidence.
 - Alternative: run the newly authored exact-SHA developer QA harness in a proper pinned, disposable engineering checkout; preserve original per-step logs and correct every failure, then rerun at the modified SHA. Neither option is marked PASS here.
 
+## 2B. Further developer closure after the runner failure
+
+1. `.gitignore` now ignores `artifacts/stage21-local-qa/`, so local QA logs cannot themselves fail the clean-checkout source preflight. The old runner output directory was not ignored.
+2. GitHub validation branches now include later `v19/stage*` branches instead of only `v19/stage21-*`. No external deployment workflow is added.
+3. The original 82 acceptance IDs and 47 issue IDs are frozen in `stage21-original-id-manifest.json`; the preflight checks retention and uniqueness **without rejecting newly discovered issues**. The previous exact-47 count would have incorrectly punished responsible issue reporting.
+4. The preflight reads additional `.mts`/`.cts` imports, reports absent Node-version configuration explicitly and still fails closed on ambiguous same-stem TypeScript/ESM imports.
+5. Developer QA log capture in `stage21-run-developer-qa.mjs` now streams each suite directly to a private local file instead of loading large stdout/stderr buffers into RAM. This reduces avoidable memory pressure during QA on low-spec computers.
+6. `qa/stage21-baseline-audit.test.mjs` contains four native regression scenarios using disposable Git fixtures for exact source, original ledger IDs, adding new issues, deleting old issues, dirty worktrees and import collisions. The newly authored test source is **NOT EXECUTED** on the connected repository.
+7. See `STAGE21_ORIGINAL_TRACEABILITY_SOURCE_REVIEW_2026-10-17.md`: 367 declared ledger path references were inspected via GitHub's tree; **364 tracked file paths, 3 tracked directory paths, 0 missing declared paths**. This is only path provenance, not passing tests or completed requirements.
+8. The hosted workflow remains blocked before job steps; changes to its source file cannot establish which account policy or runner provisioning issue caused the GitHub failure. No new status is claimed for `pnpm check`, `pnpm test`, `pnpm build` or Playwright.
+
 ## 3. Stage 21 mandatory exit gates (current status)
 
 | ID | Proof required to close this stage | Status |
