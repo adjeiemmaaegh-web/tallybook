@@ -97,7 +97,7 @@ test("deletion of original issue, duplicate ID and dirty worktree all fail close
  sha=x.commit();
  const repeated=x.audit(sha);
  assert.notEqual(repeated.status,0);
- assert.match(repeated.stdout,/Duplicate\\/malformed blockers entry/);
+ assert.match(repeated.stdout,/Duplicate\/malformed blockers entry/);
  write(x.root,"uncommitted.txt","untracked unsanitized fixture");
  assert.match(x.audit(sha).stdout,/Worktree contains uncommitted changes/);
 });
