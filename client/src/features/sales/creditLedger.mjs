@@ -147,7 +147,8 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
     if (typeof originalId !== 'string' || !originalId || !sale || seenOriginals.has(originalId) ||
         !Number.isSafeInteger(reversal.reversedOutstandingMinor) || reversal.reversedOutstandingMinor > 0 ||
         reversal.reversedOutstandingMinor !== -sale.outstandingMinor ||
-        (sale.customerId !== undefined && reversal.customerId !== sale.customerId)) {
+        reversal.businessProfileId !== sale.businessProfileId ||
+        reversal.customerId !== sale.customerId) {
       throw new Error('Customer ledger contains an invalid, orphaned or duplicate sale reversal.');
     }
     seenOriginals.add(originalId);
