@@ -44,6 +44,8 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const activeId = getActiveBusinessProfileId();
   const sale = await latestReversibleSale(database, activeId);
   if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+  if(!/^[A-Z]{3}$/.test(currency)||sale.currency!==currency)
+    throw new Error("Original sale currency is missing or differs from selected reversal currency; reconcile before a refund.");
   const profile=await database.businessProfiles.get(activeId);
   if(!profile)throw new Error('The selected company has no saved refund policy.');
   // Advisory read-only preview; the posting transaction reauthorizes against
@@ -68,9 +70,16 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
     const existingByKey = await database.saleReversals.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
-    if (existingByKey) return existingByKey;
+    if(existingByKey){
+      const previousSale=await database.sales.get(existingByKey.originalSaleId);
+      if(!previousSale||previousSale.businessProfileId!==activeId||previousSale.currency!==currency)
+        throw new Error("Reversal retry currency or original sale needs reconciliation.");
+      return existingByKey;
+    }
     const sale = await latestReversibleSale(database, activeId);
     if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+    if(!/^[A-Z]{3}$/.test(currency)||sale.currency!==currency)
+      throw new Error("Saved sale currency must match the explicit reversal currency; no exchange rate may be assumed.");
     const currentProfile=await database.businessProfiles.get(activeId);
     if(!currentProfile)throw new Error('Company return policy is unavailable.');
     const now=new Date().toISOString();
@@ -102,7 +111,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     for (const [productId, quantity] of restoreByProduct) {
       const product = resolvedProducts.find(item => item.id === productId)!;
       const restored = product.stockQuantity + quantity;
-      if (!Number.isSafeInteger(restored) || restored < 0) throw new Error("Stock restoration would create an invalid quantity.");
+      if (!Number.isSafeInteger(restored) || restored < 0 || restored > 9_999_999) throw new Error("Stock restoration would create an invalid quantity.");
       restoredStock.set(productId, restored);
       movements.push({ id: nanoid(14), businessProfileId: activeId, productId,
         movementType: "reversal", quantityDelta: quantity,
@@ -165,7 +174,6 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     }));
     for(const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,sale.storeId,movement.quantityDelta,movement.id,"refund",now,movement.previousQuantity,movement.resultingQuantity);
     await database.inventoryMovements.bulkAdd(movements);
-    void currency;
     return reversal;
   });
 }
