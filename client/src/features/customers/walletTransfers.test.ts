@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TallybookDB, initializeDatabase } from '@/db/TallybookDB';
 import { saveBusinessProfile } from '@/features/business/businessProfile';
+import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import { createCustomer } from '@/features/customers/customers';
 import { createProduct } from '@/features/inventory/inventory';
 import { setCustomerPolicy, getCustomerBenefits } from './customerBenefits';
@@ -20,7 +21,7 @@ async function fixture(){
  const product=await createProduct({name:'Rice',sku:'',categoryId:'uncategorized',sellingPrice:'10.00',costPrice:'',initialStock:'10',lowStockThreshold:'1'},'GHS',db);
  return {db,customer,product};
 }
-afterEach(async()=>{for(const db of dbs.splice(0))db.close();await Promise.all(names.splice(0).map(name=>new Dexie(name).delete()));});
+afterEach(async()=>{setActiveBusinessProfileId('primary');for(const db of dbs.splice(0))db.close();await Promise.all(names.splice(0).map(name=>new Dexie(name).delete()));});
 describe('Stage 4 wallet and loyalty financial safeguards',()=>{
  it('records prepaid funds once and refuses refund above the available balance',async()=>{
   const {db,customer}=await fixture();
@@ -55,4 +56,39 @@ describe('Stage 4 wallet and loyalty financial safeguards',()=>{
   expect(cashSale.payment?.amountMinor).toBe(1000);
   expect(await db.payments.count()).toBe(2);
  });
+ it('permits matching retry keys in independent company wallets while denying a changed same-company retry',async()=>{
+  const {db,customer}=await fixture();
+  const key='company-wallet-shared-001';
+  const primary=await recordWalletTransfer({
+    customerId:customer.id,kind:'deposit',amountMinor:800,method:'cash',
+    reference:'primary-cash',submissionKey:key
+  },db);
+  setActiveBusinessProfileId('second-company');
+  await saveBusinessProfile({name:'Independent Shop',country:'Ghana',currency:'GHS',
+    businessType:'Retail shop',phone:'',email:'',address:''},db);
+  const customerTwo=await createCustomer({
+    name:'Kofi',phone:'0240000002',email:'',address:'',notes:'',status:'active'
+  },db);
+  const second=await recordWalletTransfer({
+    customerId:customerTwo.id,kind:'deposit',amountMinor:300,method:'cash',
+    reference:'second-cash',submissionKey:key
+  },db);
+  expect(primary.businessProfileId).toBe('primary');
+  expect(second.businessProfileId).toBe('second-company');
+  expect(primary.id).not.toBe(second.id);
+  expect((await db.walletTransfers.count())).toBe(2);
+  expect((await recordWalletTransfer({
+    customerId:customerTwo.id,kind:'deposit',amountMinor:300,method:'cash',
+    reference:'second-cash',submissionKey:key
+  },db)).id).toBe(second.id);
+  await expect(recordWalletTransfer({
+    customerId:customerTwo.id,kind:'deposit',amountMinor:301,method:'cash',
+    reference:'changed-cash',submissionKey:key
+  },db)).rejects.toThrow(/reused/);
+  setActiveBusinessProfileId('primary');
+  expect((await db.walletTransfers.where('[businessProfileId+submissionKey]')
+    .equals(['primary',key]).first())?.id).toBe(primary.id);
+  expect((await db.walletTransfers.count())).toBe(2);
+ });
+
 });
