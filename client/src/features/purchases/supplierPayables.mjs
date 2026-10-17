@@ -9,7 +9,7 @@ function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
 const currency = value => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
 const timestamp = value => typeof value === 'string' &&
-  /^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d{1,3})?(?:Z|[+-]\\d\\d:\\d\\d)$/.test(value) &&
+  /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value) &&
   Number.isFinite(Date.parse(value));
 
 /** Build the as-of balance for exactly one company-scoped purchase. */
