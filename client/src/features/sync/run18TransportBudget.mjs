@@ -36,9 +36,21 @@ export async function readRun18BoundedJson(response,maxBytes) {
    return result;
  }
  const chunks=[];let total=0;
+ const started=Date.now();
  try{
    while(true){
-     const part=await reader.read();
+     const remaining=RUN18_RELAY_REQUEST_DEADLINE_MS-(Date.now()-started);
+     if(remaining<=0)deny("response stream timed out; local pending state is unchanged");
+     let timer;
+     let part;
+     try {
+       part=await Promise.race([
+         reader.read(),
+         new Promise((_,reject)=>{
+           timer=setTimeout(()=>reject(Error("Encrypted relay response timed out; local pending state is unchanged.")),remaining);
+         })
+       ]);
+     }finally{clearTimeout(timer);}
      if(part.done)break;
      if(!(part.value instanceof Uint8Array))deny("invalid stream chunk");
      total+=part.value.byteLength;
@@ -46,7 +58,7 @@ export async function readRun18BoundedJson(response,maxBytes) {
      chunks.push(part.value);
    }
  }catch(e){try{await reader.cancel();}catch{}throw e;}
- finally{reader.releaseLock();}
+ finally{try{reader.releaseLock();}catch{}}
  const bytes=new Uint8Array(total);let offset=0;
  for(const part of chunks){bytes.set(part,offset);offset+=part.length;}
  const text=new TextDecoder("utf-8",{fatal:true}).decode(bytes);
