@@ -43,6 +43,10 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
       if (!Number.isSafeInteger(unallocatedMinor)) throw new Error('Repayment allocation exceeds safe money bounds.');
       continue;
     }
+    if (repayment.saleAllocations !== undefined &&
+        (typeof repayment.businessProfileId !== 'string' || !repayment.businessProfileId ||
+         typeof repayment.customerId !== 'string' || !repayment.customerId))
+      throw new Error('Repayment allocation lacks its company or customer identity.');
     if (repayment.amountMinor === 0 || !Array.isArray(repayment.saleAllocations) ||
         repayment.saleAllocations.length === 0 || repayment.saleAllocations.length > 256)
       throw new Error('Repayment allocation must be a nonempty list for a positive repayment.');
