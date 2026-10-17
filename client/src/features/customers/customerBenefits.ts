@@ -1,5 +1,6 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { requirePermission } from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Stage 4 customer policies and independent prepaid/loyalty ledgers.
  * A wallet balance is NOT debt repayment or cash received. This module never
  * posts cash/stock or redeems value during POS checkout.
@@ -23,11 +24,13 @@ export async function setCustomerPolicy(customerId: string, input: Pick<Customer
     if (input.loyaltySpendMinorPerPoint !== undefined && (!Number.isSafeInteger(input.loyaltySpendMinorPerPoint) || input.loyaltySpendMinorPerPoint < 1 || input.loyaltySpendMinorPerPoint > 1000000000)) throw new Error('Loyalty earning threshold must be a positive safe integer.');
     if (input.loyaltyPointValueMinor !== undefined && (!Number.isSafeInteger(input.loyaltyPointValueMinor) || input.loyaltyPointValueMinor < 1 || input.loyaltyPointValueMinor > 1000000000)) throw new Error('Loyalty point value must be a positive safe integer.');
     if ((input.group ?? '').length > 60) throw new Error('Customer group is too long.');
-    return database.transaction('rw', [database.customers,database.customerPolicies,database.staffMembers,database.staffAudits], async()=>{
+    return database.transaction('rw', [database.appMeta,database.customers,database.customerPolicies,database.staffMembers,database.staffAudits], async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
       const actor = await requirePermission('staff', database, businessProfileId);
       const customer = await database.customers.get(customerId);
       if (!customer || customer.businessProfileId !== businessProfileId || customer.archivedAt) throw new Error('Customer is unavailable.');
       const policy: CustomerPolicy = { id: `${businessProfileId}:${customerId}`, businessProfileId, customerId, creditLimitMinor: input.creditLimitMinor, paymentDueDays: input.paymentDueDays, group: input.group?.trim() || undefined, maxDiscountPercent: input.maxDiscountPercent, loyaltySpendMinorPerPoint: input.loyaltySpendMinorPerPoint, loyaltyPointValueMinor: input.loyaltyPointValueMinor, updatedAt: new Date().toISOString() };
+      if(getActiveBusinessProfileId()!==businessProfileId)throw new Error("Company changed during customer policy update.");
       await database.customerPolicies.put(policy);
       if (actor) await database.staffAudits.add({id:nanoid(),businessProfileId,staffId:actor.id,action:'customer.policy.updated',createdAt:policy.updatedAt,details:customerId});
       return policy;
@@ -68,7 +71,8 @@ export async function recordCustomerBenefit(input: {customerId:string;kind:Benef
     if(!Number.isSafeInteger(input.delta)||input.delta===0||Math.abs(input.delta)>1_000_000_000) throw new Error('Invalid benefit adjustment.');
     if(!input.reason.trim() || input.reason.length>240) throw new Error('A brief adjustment reason is required.');
     if(input.submissionKey.length<8||input.submissionKey.length>80) throw new Error('Invalid submission key.');
-    return database.transaction('rw',[database.customers,database.customerBenefits,database.staffMembers,database.staffAudits],async()=>{
+    return database.transaction('rw',[database.appMeta,database.customers,database.customerBenefits,database.staffMembers,database.staffAudits],async()=>{
+      await assertRun7RetailWriteReady(database.appMeta);
       const actor=await requirePermission('staff',database,businessProfileId);
       const customer=await database.customers.get(input.customerId);
       if(!customer||customer.businessProfileId!==businessProfileId||customer.archivedAt) throw new Error('Customer is unavailable.');
@@ -78,6 +82,7 @@ export async function recordCustomerBenefit(input: {customerId:string;kind:Benef
       const balance=existing.reduce((s,e)=>s+e.delta,0)+input.delta;
       if(!Number.isSafeInteger(balance)||balance<0)throw new Error('Insufficient balance or invalid benefit ledger.');
       const entry:CustomerBenefitEntry={id:nanoid(14),businessProfileId,customerId:input.customerId,kind:input.kind,delta:input.delta,reason:input.reason.trim(),submissionKey:input.submissionKey,createdAt:new Date().toISOString()};
+      if(getActiveBusinessProfileId()!==businessProfileId)throw new Error("Company changed during loyalty adjustment.");
       await database.customerBenefits.add(entry);
       if(actor)await database.staffAudits.add({id:nanoid(),businessProfileId,staffId:actor.id,action:'customer.points.adjusted',createdAt:entry.createdAt,details:entry.id});
       return entry;
