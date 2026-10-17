@@ -8,7 +8,7 @@ import {getVerifiedBackupReceipt} from "@/features/backup/backup";
 import {RESTORE_JOURNAL_KEY} from "@/features/backup/restoreJournal.mjs";
 import {auditLocalIntegrity} from "@/features/reliability/integrity";
 export interface Run20Diagnostics{
- companyId:string;observedAt:string;schemaVersion:number;
+ companyId:string;observedAt:string;schemaVersion:number|null;supportedSchemaVersion:number;
  recoveryJournalPresent:boolean;backupReceipt:{
   createdAt:string;sha256:string|null
  }|null;backupIsForSelectedCompany:boolean;
@@ -41,7 +41,7 @@ export async function getRun20Diagnostics(
   const schema=await database.appMeta.get("schemaVersion");
   await assertOwner(database,company,actor);
   return {recoveryJournalPresent:Boolean(marker),schemaVersion:
-    typeof schema?.value==="number"?schema.value:DATABASE_SCHEMA_VERSION};
+    typeof schema?.value==="number"?schema.value:null};
  });
  // Only explicit owner action invokes a full read-only financial integrity
  // analysis. No workflow is ever marked safe merely because it returns clear.
@@ -56,7 +56,7 @@ export async function getRun20Diagnostics(
  await assertOwner(database,company,actor);
  return {
   companyId:company,observedAt:new Date().toISOString(),
-  schemaVersion:baseline.schemaVersion,
+  schemaVersion:baseline.schemaVersion,supportedSchemaVersion:DATABASE_SCHEMA_VERSION,
   recoveryJournalPresent:baseline.recoveryJournalPresent,
   backupReceipt:belongs&&receipt?{
    createdAt:receipt.createdAt,sha256:typeof receipt.sha256==="string"?receipt.sha256:null
