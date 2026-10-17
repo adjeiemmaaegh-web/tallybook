@@ -157,7 +157,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
   const input = purchaseFormSchema.parse(values); const submissionKey = input.submissionKey ?? nanoid(18);
   if (new Set(input.lines.map((line) => line.productId)).size !== input.lines.length) throw new Error("Add each product only once to a purchase.");
   if (new Date(input.purchaseDate + "T00:00:00Z").toISOString().slice(0, 10) !== input.purchaseDate) throw new Error("Choose a valid purchase date.");
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
