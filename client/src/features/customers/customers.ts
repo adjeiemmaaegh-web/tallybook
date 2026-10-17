@@ -128,18 +128,22 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
       // Wallet deposits and loyalty entitlements remain customer liabilities,
       // not abandoned just because a profile is hidden. A corrupted negative
       // or overflowing balance is not a zero available entitlement.
-      let walletMinor=0,loyaltyPoints=0;
+      let walletMinor=0n,loyaltyPoints=0n;
       for(const row of benefits){
         if(row.kind!=="wallet"&&row.kind!=="points")continue;
         if(!Number.isSafeInteger(row.delta)||row.delta===0)
           throw new Error("Customer benefit ledger needs reconciliation before archiving.");
-        if(row.kind==="wallet")walletMinor+=row.delta;
-        else loyaltyPoints+=row.delta;
-        if(!Number.isSafeInteger(walletMinor)||!Number.isSafeInteger(loyaltyPoints)||
-          walletMinor<0||loyaltyPoints<0)
-          throw new Error("Customer benefit ledger needs reconciliation before archiving.");
+        // Dexie customer-ID index order is NOT financial chronology. Compute
+        // exact final liability with BigInt; the separate wallet auditor
+        // verifies historic timestamps and overdrafts.
+        if(row.kind==="wallet")walletMinor+=BigInt(row.delta);
+        else loyaltyPoints+=BigInt(row.delta);
       }
-      if(walletMinor!==0||loyaltyPoints!==0)
+      if(walletMinor<0n||loyaltyPoints<0n||
+         walletMinor>BigInt(Number.MAX_SAFE_INTEGER)||
+         loyaltyPoints>BigInt(Number.MAX_SAFE_INTEGER))
+        throw new Error("Customer benefit ledger needs reconciliation before archiving.");
+      if(walletMinor!==0n||loyaltyPoints!==0n)
         throw new Error("Customer has remaining wallet funds or loyalty points. Resolve benefits before archiving.");
       assertCompanyScope(activeId,getActiveBusinessProfileId());
       await requirePermission("staff",database,activeId);
