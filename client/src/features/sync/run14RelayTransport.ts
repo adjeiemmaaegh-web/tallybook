@@ -10,6 +10,7 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
 import {pendingRun14Envelopes,stripRun14LocalState,importRun14Page,
  type Run14QueuedEnvelope,type Run14ReplicaPage} from "./run14LocalRelay";
 import {validateRun14Envelope} from "./run14Crypto";
+import {requestRun18WithDeadline,readRun18BoundedJson} from "./run18TransportBudget.mjs";
 
 export interface Run14RelayConflict {
  id:string;businessProfileId:string;eventId:string;
@@ -51,12 +52,7 @@ async function strictJSON<T>(response:Response,url:string,maxBytes:number):Promi
  if(!response||response.redirected||response.type==="opaque"||
     response.url!==url||!/^application\/json(?:\s*;|\s*$)/i.test(response.headers.get("content-type")??""))
     throw Error("Untrusted encrypted relay response.");
- const announced=response.headers.get("content-length");
- if(announced!==null&&Number(announced)>maxBytes)throw Error("Untrusted encrypted relay response exceeds size limit.");
- const text=await response.text();
- if(new TextEncoder().encode(text).byteLength>maxBytes)throw Error("Oversized encrypted relay response.");
- let result:unknown;try{result=JSON.parse(text);}catch{throw Error("Malformed encrypted relay JSON.");}
- return result as T;
+ return await readRun18BoundedJson(response,maxBytes) as T;
 }
 function verifyReceipt(receipt:Run14RelayReceipt,event:Run14QueuedEnvelope,status:number){
  if(!receipt||typeof receipt!=="object"||Array.isArray(receipt)||
@@ -124,7 +120,7 @@ export async function sendOneRun14Event(
  if(pending.some(e=>e.deviceId===item.deviceId&&e.sequence<item.sequence))
    throw Error("An earlier encrypted event must be delivered first.");
  await confirmLocalRelayPermission(database,company,item.deviceId);
- const response=await transport(url,{method:"POST",mode:"cors",redirect:"error",
+ const response=await requestRun18WithDeadline(transport,url,{method:"POST",mode:"cors",redirect:"error",
    credentials:"omit",cache:"no-store",
    headers:{...credentialsHeaders(credentials,company,item.deviceId),"content-type":"application/json"},
    body:JSON.stringify(stripRun14LocalState(item))});
@@ -172,7 +168,7 @@ export async function pullOneRun14Page(
  if(!Number.isSafeInteger(after)||after<0)throw Error("Corrupt local replica cursor.");
  const target=new URL(base);target.searchParams.set("after",String(after));
  await confirmLocalRelayPermission(database,company,deviceId);
- const response=await transport(target.href,{method:"GET",mode:"cors",redirect:"error",
+ const response=await requestRun18WithDeadline(transport,target.href,{method:"GET",mode:"cors",redirect:"error",
    credentials:"omit",cache:"no-store",headers:credentialsHeaders(credentials,company,deviceId)});
  if(response.status!==200)throw Error("Encrypted replica read was not authorized.");
  const page=await strictJSON<Run14ReplicaPage>(response,target.href,1800000);
@@ -198,7 +194,7 @@ export async function requestRun14Capability(
     !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(session)||session.length>4096)
    throw Error("Invalid scoped capability request.");
  const target=new URL(base);target.pathname="/api/sync/replication/capability";
- const response=await transport(target.href,{method:"POST",mode:"cors",redirect:"error",
+ const response=await requestRun18WithDeadline(transport,target.href,{method:"POST",mode:"cors",redirect:"error",
    credentials:"omit",cache:"no-store",headers:{
     "content-type":"application/json","x-tallybook-session":"Bearer "+session},
    body:JSON.stringify({organizationId:company,deviceId,scope})});
