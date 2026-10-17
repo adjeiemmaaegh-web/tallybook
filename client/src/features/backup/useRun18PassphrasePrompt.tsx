@@ -2,7 +2,7 @@
  * No plaintext window.prompt, localStorage, analytics, logs, or persistence.
  * Strings are only held during the explicit encrypt/decrypt operation.
  */
-import {useCallback,useEffect,useRef,useState,type ReactNode} from "react";
+import {useCallback,useEffect,useRef,useState} from "react";
 type Pending={title:string;description:string;confirmLabel:string;minimum:number};
 export function useRun18PassphrasePrompt(){
  const [pending,setPending]=useState<Pending|null>(null);
