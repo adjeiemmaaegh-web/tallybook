@@ -33,18 +33,25 @@ export function AppShell({ children }: AppShellProps) {
     let mounted = true;
     const refresh = (silent = false) => {
       if (mounted && !silent) setStaffGate("loading");
-      void db.staffMembers.where("businessProfileId").equals(activeCompanyId).toArray().then(members => {
-        const current=currentStaffId(activeCompanyId);
-        if (mounted) setStaffGate(members.length === 0 || members.some(member => member.id === current && !member.disabledAt) ? "open" : "locked");
-      }).catch(() => { if (mounted) setStaffGate("locked"); });
+      // Do not repeatedly deserialize all PIN hashes and WebAuthn credentials.
+      const current=currentStaffId(activeCompanyId);
+      void db.transaction("r",db.staffMembers,async()=>{
+        const total=await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count();
+        if(!total)return true;
+        if(!current)return false;
+        const member=await db.staffMembers.get(current);
+        return Boolean(member&&member.businessProfileId===activeCompanyId&&!member.disabledAt);
+      }).then(open=>{if(mounted)setStaffGate(open?"open":"locked");})
+      .catch(() => { if (mounted) setStaffGate("locked"); });
     };
     refresh();
     const onSession = () => refresh(true);
-    const onFocus = () => refresh(true);
-    const timer = window.setInterval(onFocus,15_000);
+    const onFocus = () => {if(document.visibilityState==="visible")refresh(true);};
+    const timer = window.setInterval(onFocus,30_000);
     window.addEventListener(STAFF_SESSION_CHANGED,onSession);
     window.addEventListener('focus',onFocus);
-    return () => { mounted = false; window.clearInterval(timer); window.removeEventListener(STAFF_SESSION_CHANGED,onSession); window.removeEventListener('focus',onFocus); };
+     document.addEventListener('visibilitychange',onFocus);
+    return () => { mounted = false; window.clearInterval(timer); window.removeEventListener(STAFF_SESSION_CHANGED,onSession); window.removeEventListener('focus',onFocus); document.removeEventListener('visibilitychange',onFocus); };
   }, [activeCompanyId]);
   const [location] = useLocation();
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
