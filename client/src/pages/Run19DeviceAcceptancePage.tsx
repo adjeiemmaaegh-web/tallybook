@@ -44,6 +44,7 @@ export default function Run19DeviceAcceptancePage(){
  const [choices,setChoices]=useState<Record<string,Choice>>({});
  const [area,setArea]=useState("All areas");
  const [sourceSha,setSourceSha]=useState("");
+ const [devicePlatform,setDevicePlatform]=useState<"Windows"|"Android">("Windows");
  const [deviceClass,setDeviceClass]=useState("");
  const [browser,setBrowser]=useState("");
  const [os,setOs]=useState("");
@@ -69,7 +70,7 @@ export default function Run19DeviceAcceptancePage(){
     .catch(e=>{if(active)setAuthError(cleanError(e));});
   return()=>{active=false;};
  },[ownerKey]);
- const counts=useMemo(()=>run19Summary(results),[results]);
+ const counts=useMemo(()=>run19Summary(results,devicePlatform),[results,devicePlatform]);
  const filtered=useMemo(()=>RUN19_CASES.filter(row=>area==="All areas"||row.area===area),[area]);
  const current=useCallback(async()=>{
   if(!authorized)throw Error("Owner-only device acceptance is locked.");
@@ -84,7 +85,7 @@ export default function Run19DeviceAcceptancePage(){
    evidenceFile:draft.evidenceFile.trim(),observedAt:new Date().toISOString()
   };
   try{
-   const row=validateRun19Result(candidate);
+   const row=validateRun19Result(candidate,devicePlatform);
    setResults(list=>list.map(item=>item.caseId===caseId?row:item));
    setMessage(caseId+" observation recorded locally. This is not acceptance signoff.");
   }catch(e){setError(cleanError(e));}
@@ -99,7 +100,7 @@ export default function Run19DeviceAcceptancePage(){
   if(!sampleConfirmed||!noPaymentsConfirmed||!noDeployConfirmed)
     throw Error("Explicitly confirm disposable test data, no payments and no external deployment.");
   return createRun19EvidencePayload({
-   sourceSha,createdAt:new Date().toISOString(),deviceClass:deviceClass.trim(),
+   sourceSha,createdAt:new Date().toISOString(),devicePlatform,deviceClass:deviceClass.trim(),
    browser:browser.trim(),os:os.trim(),operatorLabel:operatorLabel.trim(),
    sampleDataOnly:true,noLivePayments:true,noExternalDeployment:true,results
   });
@@ -130,7 +131,7 @@ export default function Run19DeviceAcceptancePage(){
    const received=await importRun19Envelope(await file.text());
    await current();
    setResults(received.payload.results.map(row=>({...row})));
-   setSourceSha(received.payload.sourceSha);setDeviceClass(received.payload.deviceClass);
+   setSourceSha(received.payload.sourceSha);setDevicePlatform(received.payload.devicePlatform);setDeviceClass(received.payload.deviceClass);
    setBrowser(received.payload.browser);setOs(received.payload.os);
    setOperatorLabel(received.payload.operatorLabel);
    setSampleConfirmed(false);setNoPaymentsConfirmed(false);setNoDeployConfirmed(false);
@@ -152,7 +153,7 @@ export default function Run19DeviceAcceptancePage(){
     <p className="text-sm font-semibold">Tallybook V19 · Run 19 · Source-only UAT tooling</p>
     <h1 className="text-3xl font-bold">Real-device evidence workspace</h1>
     <p>Only a real operator on actual hardware can record a manual result. This workspace does not run POS transactions, prove devices work, contact providers or grant production approval. Evidence stays in memory until you explicitly export a local file.</p>
-    <p className="rounded border p-3 text-sm" role="status"><strong>Release: NO-GO.</strong> {counts.counts.pass} operator-recorded PASS, {counts.counts.fail} FAIL, {counts.counts.blocked} BLOCKED, {counts.counts["not-run"]} NOT RUN; {counts.criticalUnverified} mandatory checks lack recorded PASS. Counts are observations, not independently validated acceptance.</p>
+    <p className="rounded border p-3 text-sm" role="status"><strong>Release: NO-GO.</strong> {counts.counts.pass} operator-recorded PASS on this {devicePlatform} evidence file, {counts.counts.fail} FAIL, {counts.counts.blocked} BLOCKED, {counts.counts["not-run"]} NOT RUN; {counts.criticalUnverified} mandatory checks lack recorded PASS. Counts are observations, not independently validated acceptance.</p>
    </header>
    {error?<p role="alert" className="rounded border border-red-700 p-3">{error}</p>:null}
    {message?<p role="status" className="rounded border p-3">{message}</p>:null}
@@ -160,6 +161,17 @@ export default function Run19DeviceAcceptancePage(){
      <h2 id="run19-context-heading" className="text-lg font-semibold">1. Identify exact source and disposable device</h2>
      <p className="text-sm">Use the exact Git commit deployed to the device, not an earlier branch commit. Keep personal contacts, PINs, merchant keys and payment data out of notes and screenshots.</p>
      <div className="grid gap-3 sm:grid-cols-2">
+       <label className="text-sm">Actual device platform
+         <select className="mt-1 block w-full rounded border p-2" value={devicePlatform}
+           onChange={e=>{
+             setDevicePlatform(e.target.value as "Windows"|"Android");
+             setResults(run19DefaultResults());setDrafts({});setChoices({});
+             setMessage("Device platform changed. Previous observations were cleared to prevent cross-device provenance errors.");
+           }}>
+           <option value="Windows">Windows computer</option>
+           <option value="Android">Android mobile device</option>
+         </select>
+       </label>
        <label className="text-sm">Exact 40-character Git source SHA
          <input className="mt-1 block w-full rounded border p-2 font-mono" value={sourceSha} maxLength={40}
            placeholder="Paste actual installed source commit" onChange={e=>setSourceSha(e.target.value)} spellCheck={false}/>
@@ -237,19 +249,22 @@ export default function Run19DeviceAcceptancePage(){
     {filtered.map(test=>{
       const saved=results.find(row=>row.caseId===test.id)!;
       const draft=drafts[test.id]??{note:saved.note,evidenceFile:saved.evidenceFile};
-      const choice=choices[test.id]??defaultChoice;
+      const applicable=test.platform==="Both"||test.platform===devicePlatform;
+      const choice=choices[test.id]??(applicable?defaultChoice:"not-applicable");
       return <article key={test.id} className="space-y-3 rounded border p-3">
        <h3 className="font-semibold">{test.id} · {test.area} · {test.platform}{test.critical?" · Required":""}</h3>
        <p className="text-sm">{test.description}</p>
+       {!applicable?<p className="text-sm">This is a {test.platform} check; record it on a separate physical {test.platform} evidence file. Only a documented N/A is permitted here.</p>:null}
        <p className="text-sm">Recorded: <strong>{saved.status.toUpperCase()}</strong>{saved.observedAt?" · "+new Date(saved.observedAt).toLocaleString():""}</p>
        <div className="grid gap-2 sm:grid-cols-2">
         <label className="text-sm">Manual outcome
          <select className="mt-1 block w-full rounded border p-2" value={choice}
           onChange={e=>setChoices(all=>({...all,[test.id]:e.target.value as Choice}))}>
-          <option value="blocked">Blocked / unavailable</option>
-          <option value="pass">Observed PASS (evidence required)</option>
-          <option value="fail">Observed FAIL</option>
-          {!test.critical?<option value="not-applicable">Not applicable</option>:null}
+          {applicable?<>
+            <option value="blocked">Blocked / unavailable</option>
+            <option value="pass">Observed PASS (evidence required)</option>
+            <option value="fail">Observed FAIL</option>
+          </>:<option value="not-applicable">Not applicable on this device</option>}
          </select>
         </label>
         <label className="text-sm">Retained evidence filename (no URLs or local paths)
