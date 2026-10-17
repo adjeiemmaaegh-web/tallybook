@@ -56,6 +56,27 @@ describe("inventory ledger", () => {
     expect(snapshot.movements[0]).toMatchObject({ quantityDelta: -5, previousQuantity: 11, resultingQuantity: 6, note: "Shelf count" });
   });
 
+  it("reserves physical units without Dexie missing-table errors during atomic stock decreases",async()=>{
+    const database=makeDatabase();
+    await initializeDatabase(database);
+    const product=await createProduct(productValues,"GHS",database);
+    const createdAt=new Date(Date.now()-60_000).toISOString();
+    const expiresAt=new Date(Date.now()+60*60_000).toISOString();
+    await database.commerceHolds.add({
+      id:"hold-stage22-001",businessProfileId:"primary",productId:product.id,
+      orderId:"order-stage22-001",quantity:3,unitPriceMinor:1250,
+      submissionKey:"hold-stage22-key-001",status:"active",reason:"owner-confirmed",
+      createdAt,updatedAt:createdAt,expiresAt
+    });
+    const decreased=await adjustStock(product.id,{movementType:"decrease",quantity:"6",note:"Count correction"},database);
+    expect(decreased.resultingQuantity).toBe(4);
+    const beforeCount=await database.inventoryMovements.count();
+    await expect(adjustStock(product.id,{movementType:"decrease",quantity:"2",note:"Another correction"},database))
+      .rejects.toThrow(/reserve|committed/i);
+    expect((await database.products.get(product.id))?.stockQuantity).toBe(4);
+    expect(await database.inventoryMovements.count()).toBe(beforeCount);
+  });
+
   it("keeps quantity changes out of product edits and preserves history when a product is archived", async () => {
     const database = makeDatabase();
     await initializeDatabase(database);
