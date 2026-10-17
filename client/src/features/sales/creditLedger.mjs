@@ -130,12 +130,26 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
     throw new Error('Customer ledger is unavailable for reconciliation.');
   }
   const saleById = new Map();
+  let ledgerOwner = null;
+  // Every record in this aggregate must refer to one exact customer/company.
+  // Refuse unscoped or foreign entries rather than presenting blended debt.
+  const assertOwner = (row) => {
+    if (typeof row?.businessProfileId !== 'string' || !row.businessProfileId ||
+        typeof row?.customerId !== 'string' || !row.customerId)
+      throw new Error('Customer ledger contains an unscoped financial entry.');
+    if (ledgerOwner === null) ledgerOwner = [row.businessProfileId, row.customerId];
+    else if (row.businessProfileId !== ledgerOwner[0] || row.customerId !== ledgerOwner[1])
+      throw new Error('Customer ledger mixes company or customer identities.');
+  };
   for (const sale of sales) {
     if (typeof sale?.id !== 'string' || !sale.id || saleById.has(sale.id)) {
       throw new Error('Customer ledger has missing or duplicate sale identities.');
     }
+    assertOwner(sale);
     saleById.set(sale.id, sale);
   }
+  for (const repayment of repayments) assertOwner(repayment);
+  for (const reversal of reversals) assertOwner(reversal);
   // Currency is as important as the integer amount: never add GHS to USD.
   inspectReceivableCurrency(sales, repayments);
   const grossOutstandingMinor = checkedMinorSum(sales, 'outstandingMinor');
