@@ -36,14 +36,21 @@ export async function setCustomerPolicy(customerId: string, input: Pick<Customer
 }
 export async function getCustomerPolicy(customerId: string, database: TallybookDB = db) {
   const businessProfileId = getActiveBusinessProfileId();
-  const policy = await database.customerPolicies.get(`${businessProfileId}:${customerId}`);
+  const policy=await database.transaction('r',[database.customerPolicies,database.staffMembers],async()=>{
+    await requirePermission('sell',database,businessProfileId);
+    return database.customerPolicies.get(`${businessProfileId}:${customerId}`);
+  });
   if (getActiveBusinessProfileId() !== businessProfileId || (policy && (policy.businessProfileId !== businessProfileId || policy.customerId !== customerId)))
     throw new Error('Customer policy belongs to another company or company changed.');
   return policy;
 }
 export async function getCustomerBenefits(customerId: string, database: TallybookDB = db) {
   const businessProfileId = getActiveBusinessProfileId();
-  const entries = await database.customerBenefits.where('customerId').equals(customerId).and(e=>e.businessProfileId===businessProfileId).toArray();
+  const entries=await database.transaction('r',[database.customerBenefits,database.staffMembers],async()=>{
+    await requirePermission('sell',database,businessProfileId);
+    return database.customerBenefits.where('customerId').equals(customerId)
+      .and(e=>e.businessProfileId===businessProfileId).toArray();
+  });
   if (getActiveBusinessProfileId() !== businessProfileId) throw new Error('Company changed while loading customer benefits.');
   const walletMinor = entries.filter(e=>e.kind==='wallet').reduce((s,e)=>s+e.delta,0);
   const points = entries.filter(e=>e.kind==='points').reduce((s,e)=>s+e.delta,0);
