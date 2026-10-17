@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/stage21-baseline-audit.mjs --sha GIT_COMMIT_SHA
  */
-import {readFileSync,existsSync,readdirSync,statSync} from "node:fs";
+import {readFileSync,existsSync,readdirSync} from "node:fs";
 import {resolve,dirname,relative,extname} from "node:path";
 import {execFileSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
@@ -38,7 +38,7 @@ const frozen=json("docs/release/stage21-original-id-manifest.json");
 const lockExists=existsSync(file("pnpm-lock.yaml"));
 if(!lockExists)fail.push("Missing pnpm lockfile");
 if(pkg?.packageManager!=="pnpm@10.34.0")fail.push("Unsupported or unpinned pnpm toolchain");
-if(read(".node-version").trim()!=="24.19.0")fail.push("Node 24.19.0 pin not preserved");
+if(!existsSync(file(".node-version"))||read(".node-version").trim()!=="24.19.0")fail.push("Node 24.19.0 pin not preserved");
 const statuses=new Set(["implemented-unverified","implemented-and-tested","missing","blocked"]);
 function registry(rows,title,originalIds){
  if(!Array.isArray(originalIds)||!originalIds.length||
@@ -75,7 +75,7 @@ if(trace?.decision!=="NO-GO")fail.push("Acceptance ledger unexpectedly leaves NO
 if(!String(issues?.decision??"").includes("NO-GO"))fail.push("Issue ledger unexpectedly leaves NO-GO");
 
 const skipDir=new Set(["node_modules",".git","dist","build",".pnpm-store","artifacts",".next","coverage"]);
-const sourceExt=new Set([".ts",".tsx",".mjs",".js",".jsx",".cjs"]);
+const sourceExt=new Set([".ts",".tsx",".mts",".cts",".mjs",".js",".jsx",".cjs"]);
 const all=new Set(),sources=[];
 function visit(abs) {
  for(const item of readdirSync(abs,{withFileTypes:true})){
@@ -93,7 +93,7 @@ function visit(abs) {
 }
 visit(root);
 
-const candidates=["",".ts",".tsx",".mts",".cts",".js",".jsx",".mjs",".cjs",".json",
+const candidates=["",".ts",".tsx",".mts",".cts",".d.ts",".d.mts",".js",".jsx",".mjs",".cjs",".json",
  ".css",".scss",".svg",".png",".webp",".jpg",".jpeg","/index.ts","/index.tsx",
  "/index.js","/index.mjs","/index.jsx","/index.d.mts"];
 const matches=[
