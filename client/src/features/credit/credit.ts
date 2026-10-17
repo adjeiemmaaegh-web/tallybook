@@ -141,7 +141,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     const now = new Date().toISOString();
     const submissionKey = input.submissionKey ?? nanoid(18);
     const canonicalAllocations = input.saleAllocations?.map(row => ({...row})).sort((a,b)=>a.saleId.localeCompare(b.saleId));
-    const existing = await database.repayments.where("submissionKey").equals(submissionKey).and((repayment) => repayment.businessProfileId === activeId).first();
+    const existing = await database.repayments.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existing) {
       const amountMinor = parseAmount(input.amount, input.currency);
       if (existing.customerId!==input.customerId || existing.amountMinor!==amountMinor || (existing.currency !== input.currency) || existing.method!==input.method ||
