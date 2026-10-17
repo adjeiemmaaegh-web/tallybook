@@ -192,10 +192,10 @@ export default function Run20OperationsPage(){
        <div><dt>Browser storage estimate</dt><dd>{diagnostics.deviceStorageBytes?
         `${diagnostics.deviceStorageBytes.usage??"unknown"} / ${diagnostics.deviceStorageBytes.quota??"unknown"} bytes`:"Unavailable"}</dd></div>
        <div><dt>Browser online flag</dt><dd>{diagnostics.onlineFlag===null?"Unknown":diagnostics.onlineFlag?"Browser flag online, no server verification":"Browser flag offline"}</dd></div>
-       <div><dt>Optional integrity audit</dt><dd>{diagnostics.integrity?
+       <div><dt>Optional legacy-core integrity audit (not full Run 13–17 coverage)</dt><dd>{diagnostics.integrity?
          `${diagnostics.integrity.status}; ${diagnostics.integrity.issueCount} findings in ${diagnostics.integrity.recordsChecked} records`:
          "Not performed in this view"}</dd></div>
-       <div><dt>Acceptance</dt><dd>No independent security, finance or device signoff recorded</dd></div>
+       <div><dt>Acceptance</dt><dd>No independent security, finance or device signoff recorded; store-stock, commerce holds/delivery and Run 17 review journal require separate audits</dd></div>
       </dl>:null}
       {diagnostics?.integrity?.issueCodes.length?<p className="text-sm" role="alert">
        Review source issue categories before another live operation: {diagnostics.integrity.issueCodes.join(", ")}
