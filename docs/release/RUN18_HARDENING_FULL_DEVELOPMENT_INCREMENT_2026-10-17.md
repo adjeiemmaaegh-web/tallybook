@@ -3,7 +3,7 @@
 **Date:** 2026-10-17 (Asia/Dubai)  
 **Branch:** `v19/run18-hardening-development-20261017`  
 **Based on completed-source but unaccepted Run 17:** `v19/run17-assistant-analytics-development-20261017` at `c6280f75eb4bc243c761c22990b08b7af403de9e`.  
-**Final implementation source HEAD before this report:** `446656c763811f551541e36f751aedb34d789347`.  
+**Reviewed implementation source HEAD before this final documentation update:** `ca32a1aad1f2aca8f53a23e2e7a026d40acbe746`.  
 **Scope verified:** the governing 20-run plan's **R — Hardening**, covering Windows low-resource performance, accessibility, security review, malicious backups and recovery, network failure and formal threat-model controls.  
 **Status:** **RUN 18 SOURCE-DEVELOPMENT INCREMENT DELIVERED / MANUALLY INSPECTED; QA, THREAT-MODEL SIGNOFF AND PRODUCTION ACCEPTANCE NOT PERFORMED.**  
 **Release:** **NO-GO**. No tests, builds, CI, semantic TS checks, local browser/Windows or Android checks, staging, production deployment, payments or external cloud activity were initiated by this engineering increment, in accordance with the owner's development-only instruction. No merge into `main` occurred.
@@ -19,7 +19,7 @@
 
 ### B. Service-worker lifecycle and accessibility
 
-5. **No forced app update during POS:** `vite.config.ts` changes `registerType:"autoUpdate"` to `"prompt"`. `client/src/features/reliability/run18UpdatePolicy.ts`, `client/src/components/Run18UpdateNotice.tsx` and `client/src/main.tsx` announce installed updates and apply them only when the user explicitly chooses reload after saving their work. The app cannot promise protection against OS power loss or browser crash.
+5. **No forced app update during POS:** `vite.config.ts` changes `registerType:"autoUpdate"` to `"prompt"`. `client/src/features/reliability/run18UpdatePolicy.ts`, `client/src/components/Run18UpdateNotice.tsx` and `client/src/main.tsx` announce installed updates and apply them only when the user explicitly chooses reload after saving their work. The reload callback dynamically acquires the existing exclusive two-database Web Lock and rejects an outstanding restore marker before activating the update; any active cooperating retail write makes the attempt fail closed. The app cannot promise protection against OS power loss or browser crash.
 6. **Keyboard and assistive support:** `AppShell.tsx` binds mobile navigation to its controlled drawer, retains the focus trap and Escape handling, and focuses primary content after route transitions. Global CSS adds visible focus, reduced-motion, forced-colors and higher-contrast handling. `client/src/components/ErrorBoundary.tsx` shows accessible recovery guidance that discourages deleting browser storage during a problem.
 7. **Masked backup passphrase dialog:** `client/src/features/backup/useRun18PassphrasePrompt.tsx` replaces plaintext `window.prompt` backup passwords with transient `type="password"` input, keyboard focus confinement, Escape cancellation, masked entry and no application persistence. Browser-managed credential behavior and malicious extensions remain outside the app's control.
 
