@@ -60,6 +60,7 @@ export default function BackupPage() {
       const text=await encryptBackupText(stringifyBackup(backup),passphrase);
       if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company switched before the encrypted file was prepared.");
       const proof=await createRun8FileReceipt(text,exportedCompanyId,backup.createdAt);
+      if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed before verification eligibility.");
       const blob=new Blob([text],{type:"application/json"});
       const url=URL.createObjectURL(blob);
       const link=document.createElement("a");
@@ -83,7 +84,7 @@ export default function BackupPage() {
   };
 
   const verifyDownloadedFile=async(file:File|undefined)=>{
-    if(!file||!pendingFileProof)return;
+    if(!file||!pendingFileProof||verifyingFile||readingFile||restoring||passphrases.active)return;
     setVerifyingFile(true);
     try{
       const companyAtStart=getActiveBusinessProfileId();
@@ -102,6 +103,7 @@ export default function BackupPage() {
       if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed before confirming saved backup.");
       const confirmedAt=await recordBackupExportedAt(
         proof.createdAt,db,proof.companyId,proof.sha256);
+      if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed after verifying the saved file.");
       setLastBackupAt(confirmedAt);
       setLastBackupCompanyId(proof.companyId);
       setPendingFileProof(null);
@@ -119,7 +121,7 @@ export default function BackupPage() {
     const companyAtStart=getActiveBusinessProfileId();
     // A cancelled or rejected second import must never leave the previous
     // file armed as the next destructive restore candidate.
-    setPendingBackup(null);setSummary(null);setMessage(null);
+    importedUnderCompany.current=null;setPendingBackup(null);setSummary(null);setMessage(null);
     try {
       const text=await readRun18BoundedBackupFile(file,(navigator as Navigator & {deviceMemory?:number}).deviceMemory);
       if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed during file read.");
@@ -187,7 +189,7 @@ export default function BackupPage() {
       </label>:null}
       {message ? <p className="backup-message" role="status"><FileCheck2 className="h-4 w-4" aria-hidden="true" />{message}</p> : null}</section>
 
-      <section className="backup-sheet"><div className="backup-sheet-head"><div><p className="ledger-kicker">02 · Restore a copy</p><h2>Check a backup file</h2></div><Upload className="h-5 w-5 text-baobab" aria-hidden="true" /></div><p>Choose an encrypted Tallybook backup and enter its passphrase. Legacy readable JSON backups are accepted only after an explicit privacy warning. Tallybook validates the schema and record links before offering to replace that company's local workspace.</p><label className="backup-file-input"><span><Upload className="h-4 w-4" aria-hidden="true" />Choose backup file</span><input ref={inputRef} type="file" accept="application/json,.json" disabled={readingFile||restoring||passphrases.active} onChange={(event) => {const file=event.currentTarget.files?.[0];event.currentTarget.value="";void readBackup(file);}} /></label>{summary ? <div className="backup-preview"><div><FileCheck2 className="h-5 w-5 text-baobab" aria-hidden="true" /><span><b>{summary.businessName ?? "Unnamed local business"}</b><small>Created {formatBackupDate(summary.createdAt)}</small></span></div><dl><div><dt>Products</dt><dd>{summary.counts.products}</dd></div><div><dt>Customers</dt><dd>{summary.counts.customers}</dd></div><div><dt>Sales</dt><dd>{summary.counts.sales}</dd></div><div><dt>Payments</dt><dd>{summary.counts.payments + summary.counts.repayments}</dd></div><div><dt>Receipts</dt><dd>{summary.counts.receipts}</dd></div></dl><button className="primary-action" type="button" onClick={() => setMessage("Confirm the replacement below to restore this checked local backup.")}><ArchiveRestore className="h-4 w-4" aria-hidden="true" />Restore backup</button></div> : <p className="backup-empty"><FileWarning className="h-4 w-4" aria-hidden="true" />No checked backup file yet.</p>}</section>
+      <section className="backup-sheet"><div className="backup-sheet-head"><div><p className="ledger-kicker">02 · Restore a copy</p><h2>Check a backup file</h2></div><Upload className="h-5 w-5 text-baobab" aria-hidden="true" /></div><p>Choose an encrypted Tallybook backup and enter its passphrase. Legacy readable JSON backups are accepted only after an explicit privacy warning. Tallybook validates the schema and record links before offering to replace that company's local workspace.</p>{readingFile?<p role="status">Reading local backup. Memory limits protect this device; no saved records are changed during file review.</p>:null}<label className="backup-file-input"><span><Upload className="h-4 w-4" aria-hidden="true" />Choose backup file</span><input ref={inputRef} type="file" accept="application/json,.json" disabled={readingFile||restoring||passphrases.active} onChange={(event) => {const file=event.currentTarget.files?.[0];event.currentTarget.value="";void readBackup(file);}} /></label>{summary ? <div className="backup-preview"><div><FileCheck2 className="h-5 w-5 text-baobab" aria-hidden="true" /><span><b>{summary.businessName ?? "Unnamed local business"}</b><small>Created {formatBackupDate(summary.createdAt)}</small></span></div><dl><div><dt>Products</dt><dd>{summary.counts.products}</dd></div><div><dt>Customers</dt><dd>{summary.counts.customers}</dd></div><div><dt>Sales</dt><dd>{summary.counts.sales}</dd></div><div><dt>Payments</dt><dd>{summary.counts.payments + summary.counts.repayments}</dd></div><div><dt>Receipts</dt><dd>{summary.counts.receipts}</dd></div></dl><button className="primary-action" type="button" onClick={() => setMessage("Confirm the replacement below to restore this checked local backup.")}><ArchiveRestore className="h-4 w-4" aria-hidden="true" />Restore backup</button></div> : <p className="backup-empty"><FileWarning className="h-4 w-4" aria-hidden="true" />No checked backup file yet.</p>}</section>
 
       <section className="backup-sheet backup-integrity-sheet"><div className="backup-sheet-head"><div><p className="ledger-kicker">03 · Check this device</p><h2>Review local records</h2></div><SearchCheck className="h-5 w-5 text-baobab" aria-hidden="true" /></div><p>This check reads saved record links and totals only. It never changes or removes your local records.</p><button className="secondary-action" type="button" onClick={() => void checkLocalRecords()} disabled={checkingIntegrity}>{checkingIntegrity ? "Checking local records…" : "Check local records"}<SearchCheck className="h-4 w-4" aria-hidden="true" /></button>{integrityAudit ? integrityAudit.status === "clear" ? <p className="backup-integrity-clear" role="status"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Checked {integrityAudit.recordsChecked} saved records. No relationship issues found.</p> : <div className="backup-integrity-attention" role="alert"><strong>Found {integrityAudit.issues.length} item{integrityAudit.issues.length === 1 ? "" : "s"} that need attention.</strong><p>Download a fresh backup before seeking help. This check did not change anything.</p><ul>{integrityAudit.issues.slice(0, 3).map((entry, index) => <li key={`${entry.code}-${entry.recordId ?? index}`}>{entry.message}</li>)}</ul></div> : null}</section></div>
 
