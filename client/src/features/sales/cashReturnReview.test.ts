@@ -8,6 +8,7 @@ import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySetting
 import {createProduct} from '@/features/inventory/inventory';
 import {completeSale} from '@/features/sales/sales';
 import {getCashReturnReview} from './cashReturnReview.ts';
+import {createStaff,unlockStaff,lockStaff} from '@/features/staff/staff';
 import {quoteReviewedCashReturn} from './cashReturnReview.mjs';
 const opened:TallybookDB[]=[];
 async function setup() {
@@ -21,7 +22,7 @@ async function setup() {
   const original=await completeSale({lines:[{productId:product.id,quantity:2}],discount:'0',paymentMethod:'cash',amountPaid:'20',currency:'GHS',submissionKey:'review-sale-001'},database);
   return {database,original,product};
 }
-afterEach(async()=>{vi.useRealTimers();vi.restoreAllMocks();setActiveBusinessProfileId('primary');for(const database of opened.splice(0)){database.close();await new Dexie(database.name).delete();}});
+afterEach(async()=>{lockStaff('primary');vi.useRealTimers();vi.restoreAllMocks();setActiveBusinessProfileId('primary');for(const database of opened.splice(0)){database.close();await new Dexie(database.name).delete();}});
 it('reads saved receipt, payment and FIFO evidence without writing a refund',async()=>{
   const {database,original,product}=await setup();
   const before={returns:await database.cashPartialReturns.count(),movements:await database.inventoryMovements.count(),costs:await database.inventoryCostEvents.count()};
@@ -55,4 +56,19 @@ it('refuses to quote further returns when the earlier stock movement no longer m
   },database));
   await database.inventoryCostEvents.update(saved.lines[0].costEventId,{sourceId:'tampered-source'});
   await expect(getCashReturnReview(original.sale.id,database)).rejects.toThrow(/stock movement|FIFO/i);
+});
+
+it('denies cashier-only access to private refund review and permits the unlocked owner',async()=>{
+  const {database,original}=await setup();
+  const owner=await createStaff('Fixture Owner','owner','123456',database);
+  await unlockStaff(owner.id,'123456',database);
+  const cashier=await createStaff('Fixture Cashier','cashier','654321',database);
+  lockStaff('primary');
+  await unlockStaff(cashier.id,'654321',database);
+  await expect(getCashReturnReview(original.sale.id,database))
+    .rejects.toThrow(/refund permission denied|access locked/i);
+  expect(await database.cashPartialReturns.count()).toBe(0);
+  await unlockStaff(owner.id,'123456',database);
+  const ownerReview=await getCashReturnReview(original.sale.id,database);
+  expect(ownerReview.options).toHaveLength(1);
 });
