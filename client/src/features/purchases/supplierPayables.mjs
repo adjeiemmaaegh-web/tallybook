@@ -95,5 +95,31 @@ export function reconcileSupplierPayables(purchases, entries) {
     return { purchaseId: purchase.id, ...result };
   });
   const outstandingByCurrency = [...balances].map(([currency, amountMinor]) => ({ currency, amountMinor })).sort((a,b) => a.currency.localeCompare(b.currency));
-  return { outstandingMinor: outstandingByCurrency.length === 1 ? outstandingByCurrency[0].amountMinor : null, outstandingByCurrency, unknownPurchases, complete: unknownPurchases === 0, results };
+  // Supplier-level view is derived from already validated, exact purchase
+  // balances. Do not merge currencies or treat unrecognized invoices as zero.
+  const supplierMap = new Map();
+  for (let i=0;i<purchases.length;i++) {
+    const purchase=purchases[i],result=results[i];
+    let summary=supplierMap.get(purchase.supplierId);
+    if(!summary) {
+      summary={supplierId:purchase.supplierId,unknownPurchases:0,
+        purchaseCount:0,byCurrency:new Map()};
+      supplierMap.set(purchase.supplierId,summary);
+    }
+    summary.purchaseCount++;
+    if(result.status==='unknown') {summary.unknownPurchases++;continue;}
+    const old=summary.byCurrency.get(purchase.currency)??0;
+    const next=old+result.outstandingMinor;
+    if(!Number.isSafeInteger(next)||next<0)
+      throw new Error('Supplier-level liability exceeds safe monetary limits.');
+    summary.byCurrency.set(purchase.currency,next);
+  }
+  const outstandingBySupplier=[...supplierMap.values()].map(row=>({
+    supplierId:row.supplierId,purchaseCount:row.purchaseCount,
+    unknownPurchases:row.unknownPurchases,complete:row.unknownPurchases===0,
+    outstandingByCurrency:[...row.byCurrency].map(([currency,amountMinor])=>({
+      currency,amountMinor
+    })).sort((a,b)=>a.currency.localeCompare(b.currency))
+  })).sort((a,b)=>a.supplierId.localeCompare(b.supplierId));
+  return { outstandingMinor: outstandingByCurrency.length === 1 ? outstandingByCurrency[0].amountMinor : null, outstandingByCurrency, outstandingBySupplier, unknownPurchases, complete: unknownPurchases === 0, results };
 }
