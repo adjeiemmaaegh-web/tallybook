@@ -53,6 +53,7 @@ jobs:
           } 2>&1 | tee artifacts/release-v19/stage21-preflight.log
       - name: Install frozen dependencies
         id: install
+        if: ${{ always() && steps.preflight.outcome != 'cancelled' }}
         run: |
           set -o pipefail
           pnpm install --frozen-lockfile 2>&1 | tee artifacts/release-v19/install-ci.log
