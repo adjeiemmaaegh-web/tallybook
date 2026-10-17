@@ -2,6 +2,7 @@
  * + fake IndexedDB environment; not executed in this source-only edit.
  */
 import Dexie from "dexie";
+import {webcrypto} from "node:crypto";
 import {afterEach,describe,expect,it} from "vitest";
 import {TallybookDB,initializeDatabase} from "@/db/TallybookDB";
 import {setActiveBusinessProfileId} from "@/features/business/activeCompany";
@@ -9,6 +10,7 @@ import {saveBusinessProfile} from "@/features/business/businessProfile";
 import {createStaff,unlockStaff,lockStaff} from "@/features/staff/staff";
 import {auditRun20CrossRunLinks} from "./run20CrossRunAudit";
 
+if(!globalThis.crypto?.subtle)Object.defineProperty(globalThis,"crypto",{configurable:true,value:webcrypto});
 let serial=0;
 const opened:TallybookDB[]=[];
 async function ready(){
