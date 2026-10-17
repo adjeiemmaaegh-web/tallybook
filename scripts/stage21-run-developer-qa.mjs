@@ -11,7 +11,7 @@
  * All test categories are attempted; process exits nonzero if any fails.
  */
 import {execFileSync,spawnSync} from "node:child_process";
-import {mkdirSync,writeFileSync,existsSync,readdirSync} from "node:fs";
+import {mkdirSync,writeFileSync,appendFileSync,openSync,closeSync,existsSync,readdirSync} from "node:fs";
 import {resolve,dirname} from "node:path";
 import {fileURLToPath} from "node:url";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
@@ -53,17 +53,26 @@ const folder=resolve(root,"artifacts","stage21-local-qa",stamp+"-"+head.slice(0,
 mkdirSync(folder,{recursive:true});
 const results=[];
 function one(id,cmd,args,timeout=900000){
- const result=invoke(cmd,args,timeout);
- const output=[
+ // Stream output directly to a private file: large native/browser suites
+ // must not buffer tens of megabytes into Node RAM on low-spec Windows.
+ const out=resolve(folder,id+".log");
+ writeFileSync(out,[
   "STAGE21 DEVELOPER VERIFICATION",id,
   "sha: "+head,"node: "+process.version,"pnpm: 10.34.0",
-  "command: "+cmd+" "+args.join(" "),
+  "command: "+cmd+" "+args.join(" "),"-- combined stdout and stderr --",""
+ ].join("\n"),{encoding:"utf8",mode:0o600});
+ const fd=openSync(out,"a",0o600);
+ let result;
+ try{
+   result=spawnSync(cmd,args,{cwd:root,stdio:["ignore",fd,fd],timeout,
+     shell:process.platform==="win32"});
+ }finally{closeSync(fd);}
+ appendFileSync(out,[
+  "","-- process result --",
   "exit status: "+String(result.status),
   "signal: "+String(result.signal??"none"),
-  "error: "+String(result.error?.message??"none"),
-  "-- stdout --",result.stdout??"","-- stderr --",result.stderr??""
- ].join("\n");
- writeFileSync(resolve(folder,id+".log"),output,{encoding:"utf8",mode:0o600});
+  "error: "+String(result.error?.message??"none"),""
+ ].join("\n"),{encoding:"utf8"});
  const success=result.status===0&&!result.error;
  results.push({id,success,exitCode:result.status,error:result.error?.message??null,
    timeout:result.error?.code==="ETIMEDOUT"});
