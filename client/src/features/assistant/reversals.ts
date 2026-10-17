@@ -67,7 +67,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
-    const existingByKey = await database.saleReversals.where("submissionKey").equals(submissionKey).and((item) => item.businessProfileId === activeId).first();
+    const existingByKey = await database.saleReversals.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existingByKey) return existingByKey;
     const sale = await latestReversibleSale(database, activeId);
     if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
