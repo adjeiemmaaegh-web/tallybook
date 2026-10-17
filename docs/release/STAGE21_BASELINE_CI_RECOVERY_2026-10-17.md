@@ -33,6 +33,20 @@ The checkout metadata has `.node-version=24.19.0`, `packageManager=pnpm@10.34.0`
 4. **Failed previous CI incident captured** — Existing validation run `39000398606` at `cb204d3ac8d59e9ca5834074910be271446c73f9` reported failed before visible executed steps; no job artifacts, and the job log could not be retrieved. This may be runner/account infrastructure or workflow configuration; no application assertion is claimed to have executed or failed based on that attempt.
 5. **Static GitHub source-tree inspection** — The source tree was inspected without executing the app. It contains approximately 1,100 tracked files, the expected QA configs and lockfile, and two same-stem TypeScript/ESM pairs (`supplierPayables`, `cashReturnReview`) that must retain explicit imports where applicable. These file observations do not prove that every runtime import, migration or UI workflow succeeds.
 
+6. **Local pinned developer QA fallback** — `scripts/stage21-run-developer-qa.mjs` now provides an explicit exact-Git-SHA, clean-worktree and Node 24.19.0/pnpm 10.34.0 gate for developer-controlled checkouts. It runs independent native/client/types/build/three-browser/dependency checks, records per-step outcome and private logs in a local evidence directory, and never calls deployment or business payment services. The runner is not a substitute for actual execution and was NOT executed against the complete connected repository in this source-only environment. Dependencies must already be installed unless a developer deliberately sets `TALLYBOOK_STAGE21_ALLOW_INSTALL=1` to run the frozen install.
+
+## 2A. Actual new GitHub-hosted runner attempt (BLOCKED)
+
+A genuine GitHub release-validation push run was triggered on the corrected branch at commit `0e2d77f80e3630f11c5356a7303e92852a46a121`:
+
+- Run: https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/39011198208
+- GitHub status: `completed`; conclusion: `failure`; start: `2026-10-17T06:47:15Z`; end: `2026-10-17T06:47:18Z`.
+- Job `Pinned Node 24 - complete developer QA`: `117333910224`, `failure`, **zero reported steps**.
+- Download of job logs: HTTP 404 `BlobNotFound`. No test install, TypeScript check, Vitest assertion, browser test, native suite, production build or artifact can be claimed.
+- The same pre-step pattern occurred before CI workflow corrections at run `39000398606`. It may reflect hosted runner provisioning, private repository Actions usage/billing or account/repository policy. Cause NOT established. The assistant cannot inspect/alter the owner's GitHub account billing settings through these repository tools.
+- Follow-up external/account checks for the GitHub owner, not merchant hardware UAT: GitHub repository **Settings → Actions → General**, account **Billing and licensing / Actions usage and budgets**, GitHub Actions service status or GitHub Support quoting the run/job IDs. No assumption of an exhausted quota or billing denial is justified without the actual account evidence.
+- Alternative: run the newly authored exact-SHA developer QA harness in a proper pinned, disposable engineering checkout; preserve original per-step logs and correct every failure, then rerun at the modified SHA. Neither option is marked PASS here.
+
 ## 3. Stage 21 mandatory exit gates (current status)
 
 | ID | Proof required to close this stage | Status |
