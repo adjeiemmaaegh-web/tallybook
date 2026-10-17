@@ -88,7 +88,7 @@ async function createExpenseWhileLocked(values:CreateExpenseInput,database:Tally
     const shift=await activeStaffShift(staff,database);
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error('Company changed while authorizing an expense.');
-    const existing = await database.expenses.where("submissionKey").equals(submissionKey).and((expense) => expense.businessProfileId === activeId).first();
+    const existing = await database.expenses.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existing) {
       if (existing.category !== input.category || existing.amountMinor !== amountMinor || existing.currency !== values.currency ||
           existing.expenseDate !== input.expenseDate || (existing.note ?? "") !== (input.note?.trim() ?? ""))
