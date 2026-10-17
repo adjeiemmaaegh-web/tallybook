@@ -40,7 +40,7 @@ export async function recordWalletTransfer(input: {
       const currency=profile.currency;
       const customer=await database.customers.get(input.customerId);
       if (!customer || customer.businessProfileId!==businessProfileId || customer.archivedAt) throw new Error('Customer is unavailable.');
-      const prior=await database.walletTransfers.where('submissionKey').equals(input.submissionKey).first();
+      const prior=await database.walletTransfers.where('[businessProfileId+submissionKey]').equals([businessProfileId,input.submissionKey]).first();
       if (prior) {
         if (prior.businessProfileId!==businessProfileId || prior.currency!==currency || prior.customerId!==input.customerId || prior.kind!==input.kind || prior.amountMinor!==input.amountMinor || prior.method!==input.method || prior.reference!==input.reference.trim()) throw new Error('Transfer key was reused for different details.');
         const linked=await database.customerBenefits.get(prior.benefitEntryId);
