@@ -54,13 +54,20 @@ export function deriveRun17Evidence(input){
     !["active","closed"].includes(store.status))deny("store directory needs reconciliation");
  const storeIds=new Set(stores.map(x=>x.id));
  const selected=[],fullReversed=new Set(),partiallyReturned=new Set();
+ let legacyCurrencyUnverifiedSales=0;
  for(const sale of sales){
-  if(!isDate(sale.createdAt)||!minor(sale.totalMinor)||sale.currency!==input.currency||
+  if(!isDate(sale.createdAt)||!minor(sale.totalMinor)||
      !["completed","reversed"].includes(sale.status)||
      (sale.storeId!==undefined&&!storeIds.has(sale.storeId)))
     deny("sale money, store or chronology requires reconciliation");
   const ts=Date.parse(sale.createdAt);
-  if(ts>=input.startMs&&ts<input.endMs&&ts<=Date.parse(asOf))selected.push(sale);
+  if(ts>=input.startMs&&ts<input.endMs&&ts<=Date.parse(asOf)){
+    // Historical sales may have no saved currency; never infer one.
+    if(sale.currency===undefined){legacyCurrencyUnverifiedSales++;continue;}
+    if(sale.currency!==input.currency)
+      deny("Selected sale is denominated in a different currency.");
+    selected.push(sale);
+  }
  }
  for(const reversal of reversals){
   if(!saleMap.has(reversal.originalSaleId)||!isDate(reversal.createdAt))
@@ -167,6 +174,12 @@ export function deriveRun17Evidence(input){
       [transfer.status,transfer.dispatchedAt,transfer.productId,transfer.quantity]));
   }
  }
+ if(legacyCurrencyUnverifiedSales)
+  findings.push(finding("coverage","legacy-currency","information",
+    "Historical sales excluded: currency not recorded",
+    legacyCurrencyUnverifiedSales+" selected historical sale records lack currency evidence; neither money nor product units are inferred from them.",
+    "Review original invoices and the company's archived currency policy before interpreting total sales.",
+    "/reports",[],[legacyCurrencyUnverifiedSales,input.period],"limited"));
  const historicalMissingStore=stores.length>0?selected.filter(s=>!s.storeId).length:0;
  if(historicalMissingStore)
   findings.push(finding("coverage","store-origin","information","Some saved sales have no store attribution",
@@ -187,6 +200,7 @@ export function deriveRun17Evidence(input){
   scopeLabel:"Device-local recorded evidence; not bank-verified, not audited financial statements",
   summary:Object.freeze({
     grossRecordedInvoiceMinor:grossMinor,recordedSaleCount:selected.length,
+    legacyCurrencyUnverifiedSaleCount:legacyCurrencyUnverifiedSales,
     fullyReversedSaleCount:selectedFull,partialReturnAffectedSaleCount:selectedPart,
     storeOriginUnknownSaleCount:historicalMissingStore,localOrderCount:orders.length,
     pendingDispatchedTransferCount:transfers.filter(x=>x.status==="dispatched").length,
