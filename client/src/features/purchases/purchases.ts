@@ -176,7 +176,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
     const shift=await activeStaffShift(staff,database);
-    const existing = await database.purchases.where("submissionKey").equals(submissionKey).and((purchase) => purchase.businessProfileId === activeId).first();
+    const existing = await database.purchases.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existing) {
       const savedLines = await database.purchaseLines.where("purchaseId").equals(existing.id).toArray();
       const submitted = input.lines.map(line => ({productId:line.productId,quantity:Number(line.quantity),unitCostMinor:parseAmountToMinor(line.unitCost,currency)}))
