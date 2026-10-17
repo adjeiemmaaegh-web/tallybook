@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 33;
+export const DATABASE_SCHEMA_VERSION = 34;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -299,6 +299,12 @@ export class TallybookDB extends Dexie {
     // Run 17: append-only human advisory-review evidence, never retail mutation.
     this.version(33).stores({
       run17ReviewEvents:"id, businessProfileId, findingId, staffId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+findingId], &[businessProfileId+findingId+sequence]"
+    });
+    // Stage 22: same retry key is legal in different companies, but unique
+    // within one company. Index-only migration preserves every original
+    // wallet transfer and never rewrites amounts, currencies or beneficiaries.
+    this.version(34).stores({
+      walletTransfers:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]"
     });
   }
 }
