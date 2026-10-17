@@ -58,6 +58,14 @@ A genuine GitHub release-validation push run was triggered on the corrected bran
 7. See `STAGE21_ORIGINAL_TRACEABILITY_SOURCE_REVIEW_2026-10-17.md`: 367 declared ledger path references were inspected via GitHub's tree; **364 tracked file paths, 3 tracked directory paths, 0 missing declared paths**. This is only path provenance, not passing tests or completed requirements.
 8. The hosted workflow remains blocked before job steps; changes to its source file cannot establish which account policy or runner provisioning issue caused the GitHub failure. No new status is claimed for `pnpm check`, `pnpm test`, `pnpm build` or Playwright.
 
+## 2C. Latest QA-harness hardening and source audit
+
+- `qa/stage21-baseline-audit.test.mjs` now includes an explicit duplicate blocker ID assertion, alongside frozen historical IDs, new tracked issues, clean worktrees and import collisions. These are executable **test sources, not executed results**.
+- The dependency-free import scanner was narrowed to line-oriented static import/export statements, reducing false positives from quoted fixtures and comments; the synthetic fixture examples no longer look like live QA dependencies. Full TypeScript semantic resolution remains separately required.
+- The original 82/47 manifest is immutable within the committed branch. New real issue IDs may be added without overwriting/deleting historical issue entries.
+- `artifacts/stage21-local-qa/` is ignored; the local developer QA harness streams suite stdout/stderr to private per-step files instead of memory buffers.
+- No local build, typecheck, Vitest, Playwright or full native suite has run on this Stage 21 source. The author's tools do not have the private repository checkout, Node 24.19.0, or frozen package installation. No green claims are supported by the source-only checks.
+
 ## 3. Stage 21 mandatory exit gates (current status)
 
 | ID | Proof required to close this stage | Status |
