@@ -4,7 +4,7 @@ name: Release validation
 # provisions cloud resources or enables live payments.
 on:
   push:
-    branches: [main, 'v19/stage21-*']
+    branches: [main, 'v19/stage*']
   pull_request:
   workflow_dispatch:
 
