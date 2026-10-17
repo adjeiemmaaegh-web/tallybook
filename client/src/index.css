@@ -1,5 +1,5 @@
 /** Adobea design reminder (Stage 1 restyle): indigo/gold POS-style operating surfaces, plain-language copy, no editorial hero blocks. Engine, routes, and data are untouched. */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap");
+/* Run 18: no third-party font fetch; local/system fallbacks retain offline privacy and avoid a network-dependent first paint. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -1006,4 +1006,30 @@ body { background: var(--ta-canvas); color: var(--ta-ink); font-family: var(--fo
   .receipt-dialog-content .receipt-detail { max-width: 80mm !important; margin: 0 auto !important; }
   .receipt-dialog-content .receipt-detail-items,
   .receipt-dialog-content .receipt-detail-calculation { break-inside: avoid; }
+}
+
+/* Run 18 — accessibility and low-power motion preferences. All interactive
+ * controls retain a visible keyboard focus ring even inside drawers/dialogs.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (forced-colors: active) {
+  :focus-visible { outline: 3px solid Highlight !important; outline-offset: 3px; }
+  .skip-link { border-color: ButtonText; background: Canvas; color: CanvasText; }
+  [aria-current="page"] { outline: 2px solid SelectedItem; outline-offset: -2px; }
+}
+:where(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 3px solid #ae581f;
+  outline-offset: 3px;
+}
+:where(button, input, select, textarea):disabled { cursor: not-allowed; }
+@media (prefers-contrast: more) {
+  :root { --color-ink-soft: #41434a; --color-rule: #848489; }
+  .status-chip, .backup-file-input, .quiet-action { border-width: 2px; }
 }
