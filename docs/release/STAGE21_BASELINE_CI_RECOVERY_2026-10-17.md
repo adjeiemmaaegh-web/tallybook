@@ -66,6 +66,19 @@ A genuine GitHub release-validation push run was triggered on the corrected bran
 - `artifacts/stage21-local-qa/` is ignored; the local developer QA harness streams suite stdout/stderr to private per-step files instead of memory buffers.
 - No local build, typecheck, Vitest, Playwright or full native suite has run on this Stage 21 source. The author's tools do not have the private repository checkout, Node 24.19.0, or frozen package installation. No green claims are supported by the source-only checks.
 
+## 2D. Latest exact-branch CI attempt and narrowly scoped runtime evidence
+
+**Latest hosted CI attempt:** https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/39013435194 on source SHA `a5578e6fba075cb15143dcb0c3f80730a39630df`. GitHub reported `completed / failure` with job `117340560069`. The job had **zero executed step summaries**, **zero artifacts**, and its logs returned 404 `BlobNotFound`. Source integration, dependency installation, native tests, browser tests, TypeScript and the build **did not acquire runnable CI evidence**. The account/runner failure cause remains undetermined. This is **CI BLOCKED**, not an application regression verdict.
+
+**Isolated V8 source-function probes (9/9 passed, not full QA):** The pure GitHub-sourced modules were parsed/evaluated with their imports removed where applicable, and nine controlled scenarios were observed:
+- Run 17: legacy sale without saved currency excluded; legitimate same-currency sale counted alongside an excluded legacy sale; explicit foreign currency rejected.
+- Run 20: all 20 mandatory release gates remain NO-GO; staging/production/payment activation is refused.
+- Run 18 + resource budget: low-memory limits for 1, 2, 4 and 8 GiB hints; oversized declared file rejected without reading; forged small metadata with oversized actual UTF-8 content rejected; normal small content preserved.
+
+**Exact module Git blob provenance:** `run17Evidence.mjs` `ca2c145d6314a868aae5b5c280f35f42036a08d2`; `run20ReleaseGates.mjs` `54085e42ed0c31138c2dbfa3cc19ef50c990e90b`; `backupResourceLimits.mjs` `21a0f8743ef7f41153b8fbccb1a5aaacdf63dfc3`; `run18ImportAdmission.mjs` `9fb7f245dc3235e1b01877bb04faf2500e83dbce`.
+
+These checks were executed in an isolated JavaScript V8 evaluator against fetched pure source rather than pinned Node 24 with repository dependencies; there was no browser, native repo test harness, IndexedDB, package install, live payment or actual Tallybook launch. **They must not be used to mark any of the 82 acceptance units or 47 historical issues independently verified.** Three new Stage 21 audit/harness files were also syntax-parsed after removing module-specific syntax, which is not a semantic TypeScript or actual CLI test.
+
 ## 3. Stage 21 mandatory exit gates (current status)
 
 | ID | Proof required to close this stage | Status |
