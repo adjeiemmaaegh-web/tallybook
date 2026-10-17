@@ -8,7 +8,7 @@ const MAX_MINOR = Number.MAX_SAFE_INTEGER;
 function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0; }
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
 const currency = value => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
-const timestamp = value => {
+export const validSupplierLedgerTimestamp = value => {
   if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value)) return false;
   const match = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.\d{1,3})?(Z|[+-](\d\d):(\d\d))$/.exec(value);
   if (!match) return false;
@@ -26,7 +26,7 @@ const timestamp = value => {
 export function reconcileSupplierPayable(purchase, entries) {
   if (!purchase || !identity(purchase.id) || !identity(purchase.businessProfileId) ||
       !identity(purchase.supplierId) || !validAmount(purchase.totalCostMinor) ||
-      !currency(purchase.currency) || !timestamp(purchase.createdAt) || !Array.isArray(entries)) {
+      !currency(purchase.currency) || !validSupplierLedgerTimestamp(purchase.createdAt) || !Array.isArray(entries)) {
     throw new Error('Supplier purchase requires reconciliation.');
   }
   const seenIds = new Set();
@@ -41,7 +41,7 @@ export function reconcileSupplierPayable(purchase, entries) {
     if (!row || !identity(row.id) || !identity(row.submissionKey) || seenIds.has(row.id) || seenKeys.has(row.submissionKey) ||
         row.businessProfileId !== purchase.businessProfileId || row.purchaseId !== purchase.id ||
         row.supplierId !== purchase.supplierId || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||
-        !timestamp(row.createdAt) || Date.parse(row.createdAt) < Date.parse(purchase.createdAt) ||
+        !validSupplierLedgerTimestamp(row.createdAt) || Date.parse(row.createdAt) < Date.parse(purchase.createdAt) ||
         (row.reference !== undefined && (typeof row.reference !== 'string' || row.reference.length > 120))) {
       throw new Error('Supplier payable contains a duplicate, foreign or malformed entry.');
     }
