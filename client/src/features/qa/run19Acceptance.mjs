@@ -141,3 +141,38 @@ export function verifyRun19EvidencePayload(value){
    throw Error("Acceptance counts, source context or release decision were tampered with.");
  return canonical;
 }
+
+/** Coverage is across physically distinct Windows and Android campaigns.
+ * A case labelled "Both" needs recorded evidence on BOTH platforms. A
+ * reported failure anywhere remains OPEN despite a success elsewhere.
+ * Matching device reports do not constitute witnessed or signed acceptance.
+ */
+export function run19CrossDeviceCoverage(payloads){
+ if(!Array.isArray(payloads)||payloads.length<1||payloads.length>50)
+   throw Error("Supply one to fifty separately exported physical-device campaigns.");
+ const campaigns=payloads.map(verifyRun19EvidencePayload);
+ const sha=campaigns[0].sourceSha;
+ if(campaigns.some(item=>item.sourceSha!==sha))
+   throw Error("Cannot combine UAT evidence from different source commits.");
+ const gaps=[],failures=[],observations=[];
+ for(const test of RUN19_CASES){
+   const required=test.platform==="Both"?["Windows","Android"]:[test.platform];
+   const needed=[];
+   for(const platform of required){
+     const rows=campaigns.filter(c=>c.devicePlatform===platform)
+       .flatMap(c=>c.results.filter(x=>x.caseId===test.id));
+     if(rows.some(x=>x.status==="fail"))failures.push(test.id+" / "+platform);
+     if(!rows.some(x=>x.status==="pass"))needed.push(platform);
+     observations.push(Object.freeze({caseId:test.id,platform,
+       recordedPass:rows.filter(x=>x.status==="pass").length,
+       recordedFail:rows.filter(x=>x.status==="fail").length}));
+   }
+   if(needed.length)gaps.push(Object.freeze({caseId:test.id,platforms:Object.freeze(needed)}));
+ }
+ return Object.freeze({sourceSha:sha,campaigns:campaigns.length,
+   coverageGaps:Object.freeze(gaps),reportedFailures:Object.freeze(failures),
+   observations:Object.freeze(observations),
+   screenshotsIndependentlyInspected:false,realDeviceProvenBySoftware:false,
+   independentReviewerSigned:false,ownerAccepted:false,releaseDecision:"NO-GO",
+   note:"Source-identical manual reports have not been independently witnessed, verified, or accepted."});
+}
