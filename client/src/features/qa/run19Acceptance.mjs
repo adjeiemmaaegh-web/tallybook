@@ -43,6 +43,7 @@ export const RUN19_CASES=Object.freeze([
 ]);
 export const RUN19_STATUS=Object.freeze(["not-run","pass","fail","blocked","not-applicable"]);
 export const RUN19_PLATFORMS=Object.freeze(["Windows","Android","Both"]);
+export const RUN19_DEVICE_PLATFORMS=Object.freeze(["Windows","Android"]);
 const safeString=(x,min,max)=>typeof x==="string"&&x.length>=min&&x.length<=max&&
  !/[\u0000-\u001f\u007f<>]/.test(x);
 const date=x=>typeof x==="string"&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x)&&
@@ -54,7 +55,10 @@ export function run19DefaultResults(){
   caseId:item.id,status:"not-run",note:"",evidenceFile:"",observedAt:null
  }));
 }
-export function validateRun19Result(item) {
+export function validateRun19Result(item,devicePlatform) {
+ if(!RUN19_DEVICE_PLATFORMS.includes(devicePlatform))throw Error("Select the actual physical device platform.");
+ const caseDefinition=RUN19_CASES.find(row=>row.id===item?.caseId);
+ const applicable=caseDefinition&&(caseDefinition.platform==="Both"||caseDefinition.platform===devicePlatform);
  if(!item||typeof item!=="object"||Array.isArray(item)||
    Object.keys(item).sort().join(",")!=="caseId,evidenceFile,note,observedAt,status"||
    !RUN19_CASES.some(test=>test.id===item.caseId)||
@@ -69,26 +73,32 @@ export function validateRun19Result(item) {
  }else{
    if(!date(item.observedAt)||!safeString(item.note.trim(),20,600))
      throw Error("Observed checks require timestamp and a specific factual note (20+ characters).");
+   if(item.status==="not-applicable"&&applicable)
+     throw Error("A device-relevant critical UAT case cannot be waived.");
+   if(item.status!=="not-applicable"&&!applicable)
+     throw Error("A case for another operating system cannot be marked observed on this device.");
    if(item.status==="pass"&&!ref(item.evidenceFile))
      throw Error("A PASS needs a separately retained evidence file reference; narrative alone is insufficient.");
    if(item.evidenceFile!==""&&!ref(item.evidenceFile))
      throw Error("Evidence filenames must be local filenames, not URLs or private paths.");
-   if(item.status==="not-applicable"&&RUN19_CASES.find(row=>row.id===item.caseId)?.critical)
-     throw Error("Critical real-device checks cannot be waived as not applicable.");
+
  }
  return Object.freeze({...item});
 }
-export function run19Summary(rows){
+export function run19Summary(rows,devicePlatform){
+ if(!RUN19_DEVICE_PLATFORMS.includes(devicePlatform))throw Error("Device platform required for per-device results.");
  if(!Array.isArray(rows)||rows.length!==RUN19_CASES.length)
   throw Error("The complete Run 19 acceptance matrix must remain intact.");
  const seen=new Set();
  const counts=Object.fromEntries(RUN19_STATUS.map(status=>[status,0]));
  let criticalUnverified=0;
  for(const item of rows) {
-  validateRun19Result(item);
+  validateRun19Result(item,devicePlatform);
   if(seen.has(item.caseId))throw Error("Duplicate device acceptance case.");
   seen.add(item.caseId);counts[item.status]++;
-  if(item.status!=="pass"&&RUN19_CASES.find(x=>x.id===item.caseId).critical)criticalUnverified++;
+  const defined=RUN19_CASES.find(x=>x.id===item.caseId);
+  if(item.status!=="pass"&&defined.critical&&
+     (defined.platform==="Both"||defined.platform===devicePlatform))criticalUnverified++;
  }
  if(RUN19_CASES.some(x=>!seen.has(x.id)))throw Error("A mandatory acceptance case is absent.");
  return Object.freeze({counts:Object.freeze(counts),criticalUnverified,
@@ -98,6 +108,7 @@ export function run19Summary(rows){
 }
 export function createRun19EvidencePayload(input) {
  if(!input||typeof input!=="object"||
+    !RUN19_DEVICE_PLATFORMS.includes(input.devicePlatform)||
     !/^[0-9a-f]{40}$/i.test(input.sourceSha??"")||
     !safeString(input.deviceClass??"",5,100)||
     !safeString(input.browser??"",2,100)||
@@ -107,11 +118,13 @@ export function createRun19EvidencePayload(input) {
     input.noLivePayments!==true||input.noExternalDeployment!==true||
     !Array.isArray(input.results))
    throw Error("Run 19 requires exact Git SHA, labelled disposable device and protected test scope.");
- const results=input.results.map(validateRun19Result);
- const summary=run19Summary(results);
+ const results=input.results.map(row=>validateRun19Result(row,input.devicePlatform));
+ const summary=run19Summary(results,input.devicePlatform);
+ for(const row of results)if(row.observedAt&&Date.parse(row.observedAt)>Date.parse(input.createdAt))
+   throw Error("A device observation cannot postdate its evidence export.");
  return Object.freeze({
   kind:RUN19_KIND,formatVersion:RUN19_FORMAT,sourceSha:input.sourceSha.toLowerCase(),
-  createdAt:input.createdAt,deviceClass:input.deviceClass,browser:input.browser,
+  createdAt:input.createdAt,devicePlatform:input.devicePlatform,deviceClass:input.deviceClass,browser:input.browser,
   os:input.os,operatorLabel:input.operatorLabel,sampleDataOnly:true,
   noLivePayments:true,noExternalDeployment:true,
   results,summary
@@ -120,7 +133,7 @@ export function createRun19EvidencePayload(input) {
 export function verifyRun19EvidencePayload(value){
  if(!value||typeof value!=="object"||Array.isArray(value)||
    Object.keys(value).sort().join(",")!==
-   "browser,createdAt,deviceClass,formatVersion,kind,noExternalDeployment,noLivePayments,operatorLabel,os,results,sampleDataOnly,sourceSha,summary"||
+   "browser,createdAt,deviceClass,devicePlatform,formatVersion,kind,noExternalDeployment,noLivePayments,operatorLabel,os,results,sampleDataOnly,sourceSha,summary"||
    value.kind!==RUN19_KIND||value.formatVersion!==RUN19_FORMAT)
    throw Error("Unsupported device acceptance evidence format.");
  const canonical=createRun19EvidencePayload(value);
