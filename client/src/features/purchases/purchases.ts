@@ -12,6 +12,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { checkedMinorSum } from "@/features/sales/creditLedger.mjs";
 import { appendInventoryCostChange } from "@/features/inventory/costLedger";
+import { reconcileSupplierPayable } from "@/features/purchases/supplierPayables.mjs";
 
 export interface Supplier {
   id: string;
@@ -132,11 +133,24 @@ export async function updateSupplier(supplierId: string, values: SupplierFormVal
 export async function archiveSupplier(supplierId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.appMeta, database.suppliers, database.staffMembers, database.staffAudits], async () => {
+    return database.transaction("rw", [database.appMeta, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffAudits], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       const staff = await requirePermission("inventory", database, activeId);
       const supplier = await database.suppliers.get(supplierId);
       if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("This supplier is already archived or unavailable.");
+      // Supplier archives must never hide an unreviewed or unpaid purchasing
+      // liability from normal operations. A purchase receipt alone is not
+      // evidence of payment, so a missing recognition stays UNKNOWN.
+      const purchases=await database.purchases.where("supplierId").equals(supplierId)
+        .and(row=>row.businessProfileId===activeId).toArray();
+      for(const purchase of purchases){
+        const entries=await database.supplierPayableEntries.where("purchaseId").equals(purchase.id).toArray();
+        const status=reconcileSupplierPayable(purchase,entries);
+        if(status.status!=="settled"||status.outstandingMinor!==0)
+          throw new Error("Supplier has unpaid or unverified purchase liabilities. Reconcile every original purchase before archiving.");
+      }
+      if(getActiveBusinessProfileId()!==activeId)
+        throw new Error("Company changed before supplier financial closeout.");
       const now = new Date().toISOString();
       const archived = { ...supplier, archivedAt: now, updatedAt: now };
       await database.suppliers.put(archived);
