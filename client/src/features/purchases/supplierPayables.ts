@@ -132,7 +132,8 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
 
 export async function getSupplierPayables(database: TallybookDB = db) {
   const company = getActiveBusinessProfileId();
-  return database.transaction('r', [database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers], async () => {
+  return database.transaction('r', [database.appMeta, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission('reports',database,company);
     const purchases = await database.purchases.where('businessProfileId').equals(company).toArray();
     const entries = await database.supplierPayableEntries.where('businessProfileId').equals(company).toArray();
@@ -145,7 +146,10 @@ export async function getSupplierPayables(database: TallybookDB = db) {
     if(purchases.some(x=>!supplierIds.has(x.supplierId)))throw new Error('Supplier purchase has a missing or foreign supplier identity.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched during supplier balance review.');
     const balanced=reconcileSupplierPayables(purchases, entries);
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission('reports',database,company);
+    if(getActiveBusinessProfileId()!==company)
+      throw new Error('Company changed while reviewing supplier liability.');
     return balanced;
   });
 }
