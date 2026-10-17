@@ -297,7 +297,7 @@ export async function adjustStock(productId: string, values: StockAdjustmentValu
 async function adjustStockWhileLocked(productId: string, values: StockAdjustmentValues, database: TallybookDB = db) {
   const input = stockAdjustmentSchema.parse(values);
   const company = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("inventory", database, company);
     const product = await database.products.get(productId);
