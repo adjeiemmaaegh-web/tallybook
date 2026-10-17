@@ -27,6 +27,7 @@ const InsightsPage = lazy(() => import("@/pages/InsightsPage"));
 const FinancialIntelligencePage = lazy(() => import("@/pages/FinancialIntelligencePage"));
 const BackupPage = lazy(() => import("@/pages/BackupPage"));
 const Run19DeviceAcceptancePage = lazy(() => import("@/pages/Run19DeviceAcceptancePage"));
+const Run20OperationsPage = lazy(() => import("@/pages/Run20OperationsPage"));
 const EndOfDayPage = lazy(() => import("@/pages/EndOfDayPage"));
 const PurchasesPage = lazy(() => import("@/pages/PurchasesPage"));
 const ExpensesPage = lazy(() => import("@/pages/ExpensesPage"));
@@ -67,6 +68,7 @@ function Router() {
         <Route path="/business-health" component={BusinessHealthPage} />
         <Route path="/backup" component={BackupPage} />
         <Route path="/device-uat" component={Run19DeviceAcceptancePage} />
+        <Route path="/release-operations" component={Run20OperationsPage} />
         <Route path="/assistant" component={AssistantPage} />
         <Route component={AppNotFound} />
       </Switch>
