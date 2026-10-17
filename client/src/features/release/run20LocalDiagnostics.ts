@@ -7,13 +7,14 @@ import {currentStaffId,requirePermission} from "@/features/staff/staff";
 import {getVerifiedBackupReceipt} from "@/features/backup/backup";
 import {RESTORE_JOURNAL_KEY} from "@/features/backup/restoreJournal.mjs";
 import {auditLocalIntegrity} from "@/features/reliability/integrity";
+import {auditRun20CrossRunLinks,type Run20CrossRunResult} from "./run20CrossRunAudit";
 export interface Run20Diagnostics{
  companyId:string;observedAt:string;schemaVersion:number|null;supportedSchemaVersion:number;
  recoveryJournalPresent:boolean;backupReceipt:{
   createdAt:string;sha256:string|null
  }|null;backupIsForSelectedCompany:boolean;
  deviceStorageBytes:{usage:number|null;quota:number|null}|null;
- onlineFlag:boolean|null;integrityCoverage:"legacy-core-only";integrity:{
+ onlineFlag:boolean|null;integrityCoverage:"legacy-core-only";crossRun:Run20CrossRunResult|null;integrity:{
   status:"clear"|"attention";recordsChecked:number;issueCount:number;
   issueCodes:string[]
  }|null;
@@ -47,6 +48,8 @@ export async function getRun20Diagnostics(
  // analysis. No workflow is ever marked safe merely because it returns clear.
  const integrity=withIntegrityAudit&&!baseline.recoveryJournalPresent?
    await auditLocalIntegrity(database):null;
+ const crossRun=withIntegrityAudit&&!baseline.recoveryJournalPresent?
+   await auditRun20CrossRunLinks(database):null;
  await assertOwner(database,company,actor);
  const receipt=await getVerifiedBackupReceipt(database);
  await assertOwner(database,company,actor);
@@ -67,7 +70,7 @@ export async function getRun20Diagnostics(
    quota:Number.isFinite(storage.quota)?storage.quota!:null
   }:null,
   onlineFlag:typeof navigator!=="undefined"?navigator.onLine:null,
-  integrityCoverage:"legacy-core-only",
+  integrityCoverage:"legacy-core-only",crossRun,
   integrity:integrity?{
    status:integrity.status,recordsChecked:integrity.recordsChecked,
    issueCount:integrity.issues.length,
