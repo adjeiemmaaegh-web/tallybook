@@ -47,6 +47,7 @@ export function deriveRun17Evidence(input){
  const transfers=companyRows(input.storeTransferRequests,company,"store transfer");
  const stores=companyRows(input.storeLocations,company,"store");
  const productIds=new Set(products.map(x=>x.id));
+ const productById=new Map(products.map(x=>[x.id,x]));
  const saleMap=new Map(sales.map(x=>[x.id,x]));
  const orderMap=new Map(orders.map(x=>[x.id,x]));
  for(const store of stores)if(typeof store.name!=="string"||!store.name.trim()||
@@ -79,9 +80,12 @@ export function deriveRun17Evidence(input){
      !qty(line.quantity)||line.quantity===0||!minor(line.lineTotalMinor))
     deny("orphan sale quantity or untrusted invoice evidence");
   if(!eligibleSales.has(line.saleId))continue;
-  const previous=byProduct.get(line.productId)??{units:0,rows:[]};
-  const total=safeAdd(previous.units,line.quantity);
-  byProduct.set(line.productId,{units:total,rows:[...previous.rows,line.id]});
+  // Reuse one mutable accumulator: previous array spreading was quadratic
+  // with repeated sales of the same product on low-memory computers.
+  let aggregate=byProduct.get(line.productId);
+  if(!aggregate){aggregate={units:0,rows:[]};byProduct.set(line.productId,aggregate);}
+  aggregate.units=safeAdd(aggregate.units,line.quantity);
+  aggregate.rows.push(line.id);
  }
  let grossMinor=0;
  for(const s of selected)grossMinor=safeAdd(grossMinor,s.totalMinor);
@@ -175,7 +179,7 @@ export function deriveRun17Evidence(input){
     "Review original sale lines and partial-return stock evidence before estimating net demand.",
     "/reports",[],[selectedPart,input.period],"limited"));
  const ranked=[...byProduct.entries()].map(([id,value])=>({
-  productId:id,name:products.find(p=>p.id===id)?.name??id,units:value.units,
+  productId:id,name:productById.get(id)?.name??id,units:value.units,
   sourceSaleLineIds:value.rows
  })).sort((a,b)=>b.units-a.units||a.name.localeCompare(b.name)).slice(0,10);
  const out=Object.freeze({
