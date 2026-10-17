@@ -181,7 +181,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const shift = cashier ? await database.staffShifts.where("staffId").equals(cashier.id).filter(x => x.businessProfileId === cashier.businessProfileId && !x.closedAt).first() : undefined;
 
     const submissionKey = input.submissionKey ?? nanoid(18);
-    const existingSale = await database.sales.where("submissionKey").equals(submissionKey).and((sale) => sale.businessProfileId === activeId).first();
+    const existingSale = await database.sales.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existingSale) {
       const [existingLines, existingPayment, existingReceipt] = await Promise.all([
         database.saleLines.where("saleId").equals(existingSale.id).toArray(),
