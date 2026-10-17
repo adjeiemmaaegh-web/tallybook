@@ -5,13 +5,14 @@
  */
 import {readFile} from "node:fs/promises";
 import {resolve} from "node:path";
+import {fileURLToPath} from "node:url";
 import {
  RUN20_EXTERNAL_STAGING_APPROVED,RUN20_PRODUCTION_AUTHORIZED,
  RUN20_REAL_PAYMENTS_AUTHORIZED,RUN20_PUBLIC_COMMERCE_AUTHORIZED,
  RUN20_CLOUD_FINANCIAL_SYNC_AUTHORIZED,RUN20_AUTOMATIC_PROMOTION_ENABLED,
  RUN20_GATES
 } from "../client/src/features/release/run20ReleaseGates.mjs";
-const root=resolve(new URL("..",import.meta.url).pathname);
+const root=resolve(fileURLToPath(new URL("..",import.meta.url)));
 const problems=[];
 const read=async path=>readFile(resolve(root,path),"utf8").catch(()=>{
  problems.push("Missing file: "+path);return "";
