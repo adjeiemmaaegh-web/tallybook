@@ -97,7 +97,9 @@ export default function Run19DeviceAcceptancePage(){
  const record=async(caseId:string)=>{
   try{await current();}catch(e){setError(cleanError(e));return;}
   setError("");setMessage("");
-  const currentStatus=choices[caseId]??defaultChoice;
+  const test=RUN19_CASES.find(item=>item.id===caseId);
+  const onDevice=test&&(test.platform==="Both"||test.platform===devicePlatform);
+  const currentStatus=choices[caseId]??(onDevice?defaultChoice:"not-applicable");
   const draft=drafts[caseId]??{note:"",evidenceFile:""};
   const candidate={
    caseId,status:currentStatus,note:draft.note.trim(),
