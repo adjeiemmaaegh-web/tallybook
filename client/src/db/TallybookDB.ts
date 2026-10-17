@@ -300,9 +300,10 @@ export class TallybookDB extends Dexie {
     this.version(33).stores({
       run17ReviewEvents:"id, businessProfileId, findingId, staffId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+findingId], &[businessProfileId+findingId+sequence]"
     });
-    // Stage 22: same retry key is legal in different companies, but unique
-    // within one company. Index-only migration preserves every original
-    // wallet transfer and never rewrites amounts, currencies or beneficiaries.
+    // Stage 22: financial retry keys are unique PER COMPANY, not globally.
+    // Index-only upgrade preserves immutable sales, repayments, purchases,
+    // expenses, reversals, wallet transfers and benefit rows without rewriting
+    // any money, currency snapshots, supplier or customer relationships.
     this.version(34).stores({
       walletTransfers:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]",
       sales:"id, businessProfileId, customerId, receiptNumber, createdAt, outstandingMinor, paymentMethod, submissionKey, &[businessProfileId+submissionKey]",
