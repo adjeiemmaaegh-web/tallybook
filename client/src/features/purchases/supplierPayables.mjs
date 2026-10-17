@@ -8,9 +8,19 @@ const MAX_MINOR = Number.MAX_SAFE_INTEGER;
 function validAmount(amount) { return Number.isSafeInteger(amount) && amount > 0; }
 function identity(value) { return typeof value === 'string' && value.length > 0 && value.length <= 100; }
 const currency = value => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
-const timestamp = value => typeof value === 'string' &&
-  /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value) &&
-  Number.isFinite(Date.parse(value));
+const timestamp = value => {
+  if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value)) return false;
+  const match = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.\d{1,3})?(Z|[+-](\d\d):(\d\d))$/.exec(value);
+  if (!match) return false;
+  const [,year,month,day,hour,minute,second,zone,offsetHours,offsetMinutes] = match;
+  const y = Number(year), m = Number(month), d = Number(day);
+  const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (y < 1 || m < 1 || m > 12 || d < 1 || d > days[m - 1] ||
+      Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59 ||
+      (zone !== 'Z' && (Number(offsetHours) > 23 || Number(offsetMinutes) > 59))) return false;
+  return Number.isFinite(Date.parse(value));
+};
 
 /** Build the as-of balance for exactly one company-scoped purchase. */
 export function reconcileSupplierPayable(purchase, entries) {
@@ -66,8 +76,13 @@ export function reconcileSupplierPayable(purchase, entries) {
 export function reconcileSupplierPayables(purchases, entries) {
   if (!Array.isArray(purchases) || !Array.isArray(entries)) throw new Error('Supplier payable snapshot unavailable.');
   const purchasesById = new Map();
+  let snapshotCompany = null;
   for (const purchase of purchases) {
-    if (!identity(purchase?.id) || purchasesById.has(purchase.id)) throw new Error('Supplier payable snapshot has duplicate purchases.');
+    if (!identity(purchase?.id) || !identity(purchase?.businessProfileId) ||
+        purchasesById.has(purchase.id)) throw new Error('Supplier payable snapshot has duplicate or invalid purchases.');
+    if (snapshotCompany !== null && purchase.businessProfileId !== snapshotCompany)
+      throw new Error('Supplier payable snapshot mixes company identities.');
+    snapshotCompany = purchase.businessProfileId;
     purchasesById.set(purchase.id, purchase);
   }
   const byPurchase = new Map();
