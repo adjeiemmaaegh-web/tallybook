@@ -95,7 +95,19 @@ export default function PurchasesPage() {
           if (!balance || balance.status === "unknown") return <div><small>Supplier payment status: unknown, not counted as zero debt.</small>{purchase.currency ? <button className="row-action" type="button" onClick={() => void recognizePayable(purchase)}>Recognize fully unpaid invoice</button> : null}</div>;
           return <div><small>Supplier liability: {formatMinorAmount(balance.outstandingMinor ?? 0, purchase.currency ?? currency)} outstanding · {formatMinorAmount(balance.paidMinor ?? 0, purchase.currency ?? currency)} manually paid · {formatMinorAmount(balance.creditedMinor ?? 0, purchase.currency ?? currency)} credited</small>{balance.status !== "settled" ? <button className="row-action" type="button" onClick={() => { setSettlementPurchase(purchase); setSettlementKind("payment"); setSettlementAmount(""); setSettlementReference(""); }}>Record payment / credit</button> : null}</div>;
         })()}</article>)}</div> : <div className="dashboard-empty"><strong>No purchase history yet.</strong><p>When you complete a purchase, its supplier, costs, products, and stock increase will stay together here.</p></div>}</section></div>
-    {payables ? <p role="status">Explicit unpaid supplier liabilities: {payables.outstandingByCurrency.map(row => formatMinorAmount(row.amountMinor, row.currency)).join(" · ") || "none yet recorded"}. {payables.unknownPurchases} purchase(s) have unknown payment status and are excluded from these figures.</p> : null}
+    {payables ? <section aria-label="Supplier liability overview" className="space-y-2">
+      <p role="status">Explicit unpaid supplier liabilities: {payables.outstandingByCurrency.map(row => formatMinorAmount(row.amountMinor, row.currency)).join(" · ") || "none yet recorded"}. {payables.unknownPurchases} purchase(s) have unknown payment status and are excluded from these figures.</p>
+      {payables.outstandingBySupplier.length > 0 ? <div className="space-y-2">
+        <h3 className="font-semibold">Liability by supplier</h3>
+        {payables.outstandingBySupplier.map(row => <p key={row.supplierId} className="text-sm">
+          <strong>{suppliers.find(supplier => supplier.id === row.supplierId)?.name ??
+            archivedSuppliers.find(supplier => supplier.id === row.supplierId)?.name ??
+            "Unlabelled saved supplier"}</strong>:
+          {" "}{row.outstandingByCurrency.map(amount => formatMinorAmount(amount.amountMinor,amount.currency)).join(" · ") || "no recognized outstanding balance"}
+          {" · "}{row.unknownPurchases} invoice(s) with unverified payment status
+        </p>)}
+      </div> : null}
+    </section> : null}
     <Dialog open={Boolean(settlementPurchase)} onOpenChange={(open) => { if (!open && !savingSettlement) setSettlementPurchase(null); }}><DialogContent><DialogHeader><DialogTitle>Record a supplier settlement</DialogTitle><DialogDescription>This is an offline manual record. It does not send money or confirm a bank or MoMo transfer. Use evidence from your supplier.</DialogDescription></DialogHeader>
       <label><span>Event</span><select value={settlementKind} onChange={event => setSettlementKind(event.target.value as "payment" | "credit")}><option value="payment">Payment already made</option><option value="credit">Supplier credit note</option></select></label>
       <label><span>Amount ({settlementPurchase?.currency ?? "unverified"})</span><Input inputMode="decimal" value={settlementAmount} onChange={event => setSettlementAmount(event.target.value)} /></label>
