@@ -6,7 +6,7 @@ import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import {createProduct} from '@/features/inventory/inventory';
 import {completeSale} from '@/features/sales/sales';
-import {executeLatestSaleReversal} from '@/features/assistant/reversals';
+import {executeLatestSaleReversal,prepareLatestSaleReversal} from '@/features/assistant/reversals';
 import {recordConfirmedCashPartialReturn} from '@/features/sales/cashPartialReturnPosting';
 import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
 import {getFinancialSummary} from '@/features/reports/financialIntelligence';
@@ -71,6 +71,22 @@ describe('Run 11 company return policy database and posting protection',()=>{
   });
   expect((await getFinancialSummary('month',new Date(),undefined,undefined,db))
    .returnPolicyEvidence?.verifiedRefunds).toBe(1);
+ });
+ it('rejects wrong-currency full reversals at preview and posting, including retry attempts',async()=>{
+  const {db,product}=await fixture(true);
+  const saved=await sell(db,product.id);
+  const stock=(await db.products.get(product.id))?.stockQuantity;
+  later();
+  await expect(prepareLatestSaleReversal('USD',db)).rejects.toThrow(/currency/);
+  await expect(executeLatestSaleReversal('USD',db,'run11-currency-guard-001'))
+    .rejects.toThrow(/currency/);
+  expect(await db.saleReversals.count()).toBe(0);
+  expect((await db.products.get(product.id))?.stockQuantity).toBe(stock);
+  const reversed=await executeLatestSaleReversal('GHS',db,'run11-currency-guard-001');
+  expect(reversed.originalSaleId).toBe(saved.sale.id);
+  await expect(executeLatestSaleReversal('USD',db,'run11-currency-guard-001'))
+    .rejects.toThrow(/currency/);
+  expect(await db.saleReversals.count()).toBe(1);
  });
  it('owner-enabled cash partial return retains original invoice, tax, stock and policy evidence',async()=>{
   const{db,product}=await fixture(true);
