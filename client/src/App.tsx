@@ -1,4 +1,5 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
+import { lazy, Suspense } from "react";
 import { AuthGate } from "@/auth/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
 import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotifier";
@@ -9,36 +10,37 @@ import { BusinessProfileProvider } from "@/contexts/BusinessProfileContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import AppNotFound from "@/pages/AppNotFound";
-import AssistantPage from "@/pages/AssistantPage";
-import BusinessSetup from "@/pages/BusinessSetup";
-import CustomersPage from "@/pages/CustomersPage";
-import StaffPage from "@/pages/StaffPage";
-import StoresPage from "@/pages/StoresPage";
-import CommercePage from "@/pages/CommercePage";
-import LocalAlertsPage from "@/pages/LocalAlertsPage";
-import SyncStatusPage from "@/pages/SyncStatusPage";
-import CustomerBenefitsPage from "@/pages/CustomerBenefitsPage";
-import QuotationsPage from "@/pages/QuotationsPage";
-import InventoryPage from "@/pages/InventoryPage";
-import SalesPage from "@/pages/SalesPage";
-import ReportsPage from "@/pages/ReportsPage";
-import InsightsPage from "@/pages/InsightsPage";
-import FinancialIntelligencePage from "@/pages/FinancialIntelligencePage";
-import BackupPage from "@/pages/BackupPage";
-import EndOfDayPage from "@/pages/EndOfDayPage";
-import PurchasesPage from "@/pages/PurchasesPage";
-import ExpensesPage from "@/pages/ExpensesPage";
-import BusinessHealthPage from "@/pages/BusinessHealthPage";
-import StageHome from "@/pages/StageHome";
+const AssistantPage = lazy(() => import("@/pages/AssistantPage"));
+const BusinessSetup = lazy(() => import("@/pages/BusinessSetup"));
+const CustomersPage = lazy(() => import("@/pages/CustomersPage"));
+const StaffPage = lazy(() => import("@/pages/StaffPage"));
+const StoresPage = lazy(() => import("@/pages/StoresPage"));
+const CommercePage = lazy(() => import("@/pages/CommercePage"));
+const LocalAlertsPage = lazy(() => import("@/pages/LocalAlertsPage"));
+const SyncStatusPage = lazy(() => import("@/pages/SyncStatusPage"));
+const CustomerBenefitsPage = lazy(() => import("@/pages/CustomerBenefitsPage"));
+const QuotationsPage = lazy(() => import("@/pages/QuotationsPage"));
+const InventoryPage = lazy(() => import("@/pages/InventoryPage"));
+const SalesPage = lazy(() => import("@/pages/SalesPage"));
+const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const InsightsPage = lazy(() => import("@/pages/InsightsPage"));
+const FinancialIntelligencePage = lazy(() => import("@/pages/FinancialIntelligencePage"));
+const BackupPage = lazy(() => import("@/pages/BackupPage"));
+const EndOfDayPage = lazy(() => import("@/pages/EndOfDayPage"));
+const PurchasesPage = lazy(() => import("@/pages/PurchasesPage"));
+const ExpensesPage = lazy(() => import("@/pages/ExpensesPage"));
+const BusinessHealthPage = lazy(() => import("@/pages/BusinessHealthPage"));
+const StageHome = lazy(() => import("@/pages/StageHome"));
 import GoogleSignInPage from "@/pages/GoogleSignInPage";
 import SupabaseSignInPage from "@/pages/SupabaseSignInPage";
-import CloudAccountPage from "@/pages/CloudAccountPage";
+const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function Router() {
   return (
     <AppShell>
+      <Suspense fallback={<main className="mx-auto max-w-3xl p-6" role="status" aria-live="polite"><h1 className="text-lg font-semibold">Opening this local workspace…</h1><p className="text-sm">Your saved records remain on this device. No data is uploaded.</p></main>}>
       <Switch>
         <Route path="/" component={StageHome} />
         <Route path="/signin" component={GoogleSignInPage} />
@@ -66,6 +68,7 @@ function Router() {
         <Route path="/assistant" component={AssistantPage} />
         <Route component={AppNotFound} />
       </Switch>
+      </Suspense>
     </AppShell>
   );
 }
