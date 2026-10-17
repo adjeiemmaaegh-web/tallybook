@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { activeStaffShift, requirePermission } from '@/features/staff/staff';
-import { reconcileSupplierPayable } from './supplierPayables.mjs';
+import { reconcileSupplierPayable, validSupplierLedgerTimestamp } from './supplierPayables.mjs';
 
 /** Offline manual attestations, not verified bank/provider settlements. */
 export interface SupplierPayableEntry {
@@ -57,7 +57,7 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     }
     if (entries.length) throw new Error('Supplier liability was already recognized or needs reconciliation.');
     const createdAt = new Date().toISOString();
-    if(!Number.isFinite(Date.parse(purchase.createdAt))||Date.parse(createdAt)<Date.parse(purchase.createdAt))
+    if(!validSupplierLedgerTimestamp(purchase.createdAt)||Date.parse(createdAt)<Date.parse(purchase.createdAt))
       throw new Error('Supplier recognition cannot predate the purchase receipt.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company changed during supplier recognition.');
     const result: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId, currency: purchase.currency, kind: 'recognition', amountMinor: purchase.totalCostMinor, submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
@@ -114,7 +114,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     if (balance.outstandingMinor === null) throw new Error('Confirm an unpaid supplier liability before recording a settlement.');
     if (input.amountMinor > balance.outstandingMinor) throw new Error('Supplier settlement exceeds the remaining liability.');
     const createdAt = new Date().toISOString();
-    if(!Number.isFinite(Date.parse(purchase.createdAt))||Date.parse(createdAt)<Date.parse(purchase.createdAt))
+    if(!validSupplierLedgerTimestamp(purchase.createdAt)||Date.parse(createdAt)<Date.parse(purchase.createdAt))
       throw new Error('Supplier settlement cannot predate its original purchase.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company changed during supplier settlement authorization.');
     const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(input.reference?.trim() ? {reference:input.reference.trim()} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
