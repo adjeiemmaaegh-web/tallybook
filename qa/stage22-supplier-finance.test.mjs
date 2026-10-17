@@ -69,7 +69,17 @@ test("mixed-currency purchase balances remain separate and missing recognition r
  assert.deepEqual(result.outstandingByCurrency,[
   {currency:"GHS",amountMinor:10000},{currency:"USD",amountMinor:750}
  ]);
+ assert.deepEqual(result.outstandingBySupplier,[
+  {supplierId:"supplier-A",purchaseCount:1,unknownPurchases:0,complete:true,
+   outstandingByCurrency:[{currency:"GHS",amountMinor:10000}]},
+  {supplierId:"supplier-B",purchaseCount:1,unknownPurchases:0,complete:true,
+   outstandingByCurrency:[{currency:"USD",amountMinor:750}]}
+ ]);
  const missing=reconcileSupplierPayables([purchase(),p2],rows.slice(0,1));
  assert.equal(missing.unknownPurchases,1);
  assert.equal(missing.complete,false);
+ assert.deepEqual(missing.outstandingBySupplier.find(x=>x.supplierId==="supplier-B"),{
+  supplierId:"supplier-B",purchaseCount:1,unknownPurchases:1,complete:false,
+  outstandingByCurrency:[]
+ });
 });
