@@ -91,7 +91,11 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
   if (input.kind !== 'payment' && input.kind !== 'credit') throw new Error('Choose a payment or supplier credit.');
   if (input.kind === 'payment' && !['cash','bank','card','mobile','other'].includes(input.method ?? '')) throw new Error('Choose a recorded payment method.');
   if (input.kind === 'credit' && input.method !== undefined) throw new Error('A supplier credit is not a cash payment.');
-  if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.length > 120)) throw new Error('Supplier reference is too long.');
+  if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.trim().length > 120))
+    throw new Error('Supplier settlement reference is invalid or too long.');
+  const normalizedReference = input.reference?.trim() ?? '';
+  if (input.reference !== undefined && normalizedReference.length === 0)
+    throw new Error('Supplier settlement reference cannot contain only whitespace.');
   const company = getActiveBusinessProfileId();
   return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
@@ -108,7 +112,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     const balance = reconcileSupplierPayable(purchase, rows);
     const priorKey = await database.supplierPayableEntries.where('[businessProfileId+submissionKey]').equals([company, input.submissionKey]).first();
     if (priorKey) {
-      if (priorKey.purchaseId === input.purchaseId && priorKey.supplierId === purchase.supplierId && priorKey.currency === purchase.currency && priorKey.kind === input.kind && priorKey.amountMinor === input.amountMinor && priorKey.method === input.method && (priorKey.reference ?? '') === (input.reference?.trim() ?? '')) return priorKey;
+      if (priorKey.purchaseId === input.purchaseId && priorKey.supplierId === purchase.supplierId && priorKey.currency === purchase.currency && priorKey.kind === input.kind && priorKey.amountMinor === input.amountMinor && priorKey.method === input.method && (priorKey.reference ?? '') === normalizedReference) return priorKey;
       throw new Error('Supplier submission key was reused for different details.');
     }
     if (balance.outstandingMinor === null) throw new Error('Confirm an unpaid supplier liability before recording a settlement.');
@@ -117,7 +121,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     if(!validSupplierLedgerTimestamp(purchase.createdAt)||Date.parse(createdAt)<Date.parse(purchase.createdAt))
       throw new Error('Supplier settlement cannot predate its original purchase.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company changed during supplier settlement authorization.');
-    const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(input.reference?.trim() ? {reference:input.reference.trim()} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
+    const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(normalizedReference ? {reference:normalizedReference} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
     // Never depend only on a pre-insertion balance: verify the proposed
     // exact-currency payment/credit and remaining liability in this transaction.
     reconcileSupplierPayable(purchase,[...rows,entry]);
