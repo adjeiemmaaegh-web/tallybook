@@ -1,5 +1,7 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { requirePermission } from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
+import {reconcileCreditLedger} from "@/features/sales/creditLedger.mjs";
 /** Tactile Ledger customer reminder: people records stay local, and financial figures are never invented before a real transaction exists. */
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -102,12 +104,49 @@ export async function updateCustomer(customerId: string, values: CustomerFormVal
 export async function archiveCustomer(customerId: string, database: TallybookDB = db) {
   return withCoordinatedRetailWrite(async () => {
     const activeId = getActiveBusinessProfileId();
-    return database.transaction("rw", [database.customers, database.staffMembers], async () => {
+    return database.transaction("rw", [
+      database.appMeta,database.customers,database.sales,database.saleReversals,
+      database.repayments,database.customerBenefits,database.staffMembers
+    ], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("staff", database, activeId);
       const customer = await database.customers.get(customerId);
-      if (!customer || customer.businessProfileId !== activeId || customer.archivedAt) throw new Error("This customer is already archived or unavailable.");
-      const archived = { ...customer, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      if (!customer || customer.businessProfileId !== activeId || customer.archivedAt)
+        throw new Error("This customer is already archived or unavailable.");
+      // A customer with outstanding credit cannot be archived: repayment
+      // entrypoints intentionally require an active customer. Preserve both
+      // the customer identity and debt instead of stranding the collection.
+      const [sales,repayments,reversals,benefits]=await Promise.all([
+        database.sales.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
+        database.repayments.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
+        database.saleReversals.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
+        database.customerBenefits.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray()
+      ]);
+      const debt=reconcileCreditLedger(sales,reversals,repayments);
+      if(debt.outstandingMinor>0)
+        throw new Error("Customer has outstanding receivables. Record and reconcile repayments before archiving.");
+      // Wallet deposits and loyalty entitlements remain customer liabilities,
+      // not abandoned just because a profile is hidden. A corrupted negative
+      // or overflowing balance is not a zero available entitlement.
+      let walletMinor=0,loyaltyPoints=0;
+      for(const row of benefits){
+        if(row.kind!=="wallet"&&row.kind!=="points")continue;
+        if(!Number.isSafeInteger(row.delta)||row.delta===0)
+          throw new Error("Customer benefit ledger needs reconciliation before archiving.");
+        if(row.kind==="wallet")walletMinor+=row.delta;
+        else loyaltyPoints+=row.delta;
+        if(!Number.isSafeInteger(walletMinor)||!Number.isSafeInteger(loyaltyPoints)||
+          walletMinor<0||loyaltyPoints<0)
+          throw new Error("Customer benefit ledger needs reconciliation before archiving.");
+      }
+      if(walletMinor!==0||loyaltyPoints!==0)
+        throw new Error("Customer has remaining wallet funds or loyalty points. Resolve benefits before archiving.");
+      assertCompanyScope(activeId,getActiveBusinessProfileId());
+      await requirePermission("staff",database,activeId);
+      const now=new Date().toISOString();
+      const archived={...customer,archivedAt:now,updatedAt:now};
       await database.customers.put(archived);
+      assertCompanyScope(activeId,getActiveBusinessProfileId());
       return archived;
     });
   });
