@@ -33,10 +33,11 @@ export default function Run20OperationsPage(){
  const [message,setMessage]=useState("");
  const [area,setArea]=useState("All");
  const pending=useRef(false);
+ const identity=useRef<{company:string;actor:string}|null>(null);
  const reportInput=useRef<HTMLInputElement>(null);
  const qaInput=useRef<HTMLInputElement>(null);
  const reset=useCallback(()=>{
-   setAuthorized(false);setDiagnostics(null);setGateRows(defaultRun20Evidence());
+   identity.current=null;setAuthorized(false);setDiagnostics(null);setGateRows(defaultRun20Evidence());
    setDrafts({});setCoverage(null);setPlatformEvidence([]);
    setSourceSha("");setMessage("");
  },[]);
@@ -51,6 +52,7 @@ export default function Run20OperationsPage(){
      if(snapshot.companyId!==active||getActiveBusinessProfileId()!==active||
         currentStaffId(active)!==actor)
        throw Error("Company or owner session changed while inspecting operations.");
+     identity.current={company:active,actor};
      setCompany(active);setOwnerId(actor);setDiagnostics(snapshot);setAuthorized(true);
    }catch(e){
      reset();setError(readable(e));
@@ -61,8 +63,9 @@ export default function Run20OperationsPage(){
    const onCheck=()=>{
      if(!live)return;
      const current=getActiveBusinessProfileId();
-     if(current!==company||currentStaffId(current)!==ownerId){
-       reset();setCompany(current);setOwnerId(currentStaffId(current));
+     if(identity.current&&(current!==identity.current.company||
+       currentStaffId(current)!==identity.current.actor)){
+       reset();
      }
      void refresh(false);
    };
@@ -74,9 +77,7 @@ export default function Run20OperationsPage(){
    return()=>{live=false;window.removeEventListener(STAFF_SESSION_CHANGED,onCheck);
      window.removeEventListener("focus",onFocus);
      document.removeEventListener("visibilitychange",onFocus);};
- // Initial company is deliberately rebound through explicit authorization.
- // eslint-disable-next-line react-hooks/exhaustive-deps
- },[]);
+ },[refresh,reset]);
  const guard=async()=>{
    if(!authorized||!diagnostics)throw Error("Operations review is locked.");
    if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==ownerId)
@@ -136,8 +137,8 @@ export default function Run20OperationsPage(){
      setMessage("Reopened hash-matched worksheet. Original evidence and signatures are still unverified. Release: NO-GO.");
    }catch(e){setError(readable(e));}finally{setBusy(false);}
  };
- const importDeviceFiles=async(files:FileList|null)=>{
-   if(!files||!files.length||busy)return;setBusy(true);setError("");setMessage("");
+ const importDeviceFiles=async(files:File[])=>{
+   if(!files.length||busy)return;setBusy(true);setError("");setMessage("");
    try{
      await guard();
      if(!/^[a-f0-9]{40}$/i.test(sourceSha))throw Error("Enter exact release source SHA before adding device evidence.");
@@ -264,7 +265,7 @@ export default function Run20OperationsPage(){
       <h2 className="text-xl font-semibold">3. Inspect Run 19 device archive coverage</h2>
       <p className="text-sm">Cross-platform hashes do not verify attached screenshots or real hardware. Select evidence for the SAME exact source SHA. A claim of PASS cannot override another device's FAIL.</p>
       <input ref={qaInput} type="file" multiple accept="application/json,.json" disabled={busy}
-        onChange={e=>{const files=e.currentTarget.files;e.currentTarget.value="";void importDeviceFiles(files);}}/>
+        onChange={e=>{const files=Array.from(e.currentTarget.files??[]);e.currentTarget.value="";void importDeviceFiles(files);}}/>
       <p>{platformEvidence.length} device archives checked locally.</p>
       {coverage?<p className="text-sm">
          {coverage.coverageGaps.length} missing platform/case combinations;
