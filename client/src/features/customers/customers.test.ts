@@ -3,6 +3,12 @@ import Dexie from "dexie";
 import { afterEach, describe, expect, it } from "vitest";
 import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { archiveCustomer, createCustomer, customerFormSchema, getCustomerSnapshot, searchCustomers, updateCustomer } from "@/features/customers/customers";
+import {saveBusinessProfile} from "@/features/business/businessProfile";
+import {createProduct} from "@/features/inventory/inventory";
+import {completeSale} from "@/features/sales/sales";
+import {recordRepayment} from "@/features/credit/credit";
+import {recordWalletTransfer} from "@/features/customers/walletTransfers";
+import {setActiveBusinessProfileId} from "@/features/business/activeCompany";
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -16,6 +22,7 @@ function makeDatabase() {
 }
 
 afterEach(async () => {
+  setActiveBusinessProfileId("primary");
   openDatabases.splice(0).forEach((database) => database.close());
   await Promise.all([...databaseNames].map((name) => new Dexie(name).delete()));
   databaseNames.clear();
@@ -67,6 +74,45 @@ describe("customer records", () => {
     expect(() => customerFormSchema.parse({ ...customerInput, name: "A" })).toThrow("customer name");
     expect(() => customerFormSchema.parse({ ...customerInput, phone: "123" })).toThrow("phone number");
     expect(() => customerFormSchema.parse({ ...customerInput, email: "not-an-email" })).toThrow("valid email");
+  });
+
+  it("does not strand receivables by archiving a customer before an exact repayment",async()=>{
+    setActiveBusinessProfileId("primary");
+    const database=makeDatabase();
+    await initializeDatabase(database);
+    await saveBusinessProfile({name:"Stage22 Receivables",country:"Ghana",currency:"GHS",businessType:"Retail"},database);
+    const customer=await createCustomer(customerInput,database);
+    const product=await createProduct({name:"Test rice",categoryId:"uncategorized",
+      sellingPrice:"10",costPrice:"1",initialStock:"2",lowStockThreshold:"0"},"GHS",database);
+    const sold=await completeSale({lines:[{productId:product.id,quantity:1}],customerId:customer.id,
+      discount:"0",paymentMethod:"credit",amountPaid:"0",currency:"GHS",submissionKey:"archivable-credit-001"},database);
+    await expect(archiveCustomer(customer.id,database)).rejects.toThrow(/outstanding receivables/i);
+    expect((await database.customers.get(customer.id))?.archivedAt).toBeUndefined();
+    await recordRepayment({customerId:customer.id,amount:"10",currency:"GHS",
+      method:"cash",submissionKey:"archivable-payment-001",
+      saleAllocations:[{saleId:sold.sale.id,amountMinor:1000}]},database);
+    expect((await archiveCustomer(customer.id,database)).archivedAt).toBeTruthy();
+    expect(await database.repayments.count()).toBe(1);
+  });
+
+  it("does not hide unsettled prepaid-wallet cash or unredeemed loyalty balance",async()=>{
+    setActiveBusinessProfileId("primary");
+    const database=makeDatabase();await initializeDatabase(database);
+    await saveBusinessProfile({name:"Stage22 Wallets",country:"Ghana",currency:"GHS",businessType:"Retail"},database);
+    const customer=await createCustomer(customerInput,database);
+    await recordWalletTransfer({customerId:customer.id,kind:"deposit",amountMinor:800,
+      method:"cash",reference:"deposit-cash-001",submissionKey:"archive-wallet-deposit-001"},database);
+    await expect(archiveCustomer(customer.id,database)).rejects.toThrow(/remaining wallet/i);
+    await recordWalletTransfer({customerId:customer.id,kind:"refund",amountMinor:800,
+      method:"cash",reference:"refund-cash-001",submissionKey:"archive-wallet-refund-001"},database);
+    await database.customerBenefits.add({id:"stage22-loyalty-entry",businessProfileId:"primary",
+      customerId:customer.id,kind:"points",delta:2,reason:"Fixture loyalty",
+      submissionKey:"stage22-loyalty-001",createdAt:new Date().toISOString()});
+    await expect(archiveCustomer(customer.id,database)).rejects.toThrow(/remaining wallet funds or loyalty points/i);
+    await database.customerBenefits.add({id:"stage22-loyalty-use",businessProfileId:"primary",
+      customerId:customer.id,kind:"points",delta:-2,reason:"Fixture redeemed",
+      submissionKey:"stage22-loyalty-002",createdAt:new Date().toISOString()});
+    expect((await archiveCustomer(customer.id,database)).archivedAt).toBeTruthy();
   });
 
   it("migrates a Stage 3 business profile into the Stage 4 customer schema without removing existing data", async () => {
