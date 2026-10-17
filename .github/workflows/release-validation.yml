@@ -1,45 +1,116 @@
 name: Release validation
+
+# Validation only. This workflow never deploys, changes customer data,
+# provisions cloud resources or enables live payments.
 on:
   push:
+    branches: [main, 'v19/stage21-*']
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: tallybook-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    name: Pinned Node 24 - complete developer QA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned pnpm before Node cache lookup
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.0
+          run_install: false
+      - name: Setup pinned Node with pnpm dependency cache
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
-      - run: mkdir -p artifacts/release-v19
-      - name: Client integration tests
-        run: set -o pipefail; pnpm test --maxWorkers=2 2>&1 | tee artifacts/release-v19/client-ci.log
-      - name: Node, filesystem security and TLS integration tests
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Immutable source and toolchain preflight
+        id: preflight
+        run: |
+          mkdir -p artifacts/release-v19
+          {
+            echo "sha=${GITHUB_SHA}"
+            echo "branch=${GITHUB_REF}"
+            echo "runner=${RUNNER_OS} ${RUNNER_ARCH}"
+            node --version
+            pnpm --version
+            git status --short
+            node scripts/stage21-baseline-audit.mjs --sha "${GITHUB_SHA}"
+          } 2>&1 | tee artifacts/release-v19/stage21-preflight.log
+      - name: Install frozen dependencies
+        id: install
+        run: |
+          set -o pipefail
+          pnpm install --frozen-lockfile 2>&1 | tee artifacts/release-v19/install-ci.log
+      - name: Native and server regression
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs 2>&1 | tee artifacts/release-v19/native-ci.log
+      - name: Client/IndexedDB unit and integration
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm test --maxWorkers=2 2>&1 | tee artifacts/release-v19/client-ci.log
+      - name: Semantic TypeScript
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm check 2>&1 | tee artifacts/release-v19/types-ci.log
+      - name: Production client and server bundle
+        id: build
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm build 2>&1 | tee artifacts/release-v19/build-ci.log
+      - name: Install Chromium browser
+        id: chromium
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee artifacts/release-v19/browser-install-ci.log
+      - name: Browser functional and IndexedDB acceptance
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test 2>&1 | tee artifacts/release-v19/browser-ci.log
+      - name: Authentication browser negative cases
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.auth.config.mjs 2>&1 | tee artifacts/release-v19/auth-ci.log
+      - name: Offline built-app acceptance
+        if: ${{ always() && steps.chromium.outcome == 'success' && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.offline.config.mjs 2>&1 | tee artifacts/release-v19/offline-ci.log
+      - name: Dependency vulnerability advisory check
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm audit --audit-level moderate 2>&1 | tee artifacts/release-v19/dependencies-ci.log
+      - name: Preserve development evidence even after failed tests
         if: always()
-        run: set -o pipefail; node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs 2>&1 | tee artifacts/release-v19/node-ci.log
-      - name: Semantic types
-        if: always()
-        run: set -o pipefail; pnpm check 2>&1 | tee artifacts/release-v19/types-ci.log
-      - name: Production build
-        if: always()
-        run: set -o pipefail; pnpm build 2>&1 | tee artifacts/release-v19/build-ci.log
-      - name: Browser installation
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Native IndexedDB migrations and setup
-        run: set -o pipefail; pnpm exec playwright test 2>&1 | tee artifacts/release-v19/browser-ci.log
-      - name: Authentication gate browser checks
-        run: pnpm exec playwright test --config playwright.auth.config.mjs
-      - name: Offline production checkout
-        run: set -o pipefail; pnpm exec playwright test --config playwright.offline.config.mjs 2>&1 | tee artifacts/release-v19/offline-ci.log
-      - name: Dependency vulnerabilities
-        run: pnpm audit --audit-level moderate
-      - uses: actions/upload-artifact@v4
-        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: release-validation-logs
-          path: artifacts/release-v19/*-ci.log
+          name: tallybook-v19-stage21-qa-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/release-v19/*-ci.log
+            artifacts/release-v19/stage21-preflight.log
+            artifacts/release-v19/*-results/**
+          if-no-files-found: warn
+          retention-days: 14
