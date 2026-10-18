@@ -11,6 +11,15 @@ export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, 
   if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId))
     throw new Error('Reversal sale is not part of the customer ledger.');
   if (reversals.some(row => row.originalSaleId === sale.id)) throw new Error('Sale is already reversed.');
+  // Reconcile the hypothetical signed reversal against every saved customer
+  // posting before permitting stock or customer-benefit changes. This also
+  // rejects any reversal which would create an overpayment or negative debt.
+  reconcileCreditLedger(customerSales, [...reversals, {
+    businessProfileId: sale.businessProfileId,
+    customerId: sale.customerId,
+    originalSaleId: sale.id,
+    reversedOutstandingMinor: -sale.outstandingMinor,
+  }], repayments);
   if (sale.outstandingMinor > 0) {
     const allocation = reconcileRepaymentAllocations(customerSales, reversals, repayments);
     if (allocation.unallocatedMinor > 0)
