@@ -34,8 +34,20 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
   }
   const reversed = new Set(reversals.map(row => row.originalSaleId));
   const allocatedBySale = new Map();
+  const repaymentIds = new Set();
+  const repaymentKeys = new Set();
   let unallocatedMinor = 0;
   for (const repayment of repayments) {
+    if (repayment?.id !== undefined) {
+      if (typeof repayment.id !== 'string' || !repayment.id || repaymentIds.has(repayment.id))
+        throw new Error('Duplicate or missing repayment identity in allocation history.');
+      repaymentIds.add(repayment.id);
+    }
+    if (repayment?.submissionKey !== undefined) {
+      if (typeof repayment.submissionKey !== 'string' || !repayment.submissionKey || repaymentKeys.has(repayment.submissionKey))
+        throw new Error('Duplicate repayment operation key in allocation history.');
+      repaymentKeys.add(repayment.submissionKey);
+    }
     if (!Number.isSafeInteger(repayment?.amountMinor) || repayment.amountMinor < 0)
       throw new Error('Invalid repayment amount in allocation evidence.');
     if (repayment.saleAllocations === undefined) {
