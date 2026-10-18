@@ -70,11 +70,23 @@ export const recordRepaymentSchema = z.object({
 });
 
 function parseAmount(value: string, currency: string) {
-  const amount = Number(value.trim().replace(",", "."));
-  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a repayment amount greater than zero.");
-  const minor = Math.round(amount * currencyMinorDivisor(currency));
-  if (!Number.isSafeInteger(minor) || minor <= 0) throw new Error("Repayment exceeds safe money bounds.");
-  return minor;
+  // Decimal text is financial evidence: never route a large decimal through
+  // IEEE-754 multiplication/rounding, and never silently round extra digits.
+  const normalized = value.trim().replace(",", ".");
+  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(normalized);
+  if (!match) throw new Error("Enter a valid repayment amount.");
+  const divisor = currencyMinorDivisor(currency);
+  if (!Number.isSafeInteger(divisor) || divisor < 1 || (divisor !== 1 && divisor !== 10 && divisor !== 100))
+    throw new Error("Unsupported repayment currency precision.");
+  const fractionDigits = divisor === 1 ? 0 : divisor === 10 ? 1 : 2;
+  const fractional = match[2] ?? "";
+  if (fractional.length > fractionDigits)
+    throw new Error("Repayment has more fractional digits than the currency supports.");
+  const minor = BigInt(match[1]) * BigInt(divisor) +
+    BigInt((fractional + "0".repeat(fractionDigits)).slice(0, fractionDigits) || "0");
+  if (minor <= 0n || minor > BigInt(Number.MAX_SAFE_INTEGER))
+    throw new Error("Repayment exceeds safe money bounds.");
+  return Number(minor);
 }
 
 function debtFromRecords(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[] = []) {
