@@ -73,7 +73,7 @@ function parseAmount(value: string, currency: string) {
   // Decimal text is financial evidence: never route a large decimal through
   // IEEE-754 multiplication/rounding, and never silently round extra digits.
   const normalized = value.trim().replace(",", ".");
-  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(normalized);
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(normalized);
   if (!match) throw new Error("Enter a valid repayment amount.");
   const divisor = currencyMinorDivisor(currency);
   if (!Number.isSafeInteger(divisor) || divisor < 1 || (divisor !== 1 && divisor !== 10 && divisor !== 100))
