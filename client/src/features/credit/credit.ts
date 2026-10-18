@@ -207,7 +207,10 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");
     await assertRun7RetailWriteReady(database.appMeta);
-    await requirePermission("sell",database,activeId);
+    const postingStaff = await requirePermission("sell",database,activeId);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === "cashier" && !postingShift)
+      throw new Error("Cashier shift closed before repayment was recorded.");
     await database.repayments.add(repayment);
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});
     if(getActiveBusinessProfileId()!==activeId)
