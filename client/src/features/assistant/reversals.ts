@@ -31,7 +31,8 @@ export interface SaleReversal {
 export interface ReversalPreview { saleId: string; receiptNumber: string; totalMinor: number; createdAt: string; lines: Array<{ productName: string; quantity: number }>; text: string; reversal?: SaleReversal }
 
 async function latestReversibleSale(database: TallybookDB, activeId: string) {
-  const sales = await database.sales.where("businessProfileId").equals(activeId).reverse().sortBy("createdAt");
+  const sales = (await database.sales.where("businessProfileId").equals(activeId).toArray())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
   for (const sale of sales) {
     const existing = await database.saleReversals.where("originalSaleId").equals(sale.id).first();
     const partial = await database.cashPartialReturns.where("originalSaleId").equals(sale.id).first();
@@ -67,8 +68,17 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before reversing a sale.');
+    if (typeof submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
+      throw new Error('Invalid reversal submission key.');
     const existingByKey = await database.saleReversals.where("submissionKey").equals(submissionKey).and((item) => item.businessProfileId === activeId).first();
-    if (existingByKey) return existingByKey;
+    if (existingByKey) {
+      const original = await database.sales.get(existingByKey.originalSaleId);
+      if (!original || original.businessProfileId !== activeId || existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
+          existingByKey.reversedReceivedMinor !== -original.amountPaidMinor || existingByKey.reversedOutstandingMinor !== -original.outstandingMinor)
+        throw new Error('Saved reversal retry does not reconcile with its original sale.');
+      return existingByKey;
+    }
     const sale = await latestReversibleSale(database, activeId);
     if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
     const currentProfile=await database.businessProfiles.get(activeId);
@@ -156,7 +166,11 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     }
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error('Company changed before completing the full reversal.');
-    await requirePermission('refund',database,activeId);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const postingStaff = await requirePermission('refund',database,activeId);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === 'cashier' && !postingShift)
+      throw new Error('Cashier shift closed before sale reversal was recorded.');
     await database.saleReversals.add(reversal);
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'sale.reversed',createdAt:now,details:reversal.id});
     await Promise.all(Array.from(restoredStock, async ([productId, stockQuantity]) => {
