@@ -41,6 +41,7 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before recognizing supplier liabilities.');
     const purchase = await database.purchases.get(purchaseId);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before recognizing supplier debt.');
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase is missing, foreign or has no verified currency snapshot; reconcile it before recognizing debt.');
@@ -63,6 +64,9 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     const result: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId, currency: purchase.currency, kind: 'recognition', amountMinor: purchase.totalCostMinor, submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
     // Reconcile the PROPOSED recognition inside its write transaction.
     reconcileSupplierPayable(purchase,[...entries,result]);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const finalStaff = await requirePermission('staff',database,company);
+    if (finalStaff?.role === 'cashier' && !await activeStaffShift(finalStaff,database)) throw new Error('Cashier shift closed before recognizing supplier liability.');
     await database.supplierPayableEntries.add(result);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: 'supplier.liability.recognized', createdAt, details: purchaseId });
     if(getActiveBusinessProfileId()!==company)
@@ -101,6 +105,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before posting supplier settlement.');
     const purchase = await database.purchases.get(input.purchaseId);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before supplier settlement.');
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase currency and ownership need reconciliation.');
@@ -126,6 +131,9 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     // exact-currency payment/credit and remaining liability in this transaction.
     reconcileSupplierPayable(purchase,[...rows,entry]);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before committing supplier settlement.');
+    await assertRun7RetailWriteReady(database.appMeta);
+    const finalStaff = await requirePermission('staff',database,company);
+    if (finalStaff?.role === 'cashier' && !await activeStaffShift(finalStaff,database)) throw new Error('Cashier shift closed before supplier settlement was recorded.');
     await database.supplierPayableEntries.add(entry);
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: input.kind === 'payment' ? 'supplier.payment.recorded' : 'supplier.credit.recorded', createdAt, details: purchase.id });
     if(getActiveBusinessProfileId()!==company)
