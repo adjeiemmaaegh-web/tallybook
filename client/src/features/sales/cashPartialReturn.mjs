@@ -19,7 +19,13 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
   }
   const bySale = new Map();
   const ids = new Set(), keys = new Set(), movementIds = new Set(), costIds = new Set();
-  const reversed = new Set(fullReversals.map(r => r.originalSaleId));
+  const reversed = new Set();
+  for (const row of fullReversals) {
+    const original = saleById.get(row?.originalSaleId);
+    if (!original || row.businessProfileId !== original.businessProfileId || reversed.has(row.originalSaleId))
+      throw new Error('Cash-return history contains an orphaned or duplicate full reversal.');
+    reversed.add(row.originalSaleId);
+  }
   const ordered = [...returns].sort((a,b) => (a.returnSequence ?? 0) - (b.returnSequence ?? 0) || String(a.id).localeCompare(String(b.id)));
   for (const entry of ordered) {
     if (!validId(entry?.id) || ids.has(entry.id) || !validId(entry.submissionKey) ||
@@ -68,7 +74,6 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     const prior = existing.flatMap(p => p.lines.map(row => ({saleLineId:row.saleLineId,quantity:row.quantity})));
     const plan = planPartialSaleReturn(sale,lines,prior,requested);
     if (sale.tax && !plan.taxPolicyVerified) throw new Error('Cash return requires verified original tax policy evidence.');
-    if (sale.tax && !plan.taxPolicyVerified) throw new Error('Cash return requires verified saved tax policy.');
     if (plan.draftAmountMinor !== entry.refundedMinor || plan.draftTaxMinor !== entry.returnedTaxMinor ||
         plan.draftTaxableMinor !== entry.returnedTaxableMinor || plan.draftDiscountMinor !== entry.returnedDiscountMinor) {
       throw new Error('Cash return saved amounts do not reconcile with original invoice components.');
