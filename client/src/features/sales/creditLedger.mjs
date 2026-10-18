@@ -174,7 +174,7 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
   const reversalKeys = new Set();
   const reversalCredits = [];
   for (const reversal of reversals) {
-    if (reversal.id && reversalIds.has(reversal.id)) throw new Error('Repeated reversal identity.');
+    if (reversal.id !== undefined && (typeof reversal.id !== 'string' || !reversal.id || reversalIds.has(reversal.id))) throw new Error('Invalid or repeated reversal identity.');
     if (reversal.submissionKey !== undefined && (typeof reversal.submissionKey !== 'string' || !reversal.submissionKey || reversalKeys.has(reversal.submissionKey))) throw new Error('Invalid or repeated reversal operation.');
     if (reversal.id) reversalIds.add(reversal.id);
     if (reversal.submissionKey) reversalKeys.add(reversal.submissionKey);
