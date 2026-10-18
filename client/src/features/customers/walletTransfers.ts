@@ -53,6 +53,28 @@ export async function recordWalletTransfer(input: {
       }
       const previousTransfers=await database.walletTransfers.where('customerId').equals(input.customerId).and(row=>row.businessProfileId===businessProfileId).toArray();
       if (previousTransfers.some(row=>row.currency!==currency)) throw new Error('Prepaid history has unknown or different currency; reconcile before further transfers.');
+      // Each recorded manual cash movement must still have its exact wallet
+      // posting. Refuse further deposits/refunds if an import or recovery left
+      // the journal and the spendable customer balance inconsistent.
+      const transferIds=new Set<string>();
+      const transferKeys=new Set<string>();
+      const transferBenefitIds=new Set<string>();
+      for (const movement of previousTransfers) {
+        if (transferIds.has(movement.id) || transferKeys.has(movement.submissionKey) ||
+            transferBenefitIds.has(movement.benefitEntryId))
+          throw new Error('Prepaid transfer journal contains repeated movement evidence.');
+        transferIds.add(movement.id);
+        transferKeys.add(movement.submissionKey);
+        transferBenefitIds.add(movement.benefitEntryId);
+        if (!Number.isSafeInteger(movement.amountMinor) || movement.amountMinor <= 0 ||
+            !['deposit','refund'].includes(movement.kind))
+          throw new Error('Prepaid transfer journal contains invalid money evidence.');
+        const posting=await database.customerBenefits.get(movement.benefitEntryId);
+        if (!posting || posting.businessProfileId!==businessProfileId ||
+            posting.customerId!==input.customerId || posting.kind!=='wallet' ||
+            posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor))
+          throw new Error('Prepaid transfer and wallet history require reconciliation.');
+      }
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId)
         .and(e=>e.businessProfileId===businessProfileId && e.kind==='wallet').toArray();
       const balance=existing.reduce((n,e)=>{
@@ -86,7 +108,8 @@ export async function recordWalletTransfer(input: {
 export async function getWalletTransfers(customerId:string,database:TallybookDB=db) {
   const businessProfileId=getActiveBusinessProfileId();
   const transfers=await database.walletTransfers.where('customerId').equals(customerId)
-    .and(row=>row.businessProfileId===businessProfileId).reverse().sortBy('createdAt');
+    .and(row=>row.businessProfileId===businessProfileId).sortBy('createdAt');
+  transfers.reverse();
   if(getActiveBusinessProfileId()!==businessProfileId || transfers.some(row=>row.businessProfileId!==businessProfileId || row.customerId!==customerId))
     throw new Error('Company changed while loading prepaid transfers.');
   return transfers;
