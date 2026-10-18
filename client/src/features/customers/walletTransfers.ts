@@ -26,8 +26,9 @@ export async function recordWalletTransfer(input: {
     const businessProfileId=getActiveBusinessProfileId();
     if (!['deposit','refund'].includes(input.kind) || !['cash','card','mobile','bank'].includes(input.method)) throw new Error('Invalid prepaid cash transfer.');
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0 || input.amountMinor > 1_000_000_000) throw new Error('Invalid prepaid cash amount.');
-    if (!input.reference.trim() || input.reference.length > 120) throw new Error('Enter an auditable payment or refund reference.');
-    if (input.submissionKey.length < 8 || input.submissionKey.length > 80) throw new Error('Invalid transfer key.');
+    if (typeof input.reference !== 'string' || !input.reference.trim() || input.reference.length > 120) throw new Error('Enter an auditable payment or refund reference.');
+    if (typeof input.submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,80}$/.test(input.submissionKey)) throw new Error('Invalid transfer key.');
+    if (typeof input.customerId !== 'string' || !input.customerId.trim()) throw new Error('Choose a customer for prepaid transfer.');
     return database.transaction('rw',[database.appMeta,database.businessProfiles,database.customers,database.customerBenefits,database.walletTransfers,database.staffMembers,database.staffShifts,database.staffAudits],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed before prepaid transfer.');
@@ -54,7 +55,12 @@ export async function recordWalletTransfer(input: {
       if (previousTransfers.some(row=>row.currency!==currency)) throw new Error('Prepaid history has unknown or different currency; reconcile before further transfers.');
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId)
         .and(e=>e.businessProfileId===businessProfileId && e.kind==='wallet').toArray();
-      const balance=existing.reduce((n,e)=>n+e.delta,0);
+      const balance=existing.reduce((n,e)=>{
+        if (!Number.isSafeInteger(e.delta)) throw new Error('Prepaid wallet has invalid financial history.');
+        const next=n+e.delta;
+        if (!Number.isSafeInteger(next)) throw new Error('Prepaid wallet history exceeds safe money limits.');
+        return next;
+      },0);
       const delta=input.kind==='deposit'?input.amountMinor:-input.amountMinor;
       if (!Number.isSafeInteger(balance) || balance < 0 || !Number.isSafeInteger(balance+delta) || balance+delta < 0) throw new Error('Prepaid wallet requires reconciliation or has insufficient balance.');
       const now=new Date().toISOString();
@@ -63,6 +69,10 @@ export async function recordWalletTransfer(input: {
         amountMinor:input.amountMinor,currency,method:input.method,reference:input.reference.trim(),benefitEntryId,
         submissionKey:input.submissionKey,createdAt:now,...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{})};
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed before prepaid posting.');
+      await assertRun7RetailWriteReady(database.appMeta);
+      const postingStaff=await requirePermission(input.kind === 'refund' ? 'refund' : 'sell',database,businessProfileId);
+      const postingShift=await activeStaffShift(postingStaff,database);
+      if(postingStaff?.role==='cashier' && !postingShift)throw new Error('Cashier shift closed before prepaid transfer was recorded.');
       await database.customerBenefits.add({id:benefitEntryId,businessProfileId,customerId:input.customerId,
         kind:'wallet',delta,reason:`Verified prepaid ${input.kind}: ${input.reference.trim()}`,
         submissionKey:`wallet-transfer-${transfer.id}`,createdAt:now});
