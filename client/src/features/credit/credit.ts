@@ -141,6 +141,10 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     const now = new Date().toISOString();
     const submissionKey = input.submissionKey ?? nanoid(18);
     const canonicalAllocations = input.saleAllocations?.map(row => ({...row})).sort((a,b)=>a.saleId.localeCompare(b.saleId));
+    if (canonicalAllocations?.some((row, index) => index > 0 && row.saleId === canonicalAllocations[index - 1].saleId))
+      throw new Error("A credit sale may appear only once in a repayment allocation.");
+    // An operation key cannot be reused for another customer or another
+    // semantic allocation; check before any additional ledger changes.
     const existing = await database.repayments.where("submissionKey").equals(submissionKey).and((repayment) => repayment.businessProfileId === activeId).first();
     if (existing) {
       const amountMinor = parseAmount(input.amount, input.currency);
@@ -190,6 +194,8 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     });
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");
+    await assertRun7RetailWriteReady(database.appMeta);
+    await requirePermission("sell",database,activeId);
     await database.repayments.add(repayment);
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});
     if(getActiveBusinessProfileId()!==activeId)
