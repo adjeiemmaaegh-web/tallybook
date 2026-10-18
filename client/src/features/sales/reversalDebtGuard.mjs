@@ -1,6 +1,6 @@
 import { reconcileCreditLedger, reconcileRepaymentAllocations } from './creditLedger.mjs';
 /**
- * Repayments are presently customer-scoped, not allocated to a particular sale.
+ * Repayments can have exact sale links or legacy unallocated balances.
  * An aggregate positive debt balance cannot prove that THIS sale is unpaid.
  * Fail closed rather than erase previously collected money from another sale.
  */
