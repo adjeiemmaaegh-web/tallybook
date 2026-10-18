@@ -80,6 +80,8 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
     const shift = await activeStaffShift(staff,database);
+    if (staff?.role === 'cashier' && !shift)
+      throw new Error('Open a shift before recording a cash refund.');
     if (getActiveBusinessProfileId() !== company) throw new Error('Company switched during the return.');
     // Never silently replay a refund after a network/UI retry: the cashier
     // must inspect the existing event instead of accidentally handing cash twice.
@@ -162,7 +164,11 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{})};
     reconcileCashPartialReturns([sale],lines,payments,[...prior,recorded],full);
     if (getActiveBusinessProfileId() !== company) throw new Error("Company switched during cash refund posting.");
-    await requirePermission("refund",database,company);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const postingStaff = await requirePermission("refund",database,company);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === 'cashier' && !postingShift)
+      throw new Error('Cashier shift closed before refund was recorded.');
     await database.cashPartialReturns.add(recorded);
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
       action:'sale.partial-cash-refund',createdAt:now,details:`${recorded.id}:${sale.id}:${recorded.refundedMinor}:${sale.currency}`});
