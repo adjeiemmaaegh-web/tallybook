@@ -76,8 +76,10 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
       // A positive allocation cannot link amounts with contradictory or only
       // one-sided currency evidence. Two historical unknowns are preserved as
       // unverifiable history, not silently migrated to today's profile currency.
-      if (sale.currency !== repayment.currency)
-        throw new Error('Repayment allocation currency does not match saved sale currency evidence.');
+      if (typeof sale.currency !== 'string' || !/^[A-Z]{3}$/.test(sale.currency) ||
+          typeof repayment.currency !== 'string' || !/^[A-Z]{3}$/.test(repayment.currency) ||
+          sale.currency !== repayment.currency)
+        throw new Error('Repayment allocation requires matching verified original-sale and payment currencies.');
       allocatedTotal += entry.amountMinor;
       const paid = (allocatedBySale.get(entry.saleId) ?? 0) + entry.amountMinor;
       if (!Number.isSafeInteger(allocatedTotal) || !Number.isSafeInteger(paid) || paid > sale.outstandingMinor)
