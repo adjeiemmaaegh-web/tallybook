@@ -170,8 +170,14 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
   inspectReceivableCurrency(sales, repayments);
   const grossOutstandingMinor = checkedMinorSum(sales, 'outstandingMinor');
   const seenOriginals = new Set();
+  const reversalIds = new Set();
+  const reversalKeys = new Set();
   const reversalCredits = [];
   for (const reversal of reversals) {
+    if (reversal.id && reversalIds.has(reversal.id)) throw new Error('Repeated reversal identity.');
+    if (reversal.submissionKey && reversalKeys.has(reversal.submissionKey)) throw new Error('Repeated reversal operation.');
+    if (reversal.id) reversalIds.add(reversal.id);
+    if (reversal.submissionKey) reversalKeys.add(reversal.submissionKey);
     const originalId = reversal?.originalSaleId;
     const sale = saleById.get(originalId);
     if (typeof originalId !== 'string' || !originalId || !sale || seenOriginals.has(originalId) ||
