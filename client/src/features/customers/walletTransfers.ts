@@ -50,7 +50,8 @@ export async function recordWalletTransfer(input: {
         if (prior.businessProfileId!==businessProfileId || prior.currency!==currency || prior.customerId!==input.customerId || prior.kind!==input.kind || prior.amountMinor!==input.amountMinor || prior.method!==input.method || prior.reference!==input.reference.trim()) throw new Error('Transfer key was reused for different details.');
         const linked=await database.customerBenefits.get(prior.benefitEntryId);
         if(!linked || linked.businessProfileId!==businessProfileId || linked.customerId!==prior.customerId ||
-          linked.kind!=='wallet' || linked.delta!==(prior.kind==='deposit'?prior.amountMinor:-prior.amountMinor))
+          linked.kind!=='wallet' || linked.delta!==(prior.kind==='deposit'?prior.amountMinor:-prior.amountMinor) ||
+          linked.submissionKey!==`wallet-transfer-${prior.id}`)
           throw new Error('Saved prepaid transfer needs reconciliation before it can be acknowledged.');
         if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed during prepaid retry.');
         return prior;
@@ -76,7 +77,8 @@ export async function recordWalletTransfer(input: {
         const posting=await database.customerBenefits.get(movement.benefitEntryId);
         if (!posting || posting.businessProfileId!==businessProfileId ||
             posting.customerId!==input.customerId || posting.kind!=='wallet' ||
-            posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor))
+            posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor) ||
+            posting.submissionKey!==`wallet-transfer-${movement.id}`)
           throw new Error('Prepaid transfer and wallet history require reconciliation.');
       }
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId)
