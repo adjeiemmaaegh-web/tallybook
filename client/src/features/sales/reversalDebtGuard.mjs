@@ -8,7 +8,7 @@ export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, 
   if (!sale || !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0)
     throw new Error('Sale debt needs reconciliation before reversal.');
   reconcileCreditLedger(customerSales, reversals, repayments);
-  if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId))
+  if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId && row.outstandingMinor === sale.outstandingMinor))
     throw new Error('Reversal sale is not part of the customer ledger.');
   if (reversals.some(row => row.originalSaleId === sale.id)) throw new Error('Sale is already reversed.');
   if (sale.outstandingMinor > 0) {
