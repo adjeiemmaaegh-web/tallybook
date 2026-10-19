@@ -41,7 +41,11 @@ export async function recordWalletTransfer(input: {
       const currency=profile.currency;
       const customer=await database.customers.get(input.customerId);
       if (!customer || customer.businessProfileId!==businessProfileId || customer.archivedAt) throw new Error('Customer is unavailable.');
-      const prior=await database.walletTransfers.where('submissionKey').equals(input.submissionKey).first();
+      // A customer-scoped retry must not bypass a damaged or duplicated
+      // journal. Compare the entire saved key history before returning success.
+      const matchingKeys=await database.walletTransfers.where('submissionKey').equals(input.submissionKey).toArray();
+      if (matchingKeys.length > 1) throw new Error('Prepaid transfer key has duplicate saved events.');
+      const prior=matchingKeys[0];
       if (prior) {
         if (prior.businessProfileId!==businessProfileId || prior.currency!==currency || prior.customerId!==input.customerId || prior.kind!==input.kind || prior.amountMinor!==input.amountMinor || prior.method!==input.method || prior.reference!==input.reference.trim()) throw new Error('Transfer key was reused for different details.');
         const linked=await database.customerBenefits.get(prior.benefitEntryId);
