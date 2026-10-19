@@ -85,8 +85,9 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     if (getActiveBusinessProfileId() !== company) throw new Error('Company switched during the return.');
     // Never silently replay a refund after a network/UI retry: the cashier
     // must inspect the existing event instead of accidentally handing cash twice.
-    if (await database.cashPartialReturns.where('[businessProfileId+submissionKey]').equals([company,values.submissionKey]).first())
-      throw new Error('This cash return was already recorded; inspect the saved return before handing out money again.');
+    const priorWithKey = await database.cashPartialReturns.where('submissionKey').equals(values.submissionKey).toArray();
+    if (priorWithKey.length > 1) throw new Error('Duplicate cash return operation records require reconciliation.');
+    if (priorWithKey.length) throw new Error('This cash return operation was already recorded or belongs to another company; inspect saved evidence before handing out money.');
     const sale = await database.sales.get(values.originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('The original sale is unavailable in this company.');
     const companyProfile=await database.businessProfiles.get(company);
