@@ -88,7 +88,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if(!currentProfile)throw new Error('Company return policy is unavailable.');
     const now=new Date().toISOString();
     const policyEvidence=authorizeReturnPolicy(currentProfile.returnPolicyHistory,sale,'full',now);
-    if (sale.customerId && sale.outstandingMinor > 0) {
+    if (sale.customerId) {
       const debts = await database.sales.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       const reversals = await database.saleReversals.where("businessProfileId").equals(activeId).and(row => row.customerId === sale.customerId).toArray();
       const repayments = await database.repayments.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
