@@ -157,7 +157,10 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       throw new Error("A credit sale may appear only once in a repayment allocation.");
     // An operation key cannot be reused for another customer or another
     // semantic allocation; check before any additional ledger changes.
-    const existing = await database.repayments.where("submissionKey").equals(submissionKey).and((repayment) => repayment.businessProfileId === activeId).first();
+    const matches = await database.repayments.where("submissionKey").equals(submissionKey).toArray();
+    if (matches.length > 1) throw new Error("Duplicate repayment operation records require reconciliation.");
+    const existing = matches[0];
+    if (existing && existing.businessProfileId !== activeId) throw new Error("Repayment operation belongs to another company.");
     if (existing) {
       const amountMinor = parseAmount(input.amount, input.currency);
       if (existing.customerId!==input.customerId || existing.amountMinor!==amountMinor || (existing.currency !== input.currency) || existing.method!==input.method ||
