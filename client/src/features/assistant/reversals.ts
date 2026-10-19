@@ -71,7 +71,10 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before reversing a sale.');
     if (typeof submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
       throw new Error('Invalid reversal submission key.');
-    const existingByKey = await database.saleReversals.where("submissionKey").equals(submissionKey).and((item) => item.businessProfileId === activeId).first();
+    const reversalMatches = await database.saleReversals.where("submissionKey").equals(submissionKey).toArray();
+    if (reversalMatches.length > 1) throw new Error("Reversal submission key has duplicate saved records.");
+    const existingByKey = reversalMatches[0];
+    if (existingByKey && existingByKey.businessProfileId !== activeId) throw new Error("Reversal key belongs to another company.");
     if (existingByKey) {
       const original = await database.sales.get(existingByKey.originalSaleId);
       if (!original || original.businessProfileId !== activeId || existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
