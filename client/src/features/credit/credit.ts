@@ -166,6 +166,16 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       if (existing.customerId!==input.customerId || existing.amountMinor!==amountMinor || (existing.currency !== input.currency) || existing.method!==input.method ||
         (existing.note??'')!==(input.note?.trim()??'') ||
         JSON.stringify(existing.saleAllocations ?? null) !== JSON.stringify(canonicalAllocations ?? null)) throw new Error("Repayment submission key was reused for different details.");
+      // Do not acknowledge a retry if its original credit posting became
+      // orphaned or the customer ledger no longer conserves saved amounts.
+      const [savedSales, savedPayments, savedReversals] = await Promise.all([
+        database.sales.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+        database.repayments.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+        database.saleReversals.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+      ]);
+      if (!savedPayments.some(row => row.id === existing.id))
+        throw new Error("Saved repayment retry is missing its original ledger evidence.");
+      reconcileCreditLedger(savedSales, savedReversals, savedPayments);
       return existing;
     }
     const customer = await database.customers.get(input.customerId);
