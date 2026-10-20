@@ -83,6 +83,23 @@ export async function recordWalletTransfer(input: {
       }
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId)
         .and(e=>e.businessProfileId===businessProfileId && e.kind==='wallet').toArray();
+      // The reverse direction matters too: a wallet posting can survive a
+      // damaged import without its corresponding transfer journal record.
+      // Do not permit further prepaid cash movement on orphaned evidence.
+      const walletPostIds=new Set<string>();
+      const transferById=new Map(previousTransfers.map(row=>[row.id,row]));
+      for (const posting of existing) {
+        if (walletPostIds.has(posting.id)) throw new Error('Duplicate prepaid wallet posting identity.');
+        walletPostIds.add(posting.id);
+        if (typeof posting.submissionKey === 'string' &&
+            posting.submissionKey.startsWith('wallet-transfer-')) {
+          const transferId=posting.submissionKey.slice('wallet-transfer-'.length);
+          const movement=transferById.get(transferId);
+          if (!movement || movement.benefitEntryId!==posting.id ||
+              posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor))
+            throw new Error('Prepaid wallet posting has no matching saved transfer.');
+        }
+      }
       const balance=existing.reduce((n,e)=>{
         if (!Number.isSafeInteger(e.delta)) throw new Error('Prepaid wallet has invalid financial history.');
         const next=n+e.delta;
