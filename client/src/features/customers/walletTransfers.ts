@@ -87,10 +87,16 @@ export async function recordWalletTransfer(input: {
       // damaged import without its corresponding transfer journal record.
       // Do not permit further prepaid cash movement on orphaned evidence.
       const walletPostIds=new Set<string>();
+      const walletPostKeys=new Set<string>();
       const transferById=new Map(previousTransfers.map(row=>[row.id,row]));
       for (const posting of existing) {
         if (walletPostIds.has(posting.id)) throw new Error('Duplicate prepaid wallet posting identity.');
         walletPostIds.add(posting.id);
+        if (posting.submissionKey !== undefined) {
+          if (typeof posting.submissionKey !== 'string' || !posting.submissionKey || walletPostKeys.has(posting.submissionKey))
+            throw new Error('Prepaid wallet contains duplicate or invalid posting operation keys.');
+          walletPostKeys.add(posting.submissionKey);
+        }
         if (typeof posting.submissionKey === 'string' &&
             posting.submissionKey.startsWith('wallet-transfer-')) {
           const transferId=posting.submissionKey.slice('wallet-transfer-'.length);
