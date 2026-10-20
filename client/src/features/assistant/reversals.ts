@@ -118,6 +118,9 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (sale.paymentMethod === "wallet" || sale.paymentMethod === "credit") {
       if (originalPayments.length !== 0)
         throw new Error("Wallet or credit sale has contradictory external tender evidence.");
+    } else if (sale.amountPaidMinor === 0) {
+      if (originalPayments.length !== 0)
+        throw new Error("Unpaid original sale has contradictory tender evidence.");
     } else {
       if (originalPayments.length !== 1 ||
           originalPayments[0].businessProfileId !== activeId ||
