@@ -23,6 +23,8 @@ export interface SaleReversal {
   submissionKey: string;
   reversedSaleTotalMinor: number;
   reversedReceivedMinor: number;
+  /** Negative accounting adjustment only; does not attest that cash or provider money was returned. */
+  refundDisbursementStatus?: 'not-recorded';
   reversedOutstandingMinor: number;
   lines: SaleReversalLine[];
   staffId?: string;
@@ -150,7 +152,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
         await database.inventoryBatches.put(batch);
       }
     }
-    const reversal: SaleReversal = {policyEvidence, id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
+    const reversal: SaleReversal = {policyEvidence, id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, refundDisbursementStatus: 'not-recorded', reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
     if (sale.customerId) {
       const linked = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
         .filter(entry => entry.businessProfileId === activeId &&
