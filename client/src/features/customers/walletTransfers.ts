@@ -53,8 +53,9 @@ export async function recordWalletTransfer(input: {
           linked.kind!=='wallet' || linked.delta!==(prior.kind==='deposit'?prior.amountMinor:-prior.amountMinor) ||
           linked.submissionKey!==`wallet-transfer-${prior.id}`)
           throw new Error('Saved prepaid transfer needs reconciliation before it can be acknowledged.');
+        // Complete the customer journal and balance audit before acknowledging a retry.
+        // An otherwise valid single transfer must not hide damaged sibling entries.
         if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed during prepaid retry.');
-        return prior;
       }
       const previousTransfers=await database.walletTransfers.where('customerId').equals(input.customerId).and(row=>row.businessProfileId===businessProfileId).toArray();
       if (previousTransfers.some(row=>row.currency!==currency)) throw new Error('Prepaid history has unknown or different currency; reconcile before further transfers.');
@@ -112,6 +113,10 @@ export async function recordWalletTransfer(input: {
         if (!Number.isSafeInteger(next)) throw new Error('Prepaid wallet history exceeds safe money limits.');
         return next;
       },0);
+      if (prior) {
+        if (!Number.isSafeInteger(balance) || balance < 0) throw new Error('Saved prepaid balance requires reconciliation before acknowledging a retry.');
+        return prior;
+      }
       const delta=input.kind==='deposit'?input.amountMinor:-input.amountMinor;
       if (!Number.isSafeInteger(balance) || balance < 0 || !Number.isSafeInteger(balance+delta) || balance+delta < 0) throw new Error('Prepaid wallet requires reconciliation or has insufficient balance.');
       const now=new Date().toISOString();
