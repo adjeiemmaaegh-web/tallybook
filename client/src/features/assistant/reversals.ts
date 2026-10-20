@@ -56,7 +56,7 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
   const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
   const named = lines.map((line, index) => ({ productName: products[index]?.name ?? line.productName ?? "Unknown product", quantity: line.quantity }));
-  return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving reversal; the original sale will remain in history and nothing is changed yet.` };
+  return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving accounting reversal. This action does not issue or verify a cash, card, or mobile money refund. The original sale remains in history, and nothing changes yet.` };
 }
 
 export async function executeLatestSaleReversal(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
@@ -80,7 +80,9 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (existingByKey) {
       const original = await database.sales.get(existingByKey.originalSaleId);
       if (!original || original.businessProfileId !== activeId || existingByKey.originalReceiptNumber !== original.receiptNumber ||
-          existingByKey.customerId !== original.customerId || existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
+          existingByKey.customerId !== original.customerId ||
+          (existingByKey.refundDisbursementStatus !== undefined && existingByKey.refundDisbursementStatus !== 'not-recorded') ||
+          existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
           existingByKey.reversedReceivedMinor !== -original.amountPaidMinor || existingByKey.reversedOutstandingMinor !== -original.outstandingMinor)
         throw new Error('Saved reversal retry does not reconcile with its original sale.');
       return existingByKey;
