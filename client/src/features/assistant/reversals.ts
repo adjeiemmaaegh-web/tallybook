@@ -77,7 +77,8 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (existingByKey && existingByKey.businessProfileId !== activeId) throw new Error("Reversal key belongs to another company.");
     if (existingByKey) {
       const original = await database.sales.get(existingByKey.originalSaleId);
-      if (!original || original.businessProfileId !== activeId || existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
+      if (!original || original.businessProfileId !== activeId || existingByKey.originalReceiptNumber !== original.receiptNumber ||
+          existingByKey.customerId !== original.customerId || existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
           existingByKey.reversedReceivedMinor !== -original.amountPaidMinor || existingByKey.reversedOutstandingMinor !== -original.outstandingMinor)
         throw new Error('Saved reversal retry does not reconcile with its original sale.');
       return existingByKey;
