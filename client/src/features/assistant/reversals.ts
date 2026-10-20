@@ -155,12 +155,18 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       const linked = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
         .filter(entry => entry.businessProfileId === activeId &&
           (entry.submissionKey === `sale-points-${sale.id}` || entry.submissionKey === `sale-wallet-${sale.id}` || entry.submissionKey === `sale-redeemed-${sale.id}`));
-      if (linked.length > 3) throw new Error("Duplicate customer benefits for this sale; reconcile before reversal.");
+      const benefitKeys = new Set(linked.map(entry => entry.submissionKey));
+      if (linked.length > 3 || benefitKeys.size !== linked.length)
+        throw new Error("Duplicate customer benefits for this sale; reconcile before reversal.");
       for (const entry of linked) {
         const entries = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
           .filter(row => row.businessProfileId === activeId && row.kind === entry.kind);
-        const available = entries.reduce((sum, row) => sum + row.delta, 0);
-        if (!Number.isSafeInteger(available) || available - entry.delta < 0)
+        const available = entries.reduce((sum, row) => {
+          if (!Number.isSafeInteger(row.delta) || !Number.isSafeInteger(sum + row.delta))
+            throw new Error("Customer benefit history exceeds safe balance limits.");
+          return sum + row.delta;
+        }, 0);
+        if (!Number.isSafeInteger(available - entry.delta) || available - entry.delta < 0)
           throw new Error("Customer rewards were already spent. Reconcile the benefit balance before reversing this sale.");
         await database.customerBenefits.add({ id: nanoid(14), businessProfileId: activeId,
           customerId: sale.customerId, kind: entry.kind, delta: -entry.delta,
