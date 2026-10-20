@@ -66,7 +66,7 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.payments, database.receipts, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
@@ -98,6 +98,34 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       const reversals = await database.saleReversals.where("businessProfileId").equals(activeId).and(row => row.customerId === sale.customerId).toArray();
       const repayments = await database.repayments.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       assertDebtReversalIsUnallocatedPaymentSafe(sale, debts, reversals, repayments);
+    }
+    // A negative accounting receipt cannot be created from an unverifiable
+    // original tender. Wallet tenders use customer-benefit postings instead
+    // of new external cash payments; credit sales carry no initial payment.
+    const [originalReceipts, originalPayments] = await Promise.all([
+      database.receipts.where("saleId").equals(sale.id).toArray(),
+      database.payments.where("saleId").equals(sale.id).toArray(),
+    ]);
+    if (originalReceipts.length !== 1 ||
+        originalReceipts[0].businessProfileId !== activeId ||
+        originalReceipts[0].receiptNumber !== sale.receiptNumber)
+      throw new Error("Original receipt evidence must reconcile before reversal.");
+    if (!Number.isSafeInteger(sale.amountPaidMinor) || sale.amountPaidMinor < 0 ||
+        !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor < 0 ||
+        !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0 ||
+        sale.amountPaidMinor + sale.outstandingMinor !== sale.totalMinor)
+      throw new Error("Original sale payment and debt amounts do not reconcile.");
+    if (sale.paymentMethod === "wallet" || sale.paymentMethod === "credit") {
+      if (originalPayments.length !== 0)
+        throw new Error("Wallet or credit sale has contradictory external tender evidence.");
+    } else {
+      if (originalPayments.length !== 1 ||
+          originalPayments[0].businessProfileId !== activeId ||
+          originalPayments[0].saleId !== sale.id ||
+          originalPayments[0].customerId !== sale.customerId ||
+          originalPayments[0].method !== sale.paymentMethod ||
+          originalPayments[0].amountMinor !== sale.amountPaidMinor)
+        throw new Error("Original cash or provider tender needs reconciliation before reversal.");
     }
     const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
     if (!lines.length) throw new Error("The sale has no lines, so it cannot be reversed safely.");
