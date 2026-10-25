@@ -13,6 +13,7 @@ import {executeLatestSaleReversal} from '@/features/assistant/reversals';
 import {getFinancialSummary} from './financialIntelligence';
 import {getReportsSnapshot} from './reports';
 import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 
 const dbs:TallybookDB[]=[];
 let counter=0;
@@ -22,6 +23,9 @@ async function fixture(){
   dbs.push(db);await initializeDatabase(db);
   await saveBusinessProfile({name:'Run10 Ledger',country:'Ghana',
     currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},db);
+  const owner=await createStaff('Run10 test owner','owner','123456',db);
+  await unlockStaff(owner.id,'123456',db);
+  await openShift(0,db);
   await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Run 10 wallet reversal fixture opt-in',db);
   const a=await createCustomer({name:'Debtor Alpha',phone:'0241101101',
     email:'',address:'',notes:'',status:'active'},db);
@@ -39,6 +43,7 @@ async function sale(db:TallybookDB,productId:string,customerId:string,method:'cr
 }
 const summary=(db:TallybookDB)=>getFinancialSummary('month',new Date(),undefined,undefined,db);
 afterEach(async()=>{
+ lockStaff('primary');
  vi.restoreAllMocks();setActiveBusinessProfileId('primary');
  for(const db of dbs.splice(0)){const name=db.name;db.close();await new Dexie(name).delete();}
 });
@@ -94,8 +99,10 @@ describe('Run 10 saved-company receivables and prepaid cash reconciliation',()=>
   await sale(db,product.id,a.id);await sale(db,product.id,b.id);
   const saved=await recordRepayment({customerId:a.id,amount:'1.00',method:'cash',
    currency:'GHS',submissionKey:'duplicate-key-1000'},db);
-  await db.repayments.add({...saved,id:'replayed-b',customerId:b.id});
-  await expect(summary(db)).rejects.toThrow(/repeated or malformed repayment submission key/);
+  await expect(db.repayments.add({...saved,id:'replayed-b',customerId:b.id}))
+   .rejects.toMatchObject({name:'ConstraintError'});
+  expect(await db.repayments.count()).toBe(1);
+  expect((await summary(db)).currentReceivablesMinor).toBe(3900);
  });
  it('new linked repayment remains idempotent and cannot be altered on retry',async()=>{
   const{db,a,product}=await fixture();
@@ -163,7 +170,7 @@ describe('Run 10 saved-company receivables and prepaid cash reconciliation',()=>
   expect(await db.repayments.count()).toBe(original);
   expect((await summary(db)).currentReceivablesMinor).toBe(2000);
  });
- it('legacy unknown currency cannot be assigned today's GHS merely to post money',async()=>{
+ it("legacy unknown currency cannot be assigned today's GHS merely to post money",async()=>{
   const{db,a,product}=await fixture();
   const first=await sale(db,product.id,a.id);
   await db.sales.update(first.sale.id,{currency:undefined});

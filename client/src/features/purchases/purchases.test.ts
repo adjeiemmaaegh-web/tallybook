@@ -4,6 +4,7 @@ import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/T
 import { createProduct } from "@/features/inventory/inventory";
 import { registerBatch } from "@/features/inventory/stage2Inventory";
 import { archiveSupplier, completePurchase, createSupplier, getPurchasesSnapshot, updateSupplier } from "@/features/purchases/purchases";
+import { recognizeUnpaidPurchase, recordSupplierSettlement } from "@/features/purchases/supplierPayables.ts";
 
 const names = new Set<string>(); const databases: Dexie[] = []; let sequence = 0;
 function makeDatabase() { const database = new TallybookDB(`tallybook-purchases-test-${Date.now()}-${++sequence}`); names.add(database.name); databases.push(database); return database; }
@@ -89,8 +90,12 @@ describe("Stage 7 local suppliers and purchases", () => {
 
   it("keeps the original supplier snapshot when a supplier is renamed or archived", async () => {
     const database = makeDatabase(); const { rice, supplier } = await fixture(database);
-    await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-08-27", note: "", submissionKey: "stage7-snapshot-key", lines: [{ productId: rice.id, quantity: "1", unitCost: "10" }] }, "GHS", database);
-    await updateSupplier(supplier.id, { name: "ABC Electronics Ltd", phone: "", email: "", address: "", notes: "" }, database); await archiveSupplier(supplier.id, database);
+    const purchase = await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-08-27", note: "", submissionKey: "stage7-snapshot-key", lines: [{ productId: rice.id, quantity: "1", unitCost: "10" }] }, "GHS", database);
+    await updateSupplier(supplier.id, { name: "ABC Electronics Ltd", phone: "", email: "", address: "", notes: "" }, database);
+    await expect(archiveSupplier(supplier.id, database)).rejects.toThrow(/unpaid or unverified/);
+    await recognizeUnpaidPurchase(purchase.id, "stage7-recognize-snapshot", database);
+    await recordSupplierSettlement({ purchaseId: purchase.id, kind: "payment", amountMinor: 1000, method: "cash", submissionKey: "stage7-settle-snapshot" }, database);
+    await archiveSupplier(supplier.id, database);
     const snapshot = await getPurchasesSnapshot(database);
     expect(snapshot.suppliers).toHaveLength(0); expect(snapshot.archivedSuppliers).toMatchObject([{ name: "ABC Electronics Ltd" }]); expect(snapshot.purchases[0]).toMatchObject({ supplierName: "ABC Wholesale" });
   });

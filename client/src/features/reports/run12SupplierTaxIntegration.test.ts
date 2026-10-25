@@ -12,6 +12,7 @@ import {recognizeUnpaidPurchase,recordSupplierSettlement,getSupplierPayables}
 import {createExpense} from '@/features/expenses/expenses';
 import {getFinancialSummary,financialCsv} from './financialIntelligence';
 import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 
 let serial=0;
 const open:TallybookDB[]=[];
@@ -27,6 +28,9 @@ async function fixture(taxPolicy?:TaxPolicy){
  await saveBusinessProfile({name:'Run 12 Test Retail',country:'Ghana',
   currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:'',
   ...(taxPolicy?{taxPolicy}:{})},database);
+ const owner=await createStaff('Run12 test owner','owner','123456',database);
+ await unlockStaff(owner.id,'123456',database);
+ await openShift(0,database);
  const product=await createProduct({name:'Run12 Rice',categoryId:'uncategorized',
   sellingPrice:'10',costPrice:'1',initialStock:'5',lowStockThreshold:'0'},'GHS',database);
  const supplier=await createSupplier({name:'Run12 Supplier'},database);
@@ -45,6 +49,7 @@ async function sale(f:Awaited<ReturnType<typeof fixture>>,enabled=false){
 }
 const report=(db:TallybookDB)=>getFinancialSummary('month',new Date(),undefined,undefined,db);
 afterEach(async()=>{
+ lockStaff('primary');
  vi.useRealTimers();vi.restoreAllMocks();setActiveBusinessProfileId('primary');
  for(const database of open.splice(0)){const name=database.name;database.close();await new Dexie(name).delete();}
 });
@@ -168,7 +173,7 @@ describe('Run12 actual IndexedDB supplier and original tax evidence',()=>{
    configuredChargedSales:1,explicitNoTaxSales:0,legacyUnverifiedSales:0
   });
  });
- it('records explicit OFF for untaxed sales, rather than inferring today's status',async()=>{
+ it("records explicit OFF for untaxed sales, rather than inferring today's status",async()=>{
   const f=await fixture(),saved=await sale(f);
   expect(saved.sale.taxConfigurationAtSale).toMatchObject({mode:'off'});
   expect(saved.sale.tax).toBeUndefined();

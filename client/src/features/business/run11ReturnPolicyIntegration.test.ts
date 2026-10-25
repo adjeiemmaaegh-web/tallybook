@@ -11,6 +11,7 @@ import {recordConfirmedCashPartialReturn} from '@/features/sales/cashPartialRetu
 import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
 import {getFinancialSummary} from '@/features/reports/financialIntelligence';
 import {currentCompanyReturnPolicy} from './returnPolicy.mjs';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 const dbs:TallybookDB[]=[];let counter=0;
 const allowBoth={enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30};
 async function fixture(enabled=false){
@@ -21,6 +22,9 @@ async function fixture(enabled=false){
  dbs.push(db);await initializeDatabase(db);
  await saveBusinessProfile({name:'Refund Policy Shop',country:'Ghana',currency:'GHS',
   businessType:'Retail shop',phone:'',email:'',address:''},db);
+ const owner=await createStaff('Policy test owner','owner','123456',db);
+ await unlockStaff(owner.id,'123456',db);
+ await openShift(0,db);
  if(enabled)await updateCompanyReturnPolicy(allowBoth,'Owner explicitly enables selected returns',db);
  const product=await createProduct({name:'Policy Rice',categoryId:'uncategorized',
   sellingPrice:'10',costPrice:'1',initialStock:'4',lowStockThreshold:'0'},'GHS',db);
@@ -36,8 +40,13 @@ function request(saleId:string,lineId:string,key:string){
   lines:[{saleLineId:lineId,quantity:1}],cashWasRefunded:true as const,
   confirmedRefundMinor:1000,disposition:'restockable' as const};
 }
-const later=()=>vi.setSystemTime(new Date('2026-01-03T09:00:00.000Z'));
+const later=async(db:TallybookDB)=>{
+ vi.setSystemTime(new Date('2026-01-03T09:00:00.000Z'));
+ const owner=await db.staffMembers.where('businessProfileId').equals('primary').first();
+ await unlockStaff(owner!.id,'123456',db);
+};
 afterEach(async()=>{
+ lockStaff('primary');
  vi.useRealTimers();vi.restoreAllMocks();setActiveBusinessProfileId('primary');
  for(const db of dbs.splice(0)){const name=db.name;db.close();await new Dexie(name).delete();}
 });
@@ -46,7 +55,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   const{db,product}=await fixture();
   const saved=await sell(db,product.id),stock=(await db.products.get(product.id))?.stockQuantity;
   expect(saved.sale.returnPolicyAtSale?.enabled).toBe(false);
-  later();
+  await later(db);
   await expect(executeLatestSaleReversal('GHS',db,'run11-default-no-full'))
    .rejects.toThrow(/does not authorize/);
   expect(await db.saleReversals.count()).toBe(0);
@@ -54,7 +63,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
  });
  it('defaults to no refunds and denies a partial cash return without any write',async()=>{
   const{db,product}=await fixture();
-  const saved=await sell(db,product.id);later();
+  const saved=await sell(db,product.id);await later(db);
   await expect(recordConfirmedCashPartialReturn(
    request(saved.sale.id,saved.lines[0].id,'run11-default-no-part'),db))
    .rejects.toThrow(/does not authorize/);
@@ -64,7 +73,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   const{db,product}=await fixture(true);
   const saved=await sell(db,product.id);
   expect(saved.sale.returnPolicyAtSale).toMatchObject({revision:1,enabled:true});
-  later();
+  await later(db);
   const reversal=await executeLatestSaleReversal('GHS',db,'run11-allowed-full-1');
   expect(reversal.policyEvidence).toMatchObject({
    kind:'full',salePolicy:{revision:1},decisionPolicy:{revision:1}
@@ -76,7 +85,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   const {db,product}=await fixture(true);
   const saved=await sell(db,product.id);
   const stock=(await db.products.get(product.id))?.stockQuantity;
-  later();
+  await later(db);
   await expect(prepareLatestSaleReversal('USD',db)).rejects.toThrow(/currency/);
   await expect(executeLatestSaleReversal('USD',db,'run11-currency-guard-001'))
     .rejects.toThrow(/currency/);
@@ -90,7 +99,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
  });
  it('owner-enabled cash partial return retains original invoice, tax, stock and policy evidence',async()=>{
   const{db,product}=await fixture(true);
-  const sale=await sell(db,product.id);later();
+  const sale=await sell(db,product.id);await later(db);
   const ret=await recordConfirmedCashPartialReturn(
    request(sale.sale.id,sale.lines[0].id,'run11-allowed-part-1'),db);
   expect(ret.policyEvidence).toMatchObject({
@@ -112,7 +121,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
  });
  it('revoking the current policy blocks returns without changing prior sale history',async()=>{
   const{db,product}=await fixture(true),sale=await sell(db,product.id);
-  later();
+  await later(db);
   await updateCompanyReturnPolicy({enabled:false,
    allowFullReversal:false,allowCashPartial:false,maxAgeDays:30},
    'Owner disables all returns',db);
@@ -123,7 +132,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
  });
  it('a sale created while no refunds existed cannot be made refundable retroactively',async()=>{
   const{db,product}=await fixture(),sale=await sell(db,product.id);
-  later();await updateCompanyReturnPolicy(allowBoth,'Enable future returns',db);
+  await later(db);await updateCompanyReturnPolicy(allowBoth,'Enable future returns',db);
   await expect(executeLatestSaleReversal('GHS',db,'run11-old-sale-full-1'))
    .rejects.toThrow(/does not authorize/);
   expect((await db.sales.get(sale.sale.id))?.returnPolicyAtSale?.enabled).toBe(false);
@@ -132,7 +141,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   const{db,product}=await fixture();
   await updateCompanyReturnPolicy({...allowBoth,allowCashPartial:false},
    'Owner allows only full returns',db);
-  const sale=await sell(db,product.id);later();
+  const sale=await sell(db,product.id);await later(db);
   await expect(recordConfirmedCashPartialReturn(
    request(sale.sale.id,sale.lines[0].id,'run11-deny-partial-1'),db))
    .rejects.toThrow(/does not authorize/);
@@ -154,7 +163,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   expect(()=>parseBackup(stringifyBackup(altered))).toThrow(/return policy snapshot/i);
  });
  it('tampered refund authorization does not disappear in otherwise valid portable backup',async()=>{
-  const{db,product}=await fixture(true);await sell(db,product.id);later();
+  const{db,product}=await fixture(true);await sell(db,product.id);await later(db);
   await executeLatestSaleReversal('GHS',db,'run11-backup-policy-1');
   const exported=await createBackup(db);
   expect(parseBackup(stringifyBackup(exported)).records.saleReversals).toHaveLength(1);
@@ -163,7 +172,7 @@ describe('Run 11 company return policy database and posting protection',()=>{
   expect(()=>parseBackup(stringifyBackup(altered))).toThrow(/return policy snapshot|refund policy/i);
  });
  it('older refund lacking policy snapshots remains legible but is not newly certified',async()=>{
-  const{db,product}=await fixture(true);await sell(db,product.id);later();
+  const{db,product}=await fixture(true);await sell(db,product.id);await later(db);
   await executeLatestSaleReversal('GHS',db,'run11-legacy-refund-1');
   const altered=await createBackup(db);
   delete altered.records.saleReversals[0].policyEvidence;

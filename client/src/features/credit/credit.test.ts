@@ -11,6 +11,7 @@ import { setCustomerPolicy } from "@/features/customers/customerBenefits";
 import { getReportsSnapshot } from "@/features/reports/reports";
 import {saveBusinessProfile} from '@/features/business/businessProfile';
 import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
+import {createStaff,unlockStaff,openShift,lockStaff,currentStaffId} from '@/features/staff/staff';
 
 const names = new Set<string>();
 const databases: Dexie[] = [];
@@ -30,8 +31,15 @@ async function creditSale(database: TallybookDB, customerName = "Credit Customer
   if(!await database.businessProfiles.get('primary')){
     await saveBusinessProfile({name:'Credit test business',country:'Ghana',
       currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+    const owner=await createStaff('Credit test owner','owner','123456',database);
+    await unlockStaff(owner.id,'123456',database);
+    await openShift(0,database);
     await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,
       allowCashPartial:false,maxAgeDays:30},'Credit reversal fixture owner opt-in',database);
+  }
+  if(!currentStaffId()){
+    const owner=await database.staffMembers.where('businessProfileId').equals('primary').first();
+    await unlockStaff(owner!.id,'123456',database);
   }
   const customer = await createCustomer({ name: customerName, phone: `+233 20 555 ${String(sequence).padStart(4, "0")}`, email: "", address: "", notes: "", status: "active" }, database);
   const product = await createProduct({ name: `Credit item for ${customerName}`, sku: "", categoryId: "uncategorized", sellingPrice: "20.00", costPrice: "", initialStock: "5", lowStockThreshold: "1" }, "GHS", database);
@@ -40,6 +48,7 @@ async function creditSale(database: TallybookDB, customerName = "Credit Customer
 }
 
 afterEach(async () => {
+  lockStaff('primary');
   databases.splice(0).forEach((database) => database.close());
   await Promise.all([...names].map((name) => new Dexie(name).delete()));
   names.clear();
@@ -91,7 +100,7 @@ describe("customer debt ledger", () => {
     const before = (await database.products.get(productId))!.stockQuantity;
     await expect(completeSale({ lines: [{productId, quantity:1}], customerId: customer.id,
       discount:"0", paymentMethod:"credit", amountPaid:"0", currency:"USD" }, database))
-      .rejects.toThrow(/different currency/);
+      .rejects.toThrow(/currency differs|different currency/);
     expect((await database.products.get(productId))!.stockQuantity).toBe(before);
     expect(await database.sales.where("customerId").equals(customer.id).count()).toBe(1);
   });

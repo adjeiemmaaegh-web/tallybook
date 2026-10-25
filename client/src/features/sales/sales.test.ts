@@ -10,6 +10,8 @@ import { createProduct, getInventorySnapshot } from "@/features/inventory/invent
 import { addMobileMoneyProvider } from "@/features/payments/mobileMoney";
 import { completeSale, getCustomerSaleSummary, getSaleSnapshot } from "@/features/sales/sales";
 import { recoverSavedCheckout } from "@/features/sales/recoverSavedCheckout";
+import { createStaff, unlockStaff, openShift, lockStaff, currentStaffId } from "@/features/staff/staff";
+import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -23,6 +25,14 @@ function makeDatabase() {
 }
 
 async function createProductFixture(database: TallybookDB, name: string, stockQuantity: string, price = "10.00") {
+  const company = getActiveBusinessProfileId();
+  if (!await database.businessProfiles.get(company))
+    await saveBusinessProfile({ name: "Sales test business", country: "Ghana", currency: "GHS", businessType: "Retail shop" }, database);
+  let owner = await database.staffMembers.where("businessProfileId").equals(company).first();
+  if (!owner) owner = await createStaff("Sales test owner", "owner", "123456", database);
+  if (currentStaffId(company) !== owner.id) await unlockStaff(owner.id, "123456", database);
+  const shifts = await database.staffShifts.where("businessProfileId").equals(company).toArray();
+  if (!shifts.some(shift => shift.staffId === owner!.id && !shift.closedAt)) await openShift(0, database);
   return createProduct({ name, sku: "", categoryId: "uncategorized", sellingPrice: price, costPrice: "", initialStock: stockQuantity, lowStockThreshold: "1" }, "GHS", database);
 }
 
@@ -32,6 +42,8 @@ async function createMobileMoneyProviderFixture(database: TallybookDB, name = "M
 }
 
 afterEach(async () => {
+  lockStaff("primary");
+  lockStaff("second-company");
   setActiveBusinessProfileId("primary");
   openDatabases.splice(0).forEach((database) => database.close());
   await Promise.all([...databaseNames].map((name) => new Dexie(name).delete()));
@@ -61,6 +73,8 @@ describe("atomic sales", () => {
     expect((await database.products.get(secondProduct.id))?.stockQuantity).toBe(3);
     expect(await database.payments.count()).toBe(2);
     setActiveBusinessProfileId("primary");
+    const owner = await database.staffMembers.where("businessProfileId").equals("primary").first();
+    await unlockStaff(owner!.id, "123456", database);
     expect((await getSaleSnapshot(database)).sales).toHaveLength(1);
   });
 

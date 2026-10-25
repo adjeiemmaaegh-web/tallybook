@@ -16,21 +16,33 @@ import { registerLocalSyncDevice } from "@/features/sync/deviceRegistry";
 import { createStore } from "@/features/stores/storeDirectory";
 import { getInsightFindings } from "@/features/insights/insightEvidence";
 import { appendInventoryCostChange, reconstructInventoryCost, restorePartialInventoryCost } from "./costLedger";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
+import { updateCompanyReturnPolicy } from "@/features/business/returnPolicySettings";
 
 const dbs: TallybookDB[] = [];
 const at = (stamp: string) => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(stamp)); };
+async function atWithOwner(db: TallybookDB, stamp: string) {
+  at(stamp);
+  const owner = await db.staffMembers.where("businessProfileId").equals("primary").first();
+  await unlockStaff(owner!.id, "123456", db);
+}
 async function setup(initialStock = "2", costPrice = "1") {
   at("2026-01-01T10:00:00.000Z");
   setActiveBusinessProfileId("primary");
   const db = new TallybookDB(`cost-ledger-${crypto.randomUUID()}`); dbs.push(db);
   await initializeDatabase(db);
   await saveBusinessProfile({ name: "Cost shop", country: "Ghana", currency: "GHS", businessType: "Retail" }, db);
+  const owner = await createStaff("Cost test owner", "owner", "123456", db);
+  await unlockStaff(owner.id, "123456", db);
+  await openShift(0, db);
+  await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable cost test returns", db);
   const product = await createProduct({ name: "Rice", categoryId: "uncategorized", sellingPrice: "10", costPrice, initialStock, lowStockThreshold: "1" }, "GHS", db);
   const supplier = await createSupplier({ name: "Supplier" }, db);
   return { db, product, supplier };
 }
 const checkout = (productId: string, quantity: number, key = crypto.randomUUID()) => ({ lines: [{ productId, quantity }], discount: "0", paymentMethod: "cash" as const, amountPaid: String(quantity * 10), currency: "GHS", submissionKey: key });
 afterEach(async () => {
+  lockStaff("primary");
   vi.useRealTimers(); vi.restoreAllMocks(); setActiveBusinessProfileId("primary");
   for (const db of dbs.splice(0)) { db.close(); await new Dexie(db.name).delete(); }
 });
@@ -38,9 +50,9 @@ afterEach(async () => {
 describe("persisted inventory cost history", () => {
   it("allocates FIFO receipts atomically, reconstructs earlier balances and restores the original costs", async () => {
     const { db, product, supplier } = await setup();
-    at("2026-01-02T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-02T10:00:00.000Z");
     await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-01-02", lines: [{ productId: product.id, quantity: "3", unitCost: "2" }] }, "GHS", db);
-    at("2026-01-03T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-03T10:00:00.000Z");
     const saved = await completeSale(checkout(product.id, 4), db);
     expect(saved.sale).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
     expect(saved.lines[0]).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
@@ -48,23 +60,23 @@ describe("persisted inventory cost history", () => {
     const events = await db.inventoryCostEvents.toArray();
     expect(reconstructInventoryCost(events, "primary", product.id, "2026-01-01T23:00:00Z")).toMatchObject({ quantity: 2, knownValueMinor: 200 });
     expect(reconstructInventoryCost(events, "primary", product.id)).toMatchObject({ quantity: 1, knownValueMinor: 200 });
-    at("2026-01-04T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-04T10:00:00.000Z");
     await executeLatestSaleReversal("GHS", db, "reverse-cost-sale");
     expect(await getFinancialSummary("today", new Date(), undefined, undefined, db)).toMatchObject({ revenueMinor: -4000, cogsMinor: -600, salesLessCostMinor: -3400 });
     expect(reconstructInventoryCost(await db.inventoryCostEvents.toArray(), "primary", product.id)).toMatchObject({ quantity: 5, knownValueMinor: 800 });
-    at("2026-01-05T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-05T10:00:00.000Z");
     const next = await completeSale(checkout(product.id, 1), db);
     expect(next.sale.cogsMinor).toBe(100);
   });
   it("restores original FIFO portions inside an inventory transaction without manufacturing a refund", async () => {
     const { db, product, supplier } = await setup();
-    at("2026-01-02T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-02T10:00:00.000Z");
     await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-01-02", lines: [{ productId: product.id, quantity: "3", unitCost: "2" }] }, "GHS", db);
-    at("2026-01-03T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-03T10:00:00.000Z");
     const saved = await completeSale(checkout(product.id, 4), db);
     const issueId = saved.lines[0].costEventId!;
     const snapshot = await db.inventoryCostEvents.toArray();
-    at("2026-01-04T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-04T10:00:00.000Z");
     await db.transaction("rw", [db.products, db.inventoryCostEvents, db.inventoryMovements], async () => {
       const current = (await db.products.get(product.id))!;
       const now = new Date().toISOString();
@@ -97,7 +109,7 @@ describe("persisted inventory cost history", () => {
     const { db, product } = await setup();
     await db.inventoryCostEvents.clear(); // A v25 balance, with no historic receipt evidence.
     await db.products.update(product.id, { costPriceMinor: 999999 });
-    at("2026-02-01T10:00:00.000Z");
+    await atWithOwner(db,"2026-02-01T10:00:00.000Z");
     const saved = await completeSale(checkout(product.id, 1), db);
     expect(saved.sale.costStatus).toBe("unavailable");
     expect(saved.sale.cogsMinor).toBeUndefined();
@@ -169,11 +181,11 @@ describe("persisted inventory cost history", () => {
   it("receives batch cost evidence, allocates physical stock by expiry, keeps accounting FIFO independent, and restores both on reversal", async () => {
     const { db, product, supplier } = await setup("4", "1");
     await registerBatch(product.id, "LATER-LOT", 4, "2027-02-01", db);
-    at("2026-01-02T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-02T10:00:00.000Z");
     const purchase = await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-01-02", submissionKey: "expiry-cost-purchase", lines: [{ productId: product.id, quantity: "3", unitCost: "5", batchCode: "EARLIER-EXPIRY", expiryDate: "2026-02-01" }] }, "GHS", db);
     const receiptLine = (await db.purchaseLines.where("purchaseId").equals(purchase.id).toArray())[0];
     const batch = await db.inventoryBatches.get(receiptLine.batchId!);
-    at("2026-01-03T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-03T10:00:00.000Z");
     const sale = await completeSale(checkout(product.id, 2), db);
 
     expect(sale.lines[0].batchAllocations).toEqual([{ batchId: batch?.id, quantity: 2 }]);
@@ -185,7 +197,7 @@ describe("persisted inventory cost history", () => {
     altered.records.inventoryBatches.find(row => row.id === batch!.id)!.receiptCostEventId = "missing-cost-event";
     expect(() => parseBackup(JSON.stringify(altered))).toThrow(/Batch receipt.*do not reconcile/);
 
-    at("2026-01-04T10:00:00.000Z");
+    await atWithOwner(db,"2026-01-04T10:00:00.000Z");
     await executeLatestSaleReversal("GHS", db, "expiry-cost-reversal");
     expect((await db.inventoryBatches.get(batch!.id))?.quantity).toBe(3);
     expect((await db.products.get(product.id))?.stockQuantity).toBe(7);

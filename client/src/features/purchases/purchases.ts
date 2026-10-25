@@ -7,7 +7,8 @@ import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
-import { INVENTORY_BUSINESS_ID, normalizeName, parseAmountToMinor, type InventoryMovement, type Product } from "@/features/inventory/inventory";
+import { INVENTORY_BUSINESS_ID, normalizeName, normalizeProductCode, parseAmountToMinor, type InventoryMovement, type Product } from "@/features/inventory/inventory";
+import type { InventoryBatch } from "@/features/inventory/stage2Inventory";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { checkedMinorSum } from "@/features/sales/creditLedger.mjs";
@@ -68,11 +69,12 @@ const positiveQuantity = z.string().trim().regex(/^\d+$/, "Quantity must be a wh
 const cost = z.string().trim().regex(/^\d+(?:[.,]\d{1,2})?$/, "Unit cost must be a valid amount.");
 
 export const supplierFormSchema = z.object({ name: nameSchema, phone: optionalText(40, "Phone"), email: optionalText(120, "Email"), address: optionalText(240, "Address"), notes: optionalText(240, "Notes") });
-export const purchaseFormSchema = z.object({ storeId: z.string().min(1).max(200).optional(), supplierId: z.string().min(1, "Choose a supplier."), purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a purchase date."), note: optionalText(240, "Note"), lines: z.array(z.object({ productId: z.string().min(1, "Choose a product."), quantity: positiveQuantity, unitCost: cost })).min(1, "Add at least one product."), submissionKey: z.string().trim().min(8).max(80).optional() });
+export const purchaseFormSchema = z.object({ storeId: z.string().min(1).max(200).optional(), supplierId: z.string().min(1, "Choose a supplier."), purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a purchase date."), note: optionalText(240, "Note"), lines: z.array(z.object({ productId: z.string().min(1, "Choose a product."), quantity: positiveQuantity, unitCost: cost, batchCode: z.string().trim().max(64, "Batch code must be 64 characters or fewer.").optional().or(z.literal("")), expiryDate: z.string().trim().max(10, "Expiry date is invalid.").optional().or(z.literal("")) })).min(1, "Add at least one product."), submissionKey: z.string().trim().min(8).max(80).optional() });
 export type SupplierFormValues = z.infer<typeof supplierFormSchema>;
 export type PurchaseFormValues = z.infer<typeof purchaseFormSchema>;
 
 function clean(value: string | undefined) { const result = value?.trim(); return result || undefined; }
+function validDateOnly(value: string) { if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false; const date = new Date(`${value}T00:00:00.000Z`); return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value; }
 
 function detail(purchase: Purchase, lines: PurchaseLine[]): PurchaseDetail { return { ...purchase, lines: lines.filter((line) => line.purchaseId === purchase.id) }; }
 
@@ -174,6 +176,11 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
   const input = purchaseFormSchema.parse(values); const submissionKey = input.submissionKey ?? nanoid(18);
   if (new Set(input.lines.map((line) => line.productId)).size !== input.lines.length) throw new Error("Add each product only once to a purchase.");
   if (new Date(input.purchaseDate + "T00:00:00Z").toISOString().slice(0, 10) !== input.purchaseDate) throw new Error("Choose a valid purchase date.");
+  for (const line of input.lines) {
+    const batchCode = clean(line.batchCode); const expiryDate = clean(line.expiryDate);
+    if (expiryDate && !batchCode) throw new Error("Enter a batch code when you provide an expiry date.");
+    if (expiryDate && !validDateOnly(expiryDate)) throw new Error("Choose a valid batch expiry date.");
+  }
   return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const now = new Date().toISOString();
@@ -182,9 +189,9 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     const existing = await database.purchases.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existing) {
       const savedLines = await database.purchaseLines.where("purchaseId").equals(existing.id).toArray();
-      const submitted = input.lines.map(line => ({productId:line.productId,quantity:Number(line.quantity),unitCostMinor:parseAmountToMinor(line.unitCost,currency)}))
+      const submitted = input.lines.map(line => ({productId:line.productId,quantity:Number(line.quantity),unitCostMinor:parseAmountToMinor(line.unitCost,currency),batchCode:normalizeProductCode(clean(line.batchCode)??""),expiryDate:clean(line.expiryDate)??""}))
         .sort((a,b)=>a.productId.localeCompare(b.productId));
-      const stored = savedLines.map(line => ({productId:line.productId,quantity:line.quantity,unitCostMinor:line.unitCostMinor}))
+      const stored = savedLines.map(line => ({productId:line.productId,quantity:line.quantity,unitCostMinor:line.unitCostMinor,batchCode:normalizeProductCode(line.batchCode??""),expiryDate:line.expiryDate??""}))
         .sort((a,b)=>a.productId.localeCompare(b.productId));
       if (existing.currency !== undefined && existing.currency !== currency) throw new Error("Purchase submission key has a different currency snapshot.");
       if ((existing.storeId??undefined)!==(input.storeId??undefined) || existing.supplierId!==input.supplierId || existing.purchaseDate!==input.purchaseDate || (existing.note??'')!==(clean(input.note)??'') ||
@@ -206,19 +213,31 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     const products = await Promise.all(input.lines.map((line) => database.products.get(line.productId)));
     if (products.some((product) => !product || product.businessProfileId !== activeId || product.archivedAt)) throw new Error("Every purchased product must still be active.");
     const resolvedProducts = products as Product[];
-    for (const product of resolvedProducts) {
+    for (const [index, product] of resolvedProducts.entries()) {
       if (product.itemKind === "service") throw new Error(`Services such as ${product.name} cannot be received as physical stock.`);
-      const tracked = await database.inventoryBatches.where("productId").equals(product.id).toArray();
-      if (tracked.some(batch => batch.businessProfileId === activeId)) throw new Error(`Receive ${product.name} through batch-aware receiving before increasing tracked stock.`);
+      const batchCode = clean(input.lines[index].batchCode);
+      const tracked = (await database.inventoryBatches.where("productId").equals(product.id).toArray()).filter(batch => batch.businessProfileId === activeId);
+      if (tracked.some(batch => !Number.isSafeInteger(batch.quantity) || batch.quantity < 0)) throw new Error(`Batch quantities for ${product.name} need reconciliation before receiving stock.`);
+      const trackedQuantity = tracked.reduce((sum, batch) => sum + batch.quantity, 0);
+      if (!Number.isSafeInteger(trackedQuantity)) throw new Error(`Batch quantities for ${product.name} exceed supported limits.`);
+      if (tracked.length && !batchCode) throw new Error(`${product.name} already uses expiry batches. Enter the new receipt's batch code.`);
+      if (batchCode && tracked.length && trackedQuantity !== product.stockQuantity) throw new Error(`Batch quantities for ${product.name} do not match on-hand stock. Register existing batches before receiving more.`);
+      if (batchCode && !tracked.length && product.stockQuantity !== 0) throw new Error(`Existing stock for ${product.name} has no batch record. Reconcile it before starting batch tracking.`);
+      if (batchCode && tracked.some(batch => normalizeProductCode(batch.batchCode) === normalizeProductCode(batchCode))) throw new Error(`Batch code ${batchCode} already exists for ${product.name}.`);
     }
     const purchaseId = nanoid(14);
-    const lines = input.lines.map((line, index) => { const unitCostMinor = parseAmountToMinor(line.unitCost, currency); const quantity = Number(line.quantity); return { id: nanoid(14), purchaseId, productId: line.productId, businessProfileId: activeId, productName: resolvedProducts[index].name, quantity, unitCostMinor, lineTotalMinor: unitCostMinor * quantity } satisfies PurchaseLine; });
+    const lines = input.lines.map((line, index) => { const unitCostMinor = parseAmountToMinor(line.unitCost, currency); const quantity = Number(line.quantity); const batchCode=clean(line.batchCode); const expiryDate=clean(line.expiryDate); return { id: nanoid(14), purchaseId, productId: line.productId, businessProfileId: activeId, productName: resolvedProducts[index].name, quantity, unitCostMinor, lineTotalMinor: unitCostMinor * quantity, ...(batchCode?{batchId:nanoid(16),batchCode}:{}), ...(expiryDate?{expiryDate}:{}) } satisfies PurchaseLine; });
     const totalCostMinor = checkedMinorSum(lines, "lineTotalMinor");
     const purchase: Purchase = { ...(input.storeId?{storeId:input.storeId}:{}), id: purchaseId, businessProfileId: activeId, supplierId: supplier.id, supplierName: supplier.name, purchaseDate: input.purchaseDate, totalCostMinor, currency, note: clean(input.note), submissionKey, createdAt: now, ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
     const movements: InventoryMovement[] = lines.map((line, index) => { const product = resolvedProducts[index]; const resultingQuantity = product.stockQuantity + line.quantity; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, purchaseId, movementType: "purchase", quantityDelta: line.quantity, previousQuantity: product.stockQuantity, resultingQuantity, note: `Purchase from ${supplier.name}`, createdAt: now }; });
     if (movements.some(m => !Number.isSafeInteger(m.previousQuantity) || m.previousQuantity < 0 || !Number.isSafeInteger(m.resultingQuantity) || m.resultingQuantity > 9_999_999)) throw new Error("Purchase stock quantity exceeds supported limits or needs reconciliation.");
     await database.purchases.add(purchase); await database.purchaseLines.bulkAdd(lines);
-    for (const [index, line] of lines.entries()) await appendInventoryCostChange(database, resolvedProducts[index], line.quantity, { sourceId: movements[index].id, createdAt: now, purchaseId }, { unitCostMinor: line.unitCostMinor });
+    const receivedBatches: InventoryBatch[]=[];
+    for (const [index, line] of lines.entries()) {
+      const event=await appendInventoryCostChange(database, resolvedProducts[index], line.quantity, { sourceId: movements[index].id, createdAt: now, purchaseId, ...(line.batchId?{batchId:line.batchId}:{}) }, { unitCostMinor: line.unitCostMinor });
+      if(line.batchId&&line.batchCode) receivedBatches.push({id:line.batchId,businessProfileId:activeId,productId:line.productId,batchCode:line.batchCode,...(line.expiryDate?{expiryDate:line.expiryDate}:{}),quantity:line.quantity,startingQuantity:line.quantity,receiptCostEventId:event.id,createdAt:now});
+    }
+    if(receivedBatches.length) await database.inventoryBatches.bulkAdd(receivedBatches);
     await Promise.all(resolvedProducts.map((product, index) => database.products.put({ ...product, stockQuantity: movements[index].resultingQuantity, updatedAt: now })));
     for (const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,input.storeId,movement.quantityDelta,movement.id,"purchase",now,movement.previousQuantity,movement.resultingQuantity);
     await database.inventoryMovements.bulkAdd(movements);

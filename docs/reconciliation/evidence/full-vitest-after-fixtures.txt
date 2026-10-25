@@ -1,0 +1,1147 @@
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ❯ src/features/staff/staff.test.ts (8 tests | 1 failed) 9262ms
+     × requires a cashier shift, attributes sales, and reconciles tracked cash 1318ms
+ ❯ src/auth/auth.test.tsx (11 tests | 10 failed) 7291ms
+     × redirects a signed-out deep link and never mounts the ledger 106ms
+     × reacts to sign-out without exposing the previous page 22ms
+     × cleans up its listener 1012ms
+     × does not let a stale session lookup override a newer sign-out 8ms
+     × does not expose local records from an unbound cached offline user marker 1030ms
+     × rejects a cached Supabase session while offline and preserves local data 1014ms
+     × clears cached identity after an online session is absent 1019ms
+     × does not allow a new offline visitor into the ledger 1017ms
+     × fails closed on a session error while retaining local records 1014ms
+     × rejects cross-tab account marker replacement without trusted authorization 1026ms
+ ❯ src/features/credit/credit.test.ts (18 tests | 17 failed) 7220ms
+     × displays the same net receivable in the sale summary, customer ledger and management reports after repayment 343ms
+     × frees customer credit limit after a real full reversal without inventing a repayment 298ms
+     × fails closed rather than erase debt when customer repayments cannot be allocated to a particular sale 280ms
+     × blocks a foreign-currency credit sale before stock can change, even without a credit-limit policy 261ms
+     × refuses a foreign-currency repayment and does not persist or mislabel the customer's debt 353ms
+     × keeps a historical sale currency unknown and refuses guessed-currency collections 377ms
+     × derives outstanding balance from a credit sale minus a partial repayment and writes one repayment record 326ms
+     × records a Mobile Money customer payment separately without altering the completed sale or its original debt 364ms
+     × rejects changed repayment details when a submission key is retried 691ms
+     × stores explicit sale allocations atomically and safely reverses only a different unpaid sale 470ms
+     × rejects mismatched/foreign/overallocated repayments without persisting them 360ms
+     × presents saved-currency targets, saves a single-sale payment and reduces its available debt 331ms
+     × rejects linked repayments after a stale target becomes ambiguous due to historical unallocated payments 344ms
+     × refuses linked and unallocated repayments for debt without verified currency 361ms
+     × supports multiple repayments through to a zero balance and rejects any further repayment 620ms
+     × rejects an overpayment without writing a detached or partial repayment record 534ms
+     × isolates balances by customer and replays the same repayment submission key only once 462ms
+ ❯ src/features/backup/run8CryptoPortability.test.ts (6 tests | 1 failed) 4462ms
+     × reselected encrypted v2 file matches real browser SHA-256 fingerprint 444ms
+ ❯ src/features/inventory/costLedger.test.ts (16 tests | 14 failed) 6722ms
+     × allocates FIFO receipts atomically, reconstructs earlier balances and restores the original costs 418ms
+     × restores original FIFO portions inside an inventory transaction without manufacturing a refund 426ms
+     × never substitutes today's product cost for an unknown legacy opening 553ms
+     × rolls allocations, sale records and stock back together after a late receipt-write failure 529ms
+     × allows one of two competing full-stock checkouts and records exactly one cost allocation 407ms
+     × retries a checkout without consuming cost layers twice and rejects a changed intent 369ms
+     × rejects another company's inventory at both checkout and replay boundaries 402ms
+     × includes immutable cost events in backup and rejects altered costs before restore 303ms
+     × restores batch quantities as well as FIFO accounting layers on reversal 302ms
+     × receives batch cost evidence, allocates physical stock by expiry, keeps accounting FIFO independent, and restores both on reversal 338ms
+     × audits cost-linked batch receipts and detects quantity tampering without changing records 328ms
+     × grounds expiry and unit-sales insights in company-scoped live records 337ms
+     × restores store and outbox records while requiring fresh consent to synchronize 558ms
+     × detects tampered persisted COGS independently from receipt evidence 523ms
+ ❯ src/features/sales/sales.test.ts (16 tests | 14 failed) 4780ms
+     × commits distinct exact-sales for the same retry key in independent companies 400ms
+     × enforces customer discount limits without changing stock or financial records 417ms
+     × completes a cash sale by writing sale, line, payment, receipt, and stock movement together 335ms
+     × recovers a committed two-item partial-payment receipt from IndexedDB without writing again 315ms
+     × rejects corrupted persisted payment data on recovery without changing the ledger 283ms
+     × accepts a comma-grouped full payment amount and records the sale once 288ms
+     × handles a partial customer sale and derives the customer outstanding amount from saved sales 279ms
+     × writes a full Mobile Money payment and provider snapshot atomically, then returns the same result for a repeat key 283ms
+     × rejects a Mobile Money payment without a configured provider before creating records or changing stock 272ms
+     × returns the same completed sale on a repeated checkout key without duplicating stock, payment, receipt, or customer activity 294ms
+     × supports a credit sale and an atomic multi-product stock update 273ms
+     × rejects changed cart or payment details for an already committed checkout key 249ms
+     × rejects a changed partial payment on retry without duplicating customer debt 241ms
+     × rejects insufficient stock and customerless credit without leaving partial records 302ms
+ ❯ src/features/assistant/audit.test.ts (17 tests | 1 failed) 33107ms
+     × each company only sees its own entries, and clearing a company removes only its entries 845ms
+ ❯ src/features/stores/storeAuthorization.test.ts (4 tests | 1 failed) 4262ms
+     × rolls back store transfer and physical-count writes when the active company changes during awaited reads 882ms
+ ❯ src/features/business/run11ReturnPolicyIntegration.test.ts (13 tests | 12 failed) 4890ms
+     × defaults to no refunds and denies full reversal before money/stock changes 519ms
+     × defaults to no refunds and denies a partial cash return without any write 378ms
+     × owner-enabled full reversal captures original and decision terms on exact journal 367ms
+     × rejects wrong-currency full reversals at preview and posting, including retry attempts 480ms
+     × owner-enabled cash partial return retains original invoice, tax, stock and policy evidence 425ms
+     × revoking the current policy blocks returns without changing prior sale history 329ms
+     × a sale created while no refunds existed cannot be made refundable retroactively 357ms
+     × full-only configuration denies partial cash refund but permits supported full correction 331ms
+     × tampered policy revision is rejected by backup preflight without restoring it 338ms
+     × tampered saved sale policy is rejected even when money and stock still reconcile 321ms
+     × tampered refund authorization does not disappear in otherwise valid portable backup 329ms
+     × older refund lacking policy snapshots remains legible but is not newly certified 312ms
+ ❯ src/features/purchases/purchases.test.ts (10 tests | 4 failed) 3560ms
+     × records a batch purchase, its base-unit FIFO cost and batch expiry atomically and idempotently 380ms
+     × refuses to start expiry tracking on untracked on-hand stock or append to a partially tracked balance 346ms
+     × rolls back purchase, cost event, movement, product and batch writes when batch persistence fails 369ms
+     × keeps the original supplier snapshot when a supplier is renamed or archived 336ms
+ ❯ src/features/reports/run9CostReconciliation.test.ts (12 tests | 5 failed) 4072ms
+     × keeps separate as-of stock assets and period COGS after FIFO sale 443ms
+     × restocking via legitimate full reversal returns original cost layers 303ms
+     × rejects full refund money journal if cost restoration evidence disappears 333ms
+     × rejects tampered full reversal quantity before showing financial results 351ms
+     × keeps completed zero-stock inventory value at zero without replacement cost 301ms
+ ❯ src/features/backup/backup.test.ts (11 tests | 2 failed) 4035ms
+     × exports and restores business records, inventory, customer debt, sales, payments, repayments, receipts, and reports after a simulated reinstall 407ms
+     × accepts explicit sale repayment links in backup and rejects tampered links 386ms
+ ❯ src/features/sales/tax.test.ts (8 tests | 5 failed) 3699ms
+   × records discounted tax, receipt, recovery and net-of-tax cost reporting together 441ms
+   × preserves the original tax snapshot on retries after a policy change and reverses it exactly 366ms
+   × rejects stale or missing tax review without a sale or stock write 345ms
+   × rolls back a taxed checkout after a receipt storage failure 387ms
+   × backs up and restores policy and immutable receipts, rejects altered tax 390ms
+ ❯ src/features/inventory/writeSafety.test.ts (5 tests | 1 failed) 3169ms
+     × denies direct cashier import, count and payment-configuration calls, and locked commerce mutations 1419ms
+ ❯ src/features/purchases/supplierPayables.test.ts (6 tests | 1 failed) 4056ms
+   × prevents supplier archival until all purchase liabilities have explicit recognition and zero outstanding 457ms
+ ❯ src/features/customers/quotations.test.ts (4 tests | 1 failed) 2470ms
+     × rolls back checkout, costs and stock when linking the converted quotation fails 605ms
+ ❯ src/features/backup/run7PostingBarrier.test.ts (6 tests | 6 failed) 2621ms
+     × rejects sale and preserves original stock, payments and receipts 699ms
+     × rejects purchase without creating stock movement or supplier payable 492ms
+     × rejects expense with no saved financial row or audit 352ms
+     × blocks credit repayment prior to ledger posting 352ms
+     × blocks independent stock adjustments during recovery 350ms
+     × failed retail mutations do not consume or rewrite recovery evidence 368ms
+ ❯ src/features/customers/customers.test.ts (7 tests | 1 failed) 2779ms
+     × does not strand receivables by archiving a customer before an exact repayment 376ms
+ ❯ src/features/reliability/integrity.test.ts (7 tests | 5 failed) 2514ms
+     × clears a valid sale ledger without writing any record 442ms
+     × reports inconsistent totals and orphan records without attempting a destructive repair 335ms
+     × accepts valid and historical Mobile Money payments, then reports a missing configured provider without changing any records 278ms
+     × detects tampered allocation evidence independently without editing the saved repayment 323ms
+     × detects tampered full reversals and preserves the original transaction records 346ms
+ ❯ src/features/sales/cashPartialReturnPosting.test.ts (7 tests | 6 failed) 2568ms
+   × atomically records two cash refunds, restores original FIFO and reports net sale and cost 486ms
+   × rolls back stock, FIFO cost and cash ledger when return posting fails 349ms
+   × blocks cash returns for customers and absent confirmation without modifying stock 384ms
+   × rejects another refund when earlier saved physical-stock evidence has been altered 455ms
+   × backup import rejects a partial cash-return whose physical stock movement was altered 466ms
+   × local integrity reports a damaged partial refund FIFO restoration without rewriting the ledger 410ms
+ ❯ src/features/sales/cashReturnReview.test.ts (5 tests | 5 failed) 1827ms
+   × reads saved receipt, payment and FIFO evidence without writing a refund 460ms
+   × fails closed on active-company mismatch 385ms
+   × rejects a missing original receipt without writing compensating data 327ms
+   × refuses to quote further returns when the earlier stock movement no longer matches its refund 321ms
+   × denies cashier-only access to private refund review and permits the unlocked owner 329ms
+ ❯ src/features/customers/walletTransfers.test.ts (4 tests | 1 failed) 1592ms
+     × saves wallet-only checkout, points earning and redemption without inventing a cash payment 360ms
+ ❯ src/features/reports/reports.test.ts (5 tests | 4 failed) 2113ms
+     × reconciles today sales, money received, debt, low stock, and transaction count to local records 481ms
+     × uses local calendar boundaries for today and leaves historical cash sales out of today totals 405ms
+     × separates recorded sales from money actually received without letting repayments rewrite today’s unpaid sale amount 381ms
+     × shows recorded expenses by local date and category without blending them into sales, collections, debt, or supplier stock history 345ms
+ ❯ src/features/reliability/offlineReliability.test.ts (3 tests | 2 failed) 1171ms
+     × preserves business, product, customer, sale, receipt, repayment, dashboard, and reports after a local close/reopen 511ms
+     × leaves no partial sale, payment, receipt, or stock change after an offline local validation failure and a reopen 319ms
+ ❯ src/cloud/CloudBusinessPanel.test.tsx (3 tests | 1 failed) 1351ms
+   × discards a previous account's delayed business lookup after sign-out 1026ms
+ ❯ src/features/backup/retailWriteCoordination.test.ts (1 test | 1 failed) 477ms
+   × cannot open a sale or adjust inventory while recovery owns the exclusive origin lock 474ms
+ ❯ src/features/security/verifyCloudCompanyAccess.test.ts (14 tests | 1 failed) 43ms
+     × returns an authorized member only after verifying the account 19ms
+ ❯ src/features/reports/run10FinancialConservation.test.ts (0 test)
+ ❯ src/features/reports/run12SupplierTaxIntegration.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/reports/run10FinancialConservation.test.ts [ src/features/reports/run10FinancialConservation.test.ts ]
+Error: Transform failed with 1 error:
+C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/run10FinancialConservation.test.ts:166:54: ERROR: Expected ")" but found "s"
+  Plugin: vite:esbuild
+  File: C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/run10FinancialConservation.test.ts:166:54
+  
+  Expected ")" but found "s"
+  164 |    expect((await summary(db)).currentReceivablesMinor).toBe(2000);
+  165 |   });
+  166 |   it('legacy unknown currency cannot be assigned today's GHS merely to post money',async()=>{
+      |                                                        ^
+  167 |    const{db,a,product}=await fixture();
+  168 |    const first=await sale(db,product.id,a.id);
+  
+ ❯ failureErrorWithLog ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1752:15
+ ❯ ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1019:50
+ ❯ responseCallbacks.<computed> ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:886:9
+ ❯ handleIncomingPacket ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:941:12
+ ❯ Socket.readFromStdout ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:864:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/125]⎯
+
+ FAIL  src/features/reports/run12SupplierTaxIntegration.test.ts [ src/features/reports/run12SupplierTaxIntegration.test.ts ]
+Error: Transform failed with 1 error:
+C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/run12SupplierTaxIntegration.test.ts:171:73: ERROR: Expected ")" but found "s"
+  Plugin: vite:esbuild
+  File: C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/run12SupplierTaxIntegration.test.ts:171:73
+  
+  Expected ")" but found "s"
+  169 |    });
+  170 |   });
+  171 |   it('records explicit OFF for untaxed sales, rather than inferring today's status',async()=>{
+      |                                                                           ^
+  172 |    const f=await fixture(),saved=await sale(f);
+  173 |    expect(saved.sale.taxConfigurationAtSale).toMatchObject({mode:'off'});
+  
+ ❯ failureErrorWithLog ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1752:15
+ ❯ ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1019:50
+ ❯ responseCallbacks.<computed> ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:886:9
+ ❯ handleIncomingPacket ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:941:12
+ ❯ Socket.readFromStdout ../node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:864:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/125]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 123 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > redirects a signed-out deep link and never mounts the ledger
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p>
+  Private ledger
+</p> instead
+ ❯ src/auth/auth.test.tsx:21:142
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > reacts to sign-out without exposing the previous page
+TypeError: mock.listener is not a function
+ ❯ src/auth/auth.test.tsx:23:206
+
+ ❯ ../node_modules/.pnpm/@testing-library+react@16.3_cd9943bf1027a9c45d0c72f500abd754/node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../node_modules/.pnpm/react@19.3.0/node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../node_modules/.pnpm/@testing-library+react@16.3_cd9943bf1027a9c45d0c72f500abd754/node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/auth/auth.test.tsx:23:193
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > cleans up its listener
+TestingLibraryElementError: Unable to find an element with the text: Sign in here. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:24:79
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > does not let a stale session lookup override a newer sign-out
+TypeError: mock.listener is not a function
+ ❯ src/auth/auth.test.tsx:25:205
+
+ ❯ ../node_modules/.pnpm/@testing-library+react@16.3_cd9943bf1027a9c45d0c72f500abd754/node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../node_modules/.pnpm/react@19.3.0/node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../node_modules/.pnpm/@testing-library+react@16.3_cd9943bf1027a9c45d0c72f500abd754/node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/auth/auth.test.tsx:25:192
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > does not expose local records from an unbound cached offline user marker
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:26:308
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > rejects a cached Supabase session while offline and preserves local data
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:27:299
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > clears cached identity after an online session is absent
+TestingLibraryElementError: Unable to find an element with the text: Sign in here. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:28:169
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > does not allow a new offline visitor into the ledger
+TestingLibraryElementError: Unable to find an element with the text: Sign in here. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:29:164
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > fails closed on a session error while retaining local records
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <p>
+      Private ledger
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/auth/auth.test.tsx:30:226
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/125]⎯
+
+ FAIL  src/auth/auth.test.tsx > authentication gate > rejects cross-tab account marker replacement without trusted authorization
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p>
+  Private ledger
+</p> instead
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <p>
+        Private ledger
+      </p>
+    </div>
+  </body>
+</html>
+ ❯ src/auth/auth.test.tsx:31:406
+
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/125]⎯
+
+ FAIL  src/cloud/CloudBusinessPanel.test.tsx > discards a previous account's delayed business lookup after sign-out
+AssertionError: expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-label="Cloud business account"
+        class="rounded border p-4 space-y-3"
+      >
+        <h2
+          class="font-semibold"
+        >
+          Cloud business account
+        </h2>
+        <p
+          class="text-sm"
+        >
+          Prepare your business account for cloud services. Local sales, stock and customer records are not uploaded or linked by this step.
+        </p>
+        <form
+          class="space-y-2"
+        >
+          <label
+            class="block"
+            for="cloud-business-name"
+          >
+            Cloud business name
+          </label>
+          <input
+            class="w-full rounded border p-2"
+            id="cloud-business-name"
+            maxlength="80"
+            required=""
+            value=""
+          />
+          <button
+            class="rounded border px-4 py-2"
+            disabled=""
+            type="submit"
+          >
+            Create cloud business
+          </button>
+        </form>
+        <p
+          role="alert"
+        >
+          [vitest] No "listAccessibleCloudBusinesses" export is defined on the "./businessIdentity" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+        </p>
+      </section>
+    </div>
+  </body>
+</html>
+ ❯ src/cloud/CloudBusinessPanel.test.tsx:39:43
+     37|   mock.lookup.mockReturnValue(new Promise(done => { resolve = done; })…
+     38|   render(<CloudBusinessPanel />);
+     39|   await waitFor(() => expect(mock.lookup).toHaveBeenCalled());
+       |                                           ^
+     40|   mock.getUser.mockResolvedValue({ data: { user: null }, error: null }…
+     41|   mock.callback?.();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/125]⎯
+
+ FAIL  src/features/assistant/audit.test.ts > privacy and scope > each company only sees its own entries, and clearing a company removes only its entries
+Error: Staff access locked or staff permission denied.
+ ❯ requirePermission src/features/staff/staff.ts:220:11
+    218|   } catch {
+    219|     if(id)lockStaff(company);
+    220|     throw new Error(`Staff access locked or ${action} permission denie…
+       |           ^
+    221|   }
+    222|   sessionExpiration.set(company,Date.now()+30*60_000);
+ ❯ clearCompanyDataWhileLocked src/features/business/activeCompany.ts:66:3
+ ❯ Object.request src/test/setup.ts:24:18
+ ❯ src/features/assistant/audit.test.ts:130:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/125]⎯
+
+ FAIL  src/features/backup/backup.test.ts > Stage 9 local backup and restore > exports and restores business records, inventory, customer debt, sales, payments, repayments, receipts, and reports after a simulated reinstall
+ FAIL  src/features/backup/backup.test.ts > Stage 9 local backup and restore > accepts explicit sale repayment links in backup and rejects tampered links
+ FAIL  src/features/backup/retailWriteCoordination.test.ts > cannot open a sale or adjust inventory while recovery owns the exclusive origin lock
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies full reversal before money/stock changes
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies a partial cash return without any write
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled full reversal captures original and decision terms on exact journal
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > rejects wrong-currency full reversals at preview and posting, including retry attempts
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled cash partial return retains original invoice, tax, stock and policy evidence
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > revoking the current policy blocks returns without changing prior sale history
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > a sale created while no refunds existed cannot be made refundable retroactively
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > full-only configuration denies partial cash refund but permits supported full correction
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered policy revision is rejected by backup preflight without restoring it
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered saved sale policy is rejected even when money and stock still reconcile
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered refund authorization does not disappear in otherwise valid portable backup
+ FAIL  src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > older refund lacking policy snapshots remains legible but is not newly certified
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > displays the same net receivable in the sale summary, customer ledger and management reports after repayment
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > frees customer credit limit after a real full reversal without inventing a repayment
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > fails closed rather than erase debt when customer repayments cannot be allocated to a particular sale
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > blocks a foreign-currency credit sale before stock can change, even without a credit-limit policy
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > refuses a foreign-currency repayment and does not persist or mislabel the customer's debt
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > keeps a historical sale currency unknown and refuses guessed-currency collections
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > derives outstanding balance from a credit sale minus a partial repayment and writes one repayment record
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > records a Mobile Money customer payment separately without altering the completed sale or its original debt
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > rejects changed repayment details when a submission key is retried
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > stores explicit sale allocations atomically and safely reverses only a different unpaid sale
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > rejects mismatched/foreign/overallocated repayments without persisting them
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > presents saved-currency targets, saves a single-sale payment and reduces its available debt
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > rejects linked repayments after a stale target becomes ambiguous due to historical unallocated payments
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > refuses linked and unallocated repayments for debt without verified currency
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > supports multiple repayments through to a zero balance and rejects any further repayment
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > rejects an overpayment without writing a detached or partial repayment record
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > isolates balances by customer and replays the same repayment submission key only once
+ FAIL  src/features/customers/customers.test.ts > customer records > does not strand receivables by archiving a customer before an exact repayment
+ FAIL  src/features/customers/walletTransfers.test.ts > Stage 4 wallet and loyalty financial safeguards > saves wallet-only checkout, points earning and redemption without inventing a cash payment
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > allocates FIFO receipts atomically, reconstructs earlier balances and restores the original costs
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores original FIFO portions inside an inventory transaction without manufacturing a refund
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > never substitutes today's product cost for an unknown legacy opening
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > retries a checkout without consuming cost layers twice and rejects a changed intent
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > includes immutable cost events in backup and rejects altered costs before restore
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores batch quantities as well as FIFO accounting layers on reversal
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > grounds expiry and unit-sales insights in company-scoped live records
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > detects tampered persisted COGS independently from receipt evidence
+ FAIL  src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > clears a valid sale ledger without writing any record
+ FAIL  src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > reports inconsistent totals and orphan records without attempting a destructive repair
+ FAIL  src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > accepts valid and historical Mobile Money payments, then reports a missing configured provider without changing any records
+ FAIL  src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > detects tampered allocation evidence independently without editing the saved repayment
+ FAIL  src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > detects tampered full reversals and preserves the original transaction records
+ FAIL  src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > preserves business, product, customer, sale, receipt, repayment, dashboard, and reports after a local close/reopen
+ FAIL  src/features/reports/reports.test.ts > Stage 7 local reports > reconciles today sales, money received, debt, low stock, and transaction count to local records
+ FAIL  src/features/reports/reports.test.ts > Stage 7 local reports > uses local calendar boundaries for today and leaves historical cash sales out of today totals
+ FAIL  src/features/reports/reports.test.ts > Stage 7 local reports > separates recorded sales from money actually received without letting repayments rewrite today’s unpaid sale amount
+ FAIL  src/features/reports/reports.test.ts > Stage 7 local reports > shows recorded expenses by local date and category without blending them into sales, collections, debt, or supplier stock history
+ FAIL  src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > keeps separate as-of stock assets and period COGS after FIFO sale
+ FAIL  src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > restocking via legitimate full reversal returns original cost layers
+ FAIL  src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects full refund money journal if cost restoration evidence disappears
+ FAIL  src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects tampered full reversal quantity before showing financial results
+ FAIL  src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > keeps completed zero-stock inventory value at zero without replacement cost
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > atomically records two cash refunds, restores original FIFO and reports net sale and cost
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > rolls back stock, FIFO cost and cash ledger when return posting fails
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > blocks cash returns for customers and absent confirmation without modifying stock
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > rejects another refund when earlier saved physical-stock evidence has been altered
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > backup import rejects a partial cash-return whose physical stock movement was altered
+ FAIL  src/features/sales/cashPartialReturnPosting.test.ts > local integrity reports a damaged partial refund FIFO restoration without rewriting the ledger
+ FAIL  src/features/sales/cashReturnReview.test.ts > reads saved receipt, payment and FIFO evidence without writing a refund
+ FAIL  src/features/sales/cashReturnReview.test.ts > fails closed on active-company mismatch
+ FAIL  src/features/sales/cashReturnReview.test.ts > rejects a missing original receipt without writing compensating data
+ FAIL  src/features/sales/cashReturnReview.test.ts > refuses to quote further returns when the earlier stock movement no longer matches its refund
+ FAIL  src/features/sales/cashReturnReview.test.ts > denies cashier-only access to private refund review and permits the unlocked owner
+ FAIL  src/features/sales/sales.test.ts > atomic sales > commits distinct exact-sales for the same retry key in independent companies
+ FAIL  src/features/sales/sales.test.ts > atomic sales > completes a cash sale by writing sale, line, payment, receipt, and stock movement together
+ FAIL  src/features/sales/sales.test.ts > atomic sales > recovers a committed two-item partial-payment receipt from IndexedDB without writing again
+ FAIL  src/features/sales/sales.test.ts > atomic sales > rejects corrupted persisted payment data on recovery without changing the ledger
+ FAIL  src/features/sales/sales.test.ts > atomic sales > accepts a comma-grouped full payment amount and records the sale once
+ FAIL  src/features/sales/sales.test.ts > atomic sales > handles a partial customer sale and derives the customer outstanding amount from saved sales
+ FAIL  src/features/sales/sales.test.ts > atomic sales > writes a full Mobile Money payment and provider snapshot atomically, then returns the same result for a repeat key
+ FAIL  src/features/sales/sales.test.ts > atomic sales > returns the same completed sale on a repeated checkout key without duplicating stock, payment, receipt, or customer activity
+ FAIL  src/features/sales/sales.test.ts > atomic sales > supports a credit sale and an atomic multi-product stock update
+ FAIL  src/features/sales/sales.test.ts > atomic sales > rejects changed cart or payment details for an already committed checkout key
+ FAIL  src/features/sales/sales.test.ts > atomic sales > rejects a changed partial payment on retry without duplicating customer debt
+ FAIL  src/features/sales/tax.test.ts > records discounted tax, receipt, recovery and net-of-tax cost reporting together
+ FAIL  src/features/sales/tax.test.ts > preserves the original tax snapshot on retries after a policy change and reverses it exactly
+ FAIL  src/features/sales/tax.test.ts > backs up and restores policy and immutable receipts, rejects altered tax
+Error: Unlock your assigned staff account before completing a sale.
+ ❯ assertCheckoutAttribution src/features/sales/requireStaff.mjs:4:11
+      2| export function assertCheckoutAttribution(actor, shift, companyId, act…
+      3|   if (!actor || typeof actor.id !== 'string' || !actor.id.trim() || ac…
+      4|     throw new Error('Unlock your assigned staff account before complet…
+       |           ^
+      5|   if (activeStaffId !== actor.id) throw new Error('Staff session chang…
+      6|   if (!shift || shift.staffId !== actor.id || shift.businessProfileId …
+ ❯ requireSaleAttendant src/features/sales/requireStaff.ts:12:10
+ ❯ Transaction.<anonymous> src/features/sales/sales.ts:184:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects sale and preserves original stock, payments and receipts
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:41:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects purchase without creating stock movement or supplier payable
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:52:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects expense with no saved financial row or audit
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:61:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > blocks credit repayment prior to ledger posting
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:69:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > blocks independent stock adjustments during recovery
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:76:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/125]⎯
+
+ FAIL  src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > failed retail mutations do not consume or rewrite recovery evidence
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 7,
+    "inclusive": true,
+    "path": [
+      "phone"
+    ],
+    "message": "Enter a phone number with at least 7 characters."
+  }
+]
+ ❯ src/features/customers/customers.ts:68:38
+     66| export async function createCustomer(values: CustomerFormValues, datab…
+     67|   return withCoordinatedRetailWrite(async () => {
+     68|     const input = customerFormSchema.parse(values);
+       |                                      ^
+     69|     const activeId = getActiveBusinessProfileId();
+     70|     const normalizedName = normalizeCustomerName(input.name);
+ ❯ src/features/backup/crossTabDataLock.mjs:29:12
+ ❯ Object.request src/test/setup.ts:24:24
+ ❯ withCrossTabDataLock src/features/backup/crossTabDataLock.mjs:27:18
+ ❯ withRetailWriteLock src/features/backup/retailWriteLock.mjs:20:30
+ ❯ withCoordinatedRetailWrite src/features/backup/coordinatedRetailWrite.ts:10:10
+ ❯ createCustomer src/features/customers/customers.ts:67:10
+ ❯ fixture src/features/backup/run7PostingBarrier.test.ts:24:23
+ ❯ src/features/backup/run7PostingBarrier.test.ts:83:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/125]⎯
+
+ FAIL  src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > reselected encrypted v2 file matches real browser SHA-256 fingerprint
+Error: Backup file fingerprint could not be verified.
+ ❯ fail src/features/backup/run8BackupFileReceipt.mjs:10:28
+      8|  from './run8EncryptedEnvelope.mjs';
+      9| const encoder=new TextEncoder();
+     10| const fail=message=>{throw Error(message);};
+       |                            ^
+     11| async function digest(text,subtle){
+     12|  if(!subtle||typeof subtle.digest!=='function')
+ ❯ digest src/features/backup/run8BackupFileReceipt.mjs:16:3
+ ❯ createRun8FileReceipt src/features/backup/run8BackupFileReceipt.mjs:32:10
+ ❯ src/features/backup/run8CryptoPortability.test.ts:70:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/125]⎯
+
+ FAIL  src/features/customers/quotations.test.ts > quotation isolation and write safety > rolls back checkout, costs and stock when linking the converted quotation fails
+AssertionError: expected [Function] to throw error including 'disk full' but got 'Unlock your assigned staff account be…'
+
+Expected: "disk full"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/customers/quotations.test.ts:45:136
+     43|     await setQuotationStatus(quote.id,'issued',database); await setQuo…
+     44|     const put=vi.spyOn(database.quotations,'put').mockRejectedValueOnc…
+     45|     await expect(convertQuotationToSale(quote.id,{paymentMethod:'credi…
+       |                                                                                                                                        ^
+     46|     put.mockRestore();
+     47|     expect(await database.sales.count()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/125]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > rolls allocations, sale records and stock back together after a late receipt-write failure
+AssertionError: expected [Function] to throw error including 'disk full' but got 'Unlock your assigned staff account be…'
+
+Expected: "disk full"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/inventory/costLedger.test.ts:114:59
+    112|     const initial = await db.inventoryCostEvents.toArray();
+    113|     vi.spyOn(db.receipts, "add").mockRejectedValueOnce(new Error("disk…
+    114|     await expect(completeSale(checkout(product.id, 1), db)).rejects.to…
+       |                                                           ^
+    115|     expect(await db.inventoryCostEvents.toArray()).toEqual(initial);
+    116|     expect(await db.sales.count()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/125]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > allows one of two competing full-stock checkouts and records exactly one cost allocation
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/features/inventory/costLedger.test.ts:123:69
+    121|     const { db, product } = await setup();
+    122|     const results = await Promise.allSettled([completeSale(checkout(pr…
+    123|     expect(results.filter(result => result.status === "fulfilled")).to…
+       |                                                                     ^
+    124|     expect(await db.sales.count()).toBe(1);
+    125|     expect(await db.inventoryCostEvents.count()).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/125]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > rejects another company's inventory at both checkout and replay boundaries
+AssertionError: expected [Function] to throw error matching /no longer available/ but got 'Unlock your assigned staff account be…'
+
+- Expected:
+/no longer available/
+
++ Received:
+"Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/inventory/costLedger.test.ts:141:59
+    139|     expect(() => reconstructInventoryCost(events, "other", product.id)…
+    140|     setActiveBusinessProfileId("other");
+    141|     await expect(completeSale(checkout(product.id, 1), db)).rejects.to…
+       |                                                           ^
+    142|     expect(await db.inventoryCostEvents.toArray()).toEqual(events);
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/125]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > receives batch cost evidence, allocates physical stock by expiry, keeps accounting FIFO independent, and restores both on reversal
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > audits cost-linked batch receipts and detects quantity tampering without changing records
+Error: Receive Rice through batch-aware receiving before increasing tracked stock.
+ ❯ Transaction.<anonymous> src/features/purchases/purchases.ts:212:78
+    210|       if (product.itemKind === "service") throw new Error(`Services su…
+    211|       const tracked = await database.inventoryBatches.where("productId…
+    212|       if (tracked.some(batch => batch.businessProfileId === activeId))…
+       |                                                                              ^
+    213|     }
+    214|     const purchaseId = nanoid(14);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/125]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores store and outbox records while requiring fresh consent to synchronize
+Error: Company or unlocked staff session changed during local sync.
+ ❯ activeScope src/features/sync/syncFoundation.ts:49:10
+     47| function activeScope(company:string,actor:string|null) {
+     48|  if(company!==getActiveBusinessProfileId()||!actor||actor!==currentSta…
+     49|    throw Error("Company or unlocked staff session changed during local…
+       |          ^
+     50| }
+     51| /** Consent is scoped per company. Disabling leaves existing queued re…
+ ❯ setSyncConsent src/features/sync/syncFoundation.ts:56:3
+ ❯ src/features/inventory/costLedger.test.ts:229:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/125]⎯
+
+ FAIL  src/features/inventory/writeSafety.test.ts > inventory and planning write safety > denies direct cashier import, count and payment-configuration calls, and locked commerce mutations
+AssertionError: expected [Function] to throw error matching /permission denied/ but got 'Company or unlocked staff session cha…'
+
+- Expected:
+/permission denied/
+
++ Received:
+"Company or unlocked staff session changed during local sync."
+
+ ❯ src/features/inventory/writeSafety.test.ts:72:53
+     70|     await expect(addMobileMoneyProvider({ name: "Other provider" }, db…
+     71|     await expect(setMobileMoneyProviderActive(provider.id, false, db))…
+     72|     await expect(setSyncConsent(db, "primary", true)).rejects.toThrow(…
+       |                                                     ^
+     73|     await expect(registerLocalSyncDevice(db, "primary", "unauthorized-…
+     74|     lockStaff("primary");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/125]⎯
+
+ FAIL  src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > records a batch purchase, its base-unit FIFO cost and batch expiry atomically and idempotently
+Error: Receive Stage 7 Rice through batch-aware receiving before increasing tracked stock.
+ ❯ Transaction.<anonymous> src/features/purchases/purchases.ts:212:78
+    210|       if (product.itemKind === "service") throw new Error(`Services su…
+    211|       const tracked = await database.inventoryBatches.where("productId…
+    212|       if (tracked.some(batch => batch.businessProfileId === activeId))…
+       |                                                                              ^
+    213|     }
+    214|     const purchaseId = nanoid(14);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/125]⎯
+
+ FAIL  src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > refuses to start expiry tracking on untracked on-hand stock or append to a partially tracked balance
+AssertionError: promise resolved "{ id: '7ut1BNTD4jV2mt', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "businessProfileId": "primary",
++   "createdAt": "2026-10-25T01:39:24.481Z",
++   "currency": "GHS",
++   "id": "7ut1BNTD4jV2mt",
++   "note": undefined,
++   "purchaseDate": "2026-08-27",
++   "submissionKey": "batch-start-refused",
++   "supplierId": "x-CjO4uCaUqK",
++   "supplierName": "ABC Wholesale",
++   "totalCostMinor": 2000,
+  }
+
+ ❯ src/features/purchases/purchases.test.ts:58:59
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/125]⎯
+
+ FAIL  src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > rolls back purchase, cost event, movement, product and batch writes when batch persistence fails
+AssertionError: expected [Function] to throw error including 'Simulated batch write failure' but got 'Receive Stage 7 Rice through batch-aw…'
+
+Expected: "Simulated batch write failure"
+Received: "Receive Stage 7 Rice through batch-aware receiving before increasing tracked stock."
+
+ ❯ src/features/purchases/purchases.test.ts:71:243
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/125]⎯
+
+ FAIL  src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > keeps the original supplier snapshot when a supplier is renamed or archived
+Error: Supplier has unpaid or unverified purchase liabilities. Reconcile every original purchase before archiving.
+ ❯ Transaction.<anonymous> src/features/purchases/purchases.ts:153:17
+    151|         const status=reconcileSupplierPayable(purchase,entries);
+    152|         if(status.status!=="settled"||status.outstandingMinor!==0)
+    153|           throw new Error("Supplier has unpaid or unverified purchase …
+       |                 ^
+    154|       }
+    155|       if(getActiveBusinessProfileId()!==activeId)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/125]⎯
+
+ FAIL  src/features/purchases/supplierPayables.test.ts > prevents supplier archival until all purchase liabilities have explicit recognition and zero outstanding
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "amountMinor": 0,
++     "currency": "GHS",
++   },
++ ]
+
+ ❯ src/features/purchases/supplierPayables.test.ts:84:6
+     82|   expect(archived.createdAt).toBe(before?.createdAt);
+     83|   expect((await getSupplierPayables(database)).outstandingByCurrency)
+     84|     .toEqual([{currency:'GHS',amountMinor:0}].filter(row=>row.amountMi…
+       |      ^
+     85|   await expect(archiveSupplier(supplier.id,database)).rejects.toThrow(…
+     86| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/125]⎯
+
+ FAIL  src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > leaves no partial sale, payment, receipt, or stock change after an offline local validation failure and a reopen
+AssertionError: expected [Function] to throw error including 'only 1 units available' but got 'Unlock your assigned staff account be…'
+
+Expected: "only 1 units available"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/reliability/offlineReliability.test.ts:68:202
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/125]⎯
+
+ FAIL  src/features/sales/sales.test.ts > atomic sales > enforces customer discount limits without changing stock or financial records
+AssertionError: expected [Function] to throw error including 'approved maximum discount' but got 'Unlock your assigned staff account be…'
+
+Expected: "approved maximum discount"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/sales/sales.test.ts:74:47
+     72|     await setCustomerPolicy(customer.id, { maxDiscountPercent: 10 }, d…
+     73|     const input = { lines: [{ productId: product.id, quantity: 2 }], c…
+     74|     await expect(completeSale(input, database)).rejects.toThrow("appro…
+       |                                               ^
+     75|     expect(await database.sales.count()).toBe(0);
+     76|     expect(await database.inventoryMovements.where("movementType").equ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/125]⎯
+
+ FAIL  src/features/sales/sales.test.ts > atomic sales > rejects a Mobile Money payment without a configured provider before creating records or changing stock
+AssertionError: expected [Function] to throw error including 'Choose a Mobile Money provider' but got 'Unlock your assigned staff account be…'
+
+Expected: "Choose a Mobile Money provider"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/sales/sales.test.ts:188:171
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/125]⎯
+
+ FAIL  src/features/sales/sales.test.ts > atomic sales > rejects insufficient stock and customerless credit without leaving partial records
+AssertionError: expected [Function] to throw error including 'only 1 units available' but got 'Unlock your assigned staff account be…'
+
+Expected: "only 1 units available"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/sales/sales.test.ts:270:169
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/125]⎯
+
+ FAIL  src/features/sales/tax.test.ts > rejects stale or missing tax review without a sale or stock write
+AssertionError: expected [Function] to throw error matching /review/ but got 'Unlock your assigned staff account be…'
+
+- Expected:
+/review/
+
++ Received:
+"Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/sales/tax.test.ts:63:101
+     61| it("rejects stale or missing tax review without a sale or stock write"…
+     62|   const {db,product,input}=await fixture(policy);
+     63|   for(const taxReviewKey of [undefined,"off"]) await expect(completeSa…
+       |                                                                                                     ^
+     64|   expect(await db.sales.count()).toBe(0);expect((await db.products.get…
+     65| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/125]⎯
+
+ FAIL  src/features/sales/tax.test.ts > rolls back a taxed checkout after a receipt storage failure
+AssertionError: expected [Function] to throw error including 'disk full' but got 'Unlock your assigned staff account be…'
+
+Expected: "disk full"
+Received: "Unlock your assigned staff account before completing a sale."
+
+ ❯ src/features/sales/tax.test.ts:69:38
+     67|   const {db,product,input}=await fixture(policy);
+     68|   vi.spyOn(db.receipts,"add").mockRejectedValueOnce(new Error("disk fu…
+     69|   await expect(completeSale(input,db)).rejects.toThrow("disk full");
+       |                                      ^
+     70|   expect(await db.sales.count()).toBe(0);expect(await db.inventoryCost…
+     71|   expect((await db.products.get(product.id))?.stockQuantity).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/125]⎯
+
+ FAIL  src/features/security/verifyCloudCompanyAccess.test.ts > verified cloud company access (inactive preview service) > returns an authorized member only after verifying the account
+AssertionError: promise rejected "Error: Company access is not authorized." instead of resolving
+ ❯ src/features/security/verifyCloudCompanyAccess.test.ts:34:73
+     32| describe("verified cloud company access (inactive preview service)", (…
+     33|   it("returns an authorized member only after verifying the account", …
+     34|     await expect(verifyCloudCompanyAccess("company-1", "manage_members…
+       |                                                                         ^
+     35|   });
+     36|   it("rejects a different company", async () => {
+
+Caused by: Error: Company access is not authorized.
+ ❯ Module.verifyCloudCompanyAccess src/features/security/verifyCloudCompanyAccess.ts:44:11
+ ❯ src/features/security/verifyCloudCompanyAccess.test.ts:34:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/125]⎯
+
+ FAIL  src/features/staff/staff.test.ts > Stage 6 local staff security > requires a cashier shift, attributes sales, and reconciles tracked cash
+AssertionError: expected [Function] to throw error matching /Open a cashier shift/ but got 'Open your staff shift before completi…'
+
+- Expected:
+/Open a cashier shift/
+
++ Received:
+"Open your staff shift before completing a sale."
+
+ ❯ src/features/staff/staff.test.ts:57:184
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/125]⎯
+
+ FAIL  src/features/stores/storeAuthorization.test.ts > store administration and benefit write authority (pending client run) > rolls back store transfer and physical-count writes when the active company changes during awaited reads
+AssertionError: expected [Function] to throw error matching /Company changed/i but got 'Company or staff session changed duri…'
+
+- Expected:
+/Company changed/i
+
++ Received:
+"Company or staff session changed during request."
+
+ ❯ src/features/stores/storeAuthorization.test.ts:105:80
+    103|       return result;
+    104|     });
+    105|     await expect(requestStoreTransfer(first.id,second.id,product.id,2,…
+       |                                                                                ^
+    106|     setActiveBusinessProfileId('primary');
+    107|     expect(await database.storeTransferRequests.count()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/125]⎯
+
+
+ Test Files  29 failed | 95 passed (124)
+      Tests  123 failed | 845 passed (968)
+   Start at  05:38:12
+   Duration  293.89s (transform 12.30s, setup 162.30s, import 105.94s, tests 476.83s, environment 336.49s)
+
