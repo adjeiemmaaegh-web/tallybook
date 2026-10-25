@@ -8,6 +8,7 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
 import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
+import { assertCompanyScope } from '@/features/business/companyScope.mjs';
 import { getCustomerDebtSummary } from '@/features/credit/credit';
 
 export type BenefitKind = 'wallet' | 'points';
@@ -33,6 +34,7 @@ export async function setCustomerPolicy(customerId: string, input: Pick<Customer
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error("Company changed during customer policy update.");
       await database.customerPolicies.put(policy);
       if (actor) await database.staffAudits.add({id:nanoid(),businessProfileId,staffId:actor.id,action:'customer.policy.updated',createdAt:policy.updatedAt,details:customerId});
+      assertCompanyScope(businessProfileId, getActiveBusinessProfileId());
       return policy;
     });
   });
@@ -85,6 +87,7 @@ export async function recordCustomerBenefit(input: {customerId:string;kind:Benef
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error("Company changed during loyalty adjustment.");
       await database.customerBenefits.add(entry);
       if(actor)await database.staffAudits.add({id:nanoid(),businessProfileId,staffId:actor.id,action:'customer.points.adjusted',createdAt:entry.createdAt,details:entry.id});
+      assertCompanyScope(businessProfileId, getActiveBusinessProfileId());
       return entry;
     });
   });

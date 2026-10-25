@@ -3,6 +3,7 @@ import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailW
 import { nanoid } from "nanoid";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { requirePermission } from "@/features/staff/staff";
 import { appendInventoryCostChange } from "./costLedger";
 import { type InventoryMovement, type Product, normalizeProductCode } from "./inventory";
@@ -15,6 +16,7 @@ export async function prepareStockCount(productIds: string[], database: Tallyboo
   const companyId = getActiveBusinessProfileId();
   if (!productIds.length || new Set(productIds).size !== productIds.length) throw new Error("Select distinct products to count.");
   const products = await database.products.bulkGet(productIds);
+  assertCompanyScope(companyId, getActiveBusinessProfileId());
   const lines = products.map((product, index) => {
     if (!product || product.businessProfileId !== companyId || product.archivedAt) throw new Error("A selected product is not active in this business.");
     return { productId: productIds[index], expectedQuantity: product.stockQuantity, countedQuantity: product.stockQuantity };
@@ -55,6 +57,7 @@ export async function postStockCount(preview: StockCountPreview, database: Tally
       if (updates.length) await database.products.bulkPut(updates);
       if (movements.length) await database.inventoryMovements.bulkAdd(movements);
       if (actor && movements.length) await database.staffAudits.add({ id: nanoid(14), businessProfileId: companyId, staffId: actor.id, action: "inventory.count.posted", createdAt: now, details: movements.map(m => m.id).join(",") });
+      assertCompanyScope(companyId, getActiveBusinessProfileId());
       return movements;
     });
   });

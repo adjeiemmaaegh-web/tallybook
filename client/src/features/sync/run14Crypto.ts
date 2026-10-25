@@ -109,11 +109,12 @@ export async function openRun14Event(envelope:Run14Envelope,passphrase:string):P
   if(await hash(cipher)!==envelope.ciphertextSha256)
     deny("Encrypted event digest mismatch.");
   const key=await secretKey(passphrase,bytes(envelope.salt));
-  let plaintext:ArrayBuffer;
+  let plaintext:ArrayBuffer | undefined;
   const {ciphertext,nonce,salt,ciphertextSha256,...meta}=envelope;
   try{plaintext=await crypto.subtle.decrypt({name:"AES-GCM",iv:buffer(bytes(nonce)),
       additionalData:buffer(aad(meta)),tagLength:128},key,buffer(cipher));}
   catch{deny("Encrypted event decryption failed; do not apply remote data.");}
+  if (!plaintext) deny("Encrypted event decryption failed; do not apply remote data.");
   let object:unknown;
   try{object=JSON.parse(decode.decode(plaintext));}catch{deny("Invalid decrypted replica data.");}
   return inspectRun14ReplicaRecord(object,envelope.organizationId);

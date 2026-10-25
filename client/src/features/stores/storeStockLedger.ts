@@ -100,7 +100,7 @@ export async function postStoreStockDelta(
   const actorId=currentStaffId(company);
   const actor=actorId ? await database.staffMembers.get(actorId) : undefined;
   if (!actor || actor.businessProfileId!==company || actor.disabledAt) throw new Error("Unlock authorized store staff.");
-  if (actor.role!=="owner" && !await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,actorId,storeId]).first())
+  if (actor.role!=="owner" && !await database.storeAssignments.where("businessProfileId").equals(company).and(row=>row.staffId===actorId && row.storeId===storeId).first())
     throw new Error("Staff is not assigned to this store.");
   await database.storeStockEntries.add(entry);
   requireCompany(company);

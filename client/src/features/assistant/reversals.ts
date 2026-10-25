@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import type { TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { formatMinorAmount, type InventoryMovement } from "@/features/inventory/inventory";
 import { appendInventoryCostChange, restoreInventoryCost } from "@/features/inventory/costLedger";
 import { assertDebtReversalIsUnallocatedPaymentSafe } from "@/features/sales/reversalDebtGuard.mjs";
@@ -55,6 +56,7 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
   const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
   const named = lines.map((line, index) => ({ productName: products[index]?.name ?? line.productName ?? "Unknown product", quantity: line.quantity }));
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
   return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving reversal; the original sale will remain in history and nothing is changed yet.` };
 }
 
@@ -174,6 +176,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     }));
     for(const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,sale.storeId,movement.quantityDelta,movement.id,"refund",now,movement.previousQuantity,movement.resultingQuantity);
     await database.inventoryMovements.bulkAdd(movements);
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
     return reversal;
   });
 }

@@ -13,6 +13,7 @@ import { mergeCheckoutQuantities } from "./checkoutQuantities";
 import { calculateCheckoutLines } from "./checkoutMoney.mjs";
 import { checkedMinorSum, checkedCreditExposure, reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWriteCurrency } from "./creditLedger.mjs";
 import { requirePermission, consumeCheckoutDiscountApproval } from "@/features/staff/staff";
+import { requireSaleAttendant } from "./requireStaff.ts";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
@@ -175,10 +176,12 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
 
   return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
     const nowDate = new Date();
     const now = nowDate.toISOString();
     const cashier = await requirePermission("sell",database,activeId);
     const shift = cashier ? await database.staffShifts.where("staffId").equals(cashier.id).filter(x => x.businessProfileId === cashier.businessProfileId && !x.closedAt).first() : undefined;
+    const staffEvidence = await requireSaleAttendant(database, activeId);
 
     const submissionKey = input.submissionKey ?? nanoid(18);
     const existingSale = await database.sales.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
@@ -334,7 +337,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const mobileMoneyProvider = mobileMoneyProviderId ? await database.mobileMoneyProviders.get(mobileMoneyProviderId) : undefined;
     if (mobileMoneyProviderId && (!mobileMoneyProvider || mobileMoneyProvider.businessProfileId !== activeId || !mobileMoneyProvider.active)) throw new Error("Choose a saved Mobile Money provider before recording this payment.");
 
-    const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, ...(cashier ? {staffId:cashier.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
+    const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
     const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
     if(linkedOrder){
@@ -388,6 +392,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if (sale.costStatus === "verified") sale.cogsMinor = checkedMinorSum(saleLines.map(line => ({ amount: line.cogsMinor! })), "amount");
     if (updatedBatches.length) await database.inventoryBatches.bulkPut(updatedBatches);
     await database.sales.add(sale);
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
     if (cashier) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:cashier.id,action:"sale.completed",createdAt:now,details:discountApprovedBy?`${sale.id}; discount approved by ${discountApprovedBy}`:sale.id});
     await database.saleLines.bulkAdd(saleLines);
     if (payment) await database.payments.add(payment);
@@ -416,6 +421,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if (activity) await database.customerActivities.add(activity);
     await database.products.bulkPut(requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { ...product, stockQuantity: product.stockQuantity - line.quantity, updatedAt: now }; }));
     await database.inventoryMovements.bulkAdd(movements);
+    assertCompanyScope(activeId, getActiveBusinessProfileId());
     return { sale, lines: saleLines, payment, receipt };
   });
 }

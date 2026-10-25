@@ -2,6 +2,7 @@ import Dexie from "dexie";
 import { afterEach, expect, it, vi } from "vitest";
 import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { updateCompanyReturnPolicy } from "@/features/business/returnPolicySettings";
 import { getCustomerSnapshot, archiveCustomer } from "@/features/customers/customers";
 import { getCustomerDebtSummary, getCustomerRepaymentTargets } from "@/features/credit/credit";
 import { getCustomerRetention } from "@/features/customers/retentionInsights";
@@ -44,6 +45,7 @@ async function unlockSaleStaff(database: TallybookDB) {
   const owner = await createStaff("Isolation test owner", "owner", "123456", database);
   await unlockStaff(owner.id, "123456", database);
   await openShift(0, database);
+  return owner;
 }
 
 function product(id: string, businessProfileId: string, stockQuantity = 5) {
@@ -142,10 +144,13 @@ it("keeps actual Dexie customer, sale, inventory, supplier, expense, and staff r
     { id: "expense-a", businessProfileId: COMPANY_A, category: "transport", amountMinor: 100, expenseDate: "2026-10-01", submissionKey: "expense-a-key", createdAt: STAMP },
     { id: "expense-b", businessProfileId: COMPANY_B, category: "transport", amountMinor: 200, expenseDate: "2026-10-01", submissionKey: "expense-b-key", createdAt: STAMP },
   ] as never[]);
-  await database.staffMembers.bulkPut([
-    { id: "staff-a", businessProfileId: COMPANY_A, name: "Staff A", role: "cashier", salt: "a", pinHash: "a", createdAt: STAMP },
-    { id: "staff-b", businessProfileId: COMPANY_B, name: "Staff B", role: "cashier", salt: "b", pinHash: "b", createdAt: STAMP },
-  ] as never[]);
+  const ownerA = await createStaff("Owner A", "owner", "123456", database);
+  await unlockStaff(ownerA.id, "123456", database);
+  setActiveBusinessProfileId(COMPANY_B);
+  const ownerB = await createStaff("Owner B", "owner", "123456", database);
+  await unlockStaff(ownerB.id, "123456", database);
+  setActiveBusinessProfileId(COMPANY_A);
+  await unlockStaff(ownerA.id, "123456", database);
 
   const readIds = async () => ({
     customers: (await getCustomerSnapshot(database)).customers.map((record) => record.id),
@@ -159,12 +164,13 @@ it("keeps actual Dexie customer, sale, inventory, supplier, expense, and staff r
 
   expect(await readIds()).toEqual({
     customers: ["customer-a"], sales: ["sale-a"], inventory: ["product-a"],
-    suppliers: ["supplier-a"], purchases: ["purchase-a"], expenses: ["expense-a"], staff: ["staff-a"],
+    suppliers: ["supplier-a"], purchases: ["purchase-a"], expenses: ["expense-a"], staff: [ownerA.id],
   });
   setActiveBusinessProfileId(COMPANY_B);
+  await unlockStaff(ownerB.id, "123456", database);
   expect(await readIds()).toEqual({
     customers: ["customer-b"], sales: ["sale-b"], inventory: ["product-b"],
-    suppliers: ["supplier-b"], purchases: ["purchase-b"], expenses: ["expense-b"], staff: ["staff-b"],
+    suppliers: ["supplier-b"], purchases: ["purchase-b"], expenses: ["expense-b"], staff: [ownerB.id],
   });
 });
 
@@ -228,7 +234,7 @@ it("rolls back an expense and its audit context if the company changes during th
     return originalAdd(record);
   });
 
-  await expect(createExpense({ category: "transport", amount: "1.00", expenseDate: localExpenseDate(), currency: "GHS", submissionKey: "expense-switch-key" }, database)).rejects.toThrow(/Company changed/);
+  await expect(createExpense({ category: "transport", amount: "1.00", expenseDate: localExpenseDate(), currency: "GHS", submissionKey: "expense-switch-key" }, database)).rejects.toThrow(/Company (changed|switched)/i);
 
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.expenses.toArray()).toEqual([]);
@@ -246,7 +252,7 @@ it("rolls back a complete sale and all stock/ledger writes if the company change
     return originalAdd(record);
   });
 
-  await expect(completeSale({ lines: [{ productId: savedProduct.id, quantity: 1 }], discount: "0", paymentMethod: "cash", amountPaid: "10.00", currency: "GHS", submissionKey: "sale-switch-key-1" }, database)).rejects.toThrow(/Company changed/);
+  await expect(completeSale({ lines: [{ productId: savedProduct.id, quantity: 1 }], discount: "0", paymentMethod: "cash", amountPaid: "10.00", currency: "GHS", submissionKey: "sale-switch-key-1" }, database)).rejects.toThrow(/Company (changed|switched)/i);
 
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.sales.toArray()).toEqual([]);
@@ -267,7 +273,7 @@ it("rolls back a purchase, cost event, movement, and stock increase if the compa
     return originalAdd(record);
   });
 
-  await expect(completePurchase({ supplierId: "supplier-a", purchaseDate: "2026-10-01", lines: [{ productId: savedProduct.id, quantity: "1", unitCost: "2.00" }], submissionKey: "purchase-switch-key" }, "GHS", database)).rejects.toThrow(/Company changed/);
+  await expect(completePurchase({ supplierId: "supplier-a", purchaseDate: "2026-10-01", lines: [{ productId: savedProduct.id, quantity: "1", unitCost: "2.00" }], submissionKey: "purchase-switch-key" }, "GHS", database)).rejects.toThrow(/Company (changed|switched)/i);
 
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.purchases.toArray()).toEqual([]);
@@ -284,17 +290,18 @@ it("rolls back repayment writes if the company changes during ledger posting", a
   await database.customers.add(savedCustomer as never);
   const savedProduct = await createProduct({ name: "Repayment race product", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "1.00", initialStock: "3", lowStockThreshold: "0" }, "GHS", database);
   await completeSale({ lines: [{ productId: savedProduct.id, quantity: 1 }], customerId: savedCustomer.id, discount: "0", paymentMethod: "credit", amountPaid: "0", currency: "GHS", submissionKey: "repayment-credit-sale" }, database);
+  const auditsBeforeRepayment = await database.staffAudits.toArray();
   const originalAdd = database.repayments.add.bind(database.repayments);
   vi.spyOn(database.repayments, "add").mockImplementation(async (record) => {
     setActiveBusinessProfileId(COMPANY_B);
     return originalAdd(record);
   });
 
-  await expect(recordRepayment({ customerId: savedCustomer.id, amount: "1.00", method: "cash", currency: "GHS", submissionKey: "repayment-switch-key" }, database)).rejects.toThrow(/Company changed/);
+  await expect(recordRepayment({ customerId: savedCustomer.id, amount: "1.00", method: "cash", currency: "GHS", submissionKey: "repayment-switch-key" }, database)).rejects.toThrow(/Company (changed|switched)/i);
 
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.repayments.toArray()).toEqual([]);
-  expect(await database.staffAudits.toArray()).toEqual([]);
+  expect(await database.staffAudits.toArray()).toEqual(auditsBeforeRepayment);
   expect((await database.products.get(savedProduct.id))?.stockQuantity).toBe(2);
 });
 
@@ -302,6 +309,7 @@ it("rolls back refund stock and FIFO entries if the company changes before refun
   const database = makeDatabase();
   await seedCompanies(database);
   await unlockSaleStaff(database);
+  await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable test returns", database);
   const savedProduct = await createProduct({ name: "Return race product", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "1.00", initialStock: "3", lowStockThreshold: "0" }, "GHS", database);
   const checkout = await completeSale({ lines: [{ productId: savedProduct.id, quantity: 2 }], discount: "0", paymentMethod: "cash", amountPaid: "20.00", currency: "GHS", submissionKey: "return-race-sale" }, database);
   const beforeMovementCount = await database.inventoryMovements.count();
@@ -315,7 +323,7 @@ it("rolls back refund stock and FIFO entries if the company changes before refun
   await expect(recordConfirmedCashPartialReturn({
     originalSaleId: checkout.sale.id, submissionKey: "return-switch-key", lines: [{ saleLineId: checkout.lines[0].id, quantity: 1 }],
     cashWasRefunded: true, confirmedRefundMinor: 1000, disposition: "restockable",
-  }, database)).rejects.toThrow(/Company changed/);
+  }, database)).rejects.toThrow(/Company (changed|switched)/i);
 
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.cashPartialReturns.toArray()).toEqual([]);
@@ -335,7 +343,7 @@ it("rejects customer debt, repayment-target, and retention reads when the compan
     const switchDuringRead = (record: unknown) => { setActiveBusinessProfileId(COMPANY_B); return record; };
     database.sales.hook("reading").subscribe(switchDuringRead);
     try {
-      await expect(read()).rejects.toThrow(/Company changed/i);
+      await expect(read()).rejects.toThrow(/Company (changed|switched)/i);
     } finally {
       database.sales.hook("reading").unsubscribe(switchDuringRead);
     }
@@ -353,7 +361,7 @@ it("rejects assistant period-sales results when the active company changes durin
   const switchDuringRead = (record: unknown) => { setActiveBusinessProfileId(COMPANY_B); return record; };
   database.sales.hook("reading").subscribe(switchDuringRead);
   try {
-    await expect(loadPeriodSales({ kind: "all" }, database, new Date("2026-10-23T23:00:00.000Z"))).rejects.toThrow(/Company changed/i);
+    await expect(loadPeriodSales({ kind: "all" }, database, new Date("2026-10-23T23:00:00.000Z"))).rejects.toThrow(/Company (changed|switched)/i);
   } finally {
     database.sales.hook("reading").unsubscribe(switchDuringRead);
   }
@@ -369,7 +377,7 @@ it("rolls back loyalty policy and points writes if the company changes at the wr
     return originalPut(record);
   });
 
-  await expect(setCustomerPolicy("customer-a", { group: "VIP" }, database)).rejects.toThrow(/Company changed/i);
+  await expect(setCustomerPolicy("customer-a", { group: "VIP" }, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.customerPolicies.toArray()).toEqual([]);
   expect(await database.staffAudits.toArray()).toEqual([]);
@@ -379,7 +387,7 @@ it("rolls back loyalty policy and points writes if the company changes at the wr
     setActiveBusinessProfileId(COMPANY_B);
     return originalAdd(record);
   });
-  await expect(recordCustomerBenefit({ customerId: "customer-a", kind: "points", delta: 5, reason: "manual correction", submissionKey: "points-switch-001" }, database)).rejects.toThrow(/Company changed/i);
+  await expect(recordCustomerBenefit({ customerId: "customer-a", kind: "points", delta: 5, reason: "manual correction", submissionKey: "points-switch-001" }, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.customerBenefits.toArray()).toEqual([]);
   expect(await database.staffAudits.toArray()).toEqual([]);
@@ -392,7 +400,7 @@ it("rejects stock-count previews if the active company changes during product re
   const switchDuringRead = (record: unknown) => { setActiveBusinessProfileId(COMPANY_B); return record; };
   database.products.hook("reading").subscribe(switchDuringRead);
   try {
-    await expect(prepareStockCount([savedProduct.id], database)).rejects.toThrow(/Company changed/i);
+    await expect(prepareStockCount([savedProduct.id], database)).rejects.toThrow(/Company (changed|switched)/i);
   } finally {
     database.products.hook("reading").unsubscribe(switchDuringRead);
   }
@@ -407,7 +415,7 @@ it("rolls back catalogue edits, batch registration, and stock corrections when t
     setActiveBusinessProfileId(COMPANY_B);
     return originalProductPut(record);
   });
-  await expect(setCatalogueOptions(savedProduct.id, { baseUnit: "piece" }, database)).rejects.toThrow(/Company changed/i);
+  await expect(setCatalogueOptions(savedProduct.id, { baseUnit: "piece" }, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect((await database.products.get(savedProduct.id))?.baseUnit).toBeUndefined();
   vi.mocked(database.products.put).mockRestore();
@@ -417,7 +425,7 @@ it("rolls back catalogue edits, batch registration, and stock corrections when t
     setActiveBusinessProfileId(COMPANY_B);
     return originalBatchAdd(record);
   });
-  await expect(registerBatch(savedProduct.id, "RACE-LOT", 1, undefined, database)).rejects.toThrow(/Company changed/i);
+  await expect(registerBatch(savedProduct.id, "RACE-LOT", 1, undefined, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.inventoryBatches.toArray()).toEqual([]);
   vi.mocked(database.inventoryBatches.add).mockRestore();
@@ -430,7 +438,7 @@ it("rolls back catalogue edits, batch registration, and stock corrections when t
     setActiveBusinessProfileId(COMPANY_B);
     return originalBulkPut(records);
   });
-  await expect(postStockCount({ ...preview, lines: preview.lines.map(line => ({ ...line, countedQuantity: line.expectedQuantity - 1 })) }, database)).rejects.toThrow(/Company changed/i);
+  await expect(postStockCount({ ...preview, lines: preview.lines.map(line => ({ ...line, countedQuantity: line.expectedQuantity - 1 })) }, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect((await database.products.get(savedProduct.id))?.stockQuantity).toBe(3);
   expect(await database.inventoryMovements.toArray()).toEqual(beforeMovements);
@@ -440,17 +448,19 @@ it("rolls back catalogue edits, batch registration, and stock corrections when t
 it("rolls back a sale reversal and stock restoration when the company changes during posting", async () => {
   const database = makeDatabase();
   await seedCompanies(database);
-  await unlockSaleStaff(database);
+  const owner = await unlockSaleStaff(database);
+  await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable test returns", database);
   const savedProduct = await createProduct({ name: "Reversal race product", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "1.00", initialStock: "3", lowStockThreshold: "0" }, "GHS", database);
   const checkout = await completeSale({ lines: [{ productId: savedProduct.id, quantity: 1 }], discount: "0", paymentMethod: "cash", amountPaid: "10.00", currency: "GHS", submissionKey: "reversal-race-sale" }, database);
   const switchDuringPreview = (record: unknown) => { setActiveBusinessProfileId(COMPANY_B); return record; };
   database.saleLines.hook("reading").subscribe(switchDuringPreview);
   try {
-    await expect(prepareLatestSaleReversal("GHS", database)).rejects.toThrow(/Company changed/i);
+    await expect(prepareLatestSaleReversal("GHS", database)).rejects.toThrow(/Company (changed|switched)/i);
   } finally {
     database.saleLines.hook("reading").unsubscribe(switchDuringPreview);
   }
   setActiveBusinessProfileId(COMPANY_A);
+  await unlockStaff(owner.id, "123456", database);
   const beforeCosts = await database.inventoryCostEvents.toArray();
   const beforeMovements = await database.inventoryMovements.toArray();
   const originalAdd = database.saleReversals.add.bind(database.saleReversals);
@@ -459,7 +469,7 @@ it("rolls back a sale reversal and stock restoration when the company changes du
     return originalAdd(record);
   });
 
-  await expect(executeLatestSaleReversal("GHS", database, "reversal-company-switch-1")).rejects.toThrow(/Company changed/i);
+  await expect(executeLatestSaleReversal("GHS", database, "reversal-company-switch-1")).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.saleReversals.toArray()).toEqual([]);
   expect((await database.products.get(savedProduct.id))?.stockQuantity).toBe(2);
@@ -480,7 +490,7 @@ it("rolls back supplier payable recognition and settlement, and rejects reads, a
     return originalAdd(record);
   });
 
-  await expect(recognizeUnpaidPurchase(purchase.id, "recognition-switch-01", database)).rejects.toThrow(/Company changed/i);
+  await expect(recognizeUnpaidPurchase(purchase.id, "recognition-switch-01", database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.supplierPayableEntries.toArray()).toEqual([]);
 
@@ -490,7 +500,7 @@ it("rolls back supplier payable recognition and settlement, and rejects reads, a
     setActiveBusinessProfileId(COMPANY_B);
     return originalAdd(record);
   });
-  await expect(recordSupplierSettlement({ purchaseId: purchase.id, kind: "payment", amountMinor: 100, method: "cash", submissionKey: "settlement-switch-01" }, database)).rejects.toThrow(/Company changed/i);
+  await expect(recordSupplierSettlement({ purchaseId: purchase.id, kind: "payment", amountMinor: 100, method: "cash", submissionKey: "settlement-switch-01" }, database)).rejects.toThrow(/Company (changed|switched)/i);
   setActiveBusinessProfileId(COMPANY_A);
   expect(await database.supplierPayableEntries.count()).toBe(1);
   expect(await database.staffAudits.toArray()).toEqual([]);
@@ -499,7 +509,7 @@ it("rolls back supplier payable recognition and settlement, and rejects reads, a
   const switchDuringRead = (record: unknown) => { setActiveBusinessProfileId(COMPANY_B); return record; };
   database.supplierPayableEntries.hook("reading").subscribe(switchDuringRead);
   try {
-    await expect(getSupplierPayables(database)).rejects.toThrow(/Company changed/i);
+    await expect(getSupplierPayables(database)).rejects.toThrow(/Company (changed|switched)/i);
   } finally {
     database.supplierPayableEntries.hook("reading").unsubscribe(switchDuringRead);
   }

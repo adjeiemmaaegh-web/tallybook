@@ -5,6 +5,7 @@ import { requirePermission } from "@/features/staff/staff";
 import { nanoid } from "nanoid";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { normalizeProductCode, type Product } from "./inventory";
 import { postStockCount, prepareStockCount, type StockCountPreview } from "./advancedInventory";
 
@@ -51,6 +52,7 @@ export async function setCatalogueOptions(productId: string, options: CatalogueO
       validateImage(options.imageDataUrl);
       const updated = { ...product, ...options, updatedAt: new Date().toISOString() };
       await database.products.put(updated);
+      assertCompanyScope(company, getActiveBusinessProfileId());
       return updated;
     });
   });
@@ -119,6 +121,7 @@ export async function registerBatch(productId: string, batchCode: string, quanti
       if (batches.filter(b => b.businessProfileId === company).reduce((sum, b) => sum + b.quantity, 0) + quantity > product.stockQuantity) throw new Error("Tracked batch quantities cannot exceed physical stock. Receive stock before registering a batch.");
       const record: InventoryBatch = { id: nanoid(16), businessProfileId: company, productId, batchCode: batchCode.trim(), quantity, expiryDate, createdAt: new Date().toISOString() };
       await database.inventoryBatches.add(record);
+      assertCompanyScope(company, getActiveBusinessProfileId());
       return record;
     });
   });
