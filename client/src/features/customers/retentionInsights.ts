@@ -1,6 +1,7 @@
 /** Read-only, local customer purchasing insights. Management information, not a prediction. */
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
+import { assertCompanyScope } from '@/features/business/companyScope.mjs';
 
 export interface CustomerRetentionSummary {
   completedSales: number;
@@ -46,6 +47,9 @@ export async function getCustomerRetention(customerId:string, database:Tallybook
     if(!customer || customer.businessProfileId !== businessProfileId || customer.archivedAt) throw new Error('Customer is unavailable.');
     const sales=await database.sales.where('customerId').equals(customerId)
       .and(s => s.businessProfileId === businessProfileId && s.status === 'completed').toArray();
-    return calculateCustomerRetention(sales,now);
+    assertCompanyScope(businessProfileId, getActiveBusinessProfileId());
+    const result = calculateCustomerRetention(sales,now);
+    assertCompanyScope(businessProfileId, getActiveBusinessProfileId());
+    return result;
   });
 }

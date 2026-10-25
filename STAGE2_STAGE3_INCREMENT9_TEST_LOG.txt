@@ -1,0 +1,41 @@
+TALLYBOOK V19 — STAGE 2–3 / SECURITY INCREMENT 9 TEST LOG
+Date: 2026-10-23
+Working source: /home/ubuntu/project_review/tallybook-main
+Baseline: /home/ubuntu/project_review/TALLYBOOK_V19_STAGE1_INCREMENT8_2026-10-23.zip
+Runtime: See artifacts/stage2-stage3-increment9/runtime-versions.txt (Node v24.19.0; pnpm 10.34.0; Vitest 4.1.11; Vite 7.3.7).
+
+VERIFIED COMMANDS
+
+1. Focused Dexie/integration set:
+   npm exec --yes --package=node@24.19.0 -- pnpm exec vitest run client/src/features/reports/inventoryValuation.test.ts client/src/features/purchases/supplierPayables.test.ts client/src/features/reports/financialIntelligence.test.ts client/src/features/inventory/costLedger.test.ts client/src/features/backup/backup.test.ts client/src/features/business/activeCompany.test.ts client/src/db/TallybookDB.test.ts client/src/features/purchases/purchases.test.ts
+   Result: PASS — 8 files, 81 tests. Raw output: artifacts/stage2-stage3-increment9/focused-tests.log
+
+2. Full client suite:
+   npm exec --yes --package=node@24.19.0 -- pnpm test
+   Result: PASS — 99 files, 797 tests. Raw output: artifacts/stage2-stage3-increment9/full-client-tests.log
+
+3. TypeScript:
+   npm exec --yes --package=node@24.19.0 -- pnpm check
+   Result: PASS. Raw output: artifacts/stage2-stage3-increment9/typescript-check.log
+
+4. Production build:
+   npm exec --yes --package=node@24.19.0 -- pnpm build
+   Result: PASS (Vite/PWA and server esbuild bundle). Existing advisories: Rollup removes two dependency annotation comments; the main minified chunk exceeds 500 kB. Raw output: artifacts/stage2-stage3-increment9/production-build.log
+
+5. Native schema and gate-policy tests:
+   npm exec --yes --package=node@24.19.0 -- node --test qa/stage12-schema-gate.test.mjs qa/stage1-gate-policy.test.mjs
+   Result: PASS — 13 tests. Raw output: artifacts/stage2-stage3-increment9/native-gates.log
+
+6. Stage 1 full gate runner:
+   npm exec --yes --package=node@24.19.0 -- node qa/stage1-gate-runner.mjs /tmp/stage2-stage3-increment9-gates.json
+   Result: 9 PASS, 0 FAIL, 0 BLOCKED; stageAccepted=false solely because windows-browser-recovery evidence is false/unavailable. The JSON result is copied to artifacts/stage2-stage3-increment9/stage1-gate-results.json. Dexie integration used the configured IndexedDB test adapter; this is not physical Windows or real-browser evidence.
+
+7. Static write-path inventory:
+   npm exec --yes --package=node@24.19.0 -- node scripts/audit-write-paths.mjs
+   Result: 70 mutating function candidates recorded at docs/release/write-entrypoints.json. This is a discovery inventory, not a completed authority review.
+
+No real-device/browser acceptance, provider sandbox, live payment/refund, external deployment, staging provisioning, or production data access was attempted. Platform acceptance remains deferred, not passed.
+
+8. Source snapshot and patch verification:
+   Baseline: TALLYBOOK_V19_STAGE1_INCREMENT8_2026-10-23.zip
+   Result: PASS — unified patch applied cleanly to a fresh extraction; every resulting packaged file matched its SHA-256 manifest; checked-in candidate-module dist files were preserved; root build output and local caches were excluded. See /home/ubuntu/project_review/TALLYBOOK_V19_STAGE2_STAGE3_INCREMENT9_SHA256.json.

@@ -1,0 +1,108 @@
+TAP version 13
+# (node:8228) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: migration chain intact
+ok 1 - migration chain intact
+  ---
+  duration_ms: 3.244497
+  type: 'test'
+  ...
+# Subtest: migration missing step
+ok 2 - migration missing step
+  ---
+  duration_ms: 0.182291
+  type: 'test'
+  ...
+# Subtest: backup exact digest
+ok 3 - backup exact digest
+  ---
+  duration_ms: 0.560042
+  type: 'test'
+  ...
+# Subtest: backup tamper
+ok 4 - backup tamper
+  ---
+  duration_ms: 0.244933
+  type: 'test'
+  ...
+# Subtest: backup traversal
+ok 5 - backup traversal
+  ---
+  duration_ms: 0.226566
+  type: 'test'
+  ...
+# Subtest: recovery rollback
+ok 6 - recovery rollback
+  ---
+  duration_ms: 0.209732
+  type: 'test'
+  ...
+# Subtest: recovery unknown no destructive action
+ok 7 - recovery unknown no destructive action
+  ---
+  duration_ms: 0.122873
+  type: 'test'
+  ...
+# Subtest: sync accepted receipt
+ok 8 - sync accepted receipt
+  ---
+  duration_ms: 0.198665
+  type: 'test'
+  ...
+# Subtest: sync mismatch
+ok 9 - sync mismatch
+  ---
+  duration_ms: 0.286575
+  type: 'test'
+  ...
+# Subtest: sync duplicate
+ok 10 - sync duplicate
+  ---
+  duration_ms: 0.523627
+  type: 'test'
+  ...
+# Subtest: financial report keeps currency boundaries
+ok 11 - financial report keeps currency boundaries
+  ---
+  duration_ms: 6.685054
+  type: 'test'
+  ...
+# Subtest: financial report rejects duplicate
+ok 12 - financial report rejects duplicate
+  ---
+  duration_ms: 0.267628
+  type: 'test'
+  ...
+# Subtest: workflow valid
+ok 13 - workflow valid
+  ---
+  duration_ms: 0.120929
+  type: 'test'
+  ...
+# Subtest: workflow rejects unauthorized jump
+ok 14 - workflow rejects unauthorized jump
+  ---
+  duration_ms: 0.157904
+  type: 'test'
+  ...
+# Subtest: unsafe expected backup paths fail closed
+ok 15 - unsafe expected backup paths fail closed
+  ---
+  duration_ms: 0.159687
+  type: 'test'
+  ...
+# Subtest: duplicate normalization hazards fail manifest validation
+ok 16 - duplicate normalization hazards fail manifest validation
+  ---
+  duration_ms: 0.164854
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137.125013

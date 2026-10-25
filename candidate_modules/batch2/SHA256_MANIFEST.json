@@ -1,0 +1,10 @@
+{
+  "QA_REVIEW.md": "86d75eb93dccb33ab7f7a93e8f891a9f2fafa25457ecf813a81b9f5ac78347ff",
+  "QA_TEST_LOG.txt": "514c02b21157e3ce21a396c2ac215e800b2e6b6631b26ff71229c1bf7756cbd9",
+  "README.md": "55f17d7231d4288f6da80a97dd40bb76f815d5ca6f981c0caf5f9fdf92f70fb7",
+  "batch2.test.mjs": "c2b645124436389ed16251b9ee62fba0baf3169373d30f07b49b828e47510e60",
+  "companyIsolationGuard.ts": "7efaa774c77607752e89da62b36fd6377d8d325bf146a38b25f750a4b0e5f8d7",
+  "inventoryReconciliation.ts": "57b8dc3a28b3689c92c043e7cc55341d531961a82e3e397c6719d33fe128e22e",
+  "multiStoreStockControl.ts": "fa282840daec42d67e2a182127379564e17384401f3c27b298b5015c3f2c2c14",
+  "staffAuthorizationAudit.ts": "6b45b3439b6c74dafc785e2fc08de9153f5a21b81eeed9e546e96e1efb1b5a34"
+}

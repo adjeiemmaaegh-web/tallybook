@@ -1,0 +1,25 @@
+Tallybook V19 — Stage 11 company-isolation Increment 10
+Date: 2026-10-24 (+04:00)
+Baseline: verified Increment 9 source snapshot
+Environment: Node v24.19.0; pnpm 10.34.0; Vitest 4.1.11; Linux x86_64.
+
+Commands/results:
+1) npm exec --yes --package=node@24.19.0 -- pnpm exec vitest run client/src/features/business/businessProfile.test.ts client/src/features/business/companyIsolation.integration.test.ts
+   PASS: 2 files, 22 tests. Includes stale expected-company form rejection and rollback after Dexie switches the active company during profile update.
+2) npm exec --yes --package=node@24.19.0 -- pnpm test
+   PASS: 99 files, 808 tests.
+3) npm exec --yes --package=node@24.19.0 -- pnpm check
+   PASS: TypeScript no-emit check after expected-company API/context/UI changes.
+4) npm exec --yes --package=node@24.19.0 -- pnpm build
+   PASS: Vite/PWA frontend and server esbuild bundle. Existing warnings: upstream dependency annotation comments and a >500 kB minified main chunk.
+5) npm exec --yes --package=node@24.19.0 -- node --test qa/stage12-schema-gate.test.mjs qa/stage1-gate-policy.test.mjs
+   PASS previously recorded: 13 native schema/policy tests. The final Stage 1 gate runner was rerun after Company-settings changes.
+6) npm exec --yes --package=node@24.19.0 -- node qa/stage1-gate-runner.mjs /tmp/stage1-gate-increment10-final-node24.json
+   PASS: executable gates 9 PASS, 0 FAIL, 0 BLOCKED. stageAccepted=false; required Windows browser-recovery evidence remains absent. Final JSON: artifacts/stage11-company-isolation-increment10/stage1-gate-results.json.
+7) Source snapshot validation
+   PASS: 887-file Increment 10 ZIP; unified patch applies to verified Increment 9 baseline, with exact file bytes/path set; all ZIP members match the per-file SHA-256 manifest. See `/home/ubuntu/project_review/TALLYBOOK_V19_STAGE11_COMPANY_ISOLATION_INCREMENT10_2026-10-24_SHA256.json`.
+
+Evidence boundary:
+- Dexie integration uses actual TallybookDB schema and configured IndexedDB test adapter, not a real browser or physical device.
+- Device/browser checks are deferred by owner direction and remain outstanding; not reported as passed.
+- No deployment, provider action, live payment/refund, or customer communication was performed.

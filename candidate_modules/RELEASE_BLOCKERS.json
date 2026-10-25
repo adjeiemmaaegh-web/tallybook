@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-24",
+  "releaseDecision": "NO-GO",
+  "stageAcceptance": false,
+  "blockers": [
+    {
+      "id": "FIN-SETTLE",
+      "severity": "critical",
+      "status": "open",
+      "reason": "Standalone refund evidence review is not a verified refund settlement write path."
+    },
+    {
+      "id": "FIN-LEDGER",
+      "severity": "critical",
+      "status": "open",
+      "reason": "Credit, wallet, supplier payable and return plans not integrated with authoritative write transactions."
+    },
+    {
+      "id": "SEC-COMPANY",
+      "severity": "critical",
+      "status": "open",
+      "reason": "Company and staff guards are candidates, not complete authorization across app paths."
+    },
+    {
+      "id": "DATA-RECOVERY",
+      "severity": "high",
+      "status": "open",
+      "reason": "Migration, backup restore and crash recovery need real-database and browser verification."
+    },
+    {
+      "id": "SYNC-CENTRAL",
+      "severity": "high",
+      "status": "open",
+      "reason": "Offline and central sale/shift synchronization not connected or delivery-tested."
+    },
+    {
+      "id": "WATCHDOG",
+      "severity": "high",
+      "status": "open",
+      "reason": "Watchdog exports/attendant reports not connected to actual records, verified schema and importing workflow."
+    },
+    {
+      "id": "QA-ENDTOEND",
+      "severity": "critical",
+      "status": "open",
+      "reason": "Application regression, browser, cross-device and full release acceptance not established."
+    }
+  ]
+}

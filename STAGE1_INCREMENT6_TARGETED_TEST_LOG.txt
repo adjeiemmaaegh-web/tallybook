@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: valid same-company references
+ok 1 - valid same-company references
+  ---
+  duration_ms: 1.016586
+  type: 'test'
+  ...
+# Subtest: cross-company customer detected
+ok 2 - cross-company customer detected
+  ---
+  duration_ms: 0.329334
+  type: 'test'
+  ...
+# Subtest: cross-company sale line detected
+ok 3 - cross-company sale line detected
+  ---
+  duration_ms: 1.134934
+  type: 'test'
+  ...
+# Subtest: missing reference detected
+ok 4 - missing reference detected
+  ---
+  duration_ms: 0.18008
+  type: 'test'
+  ...
+# Subtest: audit does not modify input
+ok 5 - audit does not modify input
+  ---
+  duration_ms: 1.556627
+  type: 'test'
+  ...
+# Subtest: successful exit is PASS
+ok 6 - successful exit is PASS
+  ---
+  duration_ms: 0.724779
+  type: 'test'
+  ...
+# Subtest: nonzero exit is FAIL
+ok 7 - nonzero exit is FAIL
+  ---
+  duration_ms: 0.903196
+  type: 'test'
+  ...
+# Subtest: missing prerequisite is BLOCKED
+ok 8 - missing prerequisite is BLOCKED
+  ---
+  duration_ms: 0.211388
+  type: 'test'
+  ...
+# Subtest: spawn errors are BLOCKED
+ok 9 - spawn errors are BLOCKED
+  ---
+  duration_ms: 0.120701
+  type: 'test'
+  ...
+# Subtest: timeout signal is BLOCKED
+ok 10 - timeout signal is BLOCKED
+  ---
+  duration_ms: 0.088563
+  type: 'test'
+  ...
+# Subtest: unavailable status is not PASS
+ok 11 - unavailable status is not PASS
+  ---
+  duration_ms: 0.104036
+  type: 'test'
+  ...
+# Subtest: summary retains outstanding physical gates
+ok 12 - summary retains outstanding physical gates
+  ---
+  duration_ms: 1.131979
+  type: 'test'
+  ...
+# Subtest: unknown status fails closed
+ok 13 - unknown status fails closed
+  ---
+  duration_ms: 0.271137
+  type: 'test'
+  ...
+# Subtest: every configured audit table is declared on actual TallybookDB
+ok 14 - every configured audit table is declared on actual TallybookDB
+  ---
+  duration_ms: 1.656547
+  type: 'test'
+  ...
+# Subtest: audited money fields exist in actual domain interfaces
+ok 15 - audited money fields exist in actual domain interfaces
+  ---
+  duration_ms: 0.491919
+  type: 'test'
+  ...
+# Subtest: consistent audit requires Dexie readonly transaction
+ok 16 - consistent audit requires Dexie readonly transaction
+  ---
+  duration_ms: 0.109845
+  type: 'test'
+  ...
+# Subtest: diagnostics do not write or mutate application records
+ok 17 - diagnostics do not write or mutate application records
+  ---
+  duration_ms: 0.269334
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.239702

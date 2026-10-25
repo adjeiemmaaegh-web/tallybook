@@ -1,7 +1,7 @@
 /** Pending IndexedDB/Vitest integration gate: do not count as executed without client dependencies. */
 import Dexie from 'dexie';
 import {webcrypto} from 'node:crypto';
-import {afterEach, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {TallybookDB, initializeDatabase} from '@/db/TallybookDB';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {saveBusinessProfile} from '@/features/business/businessProfile';
@@ -86,5 +86,37 @@ describe('store administration and benefit write authority (pending client run)'
     await expect(recordCustomerBenefit({customerId:customer.id,kind:'points',delta:5,reason:'Denied',submissionKey:'benefit-auth-check-002'},database)).rejects.toThrow(/permission denied/);
     expect((await database.customerPolicies.get(`primary:${customer.id}`))?.creditLimitMinor).toBe(2000);
     expect(await database.customerBenefits.count()).toBe(1);
+  });
+
+  it('rolls back store transfer and physical-count writes when the active company changes during awaited reads',async()=>{
+    const database=await setup();
+    await database.businessProfiles.put({id:'company-two',name:'Company B',country:'Ghana',currency:'USD',businessType:'Retail shop',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()} as never);
+    const product=await createProduct({name:'Race Rice',sku:'race-rice',categoryId:'uncategorized',sellingPrice:'3.00',costPrice:'',initialStock:'10',lowStockThreshold:'1'},'GHS',database);
+    const owner=await createStaff('Race Owner','owner','123456',database);
+    await unlockStaff(owner.id,'123456',database);
+    const first=await createStore('Race North',database),second=await createStore('Race South',database);
+
+    const originalGet=database.products.get.bind(database.products);
+    vi.spyOn(database.products,'get').mockImplementation(async(id)=>{
+      const result=await originalGet(id);
+      setActiveBusinessProfileId('company-two');
+      return result;
+    });
+    await expect(requestStoreTransfer(first.id,second.id,product.id,2,database)).rejects.toThrow(/Company changed/i);
+    setActiveBusinessProfileId('primary');
+    expect(await database.storeTransferRequests.count()).toBe(0);
+    expect((await database.staffAudits.toArray()).some(row=>row.action==='store.transfer.requested')).toBe(false);
+
+    vi.mocked(database.products.get).mockRestore();
+    await unlockStaff(owner.id,'123456',database);
+    vi.spyOn(database.products,'get').mockImplementation(async(id)=>{
+      const result=await originalGet(id);
+      setActiveBusinessProfileId('company-two');
+      return result;
+    });
+    await expect(recordStoreStockObservation(first.id,product.id,4,'race count',database)).rejects.toThrow(/Company changed/i);
+    setActiveBusinessProfileId('primary');
+    expect(await database.storeStockObservations.count()).toBe(0);
+    expect((await database.staffAudits.toArray()).some(row=>row.action==='store.stock.observed')).toBe(false);
   });
 });

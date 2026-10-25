@@ -1,0 +1,7 @@
+Focused: npm exec --yes --package=node@24.19.0 -- pnpm exec vitest run client/src/features/reports/inventoryValuation.test.ts client/src/features/purchases/supplierPayables.test.ts client/src/features/reports/financialIntelligence.test.ts client/src/features/inventory/costLedger.test.ts client/src/features/backup/backup.test.ts client/src/features/business/activeCompany.test.ts client/src/db/TallybookDB.test.ts client/src/features/purchases/purchases.test.ts
+Full client: npm exec --yes --package=node@24.19.0 -- pnpm test
+Typecheck: npm exec --yes --package=node@24.19.0 -- pnpm check
+Build: npm exec --yes --package=node@24.19.0 -- pnpm build
+Native gates: npm exec --yes --package=node@24.19.0 -- node --test qa/stage12-schema-gate.test.mjs qa/stage1-gate-policy.test.mjs
+Full gate: npm exec --yes --package=node@24.19.0 -- node qa/stage1-gate-runner.mjs /tmp/stage2-stage3-increment9-gates.json
+Write inventory: npm exec --yes --package=node@24.19.0 -- node scripts/audit-write-paths.mjs

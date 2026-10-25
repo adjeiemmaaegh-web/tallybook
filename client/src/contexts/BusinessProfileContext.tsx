@@ -14,7 +14,7 @@ interface BusinessProfileContextValue {
   status: "waiting" | "loading" | "ready" | "error";
   error: string | null;
   refresh: () => Promise<void>;
-  save: (values: BusinessProfileInput) => Promise<BusinessProfile>;
+  save: (values: BusinessProfileInput, expectedCompanyId?: string) => Promise<BusinessProfile>;
   createCompany: (values: BusinessProfileInput) => Promise<BusinessProfile>;
   switchCompany: (companyId: string) => Promise<void>;
   clearCompany: (companyId: string, confirmation: string) => Promise<void>;
@@ -53,11 +53,11 @@ export function BusinessProfileProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const save = useCallback(async (values: BusinessProfileInput) => {
-    const saved = await saveBusinessProfile(values);
+  const save = useCallback(async (values: BusinessProfileInput, expectedCompanyId = activeCompanyId) => {
+    const saved = await saveBusinessProfile(values, db, expectedCompanyId);
     await refresh();
     return saved;
-  }, [refresh]);
+  }, [activeCompanyId, refresh]);
 
   const createCompany = useCallback(async (values: BusinessProfileInput) => {
     const created = await createBusinessProfile(values);

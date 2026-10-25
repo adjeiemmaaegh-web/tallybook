@@ -1,0 +1,102 @@
+{
+  "state": "INCOMPLETE_NO_GO",
+  "baseline": "Consolidated from TALLYBOOK_V19_CENTRAL_WORKSPACE_LOCAL_INCREMENT_2026-10-24_SOURCE.zip (Dexie v30); local only",
+  "completed_source": [
+    "Data contract, configurable-policy, security and pilot documentation",
+    "Local SQL schema with deny-by-default RLS and owner read views (not PostgreSQL-tested)",
+    "New-sale mandatory staff and shift checks and MoMo provider/reference uniqueness",
+    "Additive local no-sale Dexie schema v30, PIN-gated service and Staff-page form",
+    "Single-store Watchdog event mapping extended to no-sale events",
+    "Manual uploader receipt validator with injected transport, no live upload",
+    "Company-scoped, read-only local sale integrity review and Reports UI",
+    "Versioned UTC-day Watchdog JSON preview with stable IDs, row count, cash-count/shift-open and staff-confirmed cash-return claims; provenance limitations explicit",
+    "Batch 1\u20137 integration matrix distinguishes equivalent existing finance writers from candidate-only tests"
+  ],
+  "blockers": [
+    {
+      "id": "CENTRAL-001",
+      "priority": "critical",
+      "status": "missing",
+      "description": "Trusted server-side ingestion endpoint/RPC with auth-user, device, shop, staff, version and payload authorization; no direct browser finance writes"
+    },
+    {
+      "id": "CENTRAL-002",
+      "priority": "critical",
+      "status": "missing",
+      "description": "Durable full-operation payload and outbox written atomically with each local sale/shift/refund; retry, replay, revocation and status UI"
+    },
+    {
+      "id": "CENTRAL-003",
+      "priority": "critical",
+      "status": "unverified",
+      "description": "Real PostgreSQL test-project migrations, constraints, RLS negative tests and authorization review"
+    },
+    {
+      "id": "CENTRAL-004",
+      "priority": "high",
+      "status": "implemented-unverified",
+      "description": "Mandatory sale staff/shift/MoMo changes may break older onboarding/UI integration tests; real Dexie and Vitest not run"
+    },
+    {
+      "id": "CENTRAL-005",
+      "priority": "high",
+      "status": "implemented-unverified",
+      "description": "No-sale PIN/shift/store/device workflow integrated locally but device ID is a local claim; physical drawer hardware not connected"
+    },
+    {
+      "id": "CENTRAL-006",
+      "priority": "high",
+      "status": "missing",
+      "description": "Source v29 vs other branch v33 needs an additive migration rebase and three-way merge before any GitHub integration"
+    },
+    {
+      "id": "CENTRAL-007",
+      "priority": "high",
+      "status": "missing",
+      "description": "Authoritative shop and device provenance in new sale data; central ingest must never invent or trust client claims"
+    },
+    {
+      "id": "CENTRAL-008",
+      "priority": "high",
+      "status": "missing",
+      "description": "Watchdog v1 export per-shop per-day with version/row-count, verified field contract and actual Watchdog importer test"
+    },
+    {
+      "id": "CENTRAL-009",
+      "priority": "high",
+      "status": "missing",
+      "description": "Owner cross-shop reports and provider MoMo-statement reconciliation verified against trusted central data"
+    },
+    {
+      "id": "CENTRAL-010",
+      "priority": "high",
+      "status": "unverified",
+      "description": "Full React/Vitest/typecheck/build/Playwright real-browser multi-tab and recovery tests; pnpm dependency installation unavailable locally"
+    },
+    {
+      "id": "CENTRAL-011",
+      "priority": "critical",
+      "status": "missing",
+      "description": "Full refund disbursement and financial ledger reconciliation still incomplete across app"
+    },
+    {
+      "id": "CENTRAL-012",
+      "priority": "high",
+      "status": "implemented-unverified",
+      "description": "New Watchdog daily JSON preview and local integrity review pass native focused tests; full React/Vitest/IndexedDB/actual Watchdog importer test unverified"
+    },
+    {
+      "id": "CENTRAL-013",
+      "priority": "high",
+      "status": "missing",
+      "description": "Batch 1\u20135 candidate-only financial/inventory/backup modules cannot replace existing authoritative writers without domain-specific migrations and full integration acceptance"
+    },
+    {
+      "id": "CENTRAL-014",
+      "priority": "high",
+      "status": "missing",
+      "description": "Watchdog JSON output is explicitly local-preview; genuine importer-negotiated v1 contract, authoritative register/device provenance, signed central receipts and full multi-store events remain unimplemented"
+    }
+  ],
+  "external_actions": "none; no GitHub or Supabase project changed"
+}

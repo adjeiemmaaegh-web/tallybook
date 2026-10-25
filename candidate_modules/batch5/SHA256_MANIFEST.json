@@ -1,0 +1,12 @@
+{
+  "QA_REVIEW.md": "b6cd916cd0079aedb205a8216b36719605709e2882a5f3d442fe78a36d9515e9",
+  "QA_TEST_LOG.txt": "aad3e4f315665b7c8b71dd8f9c892ffd57677d396e6c22c32dffae0ccb6292e6",
+  "README.md": "5f6d09f7c0d8f10bfb4b7f595f8aa35d8dc9373ffaa93b2d456d0fdae4264084",
+  "STANDALONE_TEST_LOG.txt": "4825bba7ef516ea6beb0cd04500f8e3e49ec9d9c3191b91e14d9d24843313982",
+  "backupRecovery.test.ts": "4f353054eead2e4f60eef03f53ad2cd3bea3bc988dcafe0804a17dc87b77fea9",
+  "crossBrowserAcceptance.spec.ts": "8f2ddddfd1d98e6c16c9ab642c1c49f377dd3d40e1e2c99693c368a206235bc6",
+  "endToEndBusinessFlows.spec.ts": "699d55505e372f73426e31e423c4bb90321c6058a95f2b17a06983db6ef78b5a",
+  "financialIntegrity.test.ts": "69ea15bb522d459737611952d76745696ca580d71d50b17b664f15fde4302de7",
+  "integrationRegression.test.ts": "7f7d6ee484da7a10427225979be141d368f356d28bf8c324e6d9796466f184b9",
+  "securityIsolation.test.ts": "dfe2d51fd0894010c68e7748cc8d98e8445f63051f8217d3f36862f09cb91b21"
+}

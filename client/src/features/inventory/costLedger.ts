@@ -24,8 +24,9 @@ export interface InventoryCostEvent {
   saleId?: string;
   saleLineId?: string;
   purchaseId?: string;
+  batchId?: string;
 }
-interface Layer { receiptId: string; quantity: number; unitCostMinor?: number; }
+interface Layer { receiptId: string; quantity: number; unitCostMinor?: number; purchaseId?: string; }
 export interface InventoryCostState {
   quantity: number;
   layers: Layer[];
@@ -59,6 +60,7 @@ export function reconstructInventoryCost(events: readonly InventoryCostEvent[], 
   const layers = new Map<string, Layer>();
   const sources = new Set<string>();
   const ids = new Set<string>();
+  const batchReceipts = new Set<string>();
   const restored = new Map<string, InventoryCostEvent[]>();
   const issued = new Map<string, InventoryCostEvent>();
   let sequence = 0, quantity = 0, previousTime = -Infinity;
@@ -68,11 +70,15 @@ export function reconstructInventoryCost(events: readonly InventoryCostEvent[], 
     if (!event.id || ids.has(event.id) || !event.sourceId || sources.has(event.sourceId) || event.businessProfileId !== company || event.productId !== productId || event.sequence !== sequence + 1 || time < previousTime || !Number.isSafeInteger(event.quantityDelta)) throw new Error("Inventory history is incomplete, duplicated or belongs to another company.");
     if (time > cutoff) break;
     if (!Array.isArray(event.allocations) || (event.unitCostMinor !== undefined && !whole(event.unitCostMinor))) throw new Error("Invalid inventory cost evidence.");
+    if (event.batchId !== undefined) {
+      if (!event.batchId.trim() || event.kind !== "receipt" || !event.purchaseId || batchReceipts.has(event.batchId)) throw new Error("Invalid or duplicated batch receipt cost evidence.");
+      batchReceipts.add(event.batchId);
+    }
     if (sequence === 0 && !["opening", "legacy-opening"].includes(event.kind)) throw new Error("Inventory history is missing its opening evidence.");
     if (sequence > 0 && ["opening", "legacy-opening"].includes(event.kind)) throw new Error("Inventory history contains a second opening.");
     if (["opening", "legacy-opening", "receipt"].includes(event.kind)) {
       if (event.quantityDelta < 0 || event.allocations.length || (event.kind === "legacy-opening" && event.unitCostMinor !== undefined)) throw new Error("Invalid inventory receipt evidence.");
-      layers.set(event.id, { receiptId: event.id, quantity: event.quantityDelta, unitCostMinor: event.unitCostMinor });
+      layers.set(event.id, { receiptId: event.id, quantity: event.quantityDelta, unitCostMinor: event.unitCostMinor, purchaseId: event.purchaseId });
     } else if (event.kind === "issue" || event.kind === "reversal") {
       const isReversal = event.kind === "reversal";
       if (isReversal ? event.quantityDelta <= 0 : event.quantityDelta >= 0) throw new Error("Invalid inventory allocation quantity.");
@@ -119,12 +125,13 @@ function requireLedgerTransaction(database: TallybookDB) {
 async function history(database: TallybookDB, product: Product) {
   return database.inventoryCostEvents.where("[businessProfileId+productId]").equals([product.businessProfileId, product.id]).toArray();
 }
-type Context = Pick<InventoryCostEvent, "sourceId" | "createdAt"> & Partial<Pick<InventoryCostEvent, "saleId" | "saleLineId" | "purchaseId">>;
+type Context = Pick<InventoryCostEvent, "sourceId" | "createdAt"> & Partial<Pick<InventoryCostEvent, "saleId" | "saleLineId" | "purchaseId" | "batchId">>;
 
 /** Caller commits the matching product/movement in this same transaction. */
 export async function appendInventoryCostChange(database: TallybookDB, product: Product, quantityDelta: number, context: Context, options: { opening?: boolean; unitCostMinor?: number } = {}) {
   requireLedgerTransaction(database);
   if (!Number.isSafeInteger(quantityDelta) || !whole(product.stockQuantity)) throw new Error("Invalid stock quantity for cost posting.");
+  if (context.batchId !== undefined && (!context.batchId.trim() || !context.purchaseId || quantityDelta <= 0 || options.opening)) throw new Error("A batch cost link must belong to a positive supplier receipt.");
   const events = await history(database, product);
   if (options.opening && events.length) throw new Error("Opening cost evidence already exists.");
   if (!events.length && !options.opening) {

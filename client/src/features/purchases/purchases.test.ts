@@ -2,6 +2,7 @@ import Dexie from "dexie";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { createProduct } from "@/features/inventory/inventory";
+import { registerBatch } from "@/features/inventory/stage2Inventory";
 import { archiveSupplier, completePurchase, createSupplier, getPurchasesSnapshot, updateSupplier } from "@/features/purchases/purchases";
 
 const names = new Set<string>(); const databases: Dexie[] = []; let sequence = 0;
@@ -30,6 +31,51 @@ describe("Stage 7 local suppliers and purchases", () => {
     expect(currentRice?.stockQuantity).toBe(7); expect(currentOil?.stockQuantity).toBe(7);
     expect(snapshot.purchases).toHaveLength(1); expect(snapshot.purchases[0].lines).toEqual(expect.arrayContaining([expect.objectContaining({ productName: "Stage 7 Rice", quantity: 4, unitCostMinor: 1450, lineTotalMinor: 5800 }), expect.objectContaining({ productName: "Stage 7 Oil", quantity: 5, unitCostMinor: 600, lineTotalMinor: 3000 })]));
     expect(movements).toEqual(expect.arrayContaining([expect.objectContaining({ productId: rice.id, purchaseId: first.id, movementType: "purchase", quantityDelta: 4, previousQuantity: 3, resultingQuantity: 7, note: "Purchase from ABC Wholesale" }), expect.objectContaining({ productId: oil.id, purchaseId: first.id, movementType: "purchase", quantityDelta: 5, previousQuantity: 2, resultingQuantity: 7 })]));
+  });
+
+  it("records a batch purchase, its base-unit FIFO cost and batch expiry atomically and idempotently", async () => {
+    const database = makeDatabase(); const { rice, supplier } = await fixture(database);
+    await registerBatch(rice.id, "OPENING-LOT", 3, "2027-02-01", database);
+    const values = { supplierId: supplier.id, purchaseDate: "2026-08-27", note: "New expiry lot", submissionKey: "batch-receipt-key-01", lines: [{ productId: rice.id, quantity: "2", unitCost: "14.50", batchCode: "LOT-NEW", expiryDate: "2027-03-01" }] };
+
+    const first = await completePurchase(values, "GHS", database); const repeated = await completePurchase(values, "GHS", database);
+    const line = (await database.purchaseLines.where("purchaseId").equals(first.id).toArray())[0];
+    const batch = await database.inventoryBatches.get(line.batchId!);
+    const event = (await database.inventoryCostEvents.where("purchaseId").equals(first.id).toArray())[0];
+
+    expect(repeated.id).toBe(first.id);
+    expect((await database.products.get(rice.id))?.stockQuantity).toBe(5);
+    expect(line).toMatchObject({ quantity: 2, unitCostMinor: 1450, batchCode: "LOT-NEW", expiryDate: "2027-03-01", batchId: expect.any(String) });
+    expect(batch).toMatchObject({ productId: rice.id, batchCode: "LOT-NEW", expiryDate: "2027-03-01", quantity: 2, startingQuantity: 2, receiptCostEventId: event.id });
+    expect(event).toMatchObject({ kind: "receipt", purchaseId: first.id, batchId: batch?.id, quantityDelta: 2, unitCostMinor: 1450 });
+    expect(await database.inventoryBatches.where("productId").equals(rice.id).count()).toBe(2);
+    expect(await database.purchaseLines.where("purchaseId").equals(first.id).count()).toBe(1);
+  });
+
+  it("refuses to start expiry tracking on untracked on-hand stock or append to a partially tracked balance", async () => {
+    const database = makeDatabase(); const { rice, supplier } = await fixture(database);
+    const values = { supplierId: supplier.id, purchaseDate: "2026-08-27", note: "", submissionKey: "batch-start-refused", lines: [{ productId: rice.id, quantity: "2", unitCost: "10", batchCode: "NEW-LOT", expiryDate: "2027-01-01" }] };
+    await expect(completePurchase(values, "GHS", database)).rejects.toThrow("has no batch record");
+    expect(await database.purchases.count()).toBe(0);
+    expect((await database.products.get(rice.id))?.stockQuantity).toBe(3);
+
+    await registerBatch(rice.id, "PARTIAL-LOT", 1, undefined, database);
+    await expect(completePurchase({ ...values, submissionKey: "batch-partial-refused" }, "GHS", database)).rejects.toThrow("do not match on-hand stock");
+    expect(await database.purchases.count()).toBe(0);
+  });
+
+  it("rolls back purchase, cost event, movement, product and batch writes when batch persistence fails", async () => {
+    const database = makeDatabase(); const { rice, supplier } = await fixture(database);
+    await registerBatch(rice.id, "OPENING-LOT", 3, undefined, database);
+    const bulkAdd = vi.spyOn(database.inventoryBatches, "bulkAdd").mockRejectedValueOnce(new Error("Simulated batch write failure"));
+    await expect(completePurchase({ supplierId: supplier.id, purchaseDate: "2026-08-27", note: "", submissionKey: "batch-write-rollback", lines: [{ productId: rice.id, quantity: "2", unitCost: "10", batchCode: "NEW-LOT" }] }, "GHS", database)).rejects.toThrow("Simulated batch write failure");
+    bulkAdd.mockRestore();
+    expect((await database.products.get(rice.id))?.stockQuantity).toBe(3);
+    expect(await database.purchases.count()).toBe(0);
+    expect(await database.purchaseLines.count()).toBe(0);
+    expect((await database.inventoryMovements.where("productId").equals(rice.id).toArray()).filter(movement => movement.movementType === "purchase")).toHaveLength(0);
+    expect((await database.inventoryCostEvents.where("productId").equals(rice.id).toArray()).filter(event => event.batchId)).toHaveLength(0);
+    expect(await database.inventoryBatches.count()).toBe(1);
   });
 
   it("rejects changed purchase details under an existing submission key without adjusting stock", async () => {

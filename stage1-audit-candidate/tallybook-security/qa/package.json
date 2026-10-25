@@ -1,0 +1,1 @@
+{"name":"tallybook-v19-adapter-qa","private":true,"type":"module","scripts":{"test":"vitest run","test:unit":"vitest run tests","test:e2e":"playwright test","typecheck":"tsc --noEmit"},"devDependencies":{"@playwright/test":"^1.56.0","vitest":"^3.2.0","typescript":"^5.8.0"}}

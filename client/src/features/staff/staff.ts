@@ -220,7 +220,7 @@ export async function requirePermission(action:StaffPermission,database:Tallyboo
     throw new Error(`Staff access locked or ${action} permission denied.`);
   }
   sessionExpiration.set(company,Date.now()+30*60_000);
-  return member;
+  return member!;
 }
 /** Retain the exact authorized actor throughout a staff mutation. The read
  * and decision both occur under the same IndexedDB write lock. */

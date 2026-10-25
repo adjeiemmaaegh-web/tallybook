@@ -1,0 +1,96 @@
+TAP version 13
+# (node:8192) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: sale conservation
+ok 1 - sale conservation
+  ---
+  duration_ms: 2.383788
+  type: 'test'
+  ...
+# Subtest: credit allocation
+ok 2 - credit allocation
+  ---
+  duration_ms: 0.286115
+  type: 'test'
+  ...
+# Subtest: unallocated credit fails closed
+ok 3 - unallocated credit fails closed
+  ---
+  duration_ms: 0.1544
+  type: 'test'
+  ...
+# Subtest: wallet no overdraft
+ok 4 - wallet no overdraft
+  ---
+  duration_ms: 0.292424
+  type: 'test'
+  ...
+# Subtest: supplier recognition and repayment
+ok 5 - supplier recognition and repayment
+  ---
+  duration_ms: 0.242661
+  type: 'test'
+  ...
+# Subtest: refund must be evidenced
+ok 6 - refund must be evidenced
+  ---
+  duration_ms: 0.26275
+  type: 'test'
+  ...
+# Subtest: partial returns cannot exceed quantity
+ok 7 - partial returns cannot exceed quantity
+  ---
+  duration_ms: 0.1821
+  type: 'test'
+  ...
+# Subtest: equivalent wallet instants reconcile regardless of offset spelling
+ok 8 - equivalent wallet instants reconcile regardless of offset spelling
+  ---
+  duration_ms: 8.841536
+  type: 'test'
+  ...
+# Subtest: wallet rejects unsafe accumulated credits
+ok 9 - wallet rejects unsafe accumulated credits
+  ---
+  duration_ms: 0.482687
+  type: 'test'
+  ...
+# Subtest: wallet rejects duplicate posting id independently of idempotency key
+ok 10 - wallet rejects duplicate posting id independently of idempotency key
+  ---
+  duration_ms: 0.504468
+  type: 'test'
+  ...
+# Subtest: credit review rejects aggregate unsafe allocations
+ok 11 - credit review rejects aggregate unsafe allocations
+  ---
+  duration_ms: 0.192486
+  type: 'test'
+  ...
+# Subtest: partial refund large arithmetic uses exact minor units
+ok 12 - partial refund large arithmetic uses exact minor units
+  ---
+  duration_ms: 0.105636
+  type: 'test'
+  ...
+# Subtest: refund reference duplicate keys across original sales rejected
+ok 13 - refund reference duplicate keys across original sales rejected
+  ---
+  duration_ms: 0.227808
+  type: 'test'
+  ...
+# Subtest: partial refund exact floor avoids floating-point overpayment
+ok 14 - partial refund exact floor avoids floating-point overpayment
+  ---
+  duration_ms: 0.09394
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 143.451415

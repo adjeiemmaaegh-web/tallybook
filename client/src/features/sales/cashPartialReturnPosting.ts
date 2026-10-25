@@ -9,7 +9,8 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
 import { nanoid } from 'nanoid';
 import { postStoreStockDelta } from '@/features/stores/storeStockLedger';
 import { db, type TallybookDB } from '@/db/TallybookDB';
-import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
+import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { requirePermission, activeStaffShift } from '@/features/staff/staff';
 import { restorePartialInventoryCost } from '@/features/inventory/costLedger';
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
@@ -123,6 +124,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       [...originalIssues, ...pastCosts].filter((row): row is NonNullable<typeof row> => Boolean(row)));
     const savedLines:CashPartialSaleReturn['lines'] = [];
     const products = new Set<string>();
+    assertCompanyScope(company, getActiveBusinessProfileId());
     for (const item of plan.lines) {
       const originalLine = lines.find(line=>line.id===item.saleLineId)!;
       if (products.has(originalLine.productId) || originalLine.stockTracked === false || !originalLine.costEventId ||
@@ -166,6 +168,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     await database.cashPartialReturns.add(recorded);
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
       action:'sale.partial-cash-refund',createdAt:now,details:`${recorded.id}:${sale.id}:${recorded.refundedMinor}:${sale.currency}`});
+    assertCompanyScope(company, getActiveBusinessProfileId());
     return recorded;
   });
 }

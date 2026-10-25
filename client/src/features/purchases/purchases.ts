@@ -54,6 +54,9 @@ export interface PurchaseLine {
   quantity: number;
   unitCostMinor: number;
   lineTotalMinor: number;
+  batchId?: string;
+  batchCode?: string;
+  expiryDate?: string;
 }
 
 export interface PurchaseDetail extends Purchase { lines: PurchaseLine[]; }

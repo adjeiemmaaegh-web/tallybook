@@ -1,0 +1,12 @@
+{
+  "QA_REVIEW.md": "53c51afc1cb5f2f67931988d7f4e419de61fbb36e9768d2d3b924888db2cd678",
+  "QA_TEST_LOG.txt": "932f80dac70f79e8b1b824730ab72af82cf7de61bc8d3d3a98a3780934a70652",
+  "README.md": "08192430e8098f328d8967a3a334b02dccdd931b222e25de7d0fc754ab565d1f",
+  "batch1.test.mjs": "6e16f2226098f20fa0b17a4d11b6e5800bfa53d431e5248e0ab4a083ce6b8557",
+  "customerCreditLedger.ts": "e0f3022d503bd53be2c3259705cb4473be62d0aeef0a660c477f0e1dce7b578d",
+  "financialReconciliation.ts": "32f3bf6ea44afa7229f0c2ed41742a311134172a55d79b345f56a1ea9c71a4f5",
+  "partialRefundEngine.ts": "e1d449c9f7e2740d624ce7c2e237b576e9effa8b35d73078b7f82341509b7ef7",
+  "refundSettlement.ts": "f050bff1b1707fe3e5c9feafad1b0daa952364126c198a5908b62113c41223e2",
+  "supplierPayableSettlement.ts": "e0220c0404e125677729e364f985d782a0bb8fbf065e52fa6bedbf4ced9be24b",
+  "walletReconciliation.ts": "da34b24858d3444eab1a6a91a195f1beb27447e2593c7755b4c546042256c020"
+}

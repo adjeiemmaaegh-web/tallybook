@@ -1,0 +1,43 @@
+# Batch 5 — Pre-Batch-7 QA
+
+# Tallybook V19 — Pre-Batch-7 Source Review and QA
+
+Date: 2026-10-24
+Baseline: the exact `TALLYBOOK_V19_FINAL_SOURCE.zip` inside uploaded `batch6.zip` / `all_30_file.zip`.
+
+## Status
+
+**Candidate code reviewed and corrected locally; NOT accepted or production-ready.** All modifications are confined to the `candidate_modules` directory. Original application source files are intentionally unchanged, and no GitHub, Supabase, deployment, or customer data was touched.
+
+## Confirmed fixes
+
+1. **Batch 1 / walletReconciliation.ts**: group postings at the same actual epoch millisecond even when offsets differ; reject duplicate posting IDs, inconsistent currencies, and unsafe intermediate minor-unit sums. Avoid false historical overdrafts.
+2. **Batch 1 / refundSettlement.ts**: catch reused refund submission keys across sales in the same company, validate confirmed evidence, reject invalid statuses, and protect aggregated minor units. Still an evidence checker, **not a refund-payment implementation**.
+3. **Batch 1 / partialRefundEngine.ts**: calculate proportional refund ceiling using exact BigInt minor-unit arithmetic rather than overflow-prone floating point.
+4. **Batch 2 / staffAuthorizationAudit.ts**: reject NaN, infinite, negative, and non-safe integer session clock/expiration values; prevent accidental session acceptance.
+5. **Batch 3 / backupRestoreValidator.ts**: validate BOTH expected and actual paths, reject duplicate separator and `.`/`..` normalization hazards, and check manifest metadata on both sides.
+6. **Batch 4 / crossShopAttendantReports.ts**: quarantine repeated Mobile Money references rather than reporting them as matched; also reject unknown event kinds.
+7. **Batch 4 / watchdogCsvExport.ts**: require nonblank event types and guard spreadsheet formulas preceded by whitespace.
+8. **Batch 4 / centralRetailSync.ts**: reject duplicate or cross-company batch identities before processing acknowledgment evidence, even when acknowledgments are empty.
+
+## Verification performed in this session
+
+- All five standalone candidate suites: Batch 1 **14/14**, Batch 2 **11/11**, Batch 3 **16/16**, Batch 4 **22/22**, Batch 5 Node contract tests **15/15**: **78/78 PASS**.
+- Cross-batch candidate compatibility tests: **5/5 PASS** (isolated pure-module scenarios; **not live application integration**).
+- Existing application native + server suite from preserved source: **481/481 PASS** on Linux Node **22.16.0** (not the pinned Node 24 toolchain).
+- Candidate TypeScript modules Batches 1–4: global TypeScript **5.8.3** `--noEmit` **PASS** in isolation (not the project's pinned semantic check).
+- New adversarial tests reproduced **12 failures** against earlier candidate behavior before fixes, then passed after correction.
+- All source ZIPs, individual batch manifests and master nested ZIP hashes verified during repackaging.
+
+## Still not tested / still required
+
+- Full application Vitest suite, project-pinned Node 24/pnpm build, real IndexedDB browser tests, schema migrations and backup/restore, Playwright and physical-device acceptance were **not** rerun in this session.
+- Candidate modules are not wired into authoritative Tallybook transaction/authorization/backup/sync entrypoints. Standalone passing tests do **not** mean payments were sent, refunds paid, sync delivered, camera evidence linked or multi-store reports reconciled.
+- Batch 5 browser tests are intentional scaffolds (some `test.skip` paths) and cannot serve as browser acceptance evidence.
+- Outstanding original release blockers remain open. **NO-GO / INCOMPLETE**.
+
+## Integration instructions
+
+Treat Batches 1–5 as reviewed candidates. Integrate service-by-service against the real Tallybook interfaces, add Dexie transaction and browser tests for each changed workflow, and keep live financial operations disabled pending authorization and evidence. The production source tree is preserved, not silently overwritten by the reviewed candidates. Do not assume Stage 1 or the entire Tallybook project is accepted because these candidates now pass.
+
+Batch 5 focused standalone test result: 15/15 PASS.

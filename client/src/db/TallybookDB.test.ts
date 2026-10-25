@@ -34,7 +34,62 @@ describe("TallybookDB", () => {
     expect(await database.appMeta.get("databaseCreatedAt")).toMatchObject({ key: "databaseCreatedAt" });
   });
 
-  it("migrates version 20 sync records to version 21 without losing events and creates conflicts table", async () => {
+  it("adds local batch provenance indexes without rewriting legacy batch records", async () => {
+    const name = `tallybook-v28-batch-migration-${Date.now()}-${++testNumber}`;
+    const legacy = new Dexie(name);
+    legacy.version(28).stores({
+      appMeta: "key, updatedAt",
+      businessProfiles: "id, name, country, currency, businessType, updatedAt",
+      products: "id, businessProfileId, name",
+      purchaseLines: "id, purchaseId, productId, businessProfileId",
+      inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt",
+      inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, createdAt",
+    });
+    await legacy.open();
+    const oldBatch = { id: "old-batch", businessProfileId: "primary", productId: "old-product", batchCode: "LEGACY-LOT", expiryDate: "2027-02-01", quantity: 2, createdAt: "2026-10-01T10:00:00.000Z" };
+    await Promise.all([
+      legacy.table("appMeta").put({ key: "databaseCreatedAt", value: "2026-10-01T10:00:00.000Z", updatedAt: "2026-10-01T10:00:00.000Z" }),
+      legacy.table("products").put({ id: "old-product", businessProfileId: "primary", stockQuantity: 2 }),
+      legacy.table("inventoryBatches").put(oldBatch),
+    ]);
+    legacy.close();
+    const upgraded = new TallybookDB(name); databases.push(upgraded);
+
+    await initializeDatabase(upgraded);
+
+    expect(upgraded.verno).toBe(DATABASE_SCHEMA_VERSION);
+    expect(await upgraded.inventoryBatches.get("old-batch")).toEqual(oldBatch);
+    expect(upgraded.inventoryBatches.schema.idxByName.receiptCostEventId).toBeDefined();
+    expect(upgraded.purchaseLines.schema.idxByName.batchId).toBeDefined();
+    expect(upgraded.inventoryCostEvents.schema.idxByName.batchId).toBeDefined();
+  });
+
+  it("upgrades a local v30 drawer journal without losing existing records", async () => {
+    const name = `tallybook-v30-local-migration-${Date.now()}-${++testNumber}`;
+    const legacy = new Dexie(name);
+    legacy.version(30).stores({
+      appMeta: "key, updatedAt",
+      businessProfiles: "id, name, country, currency, businessType, updatedAt",
+      purchaseLines: "id, purchaseId, productId, businessProfileId, batchId",
+      inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
+      inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt",
+      noSaleEvents: "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]",
+    });
+    await legacy.open();
+    const drawerEvent = { id: "drawer-1", businessProfileId: "primary", storeId: "store-1", staffId: "staff-1", shiftId: "shift-1", createdAt: "2026-10-23T12:00:00.000Z", operationKey: "drawer-key-1" };
+    const batch = { id: "batch-1", businessProfileId: "primary", productId: "product-1", batchCode: "LOT-1", quantity: 3, startingQuantity: 3, receiptCostEventId: "cost-1", createdAt: drawerEvent.createdAt };
+    await legacy.table("noSaleEvents").put(drawerEvent);
+    await legacy.table("inventoryBatches").put(batch);
+    legacy.close();
+    const upgraded = new TallybookDB(name); databases.push(upgraded);
+    await initializeDatabase(upgraded);
+    expect(upgraded.verno).toBe(DATABASE_SCHEMA_VERSION);
+    expect(await upgraded.noSaleEvents.get(drawerEvent.id)).toEqual(drawerEvent);
+    expect(await upgraded.inventoryBatches.get(batch.id)).toEqual(batch);
+    expect(upgraded.syncReplicaOutbox.schema.primKey.name).toBe("id");
+  });
+
+  it("migrates version 20 sync records to the current schema without losing events and creates conflicts table", async () => {
     const name = `tallybook-v20-migration-${Date.now()}-${++testNumber}`;
     const legacy = new Dexie(name);
     legacy.version(20).stores({

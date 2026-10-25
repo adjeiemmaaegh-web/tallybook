@@ -3,6 +3,7 @@ import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailW
 import { nanoid } from "nanoid";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { requirePermission, currentStaffId } from "@/features/staff/staff";
 
 export interface StoreStockObservation {
@@ -30,6 +31,7 @@ export async function recordStoreStockObservation(storeId: string, productId: st
     const company = getActiveBusinessProfileId();
     const validated = validateStoreStockCount(quantity, note);
     return database.transaction("rw", [database.storeStockObservations, database.storeLocations, database.products, database.staffMembers, database.staffAudits], async () => {
+      assertCompanyScope(company, getActiveBusinessProfileId());
       const member = await requirePermission("staff", database, company);
       const staffId = member?.id ?? currentStaffId(company);
       if (!staffId) throw new Error("An active staff identity is required to record store counts.");
@@ -39,8 +41,10 @@ export async function recordStoreStockObservation(storeId: string, productId: st
       if (!product || product.businessProfileId !== company || product.archivedAt || product.itemKind === "service") throw new Error("Product is not active stock in this company.");
       if (!staff || staff.businessProfileId !== company || staff.disabledAt) throw new Error("Staff identity is not active in this company.");
       const entry: StoreStockObservation = { id: nanoid(), businessProfileId: company, storeId, productId, observedQuantity: validated.quantity, recordedByStaffId: staffId, observedAt: new Date().toISOString(), ...(validated.note ? { note: validated.note } : {}) };
+      assertCompanyScope(company, getActiveBusinessProfileId());
       await database.storeStockObservations.add(entry);
       await database.staffAudits.add({id:nanoid(), businessProfileId:company, staffId, action:"store.stock.observed", createdAt:entry.observedAt, details:entry.id});
+      assertCompanyScope(company, getActiveBusinessProfileId());
       return entry;
     });
   });

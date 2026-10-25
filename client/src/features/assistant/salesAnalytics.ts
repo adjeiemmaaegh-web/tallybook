@@ -6,6 +6,7 @@
  */
 import type { TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import type { Sale, SaleLine } from "@/features/sales/sales";
 import { calendarDayToDate, describeDay, resolveRange } from "./dates";
 import type { SalesPeriodRequest } from "./types";
@@ -31,11 +32,14 @@ export async function loadPeriodSales(period: SalesPeriodRequest, database: Tall
   const window = periodWindow(period, now);
   const activeId = getActiveBusinessProfileId();
   const [allSales, allLines] = await Promise.all([database.sales.toArray(), database.saleLines.toArray()]);
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
   const sales = allSales.filter((sale) => {
     if (sale.businessProfileId !== activeId) return false;
     const createdAt = new Date(sale.createdAt);
     return createdAt >= (window.start ?? new Date(0)) && createdAt < window.end;
   });
   const ids = new Set(sales.map((sale) => sale.id));
-  return { window, sales, lines: allLines.filter((line) => ids.has(line.saleId)) };
+  const result = { window, sales, lines: allLines.filter((line) => ids.has(line.saleId)) };
+  assertCompanyScope(activeId, getActiveBusinessProfileId());
+  return result;
 }

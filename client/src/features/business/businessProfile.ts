@@ -94,13 +94,16 @@ export async function getBusinessProfile(database: TallybookDB = db) {
   return profile;
 }
 
-export async function saveBusinessProfile(input: BusinessProfileInput, database: TallybookDB = db): Promise<BusinessProfile> {
+export async function saveBusinessProfile(input: BusinessProfileInput, database: TallybookDB = db, expectedCompanyId?: string): Promise<BusinessProfile> {
   const activeId = getActiveBusinessProfileId();
+  const expectedId = expectedCompanyId ?? activeId;
+  if (expectedId !== activeId) throw new Error("Company changed; reload the business profile before saving.");
   const values = businessProfileSchema.parse(input);
   const now = new Date().toISOString();
 
   return withCoordinatedRetailWrite(() => database.transaction("rw", [database.businessProfiles, database.mobileMoneyProviders, database.staffMembers, database.staffAudits], async () => {
     const actor = await requirePermission("staff", database, activeId);
+    if (expectedId !== activeId || activeId !== getActiveBusinessProfileId()) throw new Error("Company changed; business profile not saved.");
     const existing = await database.businessProfiles.get(activeId);
     const profile: BusinessProfile = {
       id: activeId,
@@ -120,10 +123,11 @@ export async function saveBusinessProfile(input: BusinessProfileInput, database:
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
-    if (activeId !== getActiveBusinessProfileId()) throw new Error("Company changed; business profile not saved.");
+    if (expectedId !== activeId || activeId !== getActiveBusinessProfileId()) throw new Error("Company changed; business profile not saved.");
     await database.businessProfiles.put(profile);
     await saveInitialProvider(profile, database);
     if (actor) await database.staffAudits.add({ id: nanoid(14), businessProfileId: activeId, staffId: actor.id, action: "business.updated", details: profile.id, createdAt: now });
+    if (expectedId !== activeId || activeId !== getActiveBusinessProfileId()) throw new Error("Company changed; business profile not saved.");
     return profile;
   }));
 }

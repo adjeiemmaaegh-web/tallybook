@@ -1,0 +1,154 @@
+{
+  "increment": 8,
+  "baseline_archive": "TALLYBOOK_V19_STAGE1_QA_CLEAN_CLAUDE_HANDOVER_2026-10-23.zip",
+  "baseline_sha256": "56b0002e5c9f3976a4d5cea01de1a14bcf6ea1969acb7844c5eefb5a5fd52366",
+  "baseline_integrity": {
+    "embedded_manifest_entries_verified": 857,
+    "embedded_manifest_mismatches": 0,
+    "provenance_note": "The uploaded archive SHA-256 differs from the embedded HANDOVER_PACKAGE_SHA256.json input hash and the earlier hash stated in HANDOVER.md. Preserve those historical values; this increment uses the exact uploaded archive hash."
+  },
+  "changes": [
+    {
+      "file": "client/src/features/reliability/stage1Dexie.integration.test.ts",
+      "issue": "STAGE1-DEXIE-008",
+      "reason": "Exercise the candidate audit adapter against the actual TallybookDB schema and Dexie transaction API, including clean/corrupt records, read-only behavior, repeatability, no mutation, and read failure.",
+      "dependencies": ["Dexie 4.4.6", "TallybookDB schema v28", "project IndexedDB test adapter"],
+      "tests": ["Vitest: 3 tests", "Full Vitest", "Stage 1 actual Dexie integration gate"],
+      "outcome": "PASS; 3/3 targeted tests; included in 784/784 full-suite result."
+    },
+    {
+      "file": "client/src/features/business/companyIsolation.integration.test.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Verify company-scoped reads, cross-company write rejection, and all-or-nothing rollback at transaction boundaries for retail and financial operations.",
+      "dependencies": ["Dexie 4.4.6", "TallybookDB schema v28", "Vitest", "fake IndexedDB test adapter"],
+      "tests": ["Vitest: 8 tests", "Full Vitest", "Stage 1 transaction-level company isolation gate"],
+      "outcome": "PASS; 8/8 targeted tests; included in 784/784 full-suite result."
+    },
+    {
+      "file": "client/src/features/expenses/expenses.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Capture one company ID and use it for permission, staff shift, expense ownership, idempotency, and audit inside the write transaction; prevent cross-company tagging after an asynchronous switch.",
+      "dependencies": ["Dexie transactions", "companyScope helper", "staff permission/shift helpers"],
+      "tests": ["companyIsolation.integration.test.ts: expense switch rollback", "expenses.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; mid-write company switch rejects and leaves no expense or audit row."
+    },
+    {
+      "file": "client/src/features/sales/sales.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Assert the captured company at transaction entry, after asynchronous authorization, before posting, and before commit so checkout stock and ledger writes roll back together.",
+      "dependencies": ["Dexie transactions", "companyScope helper", "existing cross-tab lock"],
+      "tests": ["companyIsolation.integration.test.ts: foreign references and sale rollback", "sales.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; foreign product/customer rejected; mid-commit switch leaves sale, payment, receipt, and stock unchanged."
+    },
+    {
+      "file": "client/src/features/sales/cashPartialReturnPosting.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Check company ownership before return stock/FIFO writes and after refund/audit writes so a stale return transaction fully rolls back.",
+      "dependencies": ["Dexie transactions", "companyScope helper", "existing cash-return ledger reconciliations"],
+      "tests": ["companyIsolation.integration.test.ts: foreign sale rejection and return rollback", "cashPartialReturnPosting.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; cross-company sale rejected; mid-commit company switch leaves refund, stock, movement, and FIFO ledgers unchanged."
+    },
+    {
+      "file": "client/src/features/credit/credit.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Bind repayment authorization and staff shift to the captured company; guard idempotent return and final repayment/audit commit.",
+      "dependencies": ["Dexie transactions", "companyScope helper", "credit ledger reconciliation"],
+      "tests": ["companyIsolation.integration.test.ts: foreign customer rejection and repayment rollback", "credit.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; foreign customer rejected; mid-post company switch rolls back repayment."
+    },
+    {
+      "file": "client/src/features/purchases/purchases.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Guard supplier create/update/archive and complete-purchase transaction context, staff/shift ownership, and final commit across supplier, stock, cost, and movement writes.",
+      "dependencies": ["Dexie transactions", "companyScope helper", "existing cross-tab lock", "inventory cost ledger"],
+      "tests": ["companyIsolation.integration.test.ts: foreign supplier/product rejection and purchase rollback", "purchases.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; foreign supplier/product rejected; mid-commit switch leaves no purchase, purchase lines, stock increment, or movement."
+    },
+    {
+      "file": "client/src/features/customers/customers.ts",
+      "issue": "STAGE1-ISOLATION-008",
+      "reason": "Assert company scope around customer archival so a stale company context cannot commit the archive.",
+      "dependencies": ["Dexie transaction", "companyScope helper", "staff permission helper"],
+      "tests": ["companyIsolation.integration.test.ts: foreign customer mutation rejection", "customers.test.ts", "Full Vitest", "TypeScript check"],
+      "outcome": "PASS; foreign customer cannot be archived from another company."
+    },
+    {
+      "file": "qa/stage1-gate-policy.mjs",
+      "issue": "STAGE1-GATES-008",
+      "reason": "Require explicit evidence flags instead of permanently reporting completed Dexie/isolation evidence as missing; preserve Windows recovery as a mandatory acceptance gate.",
+      "dependencies": ["stage1-gate-runner.mjs"],
+      "tests": ["stage1-gate-policy.test.mjs: 10 tests", "Stage 1 runner"],
+      "outcome": "PASS; missing evidence now correctly reports Windows browser recovery only."
+    },
+    {
+      "file": "qa/stage1-gate-policy.test.mjs",
+      "issue": "STAGE1-GATES-008",
+      "reason": "Test explicit evidence accounting, acceptance fail-closed behavior, and Windows recovery as an independent blocker.",
+      "dependencies": ["stage1-gate-policy.mjs"],
+      "tests": ["node --test: 10/10", "Stage 1 runner native tests: 19/19"],
+      "outcome": "PASS."
+    },
+    {
+      "file": "qa/stage1-gate-runner.mjs",
+      "issue": "STAGE1-GATES-008",
+      "reason": "Run the actual Dexie and company-isolation integration suites explicitly, include policy regressions, and report automated evidence separately from real-browser/Windows recovery.",
+      "dependencies": ["Node 24.19.0", "pnpm 10.34.0", "Vitest", "installed application dependencies"],
+      "tests": ["Stage 1 runner: 9 PASS, 0 FAIL, 0 BLOCKED", "Full Vitest", "Dexie integration gate", "Company isolation gate"],
+      "outcome": "PASS; stageAccepted remains false because Windows evidence is absent."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_PROGRESS.md",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Record scope, reproducible results, limitations, remaining acceptance work, and baseline provenance discrepancy.",
+      "dependencies": [],
+      "tests": ["Review against final gate result JSON"],
+      "outcome": "Complete."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_WINDOWS_ACCEPTANCE.md",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Provide safe, explicit Windows 11 browser recovery procedures and evidence requirements for the remaining mandatory gate.",
+      "dependencies": ["Windows 11", "Chrome or Edge", "isolated profile", "synthetic records"],
+      "tests": ["Not executed; manual acceptance plan only"],
+      "outcome": "Prepared; execution/sign-off pending."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_GATE_RESULTS.json",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Preserve full final runner output and independent gate statuses as evidence.",
+      "dependencies": ["Final stage1-gate-runner.mjs execution"],
+      "tests": ["JSON parsed and summary checked"],
+      "outcome": "9 PASS, 0 FAIL, 0 BLOCKED; acceptance remains NO-GO."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_TEST_LOG.txt",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Record exact reproduction commands, tool versions, smoke results, warnings, and execution limitations.",
+      "dependencies": ["Final test and build executions"],
+      "tests": ["Cross-checked against terminal results and final gate JSON"],
+      "outcome": "Complete."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_SHA256.json",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Provide file-level SHA-256 integrity for the packaged source snapshot.",
+      "dependencies": ["Frozen source and increment records"],
+      "tests": ["All listed files will be rehashed after generation"],
+      "outcome": "Generated during final packaging and verification."
+    },
+    {
+      "file": "STAGE1_INCREMENT8_LEDGER.json",
+      "issue": "STAGE1-DELIVERY-008",
+      "reason": "Maintain the required per-file development history and identify remaining work.",
+      "dependencies": ["Increment 8 source and verification results"],
+      "tests": ["JSON parse and source-manifest verification"],
+      "outcome": "Complete."
+    }
+  ],
+  "unfinished": [
+    "Execute and retain Windows 11 Chrome/Edge offline persistence, backup/restore, corruption, interrupted transaction, and multi-tab recovery evidence per STAGE1_INCREMENT8_WINDOWS_ACCEPTANCE.md.",
+    "Do not mark Stage 1 accepted until the Windows recovery gate passes.",
+    "The candidate audit remains outside the user-facing production flow; this increment verifies its actual application Dexie adapter, not a released diagnostics UI."
+  ],
+  "status": "ENGINEERING GATES PASS; STAGE 1 NOT ACCEPTED"
+}

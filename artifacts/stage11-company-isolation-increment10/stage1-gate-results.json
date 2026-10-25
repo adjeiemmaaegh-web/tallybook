@@ -1,0 +1,97 @@
+{
+  "at": "2026-10-23T20:45:06.392Z",
+  "node": "24.19.0",
+  "expectedNode": "24.19.0",
+  "pnpm": "10.34.0",
+  "expectedPnpm": "10.34.0",
+  "dependenciesInstalled": true,
+  "platform": "linux",
+  "steps": [
+    {
+      "name": "Stage 1 targeted native tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "✔ valid same-company references (1.350734ms)\n✔ cross-company customer detected (0.279027ms)\n✔ cross-company sale line detected (0.231736ms)\n✔ missing reference detected (0.197792ms)\n✔ audit does not modify input (1.514582ms)\n✔ successful exit is PASS (1.466046ms)\n✔ nonzero exit is FAIL (0.208581ms)\n✔ missing prerequisite is BLOCKED (0.180544ms)\n✔ spawn errors are BLOCKED (1.245094ms)\n✔ timeout signal is BLOCKED (0.331661ms)\n✔ unavailable status is not PASS (0.181271ms)\n✔ summary retains outstanding physical gates (1.127036ms)\n✔ automated integration evidence is recorded but Windows recovery still blocks acceptance (0.279659ms)\n✔ stage acceptance requires all evidence and successful gates (0.318158ms)\n✔ unknown status fails closed (0.553583ms)\n✔ every configured audit table is declared on actual TallybookDB (5.428306ms)\n✔ audited money fields exist in actual domain interfaces (0.443468ms)\n✔ consistent audit requires Dexie readonly transaction (0.199227ms)\n✔ diagnostics do not write or mutate application records (0.358887ms)\nℹ tests 19\nℹ suites 0\nℹ pass 19\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 99.241944\n",
+      "stderrTail": ""
+    },
+    {
+      "name": "Integrity standalone tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "✔ clean snapshot and no writes (3.268135ms)\n✔ detects duplicate keys, transactions, broken links and invalid money (0.65341ms)\n✔ rejects invalid records and missing identities (0.489486ms)\n✔ read failure marks report incomplete, not clean (1.488523ms)\n✔ recovery risks are explicitly evidence-based (0.391913ms)\n✔ optional array relationships and custom validation (0.463807ms)\n✔ truncation never reports clean (0.360196ms)\n✔ invalid config rejected before reads (0.901849ms)\n✔ abort stops assessment (0.612381ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 96.869885\n",
+      "stderrTail": ""
+    },
+    {
+      "name": "Security standalone tests",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "✔ authorized operation is allowed and audited (1.924998ms)\n✔ cross-company principal denied (0.427398ms)\n✔ cross-company resource denied (0.238563ms)\n✔ staff membership denial (0.352796ms)\n✔ invalid role denied (0.396392ms)\n✔ permission denial (0.30697ms)\n✔ financial operation requires explicit adapter approval (0.382565ms)\n✔ unsafe financial value denied (0.305822ms)\n✔ expired session denied (3.819694ms)\n✔ adapter failure fails closed (0.662366ms)\n✔ repeated denials trigger suspicious attempt finding (0.658925ms)\n✔ audit snapshots cannot mutate internal report (0.240873ms)\n✔ does not mutate adapter-backed data (0.260734ms)\n✔ missing session denied by default (0.183031ms)\nℹ tests 14\nℹ suites 0\nℹ pass 14\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 98.179284\n",
+      "stderrTail": ""
+    },
+    {
+      "name": "Application TypeScript check",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "",
+      "stderrTail": ""
+    },
+    {
+      "name": "Full Vitest",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "/receiptDetail.test.ts \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 66\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/assistant/tinyNluV2/tinyNluV2.test.ts \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 40\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/assistant/quotationDraft.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 36\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/reports/financialIntelligence.test.ts \u001b[2m(\u001b[22m\u001b[2m25 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 50\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sharing/businessSharing.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 51\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/components/ConnectionRestoredNotifier.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 26\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/reports/inventoryValuation.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 22\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sales/parkedCart.test.ts \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 17\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/outboxDelivery.test.ts \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 14\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/inventory/catalogCsv.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 14\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/assistant/quotationAssistant.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/syncStatus.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 12\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sales/recoverSavedCheckout.test.ts \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 9\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/business/setupProgress.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sales/pendingCheckout.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 13\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/reconciliation.test.ts \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/outboxAcknowledgements.test.ts \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 9\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/customers/retentionInsights.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 12\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/assistant/taskPlanner.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 12\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/deviceRegistry.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sales/walletRecovery.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/assistant/calendarPeriods.qa.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/inventory/advancedInventory.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/pages/SalesPage.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/inventory/alertPreferences.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sales/customerCartSummary.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 12\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/sync/syncFoundation.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/inventory/localAlerts.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/inventory/stage2Inventory.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 10\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/lib/routes.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/lib/supabase.test.ts \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/features/customers/customerListView.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m99 passed\u001b[39m\u001b[22m\u001b[90m (99)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m808 passed\u001b[39m\u001b[22m\u001b[90m (808)\u001b[39m\n\u001b[2m   Start at \u001b[22m 20:42:43\n\u001b[2m   Duration \u001b[22m 122.11s\u001b[2m (transform 3.64s, setup 25.53s, import 26.15s, tests 80.70s, environment 91.67s)\u001b[22m\n\n",
+      "stderrTail": "audit atomic log retention\u001b[2m > \u001b[22m\u001b[2mrolls back a newly appended activity when retention pruning fails\n\u001b[22m\u001b[39mTallybook Assistant: could not write the activity log. Error: simulated prune failure\n    at Table.database.assistantAudit.bulkDelete \u001b[90m(/home/ubuntu/project_review/tallybook-main/\u001b[39mclient/src/features/assistant/audit.test.ts:250:85\u001b[90m)\u001b[39m\n    at Transaction.<anonymous> \u001b[90m(/home/ubuntu/project_review/tallybook-main/\u001b[39mclient/src/features/assistant/audit.ts:70:58\u001b[90m)\u001b[39m\n\n\u001b[90mstderr\u001b[2m | src/features/assistant/conversation.test.ts\u001b[2m > \u001b[22m\u001b[2mStage 5: company-scoped conversational state\u001b[2m > \u001b[22m\u001b[2mdoes not reuse customer pronouns after a business switch and return\n\u001b[22m\u001b[39mTallybook Assistant: local conversation history could not be saved.\n\n\u001b[90mstderr\u001b[2m | src/features/assistant/conversation.test.ts\u001b[2m > \u001b[22m\u001b[2mStage 5: company-scoped conversational state\u001b[2m > \u001b[22m\u001b[2mdoes not reuse customer pronouns after a business switch and return\n\u001b[22m\u001b[39mTallybook Assistant: local conversation history could not be saved.\n\n\u001b[90mstderr\u001b[2m | src/features/assistant/conversation.test.ts\u001b[2m > \u001b[22m\u001b[2mStage 5: company-scoped conversational state\u001b[2m > \u001b[22m\u001b[2minvalidates a prepared financial confirmation on company switch\n\u001b[22m\u001b[39mTallybook Assistant: local conversation history could not be saved.\n\n\u001b[90mstderr\u001b[2m | src/features/assistant/batch.test.ts\u001b[2m > \u001b[22m\u001b[2mwhat happens when saving goes wrong halfway\u001b[2m > \u001b[22m\u001b[2mdoes not save into another business if the owner switched before confirming\n\u001b[22m\u001b[39mTallybook Assistant: local conversation history could not be saved.\n\n\u001b[90mstderr\u001b[2m | src/features/purchases/supplierPayables.test.ts\u001b[2m > \u001b[22m\u001b[2mv27 explicitly recognized supplier payables\u001b[2m > \u001b[22m\u001b[2mpreserves unknown status when a legacy receipt lacks currency evidence\n\u001b[22m\u001b[39mAnother connection wants to delete database 'tallybook-supplier-payables-1792788217615-5'. Closing db now to resume the delete request.\n\n"
+    },
+    {
+      "name": "Actual TallybookDB Dexie audit integration",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90m/home/ubuntu/project_review/tallybook-main/client\u001b[39m\n\n \u001b[32m✓\u001b[39m src/features/reliability/stage1Dexie.integration.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 619\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m\u001b[90m (3)\u001b[39m\n\u001b[2m   Start at \u001b[22m 20:44:46\n\u001b[2m   Duration \u001b[22m 2.56s\u001b[2m (transform 348ms, setup 308ms, import 568ms, tests 619ms, environment 863ms)\u001b[22m\n\n",
+      "stderrTail": ""
+    },
+    {
+      "name": "Transaction-level company isolation integration",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.11 \u001b[39m\u001b[90m/home/ubuntu/project_review/tallybook-main/client\u001b[39m\n\n \u001b[32m✓\u001b[39m src/features/business/companyIsolation.integration.test.ts \u001b[2m(\u001b[22m\u001b[2m15 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1691\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m does not allow an unlocked owner to mutate a staff record belonging to another company \u001b[32m 300\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m15 passed\u001b[39m\u001b[22m\u001b[90m (15)\u001b[39m\n\u001b[2m   Start at \u001b[22m 20:44:49\n\u001b[2m   Duration \u001b[22m 4.23s\u001b[2m (transform 706ms, setup 370ms, import 1.09s, tests 1.69s, environment 877ms)\u001b[22m\n\n",
+      "stderrTail": ""
+    },
+    {
+      "name": "Vite frontend build",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "vite v7.3.7 building client environment for production...\ntransforming...\n✓ 1986 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../dist/public/manifest.webmanifest                            0.37 kB\n../dist/public/index.html                                      1.36 kB │ gzip:   0.72 kB\n../dist/public/assets/index-BxQxNfg4.css                     244.60 kB │ gzip:  42.06 kB\n../dist/public/assets/workbox-window.prod.es5-BBnX5xw4.js      5.75 kB │ gzip:   2.36 kB\n../dist/public/assets/index-DI52QujI.js                    1,396.29 kB │ gzip: 409.85 kB\n✓ built in 8.71s\n\nPWA v1.3.0\nmode      generateSW\nprecache  8 entries (1620.10 KiB)\nfiles generated\n  ../dist/public/sw.js\n  ../dist/public/workbox-835c8c05.js\n",
+      "stderrTail": "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js (74:0): A comment\n\n\"/** Anchors a pattern source. The interpolation lives here rather than at the call site because\n * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it\n * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */\"\n\nin \"node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js\" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.\nnode_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js (400:0): A comment\n\n\"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle.\"\n\nin \"node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js\" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n"
+    },
+    {
+      "name": "Server esbuild bundle",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "",
+      "stderrTail": "\n  dist/index.js  57.8kb\n\n⚡ Done in 9ms\n"
+    }
+  ],
+  "stageAccepted": false,
+  "evidence": {
+    "dexie-app-schema-integration": true,
+    "transaction-company-isolation": true,
+    "windows-browser-recovery": false
+  },
+  "notes": [
+    "Build gates are separated so a Vite success cannot conceal a server-bundle failure.",
+    "Dexie integration uses the actual TallybookDB schema and Dexie transactions with the configured IndexedDB test adapter; it is not real-browser or Windows persistence evidence.",
+    "Windows 11 browser recovery remains unverified and is required for Stage 1 acceptance."
+  ],
+  "summary": {
+    "counts": {
+      "PASS": 9,
+      "FAIL": 0,
+      "BLOCKED": 0
+    },
+    "environmentReady": true,
+    "missingEvidence": [
+      "windows-browser-recovery"
+    ],
+    "stageAccepted": false
+  }
+}

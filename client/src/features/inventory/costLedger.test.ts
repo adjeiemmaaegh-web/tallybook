@@ -10,6 +10,7 @@ import { createBackup, parseBackup, restoreBackup } from "@/features/backup/back
 import { createProduct } from "./inventory";
 import { registerBatch } from "./stage2Inventory";
 import { getFinancialSummary } from "@/features/reports/financialIntelligence";
+import { auditLocalIntegrity } from "@/features/reliability/integrity";
 import { setSyncConsent, enqueueSyncEvent } from "@/features/sync/syncFoundation";
 import { registerLocalSyncDevice } from "@/features/sync/deviceRegistry";
 import { createStore } from "@/features/stores/storeDirectory";
@@ -43,7 +44,7 @@ describe("persisted inventory cost history", () => {
     const saved = await completeSale(checkout(product.id, 4), db);
     expect(saved.sale).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
     expect(saved.lines[0]).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
-    expect(await getFinancialSummary("month", new Date(), undefined, undefined, db)).toMatchObject({ revenueMinor: 4000, cogsMinor: 600, salesLessCostMinor: 3400 });
+    expect(await getFinancialSummary("month", new Date(), undefined, undefined, db)).toMatchObject({ revenueMinor: 4000, cogsMinor: 600, salesLessCostMinor: 3400, unavailable: { cogs: "", grossProfit: "" } });
     const events = await db.inventoryCostEvents.toArray();
     expect(reconstructInventoryCost(events, "primary", product.id, "2026-01-01T23:00:00Z")).toMatchObject({ quantity: 2, knownValueMinor: 200 });
     expect(reconstructInventoryCost(events, "primary", product.id)).toMatchObject({ quantity: 1, knownValueMinor: 200 });
@@ -164,6 +165,46 @@ describe("persisted inventory cost history", () => {
     await executeLatestSaleReversal("GHS", db, "batch-reversal-key");
     expect((await db.inventoryBatches.get(batch.id))?.quantity).toBe(4);
     expect((await db.products.get(product.id))?.stockQuantity).toBe(4);
+  });
+  it("receives batch cost evidence, allocates physical stock by expiry, keeps accounting FIFO independent, and restores both on reversal", async () => {
+    const { db, product, supplier } = await setup("4", "1");
+    await registerBatch(product.id, "LATER-LOT", 4, "2027-02-01", db);
+    at("2026-01-02T10:00:00.000Z");
+    const purchase = await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-01-02", submissionKey: "expiry-cost-purchase", lines: [{ productId: product.id, quantity: "3", unitCost: "5", batchCode: "EARLIER-EXPIRY", expiryDate: "2026-02-01" }] }, "GHS", db);
+    const receiptLine = (await db.purchaseLines.where("purchaseId").equals(purchase.id).toArray())[0];
+    const batch = await db.inventoryBatches.get(receiptLine.batchId!);
+    at("2026-01-03T10:00:00.000Z");
+    const sale = await completeSale(checkout(product.id, 2), db);
+
+    expect(sale.lines[0].batchAllocations).toEqual([{ batchId: batch?.id, quantity: 2 }]);
+    expect(sale.lines[0].cogsMinor).toBe(200); // Accounting FIFO uses the earlier $1 opening layer, not the expiry-picked $5 lot.
+    expect((await db.inventoryBatches.get(batch!.id))?.quantity).toBe(1);
+    const backup = parseBackup(JSON.stringify(await createBackup(db)));
+    expect(backup.records.purchaseLines.find(line => line.id === receiptLine.id)).toMatchObject({ batchId: batch!.id, batchCode: "EARLIER-EXPIRY" });
+    const altered = structuredClone(backup);
+    altered.records.inventoryBatches.find(row => row.id === batch!.id)!.receiptCostEventId = "missing-cost-event";
+    expect(() => parseBackup(JSON.stringify(altered))).toThrow(/Batch receipt.*do not reconcile/);
+
+    at("2026-01-04T10:00:00.000Z");
+    await executeLatestSaleReversal("GHS", db, "expiry-cost-reversal");
+    expect((await db.inventoryBatches.get(batch!.id))?.quantity).toBe(3);
+    expect((await db.products.get(product.id))?.stockQuantity).toBe(7);
+    expect(reconstructInventoryCost(await db.inventoryCostEvents.toArray(), "primary", product.id)).toMatchObject({ quantity: 7, knownValueMinor: 1900 });
+  });
+  it("audits cost-linked batch receipts and detects quantity tampering without changing records", async () => {
+    const { db, product, supplier } = await setup("2", "1");
+    await registerBatch(product.id, "OPENING-LOT", 2, undefined, db);
+    const purchase = await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-01-01", submissionKey: "batch-audit-purchase", lines: [{ productId: product.id, quantity: "3", unitCost: "2", batchCode: "RECEIVED-LOT" }] }, "GHS", db);
+    const batch = await db.inventoryBatches.where("productId").equals(product.id).and(row => row.batchCode === "RECEIVED-LOT").first();
+    const before = await db.inventoryBatches.toArray();
+
+    expect(await auditLocalIntegrity(db)).toMatchObject({ status: "clear", issues: [] });
+    await db.inventoryBatches.update(batch!.id, { quantity: 99 });
+    const audit = await auditLocalIntegrity(db);
+    expect(audit.issues.some(item => item.code === "inventory-batch-integrity" && item.recordId === batch!.id)).toBe(true);
+    expect(audit.issues.some(item => item.code === "inventory-batch-allocation" && item.recordId === product.id)).toBe(true);
+    expect(await db.purchases.get(purchase.id)).toBeDefined();
+    expect(before.find(row => row.id === batch!.id)?.quantity).toBe(3);
   });
   it("grounds expiry and unit-sales insights in company-scoped live records", async () => {
     const { db, product } = await setup("4");

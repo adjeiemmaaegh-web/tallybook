@@ -9,7 +9,7 @@ import { normalizeProductCode, type Product } from "./inventory";
 import { postStockCount, prepareStockCount, type StockCountPreview } from "./advancedInventory";
 
 export interface StockCountSession extends StockCountPreview { businessProfileId: string; id: string; status: "draft" | "posted"; updatedAt: string; postedAt?: string }
-export interface InventoryBatch { id: string; businessProfileId: string; productId: string; batchCode: string; expiryDate?: string; quantity: number; createdAt: string }
+export interface InventoryBatch { id: string; businessProfileId: string; productId: string; batchCode: string; expiryDate?: string; quantity: number; startingQuantity?: number; receiptCostEventId?: string; createdAt: string }
 export type CatalogueOptions = Pick<Product, "parentProductId" | "variantLabel" | "baseUnit" | "packSize" | "wholesalePriceMinor" | "wholesaleMinimumQuantity" | "itemKind" | "imageDataUrl">;
 const whole = (n: number, maximum = 9_999_999) => Number.isSafeInteger(n) && n >= 0 && n <= maximum;
 

@@ -3,7 +3,7 @@ import { TaxSettings } from "@/components/TaxSettings";
 import {CompanyReturnPolicySettings} from '@/components/CompanyReturnPolicySettings';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, CircleAlert, PencilLine, Plus, Save, Smartphone, Store, ToggleLeft, ToggleRight } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -57,14 +57,15 @@ export default function BusinessSetup() {
   const [location] = useLocation();
   const search = typeof window !== "undefined" && window.location.search ? window.location.search : `?${location.split("?")[1] ?? ""}`;
   const isCompaniesView = new URLSearchParams(search).get("view") === "companies";
-  const { profile, status, error, save } = useBusinessProfile();
+  const { profile, activeCompanyId, status, error, save } = useBusinessProfile();
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [providers, setProviders] = useState<MobileMoneyProvider[]>([]);
   const [providerName, setProviderName] = useState("");
   const [providerBusy, setProviderBusy] = useState(false);
   const form = useForm<BusinessProfileInput>({ resolver: zodResolver(businessProfileSchema), defaultValues: toBusinessProfileFormValues(profile) });
+  const formCompanyId = useRef(profile?.id ?? activeCompanyId);
 
-  useEffect(() => { if (status === "ready") form.reset(toBusinessProfileFormValues(profile)); }, [form, profile, status]);
+  useEffect(() => { if (status === "ready") { formCompanyId.current = profile?.id ?? activeCompanyId; form.reset(toBusinessProfileFormValues(profile)); } }, [activeCompanyId, form, profile, status]);
   useEffect(() => {
     let subscribed = true;
     if (!profile) { setProviders([]); return () => { subscribed = false; }; }
@@ -81,7 +82,7 @@ export default function BusinessSetup() {
   const onSubmit = form.handleSubmit(async (values) => {
     setSavedMessage(null);
     try {
-      const saved = await save(values);
+      const saved = await save(values, formCompanyId.current);
       const message = `${saved.name} is saved on this device.`;
       setSavedMessage(message);
       toast.success(message);

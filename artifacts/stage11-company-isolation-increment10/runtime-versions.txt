@@ -1,0 +1,4 @@
+Node v24.19.0
+pnpm 10.34.0
+Vitest vitest/4.1.11 linux-x64 node-v24.19.0
+Platform Linux 6.18.38+ x86_64

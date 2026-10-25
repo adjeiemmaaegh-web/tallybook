@@ -1,0 +1,5 @@
+Node: v24.19.0
+pnpm: [WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+10.34.0
+Vitest: vitest/4.1.11 linux-x64 node-v24.19.0
+Vite: vite/7.3.7 linux-x64 node-v24.19.0

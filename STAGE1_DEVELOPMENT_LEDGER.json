@@ -1,0 +1,133 @@
+{
+  "baseline_archive": "tallybook-main.zip",
+  "baseline_sha256": "cb8421313a7b1acb3861ebe139bcbc20df6f31a292dc2aed8dd12a04269e7565",
+  "candidate_sha256": "8ac8d505b2d410bd2bb3f362cfa44db04fa2ac0fd5888c91ded63436b726b98f",
+  "stage": "1 - Foundation & Quality Recovery",
+  "status": "IN PROGRESS / NOT ACCEPTED",
+  "changes": [
+    {
+      "path": "stage1-audit-candidate/",
+      "issue": "ST1-001",
+      "reason": "Isolate candidate modules for source review; no production runtime integration",
+      "status": "implemented; standalone tests only"
+    },
+    {
+      "path": "stage1-audit-candidate/tallybook-integrity/tallybook-adapter/tallybookRules.ts",
+      "issue": "ST1-002",
+      "reason": "Remove false-positive sale total reconciliation: payments and outstanding can have legitimate nontrivial adjustments",
+      "status": "implemented; app integration unverified"
+    },
+    {
+      "path": "stage1-audit-candidate/tallybook-integrity/package.json",
+      "issue": "ST1-007",
+      "reason": "Scope CommonJS compiled candidate output under ESM parent package to allow tests to execute",
+      "status": "implemented and tested"
+    },
+    {
+      "path": "stage1-audit-candidate/tallybook-integrity/tallybook-adapter/tallybookRules.ts",
+      "issue": "ST1-003",
+      "reason": "Add opt-in consistent read-only Dexie transaction audit and schema-aligned sale line, wallet, return financial checks",
+      "status": "implemented; static contract tested; real IndexedDB unverified"
+    },
+    {
+      "path": "qa/stage1-schema-contract.test.mjs",
+      "issue": "ST1-005",
+      "reason": "Add schema and no-write static regression tests against actual application source",
+      "status": "implemented and tested"
+    },
+    {
+      "path": "stage1-audit-candidate/tallybook-integrity/tallybook-adapter/companyIsolation.mjs",
+      "issue": "ST1-008",
+      "reason": "Add read-only cross-company reference assessment on explicit snapshots",
+      "status": "implemented, five fixture tests passed; real IndexedDB unverified"
+    },
+    {
+      "path": "qa/stage1-company-isolation.test.mjs",
+      "issue": "ST1-008",
+      "reason": "Cover valid, cross-company, missing and immutable scenarios",
+      "status": "5/5 passed"
+    },
+    {
+      "path": "qa/stage1-gate-runner.mjs",
+      "issue": "ST1-010",
+      "reason": "Add reproducible non-mutating environment, native tests, TypeScript, Vitest and build gate runner",
+      "status": "implemented; targeted tests passed; full suite blocked by dependencies",
+      "dependencies": [
+        "Node 24.19.0",
+        "pnpm 10.34.0",
+        "installed project dependencies"
+      ],
+      "test_result": "9/9 targeted native tests passed; see STAGE1_INCREMENT4_GATE_RESULTS.json"
+    },
+    {
+      "path": "STAGE1_INCREMENT4_GATE_RESULTS.json",
+      "issue": "ST1-010",
+      "reason": "Record executed test and build gate evidence",
+      "status": "generated; full gates blocked"
+    }
+  ],
+  "unfinished": [
+    {
+      "issue": "ST1-003",
+      "task": "Connect read-only diagnostics to a trusted, snapshotted Dexie instance after cross-company and legacy record validation",
+      "status": "blocked pending full integration tests"
+    },
+    {
+      "issue": "ST1-004",
+      "task": "Connect security checks to authoritative write transaction permission boundaries",
+      "status": "unverified"
+    },
+    {
+      "issue": "ST1-005",
+      "task": "Create disposable IndexedDB fixture and execute integration, browser, recovery tests",
+      "status": "unverified"
+    },
+    {
+      "issue": "ST1-006",
+      "task": "Run pinned Node 24.19 and pnpm 10.34.6 full TypeScript, Vitest, build and Windows QA",
+      "status": "blocked by environment"
+    },
+    {
+      "issue": "ST1-008",
+      "task": "Validate audit against real disposable Dexie IndexedDB and legacy/multi-company fixtures; assess business-scoped reference ownership",
+      "status": "unverified"
+    },
+    {
+      "issue": "ST1-009",
+      "task": "Run actual Dexie IndexedDB integration with installed pinned dependencies",
+      "status": "blocked: dependencies unavailable"
+    },
+    {
+      "issue": "ST1-010",
+      "task": "Run full Vitest and production build",
+      "status": "blocked: vite/dependencies unavailable"
+    },
+    {
+      "issue": "ST1-011",
+      "task": "Execute Windows native and browser restart/recovery matrix",
+      "status": "blocked: Windows runtime unavailable; browser app cannot build"
+    }
+  ],
+  "dependencies": [
+    "Node 24.19.0",
+    "pnpm 10.34.6",
+    "project dependencies",
+    "real Windows QA"
+  ],
+  "tests": [
+    {
+      "command": "node --test candidate integrity and security suites",
+      "exit_code": 0,
+      "summary": "23/23 passed"
+    },
+    {
+      "command": "full app build/tsc/browser",
+      "status": "NOT RUN: pinned toolchain and dependencies unavailable"
+    },
+    {
+      "command": "node --test qa/stage1-schema-contract.test.mjs stage1-audit-candidate/tallybook-integrity/tests/integrity.test.cjs stage1-audit-candidate/tallybook-security/tests/security.test.cjs",
+      "exit_code": 0,
+      "summary": "See STAGE1_INCREMENT2_TEST_LOG.txt"
+    }
+  ]
+}

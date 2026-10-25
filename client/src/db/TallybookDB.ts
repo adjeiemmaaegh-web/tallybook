@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 34;
+export const DATABASE_SCHEMA_VERSION = 35;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -59,6 +59,7 @@ export class TallybookDB extends Dexie {
   staffMembers!: Table<import("@/features/staff/staff").StaffMember, string>;
   staffShifts!: Table<import("@/features/staff/staff").StaffShift, string>;
   staffAudits!: Table<import("@/features/staff/staff").StaffAudit, string>;
+  noSaleEvents!: Table<import("@/features/drawer/noSaleEvent.ts").NoSaleEvent, string>;
   walletTransfers!: Table<import("@/features/customers/walletTransfers").WalletTransfer, string>;
   syncConsents!: Table<import("@/features/sync/syncFoundation").SyncConsent, string>;
   syncOutbox!: Table<import("@/features/sync/syncFoundation").SyncOutboxEvent, string>;
@@ -278,9 +279,15 @@ export class TallybookDB extends Dexie {
     // v28: strictly limited, immutable, offline cash partial-return journal.
     this.version(28).stores({ cashPartialReturns: "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]" });
     // Run 13: migration adds tables only; no historical store allocations are inferred.
-    this.version(29).stores({ storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]", storeTransferRequests: "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status], &[businessProfileId+submissionKey], &[businessProfileId+dispatchKey], &[businessProfileId+completionKey], &[businessProfileId+returnProofKey], &[businessProfileId+reversesRequestId]" });
+    this.version(29).stores({
+      storeStockModes: "businessProfileId, activatedAt", storeStockEntries: "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]", storeTransferRequests: "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status], &[businessProfileId+submissionKey], &[businessProfileId+dispatchKey], &[businessProfileId+completionKey], &[businessProfileId+returnProofKey], &[businessProfileId+reversesRequestId]",
+      purchaseLines: "id, purchaseId, productId, businessProfileId, batchId",
+      inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
+      inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt"
+    });
     // v30: quarantined, independently encrypted, opt-in replica envelopes only.
     this.version(30).stores({
+      noSaleEvents: "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]",
       syncReplicaOutbox:"id, businessProfileId, deviceId, operationId, status, [businessProfileId+status], &[businessProfileId+deviceId+sequence], &[businessProfileId+operationId]",
       syncReplicaInbox:"id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
       syncReplicaCursors:"businessProfileId, updatedAt",
@@ -312,6 +319,14 @@ export class TallybookDB extends Dexie {
       expenses:"id, businessProfileId, expenseDate, category, createdAt, submissionKey, &[businessProfileId+submissionKey]",
       saleReversals:"id, businessProfileId, originalSaleId, customerId, createdAt, submissionKey, &[businessProfileId+submissionKey]",
       customerBenefits:"id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]"
+    });
+    // Reconcile the local v29/v30 line with the cloud v29-v34 line. Add indexes
+    // and the append-only drawer table without rewriting historical rows.
+    this.version(35).stores({
+      purchaseLines: "id, purchaseId, productId, businessProfileId, batchId",
+      inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
+      inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt",
+      noSaleEvents: "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]"
     });
   }
 }

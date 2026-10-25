@@ -1,0 +1,7 @@
+# Watchdog development handoff (short)
+
+Consume only versioned events from Tallybook (`DATA_CONTRACT.md`) through a verified one-shop export or future authorized central feed. Correlate event IDs and UTC timestamps with camera footage, supply clips and human review. Do not recompute Tallybook variance, refund, discount or void financial rules. Treat MoMo POS reference as unconfirmed until matched to a provider statement. Do not infer theft from video alone. Current single-store CSV is legacy preview; schema-versioned JSON/CSV v1 is NOT yet accepted or proven compatible with Watchdog's importer. Agree field names and test an actual importer round-trip before use.
+
+## Consolidation preview note (2026-10-24)
+
+Tallybook now supplies a **separate single-store UTC-day JSON preview** for importer-contract review. The legacy CSV format is unchanged. Parse `row_count` as an integrity sanity check and deduplicate by immutable `event_id`. The preview explicitly reports `contract_status: partial_unverified_provenance`, `received_at_utc: null` where not confirmed, and unverified local device claims; it is not an authenticated central feed. Do not treat an attendant-entered Mobile Money reference or a staff-confirmed cash return as independent proof of settlement. Do not infer theft from any single exception. **Do not deploy an importer change without both developers agreeing a final schema and testing the exact saved file.**

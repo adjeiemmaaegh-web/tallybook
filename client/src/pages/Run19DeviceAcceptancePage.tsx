@@ -291,13 +291,13 @@ export default function Run19DeviceAcceptancePage(){
         <label className="text-sm">Retained evidence filename (no URLs or local paths)
          <input className="mt-1 block w-full rounded border p-2" maxLength={140}
           placeholder="R19-W01-screenshot.png"
-          value={draft.evidenceFile} onChange={e=>setDrafts(all=>({...all,[test.id],note:all[test.id]?.note??saved.note,evidenceFile:e.target.value}))}/>
+          value={draft.evidenceFile} onChange={e=>setDrafts(all=>({...all,[test.id]:{...all[test.id],note:all[test.id]?.note??saved.note,evidenceFile:e.target.value}}))}/>
         </label>
        </div>
        <label className="block text-sm">Exact observed result / failure / blocker (20–600 characters, no PII)
         <textarea className="mt-1 block w-full rounded border p-2" rows={2}
          maxLength={600} placeholder="Describe what happened on this physical device, rather than what the source was intended to do."
-         value={draft.note} onChange={e=>setDrafts(all=>({...all,[test.id],evidenceFile:all[test.id]?.evidenceFile??saved.evidenceFile,note:e.target.value}))}/>
+         value={draft.note} onChange={e=>setDrafts(all=>({...all,[test.id]:{...all[test.id],evidenceFile:all[test.id]?.evidenceFile??saved.evidenceFile,note:e.target.value}}))}/>
        </label>
        <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded border p-2"

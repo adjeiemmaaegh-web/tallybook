@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {inspectLocalSaleEvidence} from '../client/src/features/reports/localIntegrityCore.ts';
+const company='business1';
+const sale=(override={})=>({id:'s1',businessProfileId:company,status:'completed',receiptNumber:'R1',createdAt:'2026-10-24T10:00:00Z',paymentMethod:'mobile',totalMinor:1000,amountPaidMinor:1000,outstandingMinor:0,discountMinor:0,subtotalMinor:1000,submissionKey:'k1',staffId:'st1',shiftId:'sh1',currency:'GHS',...override});
+const payment=(override={})=>({id:'p1',saleId:'s1',businessProfileId:company,method:'mobile',amountMinor:1000,mobileMoneyProviderId:'MTN',mobileMoneyReference:'pay-a',createdAt:'2026-10-24T10:00:00Z',...override});
+const shift=(override={})=>({id:'sh1',businessProfileId:company,staffId:'st1',openedAt:'2026-10-24T08:00:00Z',openingFloatMinor:0,...override});
+test('valid saved sale has no detected integrity findings',()=>{const a=inspectLocalSaleEvidence(company,[sale()],[payment()],[shift()]);assert.equal(a.errors.length,0);assert.equal(a.warnings.length,0);});
+test('orphan, duplicate MoMo and tender discrepancies are visible',()=>{const a=inspectLocalSaleEvidence(company,[sale()],[payment(),payment({id:'p2',saleId:'missing'}),payment({id:'p3'})],[shift()]);assert.ok(a.errors.some(e=>e.code==='ORPHAN_PAYMENT'));assert.ok(a.errors.some(e=>e.code==='DUPLICATE_MOMO_CLAIM'));assert.ok(a.errors.some(e=>e.code==='TENDER_MISMATCH'));});
+test('historical missing attribution is warning, not invented staff identity',()=>{const s=sale({staffId:undefined,shiftId:undefined,currency:undefined});const a=inspectLocalSaleEvidence(company,[s],[payment()],[shift()]);assert.equal(a.errors.length,0);assert.ok(a.warnings.some(e=>e.code==='LEGACY_SALE_PROVENANCE'));});
+test('cross-company input fails closed',()=>assert.throws(()=>inspectLocalSaleEvidence(company,[sale({businessProfileId:'other'})],[],[]),/Company scope/));
+test('credit/wallet external-payments exception does not create false errors',()=>{for (const method of ['wallet','credit']) {const s=sale({paymentMethod:method}); const a=inspectLocalSaleEvidence(company,[s],[],[shift()]);assert.ok(!a.errors.some(e=>e.code==='TENDER_MISMATCH'));}});
+test('missing shift and arithmetic overflow flagged',()=>{const a=inspectLocalSaleEvidence(company,[sale({shiftId:'missing',outstandingMinor:3})],[payment()],[shift()]);assert.ok(a.errors.some(e=>e.code==='SHIFT_MISMATCH'));assert.ok(a.errors.some(e=>e.code==='SALE_BALANCE'));});

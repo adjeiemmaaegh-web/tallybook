@@ -1,0 +1,233 @@
+{
+  "increment": "Stage 2–3 / Security Increment 9",
+  "date": "2026-10-23",
+  "baseline": "/home/ubuntu/project_review/TALLYBOOK_V19_STAGE1_INCREMENT8_2026-10-23.zip",
+  "releaseDecision": "NO-GO / INCOMPLETE",
+  "scope": [
+    "S2-06",
+    "S2-07 (partial)",
+    "S3-01",
+    "S3-05",
+    "S3-06 (partial; remains missing)",
+    "FIN-001",
+    "FIN-002",
+    "SEC-001",
+    "DATA-001"
+  ],
+  "changes": [
+    {
+      "path": "client/src/db/TallybookDB.ts",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Add non-unique schema-29 provenance indexes for batch/purchase-line/cost-event links without rewriting legacy rows.",
+      "tests": [
+        "client/src/db/TallybookDB.test.ts",
+        "qa/stage12-schema-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "client/src/db/TallybookDB.test.ts",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Prove schema-28-to-29 migration preserves old unlinked batch rows."
+    },
+    {
+      "path": "client/src/features/inventory/costLedger.ts",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Link batch receipt cost layers to physical batch identity and validate replay provenance."
+    },
+    {
+      "path": "client/src/features/inventory/costLedger.test.ts",
+      "kind": "modified",
+      "stage": "2-3",
+      "purpose": "Cover supplier batch receipt through expiry-priority physical allocation, separate FIFO costing, reversal, backup validation, and integrity audit."
+    },
+    {
+      "path": "client/src/features/inventory/stage2Inventory.ts",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Retain explicit opening quantity for tracked batch lots without changing stock or inventing acquisition cost."
+    },
+    {
+      "path": "client/src/features/purchases/purchases.ts",
+      "kind": "modified",
+      "stage": "2-3",
+      "purpose": "Atomically persist optional batch receipt metadata, purchase/cost links, base-unit amounts, idempotency, scope checks and stock reconciliation."
+    },
+    {
+      "path": "client/src/features/purchases/purchases.test.ts",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Test real Dexie purchase/batch receipt provenance, idempotency, expiry and rejection of untracked stock."
+    },
+    {
+      "path": "client/src/pages/PurchasesPage.tsx",
+      "kind": "modified",
+      "stage": "2",
+      "purpose": "Expose optional batch code and expiry inputs while keeping base-unit quantity/cost labels explicit."
+    },
+    {
+      "path": "client/src/features/purchases/purchaseBatches.css",
+      "kind": "added",
+      "stage": "2",
+      "purpose": "Style the optional batch controls accessibly and responsively."
+    },
+    {
+      "path": "client/src/features/backup/backup.ts",
+      "kind": "modified",
+      "stage": "2-11",
+      "purpose": "Validate batch receipt links and bind backup-export metadata to the exact active/exported company with transactional switch guards."
+    },
+    {
+      "path": "client/src/features/backup/backup.test.ts",
+      "kind": "modified",
+      "stage": "10-11",
+      "purpose": "Test portable batch evidence, restore behavior, correct company identity, and rollback when a company switch occurs during the metadata transaction."
+    },
+    {
+      "path": "client/src/pages/BackupPage.tsx",
+      "kind": "modified",
+      "stage": "10-11",
+      "purpose": "Record export status against the company inside the backup and show a safe warning if the active company changed."
+    },
+    {
+      "path": "client/src/features/reliability/integrity.ts",
+      "kind": "modified",
+      "stage": "2-3",
+      "purpose": "Audit batch quantities, sale allocations, receipt purchase links and cost-layer provenance read-only."
+    },
+    {
+      "path": "client/src/features/reports/inventoryValuation.ts",
+      "kind": "added",
+      "stage": "3",
+      "purpose": "Reconstruct current stock value from immutable purchase-linked layers, separating currencies and unknown legacy cost."
+    },
+    {
+      "path": "client/src/features/reports/inventoryValuation.test.ts",
+      "kind": "added",
+      "stage": "3",
+      "purpose": "Test mixed currencies, unlinked opening stock, missing currency, purchase-line/stock mismatches and safe integer limits."
+    },
+    {
+      "path": "client/src/features/reports/financialIntelligence.ts",
+      "kind": "modified",
+      "stage": "3",
+      "purpose": "Load the valuation from the same company-scoped report snapshot and include disclosed currency-separated figures in CSV."
+    },
+    {
+      "path": "client/src/pages/FinancialIntelligencePage.tsx",
+      "kind": "modified",
+      "stage": "3",
+      "purpose": "Display current/as-of inventory valuation, separated currencies and unknown stock without combining or estimating amounts."
+    },
+    {
+      "path": "client/src/features/purchases/supplierPayables.test.ts",
+      "kind": "modified",
+      "stage": "3",
+      "purpose": "Verify current stock valuation from an actual Dexie report snapshot, including known receipt currency and unknown opening quantity."
+    },
+    {
+      "path": "docs/release/write-entrypoints.json",
+      "kind": "generated",
+      "stage": "1-12",
+      "purpose": "Refresh static AST inventory; 70 candidates remain pending manual authority review."
+    },
+    {
+      "path": "docs/release/traceability.json",
+      "kind": "modified",
+      "stage": "2-3",
+      "purpose": "Append Increment 9 evidence while preserving unverified/missing statuses."
+    },
+    {
+      "path": "docs/release/blockers.json",
+      "kind": "modified",
+      "stage": "2-3,10-11",
+      "purpose": "Record Increment 9 evidence and targeted fix without closing broad P0 finance/security/recovery blockers."
+    },
+    {
+      "path": "docs/release/STAGE2_12_CONTINUATION_PLAN_2026-10-23.md",
+      "kind": "added",
+      "stage": "2-12",
+      "purpose": "Record the owner’s continue-development/defer-device-checks direction and Phase A–G execution order."
+    },
+    {
+      "path": "STAGE2_STAGE3_INCREMENT9_PROGRESS.md",
+      "kind": "added",
+      "stage": "2-3",
+      "purpose": "Record implementation, verified tests, advisories and remaining gates."
+    },
+    {
+      "path": "STAGE2_STAGE3_INCREMENT9_LEDGER.json",
+      "kind": "added",
+      "stage": "2-3",
+      "purpose": "Per-file development ledger for this increment."
+    },
+    {
+      "path": "STAGE2_STAGE3_INCREMENT9_TEST_LOG.txt",
+      "kind": "added",
+      "stage": "2-3",
+      "purpose": "Reproducible command/result index for the raw test artifacts."
+    },
+    {
+      "path": "todo.md",
+      "kind": "modified",
+      "stage": "2-12",
+      "purpose": "Append the owner direction that deferred platform checks do not block independent source development while release gates remain open."
+    },
+    {
+      "path": "artifacts/stage2-stage3-increment9/",
+      "kind": "added",
+      "stage": "2-3",
+      "purpose": "Store runtime versions, commands, focused and full test logs, typecheck/build/native gate logs, and Stage 1 gate results."
+    }
+  ],
+  "evidence": {
+    "focusedSuite": {
+      "files": 8,
+      "tests": 81,
+      "result": "PASS"
+    },
+    "fullClientSuite": {
+      "files": 99,
+      "tests": 797,
+      "result": "PASS"
+    },
+    "typescript": "PASS",
+    "productionBuild": "PASS with Zod annotation and large-chunk advisories",
+    "nativeGates": {
+      "tests": 13,
+      "result": "PASS"
+    },
+    "stage1GateRunner": {
+      "pass": 9,
+      "fail": 0,
+      "blocked": 0,
+      "stageAccepted": false,
+      "outstanding": [
+        "windows-browser-recovery"
+      ]
+    },
+    "writePathInventory": {
+      "staticMutationCandidates": 70,
+      "manualReview": "OPEN"
+    },
+    "toolchain": "Node 24.19.0; pnpm 10.34.0; Vitest 4.1.11; Vite 7.3.7",
+    "rawArtifacts": "artifacts/stage2-stage3-increment9/"
+  },
+  "remaining": [
+    "No broad stage acceptance unit is closed by this increment.",
+    "S3-06 remains missing; full independent history reconciliation and approved tax/accounting facts remain open.",
+    "FIN-001 partial refunds, adjustment/unit-conversion cost evidence and unknown legacy costs remain open.",
+    "SEC-001 full write/read authority review and actor coverage remain open.",
+    "DATA-001/DATA-002 full migration and crash/restart recovery matrix remains open.",
+    "Real browser and Windows/macOS/Android/iOS acceptance is deferred to the end and remains unverified.",
+    "No external provider, cloud, deployment, payment, refund or customer communication action was taken."
+  ],
+  "delivery": {
+    "sourceArchive": "/home/ubuntu/project_review/TALLYBOOK_V19_STAGE2_STAGE3_INCREMENT9_2026-10-23.zip",
+    "patch": "/home/ubuntu/project_review/TALLYBOOK_V19_STAGE2_STAGE3_INCREMENT9_2026-10-23.patch",
+    "sha256Sidecar": "/home/ubuntu/project_review/TALLYBOOK_V19_STAGE2_STAGE3_INCREMENT9_SHA256.json",
+    "validation": "Patch applies cleanly to the Increment 8 baseline and reproduces all packaged file hashes."
+  }
+}

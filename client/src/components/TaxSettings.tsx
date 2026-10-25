@@ -20,7 +20,7 @@ export function TaxSettings() {
     try {
       if (enabled && (!/^\d+(\.\d{1,2})?$/.test(rate) || !mode)) throw new Error("Supply a rate and choose inclusive or exclusive pricing before enabling tax.");
       const policy = taxPolicySchema.parse({enabled, registrationStatus, registrationNumber, label, rateBasisPoints: Math.round(Number(rate || "0") * 100), priceMode: mode || "exclusive"});
-      await save({...profile, taxPolicy: policy});
+      await save({...profile, taxPolicy: policy}, profile.id);
       setMessage("Tax settings saved for future sales.");
     } catch (cause) { setMessage(cause instanceof Error ? cause.message : "Tax settings could not be saved."); }
     finally { setBusy(false); }

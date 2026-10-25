@@ -1,0 +1,10 @@
+{
+  "QA_REVIEW.md": "45aee9b936e90400dff39dc1705b4a6f9ec16a7f7657a6fc2bc4d1de09525f1f",
+  "QA_TEST_LOG.txt": "590c5da8b65c3cdc84ce55302ce694b0cb6de45201d60ae0c4e9a6eae5553ed5",
+  "README.md": "1f73d55421b0bfc537250a889cc2a68ef87cb3ae058ef9fe96de9392ef8f3e2e",
+  "batch4.test.mjs": "49d1b95c5c3b406c3df8b5ed1744a94cc4138e13978fee3e3536290901809d64",
+  "centralRetailSync.ts": "626c7be56841d84398f06d98a9fb121c45ce1c7931dd238adef4f97944041bca",
+  "crossShopAttendantReports.ts": "57d66d9d3f9350b61a27dddbfa3e9360f41a70f9ce2ab4d618d4e30760cd5679",
+  "staffTransactionAndDrawerEvents.ts": "45784b07a3b9865849f132551830835d5f3fb4810c5f4e23dfa90426ff544bd4",
+  "watchdogCsvExport.ts": "14484193ffe2c8bfa81726b059a7fa6240f05eea16583506f81b0bee24b303c2"
+}

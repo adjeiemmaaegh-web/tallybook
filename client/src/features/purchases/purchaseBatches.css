@@ -1,0 +1,31 @@
+.purchase-line-batch {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.purchase-line-batch > label {
+  display: grid;
+  gap: 6px;
+  color: var(--ta-muted);
+  font-size: .75rem;
+  font-weight: 850;
+}
+
+.purchase-line-batch label em {
+  font-style: normal;
+  font-weight: 650;
+}
+
+.purchase-line-batch input {
+  border-color: var(--ta-line);
+  border-radius: 11px;
+  background: #fff;
+}
+
+@media (max-width: 699px) {
+  .purchase-line-batch {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

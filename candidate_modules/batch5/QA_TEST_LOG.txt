@@ -1,0 +1,108 @@
+TAP version 13
+# (node:8264) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: unchanged backup bytes verify
+ok 1 - unchanged backup bytes verify
+  ---
+  duration_ms: 1.385206
+  type: 'test'
+  ...
+# Subtest: altered backup fails
+ok 2 - altered backup fails
+  ---
+  duration_ms: 0.531799
+  type: 'test'
+  ...
+# Subtest: invalid schema fails
+ok 3 - invalid schema fails
+  ---
+  duration_ms: 0.252125
+  type: 'test'
+  ...
+# (node:8265) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: balanced invoice passes
+ok 4 - balanced invoice passes
+  ---
+  duration_ms: 0.929099
+  type: 'test'
+  ...
+# Subtest: invoice imbalance fails
+ok 5 - invoice imbalance fails
+  ---
+  duration_ms: 0.316871
+  type: 'test'
+  ...
+# Subtest: unsafe minor units fail
+ok 6 - unsafe minor units fail
+  ---
+  duration_ms: 0.125957
+  type: 'test'
+  ...
+# Subtest: refund cannot claim disbursed without evidence
+ok 7 - refund cannot claim disbursed without evidence
+  ---
+  duration_ms: 0.129142
+  type: 'test'
+  ...
+# Subtest: unsettled refund is not treated as paid
+ok 8 - unsettled refund is not treated as paid
+  ---
+  duration_ms: 0.151575
+  type: 'test'
+  ...
+# (node:8266) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: integration contract rejects duplicate event within a company
+ok 9 - integration contract rejects duplicate event within a company
+  ---
+  duration_ms: 1.322273
+  type: 'test'
+  ...
+# Subtest: integration contract permits distinct tenant event IDs
+ok 10 - integration contract permits distinct tenant event IDs
+  ---
+  duration_ms: 0.183131
+  type: 'test'
+  ...
+# Subtest: integration contract rejects missing company scope
+ok 11 - integration contract rejects missing company scope
+  ---
+  duration_ms: 0.124074
+  type: 'test'
+  ...
+# (node:8297) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: same-company authorized access
+ok 12 - same-company authorized access
+  ---
+  duration_ms: 0.652499
+  type: 'test'
+  ...
+# Subtest: cross-company denied
+ok 13 - cross-company denied
+  ---
+  duration_ms: 0.317782
+  type: 'test'
+  ...
+# Subtest: disabled session denied
+ok 14 - disabled session denied
+  ---
+  duration_ms: 0.116563
+  type: 'test'
+  ...
+# Subtest: missing permission denied
+ok 15 - missing permission denied
+  ---
+  duration_ms: 0.104906
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 221.450562
