@@ -23,9 +23,27 @@ for (const scenario of [{width:1280, tax:false}, {width:390, tax:false}, {width:
     await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
     await context.setOffline(true);
     await page.reload();
+    // A verified staff session is memory-only and intentionally expires on reload.
+    // Exercise the offline staff UI before checkout instead of bypassing authorization.
+    await page.goto('/staff');
+    await expect(page.getByRole('heading', { name: 'Local staff and shifts' })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Staff name' }).fill('Offline QA owner');
+    await page.getByRole('textbox', { name: 'New staff PIN' }).fill('123456');
+    await page.getByRole('button', { name: 'Create staff' }).click();
+    await expect(page.getByText('Offline QA owner — owner')).toBeVisible();
+    await page.getByLabel('Staff member').selectOption({ label: 'Offline QA owner (owner)' });
+    await page.getByRole('textbox', { name: 'Staff PIN', exact: true }).fill('123456');
+    await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+    await page.getByRole('button', { name: 'Open shift' }).click();
+    await expect(page.getByRole('button', { name: 'Close shift and record variance' })).toBeVisible();
+    await page.evaluate(() => { history.pushState({}, '', '/sales'); window.dispatchEvent(new PopStateEvent('popstate')); });
     await expect(page.getByRole('heading', { name: 'Make a sale.', exact: true })).toBeVisible();
+    await page.locator('.sale-add-line [role="combobox"]').click();
+    await expect(page.getByRole('option', { name: 'Rice · 3 available' })).toBeVisible();
+    await page.keyboard.press('Escape');
     await page.getByRole('textbox', { name: 'Scan or enter SKU or barcode' }).fill('RICE-QA');
     await page.getByRole('button', { name: 'Add item', exact: true }).click();
+    await expect(page.locator('.sale-cart-row')).toHaveCount(1);
     await page.getByRole('button', { name: 'Complete sale', exact: true }).click();
     await expect(page.locator('.receipt-confirmation')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('offline-receipt.png'), fullPage: true });
