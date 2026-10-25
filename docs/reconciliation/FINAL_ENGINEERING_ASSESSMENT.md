@@ -9,11 +9,12 @@
 - The five originally failing company-isolation tests were repaired using real staff attribution. Focused migration/isolation 22/22, purchase/isolation 25/25, Run9 finance 12/12, and backup/cost ledger 27/27 passed at their respective checkpoints. The offline and release Playwright suites each passed 3/3 after the offline stock calculation fix.
 - All 20 overlapping source paths now have documented semantic resolutions. Mobile-payment provider-reference uniqueness and company-switch inventory guards were restored without dropping stage22 transaction, store, staff, and recovery protections. The obsolete authentication test now verifies cloud-only gating while local bookkeeping stays offline-capable.
 - A complete, direct, serialized client Vitest run passed 995/995 tests in 124/124 files. TypeScript semantic checking, production build, release Playwright 3/3, offline Playwright 3/3, and production dependency audit with zero advisories passed. Earlier contended runs remain recorded as failures, not reclassified as passing.
-- Native Node on Windows completed with 746 passed, 62 failed, and 1 skipped across 809 tests. Its POSIX file-path/mode and obsolete source-contract failures require targeted repair or verification in the intended POSIX runtime. It is not a passing gate.
+- A fresh GitHub clone at `77086e2` passed frozen dependency installation, TypeScript, production build and complete client Vitest (995/995). After fast-forward to `3fd4b2f`, complete client Vitest passed again (996/996), as did release and offline Playwright (3/3 each).
+- Native QA now passes 420/420. Focused server audits pass 83/83 after updating historical source contracts to the current security design. Full Windows server tests remain non-green: 345 passed, 43 optional-sync failures, 1 skipped. All remaining failures involve POSIX-only sync path security on Windows; Linux execution is required and is not yet evidenced.
 
 ## Blocking work
 
-1. Triage the 62 native Windows failures. Separate obsolete static assertions from runtime bugs, verify POSIX permission and path checks on a supported host, and keep fail-closed security behavior.
+1. Verify the 43 optional-sync server security tests on Linux. Do not weaken POSIX path, mode, symlink, replay or revocation checks to make Windows pass.
 2. Expand historical Dexie migration, interrupted restore, and real backup fixtures across more customer histories. Validate every 12-stage acceptance unit individually.
 3. Obtain formal physical-device, cross-browser, recovery, and operational acceptance before any release decision.
 

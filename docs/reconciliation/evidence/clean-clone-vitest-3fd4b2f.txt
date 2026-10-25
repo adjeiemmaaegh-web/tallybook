@@ -1,0 +1,67 @@
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/validation-clean/client
+
+stderr | src/features/assistant/assistant.test.ts > confirmation safety > refuses to save if the owner switched company after the preview
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > never exposes another company's records
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > if the log can't be written, the sale is still saved and the owner still sees success
+Tallybook Assistant: could not write the activity log. Error: disk full
+    at Table.kit.database.assistantAudit.add (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/validation-clean/client/src/features/assistant/audit.test.ts:100:82)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/validation-clean/client/src/features/assistant/audit.ts:67:37)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:4733:39
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:788:19
+    at usePSD (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1142:18)
+    at newScope (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1044:16)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:776:22
+    at executePromiseTask (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:835:11)
+    at new DexiePromise (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:644:7)
+    at DexiePromise.follow (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\validation-clean\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:775:18)
+
+stderr | src/features/assistant/audit.test.ts > assistant audit atomic log retention > rolls back a newly appended activity when retention pruning fails
+Tallybook Assistant: could not write the activity log. Error: simulated prune failure
+    at Table.database.assistantAudit.bulkDelete (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/validation-clean/client/src/features/assistant/audit.test.ts:255:85)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/validation-clean/client/src/features/assistant/audit.ts:70:58)
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > invalidates a prepared financial confirmation on company switch
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/batch.test.ts > what happens when saving goes wrong halfway > does not save into another business if the owner switched before confirming
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1792949091263-5'. Closing db now to resume the delete request.
+
+······································································································································································································································································································································································································································································································································································································································stdout | src/features/assistant/eval/parser.eval.test.ts > assistant parser evaluation harness > reports a deterministic baseline and has no dangerous transaction classifications
+┌─────────┐
+│ (index) │
+├─────────┤
+└─────────┘
+Evaluation Summary
+------------------
+Total cases: 252
+Counted cases: 242
+Known gaps: 10
+Correct: 242
+Incorrect: 0
+Accuracy: 100.00%
+Entity cases: 10
+Entity correct: 10
+Entity accuracy: 100.00%
+Dangerous classifications: 0
+
+······························································································································································································································································································································································································
+
+ Test Files  124 passed (124)
+      Tests  996 passed (996)
+   Start at  21:19:13
+   Duration  627.15s (transform 5.64s, setup 74.15s, import 49.78s, tests 244.09s, environment 211.90s)
+

@@ -17,6 +17,6 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 | 11 | 2 | 0 | 3 | 0 | Focused company-isolation suite passes 15/15; wider audit open. |
 | 12 | 4 | 0 | 1 | 1 | Device, browser, operations and release acceptance open. |
 
-Current automated evidence: complete client Vitest 995/995 across 124 files, TypeScript semantic check, production build, release/offline Playwright 3/3 each, and zero production dependency advisories. Native Node remains non-green on Windows (746 passed, 62 failed, 1 skipped). These automated results do not change the 82 acceptance-unit statuses without the required operational evidence.
+Current automated evidence: the fresh clone at `3fd4b2f` passed complete client Vitest 996/996 across 124 files, following frozen installation, TypeScript and build. Clean-clone release and offline Playwright passed 3/3 each. After updating obsolete source-contract assertions, native QA passed 420/420 and focused server audits passed 83/83. The full Windows server suite remains non-green (345 pass, 43 optional-sync failures, 1 skip); Linux security verification is pending. These automated results do not change the 82 acceptance-unit statuses without required operational evidence.
 
 **Release decision: NO-GO.** No deployment, live payment, or formal physical-device acceptance is authorized or claimed.

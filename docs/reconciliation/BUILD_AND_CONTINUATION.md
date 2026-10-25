@@ -12,11 +12,11 @@ pnpm exec playwright test --config playwright.offline.config.mjs
 pnpm audit --prod
 ```
 
-The complete client Vitest run passed 995/995 in 124 files with the serialized invocation above. The build and both browser suites passed. Native Node on Windows remains non-green at 746 passed, 62 failed, 1 skipped. See `evidence/verification-final-summary.md` and the raw native log.
+The complete client Vitest run passed 995/995 in 124 files with the serialized invocation above; the fresh clone at `3fd4b2f` passed 996/996 after one migration test was added. Its release and offline Playwright each passed 3/3; TypeScript and build passed in the same clean checkout before that test-only update. Native QA passes 420/420; full Windows server remains non-green at 345 passed, 43 optional-sync failures, 1 skipped. See `evidence/readiness-increment.md`, `OUTSTANDING_READINESS_BLOCKERS.md`, and the raw logs.
 
 ## Continuation order
 
-1. Triage all 62 native Windows failures from `evidence/native-node-windows-final.txt`, then run the POSIX security tests in their supported runtime without relaxing file, path, or authorization checks.
+1. Run the 43 remaining optional-sync security failures in the supported Linux runtime; do not relax file, path, or authorization checks. Preserve the completed Windows QA and audit evidence.
 2. Extend Dexie migration tests for both historical v30 lineages, v34 rows, crash interruption, backup and restore. Retain transaction history.
 3. Maintain the passing offline Playwright checkout scenarios. Keep verified owner unlock, open shift and `requireSaleAttendant` enforced.
 4. Validate the 82 governing acceptance units, physical devices and cross-browser recovery. Open a pull request against `main` only when integration is ready; do not merge or deploy automatically.
