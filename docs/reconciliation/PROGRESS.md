@@ -19,3 +19,11 @@ The Master ZIP passed CRC validation. Its 994 source/documentation files were SH
 5. Reassess all 12 stages against implementation evidence. Physical-device, cross-browser and real-world acceptance remain deferred. Production release remains NO-GO.
 
 No deployment, live payment processing, or external service configuration has been performed.
+
+## 2026-10-25 continuation increment
+
+- Branch `development/v19-unified-reconciliation` created from verified stage22 commit and pushed. GitHub main and existing branches were not changed.
+- The v35 schema now joins the Master v29/v30 lineage with GitHub v29–v34. Migration fixtures preserve v28 batch data, Master-style v30 no-sale and batch records, and GitHub-style v34 sale and wallet records. Combined focused migration and company-isolation run: 22/22 passing.
+- Five originally failing Master company-isolation tests have been repaired without relaxing staff authorization; the combined suite now passes 15/15. Additional post-write company guards were added in sale, reversal, policy, catalogue and stock-count services.
+- TypeScript semantic check, client Vite build, and server esbuild bundle pass. Production dependency audit now reports zero advisories after Zod/fast-uri updates and a scoped body-parser override.
+- Full Vitest is being rerun against the stable source. It is not currently a passing gate. Twenty Master/GitHub paths still need semantic conflict resolution, including backup, credit, purchases, supplier payables, finance reports, stores and UI. The user-facing release decision remains NO-GO.

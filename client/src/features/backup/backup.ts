@@ -160,7 +160,11 @@ export function recordBackupExportedAt(
       // Kept only as legacy diagnostic metadata; neither one alone grants
       // destructive company-clear readiness.
       await database.appMeta.put({key:'lastBackupAt',value,updatedAt:value});
+      if(exportedCompanyId!==getActiveBusinessProfileId())
+        throw Error('Company changed while recording the backup export.');
       await database.appMeta.put({key:'lastBackupCompanyId',value:exportedCompanyId,updatedAt:value});
+      if(exportedCompanyId!==getActiveBusinessProfileId())
+        throw Error('Company changed while recording the backup export.');
       if(verifiedSha256){
         const verifiedAt=new Date().toISOString();
         const receipt=serializeRun8VerifiedReceipt({
@@ -173,6 +177,8 @@ export function recordBackupExportedAt(
         // An older or unverified export must never inherit prior V2 proof.
         await database.appMeta.delete(RUN8_VERIFIED_RECEIPT_KEY);
       }
+      if(exportedCompanyId!==getActiveBusinessProfileId())
+        throw Error('Company changed while recording the backup export.');
     });
     return value;
   });
