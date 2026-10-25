@@ -9,13 +9,14 @@ import { createProduct, getInventorySnapshot } from "@/features/inventory/invent
 import { addMobileMoneyProvider } from "@/features/payments/mobileMoney";
 import { getDashboardSummary, getReportsSnapshot } from "@/features/reports/reports";
 import { completeSale } from "@/features/sales/sales";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
 
 const names = new Set<string>();
 const openDatabases: Dexie[] = [];
 let sequence = 0;
 function database(name = `tallybook-offline-test-${Date.now()}-${++sequence}`) { names.add(name); const result = new TallybookDB(name); openDatabases.push(result); return result; }
 async function productFixture(db: TallybookDB, name: string, stock = "3", price = "10.00") { return createProduct({ name, sku: "", categoryId: "uncategorized", sellingPrice: price, costPrice: "", initialStock: stock, lowStockThreshold: "1" }, "GHS", db); }
-afterEach(async () => { openDatabases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
+afterEach(async () => { lockStaff(); openDatabases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
 
 describe("Stage 8 offline reliability", () => {
   it("preserves business, product, customer, sale, receipt, repayment, dashboard, and reports after a local close/reopen", async () => {
@@ -23,6 +24,9 @@ describe("Stage 8 offline reliability", () => {
     const first = database(name);
     await initializeDatabase(first);
     await saveBusinessProfile({ name: "Offline Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, first);
+    const owner = await createStaff("Offline test owner", "owner", "123456", first);
+    await unlockStaff(owner.id, "123456", first);
+    await openShift(0, first);
     const product = await productFixture(first, "Offline soap");
     const customer = await createCustomer({ name: "Offline Customer", phone: "+233 20 111 9000", email: "", address: "", notes: "", status: "active" }, first);
     const provider = await addMobileMoneyProvider({ name: "Offline MoMo" }, first);
@@ -64,6 +68,10 @@ describe("Stage 8 offline reliability", () => {
   it("leaves no partial sale, payment, receipt, or stock change after an offline local validation failure and a reopen", async () => {
     const db = database();
     await initializeDatabase(db);
+    await saveBusinessProfile({ name: "Failure-safe Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, db);
+    const owner = await createStaff("Failure-safe owner", "owner", "123456", db);
+    await unlockStaff(owner.id, "123456", db);
+    await openShift(0, db);
     const product = await productFixture(db, "Failure-safe item", "1");
     await expect(completeSale({ lines: [{ productId: product.id, quantity: 2 }], discount: "0", paymentMethod: "cash", amountPaid: "20.00", currency: "GHS", submissionKey: "offline-failure-sale" }, db)).rejects.toThrow("only 1 units available");
     db.close();

@@ -9,6 +9,7 @@ import { setCustomerPolicy, getCustomerBenefits } from './customerBenefits';
 import { recordWalletTransfer } from './walletTransfers';
 import { completeSale, getSaleSnapshot } from '@/features/sales/sales';
 import { recoverSavedCheckout } from '@/features/sales/recoverSavedCheckout';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 
 let i=0;
 const names:string[]=[];
@@ -17,11 +18,14 @@ async function fixture(){
  const db=new TallybookDB(`stage4-wallet-integration-${Date.now()}-${++i}`);dbs.push(db);names.push(db.name);
  await initializeDatabase(db);
  await saveBusinessProfile({name:'Stage4 Shop',country:'Ghana',currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},db);
+ const owner=await createStaff('Wallet test owner','owner','123456',db);
+ await unlockStaff(owner.id,'123456',db);
+ await openShift(0,db);
  const customer=await createCustomer({name:'Ama',phone:'0240000001',email:'',address:'',notes:'',status:'active'},db);
  const product=await createProduct({name:'Rice',sku:'',categoryId:'uncategorized',sellingPrice:'10.00',costPrice:'',initialStock:'10',lowStockThreshold:'1'},'GHS',db);
  return {db,customer,product};
 }
-afterEach(async()=>{setActiveBusinessProfileId('primary');for(const db of dbs.splice(0))db.close();await Promise.all(names.splice(0).map(name=>new Dexie(name).delete()));});
+afterEach(async()=>{lockStaff('primary');setActiveBusinessProfileId('primary');for(const db of dbs.splice(0))db.close();await Promise.all(names.splice(0).map(name=>new Dexie(name).delete()));});
 describe('Stage 4 wallet and loyalty financial safeguards',()=>{
  it('records prepaid funds once and refuses refund above the available balance',async()=>{
   const {db,customer}=await fixture();

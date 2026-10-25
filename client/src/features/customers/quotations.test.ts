@@ -3,13 +3,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TallybookDB, initializeDatabase } from '@/db/TallybookDB';
 import { createCustomer } from '@/features/customers/customers';
 import { createQuotation, listQuotations, setQuotationStatus, convertQuotationToSale } from './quotations';
+import {saveBusinessProfile} from '@/features/business/businessProfile';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 
 const dbs: TallybookDB[] = [];
-afterEach(async()=>{ for (const database of dbs) database.close(); await Promise.all(dbs.splice(0).map(d=>new Dexie(d.name).delete())); });
+afterEach(async()=>{ lockStaff('primary'); for (const database of dbs) database.close(); await Promise.all(dbs.splice(0).map(d=>new Dexie(d.name).delete())); });
 const customer = {name:'Ama Mensah',phone:'0240000000',email:'',address:'',notes:'',status:'active' as const};
 async function setup() {
   const database = new TallybookDB(`quotation-test-${Date.now()}-${Math.random()}`);dbs.push(database);
   await initializeDatabase(database);
+  await saveBusinessProfile({name:'Quotation test shop',country:'Ghana',currency:'GHS',businessType:'Retail shop'},database);
+  const owner=await createStaff('Quotation test owner','owner','123456',database);
+  await unlockStaff(owner.id,'123456',database);
+  await openShift(0,database);
   const c = await createCustomer(customer,database);
   await database.products.add({id:'p1',businessProfileId:c.businessProfileId,name:'Rice',normalizedName:'rice',sellingPriceMinor:1250,stockQuantity:10,lowStockThreshold:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
   return {database,c};

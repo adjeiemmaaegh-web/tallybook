@@ -11,6 +11,7 @@ import { completeSale } from "@/features/sales/sales";
 import { createAssistant, type Assistant } from "./assistant";
 import { MAX_AUDIT_ENTRIES_PER_COMPANY, listAudit, recordAudit } from "./audit";
 import { chip, confirmAction, useAssistantDb } from "./testKit";
+import { createStaff, unlockStaff } from "@/features/staff/staff";
 
 const kit = useAssistantDb();
 const NOW = new Date(2026, 9, 15, 14, 30, 0);
@@ -124,9 +125,13 @@ describe("privacy and scope", () => {
     expect(await kit.database.assistantAudit.count()).toBe(2);
     await kit.database.businessProfiles.put({ ...(await kit.database.businessProfiles.get("primary"))!, id: "company-two", name: "Second company" });
     setActiveBusinessProfileId("company-two");
+    const secondOwner = await createStaff("Second test owner", "owner", "654321", kit.database);
+    await unlockStaff(secondOwner.id, "654321", kit.database);
     await clearCompanyData("company-two", kit.database);
     expect(await kit.database.assistantAudit.count()).toBe(1);
     setActiveBusinessProfileId("primary");
+    const firstOwner = await kit.database.staffMembers.where("businessProfileId").equals("primary").first();
+    await unlockStaff(firstOwner!.id, "123456", kit.database);
     await clearCompanyData("primary", kit.database);
     expect(await kit.database.assistantAudit.count()).toBe(0);
   });

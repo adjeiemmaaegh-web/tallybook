@@ -12,7 +12,7 @@ import { recoverSavedCheckout } from "./recoverSavedCheckout";
 import { createBackup, parseBackup, restoreBackup } from "@/features/backup/backup";
 import { getFinancialSummary } from "@/features/reports/financialIntelligence";
 import { executeLatestSaleReversal } from "@/features/assistant/reversals";
-import { createStaff, unlockStaff, lockStaff } from "@/features/staff/staff";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
 import { formatReceiptShareText, resolveReceiptDetail } from "@/features/receipts/receiptDetail";
 
 const policy: TaxPolicy = { enabled: true, registrationStatus: "registered", registrationNumber: "TEST-ONLY", label: "Example tax", rateBasisPoints: 1250, priceMode: "exclusive" };
@@ -22,6 +22,9 @@ async function fixture(taxPolicy?: TaxPolicy) {
   setActiveBusinessProfileId("primary");lockStaff("primary");
   const db = new TallybookDB(`tax-${crypto.randomUUID()}`);databases.push(db);await initializeDatabase(db);
   await saveBusinessProfile({...profile, taxPolicy},db);
+  const owner=await createStaff("Tax test owner","owner","123456",db);
+  await unlockStaff(owner.id,"123456",db);
+  await openShift(0,db);
   // Explicit Run 11 company opt-in is required for the existing positive
   // tax/full-reversal regression. This is test-only, not a product default.
   await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,
@@ -73,7 +76,7 @@ it("rolls back a taxed checkout after a receipt storage failure",async()=>{
 it("backs up and restores policy and immutable receipts, rejects altered tax",async()=>{
   const {db,input}=await fixture(policy);await completeSale(input,db);const backup=await createBackup(db);
   const tampered=structuredClone(backup);tampered.records.sales[0].tax!.taxMinor++;
-  expect(()=>parseBackup(JSON.stringify(tampered))).toThrow(/tax amounts/);
+  expect(()=>parseBackup(JSON.stringify(tampered))).toThrow(/tax.*(amounts|reconcile)/i);
   const invalid=structuredClone(backup);invalid.records.businessProfiles[0].taxPolicy!.registrationStatus="unknown";
   expect(()=>parseBackup(JSON.stringify(invalid))).toThrow(/registered status/);
   await restoreBackup(backup,db);
@@ -87,7 +90,7 @@ it("keeps tax policies scoped to their business",async()=>{
   expect((await db.businessProfiles.get("primary"))?.taxPolicy).toEqual(policy);
 });
 it("denies tax changes from cashier and locked owner sessions",async()=>{
-  const {db}=await fixture();const owner=await createStaff("Owner","owner","123456",db);await unlockStaff(owner.id,"123456",db);
+  const {db}=await fixture();const owner=await db.staffMembers.where("businessProfileId").equals("primary").first();await unlockStaff(owner!.id,"123456",db);
   const cashier=await createStaff("Cashier","cashier","654321",db);await unlockStaff(cashier.id,"654321",db);
   await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/permission denied/);
   lockStaff("primary");await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/locked/);

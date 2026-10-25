@@ -297,6 +297,16 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       if (typeof value === "string" && value.length && !ids.has(value)) throw new Error(`Backup ${key} refers to a missing ${parent} record.`);
     }
   }
+  // A receipt-linked batch must point to its own immutable receipt layer.
+  // Older manually registered batches have no receiptCostEventId and remain valid.
+  const costById = new Map(records.inventoryCostEvents.map(event => [event.id, event]));
+  for (const batch of records.inventoryBatches) if (batch.receiptCostEventId) {
+    const event = costById.get(batch.receiptCostEventId);
+    if (!event || event.kind !== "receipt" || event.batchId !== batch.id ||
+        event.productId !== batch.productId || event.businessProfileId !== batch.businessProfileId ||
+        event.quantityDelta !== batch.startingQuantity)
+      throw new Error("Batch receipt and historical cost evidence do not reconcile.");
+  }
   // New v27 supplier evidence is optional for all older backups, but strict when present.
   // A legacy stock receipt never proves either payment or unpaid status.
   const purchaseById = new Map(records.purchases.map(row => [row.id, row]));

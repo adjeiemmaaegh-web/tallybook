@@ -12,7 +12,7 @@ async function digest(text,subtle){
  if(!subtle||typeof subtle.digest!=='function')
   fail('Backup file verification requires browser SHA-256 support.');
  const hash=await subtle.digest('SHA-256',encoder.encode(text));
- if(!(hash instanceof ArrayBuffer)||hash.byteLength!==32)
+ if(Object.prototype.toString.call(hash)!=='[object ArrayBuffer]'||hash.byteLength!==32)
   fail('Backup file fingerprint could not be verified.');
  return Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('');
 }

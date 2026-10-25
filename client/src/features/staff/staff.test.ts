@@ -54,7 +54,7 @@ describe('Stage 6 local staff security',()=>{
     const owner=await createStaff('Owner','owner','123456',database);await unlockStaff(owner.id,'123456',database);
     const cashier=await createStaff('Ada','cashier','654321',database);
     lockStaff('primary');await unlockStaff(cashier.id,'654321',database);
-    await expect(completeSale({lines:[{productId:product.id,quantity:1}],discount:'0',paymentMethod:'cash',amountPaid:'3',currency:'GHS',submissionKey:'shift-first-attempt'},database)).rejects.toThrow(/Open a cashier shift/);
+    await expect(completeSale({lines:[{productId:product.id,quantity:1}],discount:'0',paymentMethod:'cash',amountPaid:'3',currency:'GHS',submissionKey:'shift-first-attempt'},database)).rejects.toThrow(/Open (a cashier|your staff) shift/);
     const shift=await openShift(1000,database);
     const sale=await completeSale({lines:[{productId:product.id,quantity:1}],discount:'0',paymentMethod:'cash',amountPaid:'3',currency:'GHS',submissionKey:'shift-success-001'},database);
     expect(sale.sale).toMatchObject({staffId:cashier.id,shiftId:shift.id});

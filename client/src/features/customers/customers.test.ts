@@ -9,6 +9,7 @@ import {completeSale} from "@/features/sales/sales";
 import {recordRepayment} from "@/features/credit/credit";
 import {recordWalletTransfer} from "@/features/customers/walletTransfers";
 import {setActiveBusinessProfileId} from "@/features/business/activeCompany";
+import {createStaff,unlockStaff,openShift,lockStaff} from "@/features/staff/staff";
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -22,6 +23,7 @@ function makeDatabase() {
 }
 
 afterEach(async () => {
+  lockStaff("primary");
   setActiveBusinessProfileId("primary");
   openDatabases.splice(0).forEach((database) => database.close());
   await Promise.all([...databaseNames].map((name) => new Dexie(name).delete()));
@@ -81,6 +83,9 @@ describe("customer records", () => {
     const database=makeDatabase();
     await initializeDatabase(database);
     await saveBusinessProfile({name:"Stage22 Receivables",country:"Ghana",currency:"GHS",businessType:"Retail"},database);
+    const owner=await createStaff("Customer test owner","owner","123456",database);
+    await unlockStaff(owner.id,"123456",database);
+    await openShift(0,database);
     const customer=await createCustomer(customerInput,database);
     const product=await createProduct({name:"Test rice",categoryId:"uncategorized",
       sellingPrice:"10",costPrice:"1",initialStock:"2",lowStockThreshold:"0"},"GHS",database);

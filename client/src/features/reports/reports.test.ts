@@ -8,6 +8,8 @@ import { createExpense } from "@/features/expenses/expenses";
 import { createProduct } from "@/features/inventory/inventory";
 import { getBusinessHealthSummary, getDashboardSummary, getEndOfDaySummary, getReportsSnapshot, reportDateRange } from "@/features/reports/reports";
 import { completeSale } from "@/features/sales/sales";
+import { saveBusinessProfile } from "@/features/business/businessProfile";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
 
 const names = new Set<string>();
 const databases: Dexie[] = [];
@@ -18,6 +20,10 @@ const todayStamp = "2026-08-25T10:00:00.000Z";
 function makeDatabase() { const database = new TallybookDB(`tallybook-reports-test-${Date.now()}-${++sequence}`); names.add(database.name); databases.push(database); return database; }
 async function createFixture(database: TallybookDB) {
   await initializeDatabase(database);
+  await saveBusinessProfile({ name: "Report test business", country: "Ghana", currency: "GHS", businessType: "Retail shop" }, database);
+  const owner = await createStaff("Report test owner", "owner", "123456", database);
+  await unlockStaff(owner.id, "123456", database);
+  await openShift(0, database);
   const customer = await createCustomer({ name: "Report Customer", phone: "+233 20 000 7000", email: "", address: "", notes: "", status: "active" }, database);
   const cashProduct = await createProduct({ name: `Cash report item ${sequence}`, sku: "", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "", initialStock: "1", lowStockThreshold: "1" }, "GHS", database);
   const creditProduct = await createProduct({ name: `Credit report item ${sequence}`, sku: "", categoryId: "uncategorized", sellingPrice: "20.00", costPrice: "", initialStock: "4", lowStockThreshold: "1" }, "GHS", database);
@@ -31,7 +37,7 @@ async function createFixture(database: TallybookDB) {
   return { customer, cashProduct, creditProduct, cash, credit, repayment };
 }
 
-afterEach(async () => { databases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
+afterEach(async () => { lockStaff("primary"); databases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
 
 describe("Stage 7 local reports", () => {
   it("reconciles today sales, money received, debt, low stock, and transaction count to local records", async () => {

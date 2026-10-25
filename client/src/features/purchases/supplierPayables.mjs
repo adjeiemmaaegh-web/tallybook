@@ -86,6 +86,6 @@ export function reconcileSupplierPayables(purchases, entries) {
     }
     return { purchaseId: purchase.id, ...result };
   });
-  const outstandingByCurrency = [...balances].map(([currency, amountMinor]) => ({ currency, amountMinor })).sort((a,b) => a.currency.localeCompare(b.currency));
+  const outstandingByCurrency = [...balances].filter(([, amountMinor]) => amountMinor !== 0).map(([currency, amountMinor]) => ({ currency, amountMinor })).sort((a,b) => a.currency.localeCompare(b.currency));
   return { outstandingMinor: outstandingByCurrency.length === 1 ? outstandingByCurrency[0].amountMinor : null, outstandingByCurrency, unknownPurchases, complete: unknownPurchases === 0, results };
 }

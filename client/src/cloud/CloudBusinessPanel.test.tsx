@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { CloudBusinessPanel } from "./CloudBusinessPanel";
 const mock = vi.hoisted(() => ({ getUser: vi.fn(), lookup: vi.fn(), create: vi.fn(), unsubscribe: vi.fn(), callback: null as null | (() => void) }));
 vi.mock("@/lib/supabase", () => ({ isSupabaseConfigured: true, getSupabaseClient: () => ({ auth: { getUser: mock.getUser, onAuthStateChange: (callback: () => void) => { mock.callback = callback; return { data: { subscription: { unsubscribe: mock.unsubscribe } } }; } } }) }));
-vi.mock("./businessIdentity", () => ({ getCurrentBusiness: mock.lookup, createBusiness: mock.create }));
+vi.mock("./businessIdentity", () => ({ getCurrentBusiness: mock.lookup, listAccessibleCloudBusinesses: async () => { const result = await mock.lookup(); return result ? [result] : []; }, createBusiness: mock.create }));
 beforeEach(() => {
   cleanup(); vi.clearAllMocks(); localStorage.clear();
   Object.defineProperty(navigator, "locks", { configurable: true, value: { request: async (_name: string, callback: () => unknown) => callback() } });

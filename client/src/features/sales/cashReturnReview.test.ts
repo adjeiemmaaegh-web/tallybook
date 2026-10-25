@@ -8,7 +8,7 @@ import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySetting
 import {createProduct} from '@/features/inventory/inventory';
 import {completeSale} from '@/features/sales/sales';
 import {getCashReturnReview} from './cashReturnReview.ts';
-import {createStaff,unlockStaff,lockStaff} from '@/features/staff/staff';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 import {quoteReviewedCashReturn} from './cashReturnReview.mjs';
 const opened:TallybookDB[]=[];
 async function setup() {
@@ -17,6 +17,9 @@ async function setup() {
   const database=new TallybookDB(`cash-review-${crypto.randomUUID()}`);opened.push(database);
   await initializeDatabase(database);
   await saveBusinessProfile({name:'Refund preview',country:'Ghana',currency:'GHS',businessType:'Retail'},database);
+  const owner=await createStaff('Fixture Owner','owner','123456',database);
+  await unlockStaff(owner.id,'123456',database);
+  await openShift(0,database);
   await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Test fixture owner opt-in',database);
   const product=await createProduct({name:'Rice',categoryId:'uncategorized',sellingPrice:'10',costPrice:'1',initialStock:'3',lowStockThreshold:'0'},'GHS',database);
   const original=await completeSale({lines:[{productId:product.id,quantity:2}],discount:'0',paymentMethod:'cash',amountPaid:'20',currency:'GHS',submissionKey:'review-sale-001'},database);
@@ -60,8 +63,8 @@ it('refuses to quote further returns when the earlier stock movement no longer m
 
 it('denies cashier-only access to private refund review and permits the unlocked owner',async()=>{
   const {database,original}=await setup();
-  const owner=await createStaff('Fixture Owner','owner','123456',database);
-  await unlockStaff(owner.id,'123456',database);
+  const owner=await database.staffMembers.where('businessProfileId').equals('primary').first();
+  await unlockStaff(owner!.id,'123456',database);
   const cashier=await createStaff('Fixture Cashier','cashier','654321',database);
   lockStaff('primary');
   await unlockStaff(cashier.id,'654321',database);

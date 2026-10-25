@@ -11,20 +11,27 @@ import {executeLatestSaleReversal} from '@/features/assistant/reversals';
 import {getFinancialSummary,financialCsv} from './financialIntelligence';
 import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
 import {reconstructInventoryCost} from '@/features/inventory/costLedger';
+import {createStaff,unlockStaff,openShift,lockStaff} from '@/features/staff/staff';
 
 const testDb:TallybookDB[]=[];
-function clock(at:string){
+let activeOwner:{database:TallybookDB;id:string}|undefined;
+async function clock(at:string){
  vi.useFakeTimers({toFake:['Date']});
  vi.setSystemTime(new Date(at));
+ if(activeOwner)await unlockStaff(activeOwner.id,'123456',activeOwner.database);
 }
 async function fixture(stock='2',costPrice='1'){
- clock('2026-01-01T10:00:00.000Z');
+ await clock('2026-01-01T10:00:00.000Z');
  setActiveBusinessProfileId('primary');
  const database=new TallybookDB(`run9-cost-integration-${crypto.randomUUID()}`);
  testDb.push(database);
  await initializeDatabase(database);
  await saveBusinessProfile({name:'Run 9 FIFO Shop',country:'Ghana',
   currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+ const owner=await createStaff('Run 9 owner','owner','123456',database);
+ activeOwner={database,id:owner.id};
+ await unlockStaff(owner.id,'123456',database);
+ await openShift(0,database);
  await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Run 9 reversal fixture explicit opt-in',database);
  const product=await createProduct({name:'Rice',categoryId:'uncategorized',
   sellingPrice:'10',costPrice,initialStock:stock,lowStockThreshold:'1'},'GHS',database);
@@ -38,17 +45,17 @@ async function sale(database:TallybookDB,productId:string,quantity:number){
 const report=(database:TallybookDB)=>getFinancialSummary('month',
  new Date(),undefined,undefined,database);
 afterEach(async()=>{
- vi.restoreAllMocks();vi.useRealTimers();setActiveBusinessProfileId('primary');
+ lockStaff();activeOwner=undefined;vi.restoreAllMocks();vi.useRealTimers();setActiveBusinessProfileId('primary');
  for(const database of testDb.splice(0)){const name=database.name;database.close();await new Dexie(name).delete();}
 });
 describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=>{
  it('keeps separate as-of stock assets and period COGS after FIFO sale',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   const supplier=await createSupplier({name:'Cost supplier'},database);
   await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
    lines:[{productId:product.id,quantity:'3',unitCost:'2'}]},'GHS',database);
-  clock('2026-01-03T10:00:00.000Z');
+  await clock('2026-01-03T10:00:00.000Z');
   await sale(database,product.id,4);
   const summary=await report(database);
   expect(summary.cogsMinor).toBe(600);
@@ -59,7 +66,7 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('verifies supplier purchase invoice unit costs before reporting or exporting stock assets',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   const supplier=await createSupplier({name:'Audited supplier'},database);
   await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
    lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
@@ -69,7 +76,7 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('rejects supplier cost-event unit-cost tampering without rewriting invoice',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   const supplier=await createSupplier({name:'Audited supplier'},database);
   const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
    lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
@@ -82,7 +89,7 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('rejects altered invoice totals even if FIFO cost layers are still unchanged',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   const supplier=await createSupplier({name:'Audited supplier'},database);
   const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
    lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
@@ -91,7 +98,7 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('rejects foreign purchase-currency evidence rather than converting stock assets silently',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   const supplier=await createSupplier({name:'Audited supplier'},database);
   const purchase=await completePurchase({supplierId:supplier.id,purchaseDate:'2026-01-02',
    lines:[{productId:product.id,quantity:'2',unitCost:'3'}]},'GHS',database);
@@ -109,9 +116,9 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('restocking via legitimate full reversal returns original cost layers',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   await sale(database,product.id,2);
-  clock('2026-01-03T10:00:00.000Z');
+  await clock('2026-01-03T10:00:00.000Z');
   await executeLatestSaleReversal('GHS',database,'run9-full-reversal');
   const summary=await report(database);
   expect(summary.cogsMinor).toBe(0);
@@ -121,9 +128,9 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('rejects full refund money journal if cost restoration evidence disappears',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   await sale(database,product.id,2);
-  clock('2026-01-03T10:00:00.000Z');
+  await clock('2026-01-03T10:00:00.000Z');
   await executeLatestSaleReversal('GHS',database,'run9-missing-restoration');
   // Delete only disposable fixture's cost record; retained money and stock
   // still need a hard fail, never an inferred zero cost.
@@ -132,13 +139,13 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
   await database.inventoryCostEvents.delete(reversal!.id);
   await expect(report(database)).rejects.toThrow(/cost evidence|restoration/);
   const backup=await createBackup(database);
-  expect(()=>parseBackup(stringifyBackup(backup))).toThrow(/cost evidence|restoration/);
+  expect(()=>parseBackup(stringifyBackup(backup))).toThrow(/cost evidence|restoration|historical costs do not reconcile/);
  });
  it('rejects tampered full reversal quantity before showing financial results',async()=>{
   const{database,product}=await fixture();
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   await sale(database,product.id,1);
-  clock('2026-01-03T10:00:00.000Z');
+  await clock('2026-01-03T10:00:00.000Z');
   await executeLatestSaleReversal('GHS',database,'run9-tamper-restoration');
   const row=(await database.inventoryCostEvents.toArray()).find(x=>x.kind==='reversal')!;
   await database.inventoryCostEvents.update(row.id,{quantityDelta:2});
@@ -153,7 +160,7 @@ describe('V19 Run 9 real IndexedDB historical-cost and money reconciliation',()=
  });
  it('keeps completed zero-stock inventory value at zero without replacement cost',async()=>{
   const{database,product}=await fixture('1','1');
-  clock('2026-01-02T10:00:00.000Z');
+  await clock('2026-01-02T10:00:00.000Z');
   await sale(database,product.id,1);
   const summary=await report(database);
   expect(summary.inventoryValuation).toMatchObject({

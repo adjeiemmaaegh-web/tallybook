@@ -8,7 +8,7 @@ import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySetting
 import { createProduct } from '@/features/inventory/inventory';
 import { completeSale } from '@/features/sales/sales';
 import { recordConfirmedCashPartialReturn } from './cashPartialReturnPosting';
-import { calculateTrackedShiftCash } from '@/features/staff/staff';
+import { calculateTrackedShiftCash, createStaff, unlockStaff, openShift, lockStaff } from '@/features/staff/staff';
 import { executeLatestSaleReversal } from '@/features/assistant/reversals';
 import { getFinancialSummary } from '@/features/reports/financialIntelligence';
 import { createBackup, parseBackup } from '@/features/backup/backup';
@@ -20,12 +20,21 @@ async function fixture() {
   const database=new TallybookDB(`partial-cash-${crypto.randomUUID()}`);openDB.push(database);
   await initializeDatabase(database);
   await saveBusinessProfile({name:'Cash return test',country:'Ghana',currency:'GHS',businessType:'Retail'},database);
+  const owner=await createStaff('Cash return test owner','owner','123456',database);
+  await unlockStaff(owner.id,'123456',database);
+  await openShift(0,database);
   await updateCompanyReturnPolicy({enabled:true,allowFullReversal:true,allowCashPartial:true,maxAgeDays:30},'Test fixture owner opt-in',database);
   const product=await createProduct({name:'Rice',categoryId:'uncategorized',sellingPrice:'10',costPrice:'1',initialStock:'3',lowStockThreshold:'0'},'GHS',database);
   const original=await completeSale({lines:[{productId:product.id,quantity:2}],discount:'0',paymentMethod:'cash',amountPaid:'20',currency:'GHS',submissionKey:'original-sale-1'},database);
   return {database,product,original};
 }
+async function nextDay(database:TallybookDB){
+  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'));
+  const owner=await database.staffMembers.where('businessProfileId').equals('primary').first();
+  await unlockStaff(owner!.id,'123456',database);
+}
 afterEach(async()=>{
+  lockStaff('primary');
   vi.useRealTimers();vi.restoreAllMocks();setActiveBusinessProfileId('primary');
   for (const database of openDB.splice(0)){database.close();await new Dexie(database.name).delete();}
 });
@@ -33,7 +42,7 @@ const request=(saleId:string,lineId:string,key:string)=>({originalSaleId:saleId,
 
 it('atomically records two cash refunds, restores original FIFO and reports net sale and cost',async()=>{
   const {database,product,original}=await fixture();
-  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'));
+  await nextDay(database);
   const a=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-1'),database);
   expect(a).toMatchObject({refundMethod:'cash',refundedMinor:1000,returnSequence:1,returnedTaxMinor:0});
   expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
@@ -83,7 +92,7 @@ it('accounts for confirmed partial cash refunds in the originating shift cash ca
 
 it('rejects another refund when earlier saved physical-stock evidence has been altered',async()=>{
   const {database,original,product}=await fixture();
-  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'));
+  await nextDay(database);
   const first=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'linked-first-1'),database);
   const beforeCount=await database.cashPartialReturns.count();
   const beforeStock=(await database.products.get(product.id))?.stockQuantity;
@@ -96,7 +105,7 @@ it('rejects another refund when earlier saved physical-stock evidence has been a
 
 it('backup import rejects a partial cash-return whose physical stock movement was altered',async()=>{
   const {database,original}=await fixture();
-  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'));
+  await nextDay(database);
   const recorded=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'backup-stock-link-1'),database);
   const saved=await createBackup(database);
   expect(parseBackup(JSON.stringify(saved)).records.cashPartialReturns).toHaveLength(1);
@@ -108,7 +117,7 @@ it('backup import rejects a partial cash-return whose physical stock movement wa
 
 it('local integrity reports a damaged partial refund FIFO restoration without rewriting the ledger',async()=>{
   const {database,original}=await fixture();
-  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'));
+  await nextDay(database);
   const recorded=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'audit-cost-link-1'),database);
   await database.inventoryCostEvents.update(recorded.lines[0].costEventId,{createdAt:'2026-02-01T10:00:00Z'});
   const {auditLocalIntegrity}=await import('@/features/reliability/integrity');

@@ -1,0 +1,14 @@
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ❯ src/auth/auth.test.tsx (11 tests | 10 failed) 7235ms
+     × redirects a signed-out deep link and never mounts the ledger 90ms
+     × reacts to sign-out without exposing the previous page 10ms
+     × cleans up its listener 1014ms
+     × does not let a stale session lookup override a newer sign-out 8ms
+     × does not expose local records from an unbound cached offline user marker 1006ms
+     × rejects a cached Supabase session while offline and preserves local data 1012ms
+     × clears cached identity after an online session is absent 1016ms
+     × does not allow a new offline visitor into the ledger 1032ms
+     × fails closed on a session error while retaining local records 1007ms
+     × rejects cross-tab account marker replacement without trusted authorization 1025ms

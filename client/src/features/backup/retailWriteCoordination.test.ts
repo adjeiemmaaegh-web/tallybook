@@ -7,6 +7,8 @@ import { afterEach, expect, it } from 'vitest';
 import { TallybookDB, initializeDatabase } from '@/db/TallybookDB';
 import { createProduct, adjustStock } from '@/features/inventory/inventory';
 import { completeSale } from '@/features/sales/sales';
+import { createStaff, unlockStaff, openShift, lockStaff } from '@/features/staff/staff';
+import { saveBusinessProfile } from '@/features/business/businessProfile';
 import { TWO_DATABASE_LOCK_NAME } from './crossTabDataLock.mjs';
 
 const names:string[]=[];
@@ -17,10 +19,15 @@ async function fixture() {
   const database=new TallybookDB(name);
   openDatabases.push(database);
   await initializeDatabase(database);
+  await saveBusinessProfile({name:'Recovery lock shop',country:'Ghana',currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+  const owner=await createStaff('Recovery lock owner','owner','123456',database);
+  await unlockStaff(owner.id,'123456',database);
+  await openShift(0,database);
   const product=await createProduct({name:'Locked stock',sku:'',categoryId:'uncategorized',sellingPrice:'10.00',costPrice:'',initialStock:'5',lowStockThreshold:'1'},'GHS',database);
   return {database,product};
 }
 afterEach(async()=>{
+  lockStaff();
   for (const database of openDatabases.splice(0)) database.close();
   for (const name of names.splice(0)) await new Dexie(name).delete();
 });

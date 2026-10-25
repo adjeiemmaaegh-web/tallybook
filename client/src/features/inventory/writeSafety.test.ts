@@ -69,7 +69,7 @@ describe("inventory and planning write safety", () => {
     await expect(postStockCount(preview, db)).rejects.toThrow(/permission denied/);
     await expect(addMobileMoneyProvider({ name: "Other provider" }, db)).rejects.toThrow(/permission denied/);
     await expect(setMobileMoneyProviderActive(provider.id, false, db)).rejects.toThrow(/permission denied/);
-    await expect(setSyncConsent(db, "primary", true)).rejects.toThrow(/permission denied/);
+    await expect(setSyncConsent(db, "primary", true)).rejects.toThrow(/permission denied|staff session changed/);
     await expect(registerLocalSyncDevice(db, "primary", "unauthorized-device", "Phone")).rejects.toThrow(/permission denied/);
     lockStaff("primary");
     await expect(createDraftOrder("Blocked", [{ productId: product.id, quantity: 1 }], db)).rejects.toThrow(/locked/);

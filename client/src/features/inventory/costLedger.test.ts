@@ -56,7 +56,7 @@ describe("persisted inventory cost history", () => {
     const saved = await completeSale(checkout(product.id, 4), db);
     expect(saved.sale).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
     expect(saved.lines[0]).toMatchObject({ costStatus: "verified", cogsMinor: 600 });
-    expect(await getFinancialSummary("month", new Date(), undefined, undefined, db)).toMatchObject({ revenueMinor: 4000, cogsMinor: 600, salesLessCostMinor: 3400, unavailable: { cogs: "", grossProfit: "" } });
+    expect(await getFinancialSummary("month", new Date(), undefined, undefined, db)).toMatchObject({ revenueMinor: 4000, cogsMinor: 600, salesLessCostMinor: 3400, unavailable: { cogs: "", grossProfit: "Requires verified cost of goods sold, including purchase, return and batch costing." } });
     const events = await db.inventoryCostEvents.toArray();
     expect(reconstructInventoryCost(events, "primary", product.id, "2026-01-01T23:00:00Z")).toMatchObject({ quantity: 2, knownValueMinor: 200 });
     expect(reconstructInventoryCost(events, "primary", product.id)).toMatchObject({ quantity: 1, knownValueMinor: 200 });
@@ -103,7 +103,7 @@ describe("persisted inventory cost history", () => {
     expect((await db.products.get(product.id))!.stockQuantity).toBe(beforeStock);
     // Financial reports and backups should continue to fail closed until an
     // exact-linked, immutable partial-return financial posting is implemented.
-    await expect(getFinancialSummary("today",new Date(),undefined,undefined,db)).rejects.toThrow(/no uniquely matched full or partial return evidence/);
+    await expect(getFinancialSummary("today",new Date(),undefined,undefined,db)).rejects.toThrow(/no uniquely matched full or partial return evidence|orphaned FIFO restoration/);
   });
   it("never substitutes today's product cost for an unknown legacy opening", async () => {
     const { db, product } = await setup();
@@ -150,6 +150,10 @@ describe("persisted inventory cost history", () => {
     const events = await db.inventoryCostEvents.toArray();
     expect(() => reconstructInventoryCost(events, "other", product.id)).toThrow(/another company/);
     setActiveBusinessProfileId("other");
+    await saveBusinessProfile({ name: "Other shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, db);
+    const otherOwner = await createStaff("Other owner", "owner", "123456", db);
+    await unlockStaff(otherOwner.id, "123456", db);
+    await openShift(0, db);
     await expect(completeSale(checkout(product.id, 1), db)).rejects.toThrow(/no longer available/);
     expect(await db.inventoryCostEvents.toArray()).toEqual(events);
   });

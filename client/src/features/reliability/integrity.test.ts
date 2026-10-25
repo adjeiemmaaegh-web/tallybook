@@ -12,17 +12,23 @@ import { completePurchase, createSupplier } from "@/features/purchases/purchases
 import { createExpense } from "@/features/expenses/expenses";
 import { recordRepayment } from "@/features/credit/credit";
 import { executeLatestSaleReversal } from "@/features/assistant/reversals";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
+import { updateCompanyReturnPolicy } from "@/features/business/returnPolicySettings";
 
 const names = new Set<string>(); const openDatabases: Dexie[] = []; let sequence = 0;
 function database() { const name = `tallybook-integrity-${Date.now()}-${++sequence}`; names.add(name); const result = new TallybookDB(name); openDatabases.push(result); return result; }
 async function readyLedger(database: TallybookDB) {
   await initializeDatabase(database);
   await saveBusinessProfile({ name: "Integrity Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, database);
+  const owner = await createStaff("Integrity test owner", "owner", "123456", database);
+  await unlockStaff(owner.id, "123456", database);
+  await openShift(0, database);
+  await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable integrity test returns", database);
   const product = await createProduct({ name: "Integrity item", sku: "", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "", initialStock: "3", lowStockThreshold: "1" }, "GHS", database);
   const customer = await createCustomer({ name: "Integrity customer", phone: "+233201118888", email: "", address: "", notes: "", status: "active" }, database);
   return { product, customer };
 }
-afterEach(async () => { openDatabases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
+afterEach(async () => { lockStaff("primary"); openDatabases.splice(0).forEach((database) => database.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
 
 describe("Stage 11 local integrity audit", () => {
   it("clears a valid sale ledger without writing any record", async () => {

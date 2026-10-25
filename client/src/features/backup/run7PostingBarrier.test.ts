@@ -21,7 +21,7 @@ async function fixture(){
  const product=await createProduct({name:'Product',sku:'run7-product',
   categoryId:'uncategorized',sellingPrice:'10',costPrice:'',
   initialStock:'10',lowStockThreshold:'1'},'GHS',database);
- const customer=await createCustomer({name:'Journal Buyer',phone:'',
+ const customer=await createCustomer({name:'Journal Buyer',phone:'0240000000',
   email:'',address:'',notes:'',status:'active'},database);
  const supplier=await createSupplier({name:'Journal Supplier',phone:'',
   email:'',address:'',notes:''},database);

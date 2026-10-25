@@ -14,19 +14,26 @@ import { completeSale, getSaleSnapshot } from "@/features/sales/sales";
 import { completePurchase, createSupplier, getPurchasesSnapshot } from "@/features/purchases/purchases";
 import { createExpense } from "@/features/expenses/expenses";
 import { persistActiveBusinessProfileId, setActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
 
 const names = new Set<string>(); let sequence = 0; const opened: Dexie[] = [];
 function database(name = `tallybook-backup-test-${Date.now()}-${++sequence}`) { names.add(name); const result = new TallybookDB(name); opened.push(result); return result; }
 async function initializeBackupCompany(db: TallybookDB) {
   await initializeDatabase(db);
   await saveBusinessProfile({ name: "Backup fixture", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, db);
+  const owner = await createStaff("Backup test owner", "owner", "123456", db);
+  await unlockStaff(owner.id, "123456", db);
+  await openShift(0, db);
 }
-afterEach(async () => { opened.splice(0).forEach((entry) => entry.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
+afterEach(async () => { lockStaff("primary"); opened.splice(0).forEach((entry) => entry.close()); await Promise.all([...names].map((name) => new Dexie(name).delete())); names.clear(); });
 
 describe("Stage 9 local backup and restore", () => {
   it("exports and restores business records, inventory, customer debt, sales, payments, repayments, receipts, and reports after a simulated reinstall", async () => {
     const db = database(); await initializeDatabase(db);
     await saveBusinessProfile({ name: "Backup Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, db);
+    const owner = await createStaff("Backup test owner", "owner", "123456", db);
+    await unlockStaff(owner.id, "123456", db);
+    await openShift(0, db);
     const product = await createProduct({ name: "Backup item", sku: "", categoryId: "uncategorized", sellingPrice: "10.00", costPrice: "", initialStock: "4", lowStockThreshold: "1" }, "GHS", db);
     const customer = await createCustomer({ name: "Backup customer", phone: "+233 20 123 4500", email: "", address: "", notes: "", status: "active" }, db);
     const provider = await addMobileMoneyProvider({ name: "MTN MoMo" }, db);
@@ -47,6 +54,7 @@ describe("Stage 9 local backup and restore", () => {
     expect(getBackupSummary(exported).counts).toMatchObject({ products: 1, customers: 1, sales: 1, payments: 1, receipts: 1, repayments: 1, mobileMoneyProviders: 1, suppliers: 1, purchases: 1, purchaseLines: 1, expenses: 1 });
     await db.transaction("rw", db.appMeta, db.businessProfiles, db.products, db.customers, db.sales, db.saleLines, db.payments, db.receipts, db.customerActivities, db.repayments, db.inventoryMovements, db.categories, db.mobileMoneyProviders, db.suppliers, db.purchases, db.purchaseLines, db.expenses, async () => { await Promise.all([db.appMeta.clear(), db.businessProfiles.clear(), db.products.clear(), db.customers.clear(), db.sales.clear(), db.saleLines.clear(), db.payments.clear(), db.receipts.clear(), db.customerActivities.clear(), db.repayments.clear(), db.inventoryMovements.clear(), db.categories.clear(), db.mobileMoneyProviders.clear(), db.suppliers.clear(), db.purchases.clear(), db.purchaseLines.clear(), db.expenses.clear()]); });
     await restoreBackup(exported, db);
+    await unlockStaff(owner.id, "123456", db);
     // Device-local backup status is never imported from a portable business file.
     expect(await getLastBackupAt(db)).toBeNull();
     const [inventory, debt, reports, sales, purchases] = await Promise.all([getInventorySnapshot(db), getCustomerDebtSummary(customer.id, "GHS", db), getReportsSnapshot("all", new Date(), db), getSaleSnapshot(db), getPurchasesSnapshot(db)]);

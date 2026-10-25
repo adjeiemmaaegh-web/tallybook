@@ -10,6 +10,7 @@ vi.mock("@/lib/supabase", () => ({
 import { verifyCloudCompanyAccess } from "./verifyCloudCompanyAccess";
 
 const expires_at = Math.floor(Date.now() / 1000) + 3600;
+const access_token = "verified-test-access-token-1234567890";
 function membership(rows: unknown[], error: unknown = null, businesses: unknown[] = [{ id: "company-1", owner_id: "user-1" }]) {
   from.mockImplementation((table: string) => {
     const result = table === "business_members"
@@ -26,7 +27,7 @@ function membership(rows: unknown[], error: unknown = null, businesses: unknown[
 beforeEach(() => {
   vi.clearAllMocks();
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
-  getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at } }, error: null });
+  getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at, access_token } }, error: null });
   membership([{ user_id: "user-1", business_id: "company-1", role: "owner" }]);
 });
 describe("verified cloud company access (inactive preview service)", () => {
@@ -41,20 +42,20 @@ describe("verified cloud company access (inactive preview service)", () => {
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects a mismatch between server user and cached session", async () => {
-    getSession.mockResolvedValue({ data: { session: { user: { id: "user-2" }, expires_at } }, error: null });
+    getSession.mockResolvedValue({ data: { session: { user: { id: "user-2" }, expires_at, access_token } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects a sign-out or account switch during the membership request", async () => {
-    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at } }, error: null })
+    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at, access_token } }, error: null })
       .mockResolvedValueOnce({ data: { session: null }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
-    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at } }, error: null })
-      .mockResolvedValueOnce({ data: { session: { user: { id: "user-2" }, expires_at } }, error: null });
+    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at, access_token } }, error: null })
+      .mockResolvedValueOnce({ data: { session: { user: { id: "user-2" }, expires_at, access_token } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects an invalid final session after membership verification", async () => {
-    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at } }, error: null })
-      .mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER } }, error: null });
+    getSession.mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at, access_token } }, error: null })
+      .mockResolvedValueOnce({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER, access_token } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects missing or ambiguous membership rows", async () => {
@@ -70,7 +71,7 @@ describe("verified cloud company access (inactive preview service)", () => {
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects unsafe session timestamps", async () => {
-    getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER } }, error: null });
+    getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: Number.MAX_SAFE_INTEGER, access_token } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects absent or unverified account identity", async () => {
@@ -89,7 +90,7 @@ describe("verified cloud company access (inactive preview service)", () => {
   });
   it("rejects unsafe or out-of-range session timestamps", async () => {
     for (const invalid of [0, -1, Number.MAX_SAFE_INTEGER, Number.NaN, 1.5]) {
-      getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: invalid } }, error: null });
+      getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: invalid, access_token } }, error: null });
       await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
     }
   });
@@ -101,7 +102,7 @@ describe("verified cloud company access (inactive preview service)", () => {
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
   it("rejects expired sessions", async () => {
-    getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: 1 } }, error: null });
+    getSession.mockResolvedValue({ data: { session: { user: { id: "user-1" }, expires_at: 1, access_token } }, error: null });
     await expect(verifyCloudCompanyAccess("company-1", "read")).rejects.toThrow();
   });
 });

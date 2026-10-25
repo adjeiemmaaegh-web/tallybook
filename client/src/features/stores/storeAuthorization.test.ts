@@ -102,7 +102,7 @@ describe('store administration and benefit write authority (pending client run)'
       setActiveBusinessProfileId('company-two');
       return result;
     });
-    await expect(requestStoreTransfer(first.id,second.id,product.id,2,database)).rejects.toThrow(/Company changed/i);
+    await expect(requestStoreTransfer(first.id,second.id,product.id,2,database)).rejects.toThrow(/Company (or staff session )?changed/i);
     setActiveBusinessProfileId('primary');
     expect(await database.storeTransferRequests.count()).toBe(0);
     expect((await database.staffAudits.toArray()).some(row=>row.action==='store.transfer.requested')).toBe(false);
@@ -114,7 +114,7 @@ describe('store administration and benefit write authority (pending client run)'
       setActiveBusinessProfileId('company-two');
       return result;
     });
-    await expect(recordStoreStockObservation(first.id,product.id,4,'race count',database)).rejects.toThrow(/Company changed/i);
+    await expect(recordStoreStockObservation(first.id,product.id,4,'race count',database)).rejects.toThrow(/Company (or staff session )?changed/i);
     setActiveBusinessProfileId('primary');
     expect(await database.storeStockObservations.count()).toBe(0);
     expect((await database.staffAudits.toArray()).some(row=>row.action==='store.stock.observed')).toBe(false);
