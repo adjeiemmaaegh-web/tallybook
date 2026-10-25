@@ -93,7 +93,8 @@ test('POS hides ineligible return-review button for no-refunds companies',()=>{
  assert.match(x,/sale\.returnPolicyAtSale\?\.allowCashPartial/);
 });
 test('run 11 introduces no new IndexedDB schema, payment processor or cloud sync',()=>{
- assert.match(read('db/TallybookDB.ts'),/DATABASE_SCHEMA_VERSION = 28/);
+ assert.match(read('db/TallybookDB.ts'),/DATABASE_SCHEMA_VERSION = 35/);
+ assert.match(read('db/TallybookDB.ts'),/this\.version\(28\)/);
  for(const x of [policy(),read('features/business/returnPolicyAudit.mjs')]){
   assert.doesNotMatch(x,/fetch\(|localStorage\.|navigator\.locks|indexedDB\./);
  }

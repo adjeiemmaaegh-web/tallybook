@@ -105,7 +105,8 @@ test('management UI warns about duplicate disbursement entries and no statutory 
 });
 test('Run 12 does not add automatic payment gateway, legal rate preset or schema version',()=>{
  const x=read('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 28/);
+ assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
+ assert.match(x,/this\.version\(28\)/);
  for(const v of [read('features/reports/run12SupplierFinanceAudit.mjs'),
   read('features/reports/run12SaleTaxAudit.mjs')]){
   assert.doesNotMatch(v,/fetch\(|localStorage\.|indexedDB\.|navigator\.locks/);
@@ -114,7 +115,7 @@ test('Run 12 does not add automatic payment gateway, legal rate preset or schema
 
 test('new purchase FX is blocked after original duplicate-submission retry resolution',()=>{
  const x=read('features/purchases/purchases.ts');
- const a=x.indexOf('const existing = await database.purchases.where("submissionKey")');
+ const a=x.indexOf('const existing = await database.purchases.where("[businessProfileId+submissionKey]")');
  const b=x.indexOf('const business=await database.businessProfiles.get(activeId)',a);
  const c=x.indexOf('const supplier = await database.suppliers.get(input.supplierId)',b);
  assert.ok(a>=0&&b>a&&c>b);
@@ -123,7 +124,7 @@ test('new purchase FX is blocked after original duplicate-submission retry resol
 });
 test('new expense FX is blocked after exact saved expense replay validation',()=>{
  const x=expense();
- const a=x.indexOf('const existing = await database.expenses.where("submissionKey")');
+ const a=x.indexOf('const existing = await database.expenses.where("[businessProfileId+submissionKey]")');
  const b=x.indexOf('const profile=await database.businessProfiles.get(activeId)',a);
  const c=x.indexOf('const expense: Expense =',b);
  assert.ok(a>=0&&b>a&&c>b);

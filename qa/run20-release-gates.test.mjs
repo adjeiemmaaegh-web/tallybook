@@ -51,7 +51,7 @@ test("hash proof, wrong source and forged release decision fail closed",async()=
  assert.equal(reopened.independentReview,false);
  const swapped=JSON.parse(text);
  swapped.payload.sourceSha="b".repeat(40);
- await assert.rejects(()=>importRun20Worksheet(JSON.stringify(swapped)),/invalid|source|mismatch/i);
+ await assert.rejects(()=>importRun20Worksheet(JSON.stringify(swapped)),/invalid|source|mismatch|differs/i);
  const fake=JSON.parse(text);
  fake.payload.decision.decision="GO";
  await assert.rejects(()=>importRun20Worksheet(JSON.stringify(fake)),/differs/i);

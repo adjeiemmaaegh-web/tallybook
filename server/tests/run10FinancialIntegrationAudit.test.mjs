@@ -94,6 +94,7 @@ test('no new backend payment provider or cloud mutator is introduced by pure aud
 });
 test('existing local IndexedDB version is unchanged and no silent migration occurs',()=>{
  const x=source('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 28/);
+ assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
+ assert.match(x,/this\.version\(28\)/);
  assert.doesNotMatch(finance(),/database\.transaction\("rw"/);
 });

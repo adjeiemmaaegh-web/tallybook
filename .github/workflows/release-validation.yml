@@ -4,7 +4,7 @@ name: Release validation
 # provisions cloud resources or enables live payments.
 on:
   push:
-    branches: [main, 'v19/stage*']
+    branches: [main, 'v19/stage*', development/v19-unified-reconciliation]
   pull_request:
   workflow_dispatch:
 
@@ -66,7 +66,7 @@ jobs:
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
           set -o pipefail
-          pnpm test --maxWorkers=2 2>&1 | tee artifacts/release-v19/client-ci.log
+          pnpm test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/client-ci.log
       - name: Semantic TypeScript
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |

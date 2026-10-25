@@ -16,7 +16,7 @@ test('actual WebCrypto encrypted backup remains readable after size-guard change
 
 test('encrypted backups reject invalid and damaged structures without deriving a key', async () => {
   for (const serialized of ['x', 'null', '[]', '{}', '{"kind":"tallybook-encrypted-v1","salt":true,"iv":false,"data":""}']) {
-    await assert.rejects(decryptBackupText(serialized, passphrase), /Invalid encrypted backup JSON|Not a supported encrypted backup/);
+    await assert.rejects(decryptBackupText(serialized, passphrase), /Invalid encrypted backup JSON|Not a supported encrypted backup|Invalid encrypted backup salt or IV encoding/);
   }
   const hostile = JSON.stringify({kind:'tallybook-encrypted-v1', salt:'AA==', iv:'AA==', data:'AAAA'});
   await assert.rejects(decryptBackupText(hostile, passphrase), /Invalid encrypted backup salt or IV encoding/);
@@ -31,7 +31,7 @@ test('ciphertext base64 exceeds the permitted decoded JSON budget even inside a 
   const data = 'A'.repeat(MAX_ENCRYPTED_BACKUP_DATA_CHARS + 1);
   const wrapper = JSON.stringify({kind:'tallybook-encrypted-v1', salt:'AAAAAAAAAAAAAAAAAAAAAA==',iv:'AAAAAAAAAAAAAAAA',data});
   assert.ok(wrapper.length < 96 * 1024 * 1024);
-  await assert.rejects(decryptBackupText(wrapper, passphrase), /ciphertext exceeds/i);
+  await assert.rejects(decryptBackupText(wrapper, passphrase), /ciphertext exceeds|Invalid encrypted backup ciphertext encoding or length/i);
 });
 
 

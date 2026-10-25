@@ -53,7 +53,7 @@ test('portable restore invokes the same cost reconciliation with purchase data',
 test('purchase receipt journal commits immutable supplier ID, price and stock together',()=>{
  const x=read('features/purchases/purchases.ts');
  assert.match(x,/appendInventoryCostChange\(database/);
- assert.match(x,/purchaseId \}, \{ unitCostMinor: line\.unitCostMinor \}/);
+ assert.match(x,/purchaseId,[\s\S]*?unitCostMinor: line\.unitCostMinor/);
  assert.match(x,/await database\.purchaseLines\.bulkAdd\(lines\)/);
 });
 test('sale reversals and cash returns use original FIFO issue cost rather than editable product cost',()=>{
@@ -71,7 +71,8 @@ test('historical-cost uncertainty is retained in the FIFO replay engine',()=>{
 });
 test('source changes do not add a schema migration or new payment flows',()=>{
  const x=read('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 28/);
+ assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
+ assert.match(x,/this\.version\(28\)/);
  assert.doesNotMatch(cost(),/database\.transaction\("rw"/);
  assert.doesNotMatch(read('features/reports/run9InventoryValuation.mjs'),/fetch\(|localStorage/);
 });

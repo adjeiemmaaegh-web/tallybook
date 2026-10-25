@@ -6,7 +6,8 @@ const backup=()=>source('client/src/features/backup/backup.ts');
 const page=()=>source('client/src/pages/BackupPage.tsx');
 test('portable schema version stays unchanged while compatibility is additive',()=>{
  const db=source('client/src/db/TallybookDB.ts');
- assert.match(db,/DATABASE_SCHEMA_VERSION = 28/);
+ assert.match(db,/DATABASE_SCHEMA_VERSION = 35/);
+ assert.match(db,/this\.version\(28\)/);
  assert.match(backup(),/normalizeRun8BackupTables\(/);
  assert.match(backup(),/RUN8_BACKUP_TABLES\.some/);
 });

@@ -71,7 +71,9 @@ test('discount approval is bound to original cashier and revalidates both staff 
   const section=source.slice(source.indexOf('export async function approveCheckoutDiscount'),source.indexOf('export function consumeCheckoutDiscountApproval'));
   assert.match(section,/assertSupervisorApprovalFresh/);
   assert.match(section,/cashierId:active\.id/);
-  assert.match(source,/approval\.cashierId !== currentStaffId\(company\)/);
+  assert.match(source,/assertExactSupervisorApproval\(/);
+  assert.match(source,/cashierId:currentStaffId\(company\)|const cashierId=currentStaffId\(company\)/);
+  assert.match(source,/currentStaffId\(company\)!==cashier\.id/);
 });
 test('competing exclusive recovery prevents running an administrative write body',async()=>{
   let started=false;

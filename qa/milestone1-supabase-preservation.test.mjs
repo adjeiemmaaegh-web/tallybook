@@ -10,7 +10,8 @@ test("existing Supabase Google sign-in remains the default outside the opt-in pr
   const legacy = read("client/src/pages/GoogleSignInPage.tsx");
   assert.match(app, /isSupabaseAuthPreviewEnabled \? SupabaseSignInPage : GoogleSignInPage/);
   assert.match(legacy, /auth\.signInWithOAuth/);
-  assert.match(legacy, /onAuthStateChange/);
+  assert.match(legacy, /useRun4CloudSession/);
+  assert.match(read("client/src/auth/useRun4CloudSession.ts"), /onAuthStateChange/);
   assert.doesNotMatch(legacy, /tallybook\.google-auth\.v1/);
 });
 
@@ -29,22 +30,23 @@ test("prior Supabase session persistence, refreshing and OAuth detection are pre
 
 test("optional sign-in maintains session listener cleanup and safe redirect", () => {
   const page = read("client/src/pages/SupabaseSignInPage.tsx");
-  assert.match(page, /onAuthStateChange/);
-  assert.match(page, /subscription\.unsubscribe\(\)/);
-  assert.match(page, /auth\.signInWithOAuth/);
-  assert.match(page, /redirectTo: `\$\{window\.location\.origin\}\/signin`/);
+  assert.match(page, /GoogleSignInPage/);
+  assert.match(read("client/src/auth/useRun4CloudSession.ts"), /session\.stop\(\)/);
+  assert.match(read("client/src/pages/GoogleSignInPage.tsx"), /auth\.signInWithOAuth/);
+  assert.match(read("client/src/pages/GoogleSignInPage.tsx"), /redirectTo:`\$\{window\.location\.origin\}\/signin`/);
 });
 
 test("cloud authentication gate is staged without enabling bookkeeping sync", () => {
   const app = read("client/src/App.tsx");
   assert.match(app, /<AuthGate\b/);
-  assert.match(read("client/src/auth/AuthGate.tsx"), /VITE_TALLYBOOK_REQUIRE_AUTH === "true"/);
+  assert.match(read("client/src/auth/AuthGate.tsx"), /location!==['"]\/cloud-account['"]/);
+  assert.match(read("client/src/auth/AuthGate.tsx"), /useRun4CloudSession\(true,true\)/);
   const page = read("client/src/pages/SupabaseSignInPage.tsx");
   assert.doesNotMatch(page, /\.from\(/);
   assert.doesNotMatch(page, /supabase\.storage/);
 });
 
-test("Vercel automatic deployments are enabled for the connected project", () => {
+test("Vercel automatic deployments remain disabled pending release approval", () => {
   const config = JSON.parse(read("vercel.json"));
-  assert.equal(config.git.deploymentEnabled, true);
+  assert.equal(config.git.deploymentEnabled, false);
 });

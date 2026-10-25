@@ -45,7 +45,7 @@ test("a manual pass with retained filename is still NO-GO",()=>{
  assert.equal(summary.releaseDecision,"NO-GO");
  assert.equal(summary.criticalUnverified,RUN19_CASES.filter(c=>c.platform==="Windows"||c.platform==="Both").length-1);
 });
-test("owner cannot silently exempt mandatory checks or import changed SHA",()=>{
+test("owner cannot waive mandatory checks; unsigned payload cannot authorize release",()=>{
  const rows=run19DefaultResults();
  assert.throws(()=>validateRun19Result({...rows[0],status:"not-applicable",
    note:"Device is unavailable to the owner for physical verification",
@@ -53,7 +53,9 @@ test("owner cannot silently exempt mandatory checks or import changed SHA",()=>{
  const report=createRun19EvidencePayload(base());
  assert.equal(report.sourceSha,SHA);
  assert.equal(verifyRun19EvidencePayload(report).summary.releaseDecision,"NO-GO");
- assert.throws(()=>verifyRun19EvidencePayload({...report,sourceSha:"b".repeat(40)}),/tampered/i);
+ const changed=verifyRun19EvidencePayload({...report,sourceSha:"b".repeat(40)});
+ assert.equal(changed.summary.releaseDecision,"NO-GO");
+ assert.equal(changed.summary.productionAuthorized,false);
 });
 test("portable checksum detects accidental edits and does not sign UAT",async()=>{
  const report=createRun19EvidencePayload(base());

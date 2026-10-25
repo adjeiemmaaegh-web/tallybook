@@ -61,7 +61,7 @@ test('backup metadata receipt binds to exported file company and shared lock',()
  assert.match(s,/exportedCompanyId!==getActiveBusinessProfileId\(\)/);
  assert.match(s,/withCrossTabDataLock\('shared'/);
  const page=readFileSync(new URL('../../client/src/pages/BackupPage.tsx',import.meta.url),'utf8');
- assert.match(page,/recordBackupExportedAt\(backup\.createdAt,db,exportedCompanyId\)/);
+ assert.match(page,/recordBackupExportedAt\([\s\S]*?proof\.createdAt,db,proof\.companyId,proof\.sha256\)/);
 });
 test('recovery startup consumes the deterministic crash-state decision',()=>{
  const s=source('backup/restoreRecovery.ts');
