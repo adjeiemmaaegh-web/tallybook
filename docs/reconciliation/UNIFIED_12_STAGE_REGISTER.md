@@ -17,6 +17,6 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 | 11 | 2 | 0 | 3 | 0 | Focused company-isolation suite passes 15/15; wider audit open. |
 | 12 | 4 | 0 | 1 | 1 | Device, browser, operations and release acceptance open. |
 
-Current automated evidence: v28/v30 migration suite 6/6, v34 migration fixture 1/1, focused company isolation 15/15, TypeScript semantic check and client/server build. The first broad Vitest exploration was interrupted after source fixes changed the working tree; it is not a valid full-suite result. A fresh complete run is required. The production dependency audit found six advisories initially and zero after locked updates; runtime and full regression checks after the lock change remain required.
+Current automated evidence: focused migration and company isolation 22/22, purchase/isolation 25/25, Run9 cost reconciliation 12/12, backup and cost ledger 27/27, TypeScript semantic check, and release/offline Playwright 3/3 each on the earlier batch-merge tree. The last completed broad Vitest run reported 930 passing and 66 failing; many failures were subsequently repaired, but no completed full-suite rerun exists for commit `5616d24`. Native QA remains non-green on Windows. The production dependency audit found six advisories initially and zero after locked updates; a final complete regression gate remains required.
 
 **Release decision: NO-GO.** No deployment, live payment, or formal physical-device acceptance is authorized or claimed.
