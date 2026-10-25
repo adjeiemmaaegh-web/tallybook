@@ -359,10 +359,14 @@ describe("recording a sale", () => {
     expect(none.kind).toBe("error");
     expect(none.link?.href).toBe("/business");
     await addMobileMoneyProvider({ name: "MTN MoMo" }, database);
-    const preview = await assistant.send("Sell 1 crate of eggs to walk-in customer, paid momo");
+    const referenceQuestion = await assistant.send("Sell 1 crate of eggs to walk-in customer, paid momo");
+    expect(referenceQuestion.kind).toBe("question");
+    expect(referenceQuestion.text).toContain("transaction reference");
+    const preview = await assistant.send("MOMO-ASSISTANT-001");
     expect(preview.preview?.rows).toContainEqual({ label: "Provider", value: "MTN MoMo" });
+    expect(preview.preview?.rows).toContainEqual({ label: "Provider reference", value: "MOMO-ASSISTANT-001" });
     await assistant.act(chip(preview, "Confirm sale"));
-    expect((await database.payments.orderBy("createdAt").last())).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo" });
+    expect((await database.payments.orderBy("createdAt").last())).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo", mobileMoneyReference: "MOMO-ASSISTANT-001" });
   });
 
   it("warns that units are not stored, because 'crates' cannot be verified", async () => {

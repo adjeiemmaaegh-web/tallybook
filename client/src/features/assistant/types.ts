@@ -76,6 +76,7 @@ export interface ParsedEntities {
   paymentStatus?: "paid" | "unpaid";
   paymentConflict?: boolean;
   providerHint?: string;
+  mobileMoneyReference?: string;
   /** A money amount as a plain decimal string, e.g. "1200.50". */
   amount?: string;
   currency?: string;

@@ -20,7 +20,7 @@ import { canonicalUnit, displayMention, pluralUnit, tokenize } from "./text";
 import type { AssistantAction, AssistantReply, BatchItem, ParsedEntities, ReplyDetail, ResolvedCommand, TransactionPreviewView } from "./types";
 
 export type DraftIntent = "CUSTOMER_BALANCE" | "INVENTORY_QUERY" | "SUPPLIER_PURCHASES" | "RECORD_SALE" | "RECEIVE_STOCK" | "RECORD_CUSTOMER_PAYMENT" | "CREATE_CUSTOMER" | "CREATE_PRODUCT" | "CREATE_CATEGORY" | "CREATE_SUPPLIER" | "ADJUST_INVENTORY";
-export type Slot = "item" | "quantity" | "customer" | "payment" | "provider" | "supplier" | "cost" | "amount" | "method" | "product" | "name" | "phone" | "price" | "counted" | "category" | "duplicate" | "discount";
+export type Slot = "item" | "quantity" | "customer" | "payment" | "provider" | "mobileReference" | "supplier" | "cost" | "amount" | "method" | "product" | "name" | "phone" | "price" | "counted" | "category" | "duplicate" | "discount";
 
 export interface Draft {
   intent: DraftIntent;
@@ -193,18 +193,21 @@ async function advanceSale(draft: Draft, ctx: TransactionContext): Promise<Step>
       return ask(draft, "provider", question("Which Mobile Money provider was used?", [...options.map((option): AssistantAction => ({ type: "fill", label: option.label, slot: "provider", value: option.name, id: option.id })), { type: "cancel", label: "Cancel" }]), options);
     }
     draft.resolved.providerId = chosen.id; providerId = chosen.id; providerName = chosen.name;
+    if (!e.mobileMoneyReference)
+      return ask(draft, "mobileReference", question("What is the Mobile Money transaction reference from the provider? Enter 3–120 characters before reviewing this sale.", [{ type: "cancel", label: "Cancel" }]));
   }
 
   const outstanding = totalMinor - paidMinor;
   const paymentText = method === "credit" ? `On credit — nothing paid now; ${money(totalMinor, ctx)} will be added to ${customer!.name}'s balance`
     : outstanding > 0 ? `${paymentMethodLabel(method)} — ${money(paidMinor, ctx)} paid now, ${money(outstanding, ctx)} still owed by ${customer!.name}` : `${paymentMethodLabel(method)} — paid in full`;
   const notes = [unitNote(product, e.unit, quantity), e.priceMentioned ? `You mentioned a price (“${e.priceMentioned}”). I don't set prices — TallyBook's saved price of ${money(product.sellingPriceMinor, ctx)} is used.` : undefined].filter((note): note is string => Boolean(note));
-  const input: CompleteSaleInput = { lines: [{ productId: product.id, quantity }], customerId: customer?.id, discount: "0", paymentMethod: method, amountPaid: method === "credit" ? "0" : minorToInput(paidMinor, ctx), currency: ctx.currency, ...(providerId ? { mobileMoneyProviderId: providerId } : {}), submissionKey: draft.submissionKey };
+  const input: CompleteSaleInput = { lines: [{ productId: product.id, quantity }], customerId: customer?.id, discount: "0", paymentMethod: method, amountPaid: method === "credit" ? "0" : minorToInput(paidMinor, ctx), currency: ctx.currency, ...(providerId ? { mobileMoneyProviderId: providerId, mobileMoneyReference: e.mobileMoneyReference } : {}), submissionKey: draft.submissionKey };
   return buildPending(draft, ctx, "sale", "Sale preview — not saved yet", "Confirm sale", [
     { label: "Product", value: product.name }, { label: "Quantity", value: quantityText(quantity, e.unit) },
     { label: "Price", value: `${money(product.sellingPriceMinor, ctx)} each (from TallyBook)` }, { label: "Total", value: money(totalMinor, ctx) },
     { label: "Customer", value: customer?.name ?? "Walk-in customer" }, { label: "Payment", value: paymentText },
     ...(providerName ? [{ label: "Provider", value: providerName }] : []),
+    ...(e.mobileMoneyReference ? [{ label: "Provider reference", value: e.mobileMoneyReference }] : []),
   ], notes, { kind: "sale", input }, resolvedCommand(draft, {
     product: { text: e.productText ?? product.name, id: product.id, name: product.name }, quantity, unit: e.unit,
     customer: customer ? { text: e.customerText ?? customer.name, id: customer.id, name: customer.name } : { text: "walk-in customer", walkIn: true },

@@ -4,6 +4,10 @@ import { initializeDatabase, TallybookDB, DATABASE_SCHEMA_VERSION } from '@/db/T
 import { createProduct } from '@/features/inventory/inventory';
 import { createSupplier, completePurchase, archiveSupplier } from '@/features/purchases/purchases';
 import { getSupplierPayables, recognizeUnpaidPurchase, recordSupplierSettlement } from '@/features/purchases/supplierPayables.ts';
+import { saveBusinessProfile } from '@/features/business/businessProfile';
+import { createBackup, parseBackup, restoreBackup } from '@/features/backup/backup';
+import { getFinancialSummary } from '@/features/reports/financialIntelligence';
+import { createStaff, unlockStaff, openShift, lockStaff } from '@/features/staff/staff';
 
 const records: TallybookDB[] = [];
 let sequence = 0;
@@ -15,7 +19,7 @@ async function setup() {
   const purchase = await completePurchase({ supplierId:supplier.id,purchaseDate:'2026-10-09',lines:[{productId:product.id,quantity:'2',unitCost:'15'}],submissionKey:`purchase-fixture-${sequence}` },'GHS',database);
   return { database, product, supplier, purchase };
 }
-afterEach(async()=>{for(const database of records.splice(0)){const name=database.name;database.close();await new Dexie(name).delete();}});
+afterEach(async()=>{lockStaff('primary');for(const database of records.splice(0)){const name=database.name;database.close();await new Dexie(name).delete();}});
 describe('v27 explicitly recognized supplier payables',()=>{
   it('starts as unknown, then supports a partial manual payment and a credit',async()=>{
     const {database,purchase}=await setup();
@@ -62,6 +66,30 @@ describe('v27 explicitly recognized supplier payables',()=>{
     expect(current.verno).toBe(DATABASE_SCHEMA_VERSION);
     await expect(recognizeUnpaidPurchase(purchase.id,'legacy-recognition-001',current)).rejects.toThrow(/currency/);
     expect((await getSupplierPayables(current)).unknownPurchases).toBe(1);
+  });
+  it('round-trips recognized supplier payments through backup without double counting cash', async()=>{
+    const {database,purchase}=await setup();
+    await saveBusinessProfile({name:'Payable test shop',country:'Ghana',currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+    const owner=await createStaff('Payable backup owner','owner','123456',database);
+    await unlockStaff(owner.id,'123456',database);
+    await openShift(0,database);
+    await recognizeUnpaidPurchase(purchase.id,'recognize-backup-001',database);
+    const payment=await recordSupplierSettlement({purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:500,reference:'cash book 14',submissionKey:'payment-backup-001'},database);
+    const summary=await getFinancialSummary('year',new Date(),undefined,undefined,database);
+    expect(summary.supplierReconciliation?.periodPaymentsByCurrency).toEqual([{currency:'GHS',amountMinor:500}]);
+    expect(summary.collectionsMinor).toBe(0);
+    expect(summary.expensesMinor).toBe(0);
+    expect(summary.netRecordedCashMovementMinor).toBe(0);
+    const backup=parseBackup(JSON.stringify(await createBackup(database)));
+    expect(backup.records.supplierPayableEntries).toContainEqual(payment);
+    const altered=structuredClone(backup);
+    altered.records.supplierPayableEntries.find(entry=>entry.id===payment.id)!.currency='USD';
+    expect(()=>parseBackup(JSON.stringify(altered))).toThrow(/supplier payable/i);
+    await database.supplierPayableEntries.clear();
+    await restoreBackup(backup,database);
+    await unlockStaff(owner.id,'123456',database);
+    expect(await database.supplierPayableEntries.toArray()).toEqual(backup.records.supplierPayableEntries);
+    expect((await getSupplierPayables(database)).outstandingByCurrency).toEqual([{currency:'GHS',amountMinor:2500}]);
   });
 });
 

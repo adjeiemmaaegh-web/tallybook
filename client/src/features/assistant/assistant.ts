@@ -375,6 +375,12 @@ export function createAssistant(options: AssistantOptions): Assistant {
         if (!money.amount) return reAsk(target);
         e.amount = money.amount; if (money.currency.code) e.currency = money.currency.code; break;
       }
+      case "mobileReference": {
+        const reference = text.trim();
+        if (!/^[A-Za-z0-9][A-Za-z0-9 ._:/-]{2,119}$/.test(reference)) return reAsk(target);
+        e.mobileMoneyReference = reference;
+        break;
+      }
       case "name": {
         const person = target.intent === "CREATE_CUSTOMER" || target.intent === "CREATE_SUPPLIER";
         const answer = person ? parsePersonAnswer(text) : { name: parseNewNameAnswer(text), phone: undefined };

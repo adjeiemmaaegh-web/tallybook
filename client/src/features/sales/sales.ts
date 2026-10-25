@@ -14,6 +14,7 @@ import { calculateCheckoutLines } from "./checkoutMoney.mjs";
 import { checkedMinorSum, checkedCreditExposure, reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWriteCurrency } from "./creditLedger.mjs";
 import { requirePermission, consumeCheckoutDiscountApproval } from "@/features/staff/staff";
 import { requireSaleAttendant } from "./requireStaff.ts";
+import { assertUnusedMobileReference, normalizeMobileReference } from "./requireStaff.mjs";
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
@@ -331,11 +332,13 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if (input.paymentMethod === "credit" && input.amountPaid !== "0") throw new Error("Credit sales must record zero paid at completion.");
     if (input.paymentMethod !== "credit" && totalMinor > 0 && amountPaidMinor === 0) throw new Error("Record a payment amount or choose credit.");
     const mobileMoneyProviderId = input.mobileMoneyProviderId?.trim();
-    const mobileMoneyReference = input.mobileMoneyReference?.trim() || undefined;
-    if (input.paymentMethod !== "mobile" && (mobileMoneyProviderId || mobileMoneyReference)) throw new Error("Mobile Money provider details can only be saved with a Mobile Money payment.");
-    if (input.paymentMethod === "mobile" && amountPaidMinor > 0 && !mobileMoneyProviderId) throw new Error("Choose a Mobile Money provider before recording this payment.");
+    const mobileMoneyReference = normalizeMobileReference(input.paymentMethod, mobileMoneyProviderId, input.mobileMoneyReference);
     const mobileMoneyProvider = mobileMoneyProviderId ? await database.mobileMoneyProviders.get(mobileMoneyProviderId) : undefined;
     if (mobileMoneyProviderId && (!mobileMoneyProvider || mobileMoneyProvider.businessProfileId !== activeId || !mobileMoneyProvider.active)) throw new Error("Choose a saved Mobile Money provider before recording this payment.");
+    if (input.paymentMethod === "mobile") {
+      const providerPayments = await database.payments.where("businessProfileId").equals(activeId).toArray();
+      assertUnusedMobileReference(providerPayments, activeId, mobileMoneyProviderId!, mobileMoneyReference!);
+    }
 
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };

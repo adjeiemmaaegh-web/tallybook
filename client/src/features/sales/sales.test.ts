@@ -194,12 +194,25 @@ describe("atomic sales", () => {
     expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
   });
 
+  it("rejects a reused provider transaction reference without posting a second sale", async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const product = await createProductFixture(database, "Reference guarded stock", "3", "30.00");
+    const provider = await createMobileMoneyProviderFixture(database);
+    const request = { lines: [{ productId: product.id, quantity: 1 }], discount: "0", paymentMethod: "mobile" as const, amountPaid: "30.00", currency: "GHS", mobileMoneyProviderId: provider.id };
+    await completeSale({ ...request, mobileMoneyReference: "MOMO-REFERENCE-1", submissionKey: "mobile-reference-first" }, database);
+    await expect(completeSale({ ...request, mobileMoneyReference: "momo-reference-1", submissionKey: "mobile-reference-second" }, database)).rejects.toThrow(/already recorded/);
+    expect(await database.sales.count()).toBe(1);
+    expect(await database.payments.count()).toBe(1);
+    expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
+  });
+
   it("rejects a Mobile Money payment without a configured provider before creating records or changing stock", async () => {
     const database = makeDatabase();
     await initializeDatabase(database);
     const product = await createProductFixture(database, "Phone cover", "1", "15.00");
 
-    await expect(completeSale({ lines: [{ productId: product.id, quantity: 1 }], discount: "0", paymentMethod: "mobile", amountPaid: "15.00", currency: "GHS" }, database)).rejects.toThrow("Choose a Mobile Money provider");
+    await expect(completeSale({ lines: [{ productId: product.id, quantity: 1 }], discount: "0", paymentMethod: "mobile", amountPaid: "15.00", currency: "GHS" }, database)).rejects.toThrow("Select a saved Mobile Money provider.");
 
     expect(await database.sales.count()).toBe(0);
     expect(await database.payments.count()).toBe(0);

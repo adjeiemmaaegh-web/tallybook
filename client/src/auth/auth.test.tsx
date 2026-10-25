@@ -1,32 +1,48 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { AuthGate } from "./AuthGate";
 
-const mock = vi.hoisted(() => ({ getSession: vi.fn(), unsubscribe: vi.fn(), listener: null as null | ((event: string, session: unknown) => void) }));
-vi.mock("@/lib/supabase", () => ({ isSupabaseConfigured: true, getSupabaseClient: () => ({ auth: {
-  getSession: mock.getSession,
-  onAuthStateChange: (listener: typeof mock.listener) => { mock.listener = listener; return { data: { subscription: { unsubscribe: mock.unsubscribe } } }; },
-} }) }));
-const session = { user: { id: "owner-id" } };
-function mount(path = "/sales") {
-  const location = memoryLocation({ path });
-  const view = render(<Router hook={location.hook}><AuthGate enabled signIn={<p>Sign in here</p>}><p>Private ledger</p></AuthGate></Router>);
+// Run 4 confines cloud identity to /cloud-account. Local staff and company
+// authorization remain in the ledger services and have separate tests.
+const cloud = vi.hoisted(() => ({ status: "signed-out" as "signed-out" | "offline" | "error", calls: 0 }));
+vi.mock("./useRun4CloudSession", () => ({
+  useRun4CloudSession: () => {
+    cloud.calls += 1;
+    return { state: { status: cloud.status, userId: null, expiresAtEpochMs: null, generation: 0 }, retry: vi.fn(), signOut: vi.fn() };
+  },
+}));
+function mount(path: string) {
+  const location = memoryLocation({ path, record: true });
+  const view = render(<Router hook={location.hook}><AuthGate enabled signIn={<p>Sign in here</p>}><p>Ledger content</p></AuthGate></Router>);
   return { ...view, location };
 }
-beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); vi.spyOn(navigator, "onLine", "get").mockReturnValue(true); mock.getSession.mockResolvedValue({ data: { session: null }, error: null }); });
-afterEach(() => vi.restoreAllMocks());
-describe("authentication gate", () => {
-  it("redirects a signed-out deep link and never mounts the ledger", async () => { mount(); expect(screen.queryByText("Private ledger")).not.toBeInTheDocument(); expect(await screen.findByText("Sign in here")).toBeInTheDocument(); });
-  it("opens a signed-in session and redirects away from sign-in", async () => { mock.getSession.mockResolvedValue({data:{session},error:null}); mount("/signin"); expect(await screen.findByText("Private ledger")).toBeInTheDocument(); expect(screen.queryByText("Sign in here")).not.toBeInTheDocument(); });
-  it("reacts to sign-out without exposing the previous page", async () => { mock.getSession.mockResolvedValue({data:{session},error:null}); mount(); await screen.findByText("Private ledger"); act(()=>mock.listener!("SIGNED_OUT",null)); await screen.findByText("Sign in here"); expect(localStorage.getItem("tallybook.auth.offline-user.v1")).toBeNull(); });
-  it("cleans up its listener", async () => { const view=mount(); await screen.findByText("Sign in here"); view.unmount(); expect(mock.unsubscribe).toHaveBeenCalledOnce(); });
-  it("does not let a stale session lookup override a newer sign-out", async () => { let resolve!: (value: unknown)=>void; mock.getSession.mockReturnValue(new Promise(r=>resolve=r)); mount(); act(()=>mock.listener!("SIGNED_OUT",null)); await act(async()=>resolve({data:{session},error:null})); expect(await screen.findByText("Sign in here")).toBeInTheDocument(); });
-  it("does not expose local records from an unbound cached offline user marker", async () => { vi.spyOn(navigator,"onLine","get").mockReturnValue(false); localStorage.setItem("tallybook.auth.offline-user.v1","owner-id"); mock.getSession.mockRejectedValue(new Error("offline")); mount(); expect(await screen.findByRole("alert")).toHaveTextContent("could not check"); expect(screen.queryByText("Private ledger")).not.toBeInTheDocument(); });
-  it("rejects a cached Supabase session while offline and preserves local data", async () => { vi.spyOn(navigator,"onLine","get").mockReturnValue(false); localStorage.setItem("records-marker","retained"); mock.getSession.mockResolvedValue({data:{session},error:null}); mount(); expect(await screen.findByRole("alert")).toHaveTextContent("could not check"); expect(screen.queryByText("Private ledger")).not.toBeInTheDocument(); expect(localStorage.getItem("records-marker")).toBe("retained"); });
-  it("clears cached identity after an online session is absent", async () => { localStorage.setItem("tallybook.auth.offline-user.v1","owner-id"); mount(); await screen.findByText("Sign in here"); expect(localStorage.getItem("tallybook.auth.offline-user.v1")).toBeNull(); });
-  it("does not allow a new offline visitor into the ledger", async () => { vi.spyOn(navigator,"onLine","get").mockReturnValue(false); mount(); expect(await screen.findByText("Sign in here")).toBeInTheDocument(); });
-  it("fails closed on a session error while retaining local records", async () => { localStorage.setItem("records-marker","retained"); mock.getSession.mockRejectedValue(new Error("unavailable")); mount(); expect(await screen.findByRole("alert")).toHaveTextContent("could not check"); expect(localStorage.getItem("records-marker")).toBe("retained"); });
-  it("rejects cross-tab account marker replacement without trusted authorization", async () => { mock.getSession.mockResolvedValue({data:{session},error:null}); mount(); await screen.findByText("Private ledger"); act(()=>window.dispatchEvent(new StorageEvent("storage",{key:"tallybook.auth.offline-user.v1",newValue:"different-user"}))); await waitFor(()=>expect(screen.queryByText("Private ledger")).not.toBeInTheDocument()); });
+beforeEach(() => { cloud.status = "signed-out"; cloud.calls = 0; });
+afterEach(() => vi.clearAllMocks());
+describe("offline-first authentication boundary", () => {
+  it.each(["/", "/sales", "/inventory", "/reports", "/backup"])("keeps %s available without invoking cloud identity", path => {
+    mount(path);
+    expect(screen.getByText("Ledger content")).toBeInTheDocument();
+    expect(cloud.calls).toBe(0);
+  });
+  it("withholds cloud content from a signed-out visitor", () => {
+    const { location } = mount("/cloud-account");
+    expect(location.history.at(-1)).toBe("/signin");
+    expect(cloud.calls).toBe(1);
+  });
+  it("withholds cloud content offline while directing users to their local business", () => {
+    cloud.status = "offline";
+    mount("/cloud-account");
+    expect(screen.queryByText("Ledger content")).not.toBeInTheDocument();
+    expect(screen.getByText(/local Tallybook business remains available/)).toBeInTheDocument();
+  });
+  it("fails closed on a cloud verification error without erasing local data", () => {
+    cloud.status = "error";
+    localStorage.setItem("records-marker", "retained");
+    mount("/cloud-account");
+    expect(screen.queryByText("Ledger content")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("No cloud membership has been granted");
+    expect(localStorage.getItem("records-marker")).toBe("retained");
+  });
 });

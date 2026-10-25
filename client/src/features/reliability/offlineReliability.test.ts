@@ -30,7 +30,7 @@ describe("Stage 8 offline reliability", () => {
     const product = await productFixture(first, "Offline soap");
     const customer = await createCustomer({ name: "Offline Customer", phone: "+233 20 111 9000", email: "", address: "", notes: "", status: "active" }, first);
     const provider = await addMobileMoneyProvider({ name: "Offline MoMo" }, first);
-    const sale = await completeSale({ lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id, discount: "0", paymentMethod: "mobile", amountPaid: "4.00", currency: "GHS", mobileMoneyProviderId: provider.id, submissionKey: "offline-reopen-sale" }, first);
+    const sale = await completeSale({ lines: [{ productId: product.id, quantity: 1 }], customerId: customer.id, discount: "0", paymentMethod: "mobile", amountPaid: "4.00", currency: "GHS", mobileMoneyProviderId: provider.id, mobileMoneyReference: "OFFLINE-REOPEN-001", submissionKey: "offline-reopen-sale" }, first);
     await recordRepayment({ customerId: customer.id, amount: "3.00", method: "cash", currency: "GHS", submissionKey: "offline-reopen-repayment" }, first);
     first.close();
     const reopened = database(name);

@@ -18,6 +18,7 @@ import { exportProductCatalogCsv, importProductCatalogCsv, type StockCountPrevie
 import { saveStockCountSession, updateStockCountSession, postSavedStockCount, type StockCountSession } from "@/features/inventory/stage2Inventory";
 import { db } from "@/db/TallybookDB";
 import type { StoreLocation } from "@/features/stores/storeDirectory";
+import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { adjustStock, archiveProduct, categoryFormSchema, createCategory, createProduct, formatMinorAmount, getInventorySnapshot, isLowStock, productFormSchema, stockAdjustmentSchema, type CategoryFormValues, type InventoryMovement, type InventorySnapshot, type Product, type ProductFormValues, type StockAdjustmentValues, updateProduct } from "@/features/inventory/inventory";
 
 const emptySnapshot: InventorySnapshot = { categories: [], products: [], archivedProducts: [], movements: [] };
@@ -65,8 +66,12 @@ export default function InventoryPage() {
 
   const refresh = useCallback(async () => {
     if (databaseStatus !== "ready") return;
+    const requestedCompany = activeCompanyId;
     setLoading(true);
-    try { setSnapshot(await getInventorySnapshot()); }
+    try {
+      const result = await getInventorySnapshot();
+      if (requestedCompany === getActiveBusinessProfileId()) setSnapshot(result);
+    }
     catch (error) { toast.error(error instanceof Error ? error.message : "We could not read your stock records."); }
     finally { setLoading(false); }
   }, [databaseStatus, activeCompanyId]);
@@ -74,6 +79,8 @@ export default function InventoryPage() {
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
     setSnapshot(emptySnapshot);
+    setStockCount(null);
+    setPostingCount(false);
     setShowArchived(false);
     setRecentlyArchivedProduct(null);
     setProductDialogOpen(false);
@@ -112,11 +119,15 @@ export default function InventoryPage() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const beginStockCount = async () => {
-    try { setStockCount(await saveStockCountSession(snapshot.products.filter(p => p.itemKind !== "service").map(p => p.id))); }
+    const requestedCompany = activeCompanyId;
+    try {
+      const session = await saveStockCountSession(snapshot.products.filter(p => p.itemKind !== "service").map(p => p.id));
+      if (requestedCompany === getActiveBusinessProfileId() && session.businessProfileId === requestedCompany) setStockCount(session);
+    }
     catch (error) { toast.error(error instanceof Error ? error.message : "Unable to start stock count."); }
   };
   const commitStockCount = async () => {
-    if (!stockCount || postingCount) return;
+    if (!stockCount || postingCount || stockCount.businessProfileId !== activeCompanyId || stockCount.businessProfileId !== getActiveBusinessProfileId()) return;
     setPostingCount(true);
     try { await updateStockCountSession(stockCount.id, Object.fromEntries(stockCount.lines.map(line => [line.productId, line.countedQuantity]))); const changes = await postSavedStockCount(stockCount.id); setStockCount(null); toast.success(`${changes.length} stock corrections recorded.`); await refresh(); }
     catch (error) { toast.error(error instanceof Error ? error.message : "Stock count was not posted."); }
@@ -124,11 +135,13 @@ export default function InventoryPage() {
   };
 
   const resumeStockCount = async () => {
+    const requestedCompany = activeCompanyId;
     try {
-      const sessions = await db.stockCountSessions.where("businessProfileId").equals(activeCompanyId).toArray();
+      const sessions = await db.stockCountSessions.where("businessProfileId").equals(requestedCompany).toArray();
+      if (requestedCompany !== getActiveBusinessProfileId()) return;
       const draft = sessions.filter(session => session.status === "draft").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
       if (!draft) { toast.info("No saved draft stock count."); return; }
-      setStockCount(draft);
+      if (draft.businessProfileId === requestedCompany && draft.companyId === requestedCompany) setStockCount(draft);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to resume stock count."); }
   };
   const importCsv = async (file: File | undefined) => {
@@ -256,7 +269,7 @@ export default function InventoryPage() {
 
     <section className="inventory-history" aria-labelledby="history-title"><div className="inventory-history-head"><div><p className="ledger-kicker">Inventory history</p><h2 id="history-title">Every count leaves a line.</h2></div><span className="workspace-marker">MOV</span></div>{snapshot.movements.length ? <div className="movement-list">{snapshot.movements.slice(0, 8).map((movement) => { const product = [...snapshot.products, ...snapshot.archivedProducts].find((item) => item.id === movement.productId); return <div className="movement-row" key={movement.id}><span className={`movement-token movement-${movement.movementType}`}>{movement.movementType === "decrease" ? <Minus className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-3.5 w-3.5" aria-hidden="true" />}</span><div><strong>{product?.name ?? "Archived product"}</strong><p>{movementVerb(movement.movementType)} · {quantityLabel(movement)}{movement.note ? ` · ${movement.note}` : ""}</p></div><time>{new Date(movement.createdAt).toLocaleDateString()}</time></div>; })}</div> : <p className="inventory-history-empty">Opening stock movements will appear here as products are added.</p>}</section>
 
-    <Dialog open={Boolean(stockCount)} onOpenChange={(open) => { if (!open && !postingCount) setStockCount(null); }}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>Physical stock count</DialogTitle><DialogDescription>Review quantities before posting. If any stock changes after this count begins, posting is rejected so no sale is overwritten.</DialogDescription></DialogHeader><div className="space-y-3">{stockCount?.lines.map((line, index) => { const product = snapshot.products.find(p => p.id === line.productId); return <label key={line.productId} className="flex items-center justify-between gap-3"><span>{product?.name ?? "Product"} (expected {line.expectedQuantity})</span><Input aria-label={`Counted quantity for ${product?.name ?? line.productId}`} className="w-28" inputMode="numeric" type="number" min={0} step={1} value={line.countedQuantity} onChange={(event) => setStockCount(prev => prev ? { ...prev, lines: prev.lines.map((item, i) => i === index ? { ...item, countedQuantity: Number(event.target.value) } : item) } : prev)} /></label>; })}</div><div className="inventory-form-footer"><button type="button" className="secondary-action" disabled={postingCount} onClick={() => setStockCount(null)}>Cancel</button><button type="button" className="primary-action" disabled={postingCount} onClick={() => void commitStockCount()}>Post reviewed count</button></div></DialogContent></Dialog>
+    <Dialog open={Boolean(stockCount && stockCount.businessProfileId === activeCompanyId)} onOpenChange={(open) => { if (!open && !postingCount) setStockCount(null); }}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>Physical stock count</DialogTitle><DialogDescription>Review quantities before posting. If any stock changes after this count begins, posting is rejected so no sale is overwritten.</DialogDescription></DialogHeader><div className="space-y-3">{stockCount?.lines.map((line, index) => { const product = snapshot.products.find(p => p.id === line.productId); return <label key={line.productId} className="flex items-center justify-between gap-3"><span>{product?.name ?? "Product"} (expected {line.expectedQuantity})</span><Input aria-label={`Counted quantity for ${product?.name ?? line.productId}`} className="w-28" inputMode="numeric" type="number" min={0} step={1} value={line.countedQuantity} onChange={(event) => setStockCount(prev => prev?.businessProfileId === activeCompanyId ? { ...prev, lines: prev.lines.map((item, i) => i === index ? { ...item, countedQuantity: Number(event.target.value) } : item) } : prev)} /></label>; })}</div><div className="inventory-form-footer"><button type="button" className="secondary-action" disabled={postingCount} onClick={() => setStockCount(null)}>Cancel</button><button type="button" className="primary-action" disabled={postingCount || stockCount?.businessProfileId !== activeCompanyId} onClick={() => void commitStockCount()}>Post reviewed count</button></div></DialogContent></Dialog>
 
     <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}><DialogContent className="inventory-dialog max-h-[92dvh] overflow-y-auto"><DialogHeader><DialogTitle>{editingProduct ? `Edit ${editingProduct.name}` : "Add a product"}</DialogTitle><DialogDescription>{editingProduct ? "Update the product details. Use Adjust stock to preserve count history." : "The opening quantity will create the first movement in this product’s stock history."}</DialogDescription></DialogHeader><Form {...productForm}><form className="inventory-form" onSubmit={submitProduct} noValidate>{storeMode&&!editingProduct?<label>Opening stock store<select className="block w-full rounded border p-3" value={newProductStoreId} onChange={e=>setNewProductStoreId(e.target.value)}><option value="">Choose store for positive opening quantity</option>{companyStores.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>:null}<FormField control={productForm.control} name="name" render={({ field }) => <FormItem><FormLabel>Product name</FormLabel><FormControl><Input placeholder="For example, Laundry soap" {...field} /></FormControl><FormMessage /></FormItem>} /><div className="inventory-form-two"><FormField control={productForm.control} name="categoryId" render={({ field }) => <FormItem><FormLabel>Category</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="uncategorized">Uncategorized</SelectItem>{snapshot.categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} /><FormField control={productForm.control} name="sku" render={({ field }) => <FormItem><FormLabel>Reference <em>Optional</em></FormLabel><FormControl><Input placeholder="For example, SOAP-1" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="barcode" render={({ field }) => <FormItem><FormLabel>Barcode <em>Optional</em></FormLabel><FormControl><Input placeholder="Scan or type barcode" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="sellingPrice" render={({ field }) => <FormItem><FormLabel>Selling price ({currency})</FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="costPrice" render={({ field }) => <FormItem><FormLabel>Cost price <em>Optional</em></FormLabel><FormControl><Input inputMode="decimal" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-two"><FormField control={productForm.control} name="initialStock" render={({ field }) => <FormItem><FormLabel>{editingProduct ? "Current stock" : "Opening stock"}</FormLabel><FormControl><Input inputMode="numeric" disabled={Boolean(editingProduct)} {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={productForm.control} name="lowStockThreshold" render={({ field }) => <FormItem><FormLabel>Low-stock level</FormLabel><FormControl><Input inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>} /></div><div className="inventory-form-footer"><span><Tag className="h-4 w-4 text-baobab" aria-hidden="true" />Stock changes are recorded separately.</span><button className="primary-action" type="submit" disabled={productForm.formState.isSubmitting}><Save className="h-4 w-4" aria-hidden="true" />{editingProduct ? "Save product" : "Add product"}</button></div></form></Form></DialogContent></Dialog>
 

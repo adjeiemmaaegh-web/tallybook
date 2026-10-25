@@ -20,6 +20,10 @@ The Master ZIP passed CRC validation. Its 994 source/documentation files were SH
 
 No deployment, live payment processing, or external service configuration has been performed.
 
+## 2026-10-25 final source-integration increment
+
+All 20 overlapping Master/GitHub paths now have recorded semantic resolutions in `SOURCE_RESOLUTION_REGISTER.md`. Lost Master mobile-payment reference uniqueness, company-switch inventory guards, manual-batch quantity and supplier-payment recovery assertions were restored while retaining the later stage22 finance, store, recovery and staff controls. The obsolete global-cloud authentication test now checks the current cloud-route-only boundary. Complete client Vitest passed 995/995 in 124 files with a serialized direct run and 60-second harness timeouts; TypeScript, production build, release/offline Playwright (3/3 each), and production dependency audit (zero advisories) also passed. The earlier full runs that failed under host contention remain in evidence. Native Windows Node tests completed at 746 pass, 62 fail, 1 skip; their failures include POSIX file-path/mode assumptions and older source-contract expectations and are not counted as a passing gate. Historical migration fixtures and operational acceptance do not cover every real customer history or physical device. Production remains NO-GO and no integration PR is opened.
+
 ## 2026-10-25 continuation increment
 
 - Branch `development/v19-unified-reconciliation` created from verified stage22 commit and pushed. GitHub main and existing branches were not changed.

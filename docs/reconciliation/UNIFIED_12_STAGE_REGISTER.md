@@ -8,7 +8,7 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 | 2 | 7 | 0 | 0 | 0 | Historical batch/cost evidence still needs broader reconciliation. |
 | 3 | 6 | 0 | 1 | 0 | Financial conservation and tax acceptance open. |
 | 4 | 7 | 0 | 0 | 0 | Customer credit, wallet, and refund policies need full regression. |
-| 5 | 3 | 1 | 1 | 0 | Assistant suite has current failures; acceptance is not inferred. |
+| 5 | 3 | 1 | 1 | 0 | Assistant regression suite passes; formal acceptance is not inferred. |
 | 6 | 6 | 0 | 0 | 0 | Recovery/backup tests and physical restart evidence open. |
 | 7 | 6 | 0 | 0 | 0 | Supplier liability and settlement checks open. |
 | 8 | 5 | 0 | 4 | 0 | Cloud remains development-only and disabled for production. |
@@ -17,6 +17,6 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 | 11 | 2 | 0 | 3 | 0 | Focused company-isolation suite passes 15/15; wider audit open. |
 | 12 | 4 | 0 | 1 | 1 | Device, browser, operations and release acceptance open. |
 
-Current automated evidence: focused migration and company isolation 22/22, purchase/isolation 25/25, Run9 cost reconciliation 12/12, backup and cost ledger 27/27, TypeScript semantic check, and release/offline Playwright 3/3 each on the earlier batch-merge tree. The last completed broad Vitest run reported 930 passing and 66 failing; many failures were subsequently repaired, but no completed full-suite rerun exists for commit `5616d24`. Native QA remains non-green on Windows. The production dependency audit found six advisories initially and zero after locked updates; a final complete regression gate remains required.
+Current automated evidence: complete client Vitest 995/995 across 124 files, TypeScript semantic check, production build, release/offline Playwright 3/3 each, and zero production dependency advisories. Native Node remains non-green on Windows (746 passed, 62 failed, 1 skipped). These automated results do not change the 82 acceptance-unit statuses without the required operational evidence.
 
 **Release decision: NO-GO.** No deployment, live payment, or formal physical-device acceptance is authorized or claimed.

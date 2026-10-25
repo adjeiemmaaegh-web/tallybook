@@ -1,0 +1,664 @@
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > if the log can't be written, the sale is still saved and the owner still sees success
+Tallybook Assistant: could not write the activity log. Error: disk full
+    at Table.kit.database.assistantAudit.add (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.test.ts:100:82)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.ts:67:37)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:4733:39
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:788:19
+    at usePSD (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1142:18)
+    at newScope (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1044:16)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:776:22
+    at executePromiseTask (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:835:11)
+    at new DexiePromise (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:644:7)
+    at DexiePromise.follow (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:775:18)
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Tallybook Assistant: could not write the activity log. [DexieError [DatabaseClosedError]: DatabaseClosedError Database has been closed] {
+  inner: [DexieError [DatabaseClosedError]: Database has been closed] {
+    inner: null
+  }
+}
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > invalidates a prepared financial confirmation on company switch
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/audit.test.ts > assistant audit atomic log retention > rolls back a newly appended activity when retention pruning fails
+Tallybook Assistant: could not write the activity log. Error: simulated prune failure
+    at Table.database.assistantAudit.bulkDelete (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.test.ts:255:85)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.ts:70:58)
+
+stderr | src/features/assistant/assistant.test.ts > confirmation safety > refuses to save if the owner switched company after the preview
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/batch.test.ts > what happens when saving goes wrong halfway > does not save into another business if the owner switched before confirming
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > never exposes another company's records
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1792921808597-5'. Closing db now to resume the delete request.
+
+···························································x····················································x········································································xxxxxxx···········································································································································································································································································································································x····································································x··········································································stdout | src/features/assistant/eval/parser.eval.test.ts > assistant parser evaluation harness > reports a deterministic baseline and has no dangerous transaction classifications
+┌─────────┐
+│ (index) │
+├─────────┤
+└─────────┘
+Evaluation Summary
+------------------
+Total cases: 252
+Counted cases: 242
+Known gaps: 10
+Correct: 242
+Incorrect: 0
+Accuracy: 100.00%
+Entity cases: 10
+Entity correct: 10
+Entity accuracy: 100.00%
+Dangerous classifications: 0
+
+········································································································································································································································································································································
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/assistant/assistant.test.ts > recording a sale > handles mobile money using the owner's own configured provider
+AssertionError: expected undefined to match object { method: 'mobile', …(1) }
+
+- Expected:
+{
+  "method": "mobile",
+  "mobileMoneyProviderName": "MTN MoMo",
+}
+
++ Received:
+undefined
+
+ ❯ src/features/assistant/assistant.test.ts:365:67
+    363|     expect(preview.preview?.rows).toContainEqual({ label: "Provider", …
+    364|     await assistant.act(chip(preview, "Confirm sale"));
+    365|     expect((await database.payments.orderBy("createdAt").last())).toMa…
+       |                                                                   ^
+    366|   });
+    367|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > offers choices for a bare name rather than guessing an action
+ FAIL  src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > says it does not support unrelated or unsafe requests, and touches nothing
+Error: Hook timed out in 15000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/features/assistant/assistant.test.ts:63:1
+     61| }
+     62|
+     63| beforeEach(async () => {
+       | ^
+     64|   setActiveBusinessProfileId("primary");
+     65|   database = new TallybookDB(`tallybook-assistant-test-${Date.now()}-$…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/assistant/audit.test.ts:108:3
+    106|   });
+    107|
+    108|   it("keeps only the newest entries per company", async () => {
+       |   ^
+    109|     for (let index = 0; index < MAX_AUDIT_ENTRIES_PER_COMPANY + 3; ind…
+    110|       await recordAudit(kit.database, { businessProfileId: "primary", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > stays fast and bounded for repeated long inputs
+AssertionError: expected 4330 to be less than 1500
+ ❯ src/features/assistant/languageUnderstanding.test.ts:64:21
+     62|     const elapsed = Date.now() - started;
+     63|     expect(input.length).toBeGreaterThan(300);
+     64|     expect(elapsed).toBeLessThan(1500);
+       |                     ^
+     65|   });
+     66| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/features/business/companyIsolation.integration.test.ts > keeps actual Dexie customer, sale, inventory, supplier, expense, and staff reads inside the selected company
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/business/companyIsolation.integration.test.ts:109:1
+    107| });
+    108|
+    109| it("keeps actual Dexie customer, sale, inventory, supplier, expense, a…
+       | ^
+    110|   const database = makeDatabase();
+    111|   await seedCompanies(database);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/features/business/companyIsolation.integration.test.ts > rejects foreign-company product, customer, supplier, repayment, stock, refund, and customer mutations without writes
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/business/companyIsolation.integration.test.ts:177:1
+    175| });
+    176|
+    177| it("rejects foreign-company product, customer, supplier, repayment, st…
+       | ^
+    178|   const database = makeDatabase();
+    179|   await seedCompanies(database);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/features/credit/credit.test.ts > customer debt ledger > keeps a historical sale currency unknown and refuses guessed-currency collections
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/credit/credit.test.ts:117:3
+    115|   });
+    116|
+    117|   it("keeps a historical sale currency unknown and refuses guessed-cur…
+       |   ^
+    118|     const database = makeDatabase();
+    119|     const {customer,sale} = await creditSale(database,"Unknown Histori…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > never substitutes today's product cost for an unknown legacy opening
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/inventory/costLedger.test.ts:108:3
+    106|     await expect(getFinancialSummary("today",new Date(),undefined,unde…
+    107|   });
+    108|   it("never substitutes today's product cost for an unknown legacy ope…
+       |   ^
+    109|     const { db, product } = await setup();
+    110|     await db.inventoryCostEvents.clear(); // A v25 balance, with no hi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/features/inventory/costLedger.test.ts > persisted inventory cost history > rolls allocations, sale records and stock back together after a late receipt-write failure
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/features/inventory/costLedger.test.ts:122:3
+    120|     expect(reconstructInventoryCost(events, "primary", product.id, "20…
+    121|   });
+    122|   it("rolls allocations, sale records and stock back together after a …
+       |   ^
+    123|     const { db, product } = await setup();
+    124|     const initial = await db.inventoryCostEvents.toArray();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > preserves business, product, customer, sale, receipt, repayment, dashboard, and reports after a local close/reopen
+Error: Enter the Mobile Money transaction reference (3–120 characters).
+ ❯ normalizeMobileReference src/features/sales/requireStaff.mjs:19:11
+     17|   if (typeof providerId !== 'string' || !providerId.trim()) throw new …
+     18|   if (typeof value !== 'string' || !REFERENCE.test(value.trim()))
+     19|     throw new Error('Enter the Mobile Money transaction reference (3–1…
+       |           ^
+     20|   return value.trim();
+     21| }
+ ❯ Transaction.<anonymous> src/features/sales/sales.ts:335:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+
+ Test Files  7 failed | 117 passed (124)
+      Tests  11 failed | 984 passed (995)
+   Start at  13:43:40
+   Duration  632.56s (transform 37.47s, setup 254.66s, import 226.53s, tests 1403.63s, environment 529.01s)
+

@@ -51,6 +51,7 @@ export async function setCatalogueOptions(productId: string, options: CatalogueO
       if (options.baseUnit && options.baseUnit.length > 32) throw new Error("Base unit is too long.");
       validateImage(options.imageDataUrl);
       const updated = { ...product, ...options, updatedAt: new Date().toISOString() };
+      assertCompanyScope(company, getActiveBusinessProfileId());
       await database.products.put(updated);
       assertCompanyScope(company, getActiveBusinessProfileId());
       return updated;
@@ -68,7 +69,9 @@ export async function saveStockCountSession(productIds: string[], database: Tall
       await requirePermission("inventory", database, preview.companyId);
       const existing = await database.stockCountSessions.where("businessProfileId").equals(preview.companyId).toArray();
       if (existing.some(item => item.status === "draft")) throw new Error("Resume or complete your saved stock count before starting another.");
+      assertCompanyScope(preview.companyId, getActiveBusinessProfileId());
       await database.stockCountSessions.add(session);
+      assertCompanyScope(preview.companyId, getActiveBusinessProfileId());
     });
     return session;
   });
@@ -83,7 +86,9 @@ export async function updateStockCountSession(id: string, counts: Record<string,
       if (!session || session.companyId !== company || session.status !== "draft") throw new Error("Stock count cannot be edited.");
       for (const [key, value] of Object.entries(counts)) if (!session.lines.some(l => l.productId === key) || !whole(value)) throw new Error("Invalid stock-count line.");
       const updated = { ...session, lines: session.lines.map(l => counts[l.productId] === undefined ? l : { ...l, countedQuantity: counts[l.productId] }), updatedAt: new Date().toISOString() };
+      assertCompanyScope(company, getActiveBusinessProfileId());
       await database.stockCountSessions.put(updated);
+      assertCompanyScope(company, getActiveBusinessProfileId());
       return updated;
     });
   });
@@ -99,7 +104,9 @@ export async function postSavedStockCount(id: string, database: TallybookDB = db
       if((await database.commerceHolds.where("businessProfileId").equals(company).toArray()).some(h=>h.status==="active"&&Date.parse(h.expiresAt)>Date.now()))
         throw new Error("Active customer reservations must be fulfilled or released before stock count posting.");
       const result = await postStockCount(session, database);
+      assertCompanyScope(company, getActiveBusinessProfileId());
       await database.stockCountSessions.put({ ...session, status: "posted", postedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      assertCompanyScope(company, getActiveBusinessProfileId());
       return result;
     });
   });
@@ -119,7 +126,8 @@ export async function registerBatch(productId: string, batchCode: string, quanti
       const batches = await database.inventoryBatches.where("productId").equals(productId).toArray();
       if (batches.some(b => b.businessProfileId === company && normalizeProductCode(b.batchCode) === normalizeProductCode(batchCode))) throw new Error("Batch code already exists for this product.");
       if (batches.filter(b => b.businessProfileId === company).reduce((sum, b) => sum + b.quantity, 0) + quantity > product.stockQuantity) throw new Error("Tracked batch quantities cannot exceed physical stock. Receive stock before registering a batch.");
-      const record: InventoryBatch = { id: nanoid(16), businessProfileId: company, productId, batchCode: batchCode.trim(), quantity, expiryDate, createdAt: new Date().toISOString() };
+      const record: InventoryBatch = { id: nanoid(16), businessProfileId: company, productId, batchCode: batchCode.trim(), quantity, startingQuantity: quantity, expiryDate, createdAt: new Date().toISOString() };
+      assertCompanyScope(company, getActiveBusinessProfileId());
       await database.inventoryBatches.add(record);
       assertCompanyScope(company, getActiveBusinessProfileId());
       return record;

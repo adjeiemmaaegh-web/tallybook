@@ -21,6 +21,7 @@ export async function prepareStockCount(productIds: string[], database: Tallyboo
     if (!product || product.businessProfileId !== companyId || product.archivedAt) throw new Error("A selected product is not active in this business.");
     return { productId: productIds[index], expectedQuantity: product.stockQuantity, countedQuantity: product.stockQuantity };
   });
+  assertCompanyScope(companyId, getActiveBusinessProfileId());
   return { companyId, lines, createdAt: new Date().toISOString() };
 }
 
@@ -54,6 +55,7 @@ export async function postStockCount(preview: StockCountPreview, database: Tally
         movements.push({ id: nanoid(14), businessProfileId: companyId, productId: product.id, movementType: "correction", quantityDelta: line.countedQuantity - line.expectedQuantity, previousQuantity: line.expectedQuantity, resultingQuantity: line.countedQuantity, note, createdAt: now });
       }
       for (const movement of movements) await appendInventoryCostChange(database, products.find(p => p?.id === movement.productId)!, movement.quantityDelta, { sourceId: movement.id, createdAt: now });
+      assertCompanyScope(companyId, getActiveBusinessProfileId());
       if (updates.length) await database.products.bulkPut(updates);
       if (movements.length) await database.inventoryMovements.bulkAdd(movements);
       if (actor && movements.length) await database.staffAudits.add({ id: nanoid(14), businessProfileId: companyId, staffId: actor.id, action: "inventory.count.posted", createdAt: now, details: movements.map(m => m.id).join(",") });
@@ -119,6 +121,7 @@ export async function importProductCatalogCsv(csv: string, database: TallybookDB
         products.push({ id, businessProfileId: companyId, name: row.name, normalizedName, sku: row.sku || undefined, barcode: row.barcode || undefined, categoryId: row.categoryId || undefined, sellingPriceMinor: Number(row.sellingPriceMinor), costPriceMinor: row.costPriceMinor ? Number(row.costPriceMinor) : undefined, stockQuantity, lowStockThreshold: Number(row.lowStockThreshold), createdAt: now, updatedAt: now });
         if (stockQuantity) movements.push({ id: nanoid(14), businessProfileId: companyId, productId: id, movementType: "initial", quantityDelta: stockQuantity, previousQuantity: 0, resultingQuantity: stockQuantity, note: "Initial quantity from reviewed CSV import", createdAt: now });
       }
+      assertCompanyScope(companyId, getActiveBusinessProfileId());
       await database.products.bulkAdd(products);
       for (const product of products) await appendInventoryCostChange(database, product, product.stockQuantity, { sourceId: movements.find(m => m.productId === product.id)?.id ?? `opening:${product.id}`, createdAt: now }, { opening: true, unitCostMinor: product.costPriceMinor });
       if (movements.length) await database.inventoryMovements.bulkAdd(movements);
