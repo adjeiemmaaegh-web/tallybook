@@ -17,6 +17,8 @@ import { completePurchase, createSupplier } from "@/features/purchases/purchases
 import { getReportsSnapshot } from "@/features/reports/reports";
 import { completeSale } from "@/features/sales/sales";
 import { createAssistant, type Assistant } from "./assistant";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
+import { updateCompanyReturnPolicy } from "@/features/business/returnPolicySettings";
 import type { AssistantAction, AssistantReply } from "./index";
 
 const names = new Set<string>();
@@ -41,6 +43,10 @@ async function stock(id: string) { return (await database.products.get(id))!.sto
 
 async function seed(target: TallybookDB) {
   await saveBusinessProfile({ name: "Test Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, target);
+  const owner = await createStaff("Assistant test owner", "owner", "123456", target);
+  await unlockStaff(owner.id, "123456", target);
+  await openShift(0, target);
+  await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable assistant test returns", target);
   const product = (name: string, price: string, stockQuantity: string, cost = "") => createProduct({ name, sku: "", categoryId: "uncategorized", sellingPrice: price, costPrice: cost, initialStock: stockQuantity, lowStockThreshold: "5" }, "GHS", target);
   const eggs = await product("Eggs", "60.00", "37", "45.00");
   const rice = await product("Rice", "150.00", "20");
@@ -64,6 +70,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  lockStaff("primary");
   setActiveBusinessProfileId("primary");
   opened.splice(0).forEach((item) => item.close());
   await Promise.all(Array.from(names).map((name) => new Dexie(name).delete()));
@@ -633,6 +640,8 @@ describe("ambiguity, unsupported input, and read-only guarantees", () => {
     expect((await second.send("How many eggs are left?")).text).toContain("couldn't find a product");
     expect((await second.send("Show today's sales")).text).toMatch(/no sales recorded/);
     setActiveBusinessProfileId("primary");
+    const owner = await database.staffMembers.where("businessProfileId").equals("primary").first();
+    await unlockStaff(owner!.id, "123456", database);
     expect((await getInventorySnapshot(database)).products).toHaveLength(3);
   });
 

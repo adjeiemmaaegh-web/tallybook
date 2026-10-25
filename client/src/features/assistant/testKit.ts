@@ -9,6 +9,8 @@ import { completeSale } from "@/features/sales/sales";
 import { createProduct } from "@/features/inventory/inventory";
 import { createSupplier } from "@/features/purchases/purchases";
 import { createAssistant, type Assistant } from "./assistant";
+import { createStaff, unlockStaff, openShift, lockStaff } from "@/features/staff/staff";
+import { updateCompanyReturnPolicy } from "@/features/business/returnPolicySettings";
 import type { AssistantAction, AssistantReply } from "./index";
 
 export interface Kit {
@@ -33,6 +35,10 @@ export function useAssistantDb(): Kit {
     names.add(database.name); opened.push(database);
     await initializeDatabase(database);
     await saveBusinessProfile({ name: "Test Shop", country: "Ghana", currency: "GHS", businessType: "Retail shop", phone: "", email: "", address: "" }, database);
+    const owner = await createStaff("Assistant test owner", "owner", "123456", database);
+    await unlockStaff(owner.id, "123456", database);
+    await openShift(0, database);
+    await updateCompanyReturnPolicy({ enabled: true, allowFullReversal: true, allowCashPartial: true, maxAgeDays: 30 }, "Enable assistant test returns", database);
     const product = (name: string, price: string, stock: string, cost = "") => createProduct({ name, sku: "", categoryId: "uncategorized", sellingPrice: price, costPrice: cost, initialStock: stock, lowStockThreshold: "5" }, "GHS", database);
     const eggs = await product("Eggs", "60.00", "37", "45.00");
     const rice = await product("Rice", "150.00", "20");
@@ -46,6 +52,7 @@ export function useAssistantDb(): Kit {
   });
 
   afterEach(async () => {
+    lockStaff("primary");
     setActiveBusinessProfileId("primary");
     opened.splice(0).forEach((item) => item.close());
     await Promise.all(Array.from(names).map((name) => new Dexie(name).delete()));
