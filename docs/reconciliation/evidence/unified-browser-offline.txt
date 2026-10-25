@@ -1,0 +1,133 @@
+[WebServer] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:16744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:10620) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false (23.6s)
+(node:4976) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false (23.7s)
+(node:7808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true (23.5s)
+
+
+  1) qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.receipt-confirmation')
+    Expected: visible
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('.receipt-confirmation') with timeout 20000ms
+      - waiting for locator('.receipt-confirmation')
+
+
+      28 |     await page.getByRole('button', { name: 'Add item', exact: true }).click();
+      29 |     await page.getByRole('button', { name: 'Complete sale', exact: true }).click();
+    > 30 |     await expect(page.locator('.receipt-confirmation')).toBeVisible();
+         |                                                         ^
+      31 |     await page.screenshot({ path: testInfo.outputPath('offline-receipt.png'), fullPage: true });
+      32 |     await page.reload();
+      33 |     const ledger = await page.evaluate(async () => {
+        at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\qa\browser-offline.spec.mjs:30:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-0618a--reload-at-1280px-tax-false\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\release-v19\offline-results\browser-offline-production-0618a--reload-at-1280px-tax-false\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-0618a--reload-at-1280px-tax-false\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace artifacts\release-v19\offline-results\browser-offline-production-0618a--reload-at-1280px-tax-false\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.receipt-confirmation')
+    Expected: visible
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('.receipt-confirmation') with timeout 20000ms
+      - waiting for locator('.receipt-confirmation')
+
+
+      28 |     await page.getByRole('button', { name: 'Add item', exact: true }).click();
+      29 |     await page.getByRole('button', { name: 'Complete sale', exact: true }).click();
+    > 30 |     await expect(page.locator('.receipt-confirmation')).toBeVisible();
+         |                                                         ^
+      31 |     await page.screenshot({ path: testInfo.outputPath('offline-receipt.png'), fullPage: true });
+      32 |     await page.reload();
+      33 |     const ledger = await page.evaluate(async () => {
+        at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\qa\browser-offline.spec.mjs:30:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-d9602-e-reload-at-390px-tax-false\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\release-v19\offline-results\browser-offline-production-d9602-e-reload-at-390px-tax-false\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-d9602-e-reload-at-390px-tax-false\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace artifacts\release-v19\offline-results\browser-offline-production-d9602-e-reload-at-390px-tax-false\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.receipt-confirmation')
+    Expected: visible
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('.receipt-confirmation') with timeout 20000ms
+      - waiting for locator('.receipt-confirmation')
+
+
+      28 |     await page.getByRole('button', { name: 'Add item', exact: true }).click();
+      29 |     await page.getByRole('button', { name: 'Complete sale', exact: true }).click();
+    > 30 |     await expect(page.locator('.receipt-confirmation')).toBeVisible();
+         |                                                         ^
+      31 |     await page.screenshot({ path: testInfo.outputPath('offline-receipt.png'), fullPage: true });
+      32 |     await page.reload();
+      33 |     const ledger = await page.evaluate(async () => {
+        at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\qa\browser-offline.spec.mjs:30:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-2b2c9-ne-reload-at-390px-tax-true\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\release-v19\offline-results\browser-offline-production-2b2c9-ne-reload-at-390px-tax-true\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\release-v19\offline-results\browser-offline-production-2b2c9-ne-reload-at-390px-tax-true\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace artifacts\release-v19\offline-results\browser-offline-production-2b2c9-ne-reload-at-390px-tax-true\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false 
+    qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false 
+    qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true 

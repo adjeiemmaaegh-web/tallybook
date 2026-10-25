@@ -7,8 +7,8 @@ The Master ZIP passed CRC validation. Its 994 source/documentation files were SH
 ## Current verified changes
 
 - Dexie v29/v30 declarations now include both historical lineages. v35 declares the merged indexes and append-only drawer journal without rewriting records. `TallybookDB.test.ts` includes a v30 local migration fixture and a v28 batch fixture. Focused suite: 6 passed, 0 failed.
-- Company-isolation fixtures now unlock an owner and open a shift for checkout. The combined branch still has 9 failing cases out of 15, including genuine company-switch gaps and refund-policy setup mismatches. The failing run must be repaired before acceptance; authorization must remain enforced.
-- The stage22 baseline had malformed JSX in `Run19DeviceAcceptancePage.tsx`; the local syntax error has been fixed. Semantic checking still fails on missing declarations and unresolved source integration, and is not a passing gate.
+- Company-isolation fixtures unlock an owner and open a shift for checkout. The 15-case focused company-isolation suite now passes; broader security acceptance remains open.
+- The stage22 baseline had malformed JSX in `Run19DeviceAcceptancePage.tsx`; the syntax error was fixed. TypeScript semantic checking passes on the current tree.
 
 ## Pending critical work
 
@@ -26,4 +26,4 @@ No deployment, live payment processing, or external service configuration has be
 - The v35 schema now joins the Master v29/v30 lineage with GitHub v29–v34. Migration fixtures preserve v28 batch data, Master-style v30 no-sale and batch records, and GitHub-style v34 sale and wallet records. Combined focused migration and company-isolation run: 22/22 passing.
 - Five originally failing Master company-isolation tests have been repaired without relaxing staff authorization; the combined suite now passes 15/15. Additional post-write company guards were added in sale, reversal, policy, catalogue and stock-count services.
 - TypeScript semantic check, client Vite build, and server esbuild bundle pass. Production dependency audit now reports zero advisories after Zod/fast-uri updates and a scoped body-parser override.
-- Full Vitest is being rerun against the stable source. It is not currently a passing gate. Twenty Master/GitHub paths still need semantic conflict resolution, including backup, credit, purchases, supplier payables, finance reports, stores and UI. The user-facing release decision remains NO-GO.
+- Full Vitest was attempted twice but did not complete; the stable-source run was stopped after approximately 39 of 124 files with multiple legacy fixture failures. Native Node verification reported 766 passing and 61 failing out of 828 tests on Windows; native QA alone reported 421 passing and 18 failing out of 439. These are not passing gates and the failures need triage. Release browser automation passed 3/3 scenarios. Offline browser automation failed 3/3 scenarios: its direct IndexedDB fixture has no verified staff session after reload, so checkout does not produce a receipt. Staff authorization remains enforced; the fixture and end-to-end flow need repair. Twenty Master/GitHub paths still need semantic conflict resolution, including backup, credit, purchases, supplier payables, finance reports, stores and UI. The release decision remains NO-GO.
