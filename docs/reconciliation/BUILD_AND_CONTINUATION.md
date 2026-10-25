@@ -18,7 +18,7 @@ The full Vitest and offline browser gates are not passing. The verified server b
 
 1. Resolve the 20 paths in `SOURCE_RESOLUTION_REGISTER.md` against their exact Master and branch ancestors, recording each decision and tests.
 2. Extend Dexie migration tests for both historical v30 lineages, v34 rows, crash interruption, backup and restore. Retain transaction history.
-3. Repair the offline Playwright fixture by creating and unlocking a valid owner after reload, then opening a shift. Keep `requireSaleAttendant` enforced.
+3. Maintain the now-passing offline Playwright checkout scenarios when source conflicts are resolved. Keep the verified owner unlock, open shift and `requireSaleAttendant` enforced.
 4. Triage all full Vitest and native QA failures; rerun the complete suites on stable source. Run browser coverage and dependency checks again after source resolution.
 5. Update the 12-stage register and risk assessment. Open a pull request against `main` only when integration is reviewable; do not merge or deploy automatically.
 

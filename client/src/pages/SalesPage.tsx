@@ -169,7 +169,7 @@ export default function SalesPage() {
 
   const availableUnits = (product:InventorySnapshot["products"][number])=>{
     const baseline=product.itemKind==="service"?product.stockQuantity:storeMode?
-      (storeAvailable?.[product.id]??0):Math.max(0,product.stockQuantity-(companyCommerceReserved?.[product.id]??product.stockQuantity));
+      (storeAvailable?.[product.id]??0):Math.max(0,product.stockQuantity-(companyCommerceReserved ? (companyCommerceReserved[product.id]??0) : product.stockQuantity));
     const chosen=eligibleCommerceOrders.find(o=>o.id===saleCommerceOrderId);
     const held=chosen?.lines.find(line=>line.productId===product.id)?.quantity??0;
     return baseline+(chosen&&chosen.status==="reserved"&&Date.parse(chosen.reservationExpiresAt??"")>Date.now()?held:0);

@@ -1,0 +1,7 @@
+Command: .\node_modules\.bin\playwright.CMD test --config playwright.offline.config.mjs --reporter=line
+Result: 3 passed (26.4s)
+Scenarios: 1280px no tax; 390px no tax; 390px tax enabled.
+Production build: npm run build, exit 0.
+TypeScript semantic check: npm run check, exit 0.
+Focused company-isolation and migration Vitest: 3 files, 22 tests passed, duration 19.75s.
+This evidence applies to the offline stock availability correction and authorized browser fixture only.

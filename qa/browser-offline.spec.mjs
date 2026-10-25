@@ -60,6 +60,12 @@ for (const scenario of [{width:1280, tax:false}, {width:390, tax:false}, {width:
     if (scenario.tax) expect(ledger[0][0].tax).toMatchObject({taxMinor:100,taxableMinor:1000});
     expect(ledger[1]).toHaveLength(1); expect(ledger[2]).toHaveLength(1); expect(ledger[3]).toHaveLength(1);
     expect(ledger[4][0].stockQuantity).toBe(2); expect(ledger[5]).toHaveLength(2);
+    await page.goto('/staff');
+    await page.getByLabel('Staff member').selectOption({ label: 'Offline QA owner (owner)' });
+    await page.getByRole('textbox', { name: 'Staff PIN', exact: true }).fill('123456');
+    await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Close shift and record variance' })).toBeVisible();
+    await page.evaluate(() => { history.pushState({}, '', '/sales'); window.dispatchEvent(new PopStateEvent('popstate')); });
     await expect(page.getByRole('heading', { name: 'Every completed sale has a line.', exact: true })).toBeVisible();
     await expect(page.getByText(ledger[0][0].receiptNumber, { exact: true })).toBeVisible();
   });
