@@ -1,0 +1,4 @@
+external_id,kind,occurred_at,store_id,register_id,reference,amount,currency
+discount:fixture-sale,discount,2026-10-24T12:00:00.000Z,fixture-shop,,FIXTURE-001,1.00,GHS
+sale:fixture-sale,sale,2026-10-24T12:00:00.000Z,fixture-shop,,FIXTURE-001,20.00,GHS
+no_sale:fixture-drawer,no_sale,2026-10-24T15:00:00.000Z,fixture-shop,,,,

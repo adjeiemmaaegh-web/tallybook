@@ -3,6 +3,7 @@ import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { requirePermission, currentStaffId, staffCan } from '@/features/staff/staff';
 import { serializeSingleStoreWatchdogCsv, mapSingleStoreWatchdogEvents, type ExportSnapshot } from './watchdogEventMapper';
 import { createWatchdogDayEnvelope } from './watchdogDayEnvelope';
+import { serializeWatchdogCanonicalCsv } from './watchdogCanonicalCsv';
 
 /** Reads the only verified active store under one authorized read transaction. */
 async function readAuthorizedWatchdogSnapshot(database:TallybookDB):Promise<ExportSnapshot & {shifts: import('@/features/staff/staff').StaffShift[]; returns: import('@/features/sales/cashPartialReturnPosting').CashPartialSaleReturn[]}> {
@@ -43,4 +44,14 @@ export async function createWatchdogDayJson(dayUtc:string,database:TallybookDB=d
   const envelope=createWatchdogDayEnvelope({...data,events,dayUtc});
   if (getActiveBusinessProfileId()!==data.companyId) throw new Error('Company changed after Watchdog snapshot.');
   return JSON.stringify(envelope,null,2)+'\n';
+}
+
+/** Stage 17 Watchdog POS subset, with explicit omissions for unsupported evidence kinds. */
+export async function createWatchdogCanonicalDayCsv(dayUtc:string,database:TallybookDB=db) {
+  const data=await readAuthorizedWatchdogSnapshot(database);
+  const events=mapSingleStoreWatchdogEvents(data);
+  const envelope=createWatchdogDayEnvelope({...data,events,dayUtc});
+  const result=serializeWatchdogCanonicalCsv(envelope);
+  if(getActiveBusinessProfileId()!==data.companyId) throw new Error('Company changed after Watchdog snapshot.');
+  return result;
 }

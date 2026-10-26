@@ -1,0 +1,11 @@
+{
+  "source_file": "tallybook-watchdog-canonical-pos-v1.csv",
+  "parsed": 3,
+  "inserted": 3,
+  "replayed_insertions": 0,
+  "wrong_store_denied": true,
+  "viewer_denied": true,
+  "malformed_denied": true,
+  "changed_payload_rolled_back": true,
+  "revoked_manager_denied": true
+}

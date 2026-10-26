@@ -47,6 +47,19 @@
         "accepted": false,
         "error": "mapped source headers missing or duplicated"
       }
+    },
+    {
+      "file": "tallybook-watchdog-canonical-pos-v1.csv",
+      "sha256": "4f9ea72b7720d422e86e6c7cd574fa65d40bac06d055b00aac289cb34cdccf0c",
+      "bytes": 328,
+      "canonical_csv": {
+        "accepted": true,
+        "rows": 3
+      },
+      "mapped_csv": {
+        "accepted": true,
+        "rows": 3
+      }
     }
   ]
 }

@@ -2,6 +2,7 @@
 import { writeFileSync } from 'node:fs';
 import { mapSingleStoreWatchdogEvents, serializeSingleStoreWatchdogCsv } from '../client/src/features/integrations/watchdogEventMapper.ts';
 import { createWatchdogDayEnvelope } from '../client/src/features/integrations/watchdogDayEnvelope.ts';
+import { serializeWatchdogCanonicalCsv } from '../client/src/features/integrations/watchdogCanonicalCsv.ts';
 
 const source = {
   companyId: 'fixture-business', storeId: 'fixture-shop', dayUtc: '2026-10-24',
@@ -27,3 +28,5 @@ writeFileSync(new URL('./fixtures/tallybook-watchdog-preview-v1.json', import.me
   JSON.stringify(envelope, null, 2) + '\n');
 writeFileSync(new URL('./fixtures/tallybook-watchdog-legacy.csv', import.meta.url),
   serializeSingleStoreWatchdogCsv(source));
+writeFileSync(new URL('./fixtures/tallybook-watchdog-canonical-pos-v1.csv', import.meta.url),
+  serializeWatchdogCanonicalCsv(envelope).csv);

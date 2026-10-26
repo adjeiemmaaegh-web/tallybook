@@ -65,3 +65,7 @@ Earlier evidence files preserve interrupted or failed runs. The initial native r
 ## Completion assessment
 
 This checkpoint advances the **local sale journal**, isolated database authorization test and signed-event verifier. Secure synchronization, trusted enrollment, real Supabase verification and Watchdog importer compatibility remain incomplete. The project remains **NO-GO for production** and no PR or deployment is implied by this checkpoint.
+
+## Later same-day continuation
+
+The user supplied a separate local Watchdog desktop source, and `docs/central/2026-10-26_WATCHDOG_CANONICAL_POS_CHECKPOINT.md` records a tested, partial canonical POS CSV that its importer accepts. This does not complete the full shared event contract or trusted register/device provenance. A fresh read-only `get_project` call still returned `INACTIVE` for Supabase project `qfyydfxwvifdvffdfgeu`; the live handoff steps above remain pending. The original v37 test counts above describe the earlier checkpoint; newer exact-source results are in `docs/central/evidence/watchdog-canonical-verification-2026-10-26.md`.

@@ -20,7 +20,8 @@ def main() -> None:
 
     mapping = json.dumps({"contract_version": 1, "fields": {key: key for key in FIELDS}}).encode()
     results = []
-    for filename in ("tallybook-watchdog-preview-v1.json", "tallybook-watchdog-legacy.csv"):
+    for filename in ("tallybook-watchdog-preview-v1.json", "tallybook-watchdog-legacy.csv",
+                     "tallybook-watchdog-canonical-pos-v1.csv"):
         source = root / "qa" / "fixtures" / filename
         payload = source.read_bytes()
         entry = {"file": filename, "sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload)}
@@ -34,6 +35,9 @@ def main() -> None:
             except (ValueError, UnicodeError) as error:
                 entry[name] = {"accepted": False, "error": str(error)}
         results.append(entry)
+    canonical = results[-1]
+    assert canonical['canonical_csv'] == {'accepted': True, 'rows': 3}
+    assert canonical['mapped_csv'] == {'accepted': True, 'rows': 3}
     control = io.StringIO(newline="")
     writer = csv.DictWriter(control, fieldnames=FIELDS, lineterminator="\n")
     writer.writeheader()

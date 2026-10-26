@@ -1,1 +1,3 @@
 * text=auto eol=lf
+qa/fixtures/tallybook-watchdog-legacy.csv -text
+qa/fixtures/tallybook-watchdog-canonical-pos-v1.csv -text
