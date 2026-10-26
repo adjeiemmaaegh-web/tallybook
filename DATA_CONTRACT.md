@@ -42,3 +42,7 @@ Dexie v37 now saves new-sale `centralSaleEvents` in the checkout transaction. Th
 The user subsequently supplied a separate local Watchdog desktop source with a real importer. `docs/central/2026-10-26_WATCHDOG_REAL_IMPORTER_RECONCILIATION.md` records the direct parser probe: both current Tallybook exports are rejected because Watchdog expects a different CSV schema. The connected website repository still contains no importer. Contract agreement and end-to-end import acceptance remain open.
 
 The later canonical POS subset in `docs/central/2026-10-26_WATCHDOG_CANONICAL_POS_CHECKPOINT.md` passes that local importer's parser and authorized SQLite import/replay tests for sale, discount and no-sale fixtures. It explicitly omits unsupported shift, cash-count and MoMo kinds with a user-visible count. The full shared event contract, register provenance and operational acceptance remain open.
+
+Dexie v38 also writes a local-only `sale.cash_partial_refund_recorded` event atomically with each **new confirmed cash partial return**. Its `payoutEvidence: staff_confirmed_only` is an attendant claim, never provider or independent cash proof. The event and original return must match in portable backup validation. Existing historical returns receive no invented events. See `docs/central/2026-10-26_V38_CASH_REFUND_EVENT_CHECKPOINT.md`.
+
+The pre-existing drawer `noSaleEvents` records are also included in v38 portable backups. They remain historical local device claims; restoring them does not re-enroll or authenticate a device.

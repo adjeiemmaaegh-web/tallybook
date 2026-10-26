@@ -45,7 +45,7 @@ describe("Stage 22 company-scoped idempotency migration",()=>{
   legacy.close();
   const database=new TallybookDB(name);opened.push(database);
   await database.open();
-  expect(DATABASE_SCHEMA_VERSION).toBe(37);
+  expect(database.verno).toBe(DATABASE_SCHEMA_VERSION);
   for(const [i,source]of entries.entries()){
     const table=database.table(source.name);
     const original=oldRecords[source.name];

@@ -11,7 +11,7 @@ import { recordConfirmedCashPartialReturn } from './cashPartialReturnPosting';
 import { calculateTrackedShiftCash, createStaff, unlockStaff, openShift, lockStaff } from '@/features/staff/staff';
 import { executeLatestSaleReversal } from '@/features/assistant/reversals';
 import { getFinancialSummary } from '@/features/reports/financialIntelligence';
-import { createBackup, parseBackup } from '@/features/backup/backup';
+import { createBackup, parseBackup, restoreBackup } from '@/features/backup/backup';
 
 const openDB: TallybookDB[]=[];
 async function fixture() {
@@ -50,14 +50,22 @@ it('atomically records two cash refunds, restores original FIFO and reports net 
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-1'),database)).rejects.toThrow(/already recorded/);
   const b=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-2'),database);
   expect(b).toMatchObject({refundedMinor:1000,returnSequence:2});
+  expect(await database.centralOperationalEvents.count()).toBe(2);
+  expect(await database.centralOperationalEvents.get(`cash-refund:${b.id}`)).toMatchObject({
+    kind:'sale.cash_partial_refund_recorded',entityId:b.id,deliveryStatus:'local_only',
+    deviceId:null,payoutEvidence:'staff_confirmed_only',payload:{cashReturn:b}});
   expect((await database.products.get(product.id))?.stockQuantity).toBe(3);
   expect(await getFinancialSummary('month',new Date(),undefined,undefined,database)).toMatchObject({revenueMinor:0,cogsMinor:0});
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-3'),database)).rejects.toThrow(/quantity/);
   await expect(executeLatestSaleReversal('GHS',database,'full-after-partial')).rejects.toThrow(/couldn't find/);
   const backup=await createBackup(database);
   expect(parseBackup(JSON.stringify(backup)).records.cashPartialReturns).toHaveLength(2);
+  expect(parseBackup(JSON.stringify(backup)).records.centralOperationalEvents).toHaveLength(2);
   const damaged=structuredClone(backup);damaged.records.cashPartialReturns[1].refundedMinor++;
-  expect(()=>parseBackup(JSON.stringify(damaged))).toThrow(/Cash return|partial|reconcile/i);
+  expect(()=>parseBackup(JSON.stringify(damaged))).toThrow(/Cash return|partial|reconcile|Central cash refund/i);
+  const alteredEvent=structuredClone(backup);
+  alteredEvent.records.centralOperationalEvents[1].payload.cashReturn.refundedMinor++;
+  expect(()=>parseBackup(JSON.stringify(alteredEvent))).toThrow(/Central cash refund event/);
 });
 it('rolls back stock, FIFO cost and cash ledger when return posting fails',async()=>{
   const {database,product,original}=await fixture();
@@ -70,6 +78,31 @@ it('rolls back stock, FIFO cost and cash ledger when return posting fails',async
   expect((await database.products.get(product.id))?.stockQuantity).toBe(beforeStock);
   expect(await database.inventoryCostEvents.toArray()).toEqual(beforeCost);
   expect(await database.inventoryMovements.count()).toBe(beforeMovements);
+});
+it('rolls back cash refund, stock and cost if the central local event cannot be saved',async()=>{
+  const {database,product,original}=await fixture();
+  const beforeStock=(await database.products.get(product.id))?.stockQuantity;
+  const beforeCosts=await database.inventoryCostEvents.toArray();
+  const beforeMovements=await database.inventoryMovements.count();
+  vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('simulated event write failure'));
+  await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'failed-event-1'),database))
+    .rejects.toThrow(/event write failure/);
+  expect(await database.cashPartialReturns.count()).toBe(0);
+  expect(await database.centralOperationalEvents.count()).toBe(0);
+  expect((await database.products.get(product.id))?.stockQuantity).toBe(beforeStock);
+  expect(await database.inventoryCostEvents.toArray()).toEqual(beforeCosts);
+  expect(await database.inventoryMovements.count()).toBe(beforeMovements);
+});
+it('restores the confirmed cash refund event with its original journal',async()=>{
+  const {database,original}=await fixture();
+  const posted=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'restore-event-1'),database);
+  const backup=parseBackup(JSON.stringify(await createBackup(database)));
+  const restored=new TallybookDB(`partial-cash-restore-${crypto.randomUUID()}`);openDB.push(restored);
+  await initializeDatabase(restored);
+  await restoreBackup(backup,restored);
+  expect(await restored.cashPartialReturns.get(posted.id)).toEqual(posted);
+  expect(await restored.centralOperationalEvents.get(`cash-refund:${posted.id}`)).toMatchObject({
+    entityId:posted.id,deliveryStatus:'local_only',payload:{cashReturn:posted}});
 });
 it('blocks cash returns for customers and absent confirmation without modifying stock',async()=>{
   const {database,product,original}=await fixture();

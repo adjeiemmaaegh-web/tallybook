@@ -98,7 +98,7 @@ it("retains a v30 replica outbox and enrolled owner while adding later stores", 
   expect(await upgraded.staffMembers.get(owner.id)).toEqual(owner);
 });
 
-it('adds the v37 local event table without inventing events for historical sales', async () => {
+it('adds the v37-v38 local event tables without inventing events for historical sales or refunds', async () => {
   const name = `unified-v36-events-${Date.now()}-${Math.random()}`;
   const legacy = new Dexie(name);
   legacy.version(36).stores({
@@ -117,4 +117,24 @@ it('adds the v37 local event table without inventing events for historical sales
   await initializeDatabase(upgraded);
   expect(await upgraded.sales.get(historical.id)).toEqual(historical);
   expect(await upgraded.centralSaleEvents.count()).toBe(0);
+  expect(await upgraded.centralOperationalEvents.count()).toBe(0);
+});
+
+it('v38 preserves historical cash returns without fabricating central payout evidence', async () => {
+  const name=`unified-v37-refunds-${Date.now()}-${Math.random()}`;
+  const legacy=new Dexie(name);
+  legacy.version(37).stores({
+    appMeta:'key, updatedAt',
+    businessProfiles:'id, name, country, currency, businessType, updatedAt',
+    cashPartialReturns:'id, businessProfileId, originalSaleId, createdAt, &[businessProfileId+submissionKey]',
+  });
+  await legacy.open();
+  const historical={id:'old-return',businessProfileId:'primary',originalSaleId:'old-sale',
+    submissionKey:'old-return-key',createdAt:'2026-10-01T01:00:00.000Z',refundedMinor:100};
+  await legacy.table('cashPartialReturns').add(historical);
+  legacy.close();
+  const upgraded=new TallybookDB(name);opened.push(upgraded);
+  await initializeDatabase(upgraded);
+  expect(await upgraded.cashPartialReturns.get(historical.id)).toEqual(historical);
+  expect(await upgraded.centralOperationalEvents.count()).toBe(0);
 });

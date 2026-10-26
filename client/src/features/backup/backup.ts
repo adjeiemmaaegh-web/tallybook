@@ -45,6 +45,8 @@ import type { StaffMember, StaffShift, StaffAudit } from "@/features/staff/staff
 import type { StockCountSession, InventoryBatch } from "@/features/inventory/stage2Inventory";
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
 import { validateCentralSaleEvent } from "@/features/sync/centralSaleEvent";
+import { validateCentralOperationalEvent } from "@/features/sync/centralOperationalEvent";
+import { validateNoSaleRequest } from "@/features/drawer/noSaleEvent.mjs";
 import { validateLocalSyncDevice } from "@/features/sync/deviceRegistry";
 import { normalizeStoreName } from "@/features/stores/storeDirectory";
 import { validateTransferRequest } from "@/features/stores/storeTransfers";
@@ -92,6 +94,8 @@ export interface BackupRecords {
   syncConsents: import("@/features/sync/syncFoundation").SyncConsent[];
   syncOutbox: import("@/features/sync/syncFoundation").SyncOutboxEvent[];
   centralSaleEvents: import("@/features/sync/centralSaleEvent").CentralSaleEvent[];
+  centralOperationalEvents: import("@/features/sync/centralOperationalEvent").CentralOperationalEvent[];
+  noSaleEvents: import("@/features/drawer/noSaleEvent.ts").NoSaleEvent[];
   syncConflicts: import("@/features/sync/reconciliation").SyncConflict[];
   syncDevices: import("@/features/sync/deviceRegistry").LocalSyncDevice[];
   storeLocations: import("@/features/stores/storeDirectory").StoreLocation[];
@@ -117,7 +121,7 @@ export interface BackupSummary {
   counts: Record<Exclude<keyof BackupRecords, "appMeta">, number>;
 }
 
-const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries", "centralSaleEvents"] as const;
+const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries", "centralSaleEvents", "centralOperationalEvents", "noSaleEvents"] as const;
 const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "commerceHolds", "commerceDeliveryEvents", "run17ReviewEvents", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
@@ -274,6 +278,22 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
         JSON.stringify(records.payments.find(payment => payment.saleId === event.entityId) ?? null) !== JSON.stringify(event.payload.payment) ||
         JSON.stringify(records.receipts.find(receipt => receipt.saleId === event.entityId)) !== JSON.stringify(event.payload.receipt))
       throw new Error('Central sale event payload differs from saved checkout records.');
+  }
+  for (const event of records.centralOperationalEvents) {
+    const originalSale = records.sales.find(sale => sale.id === event.payload?.cashReturn?.originalSaleId);
+    if (!originalSale) throw new Error('Central cash refund event has no original sale.');
+    validateCentralOperationalEvent(event,originalSale);
+    const savedReturn=records.cashPartialReturns.find(row=>row.id===event.entityId);
+    if(!savedReturn || JSON.stringify(savedReturn)!==JSON.stringify(event.payload.cashReturn))
+      throw new Error('Central cash refund event payload differs from the saved return.');
+  }
+  const drawerOperationKeys=new Set<string>();
+  for (const event of records.noSaleEvents) {
+    validateNoSaleRequest(event);
+    if(event.authorizedBy!==event.staffId || !Number.isFinite(Date.parse(event.createdAt)) ||
+       drawerOperationKeys.has(event.operationKey))
+      throw new Error('Invalid or duplicate drawer event in backup.');
+    drawerOperationKeys.add(event.operationKey);
   }
   records.syncDevices.forEach(validateLocalSyncDevice);
   for (const conflict of records.syncConflicts) if (!["payload-mismatch", "operation-collision", "unknown-event"].includes(conflict.reason) || !["unresolved", "reviewed"].includes(conflict.status) || !conflict.eventId || !conflict.operationId || !Number.isFinite(Date.parse(conflict.detectedAt))) throw new Error("Invalid sync conflict snapshot.");

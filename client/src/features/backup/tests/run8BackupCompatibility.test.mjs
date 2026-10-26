@@ -7,6 +7,16 @@ test('v37 event journal is optional only in older portable backups',()=>{
  assert.deepEqual(normalizeRun8BackupTables(old,36,37).centralSaleEvents,[]);
  assert.throws(()=>normalizeRun8BackupTables(old,37,37),/Required backup table missing: centralSaleEvents/);
 });
+test('v38 operational event journal is optional only in older portable backups',()=>{
+ const old=baseline();delete old.centralOperationalEvents;
+ assert.deepEqual(normalizeRun8BackupTables(old,37,38).centralOperationalEvents,[]);
+ assert.throws(()=>normalizeRun8BackupTables(old,38,38),/Required backup table missing: centralOperationalEvents/);
+});
+test('drawer journal first enters portable backups in v38',()=>{
+ const old=baseline();delete old.noSaleEvents;
+ assert.deepEqual(normalizeRun8BackupTables(old,37,38).noSaleEvents,[]);
+ assert.throws(()=>normalizeRun8BackupTables(old,38,38),/Required backup table missing: noSaleEvents/);
+});
 test('v28 round-trip preserves every table as provided',()=>{
  const original=baseline();
  original.businessProfiles=[{id:'primary'}];

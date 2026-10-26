@@ -18,6 +18,7 @@ import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/busine
 import { reconcileCashPartialReturns } from './cashPartialReturn.mjs';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
 import type { InventoryMovement } from '@/features/inventory/inventory';
+import { makeCentralCashRefundEvent } from '@/features/sync/centralOperationalEvent';
 
 export interface CashPartialSaleReturn {
   /** Immutable owner-configured policy revision and sale-time entitlement. */
@@ -77,7 +78,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
   const company = getActiveBusinessProfileId();
   return database.transaction('rw', [database.appMeta, database.businessProfiles, database.staffMembers, database.staffShifts, database.staffAudits,
     database.sales, database.saleLines, database.payments, database.receipts, database.saleReversals, database.cashPartialReturns,
-    database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
+    database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds, database.centralOperationalEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
     const shift = await activeStaffShift(staff,database);
@@ -166,6 +167,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     if (getActiveBusinessProfileId() !== company) throw new Error("Company switched during cash refund posting.");
     await requirePermission("refund",database,company);
     await database.cashPartialReturns.add(recorded);
+    await database.centralOperationalEvents.add(makeCentralCashRefundEvent(recorded,sale));
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
       action:'sale.partial-cash-refund',createdAt:now,details:`${recorded.id}:${sale.id}:${recorded.refundedMinor}:${sale.currency}`});
     assertCompanyScope(company, getActiveBusinessProfileId());

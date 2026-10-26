@@ -13,7 +13,7 @@ export const RUN8_BACKUP_TABLES=Object.freeze([
  'staffAudits','commerceOrders','commerceHolds','commerceDeliveryEvents','run17ReviewEvents','inventoryCostEvents',
  'syncConsents','syncOutbox','syncConflicts','syncDevices',
  'storeLocations','storeAssignments','storeTransferRequests',
- 'storeStockObservations', 'storeStockModes', 'storeStockEntries','centralSaleEvents'
+ 'storeStockObservations', 'storeStockModes', 'storeStockEntries','centralSaleEvents','centralOperationalEvents','noSaleEvents'
 ]);
 const later=Object.freeze({
  mobileMoneyProviders:8,
@@ -28,7 +28,9 @@ const later=Object.freeze({
  syncConsents:26,syncOutbox:26,syncConflicts:26,syncDevices:26,
  storeLocations:26,storeAssignments:26,
  storeTransferRequests:26,storeStockObservations:26,
- storeStockModes:29,storeStockEntries:29,centralSaleEvents:37
+ storeStockModes:29,storeStockEntries:29,centralSaleEvents:37,centralOperationalEvents:38,
+ // The drawer table existed in Dexie v35 but first enters portable backups in v38.
+ noSaleEvents:38
 });
 const deny=message=>{throw Error(message);};
 const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);

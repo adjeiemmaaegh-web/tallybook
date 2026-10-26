@@ -42,12 +42,21 @@ describe("Stage 9 local backup and restore", () => {
     const supplier = await createSupplier({ name: "Backup wholesaler", phone: "", email: "", address: "", notes: "" }, db);
     const purchase = await completePurchase({ supplierId: supplier.id, purchaseDate: "2026-08-27", note: "Restock", submissionKey: "backup-purchase", lines: [{ productId: product.id, quantity: "2", unitCost: "4.00" }] }, "GHS", db);
     const expense = await createExpense({ category: "transport", amount: "6.50", expenseDate: "2026-08-27", note: "Supplier delivery", currency: "GHS", submissionKey: "backup-expense" }, db);
+    const shift=await db.staffShifts.where('businessProfileId').equals('primary').first();
+    const drawerEvent={id:'backup-drawer-event',businessProfileId:'primary',storeId:'historical-local-store',
+      deviceId:'historical-local-device',staffId:owner.id,shiftId:shift!.id,operationKey:'backup-drawer-op',
+      reason:'cash_check' as const,note:'Counting float',createdAt:new Date().toISOString(),authorizedBy:owner.id};
+    await db.noSaleEvents.add(drawerEvent);
     expect(await getLastBackupAt(db)).toBeNull();
     const exportedAt = "2026-08-27T18:00:00.000Z";
     await recordBackupExportedAt(exportedAt, db, 'primary', 'a'.repeat(64));
     expect(await getLastBackupAt(db)).toBe(exportedAt);
     const exported = parseBackup(stringifyBackup(await createBackup(db)));
     expect(exported.records.centralSaleEvents).toHaveLength(1);
+    expect(exported.records.noSaleEvents).toEqual([drawerEvent]);
+    const alteredDrawer=structuredClone(exported);
+    alteredDrawer.records.noSaleEvents[0].authorizedBy='another-staff';
+    expect(()=>parseBackup(stringifyBackup(alteredDrawer))).toThrow(/drawer event/i);
     const alteredEvent = structuredClone(exported);
     alteredEvent.records.centralSaleEvents[0].payload.sale.totalMinor += 1;
     expect(() => parseBackup(stringifyBackup(alteredEvent))).toThrow(/Central sale event/);
@@ -70,6 +79,7 @@ describe("Stage 9 local backup and restore", () => {
     expect(await db.centralSaleEvents.get(`sale:${completed.sale.id}`)).toMatchObject({
       businessProfileId: 'primary', operationId: `sale:${completed.sale.id}`,
       deliveryStatus: 'local_only', deviceId: null });
+    expect(await db.noSaleEvents.get(drawerEvent.id)).toEqual(drawerEvent);
     expect(await db.payments.where("saleId").equals(completed.sale.id).first()).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo", mobileMoneyReference: "BACKUP-REF" });
     expect(await db.mobileMoneyProviders.get(provider.id)).toMatchObject({ name: "MTN MoMo", active: true });
     expect(receiptDetail).toMatchObject({ businessName: "Backup Shop", customerName: "Backup customer" });
