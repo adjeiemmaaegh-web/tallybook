@@ -31,7 +31,7 @@ if(process.argv.length!==4||!/^[0-9a-f]{40}$/i.test(expected)){
 }
 const invoke=(cmd,args,timeout=300000)=>spawnSync(cmd,args,{
  cwd:root,encoding:"utf8",timeout,maxBuffer:64*1024*1024,
- shell:process.platform==="win32"
+ shell:process.platform==="win32"&&/\.(?:cmd|bat)$/i.test(cmd)
 });
 let head="";
 try{head=execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8",timeout:10000}).trim();}
@@ -76,7 +76,7 @@ function one(id,cmd,args,timeout=900000){
  let result;
  try{
    result=spawnSync(cmd,args,{cwd:root,stdio:["ignore",fd,fd],timeout,
-     shell:process.platform==="win32"});
+     shell:process.platform==="win32"&&/\.(?:cmd|bat)$/i.test(cmd)});
  }finally{closeSync(fd);}
  appendFileSync(out,[
   "","-- process result --",
