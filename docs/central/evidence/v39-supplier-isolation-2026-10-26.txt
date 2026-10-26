@@ -1,0 +1,18 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > starts as unknown, then supports a partial manual payment and a credit 269ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > rejects overpayment and changed duplicate keys without any ledger changes 233ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > scopes submission retries to the company compound index 190ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > rejects recognition and settlements on foreign purchase IDs 188ms
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1793028715744-5'. Closing db now to resume the delete request.
+
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence 345ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > round-trips recognized supplier payments through backup without double counting cash 636ms
+ ✓ src/features/purchases/supplierPayables.test.ts > prevents supplier archival until all purchase liabilities have explicit recognition and zero outstanding 273ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  19:31:48
+   Duration  8.45s (transform 1.13s, setup 1.08s, import 1.77s, tests 2.14s, environment 2.83s)

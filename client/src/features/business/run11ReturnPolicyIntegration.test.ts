@@ -172,6 +172,9 @@ describe('Run 11 company return policy database and posting protection',()=>{
   expect(parseBackup(stringifyBackup(exported)).records.saleReversals).toHaveLength(1);
   const altered=structuredClone(exported);
   altered.records.saleReversals[0].policyEvidence!.decisionPolicy.revision=999;
+  const event=altered.records.centralOperationalEvents.find(row=>row.kind==='sale.reversal_recorded');
+  if(!event || event.kind!=='sale.reversal_recorded')throw new Error('Missing reversal event fixture.');
+  event.payload.reversal=structuredClone(altered.records.saleReversals[0]);
   expect(()=>parseBackup(stringifyBackup(altered))).toThrow(/return policy snapshot|refund policy/i);
  });
  it('older refund lacking policy snapshots remains legible but is not newly certified',async()=>{
@@ -179,6 +182,9 @@ describe('Run 11 company return policy database and posting protection',()=>{
   await executeLatestSaleReversal('GHS',db,'run11-legacy-refund-1');
   const altered=await createBackup(db);
   delete altered.records.saleReversals[0].policyEvidence;
+  // Model a historical pre-event reversal instead of a modern event whose
+  // payload has been changed independently of its saved journal row.
+  altered.records.centralOperationalEvents=altered.records.centralOperationalEvents.filter(row=>row.kind!=='sale.reversal_recorded');
   const parsed=parseBackup(stringifyBackup(altered));
   expect(parsed.records.saleReversals).toHaveLength(1);
   // This keeps historical money visible; it does NOT grant entitlement to

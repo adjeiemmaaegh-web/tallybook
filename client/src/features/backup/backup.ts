@@ -280,12 +280,26 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       throw new Error('Central sale event payload differs from saved checkout records.');
   }
   for (const event of records.centralOperationalEvents) {
-    const originalSale = records.sales.find(sale => sale.id === event.payload?.cashReturn?.originalSaleId);
-    if (!originalSale) throw new Error('Central cash refund event has no original sale.');
-    validateCentralOperationalEvent(event,originalSale);
-    const savedReturn=records.cashPartialReturns.find(row=>row.id===event.entityId);
-    if(!savedReturn || JSON.stringify(savedReturn)!==JSON.stringify(event.payload.cashReturn))
-      throw new Error('Central cash refund event payload differs from the saved return.');
+    if(event.kind==='customer.repayment_recorded') {
+      validateCentralOperationalEvent(event);
+      const saved=records.repayments.find(row=>row.id===event.entityId);
+      if(!saved || JSON.stringify(saved)!==JSON.stringify(event.payload.repayment))
+        throw new Error('Central repayment event payload differs from the saved repayment.');
+    } else if(event.kind==='sale.reversal_recorded') {
+      const originalSale=records.sales.find(sale=>sale.id===event.payload?.reversal?.originalSaleId);
+      if(!originalSale)throw new Error('Central reversal event has no original sale.');
+      validateCentralOperationalEvent(event,originalSale);
+      const saved=records.saleReversals.find(row=>row.id===event.entityId);
+      if(!saved || JSON.stringify(saved)!==JSON.stringify(event.payload.reversal))
+        throw new Error('Central reversal event payload differs from the saved reversal.');
+    } else if(event.kind==='sale.cash_partial_refund_recorded') {
+      const originalSale=records.sales.find(sale=>sale.id===event.payload?.cashReturn?.originalSaleId);
+      if(!originalSale)throw new Error('Central cash refund event has no original sale.');
+      validateCentralOperationalEvent(event,originalSale);
+      const saved=records.cashPartialReturns.find(row=>row.id===event.entityId);
+      if(!saved || JSON.stringify(saved)!==JSON.stringify(event.payload.cashReturn))
+        throw new Error('Central cash refund event payload differs from the saved return.');
+    } else throw new Error('Unsupported central operational event kind.');
   }
   const drawerOperationKeys=new Set<string>();
   for (const event of records.noSaleEvents) {

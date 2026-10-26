@@ -1,6 +1,6 @@
 /** Tactile Ledger testing reminder: an amount owed is derived from saved credit sales minus immutable repayments; it is never an editable total. */
 import Dexie from "dexie";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { createCustomer } from "@/features/customers/customers";
 import { getCustomerDebtSummary, getCustomerRepaymentTargets, recordRepayment } from "@/features/credit/credit";
@@ -71,6 +71,10 @@ describe("customer debt ledger", () => {
     const originalId = sale.sale.id;
     const result = await executeLatestSaleReversal("GHS", database, "reverse-credit-sale-once");
     expect(result).toMatchObject({ originalSaleId: originalId, reversedOutstandingMinor: -2000 });
+    expect(await database.centralOperationalEvents.get(`sale-reversal:${result.id}`)).toMatchObject({
+      entityId:result.id,kind:'sale.reversal_recorded',shopId:null,
+      payoutEvidence:'accounting_reversal_only',payload:{reversal:result},
+    });
     expect((await getCustomerSaleSummary(customer.id, "GHS", database)).outstandingMinor).toBe(0);
     expect((await getCustomerDebtSummary(customer.id, "GHS", database)).outstandingMinor).toBe(0);
     const productId = (await database.saleLines.where("saleId").equals(originalId).first())!.productId;
@@ -134,9 +138,35 @@ describe("customer debt ledger", () => {
     const summary = await getCustomerDebtSummary(customer.id, "GHS", database);
 
     expect(repayment).toMatchObject({ customerId: customer.id, amountMinor: 750, method: "mobile", note: "Market-day payment" });
+    expect(await database.centralOperationalEvents.get(`repayment:${repayment.id}`)).toMatchObject({
+      entityId:repayment.id,kind:'customer.repayment_recorded',shopId:null,
+      settlementEvidence:'local_record_only',payload:{repayment},
+    });
     expect(summary).toMatchObject({ salesOutstandingMinor: 2000, repaidMinor: 750, outstandingMinor: 1250 });
     expect(summary.outstandingLabel).toContain("12.50");
     expect(summary.activities.map((activity) => activity.type)).toEqual(["repayment", "sale"]);
+  });
+
+  it("rolls back a repayment when its operational event cannot be saved", async () => {
+    const database=makeDatabase();
+    const {customer}=await creditSale(database,"Repayment event rollback");
+    const add=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(recordRepayment({customerId:customer.id,amount:'1.00',method:'cash',currency:'GHS',submissionKey:'rollback-repayment-event-001'},database)).rejects.toThrow('event write failed');
+    add.mockRestore();
+    expect(await database.repayments.count()).toBe(0);
+    expect(await database.centralOperationalEvents.where('kind').equals('customer.repayment_recorded').count()).toBe(0);
+  });
+
+  it("rolls back a reversal and stock restoration when its operational event cannot be saved", async () => {
+    const database=makeDatabase();
+    const {sale}=await creditSale(database,"Reversal event rollback");
+    const productId=(await database.saleLines.where('saleId').equals(sale.sale.id).first())!.productId;
+    const stockBefore=(await database.products.get(productId))!.stockQuantity;
+    const add=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(executeLatestSaleReversal('GHS',database,'rollback-reversal-event-001')).rejects.toThrow('event write failed');
+    add.mockRestore();
+    expect(await database.saleReversals.count()).toBe(0);
+    expect((await database.products.get(productId))!.stockQuantity).toBe(stockBefore);
   });
 
   it("records a Mobile Money customer payment separately without altering the completed sale or its original debt", async () => {

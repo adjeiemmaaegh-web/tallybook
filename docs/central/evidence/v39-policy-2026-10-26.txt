@@ -1,0 +1,21 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies full reversal before money/stock changes 592ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies a partial cash return without any write 503ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled full reversal captures original and decision terms on exact journal 604ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > rejects wrong-currency full reversals at preview and posting, including retry attempts 496ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled cash partial return retains original invoice, tax, stock and policy evidence 488ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > changing ordinary business details cannot erase append-only policy history 395ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > revoking the current policy blocks returns without changing prior sale history 494ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > a sale created while no refunds existed cannot be made refundable retroactively 505ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > full-only configuration denies partial cash refund but permits supported full correction 484ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered policy revision is rejected by backup preflight without restoring it 409ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered saved sale policy is rejected even when money and stock still reconcile 378ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered refund authorization does not disappear in otherwise valid portable backup 559ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > older refund lacking policy snapshots remains legible but is not newly certified 670ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  19:36:37
+   Duration  12.97s (transform 1.30s, setup 1.14s, import 2.00s, tests 6.58s, environment 2.64s)

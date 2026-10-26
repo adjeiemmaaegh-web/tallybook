@@ -53,6 +53,12 @@ describe("Stage 9 local backup and restore", () => {
     expect(await getLastBackupAt(db)).toBe(exportedAt);
     const exported = parseBackup(stringifyBackup(await createBackup(db)));
     expect(exported.records.centralSaleEvents).toHaveLength(1);
+    expect(exported.records.centralOperationalEvents).toMatchObject([{kind:'customer.repayment_recorded',settlementEvidence:'local_record_only'}]);
+    const alteredRepaymentEvent=structuredClone(exported);
+    const repaymentEvent=alteredRepaymentEvent.records.centralOperationalEvents[0];
+    if(repaymentEvent.kind!=='customer.repayment_recorded')throw new Error('Missing repayment event fixture.');
+    repaymentEvent.payload.repayment.amountMinor+=1;
+    expect(()=>parseBackup(stringifyBackup(alteredRepaymentEvent))).toThrow(/Central repayment event payload/i);
     expect(exported.records.noSaleEvents).toEqual([drawerEvent]);
     const alteredDrawer=structuredClone(exported);
     alteredDrawer.records.noSaleEvents[0].authorizedBy='another-staff';
@@ -79,6 +85,7 @@ describe("Stage 9 local backup and restore", () => {
     expect(await db.centralSaleEvents.get(`sale:${completed.sale.id}`)).toMatchObject({
       businessProfileId: 'primary', operationId: `sale:${completed.sale.id}`,
       deliveryStatus: 'local_only', deviceId: null });
+    expect((await db.centralOperationalEvents.toArray()).filter(event=>event.kind==='customer.repayment_recorded')).toHaveLength(1);
     expect(await db.noSaleEvents.get(drawerEvent.id)).toEqual(drawerEvent);
     expect(await db.payments.where("saleId").equals(completed.sale.id).first()).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo", mobileMoneyReference: "BACKUP-REF" });
     expect(await db.mobileMoneyProviders.get(provider.id)).toMatchObject({ name: "MTN MoMo", active: true });
@@ -99,22 +106,30 @@ describe("Stage 9 local backup and restore", () => {
     const saved=await completeSale({lines:[{productId:item.id,quantity:1}],customerId:customer.id,discount:"0",paymentMethod:"credit",amountPaid:"0",currency:"GHS"},local);
     await recordRepayment({customerId:customer.id,amount:"3.00",method:"cash",currency:"GHS",submissionKey:"backup-linked-payment-0001",saleAllocations:[{saleId:saved.sale.id,amountMinor:300}]},local);
     const snapshot=await createBackup(local);
+    const syncRepaymentEvent=(copy:typeof snapshot)=>{
+      const event=copy.records.centralOperationalEvents.find(row=>row.kind==='customer.repayment_recorded');
+      if(!event || event.kind!=='customer.repayment_recorded')throw new Error('Missing repayment event fixture.');
+      event.payload.repayment=structuredClone(copy.records.repayments[0]);
+    };
     expect(parseBackup(stringifyBackup(snapshot)).records.repayments[0].saleAllocations).toEqual([{saleId:saved.sale.id,amountMinor:300}]);
     expect(snapshot.records.sales[0].currency).toBe("GHS");
     expect(snapshot.records.repayments[0].currency).toBe("GHS");
     const tamperedCurrency=structuredClone(snapshot);
     tamperedCurrency.records.repayments[0].currency="USD";
+    syncRepaymentEvent(tamperedCurrency);
     expect(()=>parseBackup(stringifyBackup(tamperedCurrency))).toThrow(/currency|currencies/i);
     // An unallocated repayment still has real currency evidence. It must not
     // bypass cross-currency checks merely because no saleAllocations exist.
     const unallocatedConflict=structuredClone(snapshot);
     delete unallocatedConflict.records.repayments[0].saleAllocations;
     unallocatedConflict.records.repayments[0].currency="USD";
+    syncRepaymentEvent(unallocatedConflict);
     expect(()=>parseBackup(stringifyBackup(unallocatedConflict))).toThrow(/combines currencies/);
     const unknownHistoricalConflict=structuredClone(snapshot);
     delete unknownHistoricalConflict.records.repayments[0].saleAllocations;
     delete unknownHistoricalConflict.records.sales[0].currency;
     delete unknownHistoricalConflict.records.centralSaleEvents[0].payload.sale.currency;
+    syncRepaymentEvent(unknownHistoricalConflict);
     expect(()=>parseBackup(stringifyBackup(unknownHistoricalConflict))).toThrow(/unverified historical/);
     const unsupportedCurrency=structuredClone(snapshot);
     unsupportedCurrency.records.sales[0].currency="fake-currency";
@@ -122,9 +137,11 @@ describe("Stage 9 local backup and restore", () => {
     expect(()=>parseBackup(stringifyBackup(unsupportedCurrency))).toThrow(/sale currency evidence/i);
     const orphan=structuredClone(snapshot);
     orphan.records.repayments[0].saleAllocations![0].saleId="not-a-real-sale";
+    syncRepaymentEvent(orphan);
     expect(()=>parseBackup(stringifyBackup(orphan))).toThrow(/allocation.*missing|missing.*credit sale/i);
     const inflated=structuredClone(snapshot);
     inflated.records.repayments[0].saleAllocations![0].amountMinor=301;
+    syncRepaymentEvent(inflated);
     expect(()=>parseBackup(stringifyBackup(inflated))).toThrow(/allocations.*sum/i);
   });
 

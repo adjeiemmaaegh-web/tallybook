@@ -10,6 +10,7 @@ import { formatMinorAmount, type InventoryMovement } from "@/features/inventory/
 import { appendInventoryCostChange, restoreInventoryCost } from "@/features/inventory/costLedger";
 import { assertDebtReversalIsUnallocatedPaymentSafe } from "@/features/sales/reversalDebtGuard.mjs";
 import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
+import {makeCentralSaleReversalEvent} from '@/features/sync/centralOperationalEvent';
 
 export interface SaleReversalLine { productId: string; productName: string; quantity: number; restoredQuantity: number }
 export interface SaleReversal {
@@ -67,7 +68,7 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.centralOperationalEvents, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
@@ -169,6 +170,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       throw new Error('Company changed before completing the full reversal.');
     await requirePermission('refund',database,activeId);
     await database.saleReversals.add(reversal);
+    await database.centralOperationalEvents.add(makeCentralSaleReversalEvent(reversal,sale));
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'sale.reversed',createdAt:now,details:reversal.id});
     await Promise.all(Array.from(restoredStock, async ([productId, stockQuantity]) => {
       const product = resolvedProducts.find(item => item.id === productId)!;

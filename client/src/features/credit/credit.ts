@@ -13,6 +13,7 @@ import { reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWrite
 import { getRepaymentTargetsFromLedger, type RepaymentTargetsResult } from "@/features/credit/repaymentTargets.mjs";
 import type { PaymentMethod, Sale } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
+import {makeCentralRepaymentEvent} from '@/features/sync/centralOperationalEvent';
 
 export const repaymentMethods = ["cash", "card", "mobile"] as const;
 export type RepaymentMethod = (typeof repaymentMethods)[number];
@@ -131,7 +132,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
   return withCoordinatedRetailWrite(async()=>{
   const input = recordRepaymentSchema.parse(values);
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
+  return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.centralOperationalEvents, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched before recording customer repayment.");
@@ -191,6 +192,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");
     await database.repayments.add(repayment);
+    await database.centralOperationalEvents.add(makeCentralRepaymentEvent(repayment));
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched before customer repayment committed.");
