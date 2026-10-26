@@ -1,5 +1,5 @@
 import type {Supplier,Purchase} from '../purchases/purchases';
-import type {SupplierPayableEntry} from '../purchases/supplierPayables';
+import type {SupplierPayableEntry} from '../purchases/supplierPayables.ts';
 import type {Expense} from '../expenses/expenses';
 export interface Run12SupplierFinancialAudit {
  readonly unknownPurchases:number;

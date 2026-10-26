@@ -1,5 +1,5 @@
 import type { Purchase } from '../purchases/purchases';
-import type { SupplierPayableEntry } from '../purchases/supplierPayables';
+import type { SupplierPayableEntry } from '../purchases/supplierPayables.ts';
 export interface CurrencyAmount { currency: string; amountMinor: number }
 export interface SupplierFinancialReconciliation {
   unknownPurchases: number;
