@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { assertCompanyScope } from '@/features/business/companyScope.mjs';
+import {makeCentralShiftEvent} from '@/features/sync/centralOperationalEvent';
 
 export type StaffRole = 'owner' | 'supervisor' | 'cashier';
 export type StaffPermission = 'sell' | 'refund' | 'discount' | 'inventory' | 'reports' | 'staff';
@@ -325,7 +326,7 @@ export async function resetStaffPin(id:string,newPin:string,database:TallybookDB
 export async function openShift(openingFloatMinor:number,database:TallybookDB=db){
   const company=getActiveBusinessProfileId();
   if(!Number.isSafeInteger(openingFloatMinor)||openingFloatMinor<0)throw new Error('Invalid opening float.');
-  return withCoordinatedRetailWrite(() => database.transaction('rw',database.staffMembers,database.staffShifts,database.staffAudits,async()=>{
+  return withCoordinatedRetailWrite(() => database.transaction('rw',database.staffMembers,database.staffShifts,database.staffAudits,database.centralOperationalEvents,async()=>{
     const member=await requirePermission('sell',database,company);
     if(!member)throw new Error('Set up a staff owner before using shifts.');
     const active=await database.staffShifts.where('staffId').equals(member.id).filter(x=>x.businessProfileId===company&&!x.closedAt).first();
@@ -334,6 +335,7 @@ export async function openShift(openingFloatMinor:number,database:TallybookDB=db
     if(currentStaffId(company)!==member.id)throw new Error('Staff session changed before opening the shift.');
     const shift:StaffShift={id:nanoid(),businessProfileId:company,staffId:member.id,openedAt:new Date().toISOString(),openingFloatMinor};
     await database.staffShifts.add(shift);
+    await database.centralOperationalEvents.add(makeCentralShiftEvent(shift,'shift.opened'));
     await database.staffAudits.add({id:nanoid(),businessProfileId:company,staffId:member.id,action:'shift.opened',createdAt:shift.openedAt,details:shift.id});
     assertStaffMutationActor(company,member);
     return shift;
@@ -409,7 +411,7 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
   const member=await requirePermission('sell',database,company);
   if(!member)throw new Error('Staff member is required.');
   if(!Number.isSafeInteger(countedCashMinor)||countedCashMinor<0)throw new Error('Invalid counted cash.');
-  return withCoordinatedRetailWrite(() => database.transaction('rw',[database.staffShifts,database.staffAudits,database.sales,database.payments,database.repayments,database.walletTransfers,database.saleReversals,database.cashPartialReturns,database.staffMembers],async()=>{
+  return withCoordinatedRetailWrite(() => database.transaction('rw',[database.staffShifts,database.staffAudits,database.centralOperationalEvents,database.sales,database.payments,database.repayments,database.walletTransfers,database.saleReversals,database.cashPartialReturns,database.staffMembers],async()=>{
     const current=await requirePermission('sell',database,company);
     if(!current||current.id!==member.id||currentStaffId(company)!==member.id)throw new Error('Staff session changed during shift close.');
     const shift=await database.staffShifts.get(shiftId);
@@ -421,6 +423,7 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
     if(!Number.isSafeInteger(varianceMinor))throw new Error('Shift variance exceeds supported money limits.');
     if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==member.id)throw new Error('Staff session changed during shift close.');
     await database.staffShifts.update(shiftId,{closedAt,countedCashMinor,expectedCashMinor:cash.expectedCashMinor,varianceMinor});
+    await database.centralOperationalEvents.add(makeCentralShiftEvent({...shift,closedAt,countedCashMinor,expectedCashMinor:cash.expectedCashMinor,varianceMinor},'shift.closed'));
     await database.staffAudits.add({id:nanoid(),businessProfileId:member.businessProfileId,staffId:member.id,action:'shift.closed',createdAt:closedAt,details:`${shiftId}; variance=${varianceMinor}`});
     if(currentStaffId(company)!==member.id||getActiveBusinessProfileId()!==company)
       throw new Error('Staff session changed before shift close committed.');

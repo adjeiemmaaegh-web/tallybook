@@ -1,0 +1,43 @@
+✔ accepts only signed sale evidence bound to server membership, shop and device (10.6892ms)
+✔ rejects forged shop, payload and unrelated authenticated user (4.8576ms)
+✔ rejects signed JSON with duplicate business keys (1.2803ms)
+✔ rejects revoked device, removed membership and missing shop assignment (13.0069ms)
+✔ owner with active same-company, same-store device can be authorized (2.6499ms)
+✔ deny wrong store, device, user, company, owner, expired or revoked grant (4.1525ms)
+✔ attendant cannot transfer stock or manage store, but can perform scoped sale (0.7912ms)
+✔ no identity or trust provider fails closed, unknown actions denied before read (0.8177ms)
+✔ authorization is re-read for every operation, not cached (0.5485ms)
+✔ authoritative scope lookup is parameterized and returns exact device binding (11.5633ms)
+✔ zero and duplicate authoritative rows fail closed (2.0471ms)
+✔ owner-issued invitation is scoped to company, store, target and a 10-min token (6.7541ms)
+✔ authenticated target redeems once, grant is 8h, audit matches and result is explicitly not hardware bound (5.9872ms)
+✔ non-owner, signed-out, wrong account and malformed scope cannot issue (1.1074ms)
+✔ wrong account cannot redeem a bearer token without own verified membership (1.0311ms)
+✔ expiry is exclusive and non-monotonic invalid clock is denied (1.7236ms)
+✔ owner transfer, membership removal or store disable before redemption invalidates outstanding invitation (2.9499ms)
+✔ owner revokes only own company grant, same invite cannot be redeemed twice (1.8551ms)
+✔ owner can revoke an existing grant even after store is disabled (0.9196ms)
+✔ grant insert and audit failures roll back proof consumption, grant and audit atomically (1.6781ms)
+✔ unknown invitation and invalid/weak token always fail closed (1.138ms)
+✔ revoked server-side auth session during issuance, redemption or revocation fails closed (9.1251ms)
+✔ transaction uses SERIALIZABLE, exact parameterized reads and COMMIT + release (7.378ms)
+✔ invite redemption and grant issuance are transaction-local writes with required audit (2.2075ms)
+✔ failed write rolls back and always releases private connection (1.4053ms)
+✔ missing private pool, invalid SQL response, and failed transaction initialization deny (0.8237ms)
+✔ review SQL must not cast TEXT device-grant IDs as UUID and never inline caller values (1.0921ms)
+✔ live auth session is locked by ID, user and expiry inside the transaction (1.2492ms)
+✔ server-verified Supabase account must have active authoritative auth.session (9.9454ms)
+✔ revoked session is denied even when getUser still succeeds (2.8681ms)
+✔ unverified token, wrong subject, role, audience and expiry deny (1.9207ms)
+✔ getUser failure and unavailable session registry fail closed (0.9291ms)
+✔ private database reader uses parameterized auth.sessions lookup (0.8995ms)
+✔ missing trusted authentication dependencies reject at construction (0.4997ms)
+✔ verified token expiry is carried into the privileged transaction context (0.5531ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 719.9634

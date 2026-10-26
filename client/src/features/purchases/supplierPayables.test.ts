@@ -1,5 +1,5 @@
 import Dexie from 'dexie';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initializeDatabase, TallybookDB, DATABASE_SCHEMA_VERSION } from '@/db/TallybookDB';
 import { createProduct } from '@/features/inventory/inventory';
 import { createSupplier, completePurchase, archiveSupplier } from '@/features/purchases/purchases';
@@ -30,9 +30,25 @@ describe('v27 explicitly recognized supplier payables',()=>{
     const payment=await recordSupplierSettlement({ purchaseId:purchase.id,kind:'payment',method:'mobile',amountMinor:1100,reference:'manual-ref',submissionKey:'pay-once-001' },database);
     expect(await recordSupplierSettlement({ purchaseId:purchase.id,kind:'payment',method:'mobile',amountMinor:1100,reference:'manual-ref',submissionKey:'pay-once-001' },database)).toEqual(payment);
     await recordSupplierSettlement({ purchaseId:purchase.id,kind:'credit',amountMinor:300,submissionKey:'supplier-credit-001' },database);
+    expect((await database.centralOperationalEvents.toArray()).filter(event=>event.kind.startsWith('supplier.')).map(event=>event.kind).sort()).toEqual(['supplier.credit_recorded','supplier.liability_recognized','supplier.payment_recorded']);
     const result=await getSupplierPayables(database);
     expect(result.unknownPurchases).toBe(0);expect(result.outstandingByCurrency).toEqual([{currency:'GHS',amountMinor:1600}]);
     expect(result.results[0]).toMatchObject({ paidMinor:1100,creditedMinor:300,outstandingMinor:1600 });
+  });
+  it('rolls back supplier recognition when its operational event fails',async()=>{
+    const {database,purchase}=await setup();
+    const add=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(recognizeUnpaidPurchase(purchase.id,'recognition-event-rollback',database)).rejects.toThrow('event write failed');
+    add.mockRestore();
+    expect(await database.supplierPayableEntries.count()).toBe(0);
+  });
+  it('rolls back a supplier payment when its operational event fails',async()=>{
+    const {database,purchase}=await setup();
+    await recognizeUnpaidPurchase(purchase.id,'recognition-before-event-failure',database);
+    const add=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(recordSupplierSettlement({purchaseId:purchase.id,kind:'payment',method:'cash',amountMinor:100,submissionKey:'payment-event-rollback'},database)).rejects.toThrow('event write failed');
+    add.mockRestore();
+    expect((await database.supplierPayableEntries.toArray()).map(row=>row.kind)).toEqual(['recognition']);
   });
   it('rejects overpayment and changed duplicate keys without any ledger changes',async()=>{
     const {database,purchase}=await setup();
@@ -84,7 +100,10 @@ describe('v27 explicitly recognized supplier payables',()=>{
     expect(backup.records.supplierPayableEntries).toContainEqual(payment);
     const altered=structuredClone(backup);
     altered.records.supplierPayableEntries.find(entry=>entry.id===payment.id)!.currency='USD';
-    expect(()=>parseBackup(JSON.stringify(altered))).toThrow(/supplier payable/i);
+    const paymentEvent=altered.records.centralOperationalEvents.find(event=>event.kind==='supplier.payment_recorded'&&event.entityId===payment.id);
+    if(!paymentEvent || !paymentEvent.kind.startsWith('supplier.'))throw new Error('Missing supplier event fixture.');
+    (paymentEvent as import('@/features/sync/centralOperationalEvent').CentralSupplierEntryEvent).payload.entry.currency='USD';
+    expect(()=>parseBackup(JSON.stringify(altered))).toThrow(/supplier|Central supplier event/i);
     await database.supplierPayableEntries.clear();
     await restoreBackup(backup,database);
     await unlockStaff(owner.id,'123456',database);

@@ -53,10 +53,22 @@ describe("Stage 9 local backup and restore", () => {
     expect(await getLastBackupAt(db)).toBe(exportedAt);
     const exported = parseBackup(stringifyBackup(await createBackup(db)));
     expect(exported.records.centralSaleEvents).toHaveLength(1);
-    expect(exported.records.centralOperationalEvents).toMatchObject([{kind:'customer.repayment_recorded',settlementEvidence:'local_record_only'}]);
+    expect(exported.records.centralOperationalEvents).toContainEqual(expect.objectContaining({kind:'customer.repayment_recorded',settlementEvidence:'local_record_only'}));
+    expect(exported.records.centralOperationalEvents).toContainEqual(expect.objectContaining({kind:'purchase.completed',payload:{purchase,lines:expect.any(Array)}}));
+    expect(exported.records.centralOperationalEvents).toContainEqual(expect.objectContaining({kind:'shift.opened',payload:{shift:expect.objectContaining({id:shift!.id})}}));
+    const alteredPurchase=structuredClone(exported);
+    const purchaseEvent=alteredPurchase.records.centralOperationalEvents.find(row=>row.kind==='purchase.completed');
+    if(!purchaseEvent || purchaseEvent.kind!=='purchase.completed')throw new Error('Missing purchase event fixture.');
+    purchaseEvent.payload.purchase.totalCostMinor+=1;
+    expect(()=>parseBackup(stringifyBackup(alteredPurchase))).toThrow(/Central purchase event/i);
+    const alteredShift=structuredClone(exported);
+    const shiftEvent=alteredShift.records.centralOperationalEvents.find(row=>row.kind==='shift.opened');
+    if(!shiftEvent || shiftEvent.kind!=='shift.opened')throw new Error('Missing shift event fixture.');
+    shiftEvent.payload.shift.openingFloatMinor+=1;
+    expect(()=>parseBackup(stringifyBackup(alteredShift))).toThrow(/Central shift event/i);
     const alteredRepaymentEvent=structuredClone(exported);
-    const repaymentEvent=alteredRepaymentEvent.records.centralOperationalEvents[0];
-    if(repaymentEvent.kind!=='customer.repayment_recorded')throw new Error('Missing repayment event fixture.');
+    const repaymentEvent=alteredRepaymentEvent.records.centralOperationalEvents.find(row=>row.kind==='customer.repayment_recorded');
+    if(!repaymentEvent || repaymentEvent.kind!=='customer.repayment_recorded')throw new Error('Missing repayment event fixture.');
     repaymentEvent.payload.repayment.amountMinor+=1;
     expect(()=>parseBackup(stringifyBackup(alteredRepaymentEvent))).toThrow(/Central repayment event payload/i);
     expect(exported.records.noSaleEvents).toEqual([drawerEvent]);
@@ -86,6 +98,7 @@ describe("Stage 9 local backup and restore", () => {
       businessProfileId: 'primary', operationId: `sale:${completed.sale.id}`,
       deliveryStatus: 'local_only', deviceId: null });
     expect((await db.centralOperationalEvents.toArray()).filter(event=>event.kind==='customer.repayment_recorded')).toHaveLength(1);
+    expect((await db.centralOperationalEvents.toArray()).filter(event=>event.kind==='purchase.completed')).toHaveLength(1);
     expect(await db.noSaleEvents.get(drawerEvent.id)).toEqual(drawerEvent);
     expect(await db.payments.where("saleId").equals(completed.sale.id).first()).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo", mobileMoneyReference: "BACKUP-REF" });
     expect(await db.mobileMoneyProviders.get(provider.id)).toMatchObject({ name: "MTN MoMo", active: true });

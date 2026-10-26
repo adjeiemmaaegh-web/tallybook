@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 import { webcrypto } from 'node:crypto';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TallybookDB, initializeDatabase } from '@/db/TallybookDB';
 import { saveBusinessProfile, createBusinessProfile } from '@/features/business/businessProfile';
 import { clearCompanyData } from '@/features/business/activeCompany';
@@ -102,12 +102,29 @@ describe('Stage 6 local staff security',()=>{
     lockStaff('primary');await unlockStaff(cashier.id,'654321',database);
     await expect(completeSale({lines:[{productId:product.id,quantity:1}],discount:'0',paymentMethod:'cash',amountPaid:'3',currency:'GHS',submissionKey:'shift-first-attempt'},database)).rejects.toThrow(/Open (a cashier|your staff) shift/);
     const shift=await openShift(1000,database);
+    expect(await database.centralOperationalEvents.get(`shift.opened:${shift.id}`)).toMatchObject({kind:'shift.opened',payload:{shift}});
     const sale=await completeSale({lines:[{productId:product.id,quantity:1}],discount:'0',paymentMethod:'cash',amountPaid:'3',currency:'GHS',submissionKey:'shift-success-001'},database);
     expect(sale.sale).toMatchObject({staffId:cashier.id,shiftId:shift.id});
     expect((await database.staffAudits.where('staffId').equals(cashier.id).toArray()).some(x=>x.action==='sale.completed')).toBe(true);
     const closed=await closeShift(shift.id,1290,database);
+    expect(await database.centralOperationalEvents.get(`shift.closed:${shift.id}`)).toMatchObject({kind:'shift.closed',payload:{shift:expect.objectContaining({id:shift.id,varianceMinor:-10})}});
     expect(closed).toMatchObject({expectedCashMinor:1300,varianceMinor:-10,cashSalesMinor:300});
     await expect(closeShift(shift.id,1300,database)).rejects.toThrow(/Open shift not found/);
+  });
+
+  it('keeps shift state unchanged if an opening or closing event write fails',async()=>{
+    const database=makeDB();await setup(database);
+    const owner=await createStaff('Event owner','owner','123456',database);await unlockStaff(owner.id,'123456',database);
+    const opening=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(openShift(0,database)).rejects.toThrow('event write failed');
+    opening.mockRestore();
+    expect(await database.staffShifts.count()).toBe(0);
+    const shift=await openShift(0,database);
+    const closing=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(closeShift(shift.id,0,database)).rejects.toThrow('event write failed');
+    closing.mockRestore();
+    expect((await database.staffShifts.get(shift.id))?.closedAt).toBeUndefined();
+    expect(await database.centralOperationalEvents.get(`shift.closed:${shift.id}`)).toBeUndefined();
   });
 
   it('accepts a one-time supervisor approval only for its exact discount and intent',async()=>{

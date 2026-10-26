@@ -1,0 +1,66 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1793045229059-7'. Closing db now to resume the delete request.
+
+··········································x··········
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > adds a completed multi-line purchase, stock increases, and traceable purchase movements exactly once
+AssertionError: expected { Object (id, operationId, ...) } to match object { kind: 'purchase.completed', …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -2,27 +2,27 @@
+    "kind": "purchase.completed",
+    "payload": {
+      "lines": [
+        {
+          "businessProfileId": "primary",
+-         "id": "BzOYZA5oE9Ffs_",
+-         "lineTotalMinor": 3000,
+-         "productId": "YHZiB-Q6UzeL",
+-         "productName": "Stage 7 Oil",
+-         "purchaseId": "eMfNBJ0xJ9US_s",
+-         "quantity": 5,
+-         "unitCostMinor": 600,
+-       },
+-       {
+-         "businessProfileId": "primary",
+          "id": "pk8GpSvf399Meq",
+          "lineTotalMinor": 5800,
+          "productId": "otbS9mjFC5iM",
+          "productName": "Stage 7 Rice",
+          "purchaseId": "eMfNBJ0xJ9US_s",
+          "quantity": 4,
+          "unitCostMinor": 1450,
++       },
++       {
++         "businessProfileId": "primary",
++         "id": "BzOYZA5oE9Ffs_",
++         "lineTotalMinor": 3000,
++         "productId": "YHZiB-Q6UzeL",
++         "productName": "Stage 7 Oil",
++         "purchaseId": "eMfNBJ0xJ9US_s",
++         "quantity": 5,
++         "unitCostMinor": 600,
+        },
+      ],
+      "purchase": {
+        "businessProfileId": "primary",
+        "createdAt": "2026-10-26T20:07:25.201Z",
+
+ ❯ src/features/purchases/purchases.test.ts:35:81
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 52 passed (53)
+   Start at  00:06:14
+   Duration  73.70s (transform 2.59s, setup 7.26s, import 7.69s, tests 32.22s, environment 20.34s)

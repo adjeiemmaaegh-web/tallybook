@@ -50,7 +50,7 @@ it('atomically records two cash refunds, restores original FIFO and reports net 
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-1'),database)).rejects.toThrow(/already recorded/);
   const b=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-2'),database);
   expect(b).toMatchObject({refundedMinor:1000,returnSequence:2});
-  expect(await database.centralOperationalEvents.count()).toBe(2);
+  expect(await database.centralOperationalEvents.where('kind').equals('sale.cash_partial_refund_recorded').count()).toBe(2);
   expect(await database.centralOperationalEvents.get(`cash-refund:${b.id}`)).toMatchObject({
     kind:'sale.cash_partial_refund_recorded',entityId:b.id,deliveryStatus:'local_only',
     deviceId:null,payoutEvidence:'staff_confirmed_only',payload:{cashReturn:b}});
@@ -60,11 +60,13 @@ it('atomically records two cash refunds, restores original FIFO and reports net 
   await expect(executeLatestSaleReversal('GHS',database,'full-after-partial')).rejects.toThrow(/couldn't find/);
   const backup=await createBackup(database);
   expect(parseBackup(JSON.stringify(backup)).records.cashPartialReturns).toHaveLength(2);
-  expect(parseBackup(JSON.stringify(backup)).records.centralOperationalEvents).toHaveLength(2);
+  expect(parseBackup(JSON.stringify(backup)).records.centralOperationalEvents.filter(event=>event.kind==='sale.cash_partial_refund_recorded')).toHaveLength(2);
   const damaged=structuredClone(backup);damaged.records.cashPartialReturns[1].refundedMinor++;
   expect(()=>parseBackup(JSON.stringify(damaged))).toThrow(/Cash return|partial|reconcile|Central cash refund/i);
   const alteredEvent=structuredClone(backup);
-  alteredEvent.records.centralOperationalEvents[1].payload.cashReturn.refundedMinor++;
+  const refundEvent=alteredEvent.records.centralOperationalEvents.find(event=>event.kind==='sale.cash_partial_refund_recorded'&&event.entityId===b.id);
+  if(!refundEvent || refundEvent.kind!=='sale.cash_partial_refund_recorded')throw new Error('Missing refund event fixture.');
+  refundEvent.payload.cashReturn.refundedMinor++;
   expect(()=>parseBackup(JSON.stringify(alteredEvent))).toThrow(/Central cash refund event/);
 });
 it('rolls back stock, FIFO cost and cash ledger when return posting fails',async()=>{
@@ -88,7 +90,7 @@ it('rolls back cash refund, stock and cost if the central local event cannot be 
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'failed-event-1'),database))
     .rejects.toThrow(/event write failure/);
   expect(await database.cashPartialReturns.count()).toBe(0);
-  expect(await database.centralOperationalEvents.count()).toBe(0);
+  expect(await database.centralOperationalEvents.where('kind').equals('sale.cash_partial_refund_recorded').count()).toBe(0);
   expect((await database.products.get(product.id))?.stockQuantity).toBe(beforeStock);
   expect(await database.inventoryCostEvents.toArray()).toEqual(beforeCosts);
   expect(await database.inventoryMovements.count()).toBe(beforeMovements);

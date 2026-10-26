@@ -1,0 +1,14 @@
+✔ central coordinator stays unconfigured without private Auth and database dependencies (1.8546ms)
+✔ isolated signed ingest is atomic, idempotent, scoped and denied to browser writers (6511.2434ms)
+✔ accepts only signed sale evidence bound to server membership, shop and device (11.0882ms)
+✔ rejects forged shop, payload and unrelated authenticated user (3.129ms)
+✔ rejects signed JSON with duplicate business keys (1.2568ms)
+✔ rejects revoked device, removed membership and missing shop assignment (3.2011ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7019.0881

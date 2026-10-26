@@ -5,6 +5,8 @@ import { createProduct } from "@/features/inventory/inventory";
 import { registerBatch } from "@/features/inventory/stage2Inventory";
 import { archiveSupplier, completePurchase, createSupplier, getPurchasesSnapshot, updateSupplier } from "@/features/purchases/purchases";
 import { recognizeUnpaidPurchase, recordSupplierSettlement } from "@/features/purchases/supplierPayables.ts";
+import {createBackup,parseBackup,stringifyBackup} from '@/features/backup/backup';
+import {saveBusinessProfile} from '@/features/business/businessProfile';
 
 const names = new Set<string>(); const databases: Dexie[] = []; let sequence = 0;
 function makeDatabase() { const database = new TallybookDB(`tallybook-purchases-test-${Date.now()}-${++sequence}`); names.add(database.name); databases.push(database); return database; }
@@ -32,6 +34,20 @@ describe("Stage 7 local suppliers and purchases", () => {
     expect(currentRice?.stockQuantity).toBe(7); expect(currentOil?.stockQuantity).toBe(7);
     expect(snapshot.purchases).toHaveLength(1); expect(snapshot.purchases[0].lines).toEqual(expect.arrayContaining([expect.objectContaining({ productName: "Stage 7 Rice", quantity: 4, unitCostMinor: 1450, lineTotalMinor: 5800 }), expect.objectContaining({ productName: "Stage 7 Oil", quantity: 5, unitCostMinor: 600, lineTotalMinor: 3000 })]));
     expect(movements).toEqual(expect.arrayContaining([expect.objectContaining({ productId: rice.id, purchaseId: first.id, movementType: "purchase", quantityDelta: 4, previousQuantity: 3, resultingQuantity: 7, note: "Purchase from ABC Wholesale" }), expect.objectContaining({ productId: oil.id, purchaseId: first.id, movementType: "purchase", quantityDelta: 5, previousQuantity: 2, resultingQuantity: 7 })]));
+    expect(await database.centralOperationalEvents.get(`purchase:${first.id}`)).toMatchObject({kind:'purchase.completed',payload:{purchase:first,lines:expect.arrayContaining(snapshot.purchases[0].lines)}});
+    expect(await database.centralOperationalEvents.where('kind').equals('purchase.completed').count()).toBe(1);
+    await saveBusinessProfile({name:'Multi-line purchase backup',country:'Ghana',currency:'GHS',businessType:'Retail shop',phone:'',email:'',address:''},database);
+    expect(parseBackup(stringifyBackup(await createBackup(database))).records.purchases).toHaveLength(1);
+  });
+
+  it('rolls back a purchase and stock if its operational event cannot be saved',async()=>{
+    const database=makeDatabase(); const {rice,supplier}=await fixture(database);
+    const add=vi.spyOn(database.centralOperationalEvents,'add').mockRejectedValueOnce(new Error('event write failed'));
+    await expect(completePurchase({supplierId:supplier.id,purchaseDate:'2026-08-27',submissionKey:'purchase-event-rollback',lines:[{productId:rice.id,quantity:'2',unitCost:'10'}]},'GHS',database)).rejects.toThrow('event write failed');
+    add.mockRestore();
+    expect(await database.purchases.count()).toBe(0);
+    expect(await database.purchaseLines.count()).toBe(0);
+    expect((await database.products.get(rice.id))!.stockQuantity).toBe(3);
   });
 
   it("records a batch purchase, its base-unit FIFO cost and batch expiry atomically and idempotently", async () => {

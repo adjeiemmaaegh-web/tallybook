@@ -5,6 +5,7 @@ import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { activeStaffShift, requirePermission } from '@/features/staff/staff';
 import { reconcileSupplierPayable } from './supplierPayables.mjs';
+import {makeCentralSupplierEntryEvent} from '@/features/sync/centralOperationalEvent';
 
 /** Offline manual attestations, not verified bank/provider settlements. */
 export interface SupplierPayableEntry {
@@ -37,7 +38,7 @@ export async function recognizeUnpaidPurchase(purchaseId: string, submissionKey:
 async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submissionKey: string, database: TallybookDB = db) {
   validKey(submissionKey);
   const company = getActiveBusinessProfileId();
-  return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.centralOperationalEvents, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
@@ -64,6 +65,7 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     // Reconcile the PROPOSED recognition inside its write transaction.
     reconcileSupplierPayable(purchase,[...entries,result]);
     await database.supplierPayableEntries.add(result);
+    await database.centralOperationalEvents.add(makeCentralSupplierEntryEvent(result,purchase));
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: 'supplier.liability.recognized', createdAt, details: purchaseId });
     if(getActiveBusinessProfileId()!==company)
       throw new Error('Company switched before supplier recognition committed.');
@@ -93,7 +95,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
   if (input.kind === 'credit' && input.method !== undefined) throw new Error('A supplier credit is not a cash payment.');
   if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.length > 120)) throw new Error('Supplier reference is too long.');
   const company = getActiveBusinessProfileId();
-  return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
+  return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.centralOperationalEvents, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
@@ -123,6 +125,7 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     reconcileSupplierPayable(purchase,[...rows,entry]);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before committing supplier settlement.');
     await database.supplierPayableEntries.add(entry);
+    await database.centralOperationalEvents.add(makeCentralSupplierEntryEvent(entry,purchase));
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: input.kind === 'payment' ? 'supplier.payment.recorded' : 'supplier.credit.recorded', createdAt, details: purchase.id });
     if(getActiveBusinessProfileId()!==company)
       throw new Error('Company switched before supplier settlement committed.');

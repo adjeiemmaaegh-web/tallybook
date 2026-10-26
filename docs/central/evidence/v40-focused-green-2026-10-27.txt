@@ -1,0 +1,12 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1793046481872-7'. Closing db now to resume the delete request.
+
+·····················································
+
+ Test Files  5 passed (5)
+      Tests  53 passed (53)
+   Start at  00:27:17
+   Duration  45.30s (transform 1.75s, setup 5.12s, import 5.11s, tests 19.05s, environment 13.09s)

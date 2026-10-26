@@ -14,6 +14,7 @@ import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { checkedMinorSum } from "@/features/sales/creditLedger.mjs";
 import { appendInventoryCostChange } from "@/features/inventory/costLedger";
 import { reconcileSupplierPayable } from "@/features/purchases/supplierPayables.mjs";
+import {makeCentralPurchaseEvent} from '@/features/sync/centralOperationalEvent';
 
 export interface Supplier {
   id: string;
@@ -181,7 +182,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     if (expiryDate && !batchCode) throw new Error("Enter a batch code when you provide an expiry date.");
     if (expiryDate && !validDateOnly(expiryDate)) throw new Error("Choose a valid batch expiry date.");
   }
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.suppliers, database.products, database.purchases, database.purchaseLines, database.centralOperationalEvents, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const now = new Date().toISOString();
     const staff=await requirePermission("inventory", database, activeId);
@@ -232,6 +233,7 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
     const movements: InventoryMovement[] = lines.map((line, index) => { const product = resolvedProducts[index]; const resultingQuantity = product.stockQuantity + line.quantity; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, purchaseId, movementType: "purchase", quantityDelta: line.quantity, previousQuantity: product.stockQuantity, resultingQuantity, note: `Purchase from ${supplier.name}`, createdAt: now }; });
     if (movements.some(m => !Number.isSafeInteger(m.previousQuantity) || m.previousQuantity < 0 || !Number.isSafeInteger(m.resultingQuantity) || m.resultingQuantity > 9_999_999)) throw new Error("Purchase stock quantity exceeds supported limits or needs reconciliation.");
     await database.purchases.add(purchase); await database.purchaseLines.bulkAdd(lines);
+    await database.centralOperationalEvents.add(makeCentralPurchaseEvent(purchase,lines));
     const receivedBatches: InventoryBatch[]=[];
     for (const [index, line] of lines.entries()) {
       const event=await appendInventoryCostChange(database, resolvedProducts[index], line.quantity, { sourceId: movements[index].id, createdAt: now, purchaseId, ...(line.batchId?{batchId:line.batchId}:{}) }, { unitCostMinor: line.unitCostMinor });

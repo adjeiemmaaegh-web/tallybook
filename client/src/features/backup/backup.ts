@@ -280,7 +280,32 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       throw new Error('Central sale event payload differs from saved checkout records.');
   }
   for (const event of records.centralOperationalEvents) {
-    if(event.kind==='customer.repayment_recorded') {
+    if(event.kind==='purchase.completed') {
+      validateCentralOperationalEvent(event);
+      const saved=records.purchases.find(row=>row.id===event.entityId);
+      const savedLines=records.purchaseLines.filter(row=>row.purchaseId===event.entityId);
+      const byId=<T extends {id:string}>(rows:T[])=>[...rows].sort((left,right)=>left.id.localeCompare(right.id));
+      if(!saved || JSON.stringify(saved)!==JSON.stringify(event.payload.purchase) ||
+         JSON.stringify(byId(savedLines))!==JSON.stringify(byId(event.payload.lines)))
+        throw new Error('Central purchase event payload differs from saved purchase records.');
+    } else if(typeof event.kind==='string' && event.kind.startsWith('supplier.')) {
+      const typed=event as import('@/features/sync/centralOperationalEvent').CentralSupplierEntryEvent;
+      const purchase=records.purchases.find(row=>row.id===typed.payload?.entry?.purchaseId);
+      if(!purchase)throw new Error('Central supplier event has no original purchase.');
+      validateCentralOperationalEvent(typed,purchase);
+      const saved=records.supplierPayableEntries.find(row=>row.id===event.entityId);
+      if(!saved || JSON.stringify(saved)!==JSON.stringify(typed.payload.entry))
+        throw new Error('Central supplier event payload differs from saved supplier entry.');
+    } else if(event.kind==='shift.opened' || event.kind==='shift.closed') {
+      validateCentralOperationalEvent(event);
+      const saved=records.staffShifts.find(row=>row.id===event.entityId);
+      if(!saved || (event.kind==='shift.closed'
+        ? JSON.stringify(saved)!==JSON.stringify(event.payload.shift)
+        : saved.businessProfileId!==event.payload.shift.businessProfileId ||
+          saved.staffId!==event.payload.shift.staffId || saved.openedAt!==event.payload.shift.openedAt ||
+          saved.openingFloatMinor!==event.payload.shift.openingFloatMinor))
+        throw new Error('Central shift event payload differs from saved shift.');
+    } else if(event.kind==='customer.repayment_recorded') {
       validateCentralOperationalEvent(event);
       const saved=records.repayments.find(row=>row.id===event.entityId);
       if(!saved || JSON.stringify(saved)!==JSON.stringify(event.payload.repayment))
