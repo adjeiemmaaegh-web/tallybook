@@ -133,7 +133,8 @@ const pass=results.every(x=>x.success);
 const summary={
  kind:"stage21-developer-qa-only",
  exactSourceSha:head,
- date:new Date().toISOString(),node:process.version,packageManager:manager,ciEquivalent:pinnedPnpm,
+ date:new Date().toISOString(),node:process.version,packageManager:manager,
+ pinnedPackageManager:pinnedPnpm,ciEquivalent:false,
  outcomes:results,allChecksPassed:pass,
  ownerUatPerformed:false,independentSecurityAccepted:false,productionAuthorized:false,
  releaseDecision:"NO-GO",
