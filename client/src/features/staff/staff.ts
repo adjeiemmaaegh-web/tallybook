@@ -38,6 +38,10 @@ export function lockStaff(company=getActiveBusinessProfileId()) {
   sessionCredentials.delete(company); incrementSessionGeneration(company);
   invalidateSupervisorApprovals(company); signalSessionChanged();
 }
+/** A cloud-account transition must not leave any company's local staff unlock active. */
+export function lockAllStaff() {
+  for (const company of [...verifiedSessions.keys()]) lockStaff(company);
+}
 const randomHex = (size=16) => { const bytes=new Uint8Array(size); crypto.getRandomValues(bytes); return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join(''); };
 async function hashPin(pin:string,salt:string) { const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']); const result=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:180000,hash:'SHA-256'},key,256); return [...new Uint8Array(result)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 const validPin = (pin:string)=>/^\d{6,12}$/.test(pin);
@@ -212,11 +216,22 @@ export async function requirePermission(action:StaffPermission,database:Tallyboo
   if(!members.length)return null;
   const id=currentStaffId(company);
   const member=id?members.find(m=>m.id===id):undefined;
+  // A denied action must not revoke an otherwise valid cashier session.
+  // Revoke only when the unlocked credential or member record has changed.
+  let credentialIsCurrent=false;
+  try {
+    credentialIsCurrent=Boolean(id&&member&&!member.disabledAt&&
+      member.businessProfileId===company&&member.id===id&&
+      sessionCredentials.get(company)===staffCredentialBinding(member));
+  } catch { credentialIsCurrent=false; }
+  if(!credentialIsCurrent){
+    if(id)lockStaff(company);
+    throw new Error(`Staff access locked or ${action} permission denied.`);
+  }
   try {
     assertStaffAuthority({member,companyId:company,action,sessionId:id,
       credentialBinding:sessionCredentials.get(company)});
   } catch {
-    if(id)lockStaff(company);
     throw new Error(`Staff access locked or ${action} permission denied.`);
   }
   sessionExpiration.set(company,Date.now()+30*60_000);

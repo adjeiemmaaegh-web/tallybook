@@ -19,3 +19,7 @@
 3. Obtain formal physical-device, cross-browser, recovery, and operational acceptance before any release decision.
 
 The 12-stage register remains an evidence register, with no newly accepted unit inferred from focused tests. `BUILD_AND_CONTINUATION.md` provides exact commands and continuation order. The development branch may be reviewed, but it is not ready for an integration pull request or production release.
+
+## Owner and attendant update — 2026-10-26
+
+Local owner and cashier PIN sessions, permission boundaries, cloud-account transition revocation, and the signed-out cloud route were exercised again. A cashier's denied owner action now preserves that cashier's valid sales session. The complete client suite passed 1002/1002, the production build and TypeScript check passed, and the auth, release and offline browser suites passed 2/2, 3/3 and 3/3 respectively. The exact source changes and test logs are in `OWNER_ATTENDANT_AUTH_CHECKPOINT.md` and its linked evidence. Separate cloud owner and attendant identities are still **not** bound to local staff records. The connected Tallybook Supabase project reported `INACTIVE`, so live Google sign-in, membership enforcement and RLS remain unverified. This does not change the production NO-GO decision or authorize an integration pull request.

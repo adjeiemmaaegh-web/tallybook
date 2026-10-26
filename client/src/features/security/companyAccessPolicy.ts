@@ -27,7 +27,9 @@ export interface AuthoritativeCompanyMembership {
 const roleActions: Readonly<Record<CompanyAccessRole, ReadonlySet<CompanyAccessAction>>> = {
   owner: new Set(["read", "write", "manage_members", "delete_company"]),
   admin: new Set(["read", "write", "manage_members"]),
-  staff: new Set(["read", "write"]),
+  // Cloud attendant membership proves identity only. It does not specify
+  // which ledger, store or financial mutations the attendant may perform.
+  staff: new Set(["read"]),
 };
 
 export function canAccessCompany(

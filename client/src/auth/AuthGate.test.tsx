@@ -21,6 +21,27 @@ beforeEach(()=>{
 });
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 describe('Run 4 offline-safe AuthGate',()=>{
+ it('keeps account screens outside the local ledger tree',()=>{
+  for(const path of ['/signin','/account']){
+   mock.location=path;
+   const view=render(<AuthGate enabled signIn={<span>Sign in</span>}>
+     <span>Local ledger mounted</span>
+   </AuthGate>);
+   expect(screen.getByText('Sign in')).toBeTruthy();
+   expect(screen.queryByText('Local ledger mounted')).toBeNull();
+   view.unmount();
+  }
+  expect(useRun4CloudSession).not.toHaveBeenCalled();
+ });
+ it('keeps the account preview screen outside the local ledger tree',()=>{
+  mock.location='/account';
+  render(<AuthGate enabled signIn={<span>Google sign in</span>} accountSignIn={<span>Account preview sign in</span>}>
+    <span>Local ledger mounted</span>
+  </AuthGate>);
+  expect(screen.getByText('Account preview sign in')).toBeTruthy();
+  expect(screen.queryByText('Google sign in')).toBeNull();
+  expect(screen.queryByText('Local ledger mounted')).toBeNull();
+ });
  it('never gates local POS, backup, inventory or reports even with auth opted in',()=>{
   for(const path of ['/', '/sales','/backup','/inventory','/reports']){
    mock.location=path;

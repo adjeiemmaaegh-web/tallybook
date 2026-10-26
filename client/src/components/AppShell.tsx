@@ -25,6 +25,7 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 
 export function AppShell({ children }: AppShellProps) {
   const { activeCompanyId } = useBusinessProfile();
+  const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const menuCloseRef = useRef<HTMLButtonElement>(null);
@@ -33,7 +34,9 @@ export function AppShell({ children }: AppShellProps) {
   const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open">("loading");
   useEffect(() => {
     let mounted = true;
+    let requestId = 0;
     const refresh = (silent = false) => {
+      const request = ++requestId;
       if (mounted && !silent) setStaffGate("loading");
       // Do not repeatedly deserialize all PIN hashes and WebAuthn credentials.
       const current=currentStaffId(activeCompanyId);
@@ -43,8 +46,12 @@ export function AppShell({ children }: AppShellProps) {
         if(!current)return false;
         const member=await db.staffMembers.get(current);
         return Boolean(member&&member.businessProfileId===activeCompanyId&&!member.disabledAt);
-      }).then(open=>{if(mounted)setStaffGate(open?"open":"locked");})
-      .catch(() => { if (mounted) setStaffGate("locked"); });
+      }).then(open=>{
+        if (!mounted || request !== requestId) return;
+        if (current !== currentStaffId(activeCompanyId)) { refresh(true); return; }
+        setStaffGate(open?"open":"locked");
+      })
+      .catch(() => { if (mounted && request === requestId) setStaffGate("locked"); });
     };
     refresh();
     const onSession = () => refresh(true);
@@ -54,8 +61,7 @@ export function AppShell({ children }: AppShellProps) {
     window.addEventListener('focus',onFocus);
      document.addEventListener('visibilitychange',onFocus);
     return () => { mounted = false; window.clearInterval(timer); window.removeEventListener(STAFF_SESSION_CHANGED,onSession); window.removeEventListener('focus',onFocus); document.removeEventListener('visibilitychange',onFocus); };
-  }, [activeCompanyId]);
-  const [location] = useLocation();
+  }, [activeCompanyId, location]);
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
   useEffect(() => {

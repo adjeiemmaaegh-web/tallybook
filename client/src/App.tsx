@@ -1,6 +1,9 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AuthGate } from "@/auth/AuthGate";
+import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
+import { lockAllStaff } from "@/features/staff/staff";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/sonner";
 import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotifier";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -78,11 +81,20 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const onAccountEvent = createCloudStaffSessionBoundary(lockAllStaff);
+    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
+      // Events are only a reason to revoke a local unlock, never proof of cloud access.
+      onAccountEvent(event, session?.user.id ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <AuthGate signIn={<GoogleSignInPage />}>
+          <AuthGate signIn={<GoogleSignInPage />} accountSignIn={isSupabaseAuthPreviewEnabled ? <SupabaseSignInPage /> : <GoogleSignInPage />}>
           <DatabaseProvider>
             <BusinessProfileProvider>
               <Toaster position="top-center" richColors />

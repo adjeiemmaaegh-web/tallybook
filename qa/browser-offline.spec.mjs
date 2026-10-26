@@ -30,7 +30,7 @@ for (const scenario of [{width:1280, tax:false}, {width:390, tax:false}, {width:
     await page.getByRole('textbox', { name: 'Staff name' }).fill('Offline QA owner');
     await page.getByRole('textbox', { name: 'New staff PIN' }).fill('123456');
     await page.getByRole('button', { name: 'Create staff' }).click();
-    await expect(page.getByText('Offline QA owner — owner')).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Offline QA owner (owner)' })).toBeAttached();
     await page.getByLabel('Staff member').selectOption({ label: 'Offline QA owner (owner)' });
     await page.getByRole('textbox', { name: 'Staff PIN', exact: true }).fill('123456');
     await page.getByRole('button', { name: 'Unlock', exact: true }).click();

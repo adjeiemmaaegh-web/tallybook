@@ -7,7 +7,7 @@ import { clearCompanyData } from '@/features/business/activeCompany';
 import { createProduct } from '@/features/inventory/inventory';
 import { completeSale } from '@/features/sales/sales';
 import { setActiveBusinessProfileId } from '@/features/business/activeCompany';
-import { approveCheckoutDiscount, calculateTrackedShiftCash, listStaff, changeStaffStatus, changeStaffRole, resetStaffPin, setStaffPermissions, closeShift, consumeCheckoutDiscountApproval, createStaff, currentStaffId, lockStaff, openShift, requirePermission, unlockStaff } from './staff';
+import { approveCheckoutDiscount, calculateTrackedShiftCash, listStaff, changeStaffStatus, changeStaffRole, resetStaffPin, setStaffPermissions, closeShift, consumeCheckoutDiscountApproval, createStaff, currentStaffId, lockStaff, lockAllStaff, openShift, requirePermission, unlockStaff } from './staff';
 
 if (!globalThis.crypto?.subtle) Object.defineProperty(globalThis,'crypto',{configurable:true,value:webcrypto});
 let counter=0;
@@ -21,6 +21,15 @@ async function setup(database:TallybookDB){
 afterEach(async()=>{lockStaff('primary');for(const d of databases.splice(0)){const name=d.name;d.close();await new Dexie(name).delete();}setActiveBusinessProfileId('primary');});
 
 describe('Stage 6 local staff security',()=>{
+  it('locks every local staff session when the cloud account changes', async()=>{
+    const database=makeDB();await setup(database);
+    const owner=await createStaff('Owner','owner','123456',database);
+    await unlockStaff(owner.id,'123456',database);
+    expect(currentStaffId('primary')).toBe(owner.id);
+    lockAllStaff();
+    expect(currentStaffId('primary')).toBeNull();
+    await expect(requirePermission('staff',database)).rejects.toThrow(/locked/);
+  });
 
   it('staff directory never exposes PIN-derived secrets or authenticator keys', async () => {
     const database=makeDB();await setup(database);
@@ -43,6 +52,7 @@ describe('Stage 6 local staff security',()=>{
     lockStaff('primary');await unlockStaff(cashier.id,'654321',database);
     expect((await requirePermission('sell',database))?.id).toBe(cashier.id);
     await expect(requirePermission('inventory',database)).rejects.toThrow(/permission denied/);
+    expect(currentStaffId('primary')).toBe(cashier.id);
     await expect(createProduct({name:'Restricted product',sku:'',categoryId:'uncategorized',sellingPrice:'5',costPrice:'',initialStock:'2',lowStockThreshold:'1'},'GHS',database)).rejects.toThrow(/permission denied/);
     expect(await database.products.count()).toBe(0);
     lockStaff('primary');await expect(requirePermission('sell',database)).rejects.toThrow(/locked/);
