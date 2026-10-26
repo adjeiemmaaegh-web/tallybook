@@ -23,10 +23,13 @@ await assert.rejects(db.query('select public.add_business_attendant($1,$2)',[cre
 await assert.rejects(db.query('insert into public.business_members values($1,$2,$3,now())',[created.id,b,'owner']),/permission denied/);
 await as(a);await db.query('select public.add_business_attendant($1,$2)',[created.id,b]);
 await as(b);assert.equal((await db.query('select * from public.businesses')).rows.length,1);
+const ownMembership=(await db.query('select user_id,role from public.business_members')).rows;
+assert.deepEqual(ownMembership,[{user_id:b,role:'attendant'}]);
 await assert.rejects(db.query('select public.add_business_attendant($1,$2)',[created.id,a]),/Owner/);
 await assert.rejects(db.query('update public.businesses set owner_id=$1 where id=$2',[b,created.id]),/permission denied/);
 await as(a);await db.query('select public.remove_business_attendant($1,$2)',[created.id,b]);
 await as(b);assert.equal((await db.query('select * from public.businesses')).rows.length,0);
+assert.equal((await db.query('select * from public.business_members')).rows.length,0);
 await db.exec('reset role; set role anon;');
 await assert.rejects(db.query('select * from public.businesses'),/permission denied/);
 await assert.rejects(db.query('select public.create_owned_business($1,$2)',['Anon',key]),/permission denied/);

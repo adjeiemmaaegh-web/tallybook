@@ -8,6 +8,8 @@
  *
  * Set TALLYBOOK_STAGE21_ALLOW_INSTALL=1 to include frozen dependency install.
  * Without this opt-in, existing dependencies must already be installed.
+ * Set TALLYBOOK_STAGE21_NPM_FALLBACK=1 to run against existing node_modules
+ * when pinned pnpm is unavailable. This is labeled non-CI-equivalent.
  * All test categories are attempted; process exits nonzero if any fails.
  */
 import {execFileSync,spawnSync} from "node:child_process";
@@ -19,6 +21,7 @@ const expected=process.argv[2]==="--sha"?process.argv[3]:"";
 if(process.argv.includes("--help")){
  process.stdout.write("Usage: node scripts/stage21-run-developer-qa.mjs --sha EXACT_40_CHAR_COMMIT\n"+
   "Run on disposable developer data. With existing dependencies; to reinstall the frozen lockfile set TALLYBOOK_STAGE21_ALLOW_INSTALL=1.\n"+
+  "For an existing-dependency npm fallback set TALLYBOOK_STAGE21_NPM_FALLBACK=1; that result is not pinned-pnpm CI evidence.\n"+
   "Captures native, client, TypeScript, production build, browser/auth/offline and dependency audit logs. NO deploy or payments.\n");
  process.exit(0);
 }
@@ -45,9 +48,17 @@ if(process.version!=="v24.19.0"){
 }
 const pnpm=process.platform==="win32"?"pnpm.cmd":"pnpm";
 const version=invoke(pnpm,["--version"]);
-if(version.status!==0||version.stdout.trim()!=="10.34.0"){
- process.stderr.write("Pinned pnpm 10.34.0 missing or different.\n");process.exit(2);
+const pinnedPnpm=version.status===0&&version.stdout.trim()==="10.34.0";
+const npmFallback=!pinnedPnpm&&process.env.TALLYBOOK_STAGE21_NPM_FALLBACK==="1";
+if(!pinnedPnpm&&!npmFallback){
+ process.stderr.write("Pinned pnpm 10.34.0 missing or different. Set TALLYBOOK_STAGE21_NPM_FALLBACK=1 for labeled existing-dependency checks.\n");process.exit(2);
 }
+if(npmFallback&&process.env.TALLYBOOK_STAGE21_ALLOW_INSTALL==="1"){
+ process.stderr.write("npm fallback cannot install from the pnpm lockfile. Use existing dependencies only.\n");process.exit(2);
+}
+const manager=pinnedPnpm?"pnpm 10.34.0":"npm fallback (existing dependencies; not CI equivalent)";
+const npm=process.platform==="win32"?"npm.cmd":"npm";
+const runPackage=(id,pnpmArgs,npmArgs,timeout)=>one(id,pinnedPnpm?pnpm:npm,pinnedPnpm?pnpmArgs:npmArgs,timeout);
 const stamp=new Date().toISOString().replaceAll(":","-");
 const folder=resolve(root,"artifacts","stage21-local-qa",stamp+"-"+head.slice(0,12));
 mkdirSync(folder,{recursive:true});
@@ -58,7 +69,7 @@ function one(id,cmd,args,timeout=900000){
  const out=resolve(folder,id+".log");
  writeFileSync(out,[
   "STAGE21 DEVELOPER VERIFICATION",id,
-  "sha: "+head,"node: "+process.version,"pnpm: 10.34.0",
+  "sha: "+head,"node: "+process.version,"package manager: "+manager,
   "command: "+cmd+" "+args.join(" "),"-- combined stdout and stderr --",""
  ].join("\n"),{encoding:"utf8",mode:0o600});
  const fd=openSync(out,"a",0o600);
@@ -98,13 +109,22 @@ else{
 const dependencies=results.find(x=>x.id==="install")?.success;
 if(dependencies){
  one("native",process.execPath,["--experimental-strip-types","--test",...native],900000);
- one("client",pnpm,["test","--maxWorkers=2"],900000);
- one("types",pnpm,["check"],600000);
- one("build",pnpm,["build"],900000);
- one("browser",pnpm,["exec","playwright","test"],900000);
- one("auth-browser",pnpm,["exec","playwright","test","--config","playwright.auth.config.mjs"],900000);
- one("offline-browser",pnpm,["exec","playwright","test","--config","playwright.offline.config.mjs"],900000);
- one("dependencies",pnpm,["audit","--audit-level","moderate"],600000);
+ // One worker is slower but avoids the IndexedDB/Vitest contention observed
+ // in long Windows runs. Per-test limits surface hangs in the saved log.
+ runPackage("client",["test","--maxWorkers=1","--testTimeout=60000","--hookTimeout=60000"],
+   ["test","--","--maxWorkers=1","--testTimeout=60000","--hookTimeout=60000"],900000);
+ runPackage("types",["check"],["run","check"],600000);
+ runPackage("build",["build"],["run","build"],900000);
+ runPackage("browser",["exec","playwright","test"],["exec","--","playwright","test"],900000);
+ runPackage("auth-browser",["exec","playwright","test","--config","playwright.auth.config.mjs"],
+   ["exec","--","playwright","test","--config","playwright.auth.config.mjs"],900000);
+ runPackage("offline-browser",["exec","playwright","test","--config","playwright.offline.config.mjs"],
+   ["exec","--","playwright","test","--config","playwright.offline.config.mjs"],900000);
+ if(pinnedPnpm)one("dependencies",pnpm,["audit","--audit-level","moderate"],600000);
+ else {
+  results.push({id:"dependencies",success:false,skipped:true,reason:"npm fallback has no npm lockfile; pnpm lockfile audit not verified"});
+  process.stdout.write("dependencies: BLOCKED, pinned pnpm required for lockfile audit\n");
+ }
 }else{
  for(const id of ["native","client","types","build","browser","auth-browser","offline-browser","dependencies"])
   results.push({id,success:false,skipped:true,reason:"Frozen dependencies not available"});
@@ -113,7 +133,7 @@ const pass=results.every(x=>x.success);
 const summary={
  kind:"stage21-developer-qa-only",
  exactSourceSha:head,
- date:new Date().toISOString(),node:process.version,pnpm:"10.34.0",
+ date:new Date().toISOString(),node:process.version,packageManager:manager,ciEquivalent:pinnedPnpm,
  outcomes:results,allChecksPassed:pass,
  ownerUatPerformed:false,independentSecurityAccepted:false,productionAuthorized:false,
  releaseDecision:"NO-GO",
