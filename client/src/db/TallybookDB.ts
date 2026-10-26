@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 35;
+export const DATABASE_SCHEMA_VERSION = 36;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -327,6 +327,17 @@ export class TallybookDB extends Dexie {
       inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
       inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt",
       noSaleEvents: "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]"
+    });
+    // A company that has ever enrolled local staff must not silently return to
+    // legacy open access if its staff rows are later missing. Financial rows are
+    // untouched; only the owning business profile gains a durable marker.
+    this.version(36).stores({}).upgrade(async transaction => {
+      const members = await transaction.table("staffMembers").toArray() as Array<{ businessProfileId?: string }>;
+      for (const companyId of new Set(members.map(member => member.businessProfileId).filter((id): id is string => typeof id === "string" && !!id))) {
+        const profile = await transaction.table("businessProfiles").get(companyId);
+        if (profile && profile.staffGovernanceEnabled !== true)
+          await transaction.table("businessProfiles").update(companyId, { staffGovernanceEnabled: true });
+      }
     });
   }
 }

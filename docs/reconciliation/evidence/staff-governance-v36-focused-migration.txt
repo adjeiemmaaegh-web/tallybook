@@ -1,0 +1,10 @@
+npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  05:32:58
+   Duration  6.41s (transform 693ms, setup 2.03s, import 1.28s, tests 2.53s, environment 5.24s)
+

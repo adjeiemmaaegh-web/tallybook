@@ -8,6 +8,7 @@ pnpm run check
 pnpm run build
 pnpm exec vitest run --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 --reporter=dot
 pnpm exec playwright test --config playwright.config.mjs
+pnpm exec playwright test --config playwright.auth.config.mjs
 pnpm exec playwright test --config playwright.offline.config.mjs
 pnpm audit --prod
 ```
@@ -23,4 +24,14 @@ The complete client Vitest run passed 995/995 in 124 files with the serialized i
 
 ## Open risks
 
-The source-overlap decisions are recorded, but broad real-world financial and inventory acceptance remains open. The current v35 migration fixtures cover sample rows but not all real-world histories or restore paths. Windows native tests include POSIX path and permission assumptions and cannot be counted as passing. Physical device, cross-browser and operational acceptance remain deferred. Production release is NO-GO.
+The source-overlap decisions are recorded, but broad real-world financial and inventory acceptance remains open. The current v36 migration fixtures cover sample rows but not all real-world histories or restore paths. Windows native tests include POSIX path and permission assumptions and cannot be counted as passing. Windows and Android operational acceptance remains deferred. Production release is NO-GO.
+
+## v36 staff-governance continuation
+
+The v36 migration protects companies that have already enrolled local staff from silently reopening if staff records disappear. Reproduce the focused gate with:
+
+```powershell
+pnpm exec vitest run client/src/features/staff/staff.test.ts client/src/db/unifiedMigration.test.ts client/src/features/backup/backup.test.ts client/src/features/credit/stage22ScopedSubmissionMigration.test.ts
+```
+
+See `STAFF_GOVERNANCE_V36_CHECKPOINT.md` for the exact full-suite and browser results. Next: obtain Linux CI evidence for optional-sync security, exercise historical customer backups, and implement verified cloud-to-local owner/attendant binding. Do not provision or deploy cloud services as part of this source checkpoint.

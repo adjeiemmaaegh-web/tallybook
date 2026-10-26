@@ -123,7 +123,8 @@ describe("privacy and scope", () => {
     expect((await log()).map((entry) => entry.summary)).toEqual(["mine"]);
     await expect(clearCompanyData("company-two", kit.database)).rejects.toThrow("Switch to the company");
     expect(await kit.database.assistantAudit.count()).toBe(2);
-    await kit.database.businessProfiles.put({ ...(await kit.database.businessProfiles.get("primary"))!, id: "company-two", name: "Second company" });
+    const {staffGovernanceEnabled: _primaryGovernance, ...newCompany} = (await kit.database.businessProfiles.get("primary"))!;
+    await kit.database.businessProfiles.put({ ...newCompany, id: "company-two", name: "Second company" });
     setActiveBusinessProfileId("company-two");
     const secondOwner = await createStaff("Second test owner", "owner", "654321", kit.database);
     await unlockStaff(secondOwner.id, "654321", kit.database);

@@ -10,6 +10,29 @@ afterEach(async () => {
   }));
 });
 
+it("marks enrolled companies protected during the v35 to v36 upgrade without changing other companies", async () => {
+  const name = `unified-v35-staff-${Date.now()}-${Math.random()}`;
+  const legacy = new Dexie(name);
+  legacy.version(35).stores({
+    businessProfiles: "id, name, country, currency, businessType, updatedAt",
+    staffMembers: "id, businessProfileId, role, createdAt",
+  });
+  await legacy.open();
+  const first = {id:"primary",name:"Enrolled",country:"Ghana",currency:"GHS",businessType:"Retail shop",createdAt:"2026-10-01T00:00:00.000Z",updatedAt:"2026-10-01T00:00:00.000Z"};
+  const second = {...first,id:"second",name:"Legacy"};
+  const staff = {id:"owner-one",businessProfileId:"primary",role:"owner",createdAt:first.createdAt};
+  await legacy.table("businessProfiles").bulkPut([first,second]);
+  await legacy.table("staffMembers").put(staff);
+  legacy.close();
+
+  const upgraded = new TallybookDB(name);
+  opened.push(upgraded);
+  await initializeDatabase(upgraded);
+  expect((await upgraded.businessProfiles.get("primary"))?.staffGovernanceEnabled).toBe(true);
+  expect(await upgraded.businessProfiles.get("second")).toEqual(second);
+  expect(await upgraded.staffMembers.get(staff.id)).toEqual(staff);
+});
+
 it("retains GitHub v34 financial rows while adding the local drawer journal", async () => {
   const name = `unified-v34-${Date.now()}-${Math.random()}`;
   const legacy = new Dexie(name);
@@ -40,11 +63,13 @@ it("retains GitHub v34 financial rows while adding the local drawer journal", as
   expect(await upgraded.noSaleEvents.count()).toBe(0);
 });
 
-it("retains a v30 replica outbox and per-company sequence while adding v31-v35 stores", async () => {
+it("retains a v30 replica outbox and enrolled owner while adding later stores", async () => {
   const name = `unified-v30-replica-${Date.now()}-${Math.random()}`;
   const legacy = new Dexie(name);
   legacy.version(30).stores({
     appMeta: "key, updatedAt",
+    businessProfiles: "id, name, country, currency, businessType, updatedAt",
+    staffMembers: "id, businessProfileId, role, createdAt",
     syncReplicaOutbox: "id, businessProfileId, deviceId, operationId, status, [businessProfileId+status], &[businessProfileId+deviceId+sequence], &[businessProfileId+operationId]",
     syncReplicaInbox: "id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
     syncReplicaCursors: "businessProfileId, updatedAt",
@@ -53,7 +78,11 @@ it("retains a v30 replica outbox and per-company sequence while adding v31-v35 s
   await legacy.open();
   const event = { id: "replica-one", businessProfileId: "primary", deviceId: "device-one", operationId: "operation-one", sequence: 4, status: "pending" };
   const otherCompany = { ...event, id: "replica-two", businessProfileId: "second" };
+  const profile = {id:"primary",name:"Replica company",country:"Ghana",currency:"GHS",businessType:"Retail shop",createdAt:"2026-10-01T00:00:00.000Z",updatedAt:"2026-10-01T00:00:00.000Z"};
+  const owner = {id:"replica-owner",businessProfileId:"primary",role:"owner",createdAt:profile.createdAt};
   await legacy.table("syncReplicaOutbox").bulkPut([event,otherCompany]);
+  await legacy.table("businessProfiles").put(profile);
+  await legacy.table("staffMembers").put(owner);
   legacy.close();
 
   const upgraded = new TallybookDB(name);
@@ -65,4 +94,6 @@ it("retains a v30 replica outbox and per-company sequence while adding v31-v35 s
   expect(await upgraded.syncReplicaOutbox.where("[businessProfileId+deviceId+sequence]").equals(["second","device-one",4]).count()).toBe(1);
   expect(await upgraded.noSaleEvents.count()).toBe(0);
   expect(await upgraded.paymentSandboxIntents.count()).toBe(0);
+  expect((await upgraded.businessProfiles.get("primary"))?.staffGovernanceEnabled).toBe(true);
+  expect(await upgraded.staffMembers.get(owner.id)).toEqual(owner);
 });

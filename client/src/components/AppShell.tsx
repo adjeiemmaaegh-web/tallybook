@@ -40,9 +40,9 @@ export function AppShell({ children }: AppShellProps) {
       if (mounted && !silent) setStaffGate("loading");
       // Do not repeatedly deserialize all PIN hashes and WebAuthn credentials.
       const current=currentStaffId(activeCompanyId);
-      void db.transaction("r",db.staffMembers,async()=>{
+      void db.transaction("r",[db.staffMembers,db.businessProfiles],async()=>{
         const total=await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count();
-        if(!total)return true;
+        if(!total)return !(await db.businessProfiles.get(activeCompanyId))?.staffGovernanceEnabled;
         if(!current)return false;
         const member=await db.staffMembers.get(current);
         return Boolean(member&&member.businessProfileId===activeCompanyId&&!member.disabledAt);

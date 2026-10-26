@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import Dexie from 'dexie';
 import { assertAuthenticatorCredentialFresh, assertSupervisorApprovalFresh } from "./credentialFreshness.mjs";
 import { assertStaffAuthority, assertStaffShift, assertExactSupervisorApproval, staffCredentialBinding } from "./staffAuthority.mjs";
 import { nanoid } from 'nanoid';
@@ -64,14 +65,18 @@ export async function createStaff(name:string,role:StaffRole,pin:string,database
   if(!profile)throw new Error('Set up a company before creating staff accounts.');
   const salt=randomHex();const pinHash=await hashPin(pin,salt);
   const member=await withCoordinatedRetailWrite(() => database.transaction('rw',[database.staffMembers,database.staffAudits,database.businessProfiles],async()=>{
-    if(!(await database.businessProfiles.get(businessProfileId))) throw new Error('Company no longer exists.');
+    const currentProfile=await database.businessProfiles.get(businessProfileId);
+    if(!currentProfile) throw new Error('Company no longer exists.');
     const members=await database.staffMembers.where('businessProfileId').equals(businessProfileId).toArray();
     let actor:StaffMember|null=null;
     if(members.length){actor=await requirePermission('staff',database,businessProfileId);if(!actor)throw new Error('Unlock the existing owner before creating staff.');if(role==='owner')throw new Error('Additional owner accounts require a managed owner transfer.');}
+    else if(currentProfile.staffGovernanceEnabled)throw new Error('Staff records are missing from a protected company. Restore a verified backup before creating accounts.');
     else if(role!=='owner')throw new Error('Create the owner account first.');
     assertCompanyScope(businessProfileId,getActiveBusinessProfileId());
     const member:StaffMember={id:nanoid(),businessProfileId,name:name.trim(),role,salt,pinHash,createdAt:new Date().toISOString()};
     await database.staffMembers.add(member);
+    if(!currentProfile.staffGovernanceEnabled)
+      await database.businessProfiles.update(businessProfileId,{staffGovernanceEnabled:true});
     await database.staffAudits.add({id:nanoid(),businessProfileId,staffId:actor?.id??member.id,action:'staff.created',createdAt:member.createdAt,details:member.id});
     assertCompanyScope(businessProfileId,getActiveBusinessProfileId());
     if(actor&&currentStaffId(businessProfileId)!==actor.id)throw new Error('Staff session changed before creation completed.');
@@ -213,7 +218,18 @@ export async function requirePermission(action:StaffPermission,database:Tallyboo
   if (company !== getActiveBusinessProfileId()) throw new Error('Company changed; start the action again.');
   const members=await database.staffMembers.where('businessProfileId').equals(company).toArray();
   if (company !== getActiveBusinessProfileId()) throw new Error('Company changed; start the action again.');
-  if(!members.length)return null;
+  if(!members.length){
+    // Use the caller's transaction when it includes the company table. A few
+    // older service transactions include only staffMembers; keep those alive
+    // while checking the marker through a separate read transaction.
+    const transaction=Dexie.currentTransaction;
+    const profile=!transaction||transaction.storeNames.includes('businessProfiles')
+      ?await database.businessProfiles.get(company)
+      :await Dexie.waitFor(Dexie.ignoreTransaction(()=>database.businessProfiles.get(company)));
+    if(company!==getActiveBusinessProfileId())throw new Error('Company changed; start the action again.');
+    if(profile?.staffGovernanceEnabled)throw new Error('Staff records are missing from a protected company. Restore a verified backup.');
+    return null;
+  }
   const id=currentStaffId(company);
   const member=id?members.find(m=>m.id===id):undefined;
   // A denied action must not revoke an otherwise valid cashier session.

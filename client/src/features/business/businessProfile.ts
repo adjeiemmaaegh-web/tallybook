@@ -61,6 +61,8 @@ export type BusinessProfileInput = z.infer<typeof businessProfileSchema>;
 export interface BusinessProfile extends BusinessProfileInput {
   /** Company-owner configured append-only return policy revisions. Legacy omission means disabled. */
   returnPolicyHistory?:ReturnPolicyRevision[];
+  /** Once staff are enrolled, missing staff rows must never reopen legacy access. */
+  staffGovernanceEnabled?:true;
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -110,6 +112,7 @@ export async function saveBusinessProfile(input: BusinessProfileInput, database:
       taxPolicy: values.taxPolicy ?? existing?.taxPolicy,
       // General company-details forms cannot rewrite or erase refund governance.
       returnPolicyHistory:existing?.returnPolicyHistory,
+      staffGovernanceEnabled:existing?.staffGovernanceEnabled,
       name: values.name.trim(),
       country: values.country,
       currency: values.currency,

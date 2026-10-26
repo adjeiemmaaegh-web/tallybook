@@ -39,3 +39,5 @@ No production environment, RLS policy, deployment, or existing customer record w
 ## Connected cloud check, 2026-10-26
 
 The connected Supabase project list returned Tallybook project `qfyydfxwvifdvffdfgeu` with status `INACTIVE`. A read-only public-table listing returned "Database is possibly not accessible at the moment"; the security-advisor API returned no lints but did not establish database reachability. No project restore or configuration change was attempted. Therefore live Google sign-in, membership, and RLS cannot be certified from this check.
+
+Subsequent checkpoint: the local staff-governance requirement in item 4 was implemented and tested in Dexie v36. See `STAFF_GOVERNANCE_V36_CHECKPOINT.md`; the cloud and acceptance items remain open.

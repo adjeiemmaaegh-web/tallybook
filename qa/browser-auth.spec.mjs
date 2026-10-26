@@ -52,3 +52,26 @@ test('a local owner PIN locks and unlocks the business workspace', async ({page}
   await page.getByRole('link', {name:'Sales (POS)'}).click();
   await expect(page.getByRole('heading', {name:'Add stock before you open the receipt.'})).toBeVisible();
 });
+
+test('missing staff rows cannot reopen a protected local business', async ({page}) => {
+  await page.goto('/business', {waitUntil:'domcontentloaded'});
+  await page.getByRole('textbox', {name:'Business name'}).fill('Protected Browser Test');
+  await page.getByRole('combobox', {name:'Business type'}).click();
+  await page.getByRole('option', {name:'Retail shop'}).click();
+  await page.getByRole('button', {name:'Save business'}).click();
+  await expect(page.locator('#main-content').getByText('Protected Browser Test is saved on this device.')).toBeVisible();
+  await page.goto('/staff', {waitUntil:'domcontentloaded'});
+  await page.getByRole('textbox', {name:'Staff name'}).fill('Protected Owner');
+  await page.getByRole('textbox', {name:'New staff PIN'}).fill('123456');
+  await page.getByRole('button', {name:'Create staff'}).click();
+  await expect(page.getByRole('option', {name:'Protected Owner (owner)'})).toBeAttached();
+  await page.evaluate(async () => {
+    const {db}=await import('/src/db/TallybookDB.ts');
+    await db.staffMembers.clear();
+  });
+  await page.goto('/sales', {waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('heading', {name:'Tallybook is locked'})).toBeVisible();
+  await page.goto('/staff', {waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('alert').getByText(/protected company has no staff records/i)).toBeVisible();
+  await expect(page.getByRole('button', {name:'Create staff'})).toHaveCount(0);
+});

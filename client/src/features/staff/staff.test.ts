@@ -6,6 +6,7 @@ import { saveBusinessProfile, createBusinessProfile } from '@/features/business/
 import { clearCompanyData } from '@/features/business/activeCompany';
 import { createProduct } from '@/features/inventory/inventory';
 import { completeSale } from '@/features/sales/sales';
+import { createBackup, parseBackup, restoreBackup, stringifyBackup } from '@/features/backup/backup';
 import { setActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { approveCheckoutDiscount, calculateTrackedShiftCash, listStaff, changeStaffStatus, changeStaffRole, resetStaffPin, setStaffPermissions, closeShift, consumeCheckoutDiscountApproval, createStaff, currentStaffId, lockStaff, lockAllStaff, openShift, requirePermission, unlockStaff } from './staff';
 
@@ -21,6 +22,41 @@ async function setup(database:TallybookDB){
 afterEach(async()=>{lockStaff('primary');for(const d of databases.splice(0)){const name=d.name;d.close();await new Dexie(name).delete();}setActiveBusinessProfileId('primary');});
 
 describe('Stage 6 local staff security',()=>{
+  it('checks legacy access inside a narrower service transaction without closing it',async()=>{
+    const database=makeDB();await setup(database);
+    await database.transaction('rw',database.staffMembers,async()=>{
+      expect(await requirePermission('sell',database)).toBeNull();
+      expect(await database.staffMembers.count()).toBe(0);
+    });
+  });
+  it('does not reopen a protected company if its staff records disappear',async()=>{
+    const database=makeDB();await setup(database);
+    const owner=await createStaff('Owner','owner','123456',database);
+    expect((await database.businessProfiles.get('primary'))?.staffGovernanceEnabled).toBe(true);
+    await database.staffMembers.delete(owner.id);
+    lockStaff('primary');
+    await expect(requirePermission('sell',database)).rejects.toThrow(/staff records are missing/i);
+    await database.transaction('rw',database.staffMembers,async()=>{
+      await expect(requirePermission('sell',database)).rejects.toThrow(/staff records are missing/i);
+      expect(await database.staffMembers.count()).toBe(0);
+    });
+    await expect(createStaff('Impostor','owner','654321',database)).rejects.toThrow(/staff records are missing/i);
+    await expect(saveBusinessProfile({name:'Hijacked',country:'Ghana',currency:'GHS',businessType:'Retail shop'},database)).rejects.toThrow(/staff records are missing/i);
+    expect((await database.businessProfiles.get('primary'))?.name).toBe('Staff Shop');
+  });
+  it('refuses a backup that strips staff protection or replaces protected records with legacy open mode',async()=>{
+    const database=makeDB();await setup(database);
+    const owner=await createStaff('Owner','owner','123456',database);
+    await unlockStaff(owner.id,'123456',database);
+    const backup=await createBackup(database);
+    const stripped=structuredClone(backup);
+    stripped.records.staffMembers=[];
+    stripped.records.staffAudits=[];
+    expect(()=>parseBackup(stringifyBackup(stripped))).toThrow(/protected company backup is missing its staff records/i);
+    delete stripped.records.businessProfiles[0].staffGovernanceEnabled;
+    await expect(restoreBackup(stripped,database)).rejects.toThrow(/without staff records cannot replace a protected company/i);
+    expect((await database.staffMembers.get(owner.id))?.role).toBe('owner');
+  });
   it('locks every local staff session when the cloud account changes', async()=>{
     const database=makeDB();await setup(database);
     const owner=await createStaff('Owner','owner','123456',database);

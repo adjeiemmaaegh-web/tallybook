@@ -1,0 +1,21 @@
+
+ RUN  v4.1.11 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ❯ src/features/assistant/audit.test.ts (17 tests | 1 failed) 20523ms
+     × each company only sees its own entries, and clearing a company removes only its entries 696ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/assistant/audit.test.ts > privacy and scope > each company only sees its own entries, and clearing a company removes only its entries
+Error: Staff records are missing from a protected company. Restore a verified backup before creating accounts.
+ ❯ Transaction.<anonymous> src/features/staff/staff.ts:73:57
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 124 passed (125)
+      Tests  1 failed | 1005 passed (1006)
+   Start at  05:10:09
+   Duration  689.42s (transform 14.15s, setup 132.48s, import 105.48s, tests 680.98s, environment 367.99s)
+

@@ -70,6 +70,7 @@ describe("TallybookDB", () => {
     legacy.version(30).stores({
       appMeta: "key, updatedAt",
       businessProfiles: "id, name, country, currency, businessType, updatedAt",
+      staffMembers: "id, businessProfileId, role, createdAt",
       purchaseLines: "id, purchaseId, productId, businessProfileId, batchId",
       inventoryBatches: "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
       inventoryCostEvents: "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt",
@@ -78,6 +79,10 @@ describe("TallybookDB", () => {
     await legacy.open();
     const drawerEvent = { id: "drawer-1", businessProfileId: "primary", storeId: "store-1", staffId: "staff-1", shiftId: "shift-1", createdAt: "2026-10-23T12:00:00.000Z", operationKey: "drawer-key-1" };
     const batch = { id: "batch-1", businessProfileId: "primary", productId: "product-1", batchCode: "LOT-1", quantity: 3, startingQuantity: 3, receiptCostEventId: "cost-1", createdAt: drawerEvent.createdAt };
+    const profile = {id:"primary",name:"Drawer company",country:"Ghana",currency:"GHS",businessType:"Retail shop",createdAt:drawerEvent.createdAt,updatedAt:drawerEvent.createdAt};
+    const staff = {id:"staff-1",businessProfileId:"primary",role:"owner",createdAt:drawerEvent.createdAt};
+    await legacy.table("businessProfiles").put(profile);
+    await legacy.table("staffMembers").put(staff);
     await legacy.table("noSaleEvents").put(drawerEvent);
     await legacy.table("inventoryBatches").put(batch);
     legacy.close();
@@ -86,6 +91,8 @@ describe("TallybookDB", () => {
     expect(upgraded.verno).toBe(DATABASE_SCHEMA_VERSION);
     expect(await upgraded.noSaleEvents.get(drawerEvent.id)).toEqual(drawerEvent);
     expect(await upgraded.inventoryBatches.get(batch.id)).toEqual(batch);
+    expect((await upgraded.businessProfiles.get("primary"))?.staffGovernanceEnabled).toBe(true);
+    expect(await upgraded.staffMembers.get(staff.id)).toEqual(staff);
     expect(upgraded.syncReplicaOutbox.schema.primKey.name).toBe("id");
   });
 

@@ -1,0 +1,11 @@
+✔ declared schema version equals latest Dexie migration (1.516ms)
+✔ Dexie migration versions have no duplicate or missing numbers (1.2618ms)
+✔ regression tests cannot pin the obsolete version 21 (1.8432ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 246.5722

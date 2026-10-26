@@ -20,3 +20,7 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 Current automated evidence: the fresh clone at `3fd4b2f` passed complete client Vitest 996/996 across 124 files, following frozen installation, TypeScript and build. Clean-clone release and offline Playwright passed 3/3 each. After updating obsolete source-contract assertions, native QA passed 420/420 and focused server audits passed 83/83. The full Windows server suite remains non-green (345 pass, 43 optional-sync failures, 1 skip); Linux security verification is pending. These automated results do not change the 82 acceptance-unit statuses without required operational evidence.
 
 **Release decision: NO-GO.** No deployment, live payment, or formal physical-device acceptance is authorized or claimed.
+
+## Later v36 evidence, 2026-10-26
+
+The staff-governance migration now fails closed if an enrolled company's staff rows disappear. Full client Vitest passed 1006/1006 across 125 files; TypeScript, production build, native schema-order gate (3/3), auth browser (3/3), release browser (3/3), and offline browser (3/3) passed. The status counts above remain unchanged because these checks do not supply the missing cloud, historical customer, Linux server, and operational acceptance evidence. See `STAFF_GOVERNANCE_V36_CHECKPOINT.md`.

@@ -236,6 +236,10 @@ function hasValidExpenseRecord(value: unknown) {
  * without businessProfileId are assigned only when their parent exists. */
 function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBackup["assistant"]) {
   if (records.businessProfiles.length !== 1 || !isRecord(records.businessProfiles[0]) || typeof records.businessProfiles[0].id !== "string" || !records.businessProfiles[0].id.trim()) throw new Error("This backup must contain exactly one company.");
+  if (records.businessProfiles[0].staffGovernanceEnabled !== undefined && records.businessProfiles[0].staffGovernanceEnabled !== true)
+    throw new Error("Invalid staff governance marker in company backup.");
+  if (records.businessProfiles[0].staffGovernanceEnabled === true && !records.staffMembers.length)
+    throw new Error("A protected company backup is missing its staff records.");
   if (records.businessProfiles[0].taxPolicy !== undefined) taxPolicySchema.parse(records.businessProfiles[0].taxPolicy);
   const companyId = records.businessProfiles[0].id;
   const index = (key: keyof BackupRecords) => new Set((records[key] as Array<{ id: string }>).map((r) => r.id));
@@ -573,6 +577,9 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
   const profile = validated.records.businessProfiles[0];
   if (!profile) throw new Error("This backup does not contain one complete local company.");
   const companyId = profile.id;
+  const existingProfile = await database.businessProfiles.get(companyId);
+  if (existingProfile?.staffGovernanceEnabled && !validated.records.staffMembers.length)
+    throw new Error("A backup without staff records cannot replace a protected company.");
   const normalizeChild = <T extends { businessProfileId?: string }>(records: T[], parentRecords: Array<{ id: string; businessProfileId: string }>, parentKey: keyof T) => records.map((record) => record.businessProfileId ? record : { ...record, businessProfileId: parentRecords.find((parent) => parent.id === record[parentKey])?.businessProfileId ?? companyId });
   const normalized: BackupRecords = { ...validated.records, saleLines: normalizeChild(validated.records.saleLines, validated.records.sales, "saleId"), payments: normalizeChild(validated.records.payments, validated.records.sales, "saleId"), receipts: normalizeChild(validated.records.receipts, validated.records.sales, "saleId"), customerActivities: normalizeChild(validated.records.customerActivities, validated.records.customers, "customerId"), purchaseLines: normalizeChild(validated.records.purchaseLines, validated.records.purchases, "purchaseId") } as BackupRecords;
   await database.open();
@@ -607,6 +614,8 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     if (!restoreMarker && await database.appMeta.get(RESTORE_JOURNAL_KEY)) throw new Error("An interrupted backup restore requires recovery.");
     await requirePermission("staff", database, authorizedCompany);
     if (companyId !== authorizedCompany && await database.businessProfiles.get(companyId)) throw new Error("The destination company now exists; unlock its owner before restoring.");
+    if ((await database.businessProfiles.get(companyId))?.staffGovernanceEnabled && !normalized.staffMembers.length)
+      throw new Error("A backup without staff records cannot replace a protected company.");
     const scopedTables = recordKeys.filter(key => !["appMeta", "businessProfiles", "stockCountSessions"].includes(key)).map(key => database.table(key));
     // Repeat collision checks under the write lock: a concurrent company may
     // have claimed a globally unique key since the initial preflight.
@@ -631,7 +640,10 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     // Retain this existing audit history instead of silently deleting it on restore.
     // Company deletion and any eventual retention policy are separate owner decisions.
     await database.businessProfiles.delete(companyId);
-    await database.businessProfiles.put(normalized.businessProfiles[0]);
+    // Older backups with staff predate the marker. Restoring them must still
+    // keep the company protected if its staff rows are later lost.
+    await database.businessProfiles.put({...normalized.businessProfiles[0],
+      staffGovernanceEnabled:normalized.staffMembers.length ? true : undefined});
     for (const key of recordKeys) if (key !== "businessProfiles" && key !== "appMeta") {
       // Importing a file never grants fresh consent to send records off-device.
       const rows = key === "syncConsents"
