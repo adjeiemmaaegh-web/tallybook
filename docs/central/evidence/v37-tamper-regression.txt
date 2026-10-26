@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+   Start at  07:56:01
+   Duration  37.39s (transform 1.80s, setup 3.80s, import 4.22s, tests 18.41s, environment 9.00s)
+

@@ -1,0 +1,832 @@
+✔ accepts only signed sale evidence bound to server membership, shop and device (16.4273ms)
+✔ rejects forged shop, payload and unrelated authenticated user (6.4045ms)
+✔ rejects signed JSON with duplicate business keys (1.1589ms)
+✔ rejects revoked device, removed membership and missing shop assignment (6.9931ms)
+✔ transaction-bound independent recovery verification, consumption and audit commit together (17.5082ms)
+✔ revoked reviewer, missing evidence and foreign company each reject before approval (24.1939ms)
+✔ ownership bind still cannot occur without a preexisting server-issued recovery approval (2.0057ms)
+✔ coordinator refuses missing private authentication and connection configuration (1.7364ms)
+✔ ownership binding revalidates revoked session inside transaction, after successful outer Supabase check (1.5275ms)
+✔ owner transfer revalidates revoked session inside transaction before membership writes (9.5624ms)
+✔ payments default off; no configured provider or production mock is approved (3.335ms)
+✔ mock intent retries preserve identity, amount, currency, method and company isolation (2.332ms)
+✔ timeout is unresolved, success and refund events are idempotent, excess refunds roll back (3.0427ms)
+✔ failed collections cannot be refunded and chargebacks terminate captured mock payments (0.8974ms)
+✔ reviewer/session verification is locked and entirely parameterized (5.2185ms)
+✔ reads exact evidence with FOR UPDATE, mapped time, opaque digests (0.8139ms)
+✔ duplicate evidence and revoked reviewer fail closed on cardinality (2.3694ms)
+✔ evidence one-use consumption requires exact conditional status CAS (26.009ms)
+✔ approval/audit are parameterized and reject non-exact writes (0.9473ms)
+✔ finance captures customer ownership in the same read transaction as credit evidence (6.5916ms)
+✔ full customer snapshot is mandatory before labeling current credit as audited (2.3703ms)
+✔ one customer cannot hide an overpayment with another customer debt in report (1.4546ms)
+✔ sale-level allocation remains optional but legacy customer-level payments are never attributed (1.1001ms)
+✔ prepaid liability is conserved against external cash, wallet spending and saved reversal (6.4895ms)
+✔ wallet spending is not reported as new external cash (4.9098ms)
+✔ portable restore must validate receivable and prepaid conservation before mutations (2.1345ms)
+✔ customer repayment posting coordinates shared origin lock before IndexedDB write (2.7498ms)
+✔ proposed repayment and all saved credit are re-audited inside its write transaction (3.5532ms)
+✔ repayment refuses switched-company operation before and after writing (2.4443ms)
+✔ dashboard and end-of-day reads enforce per-customer debt invariants (2.6154ms)
+✔ management CSV and UI identify linked, legacy and prepaid amounts separately (3.6568ms)
+✔ no new backend payment provider or cloud mutator is introduced by pure audits (1.71ms)
+✔ receivables audit stays read-only while historical and staff migrations remain registered (31.0312ms)
+✔ company policy is explicit and defaults to NO refunds even for older companies (4.6803ms)
+✔ owner policy setting uses coordinated lock outside atomic local transaction (2.9384ms)
+✔ owner change preserves revision history, staff audit and company isolation (2.1666ms)
+✔ ordinary business details cannot mutate or discard existing return policy revisions (2.8148ms)
+✔ new checkout captures immutable sale-time revision in same transaction as sale (1.9941ms)
+✔ full reversal rechecks company refund policy before cost, cash and inventory posting (2.817ms)
+✔ cash partial return requires policy before invoice or stock change, saves immutable proof (3.237ms)
+✔ saveable return policy snapshots include original and decision revisions and max days (1.2353ms)
+✔ backup validates refund history and proof before any main database restore (1.2727ms)
+✔ financial summary and CSV disclose legacy unknown refund policy instead of claiming approval (23.9581ms)
+✔ company settings expose no refunds and independent partial/full permission flags (3.3945ms)
+✔ owner policy UI is connected to business settings, not just an unreachable module (3.2064ms)
+✔ both return review entrypoints check current company policy even though read-only (4.248ms)
+✔ POS hides ineligible return-review button for no-refunds companies (3.6485ms)
+✔ return-policy audits stay local with the current staff-governance schema (3.3231ms)
+✔ supplier recognition and settlement obtain shared lock before IndexedDB write (38.2968ms)
+✔ supplier write transactions include original supplier/company evidence (38.4711ms)
+✔ supplier recognition checks proposed liability, purchase date and recovery marker (13.0987ms)
+✔ supplier settlement is revalidated inside same financial write transaction (14.1204ms)
+✔ supplier reporting read validates company, staff and supplier ownership (29.8304ms)
+✔ expense write obtains shared cross-tab lock before opening transaction (27.1145ms)
+✔ expense staff/shift and currency are checked within write transaction (2.31ms)
+✔ original checkout saves exact tax ON/OFF policy with sale in same transaction (1.27ms)
+✔ financial snapshot includes supplier owner IDs and cost/settlement evidence together (3.583ms)
+✔ report computes independent full sale-time tax checks and supplier conservation (2.7297ms)
+✔ supplier credit notes never count as external cash and period supplier payments remain separate (1.772ms)
+✔ supplier liability is conserved per currency, not via USD plus GHS (1.2078ms)
+✔ saved legacy expenses of unknown original currency cannot inherit today’s profile (1.1322ms)
+✔ backup checks supplier ownership/chronology and tax policy BEFORE restore writes (1.5782ms)
+✔ CSV exposes supplier manual payments and explicit tax-off separately (2.2593ms)
+✔ management UI warns about duplicate disbursement entries and no statutory filing (2.0688ms)
+✔ supplier and tax audits remain local with the current staff-governance schema (2.9828ms)
+✔ new purchase FX is blocked after original duplicate-submission retry resolution (2.6666ms)
+✔ new expense FX is blocked after exact saved expense replay validation (1.9974ms)
+✔ sale currency is checked against original company before committing tax/cash (1.1028ms)
+✔ grouped historical supplier entries avoid repeated quadratic array copies (4.3137ms)
+✔ owner creates pending record with audit, not a verified grant (7.1739ms)
+✔ independent reviewer verifies trusted disposable restore receipt once (2.5868ms)
+✔ never verify from absent isolated restore adapter (3.4373ms)
+✔ owner may revoke pending or verified evidence with audit (1.7533ms)
+✔ revoked sessions cannot request, verify or revoke evidence (2.4652ms)
+✔ audit failure rolls back pending request in transactional store (1.4042ms)
+✔ owner and recipient may never become their own independent reviewer (0.6478ms)
+✔ verified transfer binds old owner and recipient to an immutable case digest (2.2433ms)
+✔ unconfigured ownership HTTP route defaults to 503 (10.9075ms)
+✔ TLS and exact-origin are mandatory (0.7538ms)
+✔ extraneous fields and spoofed operation reject before mutation (0.9289ms)
+✔ valid bind runs only the trusted ownership coordinator (0.7402ms)
+✔ request and verify route to dedicated evidence lifecycle (6.4545ms)
+✔ disposable restore compares full snapshot, not a caller success flag (6.9552ms)
+✔ rejected forged restored data closes disposable store (8.247ms)
+✔ backup cannot restore under another company identity (0.7387ms)
+✔ nonempty target is never overwritten (0.7872ms)
+✔ foreign-company rows in backup are rejected before import (0.6593ms)
+✔ two distinct approved operators atomically provision reviewer and audit (3.7073ms)
+✔ candidate and operator cannot be the same account (0.9966ms)
+✔ operator approvals must be independently verified (2.1309ms)
+✔ missing reviewer audit rolls back provisioning (0.7481ms)
+✔ private store opens serializable and commits only after callback returns (3.535ms)
+✔ all tenant and identity lookups use bound values, not string interpolation (2.6397ms)
+✔ write requires exactly one returned row and rollback on missing row (1.3327ms)
+✔ audit exception always rolls back and releases connection (1.3338ms)
+✔ explicitly forbids construction from a browser-style client (0.5869ms)
+✔ default disable is 503 and does not invoke mutation service (5.7221ms)
+✔ explicitly enabled direct-TLS exact-origin bearer flow dispatches invite (0.9803ms)
+✔ missing TLS, cross-origin and cookies all deny before service call (1.0624ms)
+✔ unknown operations and unexpected parameters never reach service (0.8708ms)
+✔ rejects denied service actions without exposing SQL or auth details (0.9163ms)
+✔ per-IP throttle denies after twenty requests in one minute (3.7968ms)
+✔ targeted one-time invite accepts only original account, owner preserved (14.7938ms)
+✔ foreign tenant invite and non-owner invite are denied (1.1716ms)
+✔ wrong recipient and unrelated account cannot consume bearer invite (1.8965ms)
+✔ expired invitation fails even with a valid live user session (1.7326ms)
+✔ revoked auth session fails closed for all membership mutations (2.3941ms)
+✔ repeat active invitation is denied, no token or audit duplication (1.3731ms)
+✔ recipient must still have a live owner and membership at redemption (1.1529ms)
+✔ revocation removes attendant but never owner, foreign tenant or self (2.1489ms)
+✔ owner can cancel pending invitation; replay cannot restore membership (12.7326ms)
+✔ audit failure aborts creation without storing a token (3.0281ms)
+✔ member listing is owner-only and company-isolated (2.3726ms)
+✔ malformed UUIDs, invitations and missing trusted store fail closed (1.0827ms)
+✔ unconfigured session probe is fail-closed (3.9348ms)
+✔ verified Supabase principal returns minimal non-cacheable proof (0.8352ms)
+✔ missing direct TLS or foreign Origin is rejected before resolver (0.68ms)
+✔ invalid bearer credential rejects before private auth call (0.4155ms)
+✔ revoked private Supabase session is never treated as active (0.7393ms)
+✔ server requires an independently wired private pool before enablement (1.8164ms)
+✔ repeated live session checks are throttled before auth lookup (4.9548ms)
+✔ session, company and membership are checked inside same transaction (8.3692ms)
+✔ revoked session blocks data action and rolls back (1.3698ms)
+✔ removed membership blocks tenant data reads (0.6442ms)
+✔ foreign company lookup is rejected before callback (0.6699ms)
+✔ expired session fails before checking company records (0.8414ms)
+✔ attendant cannot execute financial service operation (0.757ms)
+✔ invalid actions and identifiers cannot reach trusted callback (1.1143ms)
+✔ callback failure is returned as error and transaction rolls back (3.2627ms)
+✔ return value alone contains no bearer credential (1.3235ms)
+✔ canonical owner may read business context (3.2296ms)
+✔ canonical attendant only sees explicitly allowed reads (1.4478ms)
+✔ owner may access each declared operation (0.6196ms)
+✔ unrecognized action rejects instead of permissive fallback (0.4959ms)
+✔ foreign business identifier and foreign membership are denied (0.5475ms)
+✔ forged owner membership disagrees with canonical owner ID (0.4634ms)
+✔ missing/revoked user membership always denies (0.5726ms)
+✔ expired or unvalidated Supabase principal is denied (0.5466ms)
+✔ attendant cannot impersonate business owner (0.6094ms)
+✔ local profile identifiers can never substitute for cloud UUIDs (0.635ms)
+✔ tenant routes remain disabled until independently configured (6.1433ms)
+✔ authorized private report read receives only scoped transaction context (2.0121ms)
+✔ unknown or missing operation never invokes authorizer (0.8019ms)
+✔ foreign origin, disabled TLS or cookies deny before DB lookup (0.8941ms)
+✔ invalid tenant and request fields are denied without operations (1.1414ms)
+✔ authorization rejection has generic error with no sensitive details (1.2515ms)
+✔ per-address rate limit blocks repeated service calls (1.7066ms)
+✔ every resource category requires an injected trusted operation (6.0651ms)
+✔ each sensitive read entrypoint requires a fresh staff permission check (20.8823ms)
+✔ all four financial report entrypoints revalidate staff permission before output (2.5831ms)
+✔ staff sessions bind to credential state and do not persist unlock proof (2.3426ms)
+✔ supervisor approval is issued with an audit, a live shift, and generation (2.3441ms)
+✔ shift completion checks authorization before and after commit preparations (3.628ms)
+✔ high-risk local mutation entrypoints still enforce their required staff role (11.8625ms)
+✔ sale checkout awaits fresh database supervisor approval in posting transaction (3.0002ms)
+✔ shared assistant and retail writes use the same fixed origin-wide name (8.9683ms)
+✔ a pending exclusive crash restore blocks an ordinary shared writer (1.6731ms)
+✔ a pending retail write blocks restore before any operation begins (0.7095ms)
+✔ two independent assistant writes can hold compatible shared locks (0.5865ms)
+✔ a backup export exclusive lock blocks unrelated assistant edits (0.8156ms)
+✔ without Web Locks, destructive multi-database operations fail shut (0.4962ms)
+✔ without Web Locks, ordinary local retail writes remain available (0.4214ms)
+✔ nested retail work avoids waiting for a second lock inside a Dexie transaction (0.4974ms)
+✔ invalid lock mode is never downgraded to shared (0.7265ms)
+✔ lock released after rejected work so another restore can retry (1.7242ms)
+✔ conflicted work never starts after lock denial (1.0914ms)
+✔ all major financial and stock modules import transaction-bound recovery barrier (96.1616ms)
+✔ core sale, purchase, repayment, refund and supplier liabilities include appMeta in write scope (70.9832ms)
+✔ all core inventory write transactions and the stage2 mutation family guard journal (10.8141ms)
+✔ supplier mutations and purchase posting use four guarded write transactions (3.1475ms)
+✔ two supplier liability operations both reject pending crash journals (2.0352ms)
+✔ retail backup export owns an exclusive shared-name lock across both DB reads (0.9733ms)
+✔ backup metadata receipt binds to exported file company and shared lock (2.693ms)
+✔ recovery startup consumes the deterministic crash-state decision (1.9723ms)
+✔ portable backup compatibility covers the current staff-governance schema (5.7623ms)
+✔ backup parser validates size and ambiguous JSON before object parsing (1.045ms)
+✔ parser refuses unknown root and incomplete assistant snapshots (3.1457ms)
+✔ v2 encrypted backups bind authenticated header and keep v1 decrypt compatibility (2.4408ms)
+✔ backup UI encrypts every export, never offers a plaintext export toggle (2.7573ms)
+✔ reselected-file verification precedes persisted backup readiness marker (2.1005ms)
+✔ import path requires privacy acknowledgement for legacy plaintext backups (3.2987ms)
+✔ restore remains exclusive with journal commit and assistant rollback (1.5175ms)
+✔ new v2 passphrase and binary operations remain browser-local (3.5468ms)
+✔ file receipt never stores the entire encrypted file or passphrase (1.496ms)
+✔ legacy lastBackupAt is not treated as a verified-file readiness signal (1.0504ms)
+✔ verification recording consumes the exact successful file SHA-256 (3.0811ms)
+✔ restoring or deleting a business cannot keep its stale verified-file marker (2.625ms)
+✔ cost reconciliation checks full and partial money return evidence before totals (9.3996ms)
+✔ supplier purchase cost evidence is mandatory in cost reconciliation (14.5743ms)
+✔ all FIFO receipt and purchase snapshots come from same read transaction (6.2245ms)
+✔ financial summaries distinguish as-of assets from period COGS (10.6682ms)
+✔ financial CSV discloses incomplete stock costs and legacy supplier evidence (14.6468ms)
+✔ management UI does not mask missing inventory valuation as audited asset total (15.8491ms)
+✔ portable restore invokes the same cost reconciliation with purchase data (1.3536ms)
+✔ purchase receipt journal commits immutable supplier ID, price and stock together (2.7572ms)
+✔ sale reversals and cash returns use original FIFO issue cost rather than editable product cost (7.2483ms)
+✔ historical-cost uncertainty is retained in the FIFO replay engine (7.2612ms)
+✔ historical cost audits stay read-only with the current staff-governance schema (4.5704ms)
+✔ cost events and sale lines are pre-indexed for low-resource report reconstruction (1.9851ms)
+✔ owner with active same-company, same-store device can be authorized (3.4229ms)
+✔ deny wrong store, device, user, company, owner, expired or revoked grant (10.3767ms)
+✔ attendant cannot transfer stock or manage store, but can perform scoped sale (1.0691ms)
+✔ no identity or trust provider fails closed, unknown actions denied before read (0.8478ms)
+✔ authorization is re-read for every operation, not cached (0.6035ms)
+✔ authoritative scope lookup is parameterized and returns exact device binding (3.8592ms)
+✔ zero and duplicate authoritative rows fail closed (1.6292ms)
+✔ owner-issued invitation is scoped to company, store, target and a 10-min token (6.4368ms)
+✔ authenticated target redeems once, grant is 8h, audit matches and result is explicitly not hardware bound (6.4582ms)
+✔ non-owner, signed-out, wrong account and malformed scope cannot issue (1.1929ms)
+✔ wrong account cannot redeem a bearer token without own verified membership (1.0978ms)
+✔ expiry is exclusive and non-monotonic invalid clock is denied (1.564ms)
+✔ owner transfer, membership removal or store disable before redemption invalidates outstanding invitation (2.1399ms)
+✔ owner revokes only own company grant, same invite cannot be redeemed twice (1.7833ms)
+✔ owner can revoke an existing grant even after store is disabled (1.0046ms)
+✔ grant insert and audit failures roll back proof consumption, grant and audit atomically (3.4118ms)
+✔ unknown invitation and invalid/weak token always fail closed (1.1782ms)
+✔ revoked server-side auth session during issuance, redemption or revocation fails closed (1.7061ms)
+✔ private device enrollment coordinator refuses partial or anonymous configuration (4.6945ms)
+✔ private coordinator composes a fail-closed service, never a public route (2.9361ms)
+✔ transaction uses SERIALIZABLE, exact parameterized reads and COMMIT + release (16.1783ms)
+✔ invite redemption and grant issuance are transaction-local writes with required audit (1.7732ms)
+✔ failed write rolls back and always releases private connection (1.8286ms)
+✔ missing private pool, invalid SQL response, and failed transaction initialization deny (1.0951ms)
+✔ review SQL must not cast TEXT device-grant IDs as UUID and never inline caller values (7.1893ms)
+✔ live auth session is locked by ID, user and expiry inside the transaction (1.2553ms)
+✔ server-verified Supabase account must have active authoritative auth.session (5.9893ms)
+✔ revoked session is denied even when getUser still succeeds (4.411ms)
+✔ unverified token, wrong subject, role, audience and expiry deny (2.9288ms)
+✔ getUser failure and unavailable session registry fail closed (2.3937ms)
+✔ private database reader uses parameterized auth.sessions lookup (1.6339ms)
+✔ missing trusted authentication dependencies reject at construction (0.7321ms)
+✔ verified token expiry is carried into the privileged transaction context (0.5909ms)
+✔ limiter caps requests and recovers after time window (4.7673ms)
+✔ direct TLS cannot be forged with proxy header (0.6625ms)
+✖ login issues verifiable short-lived signed session and denies bad password (198.3732ms)
+✖ owner can invite and staff can redeem once; unauthorized invite denied (230.124ms)
+✖ missing session denies enrollment and revocation (197.8606ms)
+✔ valid short-lived scoped capability (5.4483ms)
+✔ rejects changed signature (0.9174ms)
+✔ rejects expired token (0.6626ms)
+✔ rejects scope mismatch (0.358ms)
+✔ rejects excessively long validity (0.6037ms)
+✔ rejects weak/unconfigured key (0.5295ms)
+✔ rejects write capability scope (2.4835ms)
+✔ returns ciphertext without plaintext or device metadata (9.0259ms)
+✔ rejects invalid backup ID before reading (1.3876ms)
+✔ rejects wrong organization before reading (2.473ms)
+✔ rejects revoked sessions before reading (1.3228ms)
+✔ rejects absent vault (1.1328ms)
+✔ rejects vault scope mismatches (1.3115ms)
+✔ owner encrypted backup upload returns limited acknowledgement (23.1148ms)
+✔ inspect token cannot write (29.9159ms)
+✔ member cannot upload backup (1.3698ms)
+✔ revoked session cannot upload (1.1207ms)
+✔ cross-device envelope cannot upload (1.2305ms)
+✔ tampered ciphertext cannot upload (1.3918ms)
+✔ vault absent fails closed (0.8081ms)
+✔ unexpected vault acknowledgment rejected (1.5961ms)
+✔ valid encrypted envelope accepted (4.2648ms)
+✔ tampered ciphertext rejected (1.6341ms)
+✔ extra field rejected (0.6162ms)
+✔ invalid and empty ciphertext rejected (2.5289ms)
+✖ vault rejects unsafe root directory (37.7588ms)
+✖ vault writes immutable named ciphertext and reads within organization (17.4705ms)
+✖ backup identifier traversal rejected (30.326ms)
+✖ vault refuses symlink root even when its destination is private (12.0363ms)
+✖ vault rejects records altered to include unrecognized fields or invalid creation dates (4.3342ms)
+✔ directory authorizes only exact organization, membership and device (4.5567ms)
+✔ rejects duplicate and cross-organization records (1.0129ms)
+✖ revocation is enforced on next file reload (60.7926ms)
+✖ unsafe file modes deny access (15.4197ms)
+✖ directory refuses symlink, hardlink and world-readable files (17.2957ms)
+✖ directory refuses unsafe parent permissions and parent symlinks (11.8642ms)
+✖ admin invites member and one-time token enrolls only one device (62.3866ms)
+✖ member cannot issue invitations (35.7121ms)
+✖ cross-org actor cannot redeem token (21.9447ms)
+✖ wrong actor cannot redeem token (13.6138ms)
+✖ parallel enrollment cannot reuse token (20.5651ms)
+✖ administrator revokes device and status persists (24.7823ms)
+✖ member cannot revoke (15.2227ms)
+✖ expired invitation is rejected (20.1784ms)
+✖ independent Node enrollment issuers retain all invitations (50.1084ms)
+✖ enrollment refuses symlink and hardlink registry, and insecure parent (31.0421ms)
+✔ durable journal result yields limited acknowledgement (12.5263ms)
+✔ read-only capability cannot stage an event (1.8483ms)
+✔ backup-write capability cannot stage an event (2.286ms)
+✔ cross-company payload is denied before journal mutation (1.8153ms)
+✔ revoked human session fails closed (1.5465ms)
+✔ revoked device fails closed (1.7817ms)
+✔ missing journal fails closed (2.4428ms)
+✔ duplicate acknowledgment requires exact-event classification (2.4245ms)
+✔ conflict does not claim successful replication (2.0108ms)
+✔ development HTTP works only without sensitive routes (7.8381ms)
+✔ unknown mode and missing certificate fail closed (0.7415ms)
+﹣ HTTPS starts and serves an actual TLS request (28.3238ms) # openssl unavailable
+✔ reject malformed IDs, hashes, or extra fields (3.6393ms)
+✔ evaluate company isolation and event idempotency (0.885ms)
+✖ durably stage and reload, reject exact replays (46.131ms)
+✖ reject mutated event and reused operation (24.5711ms)
+✖ separate businesses and concurrent writers (24.7921ms)
+✖ reject truncated journal rather than treating it as empty (59.532ms)
+✖ reject writable journal files (44.8673ms)
+✔ never expose a remote HTTP write route (17.8163ms)
+✖ reject a journal symlink even when its target has safe permissions (49.9382ms)
+✖ reject a symlink journal parent directory (18.0946ms)
+✖ scrypt login issues a verifiable short session after durable persistence (237.5812ms)
+✖ incorrect password rejected without minting a session (122.9901ms)
+✔ unknown users rejected (201.765ms)
+✔ disabled account rejected (128.9206ms)
+✖ world-readable credential file fails closed (147.1673ms)
+✖ concurrent sessions preserve both records (152.8273ms)
+✔ duplicate and malformed login directory fails closed (1.9736ms)
+✔ session signing secret required (162.252ms)
+✖ concurrent independent Node issuers do not lose committed sessions (642.2708ms)
+✖ pre-existing lock fails closed without issuing or deleting other files (137.1799ms)
+✖ reject insecure session directory and hard-linked identity/session files (83.9318ms)
+✖ reject symlink session store without changing its target (96.7582ms)
+✖ account disabled during lock wait cannot mint a session (89.512ms)
+✖ near-capacity session file rejects new issuance without damaging prior sessions (118.6276ms)
+✔ authorizes active org, membership, and actor-bound device (8.9296ms)
+✔ rejects unknown session actor (1.8293ms)
+✔ denies missing authoritative directory (0.5242ms)
+✔ denies disabled default directory (0.6581ms)
+✔ rejects disabled organization (0.6273ms)
+✔ rejects inactive membership (0.5967ms)
+✔ rejects role not allowlisted (1.1342ms)
+✔ rejects revoked device (0.5437ms)
+✔ rejects device registered to another actor (5.0816ms)
+✔ rejects cross-org record injection (0.9815ms)
+✔ rejects directory exceptions (0.7649ms)
+✔ rejects write scope (0.4869ms)
+✔ valid signed session identity (7.1099ms)
+✔ tampering is rejected (1.6284ms)
+✔ wrong secret is rejected (0.9456ms)
+✔ missing server secret denies closed (4.9607ms)
+✔ expired session rejected (21.447ms)
+✔ long-lived session rejected (1.2725ms)
+✔ invalid identity rejected (11.2191ms)
+✔ server session revocation enforced (3.6982ms)
+✔ mismatched session owner denied (2.0156ms)
+✔ unconfigured session store denies (0.7927ms)
+✔ snapshot authorization is scoped by exact session and actor (4.4434ms)
+✔ reject duplicate session IDs (0.513ms)
+✔ reject malformed snapshot and invalid status (0.4438ms)
+✖ file session revocation is effective immediately (83.3265ms)
+✖ reject world-writable session file (65.7983ms)
+✖ reject symlink session file (46.38ms)
+✔ reject missing file and relative path (4.0772ms)
+✖ reject world-readable session records and unrecognized snapshot fields (26.4677ms)
+✔ read-only status reports scoped staged count without data (12.5163ms)
+✔ rejects mismatched organization header (1.6094ms)
+✔ rejects missing session (8.2242ms)
+✔ rejects revoked session (1.1286ms)
+✔ rejects revoked device (1.2151ms)
+✔ fails closed without journal (1.5306ms)
+✔ fails closed for missing identity directory (0.59ms)
+✔ verified server backup proof permits one inert binding review, never grants access (7.3309ms)
+✔ reject forged local company, wrong actor, missing session and foreign destination (1.7619ms)
+✔ approved owner transfer is atomic, auditable and replay protected (1.9344ms)
+✔ an existing local binding follows a verified ownership transfer atomically (1.5538ms)
+✔ transfer requires approved recovery proof and active target admin (0.8757ms)
+✔ no session resolver or transaction adapter means fail closed (0.6015ms)
+✔ binding records one validated timestamp in both binding and audit (0.6272ms)
+✔ expiry uses one clock reading and rejects a boundary-expired recovery (2.3316ms)
+✔ owner transfer demotes the same validated owner membership, without a second read (2.2649ms)
+✔ revoked session is denied inside both ownership transactions before business records are read (2.0343ms)
+✔ session verification requires the same authenticated user and live session identifier (0.7723ms)
+✔ JWT expiry at transaction time denies binding and owner transfer even if auth.sessions remains active (8.2694ms)
+✔ missing JWT expiry metadata is never accepted from a custom session resolver (0.5146ms)
+✔ ownership database adapter commits and releases one serialized transaction (7.4984ms)
+✔ database adapter rolls back and releases on failure (2.8564ms)
+✔ user-supplied identifiers are parameterized and forbidden roles fail before writes (3.6978ms)
+✔ zero-row database mutation rolls back as a conflict (0.9622ms)
+✔ transfer updates existing local binding owner in the same transaction (1.0213ms)
+✔ transfer tolerates cloud-only company without local binding (0.6068ms)
+✔ a private transaction pool is mandatory (0.4991ms)
+✔ existing cloud-company binding is detected even for a different local ID (1.2982ms)
+✔ conditional owner change uses prior owner as a database predicate (3.0486ms)
+✔ binding and transfer services can lock the live Supabase session in the same SQL transaction (5.6986ms)
+✔ missing or duplicate private session rows fail closed (1.0884ms)
+✔ new private evidence schema never exposes browser writer credentials (2.5075ms)
+✔ verified evidence enforces independent reviewer and digest receipt shape (6.07ms)
+✔ verified restore drill, independent reviewer and live session issue 10-minute approval atomically (13.3104ms)
+✔ revoked reviewer authorization and revoked Supabase session deny inside transaction (7.2362ms)
+✔ only verified independent restore evidence with actual digest receipts is usable (6.7672ms)
+✔ owner reassignment during review invalidates stale ownership proof (0.571ms)
+✔ approved owner transfer needs exact recipient and transfer review digest (0.6237ms)
+✔ missing, invalid or ambiguous inputs reject without database mutation (0.8298ms)
+✔ failed approval insertion and failed audit roll back evidence consumption and writes (2.5157ms)
+✔ old external verifyRecovery callback cannot substitute for locked DB evidence (0.9647ms)
+✔ requires trusted reviewer resolver and transactional provider (0.751ms)
+✔ expired or missing reviewer JWT deadline denies before database evidence inspection (1.3845ms)
+✔ transfer recipient cannot act as their own independent recovery reviewer (0.6524ms)
+ℹ tests 393
+ℹ suites 0
+ℹ pass 349
+ℹ fail 43
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 9045.6786
+
+✖ failing tests:
+
+test at server\tests\syncAccessRoutes.test.mjs:22:1
+✖ login issues verifiable short-lived signed session and denies bad password (198.3732ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at createAccessActions (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncAccessRoutes.mjs:24:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncAccessRoutes.test.mjs:18:16)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncAccessRoutes.test.mjs:23:1
+✖ owner can invite and staff can redeem once; unauthorized invite denied (230.124ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at createAccessActions (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncAccessRoutes.mjs:24:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncAccessRoutes.test.mjs:18:16)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncAccessRoutes.test.mjs:24:1
+✖ missing session denies enrollment and revocation (197.8606ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at createAccessActions (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncAccessRoutes.mjs:24:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncAccessRoutes.test.mjs:18:16)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncBackupVault.test.mjs:13:1
+✖ vault rejects unsafe root directory (37.7588ms)
+  Error: Absolute vault path required
+      at createEncryptedBackupVault (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncBackupVault.mjs:26:84)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncBackupVault.test.mjs:13:151)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncBackupVault.test.mjs:14:1
+✖ vault writes immutable named ciphertext and reads within organization (17.4705ms)
+  Error: Absolute vault path required
+      at createEncryptedBackupVault (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncBackupVault.mjs:26:84)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncBackupVault.test.mjs:14:176)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncBackupVault.test.mjs:15:1
+✖ backup identifier traversal rejected (30.326ms)
+  Error: Absolute vault path required
+      at createEncryptedBackupVault (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncBackupVault.mjs:26:84)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncBackupVault.test.mjs:15:152)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncBackupVault.test.mjs:17:1
+✖ vault refuses symlink root even when its destination is private (12.0363ms)
+  Error: Absolute vault path required
+      at createEncryptedBackupVault (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncBackupVault.mjs:26:84)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncBackupVault.test.mjs:22:26)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncBackupVault.test.mjs:25:1
+✖ vault rejects records altered to include unrecognized fields or invalid creation dates (4.3342ms)
+  Error: Absolute vault path required
+      at createEncryptedBackupVault (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncBackupVault.mjs:26:84)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncBackupVault.test.mjs:28:17)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncDirectory.test.mjs:19:1
+✖ revocation is enforced on next file reload (60.7926ms)
+  Error: Absolute directory path required
+      at createReadOnlyFileDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncDirectory.mjs:53:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncDirectory.test.mjs:23:18)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncDirectory.test.mjs:30:1
+✖ unsafe file modes deny access (15.4197ms)
+  Error: Absolute directory path required
+      at createReadOnlyFileDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncDirectory.mjs:53:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncDirectory.test.mjs:32:161)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncDirectory.test.mjs:36:1
+✖ directory refuses symlink, hardlink and world-readable files (17.2957ms)
+  Error: Absolute directory path required
+      at createReadOnlyFileDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncDirectory.mjs:53:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncDirectory.test.mjs:41:25)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncDirectory.test.mjs:50:1
+✖ directory refuses unsafe parent permissions and parent symlinks (11.8642ms)
+  Error: Absolute directory path required
+      at createReadOnlyFileDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncDirectory.mjs:53:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncDirectory.test.mjs:55:25)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:10:1
+✖ admin invites member and one-time token enrolls only one device (62.3866ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at server\tests\syncEnrollment.test.mjs:11:1
+✖ member cannot issue invitations (35.7121ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:12:1
+✖ cross-org actor cannot redeem token (21.9447ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:13:1
+✖ wrong actor cannot redeem token (13.6138ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:14:1
+✖ parallel enrollment cannot reuse token (20.5651ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:15:1
+✖ administrator revokes device and status persists (24.7823ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:16:1
+✖ member cannot revoke (15.2227ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:17:1
+✖ expired invitation is rejected (20.1784ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:19:1
+✖ independent Node enrollment issuers retain all invitations (50.1084ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncEnrollment.test.mjs:37:1
+✖ enrollment refuses symlink and hardlink registry, and insecure parent (31.0421ms)
+  Error: Absolute registry path required
+      at path (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:11:96)
+      at createServerEnrollmentRegistry (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncEnrollment.mjs:89:16)
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncEnrollment.test.mjs:9:198)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:11:1
+✖ durably stage and reload, reject exact replays (46.131ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:11:88
+      at sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:90)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:12:1
+✖ reject mutated event and reused operation (24.5711ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:12:83
+      at sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:90)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:13:1
+✖ separate businesses and concurrent writers (24.7921ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:13:84
+      at sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:90)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:14:1
+✖ reject truncated journal rather than treating it as empty (59.532ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:14:163
+      at async sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:84)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:15:1
+✖ reject writable journal files (44.8673ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:15:146
+      at async sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:84)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:18:1
+✖ reject a journal symlink even when its target has safe permissions (49.9382ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:22:17
+      at async sandbox (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:8:84)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncJournal.test.mjs:27:1
+✖ reject a symlink journal parent directory (18.0946ms)
+  Error: Absolute path required
+      at createFileSyncJournal (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncJournal.mjs:77:94)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncJournal.test.mjs:35:26)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:19:1
+✖ scrypt login issues a verifiable short session after durable persistence (237.5812ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:20:22
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:15)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at server\tests\syncLogin.test.mjs:26:1
+✖ incorrect password rejected without minting a session (122.9901ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:27:24
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:15)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:35:1
+✖ world-readable credential file fails closed (147.1673ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Unsafe/. Input:
+  
+  'Error: Absolute path required'
+  
+      at async file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:36:27
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Absolute path required
+        at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+        at requirePrivateDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:14:36)
+        at readSafeJSON (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:18:9)
+        at authenticateLocalUser (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:39:46)
+        at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:36:48
+        at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    expected: /Unsafe/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at server\tests\syncLogin.test.mjs:38:1
+✖ concurrent sessions preserve both records (152.8273ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:39:15
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:15)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:48:1
+✖ concurrent independent Node issuers do not lose committed sessions (642.2708ms)
+  Error: Issuer exited 1: file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12
+  const validPath = filename => { if (typeof filename !== 'string' || !filename.startsWith('/') || filename.includes('\0')) throw Error('Absolute path required'); return resolve(filename); };
+                                                                                                                                  ^
+  
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/[eval1]:2:11
+      at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+      at async node:internal/modules/esm/loader:224:26
+      at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:221:20)
+      at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+  
+  Node.js v24.19.0
+  
+      at ChildProcess.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:60:62)
+      at ChildProcess.emit (node:events:509:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:295:12)
+
+test at server\tests\syncLogin.test.mjs:69:1
+✖ pre-existing lock fails closed without issuing or deleting other files (137.1799ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:72:24
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:77:1
+✖ reject insecure session directory and hard-linked identity/session files (83.9318ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Unsafe session directory/. Input:
+  
+  'Error: Absolute path required'
+  
+      at async file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:81:3
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Absolute path required
+        at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+        at requirePrivateDirectory (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:14:36)
+        at readSafeJSON (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:18:9)
+        at authenticateLocalUser (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:39:46)
+        at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:81:24
+        at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    expected: /Unsafe session directory/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at server\tests\syncLogin.test.mjs:93:1
+✖ reject symlink session store without changing its target (96.7582ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:99:24
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:103:1
+✖ account disabled during lock wait cannot mint a session (89.512ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:105:17
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncLogin.test.mjs:116:1
+✖ near-capacity session file rejects new issuance without damaging prior sessions (118.6276ms)
+  Error: Absolute path required
+      at validPath (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:12:129)
+      at createSessionIssuer (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncLogin.mjs:108:3)
+      at file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:122:24
+      at async fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncLogin.test.mjs:17:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncSessionStore.test.mjs:21:1
+✖ file session revocation is effective immediately (83.3265ms)
+  Error: Absolute session file path required
+      at createReadOnlyFileSessionStore (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncSessionStore.mjs:24:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncSessionStore.test.mjs:26:19)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncSessionStore.test.mjs:32:1
+✖ reject world-writable session file (65.7983ms)
+  Error: Absolute session file path required
+      at createReadOnlyFileSessionStore (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncSessionStore.mjs:24:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncSessionStore.test.mjs:34:86)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncSessionStore.test.mjs:37:1
+✖ reject symlink session file (46.38ms)
+  Error: Absolute session file path required
+      at createReadOnlyFileSessionStore (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncSessionStore.mjs:24:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncSessionStore.test.mjs:39:87)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at server\tests\syncSessionStore.test.mjs:47:1
+✖ reject world-readable session records and unrecognized snapshot fields (26.4677ms)
+  Error: Absolute session file path required
+      at createReadOnlyFileSessionStore (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/syncSessionStore.mjs:24:99)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/server/tests/syncSessionStore.test.mjs:55:26)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

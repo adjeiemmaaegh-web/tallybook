@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ❯ src/features/business/run11ReturnPolicyIntegration.test.ts (13 tests | 1 failed) 7418ms
+     × tampered saved sale policy is rejected even when money and stock still reconcile 406ms
+ ❯ src/features/reports/run12SupplierTaxIntegration.test.ts (16 tests | 1 failed) 6750ms
+     × tampered saved tax-off configuration is rejected by report and backup 405ms
+ ❯ src/features/sales/tax.test.ts (8 tests | 1 failed) 3515ms
+   × backs up and restores policy and immutable receipts, rejects altered tax 425ms

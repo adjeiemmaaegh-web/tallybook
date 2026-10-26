@@ -76,6 +76,7 @@ it("rolls back a taxed checkout after a receipt storage failure",async()=>{
 it("backs up and restores policy and immutable receipts, rejects altered tax",async()=>{
   const {db,input}=await fixture(policy);await completeSale(input,db);const backup=await createBackup(db);
   const tampered=structuredClone(backup);tampered.records.sales[0].tax!.taxMinor++;
+  tampered.records.centralSaleEvents[0].payload.sale.tax!.taxMinor++;
   expect(()=>parseBackup(JSON.stringify(tampered))).toThrow(/tax.*(amounts|reconcile)/i);
   const invalid=structuredClone(backup);invalid.records.businessProfiles[0].taxPolicy!.registrationStatus="unknown";
   expect(()=>parseBackup(JSON.stringify(invalid))).toThrow(/registered status/);

@@ -13,7 +13,7 @@ import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
 
 export const DATABASE_NAME = "tallybook-db";
-export const DATABASE_SCHEMA_VERSION = 36;
+export const DATABASE_SCHEMA_VERSION = 37;
 
 export interface AppMetaRecord {
   key: "databaseCreatedAt" | "schemaVersion" | "lastBackupAt" | "lastBackupCompanyId" | "activeBusinessProfileId" | "restoreRecoveryJournal" | "verifiedBackupReceiptV2";
@@ -63,6 +63,7 @@ export class TallybookDB extends Dexie {
   walletTransfers!: Table<import("@/features/customers/walletTransfers").WalletTransfer, string>;
   syncConsents!: Table<import("@/features/sync/syncFoundation").SyncConsent, string>;
   syncOutbox!: Table<import("@/features/sync/syncFoundation").SyncOutboxEvent, string>;
+  centralSaleEvents!: Table<import("@/features/sync/centralSaleEvent").CentralSaleEvent, string>;
   syncConflicts!: Table<import("@/features/sync/reconciliation").SyncConflict, string>;
   syncDevices!: Table<import("@/features/sync/deviceRegistry").LocalSyncDevice, string>;
   syncReplicaOutbox!: Table<import("@/features/sync/run14LocalRelay").Run14QueuedEnvelope, string>;
@@ -339,6 +340,9 @@ export class TallybookDB extends Dexie {
           await transaction.table("businessProfiles").update(companyId, { staffGovernanceEnabled: true });
       }
     });
+    // v37 is additive. Historical sales keep unknown provenance; only newly
+    // committed checkouts write full local event evidence atomically.
+    this.version(37).stores({ centralSaleEvents: 'id, businessProfileId, &[businessProfileId+operationId], entityId, createdAt' });
   }
 }
 

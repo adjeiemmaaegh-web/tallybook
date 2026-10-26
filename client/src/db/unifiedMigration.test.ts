@@ -97,3 +97,24 @@ it("retains a v30 replica outbox and enrolled owner while adding later stores", 
   expect((await upgraded.businessProfiles.get("primary"))?.staffGovernanceEnabled).toBe(true);
   expect(await upgraded.staffMembers.get(owner.id)).toEqual(owner);
 });
+
+it('adds the v37 local event table without inventing events for historical sales', async () => {
+  const name = `unified-v36-events-${Date.now()}-${Math.random()}`;
+  const legacy = new Dexie(name);
+  legacy.version(36).stores({
+    appMeta: 'key, updatedAt',
+    businessProfiles: 'id, name, country, currency, businessType, updatedAt',
+    sales: 'id, businessProfileId, customerId, receiptNumber, createdAt, outstandingMinor, paymentMethod, submissionKey, &[businessProfileId+submissionKey]',
+  });
+  await legacy.open();
+  const historical = { id: 'old-sale', businessProfileId: 'primary',
+    submissionKey: 'old-checkout', receiptNumber: 'OLD-1', createdAt: '2026-10-01T00:00:00.000Z',
+    totalMinor: 100, amountPaidMinor: 100, outstandingMinor: 0, paymentMethod: 'cash' };
+  await legacy.table('sales').add(historical);
+  legacy.close();
+  const upgraded = new TallybookDB(name);
+  opened.push(upgraded);
+  await initializeDatabase(upgraded);
+  expect(await upgraded.sales.get(historical.id)).toEqual(historical);
+  expect(await upgraded.centralSaleEvents.count()).toBe(0);
+});

@@ -1,0 +1,12 @@
+✔ exact-SHA and 82/47 immutable record identities pass on disposable clean fixture (1952.8105ms)
+✔ new discovered issue is allowed while the original 47 IDs must remain (1971.3529ms)
+✔ deletion of original issue, duplicate ID and dirty worktree all fail closed (3722.1434ms)
+✔ ambiguous sibling .ts and .mjs and missing imports are detected (1800.5431ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9757.736

@@ -44,6 +44,7 @@ import {reconcileRun17Reviews,type Run17ReviewEvent} from "@/features/insights/r
 import type { StaffMember, StaffShift, StaffAudit } from "@/features/staff/staff";
 import type { StockCountSession, InventoryBatch } from "@/features/inventory/stage2Inventory";
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
+import { validateCentralSaleEvent } from "@/features/sync/centralSaleEvent";
 import { validateLocalSyncDevice } from "@/features/sync/deviceRegistry";
 import { normalizeStoreName } from "@/features/stores/storeDirectory";
 import { validateTransferRequest } from "@/features/stores/storeTransfers";
@@ -90,6 +91,7 @@ export interface BackupRecords {
   run17ReviewEvents: Run17ReviewEvent[];
   syncConsents: import("@/features/sync/syncFoundation").SyncConsent[];
   syncOutbox: import("@/features/sync/syncFoundation").SyncOutboxEvent[];
+  centralSaleEvents: import("@/features/sync/centralSaleEvent").CentralSaleEvent[];
   syncConflicts: import("@/features/sync/reconciliation").SyncConflict[];
   syncDevices: import("@/features/sync/deviceRegistry").LocalSyncDevice[];
   storeLocations: import("@/features/stores/storeDirectory").StoreLocation[];
@@ -115,7 +117,7 @@ export interface BackupSummary {
   counts: Record<Exclude<keyof BackupRecords, "appMeta">, number>;
 }
 
-const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries"] as const;
+const extendedKeys = ["syncConsents", "syncOutbox", "syncConflicts", "syncDevices", "storeLocations", "storeAssignments", "storeTransferRequests", "storeStockObservations", "storeStockModes", "storeStockEntries", "centralSaleEvents"] as const;
 const recordKeys = ["appMeta", "businessProfiles", "categories", "products", "inventoryMovements", "customers", "sales", "saleLines", "payments", "receipts", "customerActivities", "repayments", "mobileMoneyProviders", "suppliers", "purchases", "purchaseLines", "supplierPayableEntries", "expenses", "saleReversals", "cashPartialReturns", "stockCountSessions", "inventoryBatches", "quotations", "customerBenefits", "customerPolicies", "walletTransfers", "staffMembers", "staffShifts", "staffAudits", "commerceOrders", "commerceHolds", "commerceDeliveryEvents", "run17ReviewEvents", "inventoryCostEvents", ...extendedKeys] as const;
 const summaryKeys = recordKeys.filter((key) => key !== "appMeta") as Exclude<keyof BackupRecords, "appMeta">[];
 
@@ -262,6 +264,17 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   }
   if (records.syncConsents.length > 1 || records.syncConsents.some(row => typeof row.enabled !== "boolean" || !Number.isFinite(Date.parse(row.updatedAt)))) throw new Error("Invalid sync consent snapshot.");
   records.syncOutbox.forEach(validateOutboxEvent);
+  for (const event of records.centralSaleEvents) {
+    validateCentralSaleEvent(event);
+    const saved = records.sales.find(sale => sale.id === event.entityId);
+    if (!saved || JSON.stringify(saved) !== JSON.stringify(event.payload.sale))
+      throw new Error('Central sale event has no matching immutable sale.');
+    const savedLines = records.saleLines.filter(line => line.saleId === event.entityId);
+    if (JSON.stringify(savedLines) !== JSON.stringify(event.payload.lines) ||
+        JSON.stringify(records.payments.find(payment => payment.saleId === event.entityId) ?? null) !== JSON.stringify(event.payload.payment) ||
+        JSON.stringify(records.receipts.find(receipt => receipt.saleId === event.entityId)) !== JSON.stringify(event.payload.receipt))
+      throw new Error('Central sale event payload differs from saved checkout records.');
+  }
   records.syncDevices.forEach(validateLocalSyncDevice);
   for (const conflict of records.syncConflicts) if (!["payload-mismatch", "operation-collision", "unknown-event"].includes(conflict.reason) || !["unresolved", "reviewed"].includes(conflict.status) || !conflict.eventId || !conflict.operationId || !Number.isFinite(Date.parse(conflict.detectedAt))) throw new Error("Invalid sync conflict snapshot.");
   auditRun13StoreBackup(companyId,records.storeStockModes,records.storeStockEntries,records.products,records.storeLocations,records.storeTransferRequests,records.inventoryMovements);

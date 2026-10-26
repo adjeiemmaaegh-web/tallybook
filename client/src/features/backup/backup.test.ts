@@ -47,6 +47,10 @@ describe("Stage 9 local backup and restore", () => {
     await recordBackupExportedAt(exportedAt, db, 'primary', 'a'.repeat(64));
     expect(await getLastBackupAt(db)).toBe(exportedAt);
     const exported = parseBackup(stringifyBackup(await createBackup(db)));
+    expect(exported.records.centralSaleEvents).toHaveLength(1);
+    const alteredEvent = structuredClone(exported);
+    alteredEvent.records.centralSaleEvents[0].payload.sale.totalMinor += 1;
+    expect(() => parseBackup(stringifyBackup(alteredEvent))).toThrow(/Central sale event/);
     expect(exported.records.expenses[0].currency).toBe("GHS");
     const invalidExpenseCurrency = structuredClone(exported);
     invalidExpenseCurrency.records.expenses[0].currency = "usd";
@@ -63,6 +67,9 @@ describe("Stage 9 local backup and restore", () => {
     expect((await db.businessProfiles.get("primary"))?.name).toBe("Backup Shop");
     expect(inventory.products.find((entry) => entry.id === product.id)?.stockQuantity).toBe(5);
     expect(await db.receipts.where("saleId").equals(completed.sale.id).count()).toBe(1);
+    expect(await db.centralSaleEvents.get(`sale:${completed.sale.id}`)).toMatchObject({
+      businessProfileId: 'primary', operationId: `sale:${completed.sale.id}`,
+      deliveryStatus: 'local_only', deviceId: null });
     expect(await db.payments.where("saleId").equals(completed.sale.id).first()).toMatchObject({ method: "mobile", mobileMoneyProviderName: "MTN MoMo", mobileMoneyReference: "BACKUP-REF" });
     expect(await db.mobileMoneyProviders.get(provider.id)).toMatchObject({ name: "MTN MoMo", active: true });
     expect(receiptDetail).toMatchObject({ businessName: "Backup Shop", customerName: "Backup customer" });
@@ -97,9 +104,11 @@ describe("Stage 9 local backup and restore", () => {
     const unknownHistoricalConflict=structuredClone(snapshot);
     delete unknownHistoricalConflict.records.repayments[0].saleAllocations;
     delete unknownHistoricalConflict.records.sales[0].currency;
+    delete unknownHistoricalConflict.records.centralSaleEvents[0].payload.sale.currency;
     expect(()=>parseBackup(stringifyBackup(unknownHistoricalConflict))).toThrow(/unverified historical/);
     const unsupportedCurrency=structuredClone(snapshot);
     unsupportedCurrency.records.sales[0].currency="fake-currency";
+    unsupportedCurrency.records.centralSaleEvents[0].payload.sale.currency="fake-currency";
     expect(()=>parseBackup(stringifyBackup(unsupportedCurrency))).toThrow(/sale currency evidence/i);
     const orphan=structuredClone(snapshot);
     orphan.records.repayments[0].saleAllocations![0].saleId="not-a-real-sale";

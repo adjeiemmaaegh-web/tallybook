@@ -1,6 +1,6 @@
 /** Tactile Ledger testing reminder: sales either write every dependent record and stock movement together, or leave the ledger unchanged. */
 import Dexie from "dexie";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DATABASE_SCHEMA_VERSION, TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { setCustomerPolicy } from "@/features/customers/customerBenefits";
 import { createCustomer } from "@/features/customers/customers";
@@ -72,6 +72,7 @@ describe("atomic sales", () => {
     expect((await database.products.get(primaryProduct.id))?.stockQuantity).toBe(3);
     expect((await database.products.get(secondProduct.id))?.stockQuantity).toBe(3);
     expect(await database.payments.count()).toBe(2);
+    expect(await database.centralSaleEvents.count()).toBe(2);
     setActiveBusinessProfileId("primary");
     const owner = await database.staffMembers.where("businessProfileId").equals("primary").first();
     await unlockStaff(owner!.id, "123456", database);
@@ -110,6 +111,29 @@ describe("atomic sales", () => {
     expect(snapshot.receipts).toMatchObject([{ saleId: result.sale.id, receiptNumber: result.sale.receiptNumber }]);
     expect(inventory.products).toMatchObject([{ id: product.id, stockQuantity: 3 }]);
     expect(inventory.movements[0]).toMatchObject({ productId: product.id, movementType: "sale", quantityDelta: -2, resultingQuantity: 3 });
+    const event = await database.centralSaleEvents.get(`sale:${result.sale.id}`);
+    expect(event).toMatchObject({ businessProfileId: result.sale.businessProfileId,
+      operationId: `sale:${result.sale.id}`, entityId: result.sale.id,
+      deliveryStatus: 'local_only', shopId: null, deviceId: null });
+    expect(event?.payload).toEqual({ sale: result.sale, lines: result.lines,
+      payment: result.payment, receipt: result.receipt });
+  });
+
+  it('rolls back checkout and stock when durable event insertion fails', async () => {
+    const database = makeDatabase();
+    await initializeDatabase(database);
+    const product = await createProductFixture(database, 'Journal rollback product', '3');
+    const stockBefore = (await database.products.get(product.id))!.stockQuantity;
+    const failed = vi.spyOn(database.centralSaleEvents, 'add').mockRejectedValueOnce(new Error('simulated event storage failure'));
+    try {
+      await expect(completeSale({ lines: [{ productId: product.id, quantity: 1 }],
+        discount: '0', paymentMethod: 'cash', amountPaid: '10.00', currency: 'GHS' }, database))
+        .rejects.toThrow(/event storage failure/);
+    } finally { failed.mockRestore(); }
+    expect(await database.sales.count()).toBe(0);
+    expect(await database.receipts.count()).toBe(0);
+    expect(await database.centralSaleEvents.count()).toBe(0);
+    expect((await database.products.get(product.id))?.stockQuantity).toBe(stockBefore);
   });
 
   it("recovers a committed two-item partial-payment receipt from IndexedDB without writing again", async () => {

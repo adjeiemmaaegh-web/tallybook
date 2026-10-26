@@ -196,7 +196,12 @@ describe('Run12 actual IndexedDB supplier and original tax evidence',()=>{
    taxConfigurationAtSale:{mode:'off'}});
   await expect(report(f.database)).rejects.toThrow(/tax evidence/i);
   const file=await createBackup(f.database);
-  expect(()=>parseBackup(stringifyBackup(file))).toThrow(/tax evidence/i);
+  await f.database.centralSaleEvents.update(`sale:${saved.sale.id}`,{
+    payload:{...(await f.database.centralSaleEvents.get(`sale:${saved.sale.id}`))!.payload,
+      sale:(await f.database.sales.get(saved.sale.id))!}});
+  const fileWithMatchingEvent=await createBackup(f.database);
+  expect(()=>parseBackup(stringifyBackup(file))).toThrow(/Central sale event/);
+  expect(()=>parseBackup(stringifyBackup(fileWithMatchingEvent))).toThrow(/tax evidence/i);
  });
  it('unknown original tax policy on an old sale remains unverified rather than exempt',async()=>{
   const f=await fixture(),saved=await sale(f);

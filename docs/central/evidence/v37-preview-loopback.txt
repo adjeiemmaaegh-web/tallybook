@@ -1,0 +1,12 @@
+✔ local preview serves built SPA and static JavaScript with correct content type (209.3353ms)
+✔ local preview fails closed on API and all write methods (56.1227ms)
+✔ local preview never returns missing assets, hidden files or symlinked private files (83.6848ms)
+✔ local preview supports HEAD without returning a body (27.4572ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 696.922

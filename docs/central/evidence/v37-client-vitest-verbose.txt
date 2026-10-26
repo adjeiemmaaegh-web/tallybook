@@ -1,0 +1,839 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > How much does Adwoa owe? 917ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > a confirmed sale: the owner's words, what the preview showed, the result, and the sale's id 921ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > Adwoa owes how much? 556ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > every kind of save is logged with the id of what it created or changed 898ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > Show Adwoa's balance. 641ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > questions, previews, cancellations and refusals are not logged 617ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > follows real repayments, because it uses the same debt service as the Customers page 574ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > a save that fails is logged as failed, with the reason, and nothing is claimed saved 570ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > says so plainly when nothing is owed, and never invents a number for an unknown customer 631ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > a multi-line message logs each attempted line in order, under one batch id, and not the lines never attempted 781ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > asks which customer when a first name is ambiguous, then answers for the one chosen 706ms
+ ✓ src/features/assistant/audit.test.ts > what gets logged > a request that is completed over several messages is logged with the first message 714ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > offers a suggestion for a small typo instead of silently accepting it 655ms
+stderr | src/features/assistant/audit.test.ts > the log never gets in the way > if the log can't be written, the sale is still saved and the owner still sees success
+Tallybook Assistant: could not write the activity log. Error: disk full
+    at Table.kit.database.assistantAudit.add (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.test.ts:100:82)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.ts:67:37)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:4733:39
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:788:19
+    at usePSD (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1142:18)
+    at newScope (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:1044:16)
+    at C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:776:22
+    at executePromiseTask (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:835:11)
+    at new DexiePromise (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:644:7)
+    at DexiePromise.follow (C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified\node_modules\.pnpm\dexie@4.4.6\node_modules\dexie\dist\dexie.js:775:18)
+
+ ✓ src/features/assistant/audit.test.ts > the log never gets in the way > if the log can't be written, the sale is still saved and the owner still sees success 615ms
+ ✓ src/features/assistant/assistant.test.ts > customer balance (real credit records) > asks whose balance when no name was given 631ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > How many crates of eggs are left? 763ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > Egg stock? 699ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > How much eggs do we have? 633ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > How many eggs are in stock? 587ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > does not claim eggs are counted in crates, because TallyBook stores no units 547ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > reflects stock changes made by the real sale service 561ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > lists every matching product when several match equally well, and reports unknown or out-of-stock items honestly 625ms
+ ✓ src/features/assistant/assistant.test.ts > inventory (real stock) > flags low stock using TallyBook's own rule 524ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > Show today's sales. 561ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > How much did we sell today? 535ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > What are today's sales? 653ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > Show sales for today. 534ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > includes today's credit sale in the total but shows it as unpaid 524ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > answers for yesterday using the same report function, not new arithmetic 568ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > supports the last 7 days, and says plainly that 'this week' means those 7 days 581ms
+ ✓ src/features/assistant/audit.test.ts > the log never gets in the way > keeps only the newest entries per company 9261ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > reports an empty day without inventing a total 608ms
+ ✓ src/features/assistant/assistant.test.ts > sales questions (same numbers as the Reports page) > refuses filters and periods it cannot honour rather than answering a different question 721ms
+ ✓ src/features/assistant/audit.test.ts > privacy and scope > each company only sees its own entries, and clearing a company removes only its entries 1233ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > prepares a preview without writing anything, then saves through completeSale after confirmation 931ms
+ ✓ src/features/assistant/audit.test.ts > privacy and scope > is not part of a backup, and restoring a backup preserves device-local audit history 1014ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > uses TallyBook's saved price and never a price typed in the sentence 1483ms
+ ✓ src/features/assistant/audit.test.ts > asking the assistant what it did > lists today's entries, newest first, with the words that were used 1517ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > records a named customer's cash sale 764ms
+ ✓ src/features/assistant/audit.test.ts > asking the assistant what it did > understands other periods and says plainly when there is nothing 734ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > records a credit sale and the customer's real balance rises 576ms
+ ✓ src/features/assistant/audit.test.ts > asking the assistant what it did > counts failures separately 546ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > supports part payment for a named customer 519ms
+ ✓ src/features/assistant/audit.test.ts > asking the assistant what it did > does not confuse “what can you do?” (help) with a request for the log 517ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > does not record a sale that exceeds stock; it offers what can be done instead, and writes nothing 579ms
+ ✓ src/features/assistant/audit.test.ts > upgrading an existing installation to database version 13 (the Assistant activity log) > from version 11: every record kept, your reversal table created, the log table created, and the marker updated 1225ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > rejects unknown products and customers, without offering to create them 1159ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > asks which product when several match equally well 853ms
+ ✓ src/features/assistant/audit.test.ts > upgrading an existing installation to database version 13 (the Assistant activity log) > from version 12: existing sale reversals are untouched by the new table 1253ms
+stderr | src/features/assistant/audit.test.ts > assistant audit atomic log retention > rolls back a newly appended activity when retention pruning fails
+Tallybook Assistant: could not write the activity log. Error: simulated prune failure
+    at Table.database.assistantAudit.bulkDelete (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.test.ts:256:85)
+    at Transaction.<anonymous> (C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/audit.ts:70:58)
+
+ ✓ src/features/assistant/audit.test.ts > assistant audit atomic log retention > rolls back a newly appended activity when retention pruning fails 967ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > refuses credit for a walk-in and asks for a name, then completes 899ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > collects missing details step by step instead of guessing 707ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > asks for a quantity when it is missing 935ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > does not guess anything for 'sell something' 1551ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > refuses discounts and unsupported currencies 878ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > rejects fractional quantities 1203ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > handles mobile money using the owner's own configured provider 1281ms
+ ✓ src/features/assistant/assistant.test.ts > recording a sale > warns that units are not stored, because 'crates' cannot be verified 874ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > cancelling records nothing, and a stale confirm button does nothing 730ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > pressing confirm twice records exactly one sale 915ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > a new command replaces the old preview, and the old confirm button no longer works 743ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > typed 'yes' confirms only when the preview was the last thing shown 1041ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > “she paid 100 cash” after asking about Adwoa previews a payment for Adwoa, saves nothing, and says who it assumed 1357ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > 'no' cancels a preview 970ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > answers “how much does he owe” about the same customer 1129ms
+stderr | src/features/assistant/assistant.test.ts > confirmation safety > refuses to save if the owner switched company after the preview
+Tallybook Assistant: local conversation history could not be saved.
+
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > refuses to save if the owner switched company after the preview 1503ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > works for “to him/her” in a sale, and the preview names the customer 1732ms
+ ✓ src/features/assistant/assistant.test.ts > confirmation safety > reports a real service failure and saves nothing (stock sold elsewhere after the preview) 1519ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > remembers the customer from a preview the owner has just seen 1401ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > previews with the product's saved cost, then records through completePurchase 993ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > asks who is meant when nothing is remembered, instead of guessing 983ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > uses a stated cost, and never invents one when none exists 1160ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > forgets after 15 minutes 1057ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > splits a stated total across the quantity only when it divides evenly 780ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > never remembers a lookup that failed 679ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > lets the owner correct the proposed cost on the preview 723ms
+ ✓ src/features/assistant/conversation.test.ts > pronouns for the customer just discussed > a sentence that names someone is never rewritten 671ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > accepts a past date but not a future one 601ms
+ ✓ src/features/assistant/conversation.test.ts > safety: remembered customers are never attached silently > a sale that doesn't name a customer does not pick up the last one 551ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > rejects unknown suppliers or products and never creates them 544ms
+ ✓ src/features/assistant/conversation.test.ts > safety: remembered customers are never attached silently > a payment with no name asks who paid 531ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > asks which supplier when one is not given 542ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > best sellers 589ms
+ ✓ src/features/assistant/assistant.test.ts > receiving stock > answers what was received, and says supplier balances are not tracked 618ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > follows the most recent question, whatever it was 755ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > asks for the method, previews the balance change, and records through recordRepayment 1128ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > sales totals, including 'today' and a bare 'yesterday' 1119ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > accepts the method in the sentence 960ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > answers follow-up questions for a previous quarter 849ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > rejects overpayment, customers with no debt, and other currencies 1305ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > does not hijack a complete new sentence 1517ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > asks which customer paid when a pronoun is used, then completes from a bare name 786ms
+ ✓ src/features/assistant/conversation.test.ts > “and last month?” — the same question for another period > does nothing when there was no earlier question, or it has expired 588ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > asks how much when only the customer and method are given 558ms
+ ✓ src/features/assistant/conversation.test.ts > “what about Adwoa?” — the same question about someone or something else > customers 621ms
+ ✓ src/features/assistant/assistant.test.ts > customer payments > treats 'received 100 from Adwoa' as ambiguous and asks 790ms
+ ✓ src/features/assistant/conversation.test.ts > “what about Adwoa?” — the same question about someone or something else > products, and a pronoun for the product just shown 863ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > offers choices for a bare name rather than guessing an action 809ms
+ ✓ src/features/assistant/conversation.test.ts > “what about Adwoa?” — the same question about someone or something else > suppliers 614ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > says it does not support unrelated or unsafe requests, and touches nothing 667ms
+ ✓ src/features/assistant/conversation.test.ts > “what about Adwoa?” — the same question about someone or something else > an unknown name still gets the usual 'add them' offer 563ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > gives help and handles empty input 611ms
+ ✓ src/features/assistant/conversation.test.ts > follow-ups don't interfere with an open question > while the assistant is waiting for a phone number, a name-like answer is the answer 738ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > stops asking after repeated unclear answers, and writes nothing 1701ms
+ ✓ src/features/assistant/conversation.test.ts > the page's context banner and “Clear conversation context” run on the real memory > names whoever is remembered, and stops when the context is cleared 2263ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > looks for a real product before giving up on an odd single word 2570ms
+ ✓ src/features/assistant/conversation.test.ts > the page's context banner and “Clear conversation context” run on the real memory > the banner disappears with the 15-minute expiry too 3289ms
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return
+Tallybook Assistant: local conversation history could not be saved.
+
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > read-only questions never change stored data 3838ms
+ ✓ src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > does not reuse customer pronouns after a business switch and return 2677ms
+stderr | src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > never exposes another company's records
+Tallybook Assistant: local conversation history could not be saved.
+
+stderr | src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > invalidates a prepared financial confirmation on company switch
+Tallybook Assistant: local conversation history could not be saved.
+
+ ✓ src/features/assistant/conversation.test.ts > Stage 5: company-scoped conversational state > invalidates a prepared financial confirmation on company switch 2239ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > never exposes another company's records 2508ms
+ ✓ src/features/assistant/assistant.test.ts > ambiguity, unsupported input, and read-only guarantees > handles rapid messages in order 1489ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > revokes cashier session if PIN verifier changes in storage 1212ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > Best-sellers THIS MONTH 1054ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > best selling products last month 773ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > revokes cashier session when role or permission overrides change 1459ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > What were the top selling products this year? 662ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > Best sellers last year 611ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > does not allow discount supervisor approval without a cashier shift 1268ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > best-selling product in the last 30 days 582ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > Best-selling product all time 625ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > persists an audit before publishing exact one-time approval 1179ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > shows the revenue and names the period 585ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > is not mistaken for recording a sale 770ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > role changes by owner make earlier cashier approvals unusable 1690ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > with no period, covers all saved records and offers narrower periods that work 661ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > says so when the period has no sales 726ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > rejects approval if the supervisor was disabled after verifying their PIN 1283ms
+ ✓ src/features/assistant/periodQueries.test.ts > best-selling products, grouped by product > answers last-quarter best sellers using the correct calendar quarter 678ms
+ ✓ src/features/assistant/periodQueries.test.ts > customers who bought > this month: biggest spenders first, walk-ins counted separately 1784ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > rejects supervisor approval after PIN reset or revoked discount permission 2681ms
+ ✓ src/features/assistant/periodQueries.test.ts > customers who bought > last month and all-time give different, correct answers 770ms
+ ✓ src/features/assistant/periodQueries.test.ts > customers who bought > 'top customers' means biggest buyers, not biggest debtors 688ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > rejects approval if cashier shift closes before discount checkout 1519ms
+ ✓ src/features/assistant/periodQueries.test.ts > top debtors > without a period: current balances, as on the customer page 858ms
+ ✓ src/features/assistant/periodQueries.test.ts > top debtors > with a period: the credit given in that period, and what they owe in total today 586ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > records approved cashier discount only when current supervisor remains authorized 1299ms
+ ✓ src/features/assistant/periodQueries.test.ts > top debtors > a period with no unpaid sales says so 675ms
+ ✓ src/features/assistant/periodQueries.test.ts > sales totals for calendar ranges > this month 538ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > refuses posting a supervisor-discount sale after supervisor revocation 1108ms
+ ✓ src/features/assistant/periodQueries.test.ts > sales totals for calendar ranges > last month and this year 522ms
+ ✓ src/features/assistant/periodQueries.test.ts > sales totals for calendar ranges > the last N days 501ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > permission changes cannot elevate cashier to staff management 1014ms
+ ✓ src/features/assistant/periodQueries.test.ts > sales totals for calendar ranges > the old periods still work 623ms
+ ✓ src/features/assistant/periodQueries.test.ts > low stock > includes products that are completely out of stock, most urgent first 599ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > PIN reset requires fresh unlock even for previously active staff 1519ms
+ ✓ src/features/staff/staffRun6.test.ts > V19 Run 6 stale credential and supervisor authorization > close-shift keeps financial variance and a single audit 997ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > asks for the phone number the app requires, shows a preview, and saves only after confirming 1028ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > goes straight to the preview when the phone is in the same sentence 567ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > shows what each line will do, saves nothing yet, then really saves every line when confirmed 854ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > asks for the name when none is given 576ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > typing “yes” confirms it too 742ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > a new customer works straight away in the other flows 780ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > never creates a second customer with the same name 715ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > mixes sales, stock receipts and payments 915ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > asks before adding someone with a similar name, and then adds them if the owner says so 670ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > separators and safe shared-terms compound sales prepare separate previews 770ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > a typed 'yes' answers the similar-name question 849ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > compound sale fails atomically if a product becomes unavailable after preview 981ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > re-asks for a phone number that is too short, and stops after repeated misses without saving 923ms
+ ✓ src/features/assistant/batch.test.ts > a list of transactions > each line is saved exactly once 877ms
+ ✓ src/features/assistant/createRecords.test.ts > add customer > cancelling at the preview saves nothing and the old confirm button is dead 689ms
+ ✓ src/features/assistant/batch.test.ts > lines that can't be recorded are never hidden or guessed > a line that isn't understood is shown and excluded; the button says exactly what it will record 774ms
+ ✓ src/features/assistant/createRecords.test.ts > add supplier > previews, then saves through the real supplier service 685ms
+ ✓ src/features/assistant/batch.test.ts > lines that can't be recorded are never hidden or guessed > a line that fails validation is excluded with the reason 723ms
+ ✓ src/features/assistant/createRecords.test.ts > add supplier > keeps a phone number given in the sentence 683ms
+ ✓ src/features/assistant/batch.test.ts > lines that can't be recorded are never hidden or guessed > two sales of the same product can't both use the same stock 843ms
+ ✓ src/features/assistant/createRecords.test.ts > add supplier > does not duplicate an existing supplier, and a new one can be used for stock straight away 1115ms
+ ✓ src/features/assistant/batch.test.ts > lines that can't be recorded are never hidden or guessed > two payments can't together exceed what the customer owes 997ms
+ ✓ src/features/assistant/createRecords.test.ts > add category > creates a real category the Stock page can use 766ms
+ ✓ src/features/assistant/batch.test.ts > lines that can't be recorded are never hidden or guessed > nothing ready means nothing to confirm 772ms
+ ✓ src/features/assistant/createRecords.test.ts > add category > does not add the same category twice 779ms
+ ✓ src/features/assistant/batch.test.ts > what happens when saving goes wrong halfway > stops at the first failure and says exactly what was and wasn't saved 750ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > asks for the selling price, then saves a real product with the stock history the app creates 641ms
+stderr | src/features/assistant/batch.test.ts > what happens when saving goes wrong halfway > does not save into another business if the owner switched before confirming
+Tallybook Assistant: local conversation history could not be saved.
+
+ ✓ src/features/assistant/batch.test.ts > what happens when saving goes wrong halfway > does not save into another business if the owner switched before confirming 545ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > takes price, opening stock, cost and low-stock level from one sentence 594ms
+ ✓ src/features/assistant/batch.test.ts > cancelling and stale previews > cancel (button or typed) saves nothing, and the old confirm button is dead 692ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > uses an existing category by name 611ms
+ ✓ src/features/assistant/batch.test.ts > cancelling and stale previews > a new message replaces the waiting batch 608ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > offers choices when the named category doesn't exist, instead of failing 584ms
+ ✓ src/features/assistant/batch.test.ts > multi-line messages are never half-recorded > one understood request plus other lines: nothing is recorded, and the owner is told 610ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > re-asks a price the currency can't hold and never saves a zero price 586ms
+ ✓ src/features/assistant/batch.test.ts > multi-line messages are never half-recorded > too many lines 696ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > never creates a second product with the same name; asks about a similar one 584ms
+ ✓ src/features/assistant/batch.test.ts > multi-line messages are never half-recorded > a plain single request is unaffected 551ms
+ ✓ src/features/assistant/createRecords.test.ts > add product > a new product can be sold once stock is added 613ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > commits distinct exact-sales for the same retry key in independent companies 1962ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > allocates FIFO receipts atomically, reconstructs earlier balances and restores the original costs 2025ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > enforces customer discount limits without changing stock or financial records 624ms
+ × src/features/sales/sales.test.ts > atomic sales > completes a cash sale by writing sale, line, payment, receipt, and stock movement together 559ms
+   → expected { id: 'sale:JK3SHC8WM9clZg', …(12) } to match object { businessProfileId: 'primary', …(5) }
+(11 matching properties omitted from actual)
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores original FIFO portions inside an inventory transaction without manufacturing a refund 993ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rolls back checkout and stock when durable event insertion fails 496ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > never substitutes today's product cost for an unknown legacy opening 650ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > recovers a committed two-item partial-payment receipt from IndexedDB without writing again 522ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > rolls allocations, sale records and stock back together after a late receipt-write failure 546ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects corrupted persisted payment data on recovery without changing the ledger 538ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > allows one of two competing full-stock checkouts and records exactly one cost allocation 715ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > accepts a comma-grouped full payment amount and records the sale once 783ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > retries a checkout without consuming cost layers twice and rejects a changed intent 738ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > handles a partial customer sale and derives the customer outstanding amount from saved sales 756ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > writes a full Mobile Money payment and provider snapshot atomically, then returns the same result for a repeat key 983ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > rejects another company's inventory at both checkout and replay boundaries 1353ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a reused provider transaction reference without posting a second sale 554ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > includes immutable cost events in backup and rejects altered costs before restore 617ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a Mobile Money payment without a configured provider before creating records or changing stock 503ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores batch quantities as well as FIFO accounting layers on reversal 516ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > returns the same completed sale on a repeated checkout key without duplicating stock, payment, receipt, or customer activity 537ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > supports a credit sale and an atomic multi-product stock update 481ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > receives batch cost evidence, allocates physical stock by expiry, keeps accounting FIFO independent, and restores both on reversal 984ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects changed cart or payment details for an already committed checkout key 525ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > audits cost-linked batch receipts and detects quantity tampering without changing records 502ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a changed partial payment on retry without duplicating customer debt 458ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > grounds expiry and unit-sales insights in company-scoped live records 496ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects insufficient stock and customerless credit without leaving partial records 564ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > migrates a Stage 4 customer database into the sale schema without removing existing records 192ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > rejects posting outside the atomic stock transaction 548ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > upgrades a version-7 database with a historical mobile payment without rewriting it and creates an empty provider store 360ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > restores store and outbox records while requiring fresh consent to synchronize 706ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > detects tampered persisted COGS independently from receipt evidence 497ms
+ ✓ src/features/inventory/costLedger.test.ts > persisted inventory cost history > deletes only the selected company's cost, store, commerce and sync records 543ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > displays the same net receivable in the sale summary, customer ledger and management reports after repayment 981ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > frees customer credit limit after a real full reversal without inventing a repayment 674ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > fails closed rather than erase debt when customer repayments cannot be allocated to a particular sale 734ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > records and reconciles recognition, partial manual payment and noncash supplier credit 817ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > blocks a foreign-currency credit sale before stock can change, even without a credit-limit policy 525ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > does not infer supplier payment when only a stock purchase exists 515ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > refuses a foreign-currency repayment and does not persist or mislabel the customer's debt 799ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > rejects replay of supplier payment submission key with a changed amount 870ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > keeps a historical sale currency unknown and refuses guessed-currency collections 737ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > rejects supplier overpayment before committing a new liability event 779ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > derives outstanding balance from a credit sale minus a partial repayment and writes one repayment record 832ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > prevents settlement when original purchase supplier ID has been corrupted 829ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > records a Mobile Money customer payment separately without altering the completed sale or its original debt 594ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > rejects backdated supplier settlement before purchase creation in reporting and backup 500ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > rejects changed repayment details when a submission key is retried 468ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > keeps actual operating expenses separate from supplier payments 478ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > stores explicit sale allocations atomically and safely reverses only a different unpaid sale 548ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > refuses cross-currency newly recorded expenses rather than silently exchanging them 549ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > rejects mismatched/foreign/overallocated repayments without persisting them 500ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > old purchase submission key remains idempotent after the owner changes company currency 469ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > presents saved-currency targets, saves a single-sale payment and reduces its available debt 510ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > old recorded expense may be replayed unchanged but new foreign-currency expense is refused 525ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > rejects linked repayments after a stale target becomes ambiguous due to historical unallocated payments 486ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > retains an original invoice with owner-configured registered exclusive tax evidence 516ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > refuses linked and unallocated repayments for debt without verified currency 503ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > records explicit OFF for untaxed sales, rather than inferring today's status 504ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > supports multiple repayments through to a zero balance and rejects any further repayment 526ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > later owner tax edits cannot silently rewrite an earlier invoice snapshot 543ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > rejects an overpayment without writing a detached or partial repayment record 594ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > tampered saved tax-off configuration is rejected by report and backup 687ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > isolates balances by customer and replays the same repayment submission key only once 800ms
+ ✓ src/features/credit/credit.test.ts > customer debt ledger > migrates a version 6 sales database into the repayment ledger without removing the customer record 467ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > unknown original tax policy on an old sale remains unverified rather than exempt 805ms
+ ✓ src/features/reports/run12SupplierTaxIntegration.test.ts > Run12 actual IndexedDB supplier and original tax evidence > failed supplier posting cannot commit a partial settlement or staff receipt 818ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > “I counted 25 eggs but we have 37”: previews, then really changes the stock and writes a correction 1215ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > keeps separate as-of stock assets and period COGS after FIFO sale 1375ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > the new stock shows up in later answers 873ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > verifies supplier purchase invoice unit costs before reporting or exporting stock assets 948ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > counting more than recorded raises stock 824ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > asks which product when only numbers were given, and keeps the count 621ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects supplier cost-event unit-cost tampering without rewriting invoice 761ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > asks for the number when only the product was given 632ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects altered invoice totals even if FIFO cost layers are still unchanged 785ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > accepts 'none' as a count of zero 702ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects foreign purchase-currency evidence rather than converting stock assets silently 801ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > says so, and changes nothing, when the count matches 646ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > never invents FIFO value for unknown opening receipt cost 658ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > uses TallyBook's real figure when the owner's remembered figure is wrong, and says so 632ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > restocking via legitimate full reversal returns original cost layers 1120ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > understands several ways of saying it 913ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > refuses to apply a stale preview if stock moved in the meantime 537ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects full refund money journal if cost restoration evidence disappears 842ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > does nothing until confirmed, and cancel leaves stock alone 543ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > rejects tampered full reversal quantity before showing financial results 921ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > offers to add a product it can't find 647ms
+ ✓ src/features/assistant/stockCount.test.ts > stock count > is not mistaken for a question or a different request 619ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > fails closed on historical FIFO evidence whose stock quantity disagrees 545ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > keeps completed zero-stock inventory value at zero without replacement cost 680ms
+ ✓ src/features/reports/run9CostReconciliation.test.ts > V19 Run 9 real IndexedDB historical-cost and money reconciliation > legacy stock without any cost events is unverified, never editable product-price value 535ms
+ ✓ src/features/assistant/errorRecovery.test.ts > not enough stock > offers to sell what's there, instead of rejecting, and the chip really records that sale 1033ms
+ ✓ src/features/assistant/errorRecovery.test.ts > not enough stock > a typed smaller quantity works too 721ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies full reversal before money/stock changes 872ms
+ ✓ src/features/assistant/errorRecovery.test.ts > not enough stock > out of stock: no 'sell 0' chip; recounting finds the stock and the sale then goes through 674ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > defaults to no refunds and denies a partial cash return without any write 730ms
+ ✓ src/features/assistant/errorRecovery.test.ts > not enough stock > 'Receive more' starts a real stock receipt for that product 625ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled full reversal captures original and decision terms on exact journal 815ms
+ ✓ src/features/assistant/errorRecovery.test.ts > customer, product or supplier not found > offers to add the customer, then carries on with the sale using them 673ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > rejects wrong-currency full reversals at preview and posting, including retry attempts 697ms
+ ✓ src/features/assistant/errorRecovery.test.ts > customer, product or supplier not found > typing a corrected name also works 585ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > owner-enabled cash partial return retains original invoice, tax, stock and policy evidence 816ms
+ ✓ src/features/assistant/errorRecovery.test.ts > customer, product or supplier not found > offers to add an unknown product and then continues the sale 690ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > changing ordinary business details cannot erase append-only policy history 591ms
+ ✓ src/features/assistant/errorRecovery.test.ts > customer, product or supplier not found > offers to add a customer when asking about someone unknown 629ms
+ ✓ src/features/assistant/errorRecovery.test.ts > customer, product or supplier not found > an unrelated request after the offer doesn't resurrect the old sale 616ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > revoking the current policy blocks returns without changing prior sale history 712ms
+ ✓ src/features/assistant/errorRecovery.test.ts > amounts and quantities that can't be recorded > whole numbers only: offers the whole numbers either side 561ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > a sale created while no refunds existed cannot be made refundable retroactively 649ms
+ ✓ src/features/assistant/errorRecovery.test.ts > amounts and quantities that can't be recorded > a payment larger than the debt: offers the full amount owed 545ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > full-only configuration denies partial cash refund but permits supported full correction 655ms
+ ✓ src/features/assistant/errorRecovery.test.ts > amounts and quantities that can't be recorded > a discount can't be applied: offers the full price instead of refusing 572ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered policy revision is rejected by backup preflight without restoring it 559ms
+ ✓ src/features/assistant/errorRecovery.test.ts > amounts and quantities that can't be recorded > a payment received that is more than the sale total: offers 'paid in full' 646ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered saved sale policy is rejected even when money and stock still reconcile 635ms
+ ✓ src/features/assistant/errorRecovery.test.ts > cancelling during recovery > leaves everything as it was 569ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > tampered refund authorization does not disappear in otherwise valid portable backup 693ms
+ ✓ src/features/business/run11ReturnPolicyIntegration.test.ts > Run 11 company return policy database and posting protection > older refund lacking policy snapshots remains legible but is not newly certified 638ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > checks legacy access inside a narrower service transaction without closing it 371ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > does not reopen a protected company if its staff records disappear 732ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > refuses a backup that strips staff protection or replaces protected records with legacy open mode 868ms
+ ✓ src/features/assistant/insights.test.ts > period sales comparison > calculates increase, decrease, and unchanged wording 918ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > locks every local staff session when the cloud account changes 606ms
+ ✓ src/features/assistant/insights.test.ts > period sales comparison > handles a zero comparison period without NaN or Infinity 548ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > staff directory never exposes PIN-derived secrets or authenticator keys 324ms
+ ✓ src/features/assistant/insights.test.ts > period sales comparison > loads this month and last month from the existing period queries 604ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > uses salted PIN verifiers and blocks unauthorized inventory actions 1026ms
+ ✓ src/features/assistant/insights.test.ts > reorder calculations > flags low stock and rounds the 14-day estimate upward 660ms
+ ✓ src/features/assistant/insights.test.ts > reorder calculations > does not suggest a negative quantity for well-stocked products 891ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > requires a cashier shift, attributes sales, and reconciles tracked cash 1281ms
+ ✓ src/features/assistant/insights.test.ts > reorder calculations > distinguishes no sales, out of stock, and limited history 531ms
+ ✓ src/features/assistant/insights.test.ts > reorder calculations > calculates suggestions from the last 30 days and identifies slow movers 464ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > accepts a one-time supervisor approval only for its exact discount and intent 1232ms
+ ✓ src/features/assistant/insights.test.ts > uses actual observation days for young products but does not invent a reorder quantity 608ms
+ ✓ src/features/assistant/insights.test.ts > refuses negative stock, negative sales, and invalid days 636ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > does not allow cashier authority to mutate role, PIN, permissions or disabled state 1185ms
+ ✓ src/features/assistant/insights.test.ts > slow movers and empty templates > only calls stocked products with zero recent sales slow movers 685ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > guards staff disabling and company-specific sessions 625ms
+ ✓ src/features/assistant/insights.test.ts > slow movers and empty templates > provides an empty reorder result without invented numbers 502ms
+ ✓ src/features/assistant/insights.test.ts > assistant insights integration > routes explicit insight questions without writing ledger data 710ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > blocks cashier company administration and cross-company deletion 927ms
+ ✓ src/features/staff/staff.test.ts > Stage 6 local staff security > calculates tracked cash without counting wallet spending as new money received 17ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > matches per-customer credit summaries to management, dashboard and partial repayments 1079ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > keeps actual Dexie customer, sale, inventory, supplier, expense, and staff reads inside the selected company 1861ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > links a partial repayment to its exact sale without changing another debtor 823ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rejects foreign-company product, customer, supplier, repayment, stock, refund, and customer mutations without writes 566ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > rejects one customer overpayment even when another customer owes more 534ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back an expense and its audit context if the company changes during the write transaction 234ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > blocks repayment allocated to a different customer in saved data 511ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back a complete sale and all stock/ledger writes if the company changes during commit 492ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back a purchase, cost event, movement, and stock increase if the company changes during commit 236ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > refuses duplicated collection submission keys across customers 503ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back repayment writes if the company changes during ledger posting 585ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > new linked repayment remains idempotent and cannot be altered on retry 619ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back refund stock and FIFO entries if the company changes before refund commit 683ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > wallet deposit stays external cash and wallet checkout is not another cash receipt 643ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rejects customer debt, repayment-target, and retention reads when the company changes during Dexie reads 230ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rejects assistant period-sales results when the active company changes during table reads 215ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > wallet sale reversal restores stored-value liability but not recorded external cash 491ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back loyalty policy and points writes if the company changes at the write boundary 204ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rejects stock-count previews if the active company changes during product reads 208ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > rejects prepaid transfer with corrupted amount without reinterpreting benefits 518ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back catalogue edits, batch registration, and stock corrections when the company changes during commit 282ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > rejects a foreign currency collection with no persisted overpayment 516ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back a sale reversal and stock restoration when the company changes during posting 664ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > rolls back supplier payable recognition and settlement, and rejects reads, after a company switch 297ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > preserves already committed customer state when receipt write aborts 644ms
+ ✓ src/features/business/companyIsolation.integration.test.ts > does not allow an unlocked owner to mutate a staff record belonging to another company 776ms
+ ✓ src/features/reports/run10FinancialConservation.test.ts > Run 10 saved-company receivables and prepaid cash reconciliation > legacy unknown currency cannot be assigned today's GHS merely to post money 790ms
+ ✓ src/features/sales/tax.test.ts > keeps tax off by default and calculates exact invoice half-up inclusive/exclusive amounts 21ms
+ ✓ src/features/sales/tax.test.ts > records discounted tax, receipt, recovery and net-of-tax cost reporting together 1115ms
+ × src/features/backup/backup.test.ts > Stage 9 local backup and restore > exports and restores business records, inventory, customer debt, sales, payments, repayments, receipts, and reports after a simulated reinstall 1629ms
+   → expected { id: 'sale:91yi6UtbUsF1AU', …(12) } to match object { businessProfileId: 'primary', …(3) }
+(13 matching properties omitted from actual)
+ ✓ src/features/sales/tax.test.ts > preserves the original tax snapshot on retries after a policy change and reverses it exactly 911ms
+ ✓ src/features/backup/backup.test.ts > Stage 9 local backup and restore > accepts explicit sale repayment links in backup and rejects tampered links 998ms
+ ✓ src/features/sales/tax.test.ts > rejects stale or missing tax review without a sale or stock write 873ms
+ ✓ src/features/backup/backup.test.ts > Stage 9 local backup and restore > rejects invalid, unsupported, or duplicate-record backups without changing the current local business 337ms
+ ✓ src/features/sales/tax.test.ts > rolls back a taxed checkout after a receipt storage failure 760ms
+ ✓ src/features/backup/backup.test.ts > Stage 9 local backup and restore > does not replace device-local schema/backup metadata or erase local assistant audit on restore 827ms
+ ✓ src/features/sales/tax.test.ts > backs up and restores policy and immutable receipts, rejects altered tax 669ms
+ ✓ src/features/backup/backup.test.ts > Stage 9 local backup and restore > accepts a readable version-9 backup that has no Stage 8 expense table 539ms
+ ✓ src/features/backup/backup.test.ts > Stage 11 multi-company backup scope > accepts an expense export for a non-primary local company 232ms
+ ✓ src/features/sales/tax.test.ts > keeps tax policies scoped to their business 550ms
+ ✓ src/features/backup/backup.test.ts > Backup isolation regression checks > rejects backup rows assigned to another company before restore 526ms
+ ✓ src/features/sales/tax.test.ts > denies tax changes from cashier and locked owner sessions 902ms
+ ✓ src/features/backup/backup.test.ts > Backup isolation regression checks > rejects dangling sale lines and malformed assistant company IDs 533ms
+ ✓ src/features/backup/backup.test.ts > V9 inventory backup integration > includes local stock-count sessions and batches in the backup and restores both 263ms
+ ✓ src/features/backup/backup.test.ts > V9 inventory backup integration > accepts older pre-V14 backups without optional inventory tables 582ms
+ ✓ src/features/backup/backup.test.ts > assistant backup history completeness > exports every company-owned history record instead of silently truncating to 50 UI entries 564ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > atomically records two cash refunds, restores original FIFO and reports net sale and cost 2977ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > rolls back stock, FIFO cost and cash ledger when return posting fails 3879ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > blocks cash returns for customers and absent confirmation without modifying stock 1598ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > accounts for confirmed partial cash refunds in the originating shift cash calculation 12ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > lists only the customers who bought it, and says which product 4482ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > does not list a customer who bought something else (the seed sold rice to Adwoa on credit) 3115ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > rejects another refund when earlier saved physical-stock evidence has been altered 3647ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > without a product it still lists everyone who bought 1565ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > backup import rejects a partial cash-return whose physical stock movement was altered 1786ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > says plainly when nobody bought that product in the period 1303ms
+ ✓ src/features/sales/cashPartialReturnPosting.test.ts > local integrity reports a damaged partial refund FIFO restoration without rewriting the ledger 1528ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > an unknown product gets the usual 'add it' offer instead of a wrong list 1229ms
+ ✓ src/features/assistant/customersByProduct.test.ts > customers who bought a particular product > walk-in sales are not listed as customers 1416ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > refuses restore, clear, and ordinary assistant writes when another tab holds the exclusive recovery lock 504ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > rejects nonportable assistant preimages without recording a marker or changing existing records 398ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > recovers a crash after assistant commit but before retail commit, repeatedly and after database reopening 817ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > does not overwrite unexpected concurrent assistant writes during recovery 411ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > rejects stale before snapshots inside the assistant write transaction 363ms
+ ✓ src/features/assistant/compoundSales.test.ts > compound sale expansion > splits two products with explicitly shared buyer and terms 1031ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > releases an untouched journal without modifying its assistant preimage 527ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > leaves an old-format interrupted marker untouched if unknown edits exist 629ms
+ ✓ src/features/assistant/compoundSales.test.ts > compound sale expansion > understands first-person completed sale requests without changing payment terms 1264ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > blocks a second restore, a backup export and company deletion until recovery 681ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > preserves an invalid journal without touching assistant records 1098ms
+ ✓ src/features/assistant/compoundSales.test.ts > compound sale expansion > never allocates a single partial payment to two separate sales 1777ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable two-database restore preimage journal > a successful normal restore commits without a journal and internal journals are rejected in backup files 486ms
+ ✓ src/features/assistant/compoundSales.test.ts > compound sale expansion > does not guess a customer or truncate a third product 923ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable company clear across assistant and retail databases > recovers assistant records after a simulated crash before the retail deletion 769ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable company clear across assistant and retail databases > clears only its company, its assistant data and main assistant audit, atomically committing no pending journal 501ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable company clear across assistant and retail databases > refuses a new clear when a prior clear was interrupted 355ms
+ ✓ src/features/assistant/compoundSales.test.ts > previews all explicitly shared sale items and makes no writes before confirmation 1104ms
+ ✓ src/features/backup/restoreRecovery.test.ts > durable company clear across assistant and retail databases > if the retail delete fails, recovers the assistant preimage and preserves the ledger 344ms
+ ✓ src/features/assistant/compoundSales.test.ts > does not expose a partial-confirm button when one compound item is unknown 748ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > clears a valid sale ledger without writing any record 1204ms
+ ✓ src/features/sales/cashReturnReview.test.ts > reads saved receipt, payment and FIFO evidence without writing a refund 1023ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > reports inconsistent totals and orphan records without attempting a destructive repair 1005ms
+ ✓ src/features/sales/cashReturnReview.test.ts > fails closed on active-company mismatch 982ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > accepts valid and historical Mobile Money payments, then reports a missing configured provider without changing any records 853ms
+ ✓ src/features/sales/cashReturnReview.test.ts > rejects a missing original receipt without writing compensating data 706ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > checks supplier purchases and purchase stock-in movements without changing their saved records 576ms
+ ✓ src/features/sales/cashReturnReview.test.ts > refuses to quote further returns when the earlier stock movement no longer matches its refund 571ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > detects tampered allocation evidence independently without editing the saved repayment 550ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > detects tampered full reversals and preserves the original transaction records 537ms
+ ✓ src/features/sales/cashReturnReview.test.ts > denies cashier-only access to private refund review and permits the unlocked owner 1112ms
+ ✓ src/features/reliability/integrity.test.ts > Stage 11 local integrity audit > reports malformed saved expenses without changing their local history 540ms
+ ✓ src/features/assistant/universalAssistant.test.ts > Universal In-App Assistant conversations > offers a verified destination for navigation questions 1126ms
+ ✓ src/features/assistant/slangStress.test.ts > assistant extreme-language stress corpus > understands slang and broken grammar without losing the intended domain 1623ms
+ ✓ src/features/assistant/universalAssistant.test.ts > Universal In-App Assistant conversations > turns a bare feature into useful choices and understands add one as that feature 895ms
+ ✓ src/features/assistant/slangStress.test.ts > assistant extreme-language stress corpus > understands application navigation and setup slang 854ms
+ ✓ src/features/assistant/universalAssistant.test.ts > Universal In-App Assistant conversations > keeps vague application language out of transaction writes 836ms
+ ✓ src/features/assistant/slangStress.test.ts > assistant extreme-language stress corpus > keeps multi-turn customer context explicit and confirmation-gated 722ms
+ ✓ src/features/assistant/universalAssistant.test.ts > Universal In-App Assistant conversations > keeps a low-stock follow-up in the read-only path 596ms
+ ✓ src/features/assistant/slangStress.test.ts > assistant extreme-language stress corpus > keeps slang writes safe and refuses vague stock receipts 584ms
+ ✓ src/features/assistant/slangStress.test.ts > assistant extreme-language stress corpus > treats what-if language as a dry run, never a sale 650ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > starts as unknown, then supports a partial manual payment and a credit 572ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > rejects overpayment and changed duplicate keys without any ledger changes 788ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > scopes submission retries to the company compound index 390ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > rejects recognition and settlements on foreign purchase IDs 342ms
+stderr | src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence
+Another connection wants to delete database 'tallybook-supplier-payables-1792987332477-5'. Closing db now to resume the delete request.
+
+ ✓ src/features/reports/reports.test.ts > Stage 7 local reports > reconciles today sales, money received, debt, low stock, and transaction count to local records 1020ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > preserves unknown status when a legacy receipt lacks currency evidence 702ms
+ ✓ src/features/reports/reports.test.ts > Stage 7 local reports > uses local calendar boundaries for today and leaves historical cash sales out of today totals 1043ms
+ ✓ src/features/reports/reports.test.ts > Stage 7 local reports > returns no best seller or activity before a completed sale or repayment is saved today 400ms
+ ✓ src/features/purchases/supplierPayables.test.ts > v27 explicitly recognized supplier payables > round-trips recognized supplier payments through backup without double counting cash 1292ms
+ ✓ src/features/purchases/supplierPayables.test.ts > prevents supplier archival until all purchase liabilities have explicit recognition and zero outstanding 340ms
+ ✓ src/features/reports/reports.test.ts > Stage 7 local reports > separates recorded sales from money actually received without letting repayments rewrite today’s unpaid sale amount 892ms
+ ✓ src/features/reports/reports.test.ts > Stage 7 local reports > shows recorded expenses by local date and category without blending them into sales, collections, debt, or supplier stock history 820ms
+ ✓ src/features/stores/storeAuthorization.test.ts > store administration and benefit write authority (pending client run) > preserves first-time no-staff store setup and rechecks subsequent staffed writes 1204ms
+ ✓ src/features/staff/run6ReadEntrypoints.test.ts > V19 Run 6 service-read staff gates > keeps legacy offline bootstrap reads intact before any local staff owner exists 342ms
+ ✓ src/features/stores/storeAuthorization.test.ts > store administration and benefit write authority (pending client run) > guards stock observations and proposals, and audits only committed staff operations 668ms
+ ✓ src/features/staff/run6ReadEntrypoints.test.ts > V19 Run 6 service-read staff gates > denies locked staff session for sales, customer, inventory and finance reads 483ms
+ ✓ src/features/stores/storeAuthorization.test.ts > store administration and benefit write authority (pending client run) > validates customer policy and points permissions inside the write transaction and attributes the actor 1525ms
+ ✓ src/features/staff/run6ReadEntrypoints.test.ts > V19 Run 6 service-read staff gates > cashier can read checkout data but not purchase or finance reporting 1485ms
+ ✓ src/features/stores/storeAuthorization.test.ts > store administration and benefit write authority (pending client run) > rolls back store transfer and physical-count writes when the active company changes during awaited reads 746ms
+ ✓ src/features/staff/run6ReadEntrypoints.test.ts > V19 Run 6 service-read staff gates > authorized owner can retrieve both cashier and sensitive finance snapshots 562ms
+ ✓ src/features/staff/run6ReadEntrypoints.test.ts > V19 Run 6 service-read staff gates > cashier permission revoked while unlocked rejects subsequent snapshot 853ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > adds a completed multi-line purchase, stock increases, and traceable purchase movements exactly once 564ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > records a batch purchase, its base-unit FIFO cost and batch expiry atomically and idempotently 401ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > refuses to start expiry tracking on untracked on-hand stock or append to a partially tracked balance 357ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > rolls back purchase, cost event, movement, product and batch writes when batch persistence fails 555ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > rejects changed purchase details under an existing submission key without adjusting stock 479ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > keeps the original supplier snapshot when a supplier is renamed or archived 509ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > rejects duplicate product lines and rolls back every purchase record and stock increase after a failed write 490ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — availability > shows the microphone when the browser supports speech recognition 451ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — availability > also works with the standard (unprefixed) API 274ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — availability > hides the microphone, rather than showing a dead button, when the browser can't do it 40ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > prevents active normalized supplier duplicates 413ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — listening > starts the engine configured correctly 103ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — listening > shows what is being heard while the owner is still speaking 74ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > serializes simultaneous normalized supplier submissions without writing duplicates 332ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — listening > tapping the microphone again stops listening 65ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — listening > remembers the chosen language 90ms
+ ✓ src/features/purchases/purchases.test.ts > Stage 7 local suppliers and purchases > opens version 8 local records under current schema without rewriting existing sales, payments, receipts, provider data, or movements 280ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — listening > can't change language mid-listen 51ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — what happens to the words > a confident transcript is sent straight to the assistant, exactly as if typed 144ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — what happens to the words > a shaky transcript is NOT thrown away and NOT sent: it waits in the box to be checked 76ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — what happens to the words > a browser that reports no confidence is treated as unsure, but the words still appear 55ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — what happens to the words > the owner can fix the words and send them 99ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “not-allowed” 73ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “audio-capture” 75ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “network” 62ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “service-not-allowed” 77ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “language-not-supported” 76ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > error “something-odd” 68ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > says so when nothing was heard 61ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > says so, without starting the engine, when the device is offline 47ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > an error clears when the owner tries again 64ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > an aborted session is not shown as an error 60ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — when it can't work, the owner is told why > works again after a failure (a fresh engine each time) 100ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — cleanup > stops the engine when leaving the page 37ms
+ ✓ src/pages/AssistantPage.voice.test.tsx > voice input — cleanup > a late 'end' from a replaced session can't disturb the new one 84ms
+ ✓ src/features/assistant/phase1Services.test.ts > Phase 1 transaction simulation and reversal services > previews and atomically reverses the latest sale without deleting its history 3524ms
+ ✓ src/features/assistant/phase1Services.test.ts > Phase 1 transaction simulation and reversal services > restores duplicate historical sale lines exactly once per product 3435ms
+ ✓ src/features/customers/customers.test.ts > customer records > creates, edits, and persists one validated customer after a local database reopen 1499ms
+ ✓ src/features/assistant/phase1Services.test.ts > Phase 1 transaction simulation and reversal services > rejects duplicated cost links without partially restoring stock 1403ms
+ ✓ src/features/customers/customers.test.ts > customer records > searches active customers and archives the record without deleting its identity 614ms
+ ✓ src/features/customers/customers.test.ts > customer records > rejects malformed, incomplete, or duplicate active customer details 594ms
+ ✓ src/features/assistant/phase1Services.test.ts > Phase 1 transaction simulation and reversal services > simulates a purchase and repayment without writing records 1311ms
+ ✓ src/features/customers/customers.test.ts > customer records > does not strand receivables by archiving a customer before an exact repayment 1322ms
+ ✓ src/features/customers/customers.test.ts > customer records > does not hide unsettled prepaid-wallet cash or unredeemed loyalty balance 797ms
+ ✓ src/features/customers/customers.test.ts > customer records > rejects orphan prepaid benefits even when their arithmetic looks like a positive balance 989ms
+ ✓ src/features/customers/customers.test.ts > customer records > migrates a Stage 3 business profile into the Stage 4 customer schema without removing existing data 1425ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > rejects any missing current schema table without deleting company data 561ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > rejects a newer unknown financial table rather than silently dropping it 457ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > rejects unknown top-level future financial data without mutating the device 408ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > rejects assistant snapshots with omitted or unknown tables 484ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > imports historical v9 empty tables without inventing modern receivables or staff 558ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > v27 cash-partial-return omission is compatible, v28 omission fails 409ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > unexpected ledger commit error restores assistant preimage and main ledger 507ms
+ ✓ src/features/backup/run8MigrationRestore.test.ts > Run 8 saved-data migration and transactional rollback > corrupted backup rejected before any restore journal or row mutation 392ms
+ ✓ src/features/customers/quotations.test.ts > quotation isolation and write safety > creates a quote without changing product stock or sales 1008ms
+ ✓ src/features/customers/quotations.test.ts > quotation isolation and write safety > rejects duplicate lines and missing products 890ms
+ ✓ src/features/customers/quotations.test.ts > quotation isolation and write safety > rejects a changed price before saving a reviewed draft 739ms
+ ✓ src/features/customers/quotations.test.ts > quotation isolation and write safety > rolls back checkout, costs and stock when linking the converted quotation fails 857ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > new encryption writes v2 with fixed authenticated cipher and key derivation 658ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > wrong password, altered ciphertext and forged v2 metadata are rejected 994ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > unexpected encrypted envelope keys or noncanonical base64 cannot be accepted 277ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > decrypts a genuine legacy encrypted-v1 file from the old algorithm 641ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > does not silently import unsupported future encrypted formats as plaintext 1ms
+ ✓ src/features/backup/run8CryptoPortability.test.ts > Run 8 browser WebCrypto and portable backup v1/v2 compatibility > reselected encrypted v2 file matches real browser SHA-256 fingerprint 350ms
+ ✓ src/features/customers/walletTransfers.test.ts > Stage 4 wallet and loyalty financial safeguards > records prepaid funds once and refuses refund above the available balance 885ms
+ ✓ src/features/customers/walletTransfers.test.ts > Stage 4 wallet and loyalty financial safeguards > saves wallet-only checkout, points earning and redemption without inventing a cash payment 678ms
+ ✓ src/features/customers/walletTransfers.test.ts > Stage 4 wallet and loyalty financial safeguards > permits matching retry keys in independent company wallets while denying a changed same-company retry 601ms
+ ✓ src/features/customers/walletTransfers.test.ts > Stage 4 wallet and loyalty financial safeguards > upgrades pre-v34 wallet evidence without rewriting funds or dropping old unique keys 259ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > creates a product and its opening stock movement in the same local transaction 850ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > records increase, decrease, and counted corrections without allowing negative stock 672ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > reserves physical units without Dexie missing-table errors during atomic stock decreases 640ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > keeps quantity changes out of product edits and preserves history when a product is archived 770ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > rejects duplicate SKU and barcode identifiers without changing stock 520ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > enforces unique barcodes on edits and permits reusing an archived code 573ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > adds the Stage 3 stores without removing a Stage 2 business profile 872ms
+ ✓ src/features/inventory/inventory.test.ts > inventory ledger > returns only the active company’s products and movements 477ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > serializes simultaneous adjustments without losing stock or movement continuity 797ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > rolls stock back if the movement write fails 644ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > posts a saved count with all nested transaction tables and rejects a second posting 725ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > denies direct cashier import, count and payment-configuration calls, and locked commerce mutations 1455ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > rejects purchase arithmetic overflow before any records or stock are written 355ms
+ ✓ src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > preserves business, product, customer, sale, receipt, repayment, dashboard, and reports after a local close/reopen 1073ms
+ ✓ src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > upgrades a version-6 ledger without removing its existing owner records and safely heals invalid schema metadata 287ms
+ ✓ src/features/reliability/offlineReliability.test.ts > Stage 8 offline reliability > leaves no partial sale, payment, receipt, or stock change after an offline local validation failure and a reopen 830ms
+ ✓ src/features/assistant/transactionSafety.test.ts > compound transaction safety > requests separate lines instead of dropping a second sale item 909ms
+ ✓ src/features/assistant/transactionSafety.test.ts > compound transaction safety > permits ordinary single sales and payment phrases 693ms
+ ✓ src/features/assistant/transactionSafety.test.ts > rejects a combined product sale before preparing any financial write 816ms
+ ✓ src/features/backup/run7CrashStages.test.ts > V19 Run 7 real IndexedDB crash-boundary snapshots > before assistant write: startup clears marker without changing evidence 664ms
+ ✓ src/features/backup/run7CrashStages.test.ts > V19 Run 7 real IndexedDB crash-boundary snapshots > after assistant write: fresh tab reverts exact postimage to preimage 524ms
+ ✓ src/features/backup/run7CrashStages.test.ts > V19 Run 7 real IndexedDB crash-boundary snapshots > unrecognized intervening edit preserves sticky marker and assistant records 270ms
+ ✓ src/features/backup/run7CrashStages.test.ts > V19 Run 7 real IndexedDB crash-boundary snapshots > completed main-ledger commit leaves no recovery marker or reverse-apply 263ms
+ ✓ src/features/backup/run7CrashStages.test.ts > V19 Run 7 real IndexedDB crash-boundary snapshots > company clear crash before retail commit returns assistant records 442ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > creates one validated profile and preserves its original creation timestamp when edited 321ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > rejects a stale settings form whose expected company is no longer active 275ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > rolls back a profile update if the active company switches during its Dexie transaction 244ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > keeps the saved profile after the local database is reopened 451ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > upgrades a Stage 1 metadata database without removing the earlier record 261ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > rejects incomplete and malformed business details before a local write 4ms
+ ✓ src/features/business/businessProfile.test.ts > business profile > defaults new setup to Ghana, cedis and MoMo and persists the owner's country and providers 220ms
+ ✓ src/features/release/run20CrossRunAudit.test.ts > Run 20 newer-table local source audit (not physical acceptance) > reports four explicitly separate structural checks without touching saved records 836ms
+ ✓ src/features/release/run20CrossRunAudit.test.ts > Run 20 newer-table local source audit (not physical acceptance) > finds orphan local order to POS reference without deleting or fabricating a sale 520ms
+ ✓ src/features/release/run20CrossRunAudit.test.ts > Run 20 newer-table local source audit (not physical acceptance) > refuses to inspect another company after the owner session is locked 485ms
+ ✓ src/features/backup/backupCrypto.test.ts > passphrase-encrypted backups > round trips confidential JSON and rejects wrong passphrases 733ms
+ ✓ src/features/backup/backupCrypto.test.ts > passphrase-encrypted backups > rejects oversized plaintext before key derivation and oversized encrypted wrappers before parsing 241ms
+ ✓ src/features/backup/backupCrypto.test.ts > passphrase-encrypted backups > preflights malformed envelope parameters before large base64 allocations 11ms
+ ✓ src/features/backup/backupCrypto.test.ts > passphrase-encrypted backups > rejects authenticated invalid UTF-8 instead of silently changing a backup 485ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects sale and preserves original stock, payments and receipts 510ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects purchase without creating stock movement or supplier payable 337ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > rejects expense with no saved financial row or audit 483ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > blocks credit repayment prior to ledger posting 486ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > does not treat prior unverified export timestamps as verified-file proof 352ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > blocks independent stock adjustments during recovery 236ms
+ ✓ src/features/backup/run7PostingBarrier.test.ts > Run 7 durable recovery marker blocks unrelated retail mutations > failed retail mutations do not consume or rewrite recovery evidence 251ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > accepts only a receipt with matching company, timestamp and SHA fingerprint 255ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > new unverified legacy export invalidates previously verified metadata 258ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > corrupted verification receipt fails closed but preserves raw evidence 260ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > restoring a ledger revokes its prior verified-file readiness 282ms
+ ✓ src/features/backup/run8VerifiedMetadata.test.ts > Run 8 verified-file readiness migration > company deletion cannot leave a verified receipt for a recreated company ID 286ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > opens a versioned local database and writes foundation metadata 391ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > adds local batch provenance indexes without rewriting legacy batch records 358ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > upgrades a local v30 drawer journal without losing existing records 344ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > migrates version 20 sync records to the current schema without losing events and creates conflicts table 319ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > keeps the original creation timestamp when initialization runs again 340ms
+ ✓ src/db/TallybookDB.test.ts > TallybookDB > opens a version-9 local database without rewriting its saved business profile and creates an empty expense table 278ms
+ ✓ src/features/backup/run7Consistency.test.ts > Run 7 consistent main plus assistant export > exports only when exclusive Web Lock is available 324ms
+ ✓ src/features/backup/run7Consistency.test.ts > Run 7 consistent main plus assistant export > never records another company as backed up after switching accounts 378ms
+ ✓ src/features/backup/run7Consistency.test.ts > Run 7 consistent main plus assistant export > records the exact company captured in the successful exported file 324ms
+ ✓ src/features/backup/run7Consistency.test.ts > Run 7 consistent main plus assistant export > does not set backup receipt while a recovery marker exists 254ms
+ ✓ src/features/backup/run7Consistency.test.ts > Run 7 consistent main plus assistant export > does not permit export metadata writes behind a competing restore lock 307ms
+ ✓ src/features/security/serviceAuthorityContinuation.test.ts > transaction-bound customer and inventory permissions > denies direct customer creates, edits, and archives after staff lock 665ms
+ ✓ src/features/security/serviceAuthorityContinuation.test.ts > transaction-bound customer and inventory permissions > denies direct catalogue, count-session, and batch changes after staff lock 542ms
+ ✓ src/components/AppShell.test.tsx > AppShell Stage 10 accessibility > offers a skip link, announces the current page, and exposes every working navigation route 944ms
+ ✓ src/pages/AssistantPage.test.tsx > AssistantPage > sends a starter suggestion and renders the reply 486ms
+ ✓ src/pages/AssistantPage.test.tsx > AssistantPage > sends typed text and clears the input 89ms
+ ✓ src/pages/AssistantPage.test.tsx > AssistantPage > renders a transaction preview with working confirm and cancel buttons 142ms
+ ✓ src/pages/AssistantPage.test.tsx > AssistantPage > shows a business setup gate instead of the chat when no business profile exists 40ms
+ ✓ src/features/business/activeCompany.test.ts > local company workspaces > persists and restores the selected company 268ms
+ ✓ src/features/business/activeCompany.test.ts > local company workspaces > rejects a nonexistent company without changing the active company or app metadata 255ms
+ ✓ src/features/business/activeCompany.test.ts > local company workspaces > clears only the selected company and preserves another workspace 273ms
+ ✓ src/features/reliability/stage1Dexie.integration.test.ts > audits every configured table through actual Dexie schema v28 in one read-only transaction 321ms
+ ✓ src/features/reliability/stage1Dexie.integration.test.ts > reports corrupt stored references and unsafe money without repairing or mutating Dexie records 274ms
+ ✓ src/features/reliability/stage1Dexie.integration.test.ts > fails closed when an audit table cannot be read from the actual Dexie transaction 258ms
+ ✓ src/db/unifiedMigration.test.ts > marks enrolled companies protected during the v35 to v36 upgrade without changing other companies 323ms
+ ✓ src/db/unifiedMigration.test.ts > retains GitHub v34 financial rows while adding the local drawer journal 260ms
+ ✓ src/db/unifiedMigration.test.ts > retains a v30 replica outbox and enrolled owner while adding later stores 246ms
+ ✓ src/features/expenses/expenses.test.ts > Stage 8 local expenses > saves one positive expense once for a repeated submission key and keeps the history read-only 338ms
+ ✓ src/features/expenses/expenses.test.ts > Stage 8 local expenses > rejects zero, invalid, and future expense dates without saving a partial record 267ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > resolves unseen Stock navigation variations from action + entity concepts 134ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > generalizes other domain concepts without full-sentence aliases 68ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > keeps exact, alias, fuzzy, and unknown interpretations observable 2ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > does not turn ambiguous words into Stock or unsupported routes 15ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > preserves write safety for typo and word-order variations 5ms
+ ✓ src/features/assistant/languageUnderstanding.test.ts > offline compositional language understanding > stays fast and bounded for repeated long inputs 473ms
+ × src/features/credit/stage22ScopedSubmissionMigration.test.ts > Stage 22 company-scoped idempotency migration > preserves source data from historical global indexes and isolates all seven ledger retries 321ms
+   → expected 37 to be 36 // Object.is equality
+ ✓ src/features/backup/retailWriteCoordination.test.ts > cannot open a sale or adjust inventory while recovery owns the exclusive origin lock 634ms
+ ✓ src/pages/EndOfDayPage.test.tsx > Stage 6 end-of-day summary > shows saved daily facts without a close-day control and keeps the existing follow-up routes 524ms
+ ✓ src/pages/EndOfDayPage.test.tsx > Stage 6 end-of-day summary > uses only the browser print dialog and shows the required printed-summary disclaimer 90ms
+ ✓ src/components/ui/select.test.tsx > shared select menu > renders dropdown options on an explicit opaque paper surface 523ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > does not contact business tables for a signed-out visitor 168ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > reuses the persisted request ID after a failed creation and remount 149ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > discards a previous account's delayed business lookup after sign-out 93ms
+ ✓ src/features/payments/mobileMoney.test.ts > local Mobile Money providers > normalizes duplicate names, lists only active providers for checkout, and keeps disabled providers as historical configuration 343ms
+ ✓ src/features/payments/mobileMoney.test.ts > local Mobile Money providers > rejects a provider list if the active company changes while Dexie reads it 232ms
+ ✓ src/components/TodayDashboard.test.tsx > Stage 2 customer-debt discovery > links the Home debt amount directly to the debtor-only customer view 488ms
+ ✓ src/components/TodayDashboard.test.tsx > Stage 2 customer-debt discovery > uses the daily summary language and distinguishes the best seller from saved recent activity 102ms
+ ✓ src/pages/StageHome.test.tsx > Today business identity > shows the saved business name and its local country/currency record 316ms
+stdout | src/features/assistant/eval/parser.eval.test.ts > assistant parser evaluation harness > reports a deterministic baseline and has no dangerous transaction classifications
+┌─────────┐
+│ (index) │
+├─────────┤
+└─────────┘
+Evaluation Summary
+------------------
+Total cases: 252
+Counted cases: 242
+Known gaps: 10
+Correct: 242
+Incorrect: 0
+Accuracy: 100.00%
+Entity cases: 10
+Entity correct: 10
+Entity accuracy: 100.00%
+Dangerous classifications: 0
+
+ ✓ src/features/assistant/eval/parser.eval.test.ts > assistant parser evaluation harness > reports a deterministic baseline and has no dangerous transaction classifications 482ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > keeps / available without invoking cloud identity 61ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > keeps /sales available without invoking cloud identity 8ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > keeps /inventory available without invoking cloud identity 12ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > keeps /reports available without invoking cloud identity 8ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > keeps /backup available without invoking cloud identity 11ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > withholds cloud content from a signed-out visitor 10ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > withholds cloud content offline while directing users to their local business 12ms
+ ✓ src/auth/auth.test.tsx > offline-first authentication boundary > fails closed on a cloud verification error without erasing local data 223ms
+ ✓ src/components/ArchivedProductsPanel.test.tsx > ArchivedProductsPanel > keeps a zero-record destination visible so owners know where archived stock will appear 295ms
+ ✓ src/components/ArchivedProductsPanel.test.tsx > ArchivedProductsPanel > shows the archived product only after Show archived and hides it again after Hide archived 90ms
+ ✓ src/components/DatabaseStatus.test.tsx > DatabaseStatus > keeps a visible offline indicator until connectivity returns 87ms
+ ✓ src/components/DatabaseStatus.test.tsx > DatabaseStatus > uses the approved plain-language preparation and recovery states 213ms
+ ✓ src/features/sync/encryptedRecovery.test.ts > Stage 8 connected recovery package > does not permit unencrypted or structurally invalid backups 10ms
+ ✓ src/features/sync/encryptedRecovery.test.ts > Stage 8 connected recovery package > rejects changed encrypted bytes before attempting recovery 1ms
+ ✓ src/features/sync/encryptedRecovery.test.ts > Stage 8 connected recovery package > rejects oversized recovery input 300ms
+ ✓ src/features/backup/expandedRetailLock.test.ts > refuses a wallet transfer while another tab holds the exclusive recovery lock 453ms
+ ✓ src/components/ArchivedRecordsAccess.test.tsx > ArchivedRecordsAccess > is always visible in Inventory actions when archived records exist and opens the record view 289ms
+ ✓ src/components/ArchivedRecordsAccess.test.tsx > ArchivedRecordsAccess > keeps the archive destination visible with a zero count so owners know where archived records will appear 28ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > shows the verified cloud identity without claiming local data encryption 109ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > switch account signs out before OAuth account selection 45ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > failed sign-out must not launch a new account session 45ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > unverified cloud identity never renders signed-in account controls 19ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > How much does Adwoa owe? 26ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > Adwoa owes how much? 5ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > What is Adwoa's balance? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > What's Adwoa's balance? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > How much does Adwoa still owe us? 3ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > Show Adwoa's outstanding balance. 10ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > Adwoa owe how much? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > What's Adwoa's debt? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > How much is Adwoa owing us? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > Show Adwoa balance. 2ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > How much does Adwoa Mensah owe? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > ADWOA owes how much 8ms
+ ✓ src/features/assistant/intentParser.test.ts > customer balance > does not treat 'we owe' as a customer balance 3ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > How many crates of eggs are left? 4ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > How much eggs do we have? 3ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > How many eggs are in stock? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > What's the current stock of eggs? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > Egg stock? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > How many eggs left? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > What's our egg inventory? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > How many crates of eggs? 2ms
+ ✓ src/features/assistant/intentParser.test.ts > inventory > Do we have eggs? 1ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > Show today's sales. → today 7ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > How much did we sell today? → today 2ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > What are today's sales? → today 2ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > Show sales for today. → today 2ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > resolves yesterday, weekdays, last 7 days and this week 13ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > flags periods and filters it cannot honour instead of answering something else 9ms
+ ✓ src/features/assistant/intentParser.test.ts > sales questions > asks for a period when none is given 1ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > parses the primary example 18ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > parses a named customer and a cash payment 10ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > parses credit sales 3ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > understands number words, articles, and customer-first phrasing 9ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > reads mobile money, card, part payments, and mentions of prices it will not use 12ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > recognises a sale but leaves the missing details empty 8ms
+ ✓ src/features/assistant/intentParser.test.ts > record sale > does not accept fractional or absurd quantities as valid 4ms
+ ✓ src/features/assistant/intentParser.test.ts > receive stock > parses the primary examples 10ms
+ ✓ src/features/assistant/intentParser.test.ts > receive stock > reads costs and dates only when they are stated 6ms
+ ✓ src/features/assistant/intentParser.test.ts > receive stock > supports synonyms 6ms
+ ✓ src/features/assistant/intentParser.test.ts > receive stock > asks rather than guessing when a bare number is received from someone 15ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > Adwoa paid 100 cedis. 4ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > Record 200 GHS payment from Adwoa. 2ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > Adwoa has paid GHS 1,250.50 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > Received 100 cedis from Adwoa 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > Adwoa paid me fifty cedis 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > captures the method and currency when given 3ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > a sale with 'paid cash' is a sale, never a customer payment 1ms
+ ✓ src/features/assistant/intentParser.test.ts > customer payment > ignores pronouns as customer names 2ms
+ ✓ src/features/assistant/intentParser.test.ts > supplier questions > answers what was received, and recognises the unsupported balance question 10ms
+ ✓ src/features/assistant/intentParser.test.ts > unsupported, unknown and ambiguous input > recognises destructive or unavailable actions and refuses them explicitly 7ms
+ ✓ src/features/assistant/intentParser.test.ts > unsupported, unknown and ambiguous input > does not classify unrelated requests 6ms
+ ✓ src/features/assistant/intentParser.test.ts > unsupported, unknown and ambiguous input > keeps bare names as mentions for the router to offer choices, not as commands 1ms
+ ✓ src/features/assistant/intentParser.test.ts > unsupported, unknown and ambiguous input > recognises help 1ms
+ ✓ src/features/assistant/intentParser.test.ts > unsupported, unknown and ambiguous input > handles empty and hostile input safely 7ms
+ ✓ src/features/assistant/intentParser.test.ts > answers to follow-up questions > reads customer, payment and cost answers 7ms
+ ✓ src/features/backup/adminRecoveryCoordination.test.ts > rejects business edits and local commerce drafts during exclusive recovery without partial writes 325ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > uses only routes from the real application registry 80ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: where can I find suppliers 3ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: open expenses 2ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: take me to business health 10ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: how do I add a supplier 6ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: what does reconciliation do 5ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: supplier 4ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: suplier 3ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: inventry 4ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > interprets ordinary or imperfect application language: expence section 5ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > does not steal business queries or explicit writes 69ms
+ ✓ src/features/assistant/appKnowledge.test.ts > Universal In-App Assistant application knowledge > rejects close fuzzy matches instead of inventing an application destination 11ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant local company isolation > rejects writes targeting an inactive company 31ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant local company isolation > cannot overwrite or delete another company's saved workflow by its globally unique ID 21ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant local company isolation > cannot overwrite or delete another company's saved alias by its globally unique ID 9ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant history company protection and backup completeness > omits absent optional intent rather than saving an unreplayable undefined field 5ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant history company protection and backup completeness > rejects foreign-company history reads, writes and clear attempts 6ms
+ ✓ src/features/assistant/assistantLocalStore.security.test.ts > assistant history company protection and backup completeness > lists newest history first, but exports every row rather than only the newest fifty 75ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > resolves informal remaining-stock questions without UNKNOWN 35ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > resolves informal customer outstanding questions 24ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > keeps show-stock ambiguity recoverable 13ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > turns application help into an answer instead of UNKNOWN 17ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > recognizes informal writes but only returns a preview disposition 25ms
+ ✓ src/features/assistant/tinyNluV2/contextFirstResolver.test.ts > context-first resolver > rejects destructive and out-of-domain requests 34ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > distinguishes prepaid settlement from fresh cash received 118ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > reconstructs original part-paid Mobile Money sale facts without changing the saved records 3ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > renders clean professional share text without private database fields 2ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > uses the native sharing mechanism when supported 6ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > falls back to clipboard copy, then manual copy only when browser sharing is unavailable 2ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > keeps historical mobile records without provider details readable 1ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > preserves the original credit-sale amount story without using a customer’s later total debt 2ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > detects bullet-pointed multi-line transactions 84ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > detects numbered multi-line transactions 14ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > detects newline-separated multi-line transactions 23ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > strips bullets and numbers correctly 3ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > returns null for single-line input 1ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > returns null for non-transaction content 4ms
+ ✓ src/features/assistant/batchParser.test.ts > parseBatch > filters out very short lines (noise) 3ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Receive stock of Eggs → RECEIVE_STOCK 60ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Recount Eggs → ADJUST_INVENTORY 13ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Add customer Kama → CREATE_CUSTOMER 5ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Add product Eggs → CREATE_PRODUCT 7ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Add supplier ABC → CREATE_SUPPLIER 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > I counted 25 but we have 37 → ADJUST_INVENTORY 4ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > I counted 25 eggs but we have 37 → ADJUST_INVENTORY 3ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Best-sellers THIS MONTH → BEST_SELLING 4ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > best selling products last month → BEST_SELLING 3ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Top debtors this month → TOP_DEBTORS 3ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Which customers owe us the most? → TOP_DEBTORS 5ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Which customers bought this month → CUSTOMERS_WHO_BOUGHT 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Top customers this year → CUSTOMERS_WHO_BOUGHT 1ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Show sales for this month → SALES_QUERY 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Sell 2 eggs to Kwame, cash → RECORD_SALE 15ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > How much does Kwame owe? → CUSTOMER_BALANCE 1ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > What's running low? → LOW_STOCK 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Kwame paid 50 cedis → RECORD_CUSTOMER_PAYMENT 12ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > Add category Drinks → CREATE_CATEGORY 1ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > set eggs stock to 25 → ADJUST_INVENTORY 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > How many eggs are left? → INVENTORY_QUERY 2ms
+ ✓ src/features/assistant/intentRouting.test.ts > chip texts and headline phrases parse to the right intent > periods 8ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > keeps account screens outside the local ledger tree 57ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > keeps the account preview screen outside the local ledger tree 6ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > never gates local POS, backup, inventory or reports even with auth opted in 18ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > guards only the cloud-only route and withholds children during validation 7ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > redirects signed-out cloud users without showing tenant data 5ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > keeps offline local navigation available while rejecting cloud access 8ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > only renders the cloud workspace after verified sign-in 3ms
+ ✓ src/auth/AuthGate.test.tsx > Run 4 offline-safe AuthGate > failure is fail-closed and offers a genuine retry 15ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > Tiny NLU v2 isolated components > resolves reusable abbreviations without sentence aliases 19ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > Tiny NLU v2 isolated components > recognizes informal reusable concepts 17ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > Tiny NLU v2 isolated components > puts deterministic destructive safety before model output 3ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > Tiny NLU v2 isolated components > rejects an untrained artifact instead of inventing a normal intent 14ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > Tiny NLU v2 isolated components > keeps financial writes non-executable at the NLU boundary 8ms
+ ✓ src/features/assistant/tinyNluV2/tinyNluV2.test.ts > intent-aware safety regressions > allows informational questions about editing while blocking actual destructive commands 2ms
+ ✓ src/features/assistant/quotationDraft.test.ts > quotation preparation and financial safety > collects customer and items over turns, does not write even after preparation confirmation 58ms
+ ✓ src/features/assistant/quotationDraft.test.ts > quotation preparation and financial safety > does not prepare a quotation after staff access is denied 3ms
+ ✓ src/features/assistant/quotationDraft.test.ts > quotation preparation and financial safety > blocks price changes between preview and confirmation 2ms
+ ✓ src/features/assistant/quotationDraft.test.ts > quotation preparation and financial safety > invalidates confirmations when changing business 1ms

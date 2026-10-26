@@ -21,6 +21,7 @@ import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
 import { allocationCost, appendInventoryCostChange } from "@/features/inventory/costLedger";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
+import { makeCentralSaleEvent } from '@/features/sync/centralSaleEvent';
 import type { Customer } from "@/features/customers/customers";
 import { formatMinorAmount, parseAmountToMinor, normalizeMoneyInput, type InventoryMovement, type Product } from "@/features/inventory/inventory";
 
@@ -175,7 +176,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = getActiveBusinessProfileId();
 
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents, database.centralSaleEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     const nowDate = new Date();
@@ -424,6 +425,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if (activity) await database.customerActivities.add(activity);
     await database.products.bulkPut(requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { ...product, stockQuantity: product.stockQuantity - line.quantity, updatedAt: now }; }));
     await database.inventoryMovements.bulkAdd(movements);
+    await database.centralSaleEvents.add(makeCentralSaleEvent(sale,saleLines,payment,receipt));
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     return { sale, lines: saleLines, payment, receipt };
   });

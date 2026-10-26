@@ -1,0 +1,24 @@
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:24424) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:2636) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 qa\browser-auth.spec.mjs:8:1 › signed-out cloud account is denied without blocking offline sales (21.5s)
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer] 
+  ok 2 qa\browser-auth.spec.mjs:19:1 › a local owner PIN locks and unlocks the business workspace (19.7s)
+  ok 3 qa\browser-auth.spec.mjs:56:1 › missing staff rows cannot reopen a protected local business (25.1s)
+
+  3 passed (1.4m)

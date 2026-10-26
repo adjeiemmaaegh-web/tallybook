@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRun8BackupTables,RUN8_BACKUP_TABLES} from '../run8BackupCompatibility.mjs';
 const baseline=()=>Object.fromEntries(RUN8_BACKUP_TABLES.map(k=>[k,[]]));
+test('v37 event journal is optional only in older portable backups',()=>{
+ const old=baseline();delete old.centralSaleEvents;
+ assert.deepEqual(normalizeRun8BackupTables(old,36,37).centralSaleEvents,[]);
+ assert.throws(()=>normalizeRun8BackupTables(old,37,37),/Required backup table missing: centralSaleEvents/);
+});
 test('v28 round-trip preserves every table as provided',()=>{
  const original=baseline();
  original.businessProfiles=[{id:'primary'}];

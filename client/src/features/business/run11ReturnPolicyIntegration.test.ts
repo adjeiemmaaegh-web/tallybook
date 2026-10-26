@@ -160,6 +160,9 @@ describe('Run 11 company return policy database and posting protection',()=>{
   const exported=await createBackup(db);
   const altered=structuredClone(exported);
   altered.records.sales[0].returnPolicyAtSale!.maxAgeDays=3650;
+  // Keep the new local event snapshot consistent so this still exercises the
+  // independent return-policy audit, rather than the event mismatch guard.
+  altered.records.centralSaleEvents[0].payload.sale.returnPolicyAtSale!.maxAgeDays=3650;
   expect(()=>parseBackup(stringifyBackup(altered))).toThrow(/return policy snapshot/i);
  });
  it('tampered refund authorization does not disappear in otherwise valid portable backup',async()=>{
