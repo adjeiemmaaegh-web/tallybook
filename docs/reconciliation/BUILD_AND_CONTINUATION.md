@@ -37,3 +37,16 @@ pnpm exec vitest run client/src/features/staff/staff.test.ts client/src/db/unifi
 ```
 
 See `STAFF_GOVERNANCE_V36_CHECKPOINT.md` for the exact full-suite and browser results. Next: obtain Linux CI evidence for optional-sync security, exercise historical customer backups, and implement verified cloud-to-local owner/attendant binding. Do not provision or deploy cloud services as part of this source checkpoint.
+
+## Watchdog local importer continuation
+
+The actual Watchdog desktop source supplied by the user is at `C:\Users\adjei\Documents\Codex\2026-10-10\referenced-chatgpt-conversation-this-is-an-2\outputs\alchemy-integration\integrated`. It is a separate local source, not the connected website repository. After any changes to the POS exporter, run:
+
+```powershell
+node qa/generate-watchdog-preview.mjs
+node --test qa/watchdog-canonical-export.test.mjs qa/watchdog-export-file.test.mjs
+python -B qa/probe-watchdog-importer.py 'C:\Users\adjei\Documents\Codex\2026-10-10\referenced-chatgpt-conversation-this-is-an-2\outputs\alchemy-integration\integrated'
+python -B qa/test-watchdog-import-roundtrip.py 'C:\Users\adjei\Documents\Codex\2026-10-10\referenced-chatgpt-conversation-this-is-an-2\outputs\alchemy-integration\integrated'
+```
+
+For the complete local source check, run Vitest from `client/` with one worker, the native `qa/*.test.mjs` and `qa/*.test.cjs` files with local loopback access, TypeScript, production build, and release/auth/offline Playwright. The earlier root-level full Vitest invocation stalled before collection; its log is preserved. See `docs/central/evidence/watchdog-canonical-verification-2026-10-26.md` for exact results and limitations. The separate Supabase test environment is still unavailable because project `qfyydfxwvifdvffdfgeu` reported `INACTIVE`. Resume the activation and forward-only migration handoff in `docs/central/2026-10-26_LOCAL_CENTRAL_CHECKPOINT.md`; never apply draft `tb_*` migrations blindly to the live schema.
