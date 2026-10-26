@@ -38,3 +38,5 @@ Do not claim the preview satisfies the full earlier Watchdog v1 contract; contra
 ## Reconciliation checkpoint (2026-10-26)
 
 Dexie v37 now saves new-sale `centralSaleEvents` in the checkout transaction. These are local-only payloads with no trusted device ID or server receipt. See `docs/central/2026-10-26_LOCAL_CENTRAL_CHECKPOINT.md` for the exact storage and backup boundaries. The synthetic exported file is `qa/fixtures/tallybook-watchdog-preview-v1.json`; the connected Alchemy-Watchdog repository at `11acc820493f303a669fb849a311f4edb47f6497` contains no importer, so no final contract agreement or actual importer acceptance can be recorded yet.
+
+The user subsequently supplied a separate local Watchdog desktop source with a real importer. `docs/central/2026-10-26_WATCHDOG_REAL_IMPORTER_RECONCILIATION.md` records the direct parser probe: both current Tallybook exports are rejected because Watchdog expects a different CSV schema. The connected website repository still contains no importer. Contract agreement and end-to-end import acceptance remain open.

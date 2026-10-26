@@ -1,0 +1,6 @@
+eventId,businessProfileId,storeId,staffId,shiftId,timestamp,eventType,saleId,amountMinor,currency,reference,reason
+discount:fixture-sale,fixture-business,fixture-shop,fixture-staff,fixture-shift,2026-10-24T12:00:00Z,discount,fixture-sale,100,GHS,,
+momo:fixture-payment,fixture-business,fixture-shop,fixture-staff,fixture-shift,2026-10-24T12:00:00Z,momo,fixture-sale,2000,GHS,FIXTURE-REF-1,
+sale:fixture-sale,fixture-business,fixture-shop,fixture-staff,fixture-shift,2026-10-24T12:00:00Z,sale,fixture-sale,2000,GHS,,
+no_sale:fixture-drawer,fixture-business,fixture-shop,fixture-staff,fixture-shift,2026-10-24T15:00:00Z,no_sale,,,,,cash_check
+shift:fixture-shift,fixture-business,fixture-shop,fixture-staff,fixture-shift,2026-10-24T18:00:00Z,shift_close,,-100,,,

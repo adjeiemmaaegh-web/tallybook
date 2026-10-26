@@ -1,6 +1,6 @@
 /** Reproducible, synthetic Tallybook export for a future Watchdog importer test. */
 import { writeFileSync } from 'node:fs';
-import { mapSingleStoreWatchdogEvents } from '../client/src/features/integrations/watchdogEventMapper.ts';
+import { mapSingleStoreWatchdogEvents, serializeSingleStoreWatchdogCsv } from '../client/src/features/integrations/watchdogEventMapper.ts';
 import { createWatchdogDayEnvelope } from '../client/src/features/integrations/watchdogDayEnvelope.ts';
 
 const source = {
@@ -25,3 +25,5 @@ const events = mapSingleStoreWatchdogEvents(source);
 const envelope = createWatchdogDayEnvelope({ ...source, events }, '2026-10-24T20:00:00Z');
 writeFileSync(new URL('./fixtures/tallybook-watchdog-preview-v1.json', import.meta.url),
   JSON.stringify(envelope, null, 2) + '\n');
+writeFileSync(new URL('./fixtures/tallybook-watchdog-legacy.csv', import.meta.url),
+  serializeSingleStoreWatchdogCsv(source));

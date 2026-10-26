@@ -1,0 +1,52 @@
+{
+  "watchdog_pos_sha256": "4172a092558de8748e71bb27883085e4f31ed660d7dd20d1f5e1ca06f395b966",
+  "watchdog_mapping_sha256": "221099e0fd9147fbfb4f0d5ef3b446aa186fc9844877327c3bfca9d422a63b02",
+  "canonical_fields": [
+    "external_id",
+    "kind",
+    "occurred_at",
+    "store_id",
+    "register_id",
+    "reference",
+    "amount",
+    "currency"
+  ],
+  "supported_kinds": [
+    "discount",
+    "no_sale",
+    "refund",
+    "sale",
+    "stock_adjustment",
+    "stock_transfer",
+    "void"
+  ],
+  "canonical_control_rows": 1,
+  "results": [
+    {
+      "file": "tallybook-watchdog-preview-v1.json",
+      "sha256": "26314b505ec5d0b50ca64ac2d2d657f8a5988a6d6f60634532f69cf4ab056428",
+      "bytes": 5536,
+      "canonical_csv": {
+        "accepted": false,
+        "error": "invalid CSV header; use Stage 17 template"
+      },
+      "mapped_csv": {
+        "accepted": false,
+        "error": "mapped source headers missing or duplicated"
+      }
+    },
+    {
+      "file": "tallybook-watchdog-legacy.csv",
+      "sha256": "9382321dae5f16d687000f6f9174f8fcb0731663ee5f71e79dcbb2b66bf2f99e",
+      "bytes": 767,
+      "canonical_csv": {
+        "accepted": false,
+        "error": "invalid CSV header; use Stage 17 template"
+      },
+      "mapped_csv": {
+        "accepted": false,
+        "error": "mapped source headers missing or duplicated"
+      }
+    }
+  ]
+}
