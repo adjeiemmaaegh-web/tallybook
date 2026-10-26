@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {assertStaffGovernanceSchema} from './schemaVersionAudit.mjs';
 const read=p=>readFileSync(new URL('../../client/src/'+p,import.meta.url),'utf8');
 const cost=()=>read('features/reports/costReconciliation.ts');
 const report=()=>read('features/reports/financialIntelligence.ts');
@@ -69,10 +70,9 @@ test('historical-cost uncertainty is retained in the FIFO replay engine',()=>{
  assert.match(x,/unknownCostUnits/);
  assert.match(x,/unitCostMinor === undefined/);
 });
-test('source changes do not add a schema migration or new payment flows',()=>{
+test('historical cost audits stay read-only with the current staff-governance schema',()=>{
  const x=read('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
- assert.match(x,/this\.version\(28\)/);
+ assertStaffGovernanceSchema(x);
  assert.doesNotMatch(cost(),/database\.transaction\("rw"/);
  assert.doesNotMatch(read('features/reports/run9InventoryValuation.mjs'),/fetch\(|localStorage/);
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {assertStaffGovernanceSchema} from './schemaVersionAudit.mjs';
 const read=p=>readFileSync(new URL('../../client/src/'+p,import.meta.url),'utf8');
 const supplier=()=>read('features/purchases/supplierPayables.ts');
 const expense=()=>read('features/expenses/expenses.ts');
@@ -103,10 +104,9 @@ test('management UI warns about duplicate disbursement entries and no statutory 
  assert.match(x,/same outside-world payout could have been entered in both places/);
  assert.match(x,/Tax filing, country-specific exemptions and statutory rates are not verified/);
 });
-test('Run 12 does not add automatic payment gateway, legal rate preset or schema version',()=>{
+test('supplier and tax audits remain local with the current staff-governance schema',()=>{
  const x=read('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
- assert.match(x,/this\.version\(28\)/);
+ assertStaffGovernanceSchema(x);
  for(const v of [read('features/reports/run12SupplierFinanceAudit.mjs'),
   read('features/reports/run12SaleTaxAudit.mjs')]){
   assert.doesNotMatch(v,/fetch\(|localStorage\.|indexedDB\.|navigator\.locks/);

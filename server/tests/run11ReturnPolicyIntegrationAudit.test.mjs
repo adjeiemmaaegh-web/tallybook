@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {assertStaffGovernanceSchema} from './schemaVersionAudit.mjs';
 const read=p=>readFileSync(new URL('../../client/src/'+p,import.meta.url),'utf8');
 const policy=()=>read('features/business/returnPolicy.mjs');
 const full=()=>read('features/assistant/reversals.ts');
@@ -92,9 +93,8 @@ test('POS hides ineligible return-review button for no-refunds companies',()=>{
  assert.match(x,/currentCompanyReturnPolicy\(profile\.returnPolicyHistory\)\.allowCashPartial/);
  assert.match(x,/sale\.returnPolicyAtSale\?\.allowCashPartial/);
 });
-test('run 11 introduces no new IndexedDB schema, payment processor or cloud sync',()=>{
- assert.match(read('db/TallybookDB.ts'),/DATABASE_SCHEMA_VERSION = 35/);
- assert.match(read('db/TallybookDB.ts'),/this\.version\(28\)/);
+test('return-policy audits stay local with the current staff-governance schema',()=>{
+ assertStaffGovernanceSchema(read('db/TallybookDB.ts'));
  for(const x of [policy(),read('features/business/returnPolicyAudit.mjs')]){
   assert.doesNotMatch(x,/fetch\(|localStorage\.|navigator\.locks|indexedDB\./);
  }

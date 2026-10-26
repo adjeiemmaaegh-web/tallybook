@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {assertStaffGovernanceSchema} from './schemaVersionAudit.mjs';
 const source=p=>readFileSync(new URL('../../client/src/'+p,import.meta.url),'utf8');
 const finance=()=>source('features/reports/financialIntelligence.ts');
 const credit=()=>source('features/credit/credit.ts');
@@ -92,9 +93,8 @@ test('no new backend payment provider or cloud mutator is introduced by pure aud
   assert.doesNotMatch(x,/fetch\(|localStorage\.|indexedDB\.|database\.transaction\(|navigator\.locks/);
  }
 });
-test('existing local IndexedDB version is unchanged and no silent migration occurs',()=>{
+test('receivables audit stays read-only while historical and staff migrations remain registered',()=>{
  const x=source('db/TallybookDB.ts');
- assert.match(x,/DATABASE_SCHEMA_VERSION = 35/);
- assert.match(x,/this\.version\(28\)/);
+ assertStaffGovernanceSchema(x);
  assert.doesNotMatch(finance(),/database\.transaction\("rw"/);
 });

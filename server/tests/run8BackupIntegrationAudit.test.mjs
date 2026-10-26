@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {assertStaffGovernanceSchema} from './schemaVersionAudit.mjs';
 const source=(path)=>readFileSync(new URL('../../'+path,import.meta.url),'utf8');
 const backup=()=>source('client/src/features/backup/backup.ts');
 const page=()=>source('client/src/pages/BackupPage.tsx');
-test('portable schema version stays unchanged while compatibility is additive',()=>{
+test('portable backup compatibility covers the current staff-governance schema',()=>{
  const db=source('client/src/db/TallybookDB.ts');
- assert.match(db,/DATABASE_SCHEMA_VERSION = 35/);
- assert.match(db,/this\.version\(28\)/);
+ assertStaffGovernanceSchema(db);
  assert.match(backup(),/normalizeRun8BackupTables\(/);
  assert.match(backup(),/RUN8_BACKUP_TABLES\.some/);
 });
