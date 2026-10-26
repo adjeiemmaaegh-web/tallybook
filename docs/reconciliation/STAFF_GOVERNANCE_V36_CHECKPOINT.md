@@ -21,3 +21,5 @@ Date: 2026-10-26. Baseline: `430d508` on `development/v19-unified-reconciliation
 ## Limits
 
 This prevents accidental reopening after staff records disappear. It does not make a browser's local database tamper-proof or replace cloud account identity. Legacy companies that have never enrolled staff still use the preexisting open local mode until an owner is created. Live Google identity, company/staff binding, and RLS remain unverified while the connected Tallybook Supabase project is inactive. Historical customer backup migration and device acceptance remain open; this is a development checkpoint, not a production release.
+
+GitHub Actions [run 40254793402](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/40254793402) for commit `31cc4488a547e1ae96c6e91d9a78309b31246416` concluded failure three seconds after starting. The GitHub connection returned no job steps or logs, so the cause is undetermined and no Linux gate is credited as passed. Investigate the run in the repository's Actions UI before treating CI as a release gate.
