@@ -1,0 +1,26 @@
+STAGE21 DEVELOPER VERIFICATION
+offline-browser
+sha: e607fc29fb35c758bf22e0660ccef558bb06fe98
+node: v24.19.0
+package manager: pnpm 10.34.0
+command: pnpm.cmd exec playwright test --config playwright.offline.config.mjs
+-- combined stdout and stderr --
+[WebServer] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:23036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:18192) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false (10.0s)
+  ok 2 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false (9.2s)
+  ok 3 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true (8.7s)
+
+  3 passed (33.2s)
+
+-- process result --
+exit status: 0
+signal: none
+error: none

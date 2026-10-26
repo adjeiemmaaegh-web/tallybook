@@ -1,0 +1,55 @@
+STAGE21 DEVELOPER VERIFICATION
+baseline
+sha: e607fc29fb35c758bf22e0660ccef558bb06fe98
+node: v24.19.0
+package manager: pnpm 10.34.0
+command: C:\Program Files\nodejs\node.exe scripts/stage21-baseline-audit.mjs --sha e607fc29fb35c758bf22e0660ccef558bb06fe98
+-- combined stdout and stderr --
+{
+  "stage": 21,
+  "sourceSha": "e607fc29fb35c758bf22e0660ccef558bb06fe98",
+  "decision": "NO-GO",
+  "registries": {
+    "acceptance": {
+      "count": 82,
+      "byStatus": {
+        "implemented-unverified": 60,
+        "missing": 18,
+        "implemented-and-tested": 1,
+        "blocked": 3
+      },
+      "originalCount": 82,
+      "originalMissing": [],
+      "addedIds": []
+    },
+    "blockers": {
+      "count": 47,
+      "byStatus": {
+        "implemented-unverified": 35,
+        "implemented-and-tested": 3,
+        "missing": 6,
+        "blocked": 3
+      },
+      "originalCount": 47,
+      "originalMissing": [],
+      "addedIds": []
+    }
+  },
+  "importScan": {
+    "sourceFiles": 757,
+    "localImports": 1864,
+    "unresolved": 0,
+    "ambiguousTsMjs": 0
+  },
+  "lockfilePresent": true,
+  "notes": [],
+  "problems": [],
+  "internallyVerified": false,
+  "ownerUatAuthorized": false,
+  "externalReleaseAuthorized": false
+}
+
+-- process result --
+exit status: 0
+signal: none
+error: none

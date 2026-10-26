@@ -1,0 +1,110 @@
+STAGE21 DEVELOPER VERIFICATION
+build
+sha: e607fc29fb35c758bf22e0660ccef558bb06fe98
+node: v24.19.0
+package manager: pnpm 10.34.0
+command: pnpm.cmd build
+-- combined stdout and stderr --
+
+> business-app@1.0.0 build C:\Users\adjei\Documents\Codex\2026-10-25\tallybook-v19-full-source-reconciliation-and\work\unified
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.3.7 building client environment for production...
+transforming...
+node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 2058 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/crossTabDataLock.mjs is dynamically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/main.tsx but also statically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/assistantLocalStore.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/reversals.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/backup.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/restoreRecovery.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/retailWriteLock.mjs, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/business/activeCompany.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/quotations.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/expenses/expenses.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/inventory/inventory.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/purchases/purchases.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/purchases/supplierPayables.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/sales/sales.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/restoreJournal.mjs is dynamically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/main.tsx but also statically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/backup.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/restoreRecovery.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/run7RecoveryDecision.mjs, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/run7RetailWriteBarrier.mjs, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/business/activeCompany.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/release/run20LocalDiagnostics.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/db/TallybookDB.ts is dynamically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/main.tsx but also statically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/components/AppShell.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/contexts/BusinessProfileContext.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/contexts/DatabaseContext.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/assistant/assistant.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/backup.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/backup/restoreRecovery.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/business/businessProfile.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/business/returnPolicySettings.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/commerce/Run16OrderOperations.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/commerce/commerce.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/commerce/run16Orders.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/credit/credit.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/customerBenefits.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/customers.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/quotations.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/retentionInsights.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/customers/walletTransfers.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/drawer/NoSalePanel.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/drawer/noSaleEvent.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/expenses/expenses.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/insights/Run17EvidencePanel.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/insights/insightEvidence.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/insights/run17ReviewStore.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/insights/run17Service.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/integrations/watchdogBridge.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/inventory/advancedInventory.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/inventory/inventory.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/inventory/stage2Inventory.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/payments/Run15PaymentSandboxPanel.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/payments/mobileMoney.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/payments/run15MockStore.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/purchases/purchases.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/purchases/supplierPayables.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/release/run20CrossRunAudit.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/release/run20LocalDiagnostics.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reliability/integrity.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/financialIntelligence.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/localIntegrityOverview.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/reports/reports.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/sales/cashReturnReview.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/sales/sales.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/staff/staff.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/run13StoreTransactionActivity.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/storeDirectory.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/storeReport.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/storeStockCounts.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/storeStockLedger.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/stores/storeTransfers.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/sync/Run14EncryptedRelayPanel.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/features/sync/run14LocalRelay.ts, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/BackupPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/InventoryPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/PurchasesPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/QuotationsPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/Run19DeviceAcceptancePage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/SalesPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/StaffPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/StageHome.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/StoresPage.tsx, C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/SyncStatusPage.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/pages/AssistantPage.tsx is dynamically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/App.tsx but also statically imported by C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client/src/components/ClementiaLauncher.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+../dist/public/manifest.webmanifest                              0.37 kB
+../dist/public/index.html                                        1.12 kB │ gzip:   0.65 kB
+../dist/public/assets/StageHome-DX8rN6Be.css                    14.68 kB │ gzip:   3.29 kB
+../dist/public/assets/index-DGRn-pSk.css                       230.65 kB │ gzip:  39.55 kB
+../dist/public/assets/arrow-right-DSzRjjzJ.js                    0.16 kB │ gzip:   0.16 kB
+../dist/public/assets/users-round-DXN_-YZ6.js                    0.25 kB │ gzip:   0.22 kB
+../dist/public/assets/archive-B9_5zvZe.js                        0.25 kB │ gzip:   0.21 kB
+../dist/public/assets/receipt-text-D0cYFcx5.js                   0.29 kB │ gzip:   0.20 kB
+../dist/public/assets/minus-Cptq4taG.js                          0.31 kB │ gzip:   0.23 kB
+../dist/public/assets/printer-2cbL5bWG.js                        0.32 kB │ gzip:   0.24 kB
+../dist/public/assets/wallet-cards-5c1XkqDw.js                   0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/CloudAccountPage-6qxLNtwT.js               0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/archive-restore-BnzOu7Gm.js                0.34 kB │ gzip:   0.24 kB
+../dist/public/assets/clipboard-list-CHGeFGCu.js                 0.41 kB │ gzip:   0.26 kB
+../dist/public/assets/save-CUibFL4G.js                           0.43 kB │ gzip:   0.27 kB
+../dist/public/assets/package-plus-BZ2GMXl-.js                   0.45 kB │ gzip:   0.30 kB
+../dist/public/assets/package-search-CB2B5Zr7.js                 0.48 kB │ gzip:   0.32 kB
+../dist/public/assets/textarea-IXW7_xJb.js                       1.07 kB │ gzip:   0.57 kB
+../dist/public/assets/businessSharing-Dq41fmeI.js                1.22 kB │ gzip:   0.67 kB
+../dist/public/assets/customerBenefits-78Tg0T7c.js               5.19 kB │ gzip:   1.79 kB
+../dist/public/assets/workbox-window.prod.es5-BBnX5xw4.js        5.75 kB │ gzip:   2.36 kB
+../dist/public/assets/LocalAlertsPage-lJRGOnFX.js                6.53 kB │ gzip:   2.51 kB
+../dist/public/assets/ExpensesPage-B1lH-1QE.js                   6.88 kB │ gzip:   2.33 kB
+../dist/public/assets/BusinessHealthPage-285V4WS2.js             7.14 kB │ gzip:   2.32 kB
+../dist/public/assets/EndOfDayPage-C566TG2-.js                   7.31 kB │ gzip:   2.20 kB
+../dist/public/assets/QuotationsPage-CQhidrph.js                 7.69 kB │ gzip:   2.81 kB
+../dist/public/assets/CommercePage-DNmyjNCx.js                   9.14 kB │ gzip:   3.23 kB
+../dist/public/assets/run19EvidenceEnvelope-BcDn79XB.js         10.94 kB │ gzip:   4.41 kB
+../dist/public/assets/StageHome-8rWXuZuZ.js                     12.50 kB │ gzip:   4.42 kB
+../dist/public/assets/CustomerBenefitsPage-s_5Hil2V.js          14.98 kB │ gzip:   4.63 kB
+../dist/public/assets/StaffPage-DLEUBUII.js                     15.00 kB │ gzip:   4.71 kB
+../dist/public/assets/StoresPage-BR8CaVmk.js                    16.98 kB │ gzip:   4.79 kB
+../dist/public/assets/integrity-NQ0o1s60.js                     17.01 kB │ gzip:   5.25 kB
+../dist/public/assets/Run19DeviceAcceptancePage-CCXAQ405.js     18.02 kB │ gzip:   6.41 kB
+../dist/public/assets/InsightsPage-B5LBNqxk.js                  19.71 kB │ gzip:   6.77 kB
+../dist/public/assets/CustomersPage-C2gfXJvr.js                 26.06 kB │ gzip:   7.13 kB
+../dist/public/assets/ReportsPage-B41ExcUy.js                   26.32 kB │ gzip:   7.64 kB
+../dist/public/assets/Run20OperationsPage-RSSGHJLt.js           26.87 kB │ gzip:   9.14 kB
+../dist/public/assets/BusinessSetup-CxvrAruO.js                 26.99 kB │ gzip:   7.43 kB
+../dist/public/assets/PurchasesPage-5O2xkJET.js                 27.32 kB │ gzip:   7.72 kB
+../dist/public/assets/InventoryPage-BT3zyjzY.js                 27.91 kB │ gzip:   7.81 kB
+../dist/public/assets/BackupPage-Dlp1YAzb.js                    28.39 kB │ gzip:   9.45 kB
+../dist/public/assets/SyncStatusPage-BRef6FD9.js                28.52 kB │ gzip:   8.94 kB
+../dist/public/assets/select-ryoMBaqC.js                        30.51 kB │ gzip:  10.59 kB
+../dist/public/assets/FinancialIntelligencePage-CK9O3uFJ.js     31.69 kB │ gzip:   8.89 kB
+../dist/public/assets/form-CGWgaqTO.js                          42.12 kB │ gzip:  15.10 kB
+../dist/public/assets/SalesPage-6stQg9X8.js                     74.70 kB │ gzip:  21.24 kB
+../dist/public/assets/index-BTfGjfUV.js                      1,117.03 kB │ gzip: 338.13 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 16.03s
+
+PWA v1.3.0
+mode      generateSW
+precache  51 entries (1913.30 KiB)
+files generated
+  ../dist/public/sw.js
+  ../dist/public/workbox-2fbc6a65.js
+
+  dist\index.js  108.8kb
+
+Done in 30ms
+
+-- process result --
+exit status: 0
+signal: none
+error: none
