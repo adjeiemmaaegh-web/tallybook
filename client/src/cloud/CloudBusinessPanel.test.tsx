@@ -3,7 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { CloudBusinessPanel } from "./CloudBusinessPanel";
 const mock = vi.hoisted(() => ({ getUser: vi.fn(), lookup: vi.fn(), create: vi.fn(), unsubscribe: vi.fn(), callback: null as null | (() => void) }));
 vi.mock("@/lib/supabase", () => ({ isSupabaseConfigured: true, getSupabaseClient: () => ({ auth: { getUser: mock.getUser, onAuthStateChange: (callback: () => void) => { mock.callback = callback; return { data: { subscription: { unsubscribe: mock.unsubscribe } } }; } } }) }));
-vi.mock("./businessIdentity", () => ({ getCurrentBusiness: mock.lookup, listAccessibleCloudBusinesses: async () => { const result = await mock.lookup(); return result ? [result] : []; }, createBusiness: mock.create }));
+vi.mock("./businessIdentity", () => ({ createBusiness: mock.create }));
+vi.mock("./cloudMembership", () => ({ listVerifiedCloudBusinesses: async () => { const result = await mock.lookup(); return result ? [result] : []; } }));
 beforeEach(() => {
   cleanup(); vi.clearAllMocks(); localStorage.clear();
   Object.defineProperty(navigator, "locks", { configurable: true, value: { request: async (_name: string, callback: () => unknown) => callback() } });
@@ -24,7 +25,10 @@ it("reuses the persisted request ID after a failed creation and remount", async 
   await screen.findByText("Connection lost");
   const firstId = mock.create.mock.calls[0][1];
   view.unmount();
-  mock.create.mockResolvedValue({ id: "cloud", owner_id: "owner", name: "Shop" });
+  mock.create.mockImplementation(async () => {
+    mock.lookup.mockResolvedValue({ id: "cloud", owner_id: "owner", name: "Shop", role: "owner" });
+    return { id: "cloud", owner_id: "owner", name: "Shop" };
+  });
   render(<CloudBusinessPanel />);
   fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
   fireEvent.click(screen.getByText("Create cloud business"));
@@ -42,4 +46,20 @@ it("discards a previous account's delayed business lookup after sign-out", async
   await screen.findByText("Sign in to prepare your cloud business");
   resolve({ id: "old", name: "Old private shop", owner_id: "owner" });
   await waitFor(() => expect(screen.queryByText("Old private shop")).toBeNull());
+});
+
+it("does not present a successful creation receipt without fresh verified owner membership", async () => {
+  mock.create.mockResolvedValue({ id: "cloud", owner_id: "owner", name: "Shop" });
+  render(<CloudBusinessPanel />);
+  fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
+  fireEvent.click(screen.getByText("Create cloud business"));
+  await screen.findByText("Cloud business ownership could not be verified.");
+  expect(screen.queryByText("Verified cloud owner membership.")).toBeNull();
+});
+it("shows attendant status without promoting to owner or linking local POS", async () => {
+  mock.getUser.mockResolvedValue({data:{user:{id:"attendant"}},error:null});
+  mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"attendant"});
+  render(<CloudBusinessPanel />);
+  expect(await screen.findByText(/Verified cloud attendant membership/)).toBeTruthy();
+  expect(screen.getByText(/not a local staff unlock/)).toBeTruthy();
 });
