@@ -79,6 +79,12 @@ Deno.serve(async(req:Request)=>{
   if(req.method!=='POST'||origin!==allowedOrigin)
     return response(null,403,{error:'QA membership request denied'});
   const op=new URL(req.url).pathname.replace(ROOT,'');
+  // V50 QA fail-closed: a bearer token + device ID does not prove private-key
+  // possession, and a pulled financial record cannot be entrusted to it.
+  // Enable only after signed challenge, bounded nonce, and one-use replay
+  // evidence are validated in the same server transaction.
+  if(op==='pullSales')
+    return response(allowedOrigin,503,{error:'Signed device-proof pull not enabled'});
   if(!new URL(req.url).pathname.startsWith(ROOT)||!Object.hasOwn(allowed,op))
     return response(allowedOrigin,404,{error:'Unknown QA operation'});
   const header=req.headers.get('authorization');
