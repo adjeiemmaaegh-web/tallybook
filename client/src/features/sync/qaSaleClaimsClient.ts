@@ -47,7 +47,7 @@ export async function fetchQaSaleClaims(scope:QaSaleReadScope):Promise<Readonly<
     const current=await client.auth.getSession();
     if(changed||final.error||current.error||
        final.data.user?.id!==user.id||
-       current.data.session?.access_token!==session.access_token||
+       !current.data.session||current.data.session.access_token!==session.access_token||
        current.data.session.user.id!==user.id||
        (current.data.session.expires_at??0)*1000<=Date.now())
       throw Error('Cloud identity changed while reading QA claims.');
