@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
-import { createBusiness, listAccessibleCloudBusinesses, type CloudBusiness } from "./businessIdentity";
+import { createBusiness } from "./businessIdentity";
+import {listVerifiedCloudBusinesses} from "./cloudMembership";
+import type {VerifiedCloudBusiness} from "./cloudMembershipBoundary.mjs";
 import {Run3MembershipPanel} from "./Run3MembershipPanel";
 
 /** Account identity only. Creating a cloud business does not claim local data. */
 export function CloudBusinessPanel() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [business, setBusiness] = useState<CloudBusiness | null>(null);
-  const [accessible, setAccessible] = useState<CloudBusiness[]>([]);
+  const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
+  const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function CloudBusinessPanel() {
         if (!active || started !== revision.current) return;
         if (authError || !user) { setBusy(false); return; }
         setUserId(user.id);
-        const list = await listAccessibleCloudBusinesses();
+        const list = await listVerifiedCloudBusinesses();
         if (active && started === revision.current) {
           setAccessible(list);
           setBusiness(list[0] ?? null);
@@ -65,9 +67,16 @@ export function CloudBusinessPanel() {
       });
       if (started !== revision.current) throw new Error("Your account changed. Check your sign-in and try again.");
       const result = await createBusiness(name, requestId);
-      if (started === revision.current && result.owner_id === userId) {
-        setBusiness(result);
-        setAccessible(list => list.some(entry => entry.id === result.id) ? list : [...list,result]);
+      // A creation receipt alone is not membership evidence. Re-query through
+      // RLS and verified account identity before presenting owner controls.
+      const verified = await listVerifiedCloudBusinesses();
+      const created = verified.find(entry => entry.id === result.id);
+      if (!created || created.role !== "owner" ||
+          created.owner_id !== userId || result.owner_id !== userId)
+        throw new Error("Cloud business ownership could not be verified.");
+      if (started === revision.current) {
+        setBusiness(created);
+        setAccessible([...verified]);
       }
     } catch (cause) {
       if (started === revision.current) setError(cause instanceof Error ? cause.message : "Could not create the cloud business.");
@@ -87,7 +96,7 @@ export function CloudBusinessPanel() {
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.owner_id === userId ? "You own this cloud business." : "You are a member of this cloud business."} Record synchronization is not active yet.</p></div> : <form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : <form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <label className="block" htmlFor="cloud-business-name">Cloud business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
@@ -95,7 +104,7 @@ export function CloudBusinessPanel() {
     {isSupabaseConfigured && userId &&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
-         isOwner={business?.owner_id === userId}/> : null}
+         isOwner={business?.role === "owner"}/> : null}
     {error && <p role="alert">{error}</p>}
   </section>;
 }
