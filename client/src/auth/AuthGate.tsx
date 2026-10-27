@@ -6,13 +6,13 @@ import {type ReactNode} from 'react';
 import {Redirect,useLocation} from 'wouter';
 import {useRun4CloudSession} from './useRun4CloudSession';
 
-type Props={children:ReactNode;signIn:ReactNode;accountSignIn?:ReactNode;enabled?:boolean};
-export function AuthGate({children,signIn,accountSignIn,enabled=true}:Props){
+type Props={children:ReactNode;signIn:ReactNode;accountSignIn?:ReactNode;passwordRecovery?:ReactNode;enabled?:boolean};
+export function AuthGate({children,signIn,accountSignIn,passwordRecovery,enabled=true}:Props){
   const [location]=useLocation();
   // Account screens have no reason to mount the local business database.
   // This also keeps a signed-out cloud-route redirect outside the ledger tree.
   if(location==='/signin')return <>{signIn}</>;
-  if(location==='/reset-password')return <>{children}</>;
+  if(location==='/reset-password')return <>{passwordRecovery??signIn}</>;
   if(location==='/account')return <>{accountSignIn??signIn}</>;
   // Preserve offline sales, inventory, reports and backup in every mode.
   // Only the opt-in cloud-account route requires a validated online session.

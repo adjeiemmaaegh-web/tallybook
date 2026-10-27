@@ -96,7 +96,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <AuthGate signIn={<GoogleSignInPage />} accountSignIn={isSupabaseAuthPreviewEnabled ? <SupabaseSignInPage /> : <GoogleSignInPage />}>
+          <AuthGate signIn={<GoogleSignInPage />} accountSignIn={isSupabaseAuthPreviewEnabled ? <SupabaseSignInPage /> : <GoogleSignInPage />} passwordRecovery={<PasswordRecoveryPage />}>
           <DatabaseProvider>
             <BusinessProfileProvider>
               <Toaster position="top-center" richColors />
