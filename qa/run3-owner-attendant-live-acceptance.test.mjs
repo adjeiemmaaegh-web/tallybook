@@ -9,7 +9,7 @@ const config=()=>({RUN3_QA_DISPOSABLE_PROJECT_APPROVED:'I_APPROVE_RUN3_DISPOSABL
  RUN3_QA_PUBLISHABLE_KEY:'sb_publishable_fixture_key',RUN3_QA_COMPANY_A:a,
  RUN3_QA_COMPANY_B:b,RUN3_QA_OWNER_A_TOKEN:'a'.repeat(40),
  RUN3_QA_OWNER_B_TOKEN:'b'.repeat(40),RUN3_QA_ATTENDANT_A_TOKEN:'c'.repeat(40),
- RUN3_QA_MEMBERSHIP_API:'https://private-test.example/api/run3/membership'});
+ RUN3_QA_MEMBERSHIP_API:'https://lmneuqxfyxplrxjswpma.supabase.co/functions/v1/tallybook-run3-qa'});
 test('requires two separate explicit disposable test approvals',()=>{
   const env=config();delete env.RUN3_QA_RUN_MUTATIONS;
   assert.throws(()=>validateConfig(env),/explicit approval/);
@@ -34,7 +34,7 @@ test('rejects production, insecure, and static Supabase membership backends',()=
    'https://tallybook-eight.vercel.app/api/run3/membership',
    'https://lmneuqxfyxplrxjswpma.supabase.co/api/run3/membership',
    'https://private-test.example/other','https://u:p@private-test.example/api/run3/membership']){
-    assert.throws(()=>validateConfig({...config(),RUN3_QA_MEMBERSHIP_API:api}),/dedicated HTTPS/);
+    assert.throws(()=>validateConfig({...config(),RUN3_QA_MEMBERSHIP_API:api}),/exact isolated QA/);
   }
 });
 test('rejects reused company IDs and bad UUIDs',()=>{
@@ -49,4 +49,7 @@ test('preflight never logs or returns credentials through URL',()=>{
   const v=validateConfig(config());
   assert.deepEqual(Object.keys(v).sort(),['api','authOrigin','companyA','companyB','key','tokens']);
   assert.ok(!v.api.includes('Bearer '));
+});
+test('acceptance only accepts the exact deployed isolated Edge path',()=>{
+ assert.equal(validateConfig(config()).api,'https://lmneuqxfyxplrxjswpma.supabase.co/functions/v1/tallybook-run3-qa');
 });
