@@ -13,7 +13,8 @@ const allowed={
   accept:['inviteToken'],
   revokeMember:['companyId','targetUserId'],
   revokeInvite:['companyId','invitationId'],
-  listMembers:['companyId']
+  listMembers:['companyId'],
+  pullSales:['companyId','deviceId','afterUtc','afterOperationId']
 } as const;
 
 function response(origin:string|null,status:number,data:object){
@@ -120,7 +121,18 @@ Deno.serve(async(req:Request)=>{
       p_company:null,p_target:null,p_token_hash:null,p_invitation:null
     };
     let inviteToken:string|undefined;
-    if(op==='invite'){
+    let pullArgs:Record<string,string>|null=null;
+    if(op==='pullSales'){
+      if(!UUID.test(String(body.companyId))||
+         !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId))||
+         !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(String(body.afterUtc))||
+         !Number.isFinite(Date.parse(String(body.afterUtc)))||
+         !/^[A-Za-z0-9:_-]{0,128}$/.test(String(body.afterOperationId)))
+        throw Error('Pull cursor/scope invalid');
+      pullArgs={p_actor:actor!,p_session:String(session),
+        p_company:body.companyId as string,p_device:body.deviceId as string,
+        p_after:body.afterUtc as string,p_after_operation:body.afterOperationId as string};
+    } else if(op==='invite'){
       if(!UUID.test(String(body.companyId))||!UUID.test(String(body.targetUserId)))
         throw Error('IDs invalid');
       args.p_company=body.companyId as string;
@@ -144,7 +156,9 @@ Deno.serve(async(req:Request)=>{
       if(!UUID.test(String(body.companyId)))throw Error('ID invalid');
       args.p_company=body.companyId as string;
     }
-    const result=await client.rpc('run3_qa_membership_rpc',args);
+    const result=op==='pullSales'
+      ?await client.rpc('run3_qa_pull_sales',pullArgs!)
+      :await client.rpc('run3_qa_membership_rpc',args);
     if(result.error||!result.data||typeof result.data!=='object')
       throw Error('SQL authorization denied');
     const payload=op==='invite'?{...result.data,inviteToken}:result.data;
