@@ -33,6 +33,15 @@ describe('Run 4 offline-safe AuthGate',()=>{
   }
   expect(useRun4CloudSession).not.toHaveBeenCalled();
  });
+ it('keeps recovery outside the ledger providers without using a cloud session',()=>{
+  mock.location='/reset-password';
+  render(<AuthGate enabled signIn={<span>Sign in</span>} passwordRecovery={<span>Password reset</span>}>
+    <span>Sensitive local ledger</span>
+  </AuthGate>);
+  expect(screen.getByText('Password reset')).toBeTruthy();
+  expect(screen.queryByText('Sensitive local ledger')).toBeNull();
+  expect(useRun4CloudSession).not.toHaveBeenCalled();
+ });
  it('keeps the account preview screen outside the local ledger tree',()=>{
   mock.location='/account';
   render(<AuthGate enabled signIn={<span>Google sign in</span>} accountSignIn={<span>Account preview sign in</span>}>
