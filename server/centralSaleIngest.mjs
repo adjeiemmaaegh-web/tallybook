@@ -22,6 +22,10 @@ export function createCentralSaleIngestService({resolveSession,store,clock=Date.
         for(const method of ['assertActiveSession','getMembership','getDevice','getShop','getStaff','isAssigned','getEvent','insertEvent'])
           if(typeof tx?.[method]!=='function')denied();
         if(await tx.assertActiveSession(principal.sessionId,principal.userId,now)!==true)denied();
+        // UUID-backed adapters must pin an exact local-company binding before
+        // the parallel directory reads in the signature verifier.
+        if(typeof tx.resolveCompany==='function' &&
+           await tx.resolveCompany(envelope?.businessId,principal.userId)!==true)denied();
         const verified=await verifyCentralSaleEvent(envelope,principal.userId,tx);
         if(verified.financialPostingAllowed!==false)denied();
         const existing=await tx.getEvent(verified.businessId,verified.operationId);

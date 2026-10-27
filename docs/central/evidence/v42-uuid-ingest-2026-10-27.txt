@@ -1,0 +1,16 @@
+✔ central coordinator stays unconfigured without private Auth and database dependencies (2.4829ms)
+✔ isolated signed ingest is atomic, idempotent, scoped and denied to browser writers (7072.0405ms)
+✔ UUID coordinator remains disabled without private dependencies (1.6891ms)
+✔ UUID ownership candidate preserves binding, company scope and browser write denial (6742.7648ms)
+✔ accepts only signed sale evidence bound to server membership, shop and device (6.69ms)
+✔ rejects forged shop, payload and unrelated authenticated user (2.7966ms)
+✔ rejects signed JSON with duplicate business keys (1.1235ms)
+✔ rejects revoked device, removed membership and missing shop assignment (5.0339ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7552.1423
