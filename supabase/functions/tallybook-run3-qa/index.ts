@@ -125,7 +125,7 @@ Deno.serve(async(req:Request)=>{
     if(op==='pullSales'){
       if(!UUID.test(String(body.companyId))||
          !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId))||
-         !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(String(body.afterUtc))||
+         !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(String(body.afterUtc))||
          !Number.isFinite(Date.parse(String(body.afterUtc)))||
          !/^[A-Za-z0-9:_-]{0,128}$/.test(String(body.afterOperationId)))
         throw Error('Pull cursor/scope invalid');
