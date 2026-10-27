@@ -56,3 +56,7 @@ V44 adds a browser IndexedDB vault for scoped, non-extractable Ed25519 keys and 
 ## Enrollment transport checkpoint, 2026-10-27
 
 V45 adds disabled-by-default staff/device HTTP routes and an explicit browser redemption transport. Native focused 9/9, client focused 3/3, TypeScript and build passed. The 82 acceptance statuses remain unchanged: the routes are not enabled, two real Auth accounts have not completed the flow, and the remaining cloud and operational gates are open. See `docs/central/2026-10-27_V45_DEVICE_ENROLLMENT_ROUTE_CHECKPOINT.md`.
+
+## Isolated HTTP lifecycle checkpoint, 2026-10-27
+
+V46's PGlite fixture exercises the guarded HTTP and private coordinator sequence through owner provision, invitation, key proof, signed sale, exact retry and revocation; 9/9 focused native tests passed. The disposable Supabase project still has zero Auth users and sessions. The governing 82 acceptance statuses remain unchanged pending real Auth/Data API, trusted-edge hosting, and the other release gates. See `docs/central/2026-10-27_V46_ISOLATED_HTTP_LIFECYCLE_CHECKPOINT.md`.

@@ -11,6 +11,10 @@ import { createStoreDeviceEnrollmentService, deviceKeyEnrollmentBytes } from '..
 import { createPostgresStoreDeviceEnrollmentStore } from '../server/storeDeviceEnrollmentPostgres.mjs';
 import { createUuidStaffShopProvisioningService } from '../server/uuidStaffShopProvisioning.mjs';
 import { createUuidStaffShopProvisioningStore } from '../server/uuidStaffShopProvisioningPostgres.mjs';
+import {createUuidStaffShopProvisioningCoordinator} from '../server/uuidStaffShopProvisioningCoordinator.mjs';
+import {createStoreDeviceEnrollmentCoordinator} from '../server/storeDeviceEnrollmentCoordinator.mjs';
+import {createCentralDeviceHandler} from '../server/centralDeviceRoutes.mjs';
+import {createCentralSaleUploadHandler} from '../server/centralSaleUploadRoute.mjs';
 
 const owner='11111111-1111-4111-8111-111111111111';
 const attendant='22222222-2222-4222-8222-222222222222';
@@ -38,6 +42,20 @@ function envelope(deviceId='deviceA',saleId='s2') {
     shopId:'shopA',staffId:'staffA',deviceId,
     payloadBase64:Buffer.from(JSON.stringify(payload)).toString('base64url'),signature:''};
   e.signature=sign(null,centralEventSigningBytes(e),privateKey).toString('base64url');return e;
+}
+function simulatedJwt(userId,authSessionId) {
+  const header=Buffer.from(JSON.stringify({alg:'HS256'})).toString('base64url');
+  const claims=Buffer.from(JSON.stringify({sub:userId,session_id:authSessionId,
+    role:'authenticated',aud:'authenticated',exp:Math.floor((now+60000)/1000)})).toString('base64url');
+  return `${header}.${claims}.simulation`;
+}
+async function callHttp(handler,path,body,token,overrides={}) {
+  const headers={origin:'https://isolated.example',authorization:`Bearer ${token}`,...overrides.headers};
+  const req={path,body,socket:{encrypted:true,remoteAddress:'127.0.0.1'},
+    get(name){return headers[name];},is(){return 'application/json';},...overrides};
+  const res={code:0,body:null,headers:{},setHeader(k,v){this.headers[k]=v;},
+    status(code){this.code=code;return this;},json(body){this.body=body;return this;}};
+  await handler(req,res);return res;
 }
 
 test('UUID ownership candidate preserves binding, company scope and browser write denial',async()=>{
@@ -76,7 +94,8 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       [company,owner,attendant,otherCompany]);
     await db.query(`insert into public.company_local_bindings(company_id,local_company_id,owner_id)
       values($1,'localA',$2),($3,'localB',$4)`,[company,owner,otherCompany,attendant]);
-    const pool={async connect(){return {query:(...args)=>db.query(...args),release(){}};}};
+    const pool={query:(...args)=>db.query(...args),
+      async connect(){return {query:(...args)=>db.query(...args),release(){}};}};
     const provisioning=createUuidStaffShopProvisioningService({
       resolveSession:async userId=>({active:true,userId,
         sessionId:userId===owner?ownerSessionId:sessionId,expiresAtEpochMs:now+60000}),
@@ -135,6 +154,51 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     assert.equal(accepted.status,'accepted');
     assert.deepEqual(await service.ingest({session:'test',envelope:envelope()}),accepted);
     assert.equal((await service.ingest({session:'test',envelope:envelope('deviceB','s3')})).status,'accepted');
+    // Full private HTTP composition with a simulated Auth verifier. The test
+    // token has no real Supabase signature and must never be used as live Auth evidence.
+    const ownerToken=simulatedJwt(owner,ownerSessionId);
+    const attendantToken=simulatedJwt(attendant,sessionId);
+    const authClient={auth:{async getUser(token){const userId=token===ownerToken?owner:
+      token===attendantToken?attendant:null;return {data:{user:userId?{id:userId}:null},
+        error:userId?null:Error('Unrecognized isolated test token')};}}};
+    const deviceHandler=createCentralDeviceHandler({enabled:true,allowedOrigin:'https://isolated.example',
+      staffService:createUuidStaffShopProvisioningCoordinator({authClient,privatePool:pool,clock:()=>now}),
+      deviceService:createStoreDeviceEnrollmentCoordinator({authClient,privatePool:pool,clock:()=>now})});
+    const saleHandler=createCentralSaleUploadHandler({enabled:true,allowedOrigin:'https://isolated.example',
+      service:createCentralSaleUuidIngestCoordinator({authClient,privatePool:pool,clock:()=>now})});
+    const staffPath='/api/central/staff/provision';
+    const invitePath='/api/central/devices/invite';
+    const redeemPath='/api/central/devices/redeem';
+    const revokePath='/api/central/devices/revoke';
+    assert.equal((await callHttp(deviceHandler,staffPath,binding,attendantToken)).code,403);
+    assert.equal((await callHttp(deviceHandler,staffPath,binding,ownerToken)).code,200);
+    const httpInvite=await callHttp(deviceHandler,invitePath,{companyId:company,
+      storeId:'shopA',targetUserId:attendant},ownerToken);
+    assert.equal(httpInvite.code,200);
+    const deviceId='deviceC';
+    const httpProof=sign(null,deviceKeyEnrollmentBytes({token:httpInvite.body.token,
+      companyId:company,storeId:'shopA',userId:attendant,staffId:'staffA',deviceId,
+      publicKeySpkiPem:keyPem}),privateKey).toString('base64url');
+    const redeemBody={token:httpInvite.body.token,staffId:'staffA',deviceId,
+      publicKeySpkiPem:keyPem,proofSignature:httpProof};
+    assert.equal((await callHttp(deviceHandler,redeemPath,redeemBody,ownerToken)).code,403);
+    const httpRedeem=await callHttp(deviceHandler,redeemPath,redeemBody,attendantToken);
+    assert.equal(httpRedeem.code,200);
+    assert.equal(httpRedeem.body.publicKeyBound,true);
+    assert.equal((await callHttp(deviceHandler,redeemPath,redeemBody,attendantToken)).code,403);
+    const saleBody={envelope:envelope(deviceId,'s4')};
+    assert.equal((await callHttp(saleHandler,'/api/central/sales',saleBody,ownerToken)).code,403);
+    const uploaded=await callHttp(saleHandler,'/api/central/sales',saleBody,attendantToken);
+    assert.equal(uploaded.code,200);
+    assert.equal(uploaded.body.status,'accepted');
+    assert.deepEqual((await callHttp(saleHandler,'/api/central/sales',saleBody,
+      attendantToken)).body,uploaded.body);
+    assert.equal((await callHttp(deviceHandler,revokePath,{companyId:company,deviceId},
+      attendantToken)).code,403);
+    assert.equal((await callHttp(deviceHandler,revokePath,{companyId:company,deviceId},
+      ownerToken)).body.revoked,true);
+    assert.equal((await callHttp(saleHandler,'/api/central/sales',saleBody,
+      attendantToken)).code,403);
     await assert.rejects(enrollment.revokeDeviceKey({session:attendant,
       companyId:company,deviceId:'deviceB'}),/enrollment denied/);
     assert.equal((await enrollment.revokeDeviceKey({session:owner,
@@ -154,7 +218,9 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await db.exec('reset role');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)",[owner]);
     await db.exec('set role authenticated');
-    assert.equal((await db.query('select * from public.company_signed_sale_events')).rows.length,3);
+    assert.equal((await db.query('select * from public.company_signed_sale_events')).rows.length,4);
     await db.exec('reset role');
+    await db.query('delete from auth.sessions where id=$1',[ownerSessionId]);
+    assert.equal((await callHttp(deviceHandler,staffPath,binding,ownerToken)).code,403);
   } finally {await db.close();}
 });
