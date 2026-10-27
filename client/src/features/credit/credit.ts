@@ -71,11 +71,23 @@ export const recordRepaymentSchema = z.object({
 });
 
 function parseAmount(value: string, currency: string) {
-  const amount = Number(value.trim().replace(",", "."));
-  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a repayment amount greater than zero.");
-  const minor = Math.round(amount * currencyMinorDivisor(currency));
-  if (!Number.isSafeInteger(minor) || minor <= 0) throw new Error("Repayment exceeds safe money bounds.");
-  return minor;
+  // Decimal text is financial evidence: never route a large decimal through
+  // IEEE-754 multiplication/rounding, and never silently round extra digits.
+  const normalized = value.trim().replace(",", ".");
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(normalized);
+  if (!match) throw new Error("Enter a valid repayment amount.");
+  const divisor = currencyMinorDivisor(currency);
+  if (!Number.isSafeInteger(divisor) || divisor < 1 || (divisor !== 1 && divisor !== 100))
+    throw new Error("Unsupported repayment currency precision.");
+  const fractionDigits = divisor === 1 ? 0 : 2;
+  const fractional = match[2] ?? "";
+  if (fractional.length > fractionDigits)
+    throw new Error("Repayment has more fractional digits than the currency supports.");
+  const minor = BigInt(match[1]) * BigInt(divisor) +
+    BigInt((fractional + "0".repeat(fractionDigits)).slice(0, fractionDigits) || "0");
+  if (minor <= 0n || minor > BigInt(Number.MAX_SAFE_INTEGER))
+    throw new Error("Repayment exceeds safe money bounds.");
+  return Number(minor);
 }
 
 function debtFromRecords(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[] = []) {
@@ -142,12 +154,29 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     const now = new Date().toISOString();
     const submissionKey = input.submissionKey ?? nanoid(18);
     const canonicalAllocations = input.saleAllocations?.map(row => ({...row})).sort((a,b)=>a.saleId.localeCompare(b.saleId));
-    const existing = await database.repayments.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
+    if (canonicalAllocations?.some((row, index) => index > 0 && row.saleId === canonicalAllocations[index - 1].saleId))
+      throw new Error("A credit sale may appear only once in a repayment allocation.");
+    // An operation key cannot be reused for another customer or another
+    // semantic allocation; check before any additional ledger changes.
+    const matches = await database.repayments.where("[businessProfileId+submissionKey]").equals([activeId, submissionKey]).toArray();
+    if (matches.length > 1) throw new Error("Duplicate repayment operation records require reconciliation.");
+    const existing = matches[0];
+    if (existing && existing.businessProfileId !== activeId) throw new Error("Repayment operation belongs to another company.");
     if (existing) {
       const amountMinor = parseAmount(input.amount, input.currency);
       if (existing.customerId!==input.customerId || existing.amountMinor!==amountMinor || (existing.currency !== input.currency) || existing.method!==input.method ||
         (existing.note??'')!==(input.note?.trim()??'') ||
         JSON.stringify(existing.saleAllocations ?? null) !== JSON.stringify(canonicalAllocations ?? null)) throw new Error("Repayment submission key was reused for different details.");
+      // Do not acknowledge a retry if its original credit posting became
+      // orphaned or the customer ledger no longer conserves saved amounts.
+      const [savedSales, savedPayments, savedReversals] = await Promise.all([
+        database.sales.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+        database.repayments.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+        database.saleReversals.where("customerId").equals(existing.customerId).and(row => row.businessProfileId === activeId).toArray(),
+      ]);
+      if (!savedPayments.some(row => row.id === existing.id))
+        throw new Error("Saved repayment retry is missing its original ledger evidence.");
+      reconcileCreditLedger(savedSales, savedReversals, savedPayments);
       return existing;
     }
     const customer = await database.customers.get(input.customerId);
@@ -191,6 +220,11 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     });
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");
+    await assertRun7RetailWriteReady(database.appMeta);
+    const postingStaff = await requirePermission("sell",database,activeId);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === "cashier" && !postingShift)
+      throw new Error("Cashier shift closed before repayment was recorded.");
     await database.repayments.add(repayment);
     await database.centralOperationalEvents.add(makeCentralRepaymentEvent(repayment));
     if(staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'repayment.recorded',createdAt:now,details:repayment.id});

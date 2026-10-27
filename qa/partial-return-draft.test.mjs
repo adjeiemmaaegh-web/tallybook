@@ -85,29 +85,30 @@ test('incremental allocations telescope to exact total even with tiny rounding r
 });
 
 const credit = (saleId, outstandingMinor, createdAt='2026-10-10T10:00:00.000Z') =>
-  ({id:saleId,businessProfileId:'company-1',customerId:'customer-1',outstandingMinor,createdAt});
+  ({id:saleId,businessProfileId:'company-1',customerId:'customer-1',currency:'GHS',outstandingMinor,createdAt});
+const repayment = amountMinor => ({amountMinor,businessProfileId:'company-1',customerId:'customer-1',currency:'GHS'});
 const a=credit('a',100), b=credit('b',200);
 test('unallocated repayments prevent reversing the wrong unpaid credit sale',()=>{
   // Customer has 200 left in total after paying 100, but the system does not
   // know whether the payment applied to sale a, b, or both.
-  const repayment=[{amountMinor:100}];
-  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[],repayment),/not linked to individual sales/);
-  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(b,[a,b],[],repayment),/not linked to individual sales/);
+  const payments=[repayment(100)];
+  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[],payments),/not linked to individual sales/);
+  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(b,[a,b],[],payments),/not linked to individual sales/);
 });
 test('full credit reversal permitted when no repayment and ledger reconciles',()=>{
   assert.doesNotThrow(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[],[]));
 });
 test('fully paid sale cannot erase any credit debt, even if customer has other repayments',()=>{
   const paid=credit('paid',0);
-  assert.doesNotThrow(()=>assertDebtReversalIsUnallocatedPaymentSafe(paid,[paid,a],[],[{amountMinor:10}]));
+  assert.doesNotThrow(()=>assertDebtReversalIsUnallocatedPaymentSafe(paid,[paid,a],[],[repayment(10)]));
 });
 test('orphan and duplicate reversals rejected before posting',()=>{
-  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[{originalSaleId:'a',reversedOutstandingMinor:-100,customerId:'customer-1'}],[]),/already reversed/);
-  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[{originalSaleId:'missing',reversedOutstandingMinor:-10}],[]),/invalid, orphaned/);
+  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[{originalSaleId:'a',reversedOutstandingMinor:-100,customerId:'customer-1',businessProfileId:'company-1'}],[]),/already reversed/);
+  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[{originalSaleId:'missing',reversedOutstandingMinor:-10,customerId:'customer-1',businessProfileId:'company-1'}],[]),/invalid, orphaned/);
 });
 test('foreign sale and negative ledger balances cannot approve reversal',()=>{
   assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe({...a,businessProfileId:'other'},[a,b],[],[]),/not part of/);
-  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[],[{amountMinor:301}]),/reconciliation/);
+  assert.throws(()=>assertDebtReversalIsUnallocatedPaymentSafe(a,[a,b],[],[repayment(301)]),/reconciliation/);
 });
 
 // Saved invoice components remain independent and conservative across partial

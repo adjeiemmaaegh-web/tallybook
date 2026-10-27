@@ -136,9 +136,14 @@ export function parseAmountToMinor(value: string, currency: string) {
   const [whole, fraction = ""] = normalized.split(".");
   const divisor = currencyMinorDivisor(currency);
   if (divisor === 1 && Number(fraction) !== 0) throw new Error("This currency requires a whole amount.");
-  const result = Number(whole) * divisor + (divisor === 1 ? 0 : Number(fraction.padEnd(2, "0")));
-  if (!Number.isSafeInteger(result) || result < 0) throw new Error("Amount exceeds safe limits.");
-  return result;
+  // Preserve monetary precision before converting to JavaScript numbers.
+  // Multiplying a large Number first can round even when the final value
+  // happens to pass Number.isSafeInteger.
+  const result = BigInt(whole) * BigInt(divisor) +
+    BigInt(divisor === 1 ? 0 : Number(fraction.padEnd(2, "0")));
+  if (result < 0n || result > BigInt(Number.MAX_SAFE_INTEGER))
+    throw new Error("Amount exceeds safe limits.");
+  return Number(result);
 }
 
 export function formatMinorAmount(value: number, currency: string) {

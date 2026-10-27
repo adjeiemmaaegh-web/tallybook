@@ -58,8 +58,8 @@ test('does not allow a zero-value record with a corrupt currency snapshot', () =
 
 test('sale-linked repayments cannot combine one-sided or conflicting currency evidence', () => {
   const linked = currency => ({ ...repayment('r1', currency, 200), saleAllocations:[{saleId:'s1',amountMinor:200}] });
-  assert.throws(() => reconcileRepaymentAllocations([sale('s1','GHS')],[],[linked('USD')]), /currency/);
-  assert.throws(() => reconcileRepaymentAllocations([sale('s1','GHS')],[],[linked(undefined)]), /currency/);
-  assert.throws(() => reconcileRepaymentAllocations([sale('s1',undefined)],[],[linked('GHS')]), /currency/);
-  assert.doesNotThrow(() => reconcileRepaymentAllocations([sale('s1',undefined)],[],[linked(undefined)]));
+  assert.throws(() => reconcileRepaymentAllocations([sale('s1','GHS')],[],[linked('USD')]), /currenc/);
+  assert.throws(() => reconcileRepaymentAllocations([sale('s1','GHS')],[],[linked(undefined)]), /currenc/);
+  assert.throws(() => reconcileRepaymentAllocations([sale('s1',undefined)],[],[linked('GHS')]), /currenc/);
+  assert.throws(() => reconcileRepaymentAllocations([sale('s1',undefined)],[],[linked(undefined)]), /currenc/);
 });

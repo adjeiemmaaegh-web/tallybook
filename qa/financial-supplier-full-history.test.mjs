@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { reconcileSupplierFinancialReport } from '../client/src/features/reports/supplierReporting.mjs';
 
 const period = { start: new Date('2026-10-10T00:00:00Z'), end: new Date('2026-10-11T00:00:00Z') };
-const purchase = { id:'P1', businessProfileId:'A', supplierId:'S1', totalCostMinor:10000, currency:'GHS' };
+const purchase = { id:'P1', businessProfileId:'A', supplierId:'S1', totalCostMinor:10000, currency:'GHS', createdAt:'2026-10-08T00:00:00Z' };
 function event(kind, n, amountMinor, extra={}) { return {
   id:`event-${n}`, submissionKey:`key-${n}`, purchaseId:'P1', businessProfileId:'A', supplierId:'S1', currency:'GHS',
   kind, amountMinor, createdAt:`2026-10-${String(n < 5 ? 9 : 10).padStart(2,'0')}T12:00:${String(n).padStart(2,'0')}Z`,

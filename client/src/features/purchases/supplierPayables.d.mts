@@ -1,5 +1,6 @@
-export interface PayablePurchase { id: string; businessProfileId: string; supplierId: string; totalCostMinor: number; currency?: string; }
+export interface PayablePurchase { id: string; businessProfileId: string; supplierId: string; totalCostMinor: number; currency?: string; createdAt: string; }
 export interface PayableEntry { id: string; submissionKey: string; businessProfileId: string; supplierId: string; purchaseId: string; currency: string; kind: 'recognition' | 'payment' | 'credit'; amountMinor: number; method?: string; createdAt: string; }
 export type PayableBalance = { status: 'unknown' | 'outstanding' | 'settled'; recognizedMinor: number | null; paidMinor: number | null; creditedMinor: number | null; outstandingMinor: number | null };
 export function reconcileSupplierPayable(purchase: PayablePurchase, entries: PayableEntry[]): PayableBalance;
-export function reconcileSupplierPayables(purchases: PayablePurchase[], entries: PayableEntry[]): { outstandingMinor: number | null; outstandingByCurrency: Array<{ currency: string; amountMinor: number }>; unknownPurchases: number; complete: boolean; results: Array<PayableBalance & { purchaseId: string }> };
+export function validSupplierLedgerTimestamp(value: unknown): boolean;
+export function reconcileSupplierPayables(purchases: PayablePurchase[], entries: PayableEntry[]): { outstandingMinor: number | null; outstandingByCurrency: Array<{ currency: string; amountMinor: number }>; outstandingBySupplier: Array<{supplierId:string;purchaseCount:number;unknownPurchases:number;complete:boolean;outstandingByCurrency:Array<{currency:string;amountMinor:number}>}>; unknownPurchases: number; complete: boolean; results: Array<PayableBalance & { purchaseId: string }> };

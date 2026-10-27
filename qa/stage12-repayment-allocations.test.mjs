@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { reconcileCreditLedger, reconcileRepaymentAllocations } from '../client/src/features/sales/creditLedger.mjs';
 import { assertDebtReversalIsUnallocatedPaymentSafe } from '../client/src/features/sales/reversalDebtGuard.mjs';
 
-const sale = (id, amount = 100, customerId = 'alice', businessProfileId = 'gh') => ({id, customerId, businessProfileId, outstandingMinor: amount});
-const payment = (id, amountMinor, parts, customerId='alice', businessProfileId='gh') => ({id, amountMinor, customerId, businessProfileId, ...(parts === undefined ? {} : {saleAllocations:parts})});
+const sale = (id, amount = 100, customerId = 'alice', businessProfileId = 'gh') => ({id, customerId, businessProfileId, currency:'GHS', outstandingMinor: amount});
+const payment = (id, amountMinor, parts, customerId='alice', businessProfileId='gh') => ({id, amountMinor, customerId, businessProfileId, currency:'GHS', ...(parts === undefined ? {} : {saleAllocations:parts})});
 const part = (saleId, amountMinor) => ({saleId, amountMinor});
 const a=sale('a',100), b=sale('b',250);
 
@@ -43,12 +43,12 @@ test('refuse cumulative overspend of one sale across distinct payments',()=>{
   assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('1',70,[part('a',70)]),payment('2',31,[part('a',31)])]),/exceed/);
 });
 test('refuse allocation to a different customer or business',()=>{
-  assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('r',50,[part('a',50)],'bob')]),/foreign/);
-  assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('r',50,[part('a',50)],'alice','other')]),/foreign/);
+  assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('r',50,[part('a',50)],'bob')]),/foreign|identities/);
+  assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('r',50,[part('a',50)],'alice','other')]),/foreign|identities/);
 });
 test('refuse missing sale targets and a stale allocation after full reversal',()=>{
   assert.throws(()=>reconcileCreditLedger([a,b],[],[payment('r',50,[part('missing',50)])]),/missing/);
-  const rev={originalSaleId:'a',customerId:'alice',reversedOutstandingMinor:-100};
+  const rev={originalSaleId:'a',customerId:'alice',businessProfileId:'gh',reversedOutstandingMinor:-100};
   assert.throws(()=>reconcileCreditLedger([a,b],[rev],[payment('r',50,[part('a',50)])]),/reversed/);
 });
 test('refuse invalid shape, absent entries, excessive entry count and zero amount',()=>{

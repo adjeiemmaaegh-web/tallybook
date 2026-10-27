@@ -38,7 +38,7 @@ test('foreign company, changed currency, unmatched tender and full reversal fail
   assert.throws(()=>verify([{...first,businessProfileId:'other'}]),/supported|linked/i);
   assert.throws(()=>verify([{...first,currency:'USD'}]),/supported/i);
   assert.throws(()=>reconcileCashPartialReturns([sale],lines,[],[first]),/tender/i);
-  assert.throws(()=>reconcileCashPartialReturns([sale],lines,payments,[first],[{originalSaleId:'sale-1'}]),/supported/i);
+  assert.throws(()=>reconcileCashPartialReturns([sale],lines,payments,[first],[{originalSaleId:'sale-1'}]),/supported|orphaned/i);
 });
 test('customer/credit/wallet sale cannot use cash-only lane',()=>{
   for (const patch of [{customerId:'c1'},{paymentMethod:'credit'},{walletAppliedMinor:1},{currency:undefined}])

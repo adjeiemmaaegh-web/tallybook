@@ -71,10 +71,10 @@ describe("Stage 2/3 prepaid ledger integration integrity",()=>{
 
 describe('FIN-002 supplier history and cash separation',()=>{
   const range = financialRange('custom',new Date('2026-10-10T12:00:00Z'),'2026-10-10','2026-10-10');
-  const purchase = {id:'p-1',businessProfileId:'shop',supplierId:'sup',totalCostMinor:10000,currency:'GHS',purchaseDate:'2026-10-09'} as NonNullable<FinancialInputs['purchases']>[number];
+  const purchase = {id:'p-1',businessProfileId:'shop',supplierId:'sup',totalCostMinor:10000,currency:'GHS',purchaseDate:'2026-10-09',createdAt:'2026-10-09T00:00:00Z'} as NonNullable<FinancialInputs['purchases']>[number];
   const entry=(kind:'recognition'|'payment'|'credit',id:string,amountMinor:number,createdAt:string)=>({
     id,submissionKey:id,businessProfileId:'shop',supplierId:'sup',purchaseId:'p-1',currency:'GHS',kind,
-    amountMinor,createdAt,...(kind==='payment'?{method:'cash' as const}:{})
+    amountMinor,createdAt:`${createdAt}Z`,...(kind==='payment'?{method:'cash' as const}:{})
   });
   it('exposes saved supplier liabilities as-of and period payments separately from expenses and cash',()=>{
     const supplierPayableEntries=[entry('payment','pay',2000,at('2026-10-10')),entry('recognition','liability',10000,at('2026-10-09')),entry('credit','credit',3000,at('2026-10-10'))];

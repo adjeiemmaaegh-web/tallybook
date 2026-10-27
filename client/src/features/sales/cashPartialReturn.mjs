@@ -19,11 +19,17 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
   }
   const bySale = new Map();
   const ids = new Set(), keys = new Set(), movementIds = new Set(), costIds = new Set();
-  const reversed = new Set(fullReversals.map(r => r.originalSaleId));
+  const reversed = new Set();
+  for (const row of fullReversals) {
+    const original = saleById.get(row?.originalSaleId);
+    if (!original || row.businessProfileId !== original.businessProfileId || reversed.has(row.originalSaleId))
+      throw new Error('Cash-return history contains an orphaned or duplicate full reversal.');
+    reversed.add(row.originalSaleId);
+  }
   const ordered = [...returns].sort((a,b) => (a.returnSequence ?? 0) - (b.returnSequence ?? 0) || String(a.id).localeCompare(String(b.id)));
   for (const entry of ordered) {
     if (!validId(entry?.id) || ids.has(entry.id) || !validId(entry.submissionKey) ||
-        keys.has(`${entry.businessProfileId}:${entry.submissionKey}`) ||
+        keys.has(entry.submissionKey) ||
         !validId(entry.originalSaleId) || !validId(entry.businessProfileId) ||
         typeof entry.createdAt !== 'string' || !Number.isFinite(Date.parse(entry.createdAt)) ||
         entry.refundMethod !== 'cash' || entry.disposition !== 'restockable' ||
@@ -33,7 +39,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         !Array.isArray(entry.lines) || entry.lines.length === 0 || entry.lines.length > 256) {
       throw new Error('Saved cash return has malformed or duplicated evidence.');
     }
-    ids.add(entry.id);keys.add(`${entry.businessProfileId}:${entry.submissionKey}`);
+    ids.add(entry.id);keys.add(entry.submissionKey);
     const sale = saleById.get(entry.originalSaleId);
     if (!sale || sale.businessProfileId !== entry.businessProfileId || reversed.has(sale.id) ||
         sale.customerId !== undefined || sale.paymentMethod !== 'cash' ||
@@ -68,7 +74,6 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     const prior = existing.flatMap(p => p.lines.map(row => ({saleLineId:row.saleLineId,quantity:row.quantity})));
     const plan = planPartialSaleReturn(sale,lines,prior,requested);
     if (sale.tax && !plan.taxPolicyVerified) throw new Error('Cash return requires verified original tax policy evidence.');
-    if (sale.tax && !plan.taxPolicyVerified) throw new Error('Cash return requires verified saved tax policy.');
     if (plan.draftAmountMinor !== entry.refundedMinor || plan.draftTaxMinor !== entry.returnedTaxMinor ||
         plan.draftTaxableMinor !== entry.returnedTaxableMinor || plan.draftDiscountMinor !== entry.returnedDiscountMinor) {
       throw new Error('Cash return saved amounts do not reconcile with original invoice components.');

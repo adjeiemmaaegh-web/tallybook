@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {reconcileSupplierPayable, reconcileSupplierPayables} from '../client/src/features/purchases/supplierPayables.mjs';
-const p = { id:'p-1', businessProfileId:'shop-A', supplierId:'supplier-A', totalCostMinor:10000, currency:'GHS' };
+const p = { id:'p-1', businessProfileId:'shop-A', supplierId:'supplier-A', totalCostMinor:10000, currency:'GHS', createdAt:'2026-10-09T00:00:00Z' };
 const row = (kind, amountMinor, n, extras={}) => ({ id:`entry-${n}`, submissionKey:`submit-${n}`, businessProfileId:p.businessProfileId, supplierId:p.supplierId, purchaseId:p.id, currency:p.currency, kind, amountMinor, createdAt:`2026-10-10T12:00:0${Math.min(n,9)}Z`, ...extras });
 const r = row('recognition',10000,1);
 const pay = row('payment',2000,2,{method:'mobile'});

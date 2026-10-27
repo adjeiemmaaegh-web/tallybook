@@ -1,6 +1,6 @@
 import { reconcileCreditLedger, reconcileRepaymentAllocations } from './creditLedger.mjs';
 /**
- * Repayments are presently customer-scoped, not allocated to a particular sale.
+ * Repayments can have exact sale links or legacy unallocated balances.
  * An aggregate positive debt balance cannot prove that THIS sale is unpaid.
  * Fail closed rather than erase previously collected money from another sale.
  */
@@ -8,7 +8,7 @@ export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, 
   if (!sale || !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0)
     throw new Error('Sale debt needs reconciliation before reversal.');
   reconcileCreditLedger(customerSales, reversals, repayments);
-  if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId))
+  if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId && row.outstandingMinor === sale.outstandingMinor))
     throw new Error('Reversal sale is not part of the customer ledger.');
   if (reversals.some(row => row.originalSaleId === sale.id)) throw new Error('Sale is already reversed.');
   if (sale.outstandingMinor > 0) {
@@ -18,4 +18,13 @@ export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, 
     if ((allocation.allocatedBySale.get(sale.id) ?? 0) > 0)
       throw new Error('This credit sale has linked repayments and cannot be fully reversed without a separate settlement adjustment.');
   }
+  // Reconcile the hypothetical signed reversal against every saved customer
+  // posting before permitting stock or customer-benefit changes. This also
+  // rejects any reversal which would create an overpayment or negative debt.
+  reconcileCreditLedger(customerSales, [...reversals, {
+    businessProfileId: sale.businessProfileId,
+    customerId: sale.customerId,
+    originalSaleId: sale.id,
+    reversedOutstandingMinor: -sale.outstandingMinor,
+  }], repayments);
 }

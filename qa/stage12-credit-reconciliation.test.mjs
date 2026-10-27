@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { checkedMinorSum, checkedCreditExposure, reconcileCreditLedger } from '../client/src/features/sales/creditLedger.mjs';
-const sale = (id, outstandingMinor, customerId = 'customer-a') => ({ id, customerId, outstandingMinor });
-const reversal = (originalSaleId, reversedOutstandingMinor, customerId = 'customer-a') => ({ originalSaleId, reversedOutstandingMinor, customerId });
-const repayment = (amountMinor) => ({ amountMinor });
+const sale = (id, outstandingMinor, customerId = 'customer-a') => ({ id, customerId, businessProfileId:'shop-A', currency:'GHS', outstandingMinor });
+const reversal = (originalSaleId, reversedOutstandingMinor, customerId = 'customer-a') => ({ originalSaleId, reversedOutstandingMinor, customerId, businessProfileId:'shop-A' });
+const repayment = (amountMinor) => ({ amountMinor, customerId:'customer-a', businessProfileId:'shop-A', currency:'GHS' });
 
 test('credit exposure subtracts persisted NEGATIVE reversal deltas and repayments before extending credit', () => {
   const sales = [sale('s1', 500), sale('s2', 200)];
@@ -24,7 +24,7 @@ test('rejects orphan/duplicate reversals, duplicated sales, mismatched customers
   assert.throws(() => reconcileCreditLedger([], [reversal('unknown', -50)], []), /reversal/);
   assert.throws(() => reconcileCreditLedger([sale('s1', 100)], [reversal('s1', -100), reversal('s1', -100)], []), /reversal/);
   assert.throws(() => reconcileCreditLedger([sale('s1', 100), sale('s1', 100)], [], []), /identities/);
-  assert.throws(() => reconcileCreditLedger([sale('s1', 100)], [reversal('s1', -100, 'foreign-customer')], []), /reversal/);
+  assert.throws(() => reconcileCreditLedger([sale('s1', 100)], [reversal('s1', -100, 'foreign-customer')], []), /reversal|identities/);
   assert.throws(() => reconcileCreditLedger([{ id: '', outstandingMinor: 100 }], [], []), /identities/);
 });
 test('rejects unsafe sums, negative and fractional source values', () => {

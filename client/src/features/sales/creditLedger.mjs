@@ -34,8 +34,20 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
   }
   const reversed = new Set(reversals.map(row => row.originalSaleId));
   const allocatedBySale = new Map();
+  const repaymentIds = new Set();
+  const repaymentKeys = new Set();
   let unallocatedMinor = 0;
   for (const repayment of repayments) {
+    if (repayment?.id !== undefined) {
+      if (typeof repayment.id !== 'string' || !repayment.id || repaymentIds.has(repayment.id))
+        throw new Error('Duplicate or missing repayment identity in allocation history.');
+      repaymentIds.add(repayment.id);
+    }
+    if (repayment?.submissionKey !== undefined) {
+      if (typeof repayment.submissionKey !== 'string' || !repayment.submissionKey || repaymentKeys.has(repayment.submissionKey))
+        throw new Error('Duplicate repayment operation key in allocation history.');
+      repaymentKeys.add(repayment.submissionKey);
+    }
     if (!Number.isSafeInteger(repayment?.amountMinor) || repayment.amountMinor < 0)
       throw new Error('Invalid repayment amount in allocation evidence.');
     if (repayment.saleAllocations === undefined) {
@@ -43,6 +55,10 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
       if (!Number.isSafeInteger(unallocatedMinor)) throw new Error('Repayment allocation exceeds safe money bounds.');
       continue;
     }
+    if (repayment.saleAllocations !== undefined &&
+        (typeof repayment.businessProfileId !== 'string' || !repayment.businessProfileId ||
+         typeof repayment.customerId !== 'string' || !repayment.customerId))
+      throw new Error('Repayment allocation lacks its company or customer identity.');
     if (repayment.amountMinor === 0 || !Array.isArray(repayment.saleAllocations) ||
         repayment.saleAllocations.length === 0 || repayment.saleAllocations.length > 256)
       throw new Error('Repayment allocation must be a nonempty list for a positive repayment.');
@@ -60,8 +76,10 @@ export function reconcileRepaymentAllocations(sales, reversals, repayments) {
       // A positive allocation cannot link amounts with contradictory or only
       // one-sided currency evidence. Two historical unknowns are preserved as
       // unverifiable history, not silently migrated to today's profile currency.
-      if (sale.currency !== repayment.currency)
-        throw new Error('Repayment allocation currency does not match saved sale currency evidence.');
+      if (typeof sale.currency !== 'string' || !/^[A-Z]{3}$/.test(sale.currency) ||
+          typeof repayment.currency !== 'string' || !/^[A-Z]{3}$/.test(repayment.currency) ||
+          sale.currency !== repayment.currency)
+        throw new Error('Repayment allocation requires matching verified original-sale and payment currencies.');
       allocatedTotal += entry.amountMinor;
       const paid = (allocatedBySale.get(entry.saleId) ?? 0) + entry.amountMinor;
       if (!Number.isSafeInteger(allocatedTotal) || !Number.isSafeInteger(paid) || paid > sale.outstandingMinor)
@@ -130,24 +148,49 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
     throw new Error('Customer ledger is unavailable for reconciliation.');
   }
   const saleById = new Map();
+  let ledgerOwner = null;
+  // Every record in this aggregate must refer to one exact customer/company.
+  // Refuse unscoped or foreign entries rather than presenting blended debt.
+  const assertOwner = (row) => {
+    if (typeof row?.businessProfileId !== 'string' || !row.businessProfileId ||
+        typeof row?.customerId !== 'string' || !row.customerId)
+      throw new Error('Customer ledger contains an unscoped financial entry.');
+    if (ledgerOwner === null) ledgerOwner = [row.businessProfileId, row.customerId];
+    else if (row.businessProfileId !== ledgerOwner[0] || row.customerId !== ledgerOwner[1])
+      throw new Error('Customer ledger mixes company or customer identities.');
+  };
   for (const sale of sales) {
     if (typeof sale?.id !== 'string' || !sale.id || saleById.has(sale.id)) {
       throw new Error('Customer ledger has missing or duplicate sale identities.');
     }
+    assertOwner(sale);
     saleById.set(sale.id, sale);
   }
+  for (const repayment of repayments) assertOwner(repayment);
+  for (const reversal of reversals) assertOwner(reversal);
   // Currency is as important as the integer amount: never add GHS to USD.
   inspectReceivableCurrency(sales, repayments);
   const grossOutstandingMinor = checkedMinorSum(sales, 'outstandingMinor');
   const seenOriginals = new Set();
+  const reversalIds = new Set();
+  const reversalKeys = new Set();
   const reversalCredits = [];
   for (const reversal of reversals) {
+    if (reversal.id !== undefined && (typeof reversal.id !== 'string' || !reversal.id || reversalIds.has(reversal.id))) throw new Error('Invalid or repeated reversal identity.');
+    if (reversal.submissionKey !== undefined && (typeof reversal.submissionKey !== 'string' || !reversal.submissionKey || reversalKeys.has(reversal.submissionKey))) throw new Error('Invalid or repeated reversal operation.');
+    if (reversal.id) reversalIds.add(reversal.id);
+    if (reversal.submissionKey) reversalKeys.add(reversal.submissionKey);
     const originalId = reversal?.originalSaleId;
     const sale = saleById.get(originalId);
     if (typeof originalId !== 'string' || !originalId || !sale || seenOriginals.has(originalId) ||
         !Number.isSafeInteger(reversal.reversedOutstandingMinor) || reversal.reversedOutstandingMinor > 0 ||
         reversal.reversedOutstandingMinor !== -sale.outstandingMinor ||
-        (sale.customerId !== undefined && reversal.customerId !== sale.customerId)) {
+        (reversal.reversedSaleTotalMinor !== undefined &&
+          (!Number.isSafeInteger(sale.totalMinor) || reversal.reversedSaleTotalMinor !== -sale.totalMinor)) ||
+        (reversal.reversedReceivedMinor !== undefined &&
+          (!Number.isSafeInteger(sale.amountPaidMinor) || reversal.reversedReceivedMinor !== -sale.amountPaidMinor)) ||
+        reversal.businessProfileId !== sale.businessProfileId ||
+        reversal.customerId !== sale.customerId) {
       throw new Error('Customer ledger contains an invalid, orphaned or duplicate sale reversal.');
     }
     seenOriginals.add(originalId);

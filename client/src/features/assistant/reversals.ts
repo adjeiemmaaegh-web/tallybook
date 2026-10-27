@@ -25,6 +25,8 @@ export interface SaleReversal {
   submissionKey: string;
   reversedSaleTotalMinor: number;
   reversedReceivedMinor: number;
+  /** Negative accounting adjustment only; does not attest that cash or provider money was returned. */
+  refundDisbursementStatus?: 'not-recorded';
   reversedOutstandingMinor: number;
   lines: SaleReversalLine[];
   staffId?: string;
@@ -33,7 +35,8 @@ export interface SaleReversal {
 export interface ReversalPreview { saleId: string; receiptNumber: string; totalMinor: number; createdAt: string; lines: Array<{ productName: string; quantity: number }>; text: string; reversal?: SaleReversal }
 
 async function latestReversibleSale(database: TallybookDB, activeId: string) {
-  const sales = await database.sales.where("businessProfileId").equals(activeId).reverse().sortBy("createdAt");
+  const sales = (await database.sales.where("businessProfileId").equals(activeId).toArray())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
   for (const sale of sales) {
     const existing = await database.saleReversals.where("originalSaleId").equals(sale.id).first();
     const partial = await database.cashPartialReturns.where("originalSaleId").equals(sale.id).first();
@@ -58,7 +61,7 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const products = await Promise.all(lines.map((line) => database.products.get(line.productId)));
   const named = lines.map((line, index) => ({ productName: products[index]?.name ?? line.productName ?? "Unknown product", quantity: line.quantity }));
   assertCompanyScope(activeId, getActiveBusinessProfileId());
-  return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving reversal; the original sale will remain in history and nothing is changed yet.` };
+  return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving accounting reversal. This action does not issue or verify a cash, card, or mobile money refund. The original sale remains in history, and nothing changes yet.` };
 }
 
 export async function executeLatestSaleReversal(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
@@ -68,15 +71,28 @@ export async function executeLatestSaleReversal(currency: string, database: Tall
 
 async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.centralOperationalEvents, database.cashPartialReturns, database.sales, database.saleLines, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.centralOperationalEvents, database.cashPartialReturns, database.sales, database.saleLines, database.payments, database.receipts, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission("refund", database, activeId);
     const shift = await activeStaffShift(staff, database);
-    const existingByKey = await database.saleReversals.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
-    if(existingByKey){
-      const previousSale=await database.sales.get(existingByKey.originalSaleId);
-      if(!previousSale||previousSale.businessProfileId!==activeId||previousSale.currency!==currency)
-        throw new Error("Reversal retry currency or original sale needs reconciliation.");
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before reversing a sale.');
+    if (typeof submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
+      throw new Error('Invalid reversal submission key.');
+    const reversalMatches = await database.saleReversals.where("[businessProfileId+submissionKey]").equals([activeId, submissionKey]).toArray();
+    if (reversalMatches.length > 1) throw new Error("Reversal submission key has duplicate saved records.");
+    const existingByKey = reversalMatches[0];
+    if (existingByKey && existingByKey.businessProfileId !== activeId) throw new Error("Reversal key belongs to another company.");
+    if (existingByKey) {
+      const original = await database.sales.get(existingByKey.originalSaleId);
+      if (original && original.currency !== currency)
+        throw new Error('Saved reversal retry currency does not match its original sale.');
+      if (!original || original.businessProfileId !== activeId ||
+          existingByKey.originalReceiptNumber !== original.receiptNumber ||
+          existingByKey.customerId !== original.customerId ||
+          (existingByKey.refundDisbursementStatus !== undefined && existingByKey.refundDisbursementStatus !== 'not-recorded') ||
+          existingByKey.reversedSaleTotalMinor !== -original.totalMinor ||
+          existingByKey.reversedReceivedMinor !== -original.amountPaidMinor || existingByKey.reversedOutstandingMinor !== -original.outstandingMinor)
+        throw new Error('Saved reversal retry does not reconcile with its original sale.');
       return existingByKey;
     }
     const sale = await latestReversibleSale(database, activeId);
@@ -87,11 +103,42 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if(!currentProfile)throw new Error('Company return policy is unavailable.');
     const now=new Date().toISOString();
     const policyEvidence=authorizeReturnPolicy(currentProfile.returnPolicyHistory,sale,'full',now);
-    if (sale.customerId && sale.outstandingMinor > 0) {
+    if (sale.customerId) {
       const debts = await database.sales.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       const reversals = await database.saleReversals.where("businessProfileId").equals(activeId).and(row => row.customerId === sale.customerId).toArray();
       const repayments = await database.repayments.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       assertDebtReversalIsUnallocatedPaymentSafe(sale, debts, reversals, repayments);
+    }
+    // A negative accounting receipt cannot be created from an unverifiable
+    // original tender. Wallet tenders use customer-benefit postings instead
+    // of new external cash payments; credit sales carry no initial payment.
+    const [originalReceipts, originalPayments] = await Promise.all([
+      database.receipts.where("saleId").equals(sale.id).toArray(),
+      database.payments.where("saleId").equals(sale.id).toArray(),
+    ]);
+    if (originalReceipts.length !== 1 ||
+        originalReceipts[0].businessProfileId !== activeId ||
+        originalReceipts[0].receiptNumber !== sale.receiptNumber)
+      throw new Error("Original receipt evidence must reconcile before reversal.");
+    if (!Number.isSafeInteger(sale.amountPaidMinor) || sale.amountPaidMinor < 0 ||
+        !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor < 0 ||
+        !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0 ||
+        sale.amountPaidMinor + sale.outstandingMinor !== sale.totalMinor)
+      throw new Error("Original sale payment and debt amounts do not reconcile.");
+    if (sale.paymentMethod === "wallet" || sale.paymentMethod === "credit") {
+      if (originalPayments.length !== 0)
+        throw new Error("Wallet or credit sale has contradictory external tender evidence.");
+    } else if (sale.amountPaidMinor === 0) {
+      if (originalPayments.length !== 0)
+        throw new Error("Unpaid original sale has contradictory tender evidence.");
+    } else {
+      if (originalPayments.length !== 1 ||
+          originalPayments[0].businessProfileId !== activeId ||
+          originalPayments[0].saleId !== sale.id ||
+          originalPayments[0].customerId !== sale.customerId ||
+          originalPayments[0].method !== sale.paymentMethod ||
+          originalPayments[0].amountMinor !== sale.amountPaidMinor)
+        throw new Error("Original cash or provider tender needs reconciliation before reversal.");
     }
     const lines = await database.saleLines.where("saleId").equals(sale.id).toArray();
     if (!lines.length) throw new Error("The sale has no lines, so it cannot be reversed safely.");
@@ -148,17 +195,23 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
         await database.inventoryBatches.put(batch);
       }
     }
-    const reversal: SaleReversal = {policyEvidence, id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
+    const reversal: SaleReversal = {policyEvidence, id: nanoid(14), businessProfileId: activeId, originalSaleId: sale.id, originalReceiptNumber: sale.receiptNumber, customerId: sale.customerId, createdAt: now, submissionKey, reversedSaleTotalMinor: -sale.totalMinor, reversedReceivedMinor: -sale.amountPaidMinor, refundDisbursementStatus: 'not-recorded', reversedOutstandingMinor: -sale.outstandingMinor, lines: reversalLines, ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{}) };
     if (sale.customerId) {
       const linked = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
         .filter(entry => entry.businessProfileId === activeId &&
           (entry.submissionKey === `sale-points-${sale.id}` || entry.submissionKey === `sale-wallet-${sale.id}` || entry.submissionKey === `sale-redeemed-${sale.id}`));
-      if (linked.length > 3) throw new Error("Duplicate customer benefits for this sale; reconcile before reversal.");
+      const benefitKeys = new Set(linked.map(entry => entry.submissionKey));
+      if (linked.length > 3 || benefitKeys.size !== linked.length)
+        throw new Error("Duplicate customer benefits for this sale; reconcile before reversal.");
       for (const entry of linked) {
         const entries = (await database.customerBenefits.where("customerId").equals(sale.customerId).toArray())
           .filter(row => row.businessProfileId === activeId && row.kind === entry.kind);
-        const available = entries.reduce((sum, row) => sum + row.delta, 0);
-        if (!Number.isSafeInteger(available) || available - entry.delta < 0)
+        const available = entries.reduce((sum, row) => {
+          if (!Number.isSafeInteger(row.delta) || !Number.isSafeInteger(sum + row.delta))
+            throw new Error("Customer benefit history exceeds safe balance limits.");
+          return sum + row.delta;
+        }, 0);
+        if (!Number.isSafeInteger(available - entry.delta) || available - entry.delta < 0)
           throw new Error("Customer rewards were already spent. Reconcile the benefit balance before reversing this sale.");
         await database.customerBenefits.add({ id: nanoid(14), businessProfileId: activeId,
           customerId: sale.customerId, kind: entry.kind, delta: -entry.delta,
@@ -168,7 +221,11 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     }
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error('Company changed before completing the full reversal.');
-    await requirePermission('refund',database,activeId);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const postingStaff = await requirePermission('refund',database,activeId);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === 'cashier' && !postingShift)
+      throw new Error('Cashier shift closed before sale reversal was recorded.');
     await database.saleReversals.add(reversal);
     await database.centralOperationalEvents.add(makeCentralSaleReversalEvent(reversal,sale));
     if(staff)await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:staff.id,action:'sale.reversed',createdAt:now,details:reversal.id});

@@ -82,11 +82,14 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
     const shift = await activeStaffShift(staff,database);
+    if (staff?.role === 'cashier' && !shift)
+      throw new Error('Open a shift before recording a cash refund.');
     if (getActiveBusinessProfileId() !== company) throw new Error('Company switched during the return.');
     // Never silently replay a refund after a network/UI retry: the cashier
     // must inspect the existing event instead of accidentally handing cash twice.
-    if (await database.cashPartialReturns.where('[businessProfileId+submissionKey]').equals([company,values.submissionKey]).first())
-      throw new Error('This cash return was already recorded; inspect the saved return before handing out money again.');
+    const priorWithKey = await database.cashPartialReturns.where('[businessProfileId+submissionKey]').equals([company,values.submissionKey]).toArray();
+    if (priorWithKey.length > 1) throw new Error('Duplicate cash return operation records require reconciliation.');
+    if (priorWithKey.length) throw new Error('This cash return operation was already recorded or belongs to another company; inspect saved evidence before handing out money.');
     const sale = await database.sales.get(values.originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('The original sale is unavailable in this company.');
     const companyProfile=await database.businessProfiles.get(company);
@@ -165,7 +168,11 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{})};
     reconcileCashPartialReturns([sale],lines,payments,[...prior,recorded],full);
     if (getActiveBusinessProfileId() !== company) throw new Error("Company switched during cash refund posting.");
-    await requirePermission("refund",database,company);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const postingStaff = await requirePermission("refund",database,company);
+    const postingShift = await activeStaffShift(postingStaff,database);
+    if (postingStaff?.role === 'cashier' && !postingShift)
+      throw new Error('Cashier shift closed before refund was recorded.');
     await database.cashPartialReturns.add(recorded);
     await database.centralOperationalEvents.add(makeCentralCashRefundEvent(recorded,sale));
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,

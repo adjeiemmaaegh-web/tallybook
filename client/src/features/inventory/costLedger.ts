@@ -130,7 +130,13 @@ type Context = Pick<InventoryCostEvent, "sourceId" | "createdAt"> & Partial<Pick
 /** Caller commits the matching product/movement in this same transaction. */
 export async function appendInventoryCostChange(database: TallybookDB, product: Product, quantityDelta: number, context: Context, options: { opening?: boolean; unitCostMinor?: number } = {}) {
   requireLedgerTransaction(database);
-  if (!Number.isSafeInteger(quantityDelta) || !whole(product.stockQuantity)) throw new Error("Invalid stock quantity for cost posting.");
+  if (!Number.isSafeInteger(quantityDelta) || !whole(product.stockQuantity) ||
+      (quantityDelta === 0 && !options.opening))
+    throw new Error("Inventory cost posting requires a nonzero stock change.");
+  if (options.opening && quantityDelta < 0)
+    throw new Error("Opening cost evidence cannot reduce inventory.");
+  if (options.unitCostMinor !== undefined && (!whole(options.unitCostMinor) || quantityDelta < 0))
+    throw new Error("Unit purchase cost must be a nonnegative safe integer on a stock receipt.");
   if (context.batchId !== undefined && (!context.batchId.trim() || !context.purchaseId || quantityDelta <= 0 || options.opening)) throw new Error("A batch cost link must belong to a positive supplier receipt.");
   const events = await history(database, product);
   if (options.opening && events.length) throw new Error("Opening cost evidence already exists.");

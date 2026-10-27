@@ -4,8 +4,8 @@ import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { activeStaffShift, requirePermission } from '@/features/staff/staff';
-import { reconcileSupplierPayable } from './supplierPayables.mjs';
 import {makeCentralSupplierEntryEvent} from '@/features/sync/centralOperationalEvent';
+import { reconcileSupplierPayable, validSupplierLedgerTimestamp } from './supplierPayables.mjs';
 
 /** Offline manual attestations, not verified bank/provider settlements. */
 export interface SupplierPayableEntry {
@@ -42,6 +42,7 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before recognizing supplier liabilities.');
     const purchase = await database.purchases.get(purchaseId);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before recognizing supplier debt.');
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase is missing, foreign or has no verified currency snapshot; reconcile it before recognizing debt.');
@@ -58,12 +59,15 @@ async function recognizeUnpaidPurchaseWhileLocked(purchaseId: string, submission
     }
     if (entries.length) throw new Error('Supplier liability was already recognized or needs reconciliation.');
     const createdAt = new Date().toISOString();
-    if(!Number.isFinite(Date.parse(purchase.createdAt))||Date.parse(createdAt)<Date.parse(purchase.createdAt))
+    if(!validSupplierLedgerTimestamp(purchase.createdAt)||Date.parse(createdAt)<Date.parse(purchase.createdAt))
       throw new Error('Supplier recognition cannot predate the purchase receipt.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company changed during supplier recognition.');
     const result: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId, currency: purchase.currency, kind: 'recognition', amountMinor: purchase.totalCostMinor, submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
     // Reconcile the PROPOSED recognition inside its write transaction.
     reconcileSupplierPayable(purchase,[...entries,result]);
+    await assertRun7RetailWriteReady(database.appMeta);
+    const finalStaff = await requirePermission('staff',database,company);
+    if (finalStaff?.role === 'cashier' && !await activeStaffShift(finalStaff,database)) throw new Error('Cashier shift closed before recognizing supplier liability.');
     await database.supplierPayableEntries.add(result);
     await database.centralOperationalEvents.add(makeCentralSupplierEntryEvent(result,purchase));
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: 'supplier.liability.recognized', createdAt, details: purchaseId });
@@ -93,12 +97,17 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
   if (input.kind !== 'payment' && input.kind !== 'credit') throw new Error('Choose a payment or supplier credit.');
   if (input.kind === 'payment' && !['cash','bank','card','mobile','other'].includes(input.method ?? '')) throw new Error('Choose a recorded payment method.');
   if (input.kind === 'credit' && input.method !== undefined) throw new Error('A supplier credit is not a cash payment.');
-  if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.length > 120)) throw new Error('Supplier reference is too long.');
+  if (input.reference !== undefined && (typeof input.reference !== 'string' || input.reference.trim().length > 120))
+    throw new Error('Supplier settlement reference is invalid or too long.');
+  const normalizedReference = input.reference?.trim() ?? '';
+  if (input.reference !== undefined && normalizedReference.length === 0)
+    throw new Error('Supplier settlement reference cannot contain only whitespace.');
   const company = getActiveBusinessProfileId();
   return database.transaction('rw', [database.appMeta, database.businessProfiles, database.suppliers, database.purchases, database.supplierPayableEntries, database.centralOperationalEvents, database.staffMembers, database.staffShifts, database.staffAudits], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('staff', database, company);
     const shift = await activeStaffShift(staff, database);
+    if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before posting supplier settlement.');
     const purchase = await database.purchases.get(input.purchaseId);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before supplier settlement.');
     if (!purchase || purchase.businessProfileId !== company || !validCurrency(purchase.currency)) throw new Error('Purchase currency and ownership need reconciliation.');
@@ -110,20 +119,23 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
     const balance = reconcileSupplierPayable(purchase, rows);
     const priorKey = await database.supplierPayableEntries.where('[businessProfileId+submissionKey]').equals([company, input.submissionKey]).first();
     if (priorKey) {
-      if (priorKey.purchaseId === input.purchaseId && priorKey.supplierId === purchase.supplierId && priorKey.currency === purchase.currency && priorKey.kind === input.kind && priorKey.amountMinor === input.amountMinor && priorKey.method === input.method && (priorKey.reference ?? '') === (input.reference?.trim() ?? '')) return priorKey;
+      if (priorKey.purchaseId === input.purchaseId && priorKey.supplierId === purchase.supplierId && priorKey.currency === purchase.currency && priorKey.kind === input.kind && priorKey.amountMinor === input.amountMinor && priorKey.method === input.method && (priorKey.reference ?? '') === normalizedReference) return priorKey;
       throw new Error('Supplier submission key was reused for different details.');
     }
     if (balance.outstandingMinor === null) throw new Error('Confirm an unpaid supplier liability before recording a settlement.');
     if (input.amountMinor > balance.outstandingMinor) throw new Error('Supplier settlement exceeds the remaining liability.');
     const createdAt = new Date().toISOString();
-    if(!Number.isFinite(Date.parse(purchase.createdAt))||Date.parse(createdAt)<Date.parse(purchase.createdAt))
+    if(!validSupplierLedgerTimestamp(purchase.createdAt)||Date.parse(createdAt)<Date.parse(purchase.createdAt))
       throw new Error('Supplier settlement cannot predate its original purchase.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company changed during supplier settlement authorization.');
-    const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(input.reference?.trim() ? {reference:input.reference.trim()} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
+    const entry: SupplierPayableEntry = { id: nanoid(18), businessProfileId: company, supplierId: purchase.supplierId, purchaseId: purchase.id, currency: purchase.currency, kind: input.kind, amountMinor: input.amountMinor, ...(input.method ? {method:input.method} : {}), ...(normalizedReference ? {reference:normalizedReference} : {}), submissionKey: input.submissionKey, createdAt, ...(staff ? { staffId: staff.id } : {}), ...(shift ? { shiftId: shift.id } : {}) };
     // Never depend only on a pre-insertion balance: verify the proposed
     // exact-currency payment/credit and remaining liability in this transaction.
     reconcileSupplierPayable(purchase,[...rows,entry]);
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched before committing supplier settlement.');
+    await assertRun7RetailWriteReady(database.appMeta);
+    const finalStaff = await requirePermission('staff',database,company);
+    if (finalStaff?.role === 'cashier' && !await activeStaffShift(finalStaff,database)) throw new Error('Cashier shift closed before supplier settlement was recorded.');
     await database.supplierPayableEntries.add(entry);
     await database.centralOperationalEvents.add(makeCentralSupplierEntryEvent(entry,purchase));
     if (staff) await database.staffAudits.add({ id: nanoid(14), businessProfileId: company, staffId: staff.id, action: input.kind === 'payment' ? 'supplier.payment.recorded' : 'supplier.credit.recorded', createdAt, details: purchase.id });
@@ -135,7 +147,8 @@ async function recordSupplierSettlementWhileLocked(input: RecordSupplierSettleme
 
 export async function getSupplierPayables(database: TallybookDB = db) {
   const company = getActiveBusinessProfileId();
-  return database.transaction('r', [database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers], async () => {
+  return database.transaction('r', [database.appMeta, database.suppliers, database.purchases, database.supplierPayableEntries, database.staffMembers], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission('reports',database,company);
     const purchases = await database.purchases.where('businessProfileId').equals(company).toArray();
     const entries = await database.supplierPayableEntries.where('businessProfileId').equals(company).toArray();
@@ -148,7 +161,10 @@ export async function getSupplierPayables(database: TallybookDB = db) {
     if(purchases.some(x=>!supplierIds.has(x.supplierId)))throw new Error('Supplier purchase has a missing or foreign supplier identity.');
     if(getActiveBusinessProfileId()!==company)throw new Error('Company switched during supplier balance review.');
     const balanced=reconcileSupplierPayables(purchases, entries);
+    await assertRun7RetailWriteReady(database.appMeta);
     await requirePermission('reports',database,company);
+    if(getActiveBusinessProfileId()!==company)
+      throw new Error('Company changed while reviewing supplier liability.');
     return balanced;
   });
 }

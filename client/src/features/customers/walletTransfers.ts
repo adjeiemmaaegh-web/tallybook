@@ -26,8 +26,9 @@ export async function recordWalletTransfer(input: {
     const businessProfileId=getActiveBusinessProfileId();
     if (!['deposit','refund'].includes(input.kind) || !['cash','card','mobile','bank'].includes(input.method)) throw new Error('Invalid prepaid cash transfer.');
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0 || input.amountMinor > 1_000_000_000) throw new Error('Invalid prepaid cash amount.');
-    if (!input.reference.trim() || input.reference.length > 120) throw new Error('Enter an auditable payment or refund reference.');
-    if (input.submissionKey.length < 8 || input.submissionKey.length > 80) throw new Error('Invalid transfer key.');
+    if (typeof input.reference !== 'string' || !input.reference.trim() || input.reference.length > 120) throw new Error('Enter an auditable payment or refund reference.');
+    if (typeof input.submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,80}$/.test(input.submissionKey)) throw new Error('Invalid transfer key.');
+    if (typeof input.customerId !== 'string' || !input.customerId.trim()) throw new Error('Choose a customer for prepaid transfer.');
     return database.transaction('rw',[database.appMeta,database.businessProfiles,database.customers,database.customerBenefits,database.walletTransfers,database.staffMembers,database.staffShifts,database.staffAudits],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed before prepaid transfer.');
@@ -40,21 +41,82 @@ export async function recordWalletTransfer(input: {
       const currency=profile.currency;
       const customer=await database.customers.get(input.customerId);
       if (!customer || customer.businessProfileId!==businessProfileId || customer.archivedAt) throw new Error('Customer is unavailable.');
-      const prior=await database.walletTransfers.where('[businessProfileId+submissionKey]').equals([businessProfileId,input.submissionKey]).first();
+      // A customer-scoped retry must not bypass a damaged or duplicated
+      // journal. Compare the entire saved key history before returning success.
+      const matchingKeys=await database.walletTransfers.where('[businessProfileId+submissionKey]').equals([businessProfileId,input.submissionKey]).toArray();
+      if (matchingKeys.length > 1) throw new Error('Prepaid transfer key has duplicate saved events.');
+      const prior=matchingKeys[0];
       if (prior) {
         if (prior.businessProfileId!==businessProfileId || prior.currency!==currency || prior.customerId!==input.customerId || prior.kind!==input.kind || prior.amountMinor!==input.amountMinor || prior.method!==input.method || prior.reference!==input.reference.trim()) throw new Error('Transfer key was reused for different details.');
         const linked=await database.customerBenefits.get(prior.benefitEntryId);
         if(!linked || linked.businessProfileId!==businessProfileId || linked.customerId!==prior.customerId ||
-          linked.kind!=='wallet' || linked.delta!==(prior.kind==='deposit'?prior.amountMinor:-prior.amountMinor))
+          linked.kind!=='wallet' || linked.delta!==(prior.kind==='deposit'?prior.amountMinor:-prior.amountMinor) ||
+          linked.submissionKey!==`wallet-transfer-${prior.id}`)
           throw new Error('Saved prepaid transfer needs reconciliation before it can be acknowledged.');
+        // Complete the customer journal and balance audit before acknowledging a retry.
+        // An otherwise valid single transfer must not hide damaged sibling entries.
         if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed during prepaid retry.');
-        return prior;
       }
       const previousTransfers=await database.walletTransfers.where('customerId').equals(input.customerId).and(row=>row.businessProfileId===businessProfileId).toArray();
       if (previousTransfers.some(row=>row.currency!==currency)) throw new Error('Prepaid history has unknown or different currency; reconcile before further transfers.');
+      // Each recorded manual cash movement must still have its exact wallet
+      // posting. Refuse further deposits/refunds if an import or recovery left
+      // the journal and the spendable customer balance inconsistent.
+      const transferIds=new Set<string>();
+      const transferKeys=new Set<string>();
+      const transferBenefitIds=new Set<string>();
+      for (const movement of previousTransfers) {
+        if (transferIds.has(movement.id) || transferKeys.has(movement.submissionKey) ||
+            transferBenefitIds.has(movement.benefitEntryId))
+          throw new Error('Prepaid transfer journal contains repeated movement evidence.');
+        transferIds.add(movement.id);
+        transferKeys.add(movement.submissionKey);
+        transferBenefitIds.add(movement.benefitEntryId);
+        if (!Number.isSafeInteger(movement.amountMinor) || movement.amountMinor <= 0 ||
+            !['deposit','refund'].includes(movement.kind))
+          throw new Error('Prepaid transfer journal contains invalid money evidence.');
+        const posting=await database.customerBenefits.get(movement.benefitEntryId);
+        if (!posting || posting.businessProfileId!==businessProfileId ||
+            posting.customerId!==input.customerId || posting.kind!=='wallet' ||
+            posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor) ||
+            posting.submissionKey!==`wallet-transfer-${movement.id}`)
+          throw new Error('Prepaid transfer and wallet history require reconciliation.');
+      }
       const existing=await database.customerBenefits.where('customerId').equals(input.customerId)
         .and(e=>e.businessProfileId===businessProfileId && e.kind==='wallet').toArray();
-      const balance=existing.reduce((n,e)=>n+e.delta,0);
+      // The reverse direction matters too: a wallet posting can survive a
+      // damaged import without its corresponding transfer journal record.
+      // Do not permit further prepaid cash movement on orphaned evidence.
+      const walletPostIds=new Set<string>();
+      const walletPostKeys=new Set<string>();
+      const transferById=new Map(previousTransfers.map(row=>[row.id,row]));
+      for (const posting of existing) {
+        if (walletPostIds.has(posting.id)) throw new Error('Duplicate prepaid wallet posting identity.');
+        walletPostIds.add(posting.id);
+        if (posting.submissionKey !== undefined) {
+          if (typeof posting.submissionKey !== 'string' || !posting.submissionKey || walletPostKeys.has(posting.submissionKey))
+            throw new Error('Prepaid wallet contains duplicate or invalid posting operation keys.');
+          walletPostKeys.add(posting.submissionKey);
+        }
+        if (typeof posting.submissionKey === 'string' &&
+            posting.submissionKey.startsWith('wallet-transfer-')) {
+          const transferId=posting.submissionKey.slice('wallet-transfer-'.length);
+          const movement=transferById.get(transferId);
+          if (!movement || movement.benefitEntryId!==posting.id ||
+              posting.delta!==(movement.kind==='deposit'?movement.amountMinor:-movement.amountMinor))
+            throw new Error('Prepaid wallet posting has no matching saved transfer.');
+        }
+      }
+      const balance=existing.reduce((n,e)=>{
+        if (!Number.isSafeInteger(e.delta)) throw new Error('Prepaid wallet has invalid financial history.');
+        const next=n+e.delta;
+        if (!Number.isSafeInteger(next)) throw new Error('Prepaid wallet history exceeds safe money limits.');
+        return next;
+      },0);
+      if (prior) {
+        if (!Number.isSafeInteger(balance) || balance < 0) throw new Error('Saved prepaid balance requires reconciliation before acknowledging a retry.');
+        return prior;
+      }
       const delta=input.kind==='deposit'?input.amountMinor:-input.amountMinor;
       if (!Number.isSafeInteger(balance) || balance < 0 || !Number.isSafeInteger(balance+delta) || balance+delta < 0) throw new Error('Prepaid wallet requires reconciliation or has insufficient balance.');
       const now=new Date().toISOString();
@@ -63,6 +125,10 @@ export async function recordWalletTransfer(input: {
         amountMinor:input.amountMinor,currency,method:input.method,reference:input.reference.trim(),benefitEntryId,
         submissionKey:input.submissionKey,createdAt:now,...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{})};
       if(getActiveBusinessProfileId()!==businessProfileId)throw new Error('Company changed before prepaid posting.');
+      await assertRun7RetailWriteReady(database.appMeta);
+      const postingStaff=await requirePermission(input.kind === 'refund' ? 'refund' : 'sell',database,businessProfileId);
+      const postingShift=await activeStaffShift(postingStaff,database);
+      if(postingStaff?.role==='cashier' && !postingShift)throw new Error('Cashier shift closed before prepaid transfer was recorded.');
       await database.customerBenefits.add({id:benefitEntryId,businessProfileId,customerId:input.customerId,
         kind:'wallet',delta,reason:`Verified prepaid ${input.kind}: ${input.reference.trim()}`,
         submissionKey:`wallet-transfer-${transfer.id}`,createdAt:now});
@@ -77,8 +143,9 @@ export async function getWalletTransfers(customerId:string,database:TallybookDB=
   const businessProfileId=getActiveBusinessProfileId();
   const transfers=await database.transaction('r',[database.walletTransfers,database.staffMembers],async()=>{
     await requirePermission('sell',database,businessProfileId);
-    return database.walletTransfers.where('customerId').equals(customerId)
-      .and(row=>row.businessProfileId===businessProfileId).reverse().sortBy('createdAt');
+    const rows=await database.walletTransfers.where('customerId').equals(customerId)
+      .and(row=>row.businessProfileId===businessProfileId).sortBy('createdAt');
+    return rows.reverse();
   });
   if(getActiveBusinessProfileId()!==businessProfileId || transfers.some(row=>row.businessProfileId!==businessProfileId || row.customerId!==customerId))
     throw new Error('Company changed while loading prepaid transfers.');
