@@ -30,7 +30,7 @@ export function CloudBusinessPanel() {
         setUserId(user.id);
         const list = await listVerifiedCloudBusinesses();
         if (active && started === revision.current) {
-          setAccessible(list);
+          setAccessible([...list]);
           setBusiness(list[0] ?? null);
         }
       } catch (cause) {
