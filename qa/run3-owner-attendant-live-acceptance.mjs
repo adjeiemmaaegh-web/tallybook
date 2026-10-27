@@ -24,12 +24,9 @@ export function validateConfig(env){
   if(!UUID.test(env.RUN3_QA_COMPANY_A)||!UUID.test(env.RUN3_QA_COMPANY_B)||
      env.RUN3_QA_COMPANY_A===env.RUN3_QA_COMPANY_B)denied('separate company UUIDs required');
   const endpoint=new URL(env.RUN3_QA_MEMBERSHIP_API);
-  if(endpoint.protocol!=='https:'||endpoint.username||endpoint.password||endpoint.search||
-     endpoint.hash||endpoint.pathname!=='/api/run3/membership'||
-     endpoint.hostname.endsWith('.supabase.co')||
-     ['tallybook-eight.vercel.app','tallybook-emma-0cc9.vercel.app',
-       'tallybook-git-main-emma-0cc9.vercel.app'].includes(endpoint.hostname))
-    denied('dedicated HTTPS test membership API required');
+  if(endpoint.href!==AUTH_ORIGIN+'/functions/v1/tallybook-run3-qa'||
+     endpoint.username||endpoint.password||endpoint.search||endpoint.hash)
+    denied('exact isolated QA Edge membership API required');
   const tokens=required.filter(n=>n.endsWith('_TOKEN')).map(n=>env[n]);
   if(new Set(tokens).size!==3||tokens.some(t=>t.length<20))denied('three independent user sessions required');
   return Object.freeze({authOrigin:AUTH_ORIGIN,api:endpoint.href.replace(/\/$/,''),
@@ -40,6 +37,7 @@ export function validateConfig(env){
 async function request(fetcher,url,{token,key,method='GET',body}={}){
   const response=await fetcher(url,{method,redirect:'error',cache:'no-store',
     headers:{'Accept':'application/json','Cache-Control':'no-store',
+      ...(body?{'Origin':AUTH_ORIGIN}:{}),
       ...(key?{'apikey':key}:{}),...(token?{'Authorization':'Bearer '+token}:{}),
       ...(body?{'Content-Type':'application/json'}:{})},
     ...(body?{body:JSON.stringify(body)}:{})});
@@ -69,7 +67,7 @@ export async function runJourney(config,fetcher=fetch){
   };
   const visible=async(token,company)=>scoped(token,'businesses',company);
   const member=async(token,company)=>scoped(token,'business_members',company);
-  const call=(operation,token,body)=>request(fetcher,api+'/'+operation,{token,method:'POST',body});
+  const call=(operation,token,body)=>request(fetcher,api+'/'+operation,{token,key,method:'POST',body});
   const before=await Promise.all([
     visible(ownerA,companyA),visible(ownerA,companyB),
     visible(ownerB,companyB),visible(ownerB,companyA),
