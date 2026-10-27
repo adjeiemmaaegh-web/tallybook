@@ -1,0 +1,1 @@
+Static-build asset check passed (2 referenced files). This does not replace browser tests.

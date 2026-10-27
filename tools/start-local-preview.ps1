@@ -25,7 +25,13 @@ if (-not (Test-Path 'node_modules/.modules.yaml')) {
   Run-Pnpm -RunArgs @('install', '--frozen-lockfile')
 } else { Write-Host 'Existing node_modules detected; using installed dependencies.' }
 Write-Host 'Building Tallybook browser application...'
-Run-Pnpm -RunArgs @('exec', 'vite', 'build')
+$localVite = Join-Path $root 'node_modules/.bin/vite.cmd'
+if (Test-Path $localVite) {
+  & $localVite build
+  if ($LASTEXITCODE -ne 0) { throw "Local Vite build failed with exit code $LASTEXITCODE." }
+} else {
+  Run-Pnpm -RunArgs @('exec', 'vite', 'build')
+}
 if (-not (Test-Path 'dist/public/index.html')) { throw 'Build did not produce dist/public/index.html.' }
 & node tools/check-static-assets.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Static build asset verification failed.' }

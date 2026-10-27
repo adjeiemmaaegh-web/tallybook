@@ -1,0 +1,24 @@
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:13588) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:11240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/tallybook-local-clone/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer] 
+  ok 1 qa\browser-release.spec.mjs:5:1 › every historical schema opens in native IndexedDB and preserves saved metadata (20.4s)
+  ok 2 qa\browser-release.spec.mjs:33:1 › new setup displays Ghana, GHS, MoMo and provider fields (5.0s)
+  ok 3 qa\browser-release.spec.mjs:42:1 › owner explicitly configures tax and prepared quotation reaches a saved offer (8.3s)
+
+  3 passed (47.7s)

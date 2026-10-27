@@ -60,3 +60,9 @@ V45 adds disabled-by-default staff/device HTTP routes and an explicit browser re
 ## Isolated HTTP lifecycle checkpoint, 2026-10-27
 
 V46's PGlite fixture exercises the guarded HTTP and private coordinator sequence through owner provision, invitation, key proof, signed sale, exact retry and revocation; 9/9 focused native tests passed. The disposable Supabase project still has zero Auth users and sessions. The governing 82 acceptance statuses remain unchanged pending real Auth/Data API, trusted-edge hosting, and the other release gates. See `docs/central/2026-10-27_V46_ISOLATED_HTTP_LIFECYCLE_CHECKPOINT.md`.
+
+## Verified main integration checkpoint — 2026-10-27
+
+The reconciled development application tree at `03a89a2f699fa34eea019f8ee1020448f0eb7efd` was fast-forwarded to both GitHub `main` and `development/v19-unified-reconciliation`; no old branch was deleted or force-pushed. A full independent Windows clone remains in `work/tallybook-local-clone`. The source package, branch disposition and exact evidence are in `MAIN_SOURCE_INTEGRATION_2026-10-27.md`.
+
+Complete client Vitest passed 1030/1030, native QA 435/435, focused server audit 48/48, TypeScript and build passed, and three Chromium suites passed 4/4, 3/3 and 3/3. Local preview returned HTTP 200. These are automated development gates only. **The existing 82 acceptance statuses are unchanged and production remains NO-GO.** Cloud owner/attendant binding and live RLS, representative customer-data migration, Linux optional-sync suite, complete Watchdog interchange, and Windows/Android user acceptance remain open.

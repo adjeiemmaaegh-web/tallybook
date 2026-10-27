@@ -5,7 +5,10 @@
 - Verified development baseline: `development/v19-unified-reconciliation` at `2f60d19a8847606c02e1ed75c6aa1e058b1262b7`.
 - Additional source: `v19/stage22-finance-completion-20261017` at `a2c445f0f1eee41bcfb9926991ff9c23e77e88c6` (53 commits outside the baseline ancestry).
 - Current GitHub `main` before integration: `1d772d70163ce4b01d95f325321b64e651d17a81`.
+- Original uploaded `TALLYBOOK_V19_MASTER_SOURCE.zip` SHA-256: `873b5a363ead6f378b0d36490cf3e6a18192e70922683ba10ba1db0be8140e70`; the input archive was not edited.
 - Merge performed in a separate local review worktree. Both source histories remain available; no existing branch was deleted.
+
+The independent local clone is non-shallow, contains 39 remote heads and 1,159 commits across all refs. `git fsck --full` exited successfully; it reported dangling historic commits/blobs but no object corruption. Both integration commits were pushed to `development/v19-unified-reconciliation`. After the final verification, GitHub `main` was fast-forwarded to the same `03a89a2` source commit. Vercel's deployment stayed unchanged.
 
 The finance branch added stronger supplier liability chronology, customer debt allocation checks, wallet journal validation, historical inventory costing checks, and partial cash-return constraints. Its direct merge failed focused tests. The current merge retains these checks where they match the current schema, while preserving company-scoped operation keys and legacy unknown financial evidence.
 
@@ -23,7 +26,9 @@ The finance branch added stronger supplier liability chronology, customer debt a
 
 - Clean baseline at `2f60d19`: TypeScript and production build passed; native QA 429/429; focused server 30/30; Chromium auth 4/4, release 3/3 and offline 3/3; full client Vitest 1,025/1,025 in 130 files.
 - Merge candidate: TypeScript passed; Vite production build passed; finance client focus 58/58; native QA 435/435 with Windows symlink/disposable Git fixture permissions. Logs are retained in the workspace `evidence/` directory and will be packaged with the final source.
-- Full merged-client suite is running. Its result must be recorded before this merge is accepted.
+- The first complete merged-client run finished with 1,023 passes and two failures in 130 files. One supplier report fixture lacked an ISO timezone and purchase creation timestamp; a reversal retry was denied with a generic message instead of the expected currency-specific message. The corrections passed the focused financial report suite 25/25 and return-policy suite 13/13. The second complete run on `03a89a2` passed 1,030/1,030 across 132 files.
+
+The `fix/clementia-maximize-minimize-2026-10-14` branch was reviewed separately. Its in-place window controls and company/currency conversation isolation were recovered in `03a89a2f699fa34eea019f8ee1020448f0eb7efd`; focused company-isolation and window-control tests passed 9/9. The older branch's unrelated settings styling was not copied over current staff/business behavior.
 
 ## Open release gates
 

@@ -54,3 +54,25 @@ For the complete local source check, run Vitest from `client/` with one worker, 
 ## Dexie v38 continuation
 
 `docs/central/2026-10-26_V38_CASH_REFUND_EVENT_CHECKPOINT.md` documents the additive operational event table, cash-return transaction, and newly portable drawer/no-sale records. Reproduce the focused gate from `client/` with `..\node_modules\.bin\vitest.cmd run src/features/sales/cashPartialReturnPosting.test.ts src/db/unifiedMigration.test.ts src/features/backup/backup.test.ts src/features/credit/stage22ScopedSubmissionMigration.test.ts --maxWorkers=1`. From the repository root, run `node --test client/src/features/backup/tests/run8BackupCompatibility.test.mjs qa/stage12-schema-gate.test.mjs`. The full client, native and browser results and raw logs are in `docs/central/evidence/v38-verification-2026-10-26.md`. Continue with full reversal, repayment, purchase and shift events, each inside its existing write transaction with rollback and backup tests. Keep cloud posting disabled until the inactive Supabase project can be inspected and a separate isolated environment validates enrollment, transactional ingest and RLS.
+
+## Reproduce the 2026-10-27 integrated source checks
+
+Use the independent full clone in `work/tallybook-local-clone` on `development/v19-unified-reconciliation`. With Node 24.19.0 and dependencies from the frozen lockfile already installed, run the commands below from the clone root. The evidence for the integrated application tree is in `docs/reconciliation/evidence/2026-10-27/`.
+
+```powershell
+Push-Location client
+..\node_modules\.bin\vitest.cmd run --maxWorkers=1
+Pop-Location
+node --test qa/*.test.mjs
+```
+
+Run the remaining semantic and build gates from the clone root:
+
+```powershell
+node_modules\.bin\tsc.cmd --noEmit
+node_modules\.bin\vite.cmd build
+```
+
+For local browser use, double-click `START_TALLYBOOK_WINDOWS.cmd` or run `powershell -ExecutionPolicy Bypass -File tools/start-local-preview.ps1`; visit `http://127.0.0.1:4173/`. The launcher builds and checks static assets before serving. Full browser test commands and results are in the raw evidence logs; run them on a machine with the required Chromium installation. A Windows-native full server run still has 43 POSIX-only optional-sync failures; do not mark that gate passed until a Linux run verifies it.
+
+GitHub main contains the reconciled development source, but `vercel.json` disables automatic Git deployments. The public site was not updated by the main fast-forward. The 82 acceptance statuses remain unchanged and production is still NO-GO.
