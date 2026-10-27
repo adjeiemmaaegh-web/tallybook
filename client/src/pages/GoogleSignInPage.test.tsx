@@ -31,6 +31,7 @@ it('shows the verified cloud identity without claiming local data encryption',()
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud session verified/)).toBeTruthy();
  expect(screen.getByText(/does not encrypt or erase/)).toBeTruthy();
+ expect(screen.getByText('Open cloud business setup and local sync status')).toBeTruthy();
 });
 it('switch account signs out before OAuth account selection',async()=>{
  render(<GoogleSignInPage/>);

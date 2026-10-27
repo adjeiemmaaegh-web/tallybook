@@ -19,7 +19,8 @@ export default function StageHome() {
   const websiteUpdate = <section className="op-row-card" style={{ display: "block", marginBottom: 18 }} aria-label="Tallybook website update">
     <div className="op-row-title">Tallybook V19 website update</div>
     <p className="op-row-sub" style={{ margin: "4px 0 10px" }}>Create an account with email or Google, then try the business, staff, sales and backup tools. Business records remain on this device; cloud sync is still being tested.</p>
-    <Link href="/signin" className="secondary-action">Create account or sign in <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+    <div className="flex flex-wrap gap-3"><Link href="/signin" className="secondary-action">Create account or sign in <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+      <Link href="/sync-status" className="secondary-action">Cloud business setup and sync status</Link></div>
   </section>;
   useEffect(() => {
     let mounted = true;
