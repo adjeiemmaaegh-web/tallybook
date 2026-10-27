@@ -9,6 +9,8 @@ import { createUuidPostgresCentralSaleIngestStore } from '../server/centralSaleI
 import { createCentralSaleUuidIngestCoordinator } from '../server/centralSaleUuidIngestCoordinator.mjs';
 import { createStoreDeviceEnrollmentService, deviceKeyEnrollmentBytes } from '../server/storeDeviceEnrollment.mjs';
 import { createPostgresStoreDeviceEnrollmentStore } from '../server/storeDeviceEnrollmentPostgres.mjs';
+import { createUuidStaffShopProvisioningService } from '../server/uuidStaffShopProvisioning.mjs';
+import { createUuidStaffShopProvisioningStore } from '../server/uuidStaffShopProvisioningPostgres.mjs';
 
 const owner='11111111-1111-4111-8111-111111111111';
 const attendant='22222222-2222-4222-8222-222222222222';
@@ -64,6 +66,7 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       revoke all on public.company_local_bindings from anon,authenticated;`);
     await db.exec(file('../docs/security/CENTRAL_SALE_UUID_BASELINE_ISOLATED_SCHEMA.sql'));
     await db.exec(file('../docs/security/DEVICE_KEY_UUID_ENROLLMENT_ISOLATED_SCHEMA.sql'));
+    await db.exec(file('../docs/security/STAFF_SHOP_UUID_BINDING_ISOLATED_SCHEMA.sql'));
     await db.query(`insert into public.businesses(id,owner_id,name,creation_request_id)
       values($1,$2,'A','aaaaaaaa-1111-4111-8111-111111111111'),
             ($3,$4,'B','bbbbbbbb-2222-4222-8222-222222222222')`,
@@ -73,12 +76,22 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       [company,owner,attendant,otherCompany]);
     await db.query(`insert into public.company_local_bindings(company_id,local_company_id,owner_id)
       values($1,'localA',$2),($3,'localB',$4)`,[company,owner,otherCompany,attendant]);
+    const pool={async connect(){return {query:(...args)=>db.query(...args),release(){}};}};
+    const provisioning=createUuidStaffShopProvisioningService({
+      resolveSession:async userId=>({active:true,userId,
+        sessionId:userId===owner?ownerSessionId:sessionId,expiresAtEpochMs:now+60000}),
+      store:createUuidStaffShopProvisioningStore(pool),clock:()=>now,
+    });
+    const binding={companyId:company,localCompanyId:'localA',storeId:'shopA',
+      staffId:'staffA',targetUserId:attendant};
+    await assert.rejects(provisioning.provision({...binding,session:attendant}),/provisioning denied/);
+    const provisioned=await provisioning.provision({...binding,session:owner});
+    assert.deepEqual(await provisioning.provision({...binding,session:owner}),provisioned);
+    assert.equal((await db.query('select count(*)::int as n from public.company_staff_store_binding_audit')).rows[0].n,1);
+    await assert.rejects(provisioning.provision({...binding,session:owner,
+      localCompanyId:'localB'}),/provisioning denied/);
     await db.query(`insert into public.company_store_scopes(company_id,id,status)
-      values($1,'shopA','active'),($2,'shopB','active')`,[company,otherCompany]);
-    await db.query(`insert into public.company_staff_identities(company_id,id,user_id)
-      values($1,'staffA',$2)`,[company,attendant]);
-    await db.query(`insert into public.company_staff_store_assignments(company_id,store_id,staff_id)
-      values($1,'shopA','staffA')`,[company]);
+      values($1,'shopB','active')`,[otherCompany]);
     await db.query(`insert into public.company_device_keys(company_id,id,store_id,user_id,staff_id,
       public_key_spki_pem,status,approved_by,approved_at)
       values($1,'deviceA','shopA',$2,'staffA',$3,'active',$4,now())`,
@@ -92,7 +105,6 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await assert.rejects(insert('localA','shopB'),/foreign key/);
     await insert('localA','shopA');
     assert.equal((await db.query('select count(*)::int as n from public.company_signed_sale_events')).rows[0].n,1);
-    const pool={async connect(){return {query:(...args)=>db.query(...args),release(){}};}};
     const enrollment=createStoreDeviceEnrollmentService({
       resolveSession:async userId=>({active:true,userId,
         sessionId:userId===owner?ownerSessionId:sessionId}),

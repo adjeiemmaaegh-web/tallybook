@@ -75,3 +75,31 @@ test('missing staff rows cannot reopen a protected local business', async ({page
   await expect(page.getByRole('alert').getByText(/protected company has no staff records/i)).toBeVisible();
   await expect(page.getByRole('button', {name:'Create staff'})).toHaveCount(0);
 });
+
+test('non-extractable device key survives browser reload outside business backups',async({page})=>{
+  await page.goto('/sales',{waitUntil:'domcontentloaded'});
+  const scope={supabaseOrigin:'https://test.supabase.co',
+    userId:'11111111-1111-4111-8111-111111111111',
+    cloudCompanyId:'22222222-2222-4222-8222-222222222222',
+    localCompanyId:'localA',staffId:'staffA',shopId:'shopA',deviceId:'browserKeyA'};
+  const created=await page.evaluate(async scope=>{
+    const {createPendingDeviceKey,activateDeviceKey}=await import('/src/features/sync/deviceKeyVault.ts');
+    const user=async()=>scope.userId,local=()=>({companyId:scope.localCompanyId,staffId:scope.staffId});
+    const pending=await createPendingDeviceKey(scope,user,local);
+    await activateDeviceKey(scope,{companyId:scope.cloudCompanyId,storeId:scope.shopId,
+      userId:scope.userId,staffId:scope.staffId,deviceId:scope.deviceId,
+      publicKeyBound:true,hardwareBound:false},user,local);
+    return pending.publicKeySpkiPem;
+  },scope);
+  expect(created).toContain('BEGIN PUBLIC KEY');
+  await page.reload();
+  const reloaded=await page.evaluate(async scope=>{
+    const {loadActiveDeviceKey,forgetDeviceKey}=await import('/src/features/sync/deviceKeyVault.ts');
+    const user=async()=>scope.userId,local=()=>({companyId:scope.localCompanyId,staffId:scope.staffId});
+    const key=await loadActiveDeviceKey(scope,user,local);
+    const signature=await crypto.subtle.sign('Ed25519',key,new TextEncoder().encode('reload-proof'));
+    await forgetDeviceKey(scope,user,local);
+    return {extractable:key.extractable,signatureBytes:signature.byteLength};
+  },scope);
+  expect(reloaded).toEqual({extractable:false,signatureBytes:64});
+});
