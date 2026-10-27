@@ -4,20 +4,22 @@ import GoogleSignInPage from './GoogleSignInPage';
 import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
 
 const mock=vi.hoisted(()=>({
- oauth:vi.fn(),signOut:vi.fn(),retry:vi.fn(),
+ oauth:vi.fn(),emailSignIn:vi.fn(),emailSignUp:vi.fn(),signOut:vi.fn(),retry:vi.fn(),
  state:{status:'signed-in' as string,userId:'user-a' as string|null,
   expiresAtEpochMs:999999999999 as number|null,generation:1}
 }));
 vi.mock('wouter',()=>({Link:({children}:{children:unknown})=><span>{children as string}</span>}));
 vi.mock('@/lib/supabase',()=>({
  isSupabaseConfigured:true,
- getSupabaseClient:()=>({auth:{signInWithOAuth:mock.oauth}})
+ getSupabaseClient:()=>({auth:{signInWithOAuth:mock.oauth,signInWithPassword:mock.emailSignIn,signUp:mock.emailSignUp}})
 }));
 vi.mock('@/auth/useRun4CloudSession',()=>({useRun4CloudSession:vi.fn()}));
 beforeEach(()=>{
  vi.clearAllMocks();
  mock.state.status='signed-in';mock.state.userId='user-a';
  mock.oauth.mockResolvedValue({error:null});
+ mock.emailSignIn.mockResolvedValue({error:null});
+ mock.emailSignUp.mockResolvedValue({data:{session:null},error:null});
  mock.signOut.mockResolvedValue(true);
  vi.mocked(useRun4CloudSession).mockImplementation(()=>({
   state:mock.state as ReturnType<typeof useRun4CloudSession>['state'],
@@ -51,4 +53,23 @@ it('unverified cloud identity never renders signed-in account controls',()=>{
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud identity could not be verified/)).toBeTruthy();
  expect(screen.queryByText('Switch Google account')).toBeNull();
+});
+it('creates an email account and tells the visitor to confirm it',async()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
+ fireEvent.click(screen.getByText('Create account'));
+ await waitFor(()=>expect(mock.emailSignUp).toHaveBeenCalledWith(expect.objectContaining({
+  email:'friend@example.com',password:'test-passphrase'})));
+ expect(screen.getByText(/Check your email and confirm/)).toBeTruthy();
+});
+it('signs in with email before offering a test workspace',async()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
+ fireEvent.click(screen.getByText('Sign in with email'));
+ await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledWith({
+  email:'friend@example.com',password:'test-passphrase'}));
 });

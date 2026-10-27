@@ -1,0 +1,9 @@
+# Friends website test checkpoint — 2026-10-27
+
+Purpose: let invited testers open a separate web origin, create a Supabase Auth account by email or use Google if configured, sign in, and exercise the local Tallybook business workflow on their own device. The website test build requires verified cloud identity before mounting the local ledger. It denies opening an existing local company under a different account in the same browser profile. This is a test isolation safeguard; browser storage is not encrypted and testers must not share browser profiles or use real business data.
+
+`VITE_TALLYBOOK_FRIENDS_TEST_MODE=true` is required only for the separate test deployment. Supabase URL and publishable key must target the isolated `Tallybook V19 Sync Test` project (`lmneuqxfyxplrxjswpma`), never a secret/service key. The original Vercel project and main branch must remain on their current settings.
+
+Email signup follows Supabase's normal confirmation setting. Testers must receive and confirm the email before sign-in if confirmation is enabled. The Auth redirect URL must include the exact test origin. If Google OAuth is offered, its provider and callback configuration must also be verified. Do not claim those external settings are working without a real account flow.
+
+Verification so far: focused auth/workspace tests 8/8, TypeScript exit 0, Vite build exit 0. An attempted complete client run was stopped after it remained in collection output for about three minutes; the previous complete integrated source suite took 1,297 seconds (1030/1030). This increment has not yet completed a fresh full suite. Production cloud sync and owner/attendant cross-device financial sharing are still disabled. Testers' business records remain in IndexedDB on each browser. Do not call this a production release.

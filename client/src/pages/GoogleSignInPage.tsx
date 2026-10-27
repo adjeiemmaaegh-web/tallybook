@@ -9,6 +9,29 @@ export default function GoogleSignInPage(){
   const {state,retry,signOut}=useRun4CloudSession(isSupabaseConfigured);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string|null>(null);
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [message,setMessage]=useState<string|null>(null);
+  async function submitEmail(mode:'signup'|'signin'){
+    if(busy||!isSupabaseConfigured)return;
+    setBusy(true);setError(null);setMessage(null);
+    try{
+      const auth=getSupabaseClient().auth;
+      if(mode==='signup'){
+        const {data,error:authError}=await auth.signUp({email:email.trim(),password,
+          options:{emailRedirectTo:`${window.location.origin}/signin`}});
+        if(authError)throw authError;
+        setMessage(data.session?'Account created. Your test workspace is ready.':
+          'Check your email and confirm your account, then return here to sign in.');
+      }else{
+        const {error:authError}=await auth.signInWithPassword({email:email.trim(),password});
+        if(authError)throw authError;
+        setMessage('Signed in. Open your test workspace.');
+      }
+      setPassword('');
+    }catch(e){setError(e instanceof Error?e.message:'Email authentication failed.');}
+    finally{setBusy(false);}
+  }
   async function signIn(selectAccount=false){
     if(busy||!isSupabaseConfigured)return;
     setBusy(true);setError(null);
@@ -38,9 +61,11 @@ export default function GoogleSignInPage(){
       <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Cloud authentication</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
         Tallybook account</h1>
-      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
-        remain on this device without signing in. Signing out does not encrypt or erase
-        records stored in this browser.</p>
+      <p className="op-row-sub">{import.meta.env.VITE_TALLYBOOK_FRIENDS_TEST_MODE==='true'
+        ? 'Sign in to open the website test workspace. Sales, stock, reports and local backups stay in this browser.'
+        : 'Cloud identity is optional. Sales, stock, reports and local backups remain on this device without signing in.'}
+        {' '}Signing out does not encrypt or erase records stored in this browser.</p>
+      <p className="op-row-sub">For website testing, each person should use their own browser profile or device. Business records remain on that device until synchronization is separately enabled.</p>
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
        state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
@@ -63,8 +88,16 @@ export default function GoogleSignInPage(){
          {state.status==='error'?<button className="secondary-action" type="button"
            onClick={()=>void retry()}><RefreshCw className="h-4 w-4"/>Retry</button>:null}
        </div>}
+      {isSupabaseConfigured&&state.status!=='signed-in'?<form className="space-y-3 mt-5" onSubmit={event=>{event.preventDefault();void submitEmail('signin');}}>
+        <h2 className="font-semibold">Use email and password</h2>
+        <label className="block">Email<input className="w-full rounded border p-3" type="email" autoComplete="email" required value={email} onChange={event=>setEmail(event.target.value)} /></label>
+        <label className="block">Password<input className="w-full rounded border p-3" type="password" autoComplete={"current-password"} minLength={6} required value={password} onChange={event=>setPassword(event.target.value)} /></label>
+        <div className="flex flex-wrap gap-2"><button className="primary-action" type="submit" disabled={busy}>Sign in with email</button>
+        <button className="secondary-action" type="button" disabled={busy} onClick={()=>void submitEmail('signup')}>Create account</button></div>
+      </form>:null}
+      {message?<p role="status">{message} <Link href="/">Open test workspace</Link></p>:null}
       {error?<p role="alert">{error}</p>:null}
     </section>
-    <Link href="/" className="back-link">Return to offline Tallybook</Link>
+    <Link href="/" className="back-link">{import.meta.env.VITE_TALLYBOOK_FRIENDS_TEST_MODE==='true'?'Open test workspace':'Return to offline Tallybook'}</Link>
   </div>;
 }
