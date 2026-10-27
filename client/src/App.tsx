@@ -37,6 +37,7 @@ const ExpensesPage = lazy(() => import("@/pages/ExpensesPage"));
 const BusinessHealthPage = lazy(() => import("@/pages/BusinessHealthPage"));
 const StageHome = lazy(() => import("@/pages/StageHome"));
 import GoogleSignInPage from "@/pages/GoogleSignInPage";
+import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import SupabaseSignInPage from "@/pages/SupabaseSignInPage";
 const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
@@ -49,6 +50,7 @@ function Router() {
       <Switch>
         <Route path="/" component={StageHome} />
         <Route path="/signin" component={GoogleSignInPage} />
+        <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/account" component={isSupabaseAuthPreviewEnabled ? SupabaseSignInPage : GoogleSignInPage} />
         <Route path="/cloud-account" component={CloudAccountPage} />
         <Route path="/business" component={BusinessSetup} />

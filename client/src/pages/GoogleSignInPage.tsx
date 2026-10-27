@@ -9,6 +9,45 @@ export default function GoogleSignInPage(){
   const {state,retry,signOut}=useRun4CloudSession(isSupabaseConfigured);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string|null>(null);
+
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [message,setMessage]=useState<string|null>(null);
+  async function emailAction(mode:'signup'|'signin'){
+    if(busy||!isSupabaseConfigured)return;
+    const address=email.trim();
+    if(!/^\S+@\S+\.\S+$/.test(address)){setError('Enter a valid email address.');return;}
+    if(mode==='signup'&&password.length<12){setError('New passwords require at least 12 characters.');return;}
+    setBusy(true);setError(null);setMessage(null);
+    try{
+      const auth=getSupabaseClient().auth;
+      if(mode==='signup'){
+        const {error:failure}=await auth.signUp({email:address,password,
+          options:{emailRedirectTo:window.location.origin+'/signin'}});
+        if(failure)throw failure;
+        setMessage('If your address can receive confirmation emails, follow that link before signing in.');
+      }else{
+        const {error:failure}=await auth.signInWithPassword({email:address,password});
+        if(failure)throw failure;
+        setMessage('Sign-in submitted; your cloud session must still be verified.');
+      }
+      setPassword('');
+    }catch{setError('Email account action failed. Check your credentials and connection.');}
+    finally{setBusy(false);}
+  }
+  async function requestRecovery(){
+    if(busy||!isSupabaseConfigured)return;
+    const address=email.trim();
+    if(!/^\S+@\S+\.\S+$/.test(address)){setError('Enter your email address first.');return;}
+    setBusy(true);setError(null);setMessage(null);
+    try{
+      const {error:failure}=await getSupabaseClient().auth.resetPasswordForEmail(address,{
+        redirectTo:window.location.origin+'/reset-password?recovery=1'});
+      if(failure)throw failure;
+      setMessage('If this address is eligible, a password-reset link will arrive.');
+    }catch{setError('Could not request a password reset. Check your connection.');}
+    finally{setBusy(false);}
+  }
   async function signIn(selectAccount=false){
     if(busy||!isSupabaseConfigured)return;
     setBusy(true);setError(null);
@@ -63,6 +102,21 @@ export default function GoogleSignInPage(){
          {state.status==='error'?<button className="secondary-action" type="button"
            onClick={()=>void retry()}><RefreshCw className="h-4 w-4"/>Retry</button>:null}
        </div>}
+
+      {isSupabaseConfigured&&state.status!=='signed-in'?<div className="space-y-3 mt-5">
+        <h2 className="font-semibold">Email account</h2>
+        <label className="block" htmlFor="tb-cloud-email">Email</label>
+        <input id="tb-cloud-email" className="w-full rounded border p-3" type="email" autoComplete="email" value={email} onChange={event=>setEmail(event.target.value)}/>
+        <label className="block" htmlFor="tb-cloud-password">Password</label>
+        <input id="tb-cloud-password" className="w-full rounded border p-3" type="password" autoComplete="current-password" value={password} onChange={event=>setPassword(event.target.value)}/>
+        <div className="flex flex-wrap gap-2">
+          <button className="primary-action" type="button" disabled={busy||!email.trim()||!password} onClick={()=>void emailAction('signin')}>Sign in with email</button>
+          <button className="secondary-action" type="button" disabled={busy||!email.trim()||!password} onClick={()=>void emailAction('signup')}>Create email account</button>
+          <button className="secondary-action" type="button" disabled={busy||!email.trim()} onClick={()=>void requestRecovery()}>Forgot password?</button>
+        </div>
+        <p className="text-sm">Use at least 12 characters for a new password. Email confirmation and recovery require internet access.</p>
+      </div>:null}
+      {message?<p role="status">{message}</p>:null}
       {error?<p role="alert">{error}</p>:null}
     </section>
     <Link href="/" className="back-link">Return to offline Tallybook</Link>
