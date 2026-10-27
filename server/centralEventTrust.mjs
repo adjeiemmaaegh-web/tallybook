@@ -50,7 +50,8 @@ export async function verifyCentralSaleEvent(envelope, actorId, directory) {
       shop?.businessId !== envelope.businessId || shop?.id !== envelope.shopId || shop?.active !== true ||
       staff?.businessId !== envelope.businessId || staff?.id !== envelope.staffId || staff?.active !== true ||
       device?.businessId !== envelope.businessId || device?.id !== envelope.deviceId ||
-      device?.shopId !== envelope.shopId || device?.actorId !== actorId || device?.active !== true ||
+      device?.shopId !== envelope.shopId || device?.actorId !== actorId ||
+      (device?.staffId!==undefined && device.staffId!==envelope.staffId) || device?.active !== true ||
       assigned !== true || publicKey.asymmetricKeyType !== 'ed25519') deny();
   const signature = Buffer.from(envelope.signature, 'base64url');
   if (signature.length !== 64 || !verify(null, bytes, publicKey, signature)) deny();

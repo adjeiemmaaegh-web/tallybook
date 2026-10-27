@@ -40,7 +40,7 @@ export function createUuidPostgresCentralSaleIngestStore(pool) {
               role:row.role,active:true}:null;
           },
           async getDevice(businessId,deviceId) {
-            const r=await client.query(`select d.id,d.store_id,d.user_id,d.status,d.public_key_spki_pem
+            const r=await client.query(`select d.id,d.store_id,d.user_id,d.staff_id,d.status,d.public_key_spki_pem
               from public.company_device_keys d join public.businesses b
                 on b.id=d.company_id and b.owner_id=d.approved_by
               join public.business_members approver on approver.business_id=d.company_id
@@ -48,7 +48,8 @@ export function createUuidPostgresCentralSaleIngestStore(pool) {
               where d.company_id=$1::uuid and d.id=$2 for share of d,b,approver`,
               [scope(businessId),deviceId]);
             const d=r?.rows?.[0];return d?{businessId,id:d.id,shopId:d.store_id,
-              actorId:d.user_id,active:d.status==='active',publicKeySpkiPem:d.public_key_spki_pem}:null;
+              actorId:d.user_id,staffId:d.staff_id,active:d.status==='active',
+              publicKeySpkiPem:d.public_key_spki_pem}:null;
           },
           async getShop(businessId,shopId) {
             const r=await client.query(`select id,status from public.company_store_scopes

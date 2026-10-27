@@ -1,0 +1,17 @@
+✔ local preview serves built SPA and static JavaScript with correct content type (1394.4342ms)
+✔ local preview fails closed on API and all write methods (188.7858ms)
+✔ local preview never returns missing assets, hidden files or symlinked private files (891.8794ms)
+✔ local preview supports HEAD without returning a body (300.564ms)
+✔ exact-SHA and 82/47 immutable record identities pass on disposable clean fixture (5544.6971ms)
+✔ new discovered issue is allowed while the original 47 IDs must remain (3268.3497ms)
+✔ deletion of original issue, duplicate ID and dirty worktree all fail closed (7808.9117ms)
+✔ ambiguous sibling .ts and .mjs and missing imports are detected (3465.5666ms)
+✔ browser modules cannot use extensionless imports that collide between .ts and .mjs (2801.0052ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20955.063

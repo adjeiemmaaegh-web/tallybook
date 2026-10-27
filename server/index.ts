@@ -19,6 +19,7 @@ import { mountRun2OwnershipRoutes } from "./run2OwnershipRoutes.mjs";
 import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
 import {installRun4SessionProbe} from "./run4SessionProbe.mjs";
 import {installRun5TenantRuntime} from "./run5TenantRuntime.mjs";
+import {mountCentralSaleUploadRoute} from "./centralSaleUploadRoute.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -49,6 +50,8 @@ async function startServer() {
   installRun4SessionProbe({app,enabled:false});
   // Run 5 cloud data access is denied until private tenant services are validated.
   installRun5TenantRuntime({app,jsonParser:express.json,enabled:false});
+  // Candidate UUID ingestion is explicitly unavailable in the shipped server.
+  mountCentralSaleUploadRoute(app,express.json,{enabled:false});
 
   // Serve static files from dist/public in production
   const staticPath =

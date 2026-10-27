@@ -21,7 +21,7 @@ function fixture() {
   envelope.signature = sign(null, centralEventSigningBytes(envelope), privateKey).toString('base64url');
   const directory = {
     async getMembership(businessId, actorId) { return { businessId, actorId, staffId: 'staff1', role: 'attendant', active: true }; },
-    async getDevice(businessId, id) { return { businessId, id, shopId: 'shop1', actorId: 'user1', active: true, publicKeySpkiPem: pem }; },
+    async getDevice(businessId, id) { return { businessId, id, shopId: 'shop1', staffId:'staff1', actorId: 'user1', active: true, publicKeySpkiPem: pem }; },
     async getShop(businessId, id) { return { businessId, id, active: true }; },
     async getStaff(businessId, id) { return { businessId, id, active: true }; },
     async isAssigned() { return true; },
@@ -57,4 +57,8 @@ test('rejects revoked device, removed membership and missing shop assignment', a
   await assert.rejects(verifyCentralSaleEvent(x.envelope, 'user1', x.directory));
   x = fixture(); x.directory.isAssigned = async () => false;
   await assert.rejects(verifyCentralSaleEvent(x.envelope, 'user1', x.directory));
+  x = fixture();
+  x.directory.getDevice=async(businessId,id)=>({businessId,id,shopId:'shop1',staffId:'staff2',
+    actorId:'user1',active:true,publicKeySpkiPem:pem});
+  await assert.rejects(verifyCentralSaleEvent(x.envelope,'user1',x.directory));
 });

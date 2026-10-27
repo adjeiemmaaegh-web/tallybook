@@ -1,0 +1,34 @@
+✔ UUID coordinator remains disabled without private dependencies (2.5388ms)
+✔ UUID ownership candidate preserves binding, company scope and browser write denial (8523.6959ms)
+✔ accepts only signed sale evidence bound to server membership, shop and device (10.5146ms)
+✔ rejects forged shop, payload and unrelated authenticated user (3.0396ms)
+✔ rejects signed JSON with duplicate business keys (1.3951ms)
+✔ rejects revoked device, removed membership and missing shop assignment (5.8813ms)
+✔ signed-sale route is unavailable unless explicitly configured (2.6817ms)
+✔ signed-sale route rejects absent direct TLS, wrong origin, cookies and malformed body (1.1781ms)
+✔ signed-sale route passes only bearer token and envelope and reports conflicts (2.918ms)
+✔ owner-issued invitation is scoped to company, store, target and a 10-min token (6.6119ms)
+✔ authenticated target redeems once, grant is 8h, audit matches and result is explicitly not hardware bound (5.6978ms)
+✔ non-owner, signed-out, wrong account and malformed scope cannot issue (1.1819ms)
+✔ wrong account cannot redeem a bearer token without own verified membership (1.0949ms)
+✔ expiry is exclusive and non-monotonic invalid clock is denied (1.4962ms)
+✔ owner transfer, membership removal or store disable before redemption invalidates outstanding invitation (2.0042ms)
+✔ owner revokes only own company grant, same invite cannot be redeemed twice (1.7338ms)
+✔ owner can revoke an existing grant even after store is disabled (0.7623ms)
+✔ grant insert and audit failures roll back proof consumption, grant and audit atomically (1.5277ms)
+✔ unknown invitation and invalid/weak token always fail closed (1.0173ms)
+✔ revoked server-side auth session during issuance, redemption or revocation fails closed (1.6145ms)
+✔ transaction uses SERIALIZABLE, exact parameterized reads and COMMIT + release (16.4571ms)
+✔ invite redemption and grant issuance are transaction-local writes with required audit (1.6301ms)
+✔ failed write rolls back and always releases private connection (5.9957ms)
+✔ missing private pool, invalid SQL response, and failed transaction initialization deny (3.2209ms)
+✔ review SQL must not cast TEXT device-grant IDs as UUID and never inline caller values (16.3732ms)
+✔ live auth session is locked by ID, user and expiry inside the transaction (0.7558ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9050.4735

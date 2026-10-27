@@ -1,0 +1,12 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/client
+
+ ✓ src/features/sync/signedSaleDelivery.test.ts > explicit signed sale delivery > rebuilds missing queue metadata and keeps matching receipts intact 9ms
+ ✓ src/features/sync/signedSaleDelivery.test.ts > explicit signed sale delivery > signs the persisted payload, uses credential-free HTTPS and checks the receipt transport 9ms
+ ✓ src/features/sync/signedSaleEnvelope.test.ts > signed sale upload claim > uses the server signing domain and a non-extractable Ed25519 key 1257ms
+ ✓ src/features/sync/signedSaleEnvelope.test.ts > signed sale upload claim > rejects missing shop provenance and extractable private keys 404ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  07:47:25
+   Duration  46.47s (transform 368ms, setup 12.29s, import 307ms, tests 1.70s, environment 29.75s)

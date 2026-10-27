@@ -1,0 +1,600 @@
+✔ assistant scope allows only exact active company (7.6722ms)
+✔ history display limit is a positive bounded safe integer (1.3078ms)
+✔ history is ordered newest first with deterministic id tie-break (83.1478ms)
+✔ audit retention removes exactly the oldest entries (2.1636ms)
+✔ audit retention rejects invalid capacities and corrupt records fail closed (2.484ms)
+✔ audit retention stable with large equal-timestamp cohorts (6.8423ms)
+✔ actual WebCrypto encrypted backup remains readable after size-guard changes (2264.7559ms)
+✔ encrypted backups reject invalid and damaged structures without deriving a key (5.8662ms)
+✔ large UTF-8 backup JSON is refused before any encryption work (570.9471ms)
+✔ ciphertext base64 exceeds the permitted decoded JSON budget even inside a valid-sized wrapper (3212.5308ms)
+✔ malformed salt and IV are rejected before decoding large attacker-controlled fields (182.7121ms)
+✔ invalid ciphertext base64 padding, alphabet and short authentication tags fail before PBKDF2 (4.0318ms)
+✔ authenticated but invalid UTF-8 is rejected rather than silently replaced during import (4183.1034ms)
+✔ a new portable business backup exports no device-local metadata (9.7232ms)
+✔ preexisting legacy backup metadata parses but has no apply/export effect (0.826ms)
+✔ restore recovery journal and active company controls cannot be imported (9.6939ms)
+✔ backup cannot supply duplicate device metadata to overwrite a local setting (1.723ms)
+✔ invalid metadata values and timestamps fail closed (2.6274ms)
+✔ non-list metadata fails closed instead of importing arbitrary records (0.7987ms)
+✔ UTF-8 budget accounts for ASCII, multibyte text, surrogate pairs and replacement characters (12.7309ms)
+✔ plain JSON cap blocks 3-byte input even when UTF-16 length looks safe (1555.2597ms)
+✔ file import cap rejects oversized and invalid file metadata BEFORE reading (0.9197ms)
+✔ envelope budget accounts for UTF-8 and encrypted ciphertext tag overhead (12.3048ms)
+✔ single-store sale, discount, momo and shift export carry exact provenance (84.4913ms)
+✔ company switching evidence fails closed (1.3567ms)
+✔ missing staff, shifts and currency cannot be invented (0.8863ms)
+✔ missing and duplicate MoMo references are rejected (5.8422ms)
+✔ sale-to-shift timing is checked (6.242ms)
+✔ financial conservation fails closed (1.2577ms)
+✔ reversal is a void, never represented as completed customer refund (1.2ms)
+✔ formula injection in MoMo reference is escaped (3.9774ms)
+✔ orphan, duplicate and wrong-amount tender postings fail closed (2.0045ms)
+✔ void actor cannot be guessed from original cashier (1.1708ms)
+✔ refuses missing staff or missing shift (7.5477ms)
+✔ accepts exact company, actor, shift (6.0996ms)
+✔ rejects closed, foreign or stale shifts (0.5223ms)
+✔ mobile requires usable provider and reference (0.8696ms)
+✔ duplicate MoMo scoped to provider and company, case folded (0.9697ms)
+✔ no-sale requires attributed evidence, valid reason and operation key (5.7213ms)
+✔ outbox receipt must attest exact operation, digest, company and device (7.636ms)
+✔ valid saved sale has no detected integrity findings (9.4894ms)
+✔ orphan, duplicate MoMo and tender discrepancies are visible (0.9241ms)
+✔ historical missing attribution is warning, not invented staff identity (0.6149ms)
+✔ cross-company input fails closed (1.2134ms)
+✔ credit/wallet external-payments exception does not create false errors (4.9931ms)
+✔ missing shift and arithmetic overflow flagged (1.295ms)
+✔ draft central schema denies browser finance writes and isolates owner reads (33937.0526ms)
+✔ central coordinator stays unconfigured without private Auth and database dependencies (4.2037ms)
+✔ isolated signed ingest is atomic, idempotent, scoped and denied to browser writers (34193.7313ms)
+✔ UUID coordinator remains disabled without private dependencies (5.9029ms)
+✔ UUID ownership candidate preserves binding, company scope and browser write denial (27318.0854ms)
+✔ Watchdog single-store export includes authenticated local drawer event (5.4376ms)
+✔ Watchdog rejects cross-shop no-sale attribution and duplicate keys (1.1722ms)
+✔ Watchdog rejects orphan no-sale shift and event outside shift (0.7644ms)
+✔ SQL migrations deny direct finance writes to browsers pending trusted ingest (3.3055ms)
+✔ daily JSON is deterministic in content, sorted, counted, and includes cash/return evidence (80.7491ms)
+✔ daily export normalizes ISO offsets to UTC and filters day (1.2232ms)
+✔ device and cloud provenance never invented (0.837ms)
+✔ rejects foreign rows, orphan return staff, and unclosed cash count (1.5991ms)
+✔ rejects duplicate event IDs, currency corruption and numeric overflow (1.145ms)
+✔ rejects nonexistent UTC calendar day and negative refund (0.8581ms)
+✔ never includes other-day shifts and returns in a daily export (0.6739ms)
+✔ real mapper feeds daily export; shift and cash count included without invented device (56.5063ms)
+✔ invalid legacy sale prevents both mapper and daily export (1.1491ms)
+✔ refund without reconciled original sale refuses export (1.2901ms)
+✔ staff recorded cash return is a claim, never cloud settlement proof (1.0975ms)
+✔ cloud membership enforces tenant isolation, ownership and retry safety (7522.501ms)
+✔ unchanged active company permits returning captured records (5.6556ms)
+✔ switch to another company fails closed before exposing stale snapshots (1.3224ms)
+✔ missing or forged captured company cannot authorize a write (2.8982ms)
+✔ company identity is exact and never normalized into a different business (2.835ms)
+✔ Web Locks serialize cross-tab destructive actions and reject competing assistant writes (7.338ms)
+✔ shared assistant writers can coexist but exclude concurrent recovery (2.4202ms)
+✔ an exception always releases the exclusive lock for a retry (0.723ms)
+✔ unsupported browsers fail closed for destructive operations but retain normal offline assistant writes (0.7356ms)
+✔ rejects invalid lock operations before any side effects (0.9173ms)
+✔ independently conserves saved sales, reversed tenders, cash refunds, wallet deposits, repayments and expenses by day (83.1275ms)
+✔ reversal of stored wallet spending does not invent a cash refund or collection (0.8232ms)
+✔ rejects a daily report that does not reconcile to the headline totals (3.8591ms)
+✔ rejects unsafe daily intermediate even when later reversals would cancel it (0.7797ms)
+✔ rejects unsafe category totals and invalid individual minor values (0.9816ms)
+✔ rejects malformed full-history timestamps even for records outside the requested reporting period (5.0404ms)
+✔ rejects impossible and normalized historical expense calendar dates (0.9504ms)
+✔ does not require same-day receipts and sales; accepts legitimate cross-period postings (22.5383ms)
+✔ rejects missing original reversal and invalid prepaid kind or expense category (1.0084ms)
+✔ rejects dates that Date.parse silently rolls into a different calendar month (1.1573ms)
+✔ rejects locale-dependent timestamp syntax and impossible clock and zone values (2.6202ms)
+✔ accepts real leap dates, local legacy ISO time, ISO fractions and standard time zones (0.5492ms)
+✔ rejects missing or invalid expense creation timestamps even if expenseDate is valid (0.7712ms)
+✔ independent daily allocator fails closed on malformed dates, not only its parent report (0.5869ms)
+✔ reconstructs external prepaid receipts, wallet spend and refunds without counting wallet spend as cash (7.6611ms)
+✔ a saved full reversal exactly restores wallet liability and cannot be counted twice (3.8778ms)
+✔ orphan, wrong customer, wrong company and mismatched benefit amount fail closed (1.2247ms)
+✔ missing transfer and sale debit fail even when cash totals look correct (1.1261ms)
+✔ orphan transfers, forged credits and manual legacy wallet entries cannot certify liability (1.5014ms)
+✔ negative balance at any recorded time, not just the final balance, is rejected (0.9619ms)
+✔ rejects mixed saved currencies, missing legacy currency and cross-company history (1.0595ms)
+✔ duplicates, numeric overflow and out-of-order snapshots cannot certify liabilities (57.8721ms)
+✔ a clean, empty saved wallet history proves zero without pretending any deposit occurred (0.4804ms)
+✔ offset-equivalent wallet credits and debits at the identical instant conserve balance independent of input order (0.8159ms)
+✔ debit before credit by one millisecond still fails historical nonnegative-balance validation (0.7025ms)
+✔ prepaid evidence independently rejects calendar-invalid timestamp before chronological reconciliation (0.9604ms)
+✔ same saved currency from five distinct money sources can be shown as one currency (3.1029ms)
+✔ foreign saved currency cannot be relabelled using the current business profile currency (3.5131ms)
+✔ unknown legacy currency cannot be reinterpreted as current currency (1.0225ms)
+✔ invalid evidence and unsafe money never produces a currency-certified report (1.0693ms)
+✔ empty history is allowed, invalid profile denomination is not (0.5722ms)
+✔ unknown currency on a truly zero-valued old sale does not cause a false monetary conversion (0.4314ms)
+✔ complete source history must be supplied, rather than treating omitted ledgers as empty (0.5266ms)
+✔ a complete historical payable is reconciled as-of and cash outflows are period-only (8.6599ms)
+✔ credits lower payables but never pretend to be outgoing money (0.5995ms)
+✔ unclassified purchases remain explicitly unknown and not paid (0.7512ms)
+✔ different saved currencies stay in separate ledgers, including period payments (44.1235ms)
+✔ out-of-range payments affect as-of liability but not period outflows (6.2998ms)
+✔ a settlement dated before the original recognition is rejected even after sorting (3.5553ms)
+✔ duplicate payments, reused submission keys, and orphaned events fail closed (1.4038ms)
+✔ foreign company, invalid currency and invalid date fail before financial reporting (0.8769ms)
+✔ overpayment, unsafe totals and malformed recognized invoices are rejected (4.1948ms)
+✔ safe-money accumulation refuses two individually legal currencies exceeding maximum combined (1.4296ms)
+✔ equal-timestamp recognition and settlement do not depend on IndexedDB id sort order (1.0219ms)
+✔ pure reporting cannot combine purchases belonging to separate companies (0.4913ms)
+✔ credit remaining plus at-sale cash equals saved invoice, independently of report sums (3.6003ms)
+✔ prepaid wallet spending is not wrongly counted as fresh external tender (2.8682ms)
+✔ unpaid credit sale has no invented cash receipt (1.2206ms)
+✔ partial and missing payments never silently reconcile (0.684ms)
+✔ tampered wallet, negative debt and overstated totals reject (1.3821ms)
+✔ duplicate payment identity and double-counted cash reject (0.6351ms)
+✔ wrong company, customer or payment method rejects even with exact amount (0.8038ms)
+✔ orphan payments, zero payment and malformed timestamps reject (0.8529ms)
+✔ two companies with independent valid sales are not cross-associated (0.6489ms)
+✖ local preview serves built SPA and static JavaScript with correct content type (117.1411ms)
+✖ local preview fails closed on API and all write methods (55.2805ms)
+✖ local preview never returns missing assets, hidden files or symlinked private files (95.0094ms)
+✖ local preview supports HEAD without returning a body (58.0092ms)
+✔ static build checker accepts a bundled React/Vite entry (74.3932ms)
+✔ static build checker rejects raw source index or missing generated assets (23.9404ms)
+✔ existing Supabase Google sign-in remains the default outside the opt-in preview (13.7488ms)
+✔ Supabase preview requires explicit feature flag and defaults to disabled (3.9079ms)
+✔ prior Supabase session persistence, refreshing and OAuth detection are preserved (1.4522ms)
+✔ optional sign-in maintains session listener cleanup and safe redirect (3.4189ms)
+✔ cloud authentication gate is staged without enabling bookkeeping sync (3.435ms)
+✔ Vercel automatic deployments remain disabled pending release approval (1.5618ms)
+✔ draft only: a single unit receives its fixed saved-invoice share (41.9181ms)
+✔ cumulative partial return is order-independent across requests (1.1496ms)
+✔ all line shares conserve the saved invoice total (0.8126ms)
+✔ ties use stable identity, not caller order (2.2716ms)
+✔ zero-value service lines receive no monetary allocation (0.6121ms)
+✔ taxed snapshot kept as labelled draft, not claimed tax refund (0.5425ms)
+✔ prior returned quantities and request quantities are strictly bounded (1.627ms)
+✔ duplicate requested rows do not allow exceeding the original quantity (0.4343ms)
+✔ foreign, orphaned and duplicated sale lines rejected (0.7902ms)
+✔ tampered financial totals and line unit/quantity evidence rejected (1.2164ms)
+✔ unsafe integers rejected without rounding or overflow (0.8135ms)
+✔ large exact integer proportional division does not round via floating point (2.1152ms)
+✔ incremental allocations telescope to exact total even with tiny rounding remainders (0.6447ms)
+✔ unallocated repayments prevent reversing the wrong unpaid credit sale (1.8499ms)
+✔ full credit reversal permitted when no repayment and ledger reconciles (0.6999ms)
+✔ fully paid sale cannot erase any credit debt, even if customer has other repayments (0.4385ms)
+✔ orphan and duplicate reversals rejected before posting (0.6794ms)
+✔ foreign sale and negative ledger balances cannot approve reversal (0.6573ms)
+✔ exclusive tax draft splits saved taxable/tax/discount pools exactly (0.6823ms)
+✔ inclusive owner tax snapshot retains original invoice total and split (0.4228ms)
+✔ repeated tax-bearing returns telescope to exact original pools, including tiny remainders (0.8731ms)
+✔ policy-free legacy tax is draft only, with explicitly unverified policy (0.3961ms)
+✔ tampered, malformed, and inconsistent saved tax evidence is rejected (1.0919ms)
+✔ full return component allocations independent of original sale-line input order (0.526ms)
+✔ overflow of received plus debt cannot be hidden by imprecise floating point (0.4814ms)
+✔ clean paid sale and unapplied historical repayment are independently auditable (7.5172ms)
+✔ valid full reversal of another sale does not invalidate an allocated repayment (0.5688ms)
+✔ rejects duplicate reversals even if identifiers differ (0.7233ms)
+✔ rejects orphan, cross-company and incorrect reversal magnitude/sign/receipt/customer (0.9388ms)
+✔ rejects repayment exceeding original customer balance, including cumulative excess (0.5824ms)
+✔ rejects repayment of already reversed credit (0.3897ms)
+✔ rejects missing, duplicate and foreign repayment allocation links (0.5508ms)
+✔ rejects allocation to reversed sale, wrong currency and a short allocation total (5.5441ms)
+✔ rejects allocations cumulatively exceeding the source sale despite a different customer sale balance (7.4585ms)
+✔ rejects invalid amounts, unsafe overflow and unexpected scopes without changing inputs (1.721ms)
+✔ does not treat a historical unverified currency as GHS or sum GHS with USD (0.6078ms)
+✔ rejects orphan credit sales and company-mismatched source references (0.5171ms)
+✔ rejects malformed allocation lists and negative/unrepresentable source money (22.7691ms)
+✔ reconciles one verified denomination and accepts a matching write currency (5.1903ms)
+✔ rejects GHS and USD amounts instead of silently adding incomparable monetary values (1.6735ms)
+✔ rejects mixed modern and unverifiable historical monetary records (0.6561ms)
+✔ preserves legacy-only read arithmetic but rejects posting in a guessed currency (0.5562ms)
+✔ allows settled zero-value historical rows without assuming a currency for them (0.4959ms)
+✔ does not ignore corrupted currency evidence or invalid money (0.9608ms)
+✔ does not allow a zero-value record with a corrupt currency snapshot (0.4322ms)
+✔ sale-linked repayments cannot combine one-sided or conflicting currency evidence (0.9702ms)
+✔ the recovery marker has a fixed key and roundtrips all three assistant tables (22.208ms)
+✔ refuses missing and malformed journal shape, version, date and identity (1.8373ms)
+✔ never applies a preimage with duplicate IDs or a row from another company (0.9237ms)
+✔ rejects malformed raw values and never guesses a partial truncated preimage (1.0602ms)
+✔ enforces the persistent preimage resource limit before any assistant database mutation (143.6486ms)
+✔ company-clear preimage retains the same durable commit-marker format (0.7349ms)
+✔ older restore journals without operation remain recoverable (0.6981ms)
+✔ unknown or malformed operations fail closed rather than triggering a deletion recovery (0.6644ms)
+✔ company-clear journals reject foreign, duplicate and oversized assistant snapshots (177.6145ms)
+✔ new recovery marker persists both the exact before and authorized after state (1.0486ms)
+✔ postimages must be owned and cannot contain duplicate assistant identities (3.6635ms)
+✔ preimage plus postimage jointly respect the journal byte bound (200.0893ms)
+✔ assistant snapshot comparison ignores row/key ordering, but not values (44.4301ms)
+✔ legacy marker without after still parses, without assuming an authorized postimage (0.4836ms)
+✔ snapshot comparison fails closed on unsupported structured-clone field types (1.2112ms)
+✔ recovery journal byte cap rejects oversized multi-byte input before parsing (752.9614ms)
+✔ recovery journal byte cap rejects oversized valid JSON assistant text on export (968.8637ms)
+✔ company clear accepts only an empty authorized assistant postimage (1.5765ms)
+✔ recovery refuses nonportable structured-clone values before persisting a journal (1.4571ms)
+✔ recovery refuses cyclic, dangerously keyed and excessively nested evidence (2.3848ms)
+✔ recovery compares JSON snapshots exactly even when one side gains unsupported data (1.8761ms)
+✔ recovery rejects hidden, symbol and accessor fields that JSON would discard (2.9592ms)
+✔ expanded retail coordination covers customers/customers.ts (5.1624ms)
+✔ expanded retail coordination covers customers/customerBenefits.ts (1.5436ms)
+✔ expanded retail coordination covers customers/walletTransfers.ts (1.3022ms)
+✔ expanded retail coordination covers stores/storeDirectory.ts (1.7519ms)
+✔ expanded retail coordination covers stores/storeTransfers.ts (1.9153ms)
+✔ expanded retail coordination covers stores/storeStockCounts.ts (1.4012ms)
+✔ expanded retail coordination covers inventory/inventory.ts (6.3123ms)
+✔ expanded retail coordination covers inventory/stage2Inventory.ts (1.3752ms)
+✔ expanded retail coordination covers inventory/advancedInventory.ts (1.6601ms)
+✔ expanded retail coordination covers purchases/purchases.ts (1.6885ms)
+✔ nested transaction work runs synchronously without requesting another browser lock (2.1751ms)
+✔ shared retail writer is refused under exclusive recovery lock before doing any work (1.7965ms)
+✔ rejected retail work releases the browser shared lock for a later attempt (0.8446ms)
+✔ absence of browser Web Locks permits local ordinary writes without enabling destructive restores (9.3164ms)
+✔ wallet transfer validates live permission and shift under the write transaction (0.9953ms)
+✔ nested synchronous validation errors become rejections without requesting Web Locks (0.5586ms)
+✔ retail write entrypoint completeSale acquires a Web Lock before starting its transaction (6.0194ms)
+✔ retail write entrypoint convertQuotationToSale acquires a Web Lock before starting its transaction (2.0551ms)
+✔ retail write entrypoint completePurchase acquires a Web Lock before starting its transaction (0.8662ms)
+✔ retail write entrypoint adjustStock acquires a Web Lock before starting its transaction (1.0483ms)
+✔ retail write entrypoint recognizeUnpaidPurchase acquires a Web Lock before starting its transaction (1.813ms)
+✔ retail write entrypoint recordSupplierSettlement acquires a Web Lock before starting its transaction (0.8597ms)
+✔ retail write entrypoint executeLatestSaleReversal acquires a Web Lock before starting its transaction (1.7261ms)
+✔ retail write entrypoint recordConfirmedCashPartialReturn acquires a Web Lock before starting its transaction (1.5529ms)
+✔ nested quotation checkout uses the already-held outer transaction and does not await a new Web Lock (2.0532ms)
+✔ an exclusive recovery lock prevents starting a retail write, then releases on completion (3.4045ms)
+✔ historical missing currency is explicitly reported rather than crashing or guessed (11.3415ms)
+✔ verified currency receipts are counted but the unverified legacy amount is excluded (1.0695ms)
+✔ explicit mismatch never converts or mixes saved currencies (5.8857ms)
+✔ pre-read admission is stricter on reported low-memory systems (3.2814ms)
+✔ actual content cannot bypass a smaller reported device budget via forged File.size (1.1811ms)
+✔ rejected file is not opened or interpreted as financial data (2.3103ms)
+✔ ordinary local file passes unchanged through the strict budget (0.5054ms)
+✔ full matrix is not accepted by default (3.75ms)
+✔ missing, repeated, fabricated or removed device cases are rejected (6.543ms)
+✔ a manual pass with retained filename is still NO-GO (1.3625ms)
+✔ owner cannot waive mandatory checks; unsigned payload cannot authorize release (5.1978ms)
+✔ portable checksum detects accidental edits and does not sign UAT (34.9417ms)
+✔ unknown external source fields cannot silently enter protected evidence (1.6308ms)
+✔ Windows cannot claim Android-only PASS or waive a Windows case (0.9532ms)
+✔ platform-combined coverage never approves release from manually claimed observations (15.0479ms)
+✔ all 20 mandatory gates start NOT RUN and remain NO-GO (9.5374ms)
+✔ report omitting or repeating an acceptance gate is rejected (1.6829ms)
+✔ manual GO is impossible despite every gate self-reporting PASS (2.1217ms)
+✔ hash proof, wrong source and forged release decision fail closed (33.0138ms)
+✔ future evidence, missing filename, wrong roles and unknown keys rejected (1.1494ms)
+✔ external staging, live payments, cloud and merge are explicitly denied (0.6633ms)
+✔ WebAuthn unlock rejects a disabled, moved or revoked staff identity (4.0223ms)
+✔ WebAuthn refuses replaced keys or algorithms even when credential id is unchanged (0.7623ms)
+✔ WebAuthn rejects replay and zero-counter downgrade after an incrementing authenticator (1.2307ms)
+✔ Supervisor approval refuses PIN reset, disable, reassignment, lost discount permission and changed cashier (1.2732ms)
+✔ admin write services acquire shared recovery lock: business/businessProfile.ts (3.9855ms)
+✔ admin write services acquire shared recovery lock: commerce/commerce.ts (1.8844ms)
+✔ admin write services acquire shared recovery lock: staff/staff.ts (2.0014ms)
+✔ staff WebAuthn counter persistence revalidates saved verifier in a write transaction (1.3216ms)
+✔ discount approval is bound to original cashier and revalidates both staff identities (2.9833ms)
+✔ competing exclusive recovery prevents running an administrative write body (1.2865ms)
+✔ shift close and preview use current actor inside the relevant read/write transactions (1.3651ms)
+✔ valid same-company references (2.5161ms)
+✔ cross-company customer detected (0.5367ms)
+✔ cross-company sale line detected (1.9257ms)
+✔ missing reference detected (1.0126ms)
+✔ audit does not modify input (2.3985ms)
+✔ successful exit is PASS (2.5685ms)
+✔ nonzero exit is FAIL (1.8412ms)
+✔ missing prerequisite is BLOCKED (0.3799ms)
+✔ spawn errors are BLOCKED (6.5295ms)
+✔ timeout signal is BLOCKED (1.2983ms)
+✔ unavailable status is not PASS (0.6522ms)
+✔ summary retains outstanding physical gates (2.3434ms)
+✔ automated integration evidence is recorded but Windows recovery still blocks acceptance (0.4875ms)
+✔ stage acceptance requires all evidence and successful gates (0.4649ms)
+✔ unknown status fails closed (0.8583ms)
+✔ every configured audit table is declared on actual TallybookDB (3.1053ms)
+✔ audited money fields exist in actual domain interfaces (0.6804ms)
+✔ consistent audit requires Dexie readonly transaction (3.8373ms)
+✔ diagnostics do not write or mutate application records (0.4981ms)
+✔ sale audit rules enforce safe paid-plus-outstanding conservation (0.3639ms)
+✔ missing evidence fails closed (16.1233ms)
+✔ reorder is threshold grounded, no purchase execution (1.1129ms)
+✔ sales pace labels itself nonforecast (1.9981ms)
+✔ debt warns absence of ageing metadata (0.6215ms)
+✔ expiry rejects other companies, invalid dates, and zero stock (11.5834ms)
+✔ automation opt-in never executes actions (0.514ms)
+✔ rejects invalid planning horizons (0.4719ms)
+✔ rejects invalid source (3.1296ms)
+✔ no sales observation is evidence-limited (0.7574ms)
+✔ stock and debt findings show exact local evidence (1.9957ms)
+✔ non-low stock and settled debts do not trigger attention (2.0165ms)
+✔ repeated partial cash returns consume exactly original paid value and quantities (4.733ms)
+✔ over-restoration is rejected (1.9017ms)
+✔ duplicate key and immutable event identity are rejected (49.4581ms)
+✔ duplicated stock movement or FIFO event is rejected (0.9355ms)
+✔ tampering refunded, tax, or discount minor units is rejected (1.3252ms)
+✔ foreign company, changed currency, unmatched tender and full reversal fail closed (1.3242ms)
+✔ customer/credit/wallet sale cannot use cash-only lane (0.9453ms)
+✔ missing sequence and altered return disposition are rejected (1.1503ms)
+✔ line attribution to different product and duplicate sale line are rejected (7.9515ms)
+✔ unsafe integers and malformed date are rejected (0.8512ms)
+✔ full snapshot verifies two independent companies without mutating inputs (10.0879ms)
+✔ a missing previous physical movement is detected outside the refund screen (2.2378ms)
+✔ a tampered original FIFO layer is detected even when refund quantity and amount still match (1.3885ms)
+✔ rejects return identity linking to absent or different-company sale (1.3489ms)
+✔ rejects wrong-company stock and cost restoration evidence (1.0694ms)
+✔ refuses reused movement and cost identities across distinct refunds (1.0752ms)
+✔ rejects duplicate historical snapshot IDs rather than selecting one arbitrarily (1.4489ms)
+✔ fails closed on malformed input arrays and missing source sale lines (1.4412ms)
+✔ read-only review returns precise original remaining units and a proportional minor-unit quote (7.4999ms)
+✔ review accounts for immutable previous returns and prevents excess units (2.1685ms)
+✔ review rejects full reversal, foreign company and mismatched sale links (0.9895ms)
+✔ review requires exactly the saved original receipt and tender (1.0048ms)
+✔ review excludes customer, credit, wallet and unknown currency histories (1.1766ms)
+✔ review excludes service, batch and missing original FIFO cost links (1.2877ms)
+✔ review does not silently quote invalid quantities or other sale lines (0.909ms)
+✔ review rejects tampered previous financial events before preparing any quote (0.9398ms)
+✔ cross-checks each partial refund with saved stock movement and exact original FIFO units (8.6138ms)
+✔ rejects journal rows whose stock movement is missing or belongs to another company (1.6539ms)
+✔ rejects tampered physical quantities, type and time even if refund amounts reconcile (2.1412ms)
+✔ rejects missing, duplicate, changed-source or wrong-sale cost events (1.0512ms)
+✔ rejects forged receipt allocation cost, receipt identity and cumulative wrong FIFO slicing (1.5222ms)
+✔ rejects tampered original issue and cross-sale return identities (0.9351ms)
+✔ rejects duplicate saved original sale lines and replayed stock movement identifiers (0.9805ms)
+✔ credit exposure subtracts persisted NEGATIVE reversal deltas and repayments before extending credit (6.7632ms)
+✔ full reversal frees exactly its original unpaid credit and cannot create an artificial balance (2.435ms)
+✔ rejects positive reversal amounts or wrong reversal magnitude (1.6795ms)
+✔ rejects orphan/duplicate reversals, duplicated sales, mismatched customers and invalid identities (0.948ms)
+✔ rejects unsafe sums, negative and fractional source values (0.9814ms)
+✔ rejects over-repayment or negative net exposure, not silently clamping to zero (0.8702ms)
+✔ allows an exactly settled customer to receive new credit (0.5101ms)
+✔ calculates exact line totals and subtotal in minor units (4.0223ms)
+✔ rejects overflow in line total (1.3972ms)
+✔ rejects overflow in accumulated subtotal (0.4455ms)
+✔ rejects negative, fractional and unsafe prices (2.4438ms)
+✔ rejects invalid quantities and missing product identifiers (1.2294ms)
+✔ single partial return uses original FIFO receipt cost, never current cost (6.7235ms)
+✔ repeated partial returns conserve exact original receipt allocations (2.0792ms)
+✔ original full reversal remains compatible (1.1548ms)
+✔ rejects duplicate previous reversal evidence (0.5301ms)
+✔ rejects duplicated restoration quantities and allocations (0.776ms)
+✔ fails closed on altered or unknown FIFO unit costs (0.6403ms)
+✔ rejects any foreign company, product or sale in saved restoration (0.7401ms)
+✔ rejects fractional, zero, negative and unsafe quantities (1.0216ms)
+✔ rejects unknown, duplicate or malformed original FIFO receipts (0.7773ms)
+✔ fails on wrong order or incomplete previous restore chain (0.9103ms)
+✔ repeated event identity or movement reference cannot be posted twice (0.6939ms)
+✔ rejects missing or repeated stock movement evidence in prior return history (0.5881ms)
+✔ explicit allocations make a different entirely unpaid sale safely reversible (7.2953ms)
+✔ split allocations to two saved sales reconcile exactly (0.9091ms)
+✔ unallocated historical repayment remains unknown even with new allocated payments (0.5857ms)
+✔ a zero-outstanding sale is not a valid target for allocated repayment (0.529ms)
+✔ duplicate sale targets within one repayment fail (0.6185ms)
+✔ allocated amount must equal immutable paid amount, including no unallocated remainder (0.9737ms)
+✔ refuse allocations that exceed original sale credit even if aggregate customer debt can cover them (0.6097ms)
+✔ refuse cumulative overspend of one sale across distinct payments (0.6504ms)
+✔ refuse allocation to a different customer or business (0.845ms)
+✔ refuse missing sale targets and a stale allocation after full reversal (1.6233ms)
+✔ refuse invalid shape, absent entries, excessive entry count and zero amount (1.3889ms)
+✔ refuse unsafe amounts, negative payments and cumulative overflow (0.9169ms)
+✔ future credit can be extended against exact allocated balances (0.501ms)
+✔ unallocated full-reversal guard remains fail-closed (2.1084ms)
+✔ saved currency and still-unpaid sale appear as an optional explicit target (68.721ms)
+✔ existing linked repayment reduces only its original sale remaining allocation (1.075ms)
+✔ fully repaid and reversed sales are excluded, without losing a remaining sale (1.0812ms)
+✔ historical customer-level repayment prevents new sale-linked choices (1.113ms)
+✔ mixed saved allocations and unknown historical payment remain blocked (1.8727ms)
+✔ mixed legacy unknown and modern verified debt cannot be shown as one balance (3.2773ms)
+✔ changed currency is not relabeled or silently made payable in current currency (1.8034ms)
+✔ duplicate and missing source sale identities are rejected before offering targets (3.765ms)
+✔ foreign-company and foreign-customer data cannot enter a selection (1.0128ms)
+✔ invalid balances and allocations are rejected rather than shown (1.1187ms)
+✔ receipt identity must exist before a credit sale can be offered (0.5596ms)
+✔ scope must be explicit (0.5357ms)
+✔ declared schema version equals latest Dexie migration (4.4833ms)
+✔ Dexie migration versions have no duplicate or missing numbers (7.6221ms)
+✔ regression tests cannot pin the obsolete version 21 (2.9189ms)
+✔ a stock receipt with no recognized liability is UNKNOWN, not zero debt (6.0323ms)
+✔ explicit liability, partial payment and supplier credit reconcile without mixing cash and credits (0.5778ms)
+✔ exact settlement has zero remaining liability; no implicit extra payment (0.6171ms)
+✔ overpayments, even from combined credits and payments, fail closed (1.4087ms)
+✔ recognition must be for original cost, exactly once, and before settlements (0.8539ms)
+✔ rejects duplicate idempotency keys and duplicate row IDs (0.5957ms)
+✔ rejects foreign-company, purchase or supplier references (0.6341ms)
+✔ rejects invalid payment methods, credits claiming cash and unknown event types (0.7369ms)
+✔ rejects unsafe, zero, negative and fractional amounts (0.7851ms)
+✔ company rollup preserves unknowns and counts only recognized liability (1.2499ms)
+✔ company rollup refuses orphan events, duplicate identities and overflows (1.0087ms)
+✔ does not mix liabilities denominated in different currencies (48.2255ms)
+✔ reconciliation ignores database row ordering, including equal timestamps (0.6895ms)
+✖ exact-SHA and 82/47 immutable record identities pass on disposable clean fixture (466.3047ms)
+✖ new discovered issue is allowed while the original 47 IDs must remain (394.3598ms)
+✖ deletion of original issue, duplicate ID and dirty worktree all fail closed (344.4368ms)
+✖ ambiguous sibling .ts and .mjs and missing imports are detected (328.4053ms)
+✔ premium shell account button opens real /account route, not local staff PIN (2.5528ms)
+✔ auth boundary wraps providers before local ledger mounts (6.3616ms)
+✔ stage 9 account UI does not imply completed cloud synchronization (0.6502ms)
+✔ locked staff gate preserves account access without unlocking sales (2.9135ms)
+✔ valid owner and no implicit financial authorization (4.6479ms)
+✔ remote attendant maps to internal staff, never admin (0.4308ms)
+✔ foreign account and company fail closed (1.3588ms)
+✔ unknown, admin, pending or revoked role fails closed (0.6201ms)
+✔ business owner must match owner membership (0.4084ms)
+✔ business owner cannot use an attendant membership as owner (0.3585ms)
+✔ null and malformed identities fail closed (0.5877ms)
+✔ projection does not mutate trusted snapshot inputs (0.3761ms)
+✔ valid local store records and historical closed destinations are not mistaken for authoritative stock (11.5281ms)
+✔ rejects foreign company and wrong-company store references (4.0937ms)
+✔ rejects duplicate store name and malformed active/closed state (0.7496ms)
+✔ rejects missing references and duplicated store assignments (0.7529ms)
+✔ a stock count of zero is valid; fractional, negative and unsafe counts are not (20.6663ms)
+✔ rejects foreign actors, unknown products and unsafe notes on observations (0.5848ms)
+✔ rejects same-origin transfer, unknown actor, invalid quantity and invalid state (0.7474ms)
+✔ transfer cancellation requires a valid cancellation timestamp and requested state excludes it (0.542ms)
+✔ rejects invalid metadata input instead of treating it as an empty local ledger (1.7205ms)
+✔ duplicate rows and invalid timestamps are flagged without mutating source records (1.1389ms)
+✔ canonical Watchdog POS export preserves exact supported amounts and discloses exclusions (5.2852ms)
+✔ canonical export rejects unknown kinds, conflicting scope, and unsafe receipt text (1.9214ms)
+✔ cash refund is exact and an accounting void has no invented payout (1.1434ms)
+✔ committed Watchdog preview file is parseable and preserves explicit provenance limits (4.1752ms)
+✖ browser modules cannot use extensionless imports that collide between .ts and .mjs (1823.5052ms)
+ℹ tests 429
+ℹ suites 0
+ℹ pass 420
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 52734.426
+
+✖ failing tests:
+
+test at qa\local-preview-server.test.mjs:29:1
+✖ local preview serves built SPA and static JavaScript with correct content type (117.1411ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:58158
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 58158
+    }
+  }
+
+test at qa\local-preview-server.test.mjs:44:1
+✖ local preview fails closed on API and all write methods (55.2805ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:58160
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 58160
+    }
+  }
+
+test at qa\local-preview-server.test.mjs:56:1
+✖ local preview never returns missing assets, hidden files or symlinked private files (95.0094ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:58162
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 58162
+    }
+  }
+
+test at qa\local-preview-server.test.mjs:72:1
+✖ local preview supports HEAD without returning a body (58.0092ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:58164
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 58164
+    }
+  }
+
+test at qa\stage21-baseline-audit.test.mjs:59:1
+✖ exact-SHA and 82/47 immutable record identities pass on disposable clean fixture (466.3047ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  128 !== 0
+
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:47:9)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:60:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 128,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at qa\stage21-baseline-audit.test.mjs:70:1
+✖ new discovered issue is allowed while the original 47 IDs must remain (394.3598ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  128 !== 0
+
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:47:9)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:71:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 128,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at qa\stage21-baseline-audit.test.mjs:81:1
+✖ deletion of original issue, duplicate ID and dirty worktree all fail closed (344.4368ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  128 !== 0
+
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:47:9)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:82:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 128,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at qa\stage21-baseline-audit.test.mjs:104:1
+✖ ambiguous sibling .ts and .mjs and missing imports are detected (328.4053ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  128 !== 0
+
+      at fixture (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:47:9)
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/stage21-baseline-audit.test.mjs:105:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 128,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at qa\window-build-extension-collisions.test.mjs:17:1
+✖ browser modules cannot use extensionless imports that collide between .ts and .mjs (1823.5052ms)
+  AssertionError [ERR_ASSERTION]: Disambiguate runtime imports explicitly: Vite chooses .mjs before .ts
+  + actual - expected
+
+  + [
+  +   'client\\src\\features\\sync\\signedSaleDelivery.ts: ./supabaseUploader'
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/unified/qa/window-build-extension-collisions.test.mjs:34:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'client\\src\\features\\sync\\signedSaleDelivery.ts: ./supabaseUploader' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

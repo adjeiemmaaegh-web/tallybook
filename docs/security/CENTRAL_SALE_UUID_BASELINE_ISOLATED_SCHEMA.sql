@@ -36,6 +36,7 @@ create table public.company_device_keys (
  id text not null check (id ~ '^[A-Za-z0-9:_-]{1,128}$'),
  store_id text not null,
  user_id uuid not null,
+ staff_id text not null,
  public_key_spki_pem text not null check (char_length(public_key_spki_pem) between 80 and 500),
  status text not null check (status in ('active','revoked')),
  approved_by uuid not null,
@@ -43,6 +44,7 @@ create table public.company_device_keys (
  primary key (company_id,id),
  foreign key (company_id,store_id) references public.company_store_scopes(company_id,id),
  foreign key (company_id,user_id) references public.business_members(business_id,user_id) on delete cascade,
+ foreign key (company_id,staff_id) references public.company_staff_identities(company_id,id),
  foreign key (company_id,approved_by) references public.business_members(business_id,user_id)
 );
 create table public.company_signed_sale_events (

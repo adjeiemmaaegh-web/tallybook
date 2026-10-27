@@ -7,29 +7,33 @@ import { centralEventSigningBytes } from '../server/centralEventTrust.mjs';
 import { createCentralSaleIngestService } from '../server/centralSaleIngest.mjs';
 import { createUuidPostgresCentralSaleIngestStore } from '../server/centralSaleIngestUuidPostgres.mjs';
 import { createCentralSaleUuidIngestCoordinator } from '../server/centralSaleUuidIngestCoordinator.mjs';
+import { createStoreDeviceEnrollmentService, deviceKeyEnrollmentBytes } from '../server/storeDeviceEnrollment.mjs';
+import { createPostgresStoreDeviceEnrollmentStore } from '../server/storeDeviceEnrollmentPostgres.mjs';
 
 const owner='11111111-1111-4111-8111-111111111111';
 const attendant='22222222-2222-4222-8222-222222222222';
 const company='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const otherCompany='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const sessionId='33333333-3333-4333-8333-333333333333';
+const ownerSessionId='44444444-4444-4444-8444-444444444444';
 const now=1793000000000;
 const {publicKey,privateKey}=generateKeyPairSync('ed25519');
 const file=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 test('UUID coordinator remains disabled without private dependencies',()=>{
   assert.throws(()=>createCentralSaleUuidIngestCoordinator({}),/not configured/);
 });
-function envelope() {
-  const payload={id:'sale:s2',businessProfileId:'localA',operationId:'sale:s2',entityId:'s2',
+function envelope(deviceId='deviceA',saleId='s2') {
+  const operationId=`sale:${saleId}`;
+  const payload={id:operationId,businessProfileId:'localA',operationId,entityId:saleId,
     kind:'sale.completed',payloadVersion:1,deliveryStatus:'local_only',deviceId:null,
     shopId:'shopA',staffId:'staffA',shiftId:'shiftA',createdAt:new Date(now).toISOString(),
-    payload:{sale:{id:'s2',businessProfileId:'localA',storeId:'shopA',staffId:'staffA',
+    payload:{sale:{id:saleId,businessProfileId:'localA',storeId:'shopA',staffId:'staffA',
       receiptNumber:'R2',totalMinor:100,amountPaidMinor:100,outstandingMinor:0},
-      lines:[{id:'l2',saleId:'s2',businessProfileId:'localA',lineTotalMinor:100}],
-      payment:{id:'p2',saleId:'s2',businessProfileId:'localA',amountMinor:100},
-      receipt:{id:'r2',saleId:'s2',businessProfileId:'localA',receiptNumber:'R2'}}};
-  const e={version:1,eventId:'sale:s2',operationId:'sale:s2',businessId:'localA',
-    shopId:'shopA',staffId:'staffA',deviceId:'deviceA',
+      lines:[{id:`l:${saleId}`,saleId,businessProfileId:'localA',lineTotalMinor:100}],
+      payment:{id:`p:${saleId}`,saleId,businessProfileId:'localA',amountMinor:100},
+      receipt:{id:`r:${saleId}`,saleId,businessProfileId:'localA',receiptNumber:'R2'}}};
+  const e={version:1,eventId:operationId,operationId,businessId:'localA',
+    shopId:'shopA',staffId:'staffA',deviceId,
     payloadBase64:Buffer.from(JSON.stringify(payload)).toString('base64url'),signature:''};
   e.signature=sign(null,centralEventSigningBytes(e),privateKey).toString('base64url');return e;
 }
@@ -47,6 +51,8 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await db.query('insert into auth.users(id) values ($1),($2)',[owner,attendant]);
     await db.query('insert into auth.sessions(id,user_id,not_after) values ($1,$2,to_timestamp($3::double precision/1000))',
       [sessionId,attendant,now+60000]);
+    await db.query('insert into auth.sessions(id,user_id,not_after) values ($1,$2,to_timestamp($3::double precision/1000))',
+      [ownerSessionId,owner,now+60000]);
     await db.exec(file('../supabase/migrations/20261013123347_business_identity.sql'));
     // Minimal replica of the inspected live table; no customer data is used.
     await db.exec(`create table public.company_local_bindings(
@@ -57,6 +63,7 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       alter table public.company_local_bindings enable row level security;
       revoke all on public.company_local_bindings from anon,authenticated;`);
     await db.exec(file('../docs/security/CENTRAL_SALE_UUID_BASELINE_ISOLATED_SCHEMA.sql'));
+    await db.exec(file('../docs/security/DEVICE_KEY_UUID_ENROLLMENT_ISOLATED_SCHEMA.sql'));
     await db.query(`insert into public.businesses(id,owner_id,name,creation_request_id)
       values($1,$2,'A','aaaaaaaa-1111-4111-8111-111111111111'),
             ($3,$4,'B','bbbbbbbb-2222-4222-8222-222222222222')`,
@@ -72,9 +79,9 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       values($1,'staffA',$2)`,[company,attendant]);
     await db.query(`insert into public.company_staff_store_assignments(company_id,store_id,staff_id)
       values($1,'shopA','staffA')`,[company]);
-    await db.query(`insert into public.company_device_keys(company_id,id,store_id,user_id,
+    await db.query(`insert into public.company_device_keys(company_id,id,store_id,user_id,staff_id,
       public_key_spki_pem,status,approved_by,approved_at)
-      values($1,'deviceA','shopA',$2,$3,'active',$4,now())`,
+      values($1,'deviceA','shopA',$2,'staffA',$3,'active',$4,now())`,
       [company,attendant,publicKey.export({type:'spki',format:'pem'}),owner]);
     const insert=async(localId,storeId)=>db.query(`insert into public.company_signed_sale_events
       (company_id,local_company_id,operation_id,event_id,store_id,staff_id,device_id,
@@ -86,6 +93,28 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await insert('localA','shopA');
     assert.equal((await db.query('select count(*)::int as n from public.company_signed_sale_events')).rows[0].n,1);
     const pool={async connect(){return {query:(...args)=>db.query(...args),release(){}};}};
+    const enrollment=createStoreDeviceEnrollmentService({
+      resolveSession:async userId=>({active:true,userId,
+        sessionId:userId===owner?ownerSessionId:sessionId}),
+      store:createPostgresStoreDeviceEnrollmentStore(pool),clock:()=>now,
+      randomInvite:()=> 'b'.repeat(64),
+    });
+    const invite=await enrollment.issueInvite({session:owner,companyId:company,
+      storeId:'shopA',targetUserId:attendant});
+    const keyPem=publicKey.export({type:'spki',format:'pem'});
+    const keyRequest={session:attendant,token:invite.token,staffId:'staffA',
+      deviceId:'deviceB',publicKeySpkiPem:keyPem};
+    const keyProof=sign(null,deviceKeyEnrollmentBytes({token:invite.token,
+      companyId:company,storeId:'shopA',userId:attendant,staffId:'staffA',
+      deviceId:'deviceB',publicKeySpkiPem:keyPem}),privateKey).toString('base64url');
+    await assert.rejects(enrollment.redeemKeyInvite({...keyRequest,
+      proofSignature:'A'.repeat(86)}),/enrollment denied/);
+    assert.equal((await db.query('select status from public.company_device_enrollment_invites')).rows[0].status,'unused');
+    const enrolled=await enrollment.redeemKeyInvite({...keyRequest,proofSignature:keyProof});
+    assert.equal(enrolled.publicKeyBound,true);
+    assert.equal(enrolled.hardwareBound,false);
+    await assert.rejects(enrollment.redeemKeyInvite({...keyRequest,proofSignature:keyProof}),/enrollment denied/);
+    assert.equal((await db.query("select count(*)::int as n from public.company_device_keys where id='deviceB'")).rows[0].n,1);
     const service=createCentralSaleIngestService({
       resolveSession:async()=>({active:true,userId:attendant,sessionId,expiresAtEpochMs:now+60000}),
       store:createUuidPostgresCentralSaleIngestStore(pool),clock:()=>now,
@@ -93,6 +122,12 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     const accepted=await service.ingest({session:'test',envelope:envelope()});
     assert.equal(accepted.status,'accepted');
     assert.deepEqual(await service.ingest({session:'test',envelope:envelope()}),accepted);
+    assert.equal((await service.ingest({session:'test',envelope:envelope('deviceB','s3')})).status,'accepted');
+    await assert.rejects(enrollment.revokeDeviceKey({session:attendant,
+      companyId:company,deviceId:'deviceB'}),/enrollment denied/);
+    assert.equal((await enrollment.revokeDeviceKey({session:owner,
+      companyId:company,deviceId:'deviceB'})).revoked,true);
+    await assert.rejects(service.ingest({session:'test',envelope:envelope('deviceB','s3')}),/authorization denied/);
     await db.query("update public.company_device_keys set status='revoked' where company_id=$1",[company]);
     await assert.rejects(service.ingest({session:'test',envelope:envelope()}),/authorization denied/);
     await db.query("update public.company_device_keys set status='active' where company_id=$1",[company]);
@@ -107,7 +142,7 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await db.exec('reset role');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)",[owner]);
     await db.exec('set role authenticated');
-    assert.equal((await db.query('select * from public.company_signed_sale_events')).rows.length,2);
+    assert.equal((await db.query('select * from public.company_signed_sale_events')).rows.length,3);
     await db.exec('reset role');
   } finally {await db.close();}
 });

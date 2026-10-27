@@ -1,0 +1,13 @@
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:16616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:21220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false (8.4s)
+  ok 2 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false (10.4s)
+  ok 3 qa\browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true (10.0s)
+
+  3 passed (34.2s)

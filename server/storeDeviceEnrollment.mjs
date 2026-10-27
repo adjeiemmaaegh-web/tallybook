@@ -4,7 +4,7 @@
  * The caller must supply a live Supabase session resolver and a SERIALIZABLE
  * transactional store. No HTTP routes or commerce operations are enabled here.
  */
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, createPublicKey, randomBytes, randomUUID, verify } from 'node:crypto';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const STORE_ID = /^[A-Za-z0-9:_-]{1,128}$/;
@@ -15,6 +15,17 @@ const denied = () => { throw new Error('Store/device enrollment denied'); };
 const validUuid = value => typeof value === 'string' && UUID.test(value);
 const validStoreId = value => typeof value === 'string' && STORE_ID.test(value);
 const digest = value => createHash('sha256').update(value, 'utf8').digest('hex');
+
+/** Exact bytes signed by the enrolling Ed25519 key. The one-use owner token
+ * binds this proof to a specific invite, member, store and staff identity.
+ */
+export function deviceKeyEnrollmentBytes({token,companyId,storeId,userId,staffId,deviceId,publicKeySpkiPem}) {
+  if(typeof token!=='string'||!INVITE_RE.test(token)||!validUuid(companyId)||!validUuid(userId)||
+     !validStoreId(storeId)||!validStoreId(staffId)||!validStoreId(deviceId)||
+     typeof publicKeySpkiPem!=='string'||publicKeySpkiPem.length>500)denied();
+  return Buffer.from(['tallybook.device.enroll.v1',digest(token),companyId,storeId,userId,
+    staffId,deviceId,digest(publicKeySpkiPem)].join('\n'),'utf8');
+}
 
 export function createStoreDeviceEnrollmentService({resolveSession, store, clock=Date.now, randomInvite=()=>randomBytes(32).toString('hex'), randomGrantId=randomUUID}) {
   if (typeof resolveSession !== 'function' || typeof store?.transaction !== 'function' ||
@@ -118,6 +129,71 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
         // Even this does NOT prove an unforgeable hardware/device identity.
         return Object.freeze({grantId,companyId:grant.companyId,storeId:grant.storeId,
           userId:actorId,expiresAt:grant.expiresAt,hardwareBound:false});
+      });
+    },
+
+    /** The target redeems an owner invitation with proof of key possession.
+     * This produces a server-owned public-key record, never a hardware claim.
+     */
+    async redeemKeyInvite({session,token,staffId,deviceId,publicKeySpkiPem,proofSignature}) {
+      if(typeof token!=='string'||!INVITE_RE.test(token)||!validStoreId(staffId)||
+         !validStoreId(deviceId)||typeof publicKeySpkiPem!=='string'||
+         !/^[A-Za-z0-9_-]{86}$/.test(proofSignature??''))denied();
+      const actor=await authenticatedUser(session);
+      const now=getNow();
+      return store.transaction(async tx=>{
+        assertMethods(tx);
+        if(typeof tx.getStaffBinding!=='function'||typeof tx.isStaffAssigned!=='function'||
+           typeof tx.insertDeviceKey!=='function')denied();
+        if(await tx.assertActiveSession(actor.sessionId,actor.userId,now)!==true)denied();
+        const invitation=await tx.getInvitation(digest(token));
+        if(!invitation||invitation.status!=='unused'||invitation.targetUserId!==actor.userId||
+           !validUuid(invitation.companyId)||!validStoreId(invitation.storeId)||
+           !Number.isSafeInteger(invitation.expiresAt)||invitation.expiresAt<=now)denied();
+        const company=await assertCompanyAndStore(tx,invitation.companyId,invitation.storeId);
+        if(company.ownerId!==invitation.issuedBy)denied();
+        await requireOwner(tx,company,invitation.issuedBy);
+        await requireMember(tx,company.id,actor.userId);
+        const staff=await tx.getStaffBinding(company.id,actor.userId);
+        if(staff?.id!==staffId||staff?.active!==true||
+           await tx.isStaffAssigned(company.id,invitation.storeId,staffId)!==true)denied();
+        let key;
+        try {key=createPublicKey(publicKeySpkiPem);} catch {denied();}
+        if(key.asymmetricKeyType!=='ed25519'||
+           key.export({type:'spki',format:'pem'})!==publicKeySpkiPem)denied();
+        const bytes=deviceKeyEnrollmentBytes({token,companyId:company.id,storeId:invitation.storeId,
+          userId:actor.userId,staffId,deviceId,publicKeySpkiPem});
+        const signature=Buffer.from(proofSignature,'base64url');
+        if(signature.length!==64||!verify(null,bytes,key,signature))denied();
+        await tx.consumeInvitation(invitation.id);
+        await tx.insertDeviceKey({companyId:company.id,id:deviceId,storeId:invitation.storeId,
+          userId:actor.userId,staffId,publicKeySpkiPem,approvedBy:invitation.issuedBy,approvedAt:now});
+        await tx.appendAudit({action:'device.key.enrolled',companyId:company.id,
+          storeId:invitation.storeId,actorId:actor.userId,targetUserId:actor.userId,
+          grantId:null,inviteId:invitation.id,at:now});
+        return Object.freeze({companyId:company.id,storeId:invitation.storeId,
+          userId:actor.userId,staffId,deviceId,publicKeyBound:true,hardwareBound:false});
+      });
+    },
+
+    async revokeDeviceKey({session,companyId,deviceId}) {
+      if(!validUuid(companyId)||!validStoreId(deviceId))denied();
+      const actor=await authenticatedUser(session);
+      const now=getNow();
+      return store.transaction(async tx=>{
+        assertMethods(tx);
+        if(typeof tx.getDeviceKey!=='function'||typeof tx.revokeDeviceKey!=='function')denied();
+        if(await tx.assertActiveSession(actor.sessionId,actor.userId,now)!==true)denied();
+        const key=await tx.getDeviceKey(companyId,deviceId);
+        if(key?.companyId!==companyId||key.id!==deviceId||key.status!=='active'||
+           !validStoreId(key.storeId))denied();
+        const company=await assertCompanyAndStore(tx,companyId,key.storeId,false);
+        await requireOwner(tx,company,actor.userId);
+        await tx.revokeDeviceKey(companyId,deviceId);
+        await tx.appendAudit({action:'device.key.revoked',companyId,
+          storeId:key.storeId,actorId:actor.userId,targetUserId:key.userId,
+          grantId:null,inviteId:null,at:now});
+        return Object.freeze({companyId,deviceId,revoked:true});
       });
     },
 

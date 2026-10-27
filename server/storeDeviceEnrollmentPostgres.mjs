@@ -42,6 +42,18 @@ export function createPostgresStoreDeviceEnrollmentStore(pool) {
             const s = rows.rows[0];
             return {id:s.id,companyId:s.company_id,status:s.status};
           },
+          async getStaffBinding(companyId,userId) {
+            const rows=await client.query(`select id,active from public.company_staff_identities
+              where company_id=$1::uuid and user_id=$2::uuid for share`,[companyId,userId]);
+            if(rows?.rows?.length!==1)return null;
+            return {id:rows.rows[0].id,active:rows.rows[0].active};
+          },
+          async isStaffAssigned(companyId,storeId,staffId) {
+            const rows=await client.query(`select active from public.company_staff_store_assignments
+              where company_id=$1::uuid and store_id=$2 and staff_id=$3 for share`,
+              [companyId,storeId,staffId]);
+            return rows?.rows?.length===1&&rows.rows[0].active===true;
+          },
           async getInvitation(tokenDigest) {
             const rows = await client.query(`select id,company_id,store_id,target_user_id,issued_by,token_digest,status,expires_at
               from public.company_device_enrollment_invites where token_digest=$1 for update`,[tokenDigest]);
@@ -65,6 +77,25 @@ export function createPostgresStoreDeviceEnrollmentStore(pool) {
               (id,company_id,store_id,user_id,status,created_at,expires_at)
               values($1,$2::uuid,$3,$4::uuid,'active',to_timestamp($5::double precision/1000),to_timestamp($6::double precision/1000)) returning id`,
               [g.id,g.companyId,g.storeId,g.userId,g.createdAt,g.expiresAt]));
+          },
+          async insertDeviceKey(k) {
+            one(await client.query(`insert into public.company_device_keys
+              (company_id,id,store_id,user_id,staff_id,public_key_spki_pem,status,approved_by,approved_at)
+              values($1::uuid,$2,$3,$4::uuid,$5,$6,'active',$7::uuid,to_timestamp($8::double precision/1000))
+              returning id`,[k.companyId,k.id,k.storeId,k.userId,k.staffId,
+                k.publicKeySpkiPem,k.approvedBy,k.approvedAt]));
+          },
+          async getDeviceKey(companyId,deviceId) {
+            const rows=await client.query(`select company_id,id,store_id,user_id,status
+              from public.company_device_keys where company_id=$1::uuid and id=$2 for update`,
+              [companyId,deviceId]);
+            const k=rows?.rows?.[0];return k?{companyId:k.company_id,id:k.id,storeId:k.store_id,
+              userId:k.user_id,status:k.status}:null;
+          },
+          async revokeDeviceKey(companyId,deviceId) {
+            one(await client.query(`update public.company_device_keys set status='revoked'
+              where company_id=$1::uuid and id=$2 and status='active' returning id`,
+              [companyId,deviceId]));
           },
           async getGrant(companyId, grantId) {
             const rows = await client.query('select id,company_id,store_id,user_id,status from public.company_device_grants where company_id=$1::uuid and id=$2 for update',[companyId,grantId]);
