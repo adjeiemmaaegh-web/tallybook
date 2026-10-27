@@ -20,6 +20,7 @@ import {installRun3MembershipRuntime} from "./run3MembershipRuntime.mjs";
 import {installRun4SessionProbe} from "./run4SessionProbe.mjs";
 import {installRun5TenantRuntime} from "./run5TenantRuntime.mjs";
 import {mountCentralSaleUploadRoute} from "./centralSaleUploadRoute.mjs";
+import {mountCentralDeviceRoutes} from "./centralDeviceRoutes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -52,6 +53,7 @@ async function startServer() {
   installRun5TenantRuntime({app,jsonParser:express.json,enabled:false});
   // Candidate UUID ingestion is explicitly unavailable in the shipped server.
   mountCentralSaleUploadRoute(app,express.json,{enabled:false});
+  mountCentralDeviceRoutes(app,express.json,{enabled:false});
 
   // Serve static files from dist/public in production
   const staticPath =
