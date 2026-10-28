@@ -2,10 +2,17 @@
  * All actions use bearer auth verified anew in the private server transaction.
  */
 import {getSupabaseClient} from '@/lib/supabase';
+import {resolveRun3Endpoint} from './run3Endpoint.mjs';
 export type Run3Member={companyId:string;userId:string;role:'owner'|'attendant';status:'active'};
 async function call(action:string,body:Record<string,string>){
   if(typeof window==='undefined'||window.location.protocol!=='https:')
     throw Error('Secure online account required for cloud invitations.');
+  const endpoint=resolveRun3Endpoint({
+    qaEndpoint:import.meta.env.VITE_TALLYBOOK_RUN3_QA_ENDPOINT,
+    supabaseUrl:import.meta.env.VITE_SUPABASE_URL,
+    isPreview:import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true',
+    publishableKey:import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  });
   const client=getSupabaseClient();
   const {data:identity,error:userError}=await client.auth.getUser();
   const {data:sessionData,error:sessionError}=await client.auth.getSession();
@@ -21,10 +28,11 @@ async function call(action:string,body:Record<string,string>){
     if(event!=='INITIAL_SESSION')changed=true;
   });
   try{
-    const res=await fetch('/api/run3/membership/'+action,{
+    const res=await fetch(endpoint.base+'/'+action,{
       method:'POST',credentials:'omit',cache:'no-store',
       headers:{'Content-Type':'application/json',
-        Authorization:'Bearer '+auth.access_token},
+        Authorization:'Bearer '+auth.access_token,
+        ...(endpoint.key?{apikey:endpoint.key}:{})},
       body:JSON.stringify(body)
     });
     if(!res.ok)throw Error('Cloud membership operation was denied or unavailable.');
