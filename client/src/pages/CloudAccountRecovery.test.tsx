@@ -66,7 +66,7 @@ describe('cloud account recovery',()=>{
     fireEvent.change(screen.getByLabelText('New password'),{target:{value:'safe-new-password-789'}});
     fireEvent.change(screen.getByLabelText('Confirm new password'),{target:{value:'safe-new-password-789'}});
     fireEvent.click(screen.getByRole('button',{name:'Update password and sign out'}));
-    await screen.findByText(/Password updated and cloud session/);
+    await screen.findByText(/Password updated\. Cloud sign-out has not been confirmed/);
     expect(screen.getByRole('alert')).toHaveTextContent('sign-out was not confirmed');
     expect(screen.queryByLabelText('New password')).toBeNull();
     expect(mock.updateUser).toHaveBeenCalledTimes(1);
@@ -79,7 +79,7 @@ describe('cloud account recovery',()=>{
     fireEvent.change(screen.getByLabelText('New password'),{target:{value:'safe-new-password-789'}});
     fireEvent.change(screen.getByLabelText('Confirm new password'),{target:{value:'safe-new-password-789'}});
     fireEvent.click(screen.getByRole('button',{name:'Update password and sign out'}));
-    await screen.findByText(/Password updated and cloud session/);
+    await screen.findByText(/Password updated\. Cloud sign-out has not been confirmed/);
     expect(screen.getByRole('alert')).toHaveTextContent('sign-out was not confirmed');
     expect(screen.queryByText('Password update failed. Request a new recovery link and try again.')).toBeNull();
     expect(mock.updateUser).toHaveBeenCalledTimes(1);
