@@ -3,6 +3,7 @@
  * The only privileged operation is the isolated atomic service_role RPC.
  */
 import {createClient} from 'npm:@supabase/supabase-js@2.117.3';
+import {verifyPullSignature} from './pullSignature.mjs';
 
 const TEST_ORIGIN='https://lmneuqxfyxplrxjswpma.supabase.co';
 const ROOT='/functions/v1/tallybook-run3-qa/';
@@ -14,7 +15,9 @@ const allowed={
   revokeMember:['companyId','targetUserId'],
   revokeInvite:['companyId','invitationId'],
   listMembers:['companyId'],
-  pullSales:['companyId','deviceId','afterUtc','afterOperationId']
+  pullChallenge:['companyId','deviceId'],
+  pullSales:['companyId','deviceId','afterUtc','afterOperationId',
+    'challengeId','nonce','signature']
 } as const;
 
 function response(origin:string|null,status:number,data:object){
@@ -61,6 +64,11 @@ async function digest(token:string){
   const hashed=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
   return [...hashed].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
+function nonceFromRandom(){
+  const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/=/g,'')
+    .replace(/\+/g,'-').replace(/\//g,'_');
+}
 Deno.serve(async(req:Request)=>{
   const origin=req.headers.get('origin');
   const allowedOrigin=qaOrigin();
@@ -79,11 +87,10 @@ Deno.serve(async(req:Request)=>{
   if(req.method!=='POST'||origin!==allowedOrigin)
     return response(null,403,{error:'QA membership request denied'});
   const op=new URL(req.url).pathname.replace(ROOT,'');
-  // V50 QA fail-closed: a bearer token + device ID does not prove private-key
-  // possession, and a pulled financial record cannot be entrusted to it.
-  // Enable only after signed challenge, bounded nonce, and one-use replay
-  // evidence are validated in the same server transaction.
-  if(op==='pullSales')
+  // Keep sale claims unavailable until the isolated V53 challenge schema and
+  // real enrolled-device acceptance have both been reviewed and enabled.
+  if((op==='pullSales'||op==='pullChallenge')&&
+     Deno.env.get('RUN3_QA_SIGNED_PULL_ENABLED')!=='true')
     return response(allowedOrigin,503,{error:'Signed device-proof pull not enabled'});
   if(!new URL(req.url).pathname.startsWith(ROOT)||!Object.hasOwn(allowed,op))
     return response(allowedOrigin,404,{error:'Unknown QA operation'});
@@ -122,23 +129,57 @@ Deno.serve(async(req:Request)=>{
        claims.sub!==actor||claims.role!=='authenticated'||claims.aud!=='authenticated'||
        !Number.isSafeInteger(claims.exp)||Number(claims.exp)*1000<=Date.now())
       throw Error('Invalid or expired verified session');
+    if(op==='pullChallenge'){
+      if(!UUID.test(String(body.companyId))||
+         !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId)))
+        throw Error('Challenge scope invalid');
+      const nonce=nonceFromRandom();
+      const result=await client.rpc('run3_qa_issue_sale_pull_challenge',{
+        p_actor:actor!,p_session:String(session),p_company:body.companyId,
+        p_device:body.deviceId,p_nonce_hash:await digest(nonce)});
+      if(result.error||!result.data||typeof result.data!=='object'||
+         result.data.companyId!==body.companyId||result.data.deviceId!==body.deviceId||
+         !UUID.test(String(result.data.challengeId)))
+        throw Error('Challenge denied');
+      return response(allowedOrigin,200,{...result.data,nonce});
+    }
+    if(op==='pullSales'){
+      if(!UUID.test(String(body.companyId))||
+         !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId))||
+         !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(String(body.afterUtc))||
+         !Number.isFinite(Date.parse(String(body.afterUtc)))||
+         !/^[A-Za-z0-9:_-]{0,128}$/.test(String(body.afterOperationId))||
+         !UUID.test(String(body.challengeId))||
+         !/^[A-Za-z0-9_-]{43}$/.test(String(body.nonce))||
+         !/^[A-Za-z0-9_-]{86}$/.test(String(body.signature)))
+        throw Error('Pull cursor or device proof invalid');
+      // Consume first: even an invalid signature burns its one-use challenge.
+      const consumed=await client.rpc('run3_qa_consume_sale_pull_challenge',{
+        p_actor:actor!,p_session:String(session),p_company:body.companyId,
+        p_device:body.deviceId,p_challenge:body.challengeId,
+        p_nonce_hash:await digest(body.nonce as string)});
+      if(consumed.error||!consumed.data||
+         !await verifyPullSignature(consumed.data.publicKeySpkiPem,body.signature as string,
+           ['tallybook.central.pull.v1',body.companyId as string,body.deviceId as string,
+            actor!,body.challengeId as string,body.nonce as string,
+            body.afterUtc as string,body.afterOperationId as string]))
+        throw Error('Device signature denied');
+      // This RPC rechecks the active Auth session, membership, staff, shop,
+      // device grant and cursor after proof consumption.
+      const pulled=await client.rpc('run3_qa_pull_sales',{
+        p_actor:actor!,p_session:String(session),p_company:body.companyId,
+        p_device:body.deviceId,p_after:body.afterUtc,
+        p_after_operation:body.afterOperationId});
+      if(pulled.error||!pulled.data||typeof pulled.data!=='object')
+        throw Error('Sale pull denied');
+      return response(allowedOrigin,200,pulled.data);
+    }
     const args:Record<string,string|null>={
       p_operation:op,p_actor:actor!,p_session:String(session),
       p_company:null,p_target:null,p_token_hash:null,p_invitation:null
     };
     let inviteToken:string|undefined;
-    let pullArgs:Record<string,string>|null=null;
-    if(op==='pullSales'){
-      if(!UUID.test(String(body.companyId))||
-         !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId))||
-         !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(String(body.afterUtc))||
-         !Number.isFinite(Date.parse(String(body.afterUtc)))||
-         !/^[A-Za-z0-9:_-]{0,128}$/.test(String(body.afterOperationId)))
-        throw Error('Pull cursor/scope invalid');
-      pullArgs={p_actor:actor!,p_session:String(session),
-        p_company:body.companyId as string,p_device:body.deviceId as string,
-        p_after:body.afterUtc as string,p_after_operation:body.afterOperationId as string};
-    } else if(op==='invite'){
+    if(op==='invite'){
       if(!UUID.test(String(body.companyId))||!UUID.test(String(body.targetUserId)))
         throw Error('IDs invalid');
       args.p_company=body.companyId as string;
@@ -162,9 +203,7 @@ Deno.serve(async(req:Request)=>{
       if(!UUID.test(String(body.companyId)))throw Error('ID invalid');
       args.p_company=body.companyId as string;
     }
-    const result=op==='pullSales'
-      ?await client.rpc('run3_qa_pull_sales',pullArgs!)
-      :await client.rpc('run3_qa_membership_rpc',args);
+    const result=await client.rpc('run3_qa_membership_rpc',args);
     if(result.error||!result.data||typeof result.data!=='object')
       throw Error('SQL authorization denied');
     const payload=op==='invite'?{...result.data,inviteToken}:result.data;
