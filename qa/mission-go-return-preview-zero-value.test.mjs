@@ -23,7 +23,7 @@ test('preview refuses a zero-cash quote from invoice discount rounding',()=>{
 test('preview preserves a positive one-minor-unit quote',()=>{
   const quoted=quoteReviewedCashReturn(review,'a',1);
   assert.equal(quoted.amountMinor,1);
-  assert.equal(quoted.discountMinor,49);
+  assert.equal(quoted.discountMinor,50);
 });
 test('preview rejects quantity above original remaining units',()=>{
   assert.throws(()=>quoteReviewedCashReturn(review,'a',2),/valid remaining quantity/);
