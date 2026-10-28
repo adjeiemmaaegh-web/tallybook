@@ -58,6 +58,32 @@ describe('cloud account recovery',()=>{
     await waitFor(()=>expect(mock.updateUser).toHaveBeenCalledWith({password:'safe-new-password-789'}));
     await waitFor(()=>expect(mock.signOut).toHaveBeenCalledOnce());
   });
+  it('keeps the completed reset visible when sign-out returns an error',async()=>{
+    window.history.replaceState(null,'','/reset-password?recovery=1');
+    mock.signOut.mockResolvedValueOnce({error:new Error('Sign-out unavailable')});
+    render(<PasswordRecoveryPage/>);
+    await screen.findByLabelText('New password');
+    fireEvent.change(screen.getByLabelText('New password'),{target:{value:'safe-new-password-789'}});
+    fireEvent.change(screen.getByLabelText('Confirm new password'),{target:{value:'safe-new-password-789'}});
+    fireEvent.click(screen.getByRole('button',{name:'Update password and sign out'}));
+    await screen.findByText(/Password updated and cloud session/);
+    expect(screen.getByRole('alert')).toHaveTextContent('sign-out was not confirmed');
+    expect(screen.queryByLabelText('New password')).toBeNull();
+    expect(mock.updateUser).toHaveBeenCalledTimes(1);
+  });
+  it('does not claim the password update failed when sign-out throws',async()=>{
+    window.history.replaceState(null,'','/reset-password?recovery=1');
+    mock.signOut.mockRejectedValueOnce(new Error('Offline'));
+    render(<PasswordRecoveryPage/>);
+    await screen.findByLabelText('New password');
+    fireEvent.change(screen.getByLabelText('New password'),{target:{value:'safe-new-password-789'}});
+    fireEvent.change(screen.getByLabelText('Confirm new password'),{target:{value:'safe-new-password-789'}});
+    fireEvent.click(screen.getByRole('button',{name:'Update password and sign out'}));
+    await screen.findByText(/Password updated and cloud session/);
+    expect(screen.getByRole('alert')).toHaveTextContent('sign-out was not confirmed');
+    expect(screen.queryByText('Password update failed. Request a new recovery link and try again.')).toBeNull();
+    expect(mock.updateUser).toHaveBeenCalledTimes(1);
+  });
   it('fails closed when the recovery session is invalid',async()=>{
     window.history.replaceState(null,'','/reset-password?recovery=1');
     mock.getUser.mockResolvedValue({data:{user:null},error:new Error('Expired')});
