@@ -17,6 +17,11 @@ function safeNumber(value) {
   if (value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Return amount exceeds safe money precision.');
   return Number(value);
 }
+/** Code-unit order is deterministic across OS locale settings and browser languages. */
+function compareLineIds(a, b) {
+  return a === b ? 0 : (a < b ? -1 : 1);
+}
+
 /** Fixed Hamilton distribution; stable line-ID order breaks exact ties. */
 export function allocateSavedInvoiceMinor(totalMinor, lines) {
   integer(totalMinor, 'invoice amount');
@@ -37,7 +42,7 @@ export function allocateSavedInvoiceMinor(totalMinor, lines) {
     return { id: row.id, amount: numerator / denominator, remainder: numerator % denominator };
   });
   let remainder = target - allocations.reduce((sum, row) => sum + row.amount, 0n);
-  allocations.sort((a,b) => a.remainder === b.remainder ? a.id.localeCompare(b.id) : (a.remainder > b.remainder ? -1 : 1));
+  allocations.sort((a,b) => a.remainder === b.remainder ? compareLineIds(a.id, b.id) : (a.remainder > b.remainder ? -1 : 1));
   for (const allocation of allocations) {
     if (remainder === 0n) break;
     allocation.amount++;
@@ -153,7 +158,7 @@ export function planPartialSaleReturn(sale, saleLines, previousReturns, requeste
     lines.push({ saleLineId, quantity, previouslyReturnedQuantity: already, cumulativeReturnedQuantity: already + quantity,
       allocatedMinor: safeNumber(taxable + tax), taxableMinor: safeNumber(taxable), taxMinor: safeNumber(tax), discountMinor: safeNumber(discount) });
   }
-  lines.sort((a,b) => a.saleLineId.localeCompare(b.saleLineId));
+  lines.sort((a,b) => compareLineIds(a.saleLineId, b.saleLineId));
   return { originalSaleId: sale.id, businessProfileId: sale.businessProfileId,
     draftAmountMinor: safeNumber(taxableAmount + taxAmount), draftTaxableMinor: safeNumber(taxableAmount),
     draftTaxMinor: safeNumber(taxAmount), draftDiscountMinor: safeNumber(discountAmount),
