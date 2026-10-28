@@ -17,3 +17,9 @@ The 2026-10-26 exact-source local QA run at `e607fc2` passed the baseline, 1006/
 No blocker may be closed solely by editing an assertion. The release decision remains NO-GO until the applicable gate is proven and reviewed. The development branch may continue to receive commits; main and deployment remain separate.
 
 The local central-event v37 checkpoint does not close these gates: its exact Windows server result is 349 pass, 43 POSIX-only failures, 1 skip, while the isolated client/native/browser results and Watchdog importer absence are documented in `docs/central/2026-10-26_LOCAL_CENTRAL_CHECKPOINT.md`. The 2026-10-26 Supabase check found the project inactive; the owner resumed it and the 2026-10-27 read-only V41 check confirmed it is active. This does not complete live sync or two-account RLS acceptance.
+
+## V52 update — 2026-10-28
+
+The V51 client suite eventually completed at 1045/1045, and the V52 native QA suite passed 470/470 with local fixture/socket permissions. Chromium release, auth, offline and friends-test password recovery checks passed 3/3, 4/4, 3/3 and 1/1. The `express>qs` production advisory was fixed in the committed lockfile; production dependency audit is clean. A low-severity development-only `deepmerge` advisory remains without an upstream patch. Exact commits and raw logs are in `docs/central/2026-10-28_V52_INTEGRATION_AND_VERIFICATION_CHECKPOINT.md`.
+
+The central cloud branch is now represented in development source, but its signed sale pull remains disabled pending one-use device proof. The isolated Supabase project has zero real Auth users. The user offered a sanitized backup and two demo inboxes; neither has been received yet. The production schema remains separate. GitHub has no completed Linux workflow for this candidate. These are open release gates, not automated-test failures.
