@@ -17,6 +17,7 @@ import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
 import { reconcileCashPartialReturns } from './cashPartialReturn.mjs';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
+import { assertCashReturnActorUnchanged } from './cashReturnActorGuard.mjs';
 import type { InventoryMovement } from '@/features/inventory/inventory';
 import { makeCentralCashRefundEvent } from '@/features/sync/centralOperationalEvent';
 
@@ -173,6 +174,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     const postingShift = await activeStaffShift(postingStaff,database);
     if (postingStaff?.role === 'cashier' && !postingShift)
       throw new Error('Cashier shift closed before refund was recorded.');
+    assertCashReturnActorUnchanged(staff,shift,postingStaff,postingShift);
     await database.cashPartialReturns.add(recorded);
     await database.centralOperationalEvents.add(makeCentralCashRefundEvent(recorded,sale));
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
