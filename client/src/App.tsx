@@ -1,13 +1,14 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
 import { lazy, Suspense, useEffect } from "react";
 import { AuthGate } from "@/auth/AuthGate";
+import { FriendsTestGate, friendsTestMode } from "@/auth/FriendsTestGate";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
 import { lockAllStaff } from "@/features/staff/staff";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/sonner";
 import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotifier";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/AppShell";
 import { BusinessProfileProvider } from "@/contexts/BusinessProfileContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -83,6 +84,7 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const onAccountEvent = createCloudStaffSessionBoundary(lockAllStaff);
@@ -92,19 +94,20 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
+  const workspace = <AuthGate signIn={<GoogleSignInPage />} accountSignIn={isSupabaseAuthPreviewEnabled ? <SupabaseSignInPage /> : <GoogleSignInPage />} passwordRecovery={<PasswordRecoveryPage />}>
+    <DatabaseProvider>
+      <BusinessProfileProvider>
+        <Toaster position="top-center" richColors />
+        <ConnectionRestoredNotifier />
+        <Router />
+      </BusinessProfileProvider>
+    </DatabaseProvider>
+  </AuthGate>;
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <AuthGate signIn={<GoogleSignInPage />} accountSignIn={isSupabaseAuthPreviewEnabled ? <SupabaseSignInPage /> : <GoogleSignInPage />} passwordRecovery={<PasswordRecoveryPage />}>
-          <DatabaseProvider>
-            <BusinessProfileProvider>
-              <Toaster position="top-center" richColors />
-              <ConnectionRestoredNotifier />
-              <Router />
-            </BusinessProfileProvider>
-          </DatabaseProvider>
-          </AuthGate>
+          {friendsTestMode && location !== '/reset-password' ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

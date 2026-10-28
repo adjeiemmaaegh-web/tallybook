@@ -4,20 +4,22 @@ import GoogleSignInPage from './GoogleSignInPage';
 import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
 
 const mock=vi.hoisted(()=>({
- oauth:vi.fn(),signOut:vi.fn(),retry:vi.fn(),
+ oauth:vi.fn(),emailSignIn:vi.fn(),emailSignUp:vi.fn(),signOut:vi.fn(),retry:vi.fn(),
  state:{status:'signed-in' as string,userId:'user-a' as string|null,
   expiresAtEpochMs:999999999999 as number|null,generation:1}
 }));
 vi.mock('wouter',()=>({Link:({children}:{children:unknown})=><span>{children as string}</span>}));
 vi.mock('@/lib/supabase',()=>({
  isSupabaseConfigured:true,
- getSupabaseClient:()=>({auth:{signInWithOAuth:mock.oauth}})
+ getSupabaseClient:()=>({auth:{signInWithOAuth:mock.oauth,signInWithPassword:mock.emailSignIn,signUp:mock.emailSignUp}})
 }));
 vi.mock('@/auth/useRun4CloudSession',()=>({useRun4CloudSession:vi.fn()}));
 beforeEach(()=>{
  vi.clearAllMocks();
  mock.state.status='signed-in';mock.state.userId='user-a';
  mock.oauth.mockResolvedValue({error:null});
+ mock.emailSignIn.mockResolvedValue({error:null});
+ mock.emailSignUp.mockResolvedValue({data:{session:null},error:null});
  mock.signOut.mockResolvedValue(true);
  vi.mocked(useRun4CloudSession).mockImplementation(()=>({
   state:mock.state as ReturnType<typeof useRun4CloudSession>['state'],
@@ -29,6 +31,7 @@ it('shows the verified cloud identity without claiming local data encryption',()
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud session verified/)).toBeTruthy();
  expect(screen.getByText(/does not encrypt or erase/)).toBeTruthy();
+ expect(screen.getByText('Open cloud business setup and local sync status')).toBeTruthy();
 });
 it('switch account signs out before OAuth account selection',async()=>{
  render(<GoogleSignInPage/>);
@@ -51,4 +54,23 @@ it('unverified cloud identity never renders signed-in account controls',()=>{
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud identity could not be verified/)).toBeTruthy();
  expect(screen.queryByText('Switch Google account')).toBeNull();
+});
+it('creates an email account and tells the visitor to confirm it',async()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
+ fireEvent.click(screen.getByText('Create email account'));
+ await waitFor(()=>expect(mock.emailSignUp).toHaveBeenCalledWith(expect.objectContaining({
+  email:'friend@example.com',password:'test-passphrase'})));
+ expect(screen.getByText(/follow that link before signing in/)).toBeTruthy();
+});
+it('signs in with email before offering a test workspace',async()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
+ fireEvent.click(screen.getByText('Sign in with email'));
+ await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledWith({
+  email:'friend@example.com',password:'test-passphrase'}));
 });

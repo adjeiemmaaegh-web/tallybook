@@ -16,6 +16,12 @@ export default function StageHome() {
   const databaseReady = status === "ready";
   const [counts, setCounts] = useState<SetupCounts | null>(null);
   const [setupError, setSetupError] = useState(false);
+  const websiteUpdate = <section className="op-row-card" style={{ display: "block", marginBottom: 18 }} aria-label="Tallybook website update">
+    <div className="op-row-title">Tallybook V19 website update</div>
+    <p className="op-row-sub" style={{ margin: "4px 0 10px" }}>Create an account with email or Google, then try the business, staff, sales and backup tools. Business records remain on this device; cloud sync is still being tested.</p>
+    <div className="flex flex-wrap gap-3"><Link href="/signin" className="secondary-action">Create account or sign in <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+      <Link href="/sync-status" className="secondary-action">Cloud business setup and sync status</Link></div>
+  </section>;
   useEffect(() => {
     let mounted = true;
     setCounts(null);
@@ -59,6 +65,7 @@ export default function StageHome() {
   if (!profile) {
     return (
       <div className="home-workspace space-y-5 pb-6">
+        {websiteUpdate}
         <section className="op-row-card" style={{ display: "block" }}>
           <div className="op-row-title">Set up your business to get started</div>
           <p className="op-row-sub" style={{ margin: "4px 0 10px" }}>Add your business name and the money you use. It takes under a minute.</p>
@@ -68,5 +75,5 @@ export default function StageHome() {
     );
   }
 
-  return <>{setupError && <p role="status">Setup progress is temporarily unavailable. Saved records were not changed.</p>}<PremiumHomeOverview companyId={activeCompanyId} companyName={profile.name} country={profile.country} currency={profile.currency} online={online} counts={counts} /></>;
+  return <>{websiteUpdate}{setupError && <p role="status">Setup progress is temporarily unavailable. Saved records were not changed.</p>}<PremiumHomeOverview companyId={activeCompanyId} companyName={profile.name} country={profile.country} currency={profile.currency} online={online} counts={counts} /></>;
 }

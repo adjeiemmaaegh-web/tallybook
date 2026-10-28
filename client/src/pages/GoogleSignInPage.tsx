@@ -90,7 +90,7 @@ export default function GoogleSignInPage(){
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void signIn(true)}>Switch Google account</button>
-          <Link href="/cloud-account" className="underline">Open cloud account preview</Link>
+          <Link href="/sync-status" className="underline">Open cloud business setup and local sync status</Link>
         </div>
        </div>:
        <div className="space-y-3">
