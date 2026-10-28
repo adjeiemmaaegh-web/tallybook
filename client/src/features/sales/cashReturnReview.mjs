@@ -52,6 +52,11 @@ export function quoteReviewedCashReturn(review,saleLineId,quantity) {
     throw new Error('Select an original sale line and valid remaining quantity.');
   const plan=planPartialSaleReturn(review.sale,review.saleLines,review.prior,[{saleLineId,quantity}]);
   if (review.sale.tax && !plan.taxPolicyVerified) throw new Error('Original tax configuration is not verified.');
+  // Posting only accepts a positive minor-unit cash amount. A tiny quantity
+  // may legitimately allocate zero after invoice-wide discount rounding;
+  // never present that draft as a payable cash refund.
+  if (!Number.isSafeInteger(plan.draftAmountMinor) || plan.draftAmountMinor <= 0)
+    throw new Error('Selected quantity has no refundable cash amount at the saved invoice precision.');
   return {amountMinor:plan.draftAmountMinor,taxMinor:plan.draftTaxMinor,
     discountMinor:plan.draftDiscountMinor,taxableMinor:plan.draftTaxableMinor};
 }
