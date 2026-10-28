@@ -1,0 +1,23 @@
+✔ active non-extractable key signs a scoped one-use pull and tampering breaks verification (202.2114ms)
+✔ challenge validation rejects a foreign device and stale or implausibly long expiry (8.8941ms)
+✔ extractable keys and invalid cursors fail before a cloud read (3.8602ms)
+✔ accepts empty authorized response (113.4407ms)
+✔ retains exact microsecond cursor without reformatting to Date (15.9072ms)
+✔ rejects foreign company and device (1.4878ms)
+✔ rejects wrong store or forged evidence classification (0.6316ms)
+✔ rejects a repeated operation ID (46.0862ms)
+✔ rejects a backwards cursor even within same millisecond (0.7838ms)
+✔ rejects forged next cursor and lying hasMore (17.821ms)
+✔ rejects malformed timestamp, payload and SHA (13.1985ms)
+✔ rejects unbounded pages (0.849ms)
+✔ permits strictly ordered different operations at same exact microsecond (96.7041ms)
+✔ browser proof verifies at the Edge boundary only for the signed scope (84.4464ms)
+✔ isolated pull challenge is one-use, session-bound and revocation-aware (11376.543ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13310.4776
