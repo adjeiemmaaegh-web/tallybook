@@ -4,6 +4,8 @@ The 82 acceptance units in `docs/release/traceability.json` remain the governing
 
 V52 evidence update (2026-10-28): source integration and local verification advanced, but none of the 82 acceptance statuses is newly accepted. See `docs/central/2026-10-28_V52_INTEGRATION_AND_VERIFICATION_CHECKPOINT.md` for exact commit-specific test results and remaining cloud, backup, Linux and device gates.
 
+V53 evidence update (2026-10-28): the isolated signed sale-pull challenge is source-only, disabled and unapplied. Focused cryptographic, PGlite, TypeScript and build checks passed; real-account/device, lossless replication and operational acceptance are still required. No acceptance status changes. See `docs/central/2026-10-28_V53_SIGNED_PULL_DRAFT_CHECKPOINT.md`.
+
 | Stage | Implemented, unverified | Implemented and tested | Missing | Blocked | Reconciliation assessment |
 |---:|---:|---:|---:|---:|---|
 | 1 | 6 | 0 | 0 | 0 | Full transaction and real-browser recovery gates open. |

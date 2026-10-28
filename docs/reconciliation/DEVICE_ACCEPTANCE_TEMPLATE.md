@@ -7,7 +7,10 @@ Use a disposable business and masked data. Record the candidate commit, browser 
 | pending | Windows / Chrome | pending | pending | not run | pending | pending |
 | pending | Windows / Edge | pending | pending | not run | pending | pending |
 | pending | Android / Chrome | pending | pending | not run | pending | pending |
-| pending | iPhone / Safari | pending | pending | not run | pending | pending |
+
+The current owner-operated acceptance scope is Windows (Chrome and Edge) and
+Android (Chrome), matching the devices the owner has available. Add another
+browser or device only if a later release explicitly supports it.
 
 For each row, execute and separately record: install/open; create and switch two companies; deny a cashier's unauthorized refund and cross-company access; sell and print/reopen a receipt; restart offline and verify sale, stock, tax, and cost; open a shift and reconcile cash; create an encrypted backup, prove the saved file digest, restore it on a disposable profile, and compare IDs and balances; interrupt a write or restore where the device allows it and confirm no partial ledger posting. Repeat with accessible keyboard and screen-reader navigation where supported.
 
