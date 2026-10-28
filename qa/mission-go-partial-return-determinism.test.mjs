@@ -47,3 +47,21 @@ test('partial-return draft line order is independent of locale and request order
   assert.deepEqual(draft, reordered);
   assert.equal(draft.draftAmountMinor, 2);
 });
+
+test('locale collation cannot redirect a rounding penny to another sale line', () => {
+  const original = String.prototype.localeCompare;
+  // Simulates a runtime whose collation reverses the chosen line IDs.
+  String.prototype.localeCompare = function (other) {
+    const left = String(this);
+    return left === String(other) ? 0 : (left < String(other) ? 1 : -1);
+  };
+  try {
+    const result = allocateSavedInvoiceMinor(1, [
+      { id: 'a', lineTotalMinor: 1 },
+      { id: '_', lineTotalMinor: 1 },
+    ]);
+    assert.deepEqual(result, { _: 1, a: 0 });
+  } finally {
+    String.prototype.localeCompare = original;
+  }
+});
