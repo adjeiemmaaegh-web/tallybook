@@ -29,7 +29,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
   const ordered = [...returns].sort((a,b) => (a.returnSequence ?? 0) - (b.returnSequence ?? 0) || String(a.id).localeCompare(String(b.id)));
   for (const entry of ordered) {
     if (!validId(entry?.id) || ids.has(entry.id) || !validId(entry.submissionKey) ||
-        keys.has(entry.submissionKey) ||
+        keys.has(`${entry.businessProfileId}:${entry.submissionKey}`) ||
         !validId(entry.originalSaleId) || !validId(entry.businessProfileId) ||
         typeof entry.createdAt !== 'string' || !Number.isFinite(Date.parse(entry.createdAt)) ||
         entry.refundMethod !== 'cash' || entry.disposition !== 'restockable' ||
@@ -39,7 +39,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         !Array.isArray(entry.lines) || entry.lines.length === 0 || entry.lines.length > 256) {
       throw new Error('Saved cash return has malformed or duplicated evidence.');
     }
-    ids.add(entry.id);keys.add(entry.submissionKey);
+    ids.add(entry.id);keys.add(`${entry.businessProfileId}:${entry.submissionKey}`);
     const sale = saleById.get(entry.originalSaleId);
     if (!sale || sale.businessProfileId !== entry.businessProfileId || reversed.has(sale.id) ||
         sale.customerId !== undefined || sale.paymentMethod !== 'cash' ||
