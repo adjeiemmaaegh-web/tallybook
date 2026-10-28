@@ -10,6 +10,7 @@ export default function PasswordRecoveryPage(){
   const [confirmation,setConfirmation]=useState('');
   const [error,setError]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
+  const [signOutConfirmed,setSignOutConfirmed]=useState(false);
   useEffect(()=>{
     if(!isSupabaseConfigured){setPhase('invalid');return;}
     let active=true;
@@ -61,6 +62,7 @@ export default function PasswordRecoveryPage(){
       try {
         const {error:signOutError}=await auth.signOut();
         if(signOutError)setError('Password updated, but sign-out was not confirmed. Sign out of shared devices.');
+        else setSignOutConfirmed(true);
       } catch {
         setError('Password updated, but sign-out was not confirmed. Sign out of shared devices.');
       }
@@ -78,7 +80,7 @@ export default function PasswordRecoveryPage(){
       <input id="recovery-confirm-password" className="w-full rounded border p-3" required minLength={12} type="password" autoComplete="new-password" value={confirmation} onChange={event=>setConfirmation(event.target.value)}/>
       <button type="submit" disabled={busy||password.length<12||!confirmation} className="rounded border px-4 py-2">{busy?'Updating…':'Update password and sign out'}</button>
     </form>:null}
-    {phase==='complete'?<p role="status">Password updated and cloud session signed out. Sign in again using your new password.</p>:null}
+    {phase==='complete'?<p role="status">{signOutConfirmed ? 'Password updated and cloud session signed out.' : 'Password updated. Cloud sign-out has not been confirmed.'} Sign in again using your new password.</p>:null}
     {error?<p role="alert">{error}</p>:null}
     <Link href="/signin" className="underline">Return to sign-in</Link>
     <p className="text-sm">This resets cloud credentials only. Local business records and staff PINs are unchanged.</p>
