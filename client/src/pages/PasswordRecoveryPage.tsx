@@ -55,9 +55,15 @@ export default function PasswordRecoveryPage(){
       const result=await auth.updateUser({password});
       if(result.error)throw result.error;
       setPassword('');setConfirmation('');
-      const {error:signOutError}=await auth.signOut();
-      if(signOutError)setError('Password updated, but sign-out was not confirmed. Sign out of shared devices.');
-      else setPhase('complete');
+      // Password replacement has already succeeded. A sign-out failure must
+      // never send the user back to the form or imply the password was unchanged.
+      setPhase('complete');
+      try {
+        const {error:signOutError}=await auth.signOut();
+        if(signOutError)setError('Password updated, but sign-out was not confirmed. Sign out of shared devices.');
+      } catch {
+        setError('Password updated, but sign-out was not confirmed. Sign out of shared devices.');
+      }
     }catch{setError('Password update failed. Request a new recovery link and try again.');}
     finally{setBusy(false);}
   }
