@@ -15,6 +15,6 @@ Verification on this Windows checkout:
 - Vite production build and PWA generation: passed (51 precache entries). This is build evidence, not deployment evidence.
 - Focused React/Vitest account, recovery, gate and auth tests: 25/25 passed.
 - Focused Node membership, Run3 preflight and cash-return regression tests: 29/29 passed.
-- Full client Vitest was attempted. It produced no test summary after several minutes and stopped advancing in the assistant test area; it was interrupted. Its partial raw output is in `evidence/v51-full-vitest-incomplete-2026-10-28.txt`. No full-suite pass is claimed.
+- Full client Vitest was attempted. It produced no test summary after several minutes, with long gaps between output in the assistant test area; it was interrupted. Its partial raw output is in `evidence/v51-full-vitest-incomplete-2026-10-28.txt`. A subsequent isolated run of `client/src/features/assistant/batch.test.ts` passed 18/18 in 48 seconds, so the partial run does **not** establish a deadlock or a failing assistant test. No full-suite pass is claimed.
 
 Still open: complete client/native/Linux and browser suites on the exact candidate SHA; real isolated owner/attendant account acceptance; secure signed upload and authorized pull; representative historical backup migration; Windows/Android acceptance; independent release review. The separate cloud integration candidate at `5e837e7` remains QA-only and was not merged into this checkpoint. No production Supabase schema, payment or Vercel deployment was changed.
