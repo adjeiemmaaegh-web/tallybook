@@ -45,9 +45,9 @@ test('supplier mutations and purchase posting use four guarded write transaction
  const r=inspected('purchases/purchases.ts');
  assert.equal(r.count,4);
 });
-test('two supplier liability operations both reject pending crash journals',()=>{
+test('all six supplier liability write paths reject pending crash journals',()=>{
  const r=inspected('purchases/supplierPayables.ts');
- assert.equal(r.count,2);
+ assert.equal(r.count,6);
 });
 test('retail backup export owns an exclusive shared-name lock across both DB reads',()=>{
  const s=source('backup/backup.ts');
