@@ -706,6 +706,7 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     // against a freshly restored company database.
     for(const table of [database.syncReplicaOutbox,database.syncReplicaInbox,
       database.syncReplicaCursors,database.syncReplicaConflicts,
+      database.qaSaleClaimInbox,database.qaSaleClaimCursors,
       database.paymentSandboxIntents,database.paymentSandboxEvents])
       await table.where("businessProfileId").equals(companyId).delete();
     // Device-local assistant audit is intentionally excluded from portable backups.
