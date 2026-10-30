@@ -79,11 +79,12 @@ BEGIN
    FROM public.company_signed_sale_events e
    WHERE e.company_id=p_company AND e.store_id=scope_store
      AND (membership_role='owner' OR e.actor_id=p_actor)
-     AND (e.received_at_utc,e.operation_id)>(p_after,p_after_operation)
-   ORDER BY e.received_at_utc,e.operation_id
+     AND (e.received_at_utc,e.operation_id COLLATE "C")
+       >(p_after,p_after_operation COLLATE "C")
+   ORDER BY e.received_at_utc,e.operation_id COLLATE "C"
    LIMIT 11
  ), indexed AS (
-   SELECT row_number() OVER(ORDER BY received_at_utc,operation_id) AS rn,
+   SELECT row_number() OVER(ORDER BY received_at_utc,operation_id COLLATE "C") AS rn,
       operation_id,event_id,store_id,staff_id,actor_id,
       payload_sha256,payload,evidence_status,received_at_utc FROM page
  )
@@ -93,9 +94,9 @@ BEGIN
    'storeId',store_id,'staffId',staff_id,'actorId',actor_id,
    'payloadSha256',btrim(payload_sha256),'payload',payload,
    'evidenceStatus',evidence_status,'receivedAtUtc',received_at_utc
-  ) ORDER BY received_at_utc,operation_id) FILTER (WHERE rn<=10),'[]'::jsonb),
+  ) ORDER BY received_at_utc,operation_id COLLATE "C") FILTER (WHERE rn<=10),'[]'::jsonb),
   max(received_at_utc) FILTER (WHERE rn<=10),
-  (array_agg(operation_id ORDER BY received_at_utc DESC,operation_id DESC)
+  (array_agg(operation_id ORDER BY received_at_utc DESC,operation_id COLLATE "C" DESC)
     FILTER (WHERE rn<=10))[1]
  INTO item_count,batch,next_time,next_op
  FROM indexed;

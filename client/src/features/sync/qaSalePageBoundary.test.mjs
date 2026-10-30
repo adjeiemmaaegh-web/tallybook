@@ -52,3 +52,8 @@ test('permits strictly ordered different operations at same exact microsecond',(
  const v=validateQaSalePage(page([event('op1'),event('op2')]),scope);
  assert.equal(v.events.length,2);
 });
+test('uses bytewise ASCII operation order for a shared timestamp',()=>{
+ const ordered=page([event('sale:Z'),event('sale_a')]);
+ assert.equal(validateQaSalePage(ordered,scope).events.length,2);
+ denied(page([event('sale_a'),event('sale:Z')]));
+});

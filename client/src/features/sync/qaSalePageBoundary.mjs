@@ -13,7 +13,9 @@ function micros(s){
 }
 function cmp(a,b){
  const x=micros(a.time),y=micros(b.time);
- return x<y?-1:x>y?1:a.operation.localeCompare(b.operation,'en',{sensitivity:'variant'});
+ // The QA RPC orders operation IDs with PostgreSQL's bytewise C collation.
+ // IDs are restricted to ASCII, so JS code-unit order is the same order.
+ return x<y?-1:x>y?1:a.operation<b.operation?-1:a.operation>b.operation?1:0;
 }
 export function validateQaSalePage(value,scope){
  if(!scope||!UUID.test(scope.companyId??'')||!ID.test(scope.deviceId??'')||
