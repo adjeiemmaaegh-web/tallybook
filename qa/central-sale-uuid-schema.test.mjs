@@ -142,9 +142,16 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     await assert.rejects(enrollment.redeemKeyInvite({...keyRequest,
       proofSignature:'A'.repeat(86)}),/enrollment denied/);
     assert.equal((await db.query('select status from public.company_device_enrollment_invites')).rows[0].status,'unused');
+    assert.equal((await db.query('select count(*)::int as n from public.company_device_grants')).rows[0].n,0);
     const enrolled=await enrollment.redeemKeyInvite({...keyRequest,proofSignature:keyProof});
     assert.equal(enrolled.publicKeyBound,true);
     assert.equal(enrolled.hardwareBound,false);
+    const granted=(await db.query(`select company_id,store_id,user_id,status,
+      extract(epoch from (expires_at-created_at))::int as lifetime
+      from public.company_device_grants`)).rows;
+    assert.equal(granted.length,1);
+    assert.deepEqual(granted[0],{company_id:company,store_id:'shopA',user_id:attendant,
+      status:'active',lifetime:8*60*60});
     await assert.rejects(enrollment.redeemKeyInvite({...keyRequest,proofSignature:keyProof}),/enrollment denied/);
     assert.equal((await db.query("select count(*)::int as n from public.company_device_keys where id='deviceB'")).rows[0].n,1);
     const service=createCentralSaleIngestService({

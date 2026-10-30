@@ -165,9 +165,18 @@ export function createStoreDeviceEnrollmentService({resolveSession, store, clock
           userId:actor.userId,staffId,deviceId,publicKeySpkiPem});
         const signature=Buffer.from(proofSignature,'base64url');
         if(signature.length!==64||!verify(null,bytes,key,signature))denied();
+        const grantId=randomGrantId();
+        if(!validUuid(grantId))denied();
         await tx.consumeInvitation(invitation.id);
         await tx.insertDeviceKey({companyId:company.id,id:deviceId,storeId:invitation.storeId,
           userId:actor.userId,staffId,publicKeySpkiPem,approvedBy:invitation.issuedBy,approvedAt:now});
+        // A key alone cannot authorize signed reads. Issue the bounded grant
+        // in this same transaction so a partial enrollment cannot escape.
+        await tx.insertGrant({id:grantId,companyId:company.id,storeId:invitation.storeId,
+          userId:actor.userId,status:'active',createdAt:now,expiresAt:now+GRANT_LIFETIME_MS});
+        await tx.appendAudit({action:'device.grant.issued',companyId:company.id,
+          storeId:invitation.storeId,actorId:actor.userId,targetUserId:actor.userId,
+          grantId,inviteId:invitation.id,at:now});
         await tx.appendAudit({action:'device.key.enrolled',companyId:company.id,
           storeId:invitation.storeId,actorId:actor.userId,targetUserId:actor.userId,
           grantId:null,inviteId:invitation.id,at:now});
