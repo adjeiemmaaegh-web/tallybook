@@ -4,6 +4,7 @@
  */
 import {createClient} from 'npm:@supabase/supabase-js@2.117.3';
 import {verifyPullSignature} from './pullSignature.mjs';
+import {handleQaDeviceAction} from './deviceActions.mjs';
 
 const TEST_ORIGIN='https://lmneuqxfyxplrxjswpma.supabase.co';
 // Separate source review is required before the isolated signed-pull routes
@@ -13,6 +14,10 @@ const ROOT='/functions/v1/tallybook-run3-qa/';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const B64=/^v1\.[A-Za-z0-9_-]{43}$/;
 const allowed={
+  deviceProvision:['companyId','localCompanyId','storeId','staffId','targetUserId'],
+  deviceInvite:['companyId','storeId','targetUserId'],
+  deviceRedeem:['companyId','storeId','token','staffId','deviceId','publicKeySpkiPem','proofSignature'],
+  deviceRevoke:['companyId','storeId','deviceId'],
   invite:['companyId','targetUserId'],
   accept:['inviteToken'],
   revokeMember:['companyId','targetUserId'],
@@ -133,6 +138,10 @@ Deno.serve(async(req:Request)=>{
        claims.sub!==actor||claims.role!=='authenticated'||claims.aud!=='authenticated'||
        !Number.isSafeInteger(claims.exp)||Number(claims.exp)*1000<=Date.now())
       throw Error('Invalid or expired verified session');
+    if(op.startsWith('device')){
+      const receipt=await handleQaDeviceAction(client,op,body,actor!,String(session));
+      return response(allowedOrigin,200,receipt);
+    }
     if(op==='pullChallenge'){
       if(!UUID.test(String(body.companyId))||
          !/^[A-Za-z0-9:_-]{1,128}$/.test(String(body.deviceId)))

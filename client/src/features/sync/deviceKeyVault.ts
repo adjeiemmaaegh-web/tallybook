@@ -163,6 +163,18 @@ export async function loadActiveDeviceKey(scope:DeviceKeyScope,
   return record.privateKey;
 }
 
+/** Public status only, after the same identity checks used to load a key. */
+export async function inspectDeviceKeyState(scope:DeviceKeyScope,
+  resolveUserId:()=>Promise<string>,currentLocalScope:()=>{companyId:string|null;staffId:string|null}):Promise<'pending'|'active'> {
+  const scopeId=requireScope(scope);
+  await requirePrincipal(scope,resolveUserId,currentLocalScope);
+  const record=await read(scopeId);
+  if(!record||!sameScope(record.scope,scope)||!validPrivateKey(record.privateKey)||
+     !['pending','active'].includes(record.status))throw Error('Device key unavailable.');
+  await requirePrincipal(scope,resolveUserId,currentLocalScope);
+  return record.status;
+}
+
 export async function forgetDeviceKey(scope:DeviceKeyScope,
   resolveUserId:()=>Promise<string>,currentLocalScope:()=>{companyId:string|null;staffId:string|null}):Promise<void> {
   const scopeId=requireScope(scope);
