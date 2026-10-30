@@ -1,6 +1,7 @@
-/** Run 4 cloud-only session hook. Local ledger does not depend on it. */
+/** Verified cloud identity. Operational access also requires a workspace grant. */
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
+import {lockWorkspace} from './workspaceBoundary';
 import {createRun4SessionController,
   type Run4SessionController,type Run4Snapshot} from './run4SessionController.mjs';
 
@@ -45,12 +46,15 @@ export function useRun4CloudSession(enabled=true,requireServerProof=false){
           throw Error('Cloud session was revoked or changed');
         return {active:true,userId,expiresAtEpochMs};
       }:undefined,
-      onChange:snapshot=>{if(mounted)setState(snapshot);}
+      onChange:snapshot=>{
+        if(snapshot.status!=='signed-in')lockWorkspace();
+        if(mounted)setState(snapshot);
+      }
     });
     controller.current=session;
     session.start();
     const refresh=()=>{void session.refresh();};
-    const offline=()=>{session.offline();};
+    const offline=()=>{lockWorkspace();session.offline();};
     const focus=()=>{if(document.visibilityState==='visible')refresh();};
     window.addEventListener('online',refresh);
     window.addEventListener('offline',offline);
@@ -68,6 +72,6 @@ export function useRun4CloudSession(enabled=true,requireServerProof=false){
   },[enabled,requireServerProof]);
 
   const retry=useCallback(async()=>controller.current?.refresh(),[]);
-  const signOut=useCallback(async()=>controller.current?.signOut()??false,[]);
+  const signOut=useCallback(async()=>{lockWorkspace();return controller.current?.signOut()??false;},[]);
   return {state,retry,signOut};
 }

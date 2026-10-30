@@ -13,8 +13,9 @@ test('premium shell account button opens real /account route, not local staff PI
 test('auth boundary wraps providers before local ledger mounts',()=>{
  const gate=app.indexOf('<AuthGate '), db=app.indexOf('<DatabaseProvider>');
  assert.ok(gate>=0 && db>gate);
- assert.match(auth,/location!==['"]\/cloud-account['"]/);
- assert.match(auth,/useRun4CloudSession\(true,true\)/);
+ assert.doesNotMatch(auth,/location!==['"]\/cloud-account['"]/);
+ assert.match(auth,/useRun4CloudSession\(true\)/);
+ assert.match(auth,/workspaceSnapshot/);
 });
 test('stage 9 account UI does not imply completed cloud synchronization',()=>{
  assert.match(app, /isSupabaseAuthPreviewEnabled\s*\?\s*SupabaseSignInPage\s*:\s*GoogleSignInPage/);

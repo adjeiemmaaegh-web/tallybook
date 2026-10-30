@@ -28,7 +28,7 @@ test("prior Supabase session persistence, refreshing and OAuth detection are pre
   assert.match(client, /getSupabaseClient/);
 });
 
-test("optional sign-in maintains session listener cleanup and safe redirect", () => {
+test("sign-in maintains session listener cleanup and safe redirect", () => {
   const page = read("client/src/pages/SupabaseSignInPage.tsx");
   assert.match(page, /GoogleSignInPage/);
   assert.match(read("client/src/auth/useRun4CloudSession.ts"), /session\.stop\(\)/);
@@ -36,11 +36,12 @@ test("optional sign-in maintains session listener cleanup and safe redirect", ()
   assert.match(read("client/src/pages/GoogleSignInPage.tsx"), /redirectTo:`\$\{window\.location\.origin\}\/signin`/);
 });
 
-test("cloud authentication gate is staged without enabling bookkeeping sync", () => {
+test("mandatory authentication boundary does not enable bookkeeping sync", () => {
   const app = read("client/src/App.tsx");
   assert.match(app, /<AuthGate\b/);
-  assert.match(read("client/src/auth/AuthGate.tsx"), /location!==['"]\/cloud-account['"]/);
-  assert.match(read("client/src/auth/AuthGate.tsx"), /useRun4CloudSession\(true,true\)/);
+  assert.doesNotMatch(read("client/src/auth/AuthGate.tsx"), /location!==['"]\/cloud-account['"]/);
+  assert.match(read("client/src/auth/AuthGate.tsx"), /useRun4CloudSession\(true\)/);
+  assert.match(read("client/src/auth/AuthGate.tsx"), /grant\.userId\s*===\s*state\.userId/);
   const page = read("client/src/pages/SupabaseSignInPage.tsx");
   assert.doesNotMatch(page, /\.from\(/);
   assert.doesNotMatch(page, /supabase\.storage/);

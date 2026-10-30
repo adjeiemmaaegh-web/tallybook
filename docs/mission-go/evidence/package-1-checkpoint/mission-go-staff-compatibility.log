@@ -1,0 +1,34 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+ ❯ src/features/staff/staff.test.ts (13 tests | 1 failed | 12 skipped) 294ms
+     × does not reopen a protected company if its staff records disappear 291ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/staff/staff.test.ts > Stage 6 local staff security > does not reopen a protected company if its staff records disappear
+Error: Unlock an authorized account, company and device workspace first.
+ ❯ requireWorkspaceAccess src/auth/workspaceBoundary.ts:45:11
+     43|   if(!grant||grant.databaseName!==databaseName&&databaseName!==undefin…
+     44|     companyId!==undefined&&grant.localCompanyId!==companyId)
+     45|     throw Error('Unlock an authorized account, company and device work…
+       |           ^
+     46|   return grant;
+     47| }
+ ❯ Object.transaction src/auth/workspaceDatabaseBoundary.ts:9:5
+ ❯ Transaction.create ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/classes/transaction/transaction.ts:123:23
+ ❯ ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/classes/dexie/transaction-helpers.ts:63:14
+ ❯ ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:812:20
+ ❯ callListener ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:495:10
+ ❯ endMicroTickScope ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:544:16
+ ❯ ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:516:29
+ ❯ usePSD ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:798:11
+ ❯ physicalTick ../../tallybook-local-clone/node_modules/.pnpm/dexie@4.4.6/node_modules/dexie/src/helpers/promise.js:513:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  18:48:05
+   Duration  39.88s (transform 1.34s, setup 10.77s, import 3.29s, tests 294ms, environment 24.00s)

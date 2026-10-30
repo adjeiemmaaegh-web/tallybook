@@ -1,5 +1,7 @@
 # Current development handover — 2026-10-30
 
+**Superseded for current authentication work:** see [Mission GO Package 1 checkpoint](../mission-go/PACKAGE_1_CHECKPOINT_2026-10-30.md). Main subsequently reached `ea165a5` and that exact commit was authorized and deployed for stakeholder testing. The newer authentication checkpoint is incomplete, blocks operational access pending secure provisioning, and must not be deployed. The remainder of this document records the earlier increment and its unresolved scope.
+
 ## Source and release decision
 
 Use `development/v19-unified-reconciliation`, local worktree `work/v19-cloud-qa` (local branch `integration/v19-cloud-qa`). The package's `PACKAGE_PROVENANCE.json` records its exact commit. GitHub main was independently read as `ba3481eb7742b065670dbe5b5ffcb93a62ee0edb` during this continuation. Main has not been changed and no current commit has been deployed or offered as a completed-integration pull request.

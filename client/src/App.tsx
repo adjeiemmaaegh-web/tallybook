@@ -1,7 +1,7 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
 import { lazy, Suspense, useEffect } from "react";
 import { AuthGate } from "@/auth/AuthGate";
-import { FriendsTestGate, friendsTestMode } from "@/auth/FriendsTestGate";
+import {lockWorkspace,listenForWorkspaceRevocation} from "@/auth/workspaceBoundary";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
 import { lockAllStaff } from "@/features/staff/staff";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -85,11 +85,13 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
+  useEffect(()=>listenForWorkspaceRevocation(),[]);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const onAccountEvent = createCloudStaffSessionBoundary(lockAllStaff);
     const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
       // Events are only a reason to revoke a local unlock, never proof of cloud access.
+      if(event!=="INITIAL_SESSION")lockWorkspace();
       onAccountEvent(event, session?.user.id ?? null);
     });
     return () => subscription.unsubscribe();
@@ -107,7 +109,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          {friendsTestMode && location !== '/reset-password' ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
+          {workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

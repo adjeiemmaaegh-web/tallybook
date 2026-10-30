@@ -1,98 +1,91 @@
-import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
-import {fireEvent,render,screen,cleanup} from '@testing-library/react';
-import {AuthGate} from './AuthGate';
-import {useRun4CloudSession} from './useRun4CloudSession';
-
-const mock=vi.hoisted(()=>({location:'/',retry:vi.fn(),state:{
- status:'checking' as string,userId:null as string|null,expiresAtEpochMs:null as number|null,generation:0}}));
-vi.mock('wouter',()=>({
- useLocation:()=>[mock.location,vi.fn()],
- Redirect:({to}:{to:string})=><span>Redirect to {to}</span>
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { AuthGate } from "./AuthGate";
+const mock = vi.hoisted(() => ({
+  path: "/",
+  status: "signed-out",
+  userId: null as string | null,
 }));
-vi.mock('./useRun4CloudSession',()=>({useRun4CloudSession:vi.fn()}));
-beforeEach(()=>{
- mock.location='/';
- mock.retry=vi.fn();
- mock.state={status:'checking',userId:null,expiresAtEpochMs:null,generation:0};
- vi.mocked(useRun4CloudSession).mockImplementation(()=>({
-  state:mock.state as ReturnType<typeof useRun4CloudSession>['state'],
-  retry:mock.retry,signOut:vi.fn()
- }));
+vi.mock("wouter", () => ({
+  useLocation: () => [mock.path, vi.fn()],
+  Redirect: () => <span>Sign-in required</span>,
+}));
+vi.mock("./useRun4CloudSession", () => ({
+  useRun4CloudSession: () => ({
+    state: { status: mock.status, userId: mock.userId },
+    retry: vi.fn(),
+  }),
+}));
+vi.mock("./WorkspaceOnboarding", () => ({
+  WorkspaceOnboarding: () => <span>Authorized setup required</span>,
+}));
+const renderGate = (enabled = true) =>
+  render(
+    <AuthGate
+      enabled={enabled}
+      signIn={<span>Account screen</span>}
+      passwordRecovery={<span>Recovery screen</span>}
+    >
+      <span>Business records</span>
+    </AuthGate>
+  );
+beforeEach(() => {
+  mock.path = "/";
+  mock.status = "signed-out";
+  mock.userId = null;
 });
-afterEach(()=>{cleanup();vi.clearAllMocks();});
-describe('Run 4 offline-safe AuthGate',()=>{
- it('keeps account screens outside the local ledger tree',()=>{
-  for(const path of ['/signin','/account']){
-   mock.location=path;
-   const view=render(<AuthGate enabled signIn={<span>Sign in</span>}>
-     <span>Local ledger mounted</span>
-   </AuthGate>);
-   expect(screen.getByText('Sign in')).toBeTruthy();
-   expect(screen.queryByText('Local ledger mounted')).toBeNull();
-   view.unmount();
-  }
-  expect(useRun4CloudSession).not.toHaveBeenCalled();
- });
- it('keeps recovery outside the ledger providers without using a cloud session',()=>{
-  mock.location='/reset-password';
-  render(<AuthGate enabled signIn={<span>Sign in</span>} passwordRecovery={<span>Password reset</span>}>
-    <span>Sensitive local ledger</span>
-  </AuthGate>);
-  expect(screen.getByText('Password reset')).toBeTruthy();
-  expect(screen.queryByText('Sensitive local ledger')).toBeNull();
-  expect(useRun4CloudSession).not.toHaveBeenCalled();
- });
- it('keeps the account preview screen outside the local ledger tree',()=>{
-  mock.location='/account';
-  render(<AuthGate enabled signIn={<span>Google sign in</span>} accountSignIn={<span>Account preview sign in</span>}>
-    <span>Local ledger mounted</span>
-  </AuthGate>);
-  expect(screen.getByText('Account preview sign in')).toBeTruthy();
-  expect(screen.queryByText('Google sign in')).toBeNull();
-  expect(screen.queryByText('Local ledger mounted')).toBeNull();
- });
- it('never gates local POS, backup, inventory or reports even with auth opted in',()=>{
-  for(const path of ['/', '/sales','/backup','/inventory','/reports']){
-   mock.location=path;
-   const view=render(<AuthGate enabled signIn={<span>Sign in</span>}>
-     <span>Local ledger available</span>
-   </AuthGate>);
-   expect(screen.getByText('Local ledger available')).toBeTruthy();
-   view.unmount();
-  }
-  expect(useRun4CloudSession).not.toHaveBeenCalled();
- });
- it('guards only the cloud-only route and withholds children during validation',()=>{
-  mock.location='/cloud-account';
-  render(<AuthGate enabled signIn={<span>Sign in</span>}>
-    <span>Sensitive cloud panel</span>
-  </AuthGate>);
-  expect(screen.getByText(/Verifying your cloud session/)).toBeTruthy();
-  expect(screen.queryByText('Sensitive cloud panel')).toBeNull();
- });
- it('redirects signed-out cloud users without showing tenant data',()=>{
-  mock.location='/cloud-account';mock.state.status='signed-out';
-  render(<AuthGate enabled signIn={<span>Sign in</span>}><span>Tenant data</span></AuthGate>);
-  expect(screen.getByText('Redirect to /signin')).toBeTruthy();
-  expect(screen.queryByText('Tenant data')).toBeNull();
- });
- it('keeps offline local navigation available while rejecting cloud access',()=>{
-  mock.location='/cloud-account';mock.state.status='offline';
-  render(<AuthGate enabled signIn={<span>Sign in</span>}><span>Cloud data</span></AuthGate>);
-  expect(screen.getByText(/local Tallybook business remains available/)).toBeTruthy();
-  expect(screen.queryByText('Cloud data')).toBeNull();
- });
- it('only renders the cloud workspace after verified sign-in',()=>{
-  mock.location='/cloud-account';mock.state.status='signed-in';
-  mock.state.userId='verified-owner';
-  render(<AuthGate enabled signIn={<span>Sign in</span>}><span>Verified cloud workspace</span></AuthGate>);
-  expect(screen.getByText('Verified cloud workspace')).toBeTruthy();
- });
- it('failure is fail-closed and offers a genuine retry',()=>{
-  mock.location='/cloud-account';mock.state.status='error';
-  render(<AuthGate enabled signIn={<span>Sign in</span>}><span>Cloud data</span></AuthGate>);
-  expect(screen.queryByText('Cloud data')).toBeNull();
-  fireEvent.click(screen.getByText('Retry verification'));
-  expect(mock.retry).toHaveBeenCalledTimes(1);
- });
+afterEach(cleanup);
+it.each([
+  "/",
+  "/sales",
+  "/inventory",
+  "/reports",
+  "/backup",
+  "/business",
+  "/assistant",
+  "/staff",
+  "/stores",
+])("denies anonymous direct navigation to %s", path => {
+  mock.path = path;
+  renderGate();
+  expect(screen.queryByText("Business records")).toBeNull();
+  expect(screen.getByText("Sign-in required")).toBeTruthy();
 });
+it("ignores the obsolete bypass flag", () => {
+  renderGate(false);
+  expect(screen.queryByText("Business records")).toBeNull();
+});
+it("does not grant local data merely because cloud identity verified", () => {
+  mock.status = "signed-in";
+  mock.userId = "verified-owner";
+  renderGate();
+  expect(screen.getByText("Authorized setup required")).toBeTruthy();
+  expect(screen.queryByText("Business records")).toBeNull();
+});
+it.each(["offline", "checking", "error", "disabled"])(
+  "fails closed while %s",
+  status => {
+    mock.status = status;
+    renderGate();
+    expect(screen.queryByText("Business records")).toBeNull();
+    if (status === "offline")
+      expect(
+        screen.getByText(
+          "An internet connection is required to create or verify your Tallybook account for the first time."
+        )
+      ).toBeTruthy();
+  }
+);
+it.each(["/signin", "/account", "/reset-password"])(
+  "keeps %s outside local database providers",
+  path => {
+    mock.path = path;
+    renderGate();
+    expect(screen.queryByText("Business records")).toBeNull();
+    expect(
+      screen.getByText(
+        path === "/reset-password" ? "Recovery screen" : "Account screen"
+      )
+    ).toBeTruthy();
+  }
+);

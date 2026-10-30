@@ -17,6 +17,13 @@ it("does not contact business tables for a signed-out visitor", async () => {
   expect(await screen.findByText("Sign in to prepare your cloud business")).toBeTruthy();
   expect(mock.lookup).not.toHaveBeenCalled();
 });
+it('employee setup never offers or invokes business ownership creation',async()=>{
+ render(<CloudBusinessPanel allowCreate={false} accountSetupOnly/>);
+ await screen.findByText(/Ask your employer for an invitation/);
+ expect(screen.queryByText('Create cloud business')).toBeNull();
+ expect(screen.queryByLabelText('Cloud business name')).toBeNull();
+ expect(mock.create).not.toHaveBeenCalled();
+});
 it("reuses the persisted request ID after a failed creation and remount", async () => {
   mock.create.mockRejectedValueOnce(new Error("Connection lost"));
   const view = render(<CloudBusinessPanel />);

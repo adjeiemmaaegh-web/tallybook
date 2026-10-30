@@ -77,12 +77,10 @@ export default function GoogleSignInPage(){
       <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Cloud authentication</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
         Tallybook account</h1>
-      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
-        remain on this device without signing in. Signing out does not encrypt or erase
-        records stored in this browser.</p>
+      <p className="op-row-sub">Sign in to set up or unlock an authorized business workspace. Existing local records are preserved; signing in does not claim ownership of them. Signing out does not encrypt or erase existing browser records.</p>
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
-       state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
+       state.status==='offline'?<p role="status">An internet connection is required to create or verify your Tallybook account for the first time.</p>:
        state.status==='signed-in'?<div className="space-y-3">
         <p role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
         <div className="flex flex-wrap gap-2">
@@ -90,7 +88,7 @@ export default function GoogleSignInPage(){
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void signIn(true)}>Switch Google account</button>
-          <Link href="/sync-status" className="underline">Open cloud business setup and local sync status</Link>
+          <Link href="/onboarding" className="underline">Continue to business setup</Link>
         </div>
        </div>:
        <div className="space-y-3">
@@ -119,6 +117,6 @@ export default function GoogleSignInPage(){
       {message?<p role="status">{message}</p>:null}
       {error?<p role="alert">{error}</p>:null}
     </section>
-    <Link href="/" className="back-link">Return to offline Tallybook</Link>
+    <Link href="/" className="back-link">Continue to authorized workspace</Link>
   </div>;
 }

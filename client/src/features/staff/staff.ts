@@ -1,5 +1,6 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import Dexie from 'dexie';
+import {requireWorkspaceAccess} from '@/auth/workspaceBoundary';
 import { assertAuthenticatorCredentialFresh, assertSupervisorApprovalFresh } from "./credentialFreshness.mjs";
 import { assertStaffAuthority, assertStaffShift, assertExactSupervisorApproval, staffCredentialBinding } from "./staffAuthority.mjs";
 import { nanoid } from 'nanoid';
@@ -216,6 +217,8 @@ export async function revokeStaffAuthenticator(id:string,database:TallybookDB=db
   }));
 }
 export async function requirePermission(action:StaffPermission,database:TallybookDB=db,company=getActiveBusinessProfileId()) {
+  const workspace=requireWorkspaceAccess(database.name,company);
+  if(!workspace.permissions.includes(action))throw new Error('This account is not authorized for this operation.');
   if (company !== getActiveBusinessProfileId()) throw new Error('Company changed; start the action again.');
   const members=await database.staffMembers.where('businessProfileId').equals(company).toArray();
   if (company !== getActiveBusinessProfileId()) throw new Error('Company changed; start the action again.');
@@ -229,9 +232,10 @@ export async function requirePermission(action:StaffPermission,database:Tallyboo
       :await Dexie.waitFor(Dexie.ignoreTransaction(()=>database.businessProfiles.get(company)));
     if(company!==getActiveBusinessProfileId())throw new Error('Company changed; start the action again.');
     if(profile?.staffGovernanceEnabled)throw new Error('Staff records are missing from a protected company. Restore a verified backup.');
-    return null;
+    throw new Error('Provision and unlock an authorized staff identity before opening this company.');
   }
   const id=currentStaffId(company);
+  if(id!==workspace.staffId)throw new Error('Local staff identity does not match the authenticated workspace.');
   const member=id?members.find(m=>m.id===id):undefined;
   // A denied action must not revoke an otherwise valid cashier session.
   // Revoke only when the unlocked credential or member record has changed.

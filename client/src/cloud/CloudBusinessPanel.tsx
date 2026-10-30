@@ -8,7 +8,7 @@ import {Run3MembershipPanel} from "./Run3MembershipPanel";
 import {QaDeviceEnrollmentPanel} from './QaDeviceEnrollmentPanel';
 
 /** Account identity only. Creating a cloud business does not claim local data. */
-export function CloudBusinessPanel() {
+export function CloudBusinessPanel({allowCreate=true,accountSetupOnly=false}:{allowCreate?:boolean;accountSetupOnly?:boolean}={}) {
   const [userId, setUserId] = useState<string | null>(null);
   const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
   const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
@@ -51,7 +51,7 @@ export function CloudBusinessPanel() {
   }, []);
 
   const create = async () => {
-    if (!userId || inFlight.current || !name.trim()) return;
+    if (!allowCreate || !userId || inFlight.current || !name.trim()) return;
     inFlight.current = true;
     const started = revision.current;
     setBusy(true); setError(null);
@@ -97,7 +97,7 @@ export function CloudBusinessPanel() {
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : <form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !allowCreate ? <p>Ask your employer for an invitation to their business. Selecting employee does not grant ownership.</p> : <form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <label className="block" htmlFor="cloud-business-name">Cloud business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
@@ -107,7 +107,7 @@ export function CloudBusinessPanel() {
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.role === "owner"}/> : null}
     {error && <p role="alert">{error}</p>}
-    {isSupabaseConfigured&&userId&&business&&
+    {!accountSetupOnly&&isSupabaseConfigured&&userId&&business&&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true'&&
       import.meta.env.VITE_SUPABASE_URL==='https://lmneuqxfyxplrxjswpma.supabase.co'
       ?<QaDeviceEnrollmentPanel userId={userId} companyId={business.id} isOwner={business.role==='owner'}/>:null}
