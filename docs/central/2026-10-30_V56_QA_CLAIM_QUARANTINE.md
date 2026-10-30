@@ -9,3 +9,5 @@ Every stored row retains `evidenceStatus: upload_claim_only` and `financialAppli
 Verification in this increment: `node_modules/.bin/tsc.cmd --noEmit -p tsconfig.json` exited 0. The user will conduct application acceptance; no claim is made that this change was tested in a browser or against a live QA account.
 
 The local sync status page now counts quarantined QA claims for the selected business and labels them unposted. Composite cursor and claim IDs use tuple serialization, so IDs containing `:` cannot collide across companies or devices. The existing QA Edge service has no device enrollment route and keeps signed pull disabled; showing a claim count does not make that route available.
+
+Sync diagnostics now require the existing `reports` staff permission in the same read transaction. Governed companies deny locked and cashier-only sessions; legacy companies without staff governance retain their current behavior. The read checks the active company and permission again before returning.

@@ -5,6 +5,8 @@ import { validateOutboxEvent } from "./syncFoundation";
 import type { LocalSyncDevice } from "./deviceRegistry";
 import { validateLocalSyncDevice } from "./deviceRegistry";
 import type { SyncConflict } from "./reconciliation";
+import {requirePermission} from '@/features/staff/staff';
+import {getActiveBusinessProfileId} from '@/features/business/activeCompany';
 
 export type SyncStatusSnapshot = {
   businessProfileId: string;
@@ -50,7 +52,9 @@ export function summarizeSyncStatus(businessProfileId: string, consent: SyncCons
 }
 export async function getLocalSyncStatus(db: TallybookDB, businessProfileId: string): Promise<SyncStatusSnapshot> {
   if (!ID.test(businessProfileId)) throw new Error("Invalid business ID.");
-  return db.transaction("r", [db.businessProfiles, db.syncConsents, db.syncOutbox, db.syncDevices, db.syncConflicts, db.qaSaleClaimInbox], async () => {
+  if(businessProfileId!==getActiveBusinessProfileId())throw Error('Company changed; start the action again.');
+  return db.transaction("r", [db.businessProfiles, db.staffMembers, db.syncConsents, db.syncOutbox, db.syncDevices, db.syncConflicts, db.qaSaleClaimInbox], async () => {
+    await requirePermission('reports',db,businessProfileId);
     if (!(await db.businessProfiles.get(businessProfileId))) throw new Error("Business not found.");
     const [consent, events, devices, conflicts] = await Promise.all([
       db.syncConsents.get(businessProfileId),
@@ -60,6 +64,8 @@ export async function getLocalSyncStatus(db: TallybookDB, businessProfileId: str
     ]);
     const snapshot=summarizeSyncStatus(businessProfileId, consent, events, devices, conflicts);
     snapshot.quarantinedQaClaims=await db.qaSaleClaimInbox.where('businessProfileId').equals(businessProfileId).count();
+    if(businessProfileId!==getActiveBusinessProfileId())throw Error('Company changed during sync status review.');
+    await requirePermission('reports',db,businessProfileId);
     return snapshot;
   });
 }
