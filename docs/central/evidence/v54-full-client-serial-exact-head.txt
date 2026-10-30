@@ -1,0 +1,17 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+ ❯ src/features/assistant/assistant.test.ts (0 test)
+ ❯ src/features/business/companyIsolation.integration.test.ts (0 test)
+ ❯ src/features/sales/sales.test.ts (0 test)
+ ❯ src/features/backup/backup.test.ts (0 test)
+ ❯ src/features/credit/credit.test.ts (0 test)
+ ❯ src/features/inventory/costLedger.test.ts (0 test)
+ ❯ src/features/purchases/purchases.test.ts (0 test)
+ ❯ src/features/assistant/audit.test.ts (0 test)
+ ❯ src/features/staff/staff.test.ts (0 test)
+ ❯ src/features/reports/financialIntelligence.test.ts (0 test)
+ ❯ src/features/assistant/intentParser.test.ts (0 test)
+ ❯ src/features/backup/restoreRecovery.test.ts (0 test)
+ ❯ src/features/reports/run12SupplierTaxIntegration.test.ts (0 test)
+ ❯ src/features/sales/cashPartialReturnPosting.test.ts (0 test)
