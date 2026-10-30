@@ -1,0 +1,15 @@
+✔ snapshots UTC due date through month and leap-year boundaries; rejects invalid terms (4.9029ms)
+✔ each overdue boundary conserves the original debt (2.6724ms)
+✔ only explicit sale allocations reduce the corresponding overdue bucket (0.7483ms)
+✔ legacy and explicit unknown terms remain unknown without rewriting history (0.5529ms)
+✔ reversals remove the exact original exposure (0.5716ms)
+✔ separates currencies and excludes unknown currency amounts (16.4976ms)
+✔ rejects altered terms, future postings, invalid dates and foreign company records (1.002ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.1235

@@ -52,6 +52,22 @@ afterEach(async () => {
 });
 
 describe("atomic sales", () => {
+  it("retains original credit terms after the customer policy changes", async () => {
+    const database=makeDatabase();await initializeDatabase(database);
+    const product=await createProductFixture(database,"Credit rice","4");
+    const customer=await createCustomer({name:"Credit customer",phone:"0240000002",email:"",address:"",notes:"",status:"active"},database);
+    await setCustomerPolicy(customer.id,{paymentDueDays:30},database);
+    const result=await completeSale({lines:[{productId:product.id,quantity:1}],customerId:customer.id,
+      discount:"0",paymentMethod:"credit",amountPaid:"0",currency:"GHS"},database);
+    const due=new Date(result.sale.createdAt);due.setUTCDate(due.getUTCDate()+30);
+    expect(result.sale.creditTermsAtSale).toEqual({version:1,paymentDueDays:30,dueDateUtc:due.toISOString().slice(0,10)});
+    await setCustomerPolicy(customer.id,{paymentDueDays:0},database);
+    expect((await database.sales.get(result.sale.id))?.creditTermsAtSale).toEqual(result.sale.creditTermsAtSale);
+    const event=await database.centralSaleEvents.get(`sale:${result.sale.id}`);
+    expect(event?.payload.sale.creditTermsAtSale).toEqual(result.sale.creditTermsAtSale);
+    expect(()=>validateCentralSaleEvent({...event!,payload:{...event!.payload,sale:{...event!.payload.sale,
+      creditTermsAtSale:{...result.sale.creditTermsAtSale!,dueDateUtc:"2000-01-01"}}}})).toThrow();
+  });
   it("commits distinct exact-sales for the same retry key in independent companies",async()=>{
     setActiveBusinessProfileId("primary");
     const database=makeDatabase();await initializeDatabase(database);

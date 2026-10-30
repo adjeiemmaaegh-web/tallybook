@@ -23,6 +23,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { makeCentralSaleEvent } from '@/features/sync/centralSaleEvent';
 import {captureSalePostingEvidence} from '@/features/sync/centralSalePostingEvidence';
+import {snapshotCreditTerms,type CreditTermsSnapshot} from '@/features/credit/creditTerms.mjs';
 import type { Customer } from "@/features/customers/customers";
 import { formatMinorAmount, parseAmountToMinor, normalizeMoneyInput, type InventoryMovement, type Product } from "@/features/inventory/inventory";
 
@@ -38,6 +39,7 @@ export interface Sale {
   taxConfigurationAtSale?:Run12SaleTaxConfiguration;
   /** Immutable snapshot of company return terms at original checkout. */
   returnPolicyAtSale?:ReturnPolicySnapshot;
+  creditTermsAtSale?:CreditTermsSnapshot;
   id: string;
   businessProfileId: string;
   customerId?: string;
@@ -314,6 +316,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     }
     if (amountPaidMinor > totalMinor) throw new Error("Amount paid cannot exceed the sale total.");
     const outstandingMinor = totalMinor - amountPaidMinor;
+    let creditTermsAtSale:CreditTermsSnapshot|undefined;
     if (outstandingMinor > 0 && !customer) throw new Error("Choose a customer before recording an outstanding amount.");
     if (customer && outstandingMinor > 0) {
       // Currency protection is NOT conditional on a configured credit limit.
@@ -326,6 +329,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       assertReceivableWriteCurrency(priorSales, priorRepayments, input.currency);
       const exposure = checkedCreditExposure(priorSales, priorReversals, priorRepayments, outstandingMinor);
       const customerPolicy = await database.customerPolicies.get(`${activeId}:${customer.id}`);
+      creditTermsAtSale=snapshotCreditTerms(now,customerPolicy?.paymentDueDays);
       if (customerPolicy?.creditLimitMinor !== undefined &&
           (!Number.isSafeInteger(customerPolicy.creditLimitMinor) || customerPolicy.creditLimitMinor < 0 || exposure > customerPolicy.creditLimitMinor))
         throw new Error('This sale exceeds the customer credit limit or the account needs reconciliation.');
@@ -344,6 +348,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
 
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
+    if(creditTermsAtSale)sale.creditTermsAtSale=creditTermsAtSale;
     const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
     if(linkedOrder){

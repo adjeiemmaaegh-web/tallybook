@@ -2310,8 +2310,12 @@
       "name": "Receivable ageing",
       "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
       "files": [
-        "client/src/features/insights/localInsights.mjs",
-        "client/src/features/credit/credit.ts"
+        "client/src/features/credit/creditTerms.mjs",
+        "client/src/features/reports/receivableAgeing.mjs",
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/pages/FinancialIntelligencePage.tsx",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/backup/backup.ts"
       ],
       "acceptance": "Explicit dated debt, due terms and repayment allocation ground ageing.",
       "requiredTests": [
@@ -2327,13 +2331,15 @@
         4,
         6
       ],
-      "status": "missing",
+      "status": "implemented-unverified",
       "evidence": [
-        "artifacts/release-v19/client-tax-final.log",
-        "artifacts/release-v19/types-release.log",
-        "artifacts/release-v19/build-release.log"
+        "docs/central/2026-10-30_RECEIVABLE_AGEING.md",
+        "artifacts/receivable-ageing-native.log",
+        "artifacts/receivable-ageing-client.log",
+        "artifacts/receivable-ageing-types.log",
+        "artifacts/receivable-ageing-build.log"
       ],
-      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers."
+      "verificationBoundary": "Original terms and ageing implemented; focused automated checks pass. User acceptance and representative historical backup checks remain open. Historical missing terms and allocations are explicitly unknown."
     },
     {
       "id": "S11-05",

@@ -1,5 +1,6 @@
 import type { Sale, SaleLine, Payment, Receipt } from '@/features/sales/sales';
 import {validateSalePostingEvidence,type SalePostingEvidence} from './centralSalePostingEvidence';
+import {validateCreditTerms} from '@/features/credit/creditTerms.mjs';
 
 /** Immutable local checkout evidence. It is not a cloud acknowledgement or a trusted device identity. */
 export interface CentralSaleEvent {
@@ -53,4 +54,5 @@ export function validateCentralSaleEvent(event: CentralSaleEvent): void {
       sale.totalMinor !== sale.amountPaidMinor + sale.outstandingMinor)
     throw new Error('Central sale event does not reconcile with its local checkout.');
   if(event.payload.postingEvidence!==undefined)validateSalePostingEvidence(sale,lines,event.payload.postingEvidence);
+  validateCreditTerms(sale);
 }

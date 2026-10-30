@@ -76,6 +76,21 @@ export default function FinancialIntelligencePage(){
        A new cross-currency collection is not authorized by this report.</p>}
       <p>This is full saved-history customer debt, not period revenue or cash collected.</p>
     </section>}
+  {summary?.receivableAgeing&&!loading&&<section className="report-sheet" aria-label="Receivables ageing">
+    <h2>Receivables ageing at {summary.receivableAgeing.asOfDate} (UTC)</h2>
+    <p>Based on terms saved at checkout and explicitly allocated repayments. Due today is current. Later policy changes do not change earlier due dates.</p>
+    {summary.receivableAgeing.groups.map(g=><div key={g.currency} className="overflow-x-auto">
+      <h3>{g.currency}</h3><table><thead><tr><th scope="col">Status</th><th scope="col">Outstanding</th></tr></thead><tbody>
+      {([['Current / not yet due',g.currentMinor],['1–30 days overdue',g.days1to30Minor],
+        ['31–60 days overdue',g.days31to60Minor],['61–90 days overdue',g.days61to90Minor],
+        ['Over 90 days overdue',g.over90Minor],['Original due terms unknown',g.unknownTermsMinor],
+        ['Earlier repayment allocation unknown',g.unknownAllocationMinor],['Total',g.outstandingMinor]] as [string,number][])
+        .map(([label,value])=><tr key={label}><th scope="row">{label}</th><td>{formatMinorAmount(value,g.currency)}</td></tr>)}
+      </tbody></table></div>)}
+    {!summary.receivableAgeing.groups.length&&<p>No outstanding receivables with verified currency.</p>}
+    {summary.receivableAgeing.unknownCurrencyCustomers>0&&<p role="status">{summary.receivableAgeing.unknownCurrencyCustomers} customer balances have unknown currency and are excluded from these totals.</p>}
+    <p>Unknown terms and unallocated historical repayments are shown separately; no due date or payment allocation is guessed.</p>
+  </section>}
   {summary?.prepaidCashAudit&&!loading&&
     <section className="report-sheet" aria-label="Prepaid cash and wallet conservation">
       <h2>Prepaid funds and stored-value liability (as-of now)</h2>

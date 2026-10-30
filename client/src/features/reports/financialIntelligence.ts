@@ -27,6 +27,7 @@ import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation 
 import type { Purchase,PurchaseLine } from "@/features/purchases/purchases";
 import type { SupplierPayableEntry } from "@/features/purchases/supplierPayables.ts";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
+import {summarizeReceivableAgeing,type ReceivableAgeing} from './receivableAgeing.mjs';
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
 export interface FinancialRange { start: Date; end: Date; label: string }
@@ -46,6 +47,7 @@ export interface FinancialSummary {
   supplierFinanceAudit?:Run12SupplierFinancialAudit;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
   receivableAudit?:Run10ReceivableAudit;
+  receivableAgeing?:ReceivableAgeing;
   /** Wallet cash and stored-value conservation, NOT provider/bank verification. */
   prepaidCashAudit?:Run10PrepaidCashAudit;
   range: FinancialRange;
@@ -233,6 +235,8 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     purchases:scoped(purchases),entries:scoped(supplierEntries),
     expenses:scoped(expenses),range
   });
+  summary.receivableAgeing=summarizeReceivableAgeing({company,customers:scoped(customers),
+    sales:scoped(sales),repayments:scoped(repayments),reversals:scoped(reversals)},now.toISOString().slice(0,10));
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
@@ -295,6 +299,20 @@ export function financialCsv(summary:FinancialSummary):string {
       ['Prepaid consumed in wallet sales across full history',summary.prepaidCashAudit.spentMinor],
       ['Original wallet spend restored on reversal',summary.prepaidCashAudit.reversedWalletSpendMinor]
     ] as (string|number)[][]:[]),
+    ...(summary.receivableAgeing ? [
+      ['Receivables ageing UTC date',summary.receivableAgeing.asOfDate],
+      ['Customers excluded from ageing amounts: unknown currency',summary.receivableAgeing.unknownCurrencyCustomers],
+      ...summary.receivableAgeing.groups.flatMap(g => [
+        [`Receivables ${g.currency}: total minor units`,g.outstandingMinor],
+        [`Receivables ${g.currency}: current or due today`,g.currentMinor],
+        [`Receivables ${g.currency}: 1–30 days overdue`,g.days1to30Minor],
+        [`Receivables ${g.currency}: 31–60 days overdue`,g.days31to60Minor],
+        [`Receivables ${g.currency}: 61–90 days overdue`,g.days61to90Minor],
+        [`Receivables ${g.currency}: over 90 days overdue`,g.over90Minor],
+        [`Receivables ${g.currency}: unknown original terms`,g.unknownTermsMinor],
+        [`Receivables ${g.currency}: unallocated repayment history`,g.unknownAllocationMinor],
+      ])
+    ] as (string|number)[][] : []),
     ['Verified COGS after reversals',summary.cogsMinor ?? `Unavailable: ${summary.unavailable.cogs}`],
     ...(summary.inventoryValuation ? [
       ['Known historical-cost stock assets, minor units (AS-OF; not replacement cost)',summary.inventoryValuation.knownValueMinor],
