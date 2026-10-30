@@ -12,6 +12,7 @@ import { completeSale, getCustomerSaleSummary, getSaleSnapshot } from "@/feature
 import { recoverSavedCheckout } from "@/features/sales/recoverSavedCheckout";
 import { createStaff, unlockStaff, openShift, lockStaff, currentStaffId } from "@/features/staff/staff";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import {validateCentralSaleEvent} from '@/features/sync/centralSaleEvent';
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -116,7 +117,16 @@ describe("atomic sales", () => {
       operationId: `sale:${result.sale.id}`, entityId: result.sale.id,
       deliveryStatus: 'local_only', shopId: null, deviceId: null });
     expect(event?.payload).toEqual({ sale: result.sale, lines: result.lines,
-      payment: result.payment, receipt: result.receipt });
+      payment: result.payment, receipt: result.receipt,postingEvidence:{version:1,storeAccountingActive:false,
+       stockMovements:inventory.movements.filter(m=>m.movementType==='sale'),
+       costIssues:await database.inventoryCostEvents.where('saleId').equals(result.sale.id).toArray(),
+       storeEntries:[],batchAfter:[],customerActivity:null,benefits:[]}});
+    const corrupted=structuredClone(event!);
+    corrupted.payload.postingEvidence!.stockMovements[0].quantityDelta=-1;
+    expect(()=>validateCentralSaleEvent(corrupted)).toThrow(/posting evidence/);
+    const missingCost=structuredClone(event!);
+    missingCost.payload.postingEvidence!.costIssues=[];
+    expect(()=>validateCentralSaleEvent(missingCost)).toThrow(/posting evidence/);
   });
 
   it('rolls back checkout and stock when durable event insertion fails', async () => {

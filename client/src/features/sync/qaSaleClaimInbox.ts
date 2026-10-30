@@ -10,6 +10,7 @@ import {loadActiveDeviceKey,type DeviceKeyScope} from './deviceKeyVault';
 import {verifiedDeviceKeyGuards} from './verifiedDeviceKeyScope';
 import type {QaSaleEvent} from './qaSalePageBoundary.mjs';
 import {verifyQaExactSalePayloads} from './qaExactSalePayload';
+import {getSupabaseClient} from '@/lib/supabase';
 
 export interface QaSaleClaimRecord extends QaSaleEvent {
   id:string;
@@ -36,6 +37,16 @@ export async function pullQaSaleClaimsToQuarantine(
   scope:DeviceKeyScope,
   database:TallybookDB=db
 ):Promise<{received:number;hasMore:boolean}> {
+  let changed=false;
+  const {data:{subscription}}=getSupabaseClient().auth.onAuthStateChange(event=>{
+    if(event!=='INITIAL_SESSION')changed=true;
+  });
+  const guard=()=>{if(changed)throw Error('Cloud account changed before QA claims were committed.');};
+  try{return await pullWhileAccountStable(scope,database,guard);}
+  finally{subscription.unsubscribe();}
+}
+async function pullWhileAccountStable(scope:DeviceKeyScope,database:TallybookDB,cloudGuard:()=>void){
+  cloudGuard();
   const company=getActiveBusinessProfileId();
   if(scope.localCompanyId!==company)throw Error('QA device belongs to another local company.');
   const actor=await requirePermission('reports',database,company);
@@ -53,6 +64,8 @@ export async function pullQaSaleClaimsToQuarantine(
     afterUtc:previous?.afterUtc??START,
     afterOperationId:previous?.afterOperationId??''},activeDevicePrivateKey);
   const page=await verifyQaExactSalePayloads(fetched,company);
+  if(await resolveUserId()!==scope.userId)throw Error('Cloud account changed during QA claim validation.');
+  cloudGuard();
   if(page.storeId!==scope.shopId)throw Error('QA claim store differs from enrolled shop.');
   if(previous && previous.storeId!==page.storeId)
     throw Error('QA device store changed. Review its enrollment before continuing.');
@@ -62,6 +75,7 @@ export async function pullQaSaleClaimsToQuarantine(
     database.appMeta,database.qaSaleClaimInbox,database.qaSaleClaimCursors,
     database.staffMembers,database.businessProfiles
   ],async()=>{
+    cloudGuard();
     await assertRun7RetailWriteReady(database.appMeta);
     const current=await database.qaSaleClaimCursors.get(id);
     if((current?.afterUtc??START)!==(previous?.afterUtc??START) ||
@@ -85,6 +99,9 @@ export async function pullQaSaleClaimsToQuarantine(
         cloudCompanyId,deviceId,storeId:page.storeId,
         afterUtc:page.nextReceivedAtUtc!,afterOperationId:page.nextOperationId!});
     }
+    cloudGuard();
+    if(company!==getActiveBusinessProfileId()||currentStaffId(company)!==actor.id)
+      throw Error('Local session changed before QA claim commit.');
   }));
   return {received:page.events.length,hasMore:page.hasMore};
 }
