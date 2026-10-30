@@ -16,6 +16,7 @@ export type SyncStatusSnapshot = {
   unresolvedConflicts: number;
   reviewedConflicts: number;
   newestPendingAt: string | null;
+  quarantinedQaClaims?: number;
   connectionState: "not-configured";
 };
 const ID = /^[A-Za-z0-9:_-]{1,128}$/;
@@ -49,7 +50,7 @@ export function summarizeSyncStatus(businessProfileId: string, consent: SyncCons
 }
 export async function getLocalSyncStatus(db: TallybookDB, businessProfileId: string): Promise<SyncStatusSnapshot> {
   if (!ID.test(businessProfileId)) throw new Error("Invalid business ID.");
-  return db.transaction("r", db.businessProfiles, db.syncConsents, db.syncOutbox, db.syncDevices, db.syncConflicts, async () => {
+  return db.transaction("r", [db.businessProfiles, db.syncConsents, db.syncOutbox, db.syncDevices, db.syncConflicts, db.qaSaleClaimInbox], async () => {
     if (!(await db.businessProfiles.get(businessProfileId))) throw new Error("Business not found.");
     const [consent, events, devices, conflicts] = await Promise.all([
       db.syncConsents.get(businessProfileId),
@@ -57,6 +58,8 @@ export async function getLocalSyncStatus(db: TallybookDB, businessProfileId: str
       db.syncDevices.where("businessProfileId").equals(businessProfileId).toArray(),
       db.syncConflicts.where("businessProfileId").equals(businessProfileId).toArray(),
     ]);
-    return summarizeSyncStatus(businessProfileId, consent, events, devices, conflicts);
+    const snapshot=summarizeSyncStatus(businessProfileId, consent, events, devices, conflicts);
+    snapshot.quarantinedQaClaims=await db.qaSaleClaimInbox.where('businessProfileId').equals(businessProfileId).count();
+    return snapshot;
   });
 }

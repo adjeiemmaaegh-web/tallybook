@@ -43,7 +43,7 @@ export async function pullQaSaleClaimsToQuarantine(
   const {resolveUserId,currentLocalScope}=verifiedDeviceKeyGuards(scope);
   const activeDevicePrivateKey=await loadActiveDeviceKey(scope,resolveUserId,currentLocalScope);
   const cloudCompanyId=scope.cloudCompanyId,deviceId=scope.deviceId;
-  const id=`${company}:${cloudCompanyId}:${deviceId}`;
+  const id=JSON.stringify([company,cloudCompanyId,deviceId]);
   const previous=await database.qaSaleClaimCursors.get(id);
   if(previous && (previous.businessProfileId!==company ||
     previous.cloudCompanyId!==cloudCompanyId || previous.deviceId!==deviceId))
@@ -71,7 +71,7 @@ export async function pullQaSaleClaimsToQuarantine(
     if(authorized?.id!==actor.id)throw Error('QA claim read permission changed.');
     const quarantinedAt=new Date().toISOString();
     for(const event of page.events){
-      const claimId=`${company}:${cloudCompanyId}:${event.operationId}`;
+      const claimId=JSON.stringify([company,cloudCompanyId,event.operationId]);
       const existing=await database.qaSaleClaimInbox.get(claimId);
       if(existing)throw Error('A QA claim was already received at a different cursor. Review the duplicate.');
       await database.qaSaleClaimInbox.add({...event,id:claimId,

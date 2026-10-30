@@ -37,6 +37,7 @@ export default function SyncStatusPage() {
     ["Revoked local devices", status.revokedDevices],
     ["Unresolved conflicts", status.unresolvedConflicts],
     ["Reviewed conflicts", status.reviewedConflicts],
+    ["Quarantined QA sale claims (not posted)", status.quarantinedQaClaims ?? 0],
   ] : [];
   return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
     <header className="space-y-2"><p className="text-sm font-semibold uppercase tracking-wide">Stage 8 · Connected services</p>
@@ -52,6 +53,7 @@ export default function SyncStatusPage() {
           <p className="rounded border p-4" role="status"><strong>Consent: {status.consentEnabled ? "Enabled locally" : "Not enabled"}.</strong> Remote connection: not configured. Neither locally acknowledged events nor registered devices prove that a server accepted any data.</p>
           <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">{metrics.map(([label, count]) => <div key={label} className="rounded border p-4"><dt className="text-sm">{label}</dt><dd className="text-2xl font-semibold tabular-nums">{count}</dd></div>)}</dl>
           <p className="text-sm">Most recent pending event: {status.newestPendingAt ? new Date(status.newestPendingAt).toLocaleString() : "None"}</p>
+          <p className="text-sm">QA sale claims are read-only evidence. They do not update this business’s sales, stock, or financial reports.</p>
           <div className="rounded border p-4 space-y-2"><h2 className="font-semibold">Requirements before connecting devices</h2><p className="text-sm">Authenticated organization identity, server-side device permissions, durable delivery acknowledgement, encrypted transport and tested conflict resolution are still required.</p><p className="text-sm">Offline sales remain independent of connected services.</p></div>
         </> : null}
       <Link href="/backup" className="inline-block underline">Local backup and restore</Link>
