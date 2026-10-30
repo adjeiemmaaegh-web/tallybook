@@ -6,6 +6,9 @@ import {createClient} from 'npm:@supabase/supabase-js@2.117.3';
 import {verifyPullSignature} from './pullSignature.mjs';
 
 const TEST_ORIGIN='https://lmneuqxfyxplrxjswpma.supabase.co';
+// Separate source review is required before the isolated signed-pull routes
+// can become live. An unexpectedly pre-set project secret cannot enable them.
+const QA_SIGNED_PULL_SOURCE_RELEASED=false;
 const ROOT='/functions/v1/tallybook-run3-qa/';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const B64=/^v1\.[A-Za-z0-9_-]{43}$/;
@@ -90,7 +93,8 @@ Deno.serve(async(req:Request)=>{
   // Keep sale claims unavailable until the isolated V53 challenge schema and
   // real enrolled-device acceptance have both been reviewed and enabled.
   if((op==='pullSales'||op==='pullChallenge')&&
-     Deno.env.get('RUN3_QA_SIGNED_PULL_ENABLED')!=='true')
+     (!QA_SIGNED_PULL_SOURCE_RELEASED||
+      Deno.env.get('RUN3_QA_SIGNED_PULL_ENABLED')!=='true'))
     return response(allowedOrigin,503,{error:'Signed device-proof pull not enabled'});
   if(!new URL(req.url).pathname.startsWith(ROOT)||!Object.hasOwn(allowed,op))
     return response(allowedOrigin,404,{error:'Unknown QA operation'});

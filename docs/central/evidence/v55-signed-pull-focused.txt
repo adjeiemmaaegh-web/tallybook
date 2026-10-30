@@ -1,0 +1,22 @@
+✔ accepts empty authorized response (4.992ms)
+✔ retains exact microsecond cursor without reformatting to Date (12.0077ms)
+✔ rejects foreign company and device (1.3322ms)
+✔ rejects wrong store or forged evidence classification (0.6783ms)
+✔ rejects a repeated operation ID (0.5755ms)
+✔ rejects a backwards cursor even within same millisecond (0.7933ms)
+✔ rejects forged next cursor and lying hasMore (0.8976ms)
+✔ rejects malformed timestamp, payload and SHA (0.7369ms)
+✔ rejects unbounded pages (0.636ms)
+✔ permits strictly ordered different operations at same exact microsecond (0.6202ms)
+✔ uses bytewise ASCII operation order for a shared timestamp (0.6802ms)
+✔ QA sale pull uses one bytewise cursor order across SQL and browser (11627.0444ms)
+✔ browser proof verifies at the Edge boundary only for the signed scope (56.7279ms)
+✔ isolated pull challenge is one-use, session-bound and revocation-aware (11965.7701ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12813.3285

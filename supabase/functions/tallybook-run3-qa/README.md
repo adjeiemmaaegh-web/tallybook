@@ -23,13 +23,15 @@ verifies \`auth.sessions\` and owner/member scopes inside one transaction.
 No offline client can call these routes without a live Auth session.
 All financial operations remain unavailable.
 
-V53 draft routes `pullChallenge` and `pullSales` remain **disabled** unless
-`RUN3_QA_SIGNED_PULL_ENABLED=true` is explicitly set in this isolated project.
+V53 draft routes `pullChallenge` and `pullSales` remain **disabled** by a
+source-level gate. A later reviewed source change must release that gate,
+and `RUN3_QA_SIGNED_PULL_ENABLED=true` must also be set in this isolated project.
 They also require the V53 one-use challenge schema, a live approved device key,
 and an Ed25519 signature over the company, account, device, challenge and exact
 cursor. A consumed or expired challenge cannot be replayed. The currently
-deployed version remains disabled; the V53 schema has only been checked in a
-transaction that was rolled back. Do not enable or deploy V53 until real
-owner/attendant and enrolled-device acceptance can be run.
+deployed version 6 has these routes disabled. The V53 challenge schema and
+V54 bytewise cursor repair are installed only in the isolated QA project.
+Do not release the source gate until real owner/attendant and enrolled-device
+acceptance can be run.
 
 *No production rollout or claim of real-browser acceptance.*

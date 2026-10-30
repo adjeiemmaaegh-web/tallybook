@@ -25,3 +25,7 @@ The V51 client suite eventually completed at 1045/1045, and the V52 native QA su
 The central cloud branch is now represented in development source, but its signed sale pull remains disabled pending one-use device proof. The isolated Supabase project has zero real Auth users. The user offered a sanitized backup and two demo inboxes; neither has been received yet. The production schema remains separate. GitHub has no completed Linux workflow for this candidate. These are open release gates, not automated-test failures.
 
 V53 adds a one-use signed-device pull draft and focused cryptographic/PGlite tests, but its QA SQL was rolled back after syntax verification and its Edge route is still disabled. It returns read-only upload claims and does not import financial records. See `docs/central/2026-10-28_V53_SIGNED_PULL_DRAFT_CHECKPOINT.md`.
+
+## V55 update — 2026-10-30
+
+V53/V54 SQL is now installed in the **isolated QA project only** and Edge Function version 6 is deployed with JWT verification and a source-level disabled signed-pull gate. The live privilege checks and unauthenticated 401 are documented in `docs/central/2026-10-30_V55_ISOLATED_SIGNED_PULL_PREPARATION.md`. Positive owner/attendant and device tests remain impossible until two real demo accounts are available. No financial import or production cloud change is implied. The exact-source local native/client/browser checks and GitHub Actions failure are recorded in `docs/central/2026-10-30_NO_MERGE_VALIDATION_CHECKPOINT.md`.
