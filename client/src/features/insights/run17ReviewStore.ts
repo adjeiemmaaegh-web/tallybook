@@ -12,7 +12,7 @@ import {getRun17Evidence,type Run17Period} from "./run17Service";
 import {reconcileRun17Reviews,validateRun17ReviewEvent,
  type Run17ReviewEvent,type Run17ReviewState} from "./run17ReviewAudit.mjs";
 export const RUN17_AUTOMATIC_ACTIONS_ENABLED=false as const;
-export const RUN17_REVIEW_WRITES_ENABLED=false as const;
+export const RUN17_REVIEW_WRITES_ENABLED=true as const;
 const KEY=/^[A-Za-z0-9:_-]{8,100}$/;
 function scope(company:string) {
  if(!company||company!==getActiveBusinessProfileId())throw Error("Company changed during insight review.");
@@ -43,31 +43,34 @@ export async function getRun17ReviewStates(database:TallybookDB=db):Promise<Read
  */
 export async function recordRun17Review(input:{
  findingId:string;period:Run17Period;action:"acknowledge"|"reopen";
- note:string;submissionKey:string
+ note:string;submissionKey:string;expectedEvidenceKey:string
 },database:TallybookDB=db):Promise<Run17ReviewEvent> {
- if(!RUN17_REVIEW_WRITES_ENABLED)throw Error("Run 17 insight reviews remain disabled until owner QA acceptance.");
  if(!KEY.test(input.submissionKey)||typeof input.note!=="string"||
     input.note.trim().length<8||input.note.length>500||
     /[\u0000-\u001f]/.test(input.note))
    throw Error("Review requires a unique request key and factual note (8–500 characters).");
  const company=getActiveBusinessProfileId();scope(company);
- const report=await getRun17Evidence(input.period,new Date(),database);
- const finding=report.findings.find(item=>item.id===input.findingId);
- if(!finding||finding.evidenceKey.length>4000)
-   throw Error("Insight changed or no longer has grounded supporting evidence.");
  return withCoordinatedRetailWrite(()=>database.transaction("rw",[
-   database.appMeta,database.staffMembers,database.staffAudits,
-   database.run17ReviewEvents
+   database.appMeta,database.businessProfiles,database.staffMembers,database.staffAudits,
+   database.run17ReviewEvents,database.products,database.sales,database.saleLines,
+   database.saleReversals,database.cashPartialReturns,database.commerceOrders,
+   database.commerceHolds,database.storeTransferRequests,database.storeLocations
  ],async()=>{
    await assertRun7RetailWriteReady(database.appMeta);
    const member=await requireReviewer(database,company);
+   const report=await getRun17Evidence(input.period,new Date(),database);
+   const finding=report.findings.find(item=>item.id===input.findingId);
+   if(!finding||finding.evidenceKey.length>4000||finding.evidenceKey!==input.expectedEvidenceKey)
+     throw Error("Insight changed; refresh and review the current supporting evidence.");
    const existing=await database.run17ReviewEvents.where("[businessProfileId+submissionKey]")
      .equals([company,input.submissionKey]).first();
    if(existing){
-     if(existing.findingId!==input.findingId||existing.period!==input.period||
+     if(existing.staffId!==member.id||existing.findingId!==input.findingId||existing.period!==input.period||
         existing.action!==input.action||existing.evidenceKey!==finding.evidenceKey||
         existing.note!==input.note.trim())
        throw Error("Review key already belongs to a different decision or evidence snapshot.");
+     scope(company);
+     if(currentStaffId(company)!==member.id)throw Error("Review staff session changed.");
      return existing;
    }
    const events=await database.run17ReviewEvents.where("[businessProfileId+findingId]")
@@ -95,6 +98,8 @@ export async function recordRun17Review(input:{
      id:nanoid(18),businessProfileId:company,staffId:member.id,
      action:"insights.run17."+input.action,createdAt:now,details:review.id
    });
+   scope(company);
+   if(currentStaffId(company)!==member.id)throw Error("Review staff session changed.");
    return review;
  }));
 }

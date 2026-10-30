@@ -2,6 +2,8 @@
 
 The 82 acceptance units in `docs/release/traceability.json` remain the governing register. This update records source-integration evidence without changing any unit to accepted. Counts below are the register's current statuses, not completion claims.
 
+Latest development update (2026-10-30): S11-02 net SKU demand/manual coverage and S11-04 original credit terms/receivables ageing moved from missing to implemented-unverified with connected UI and focused regression evidence. Manual advisory review is now enabled with atomic evidence/audit checks; scheduled automation is still incomplete. Counts: 62 implemented-unverified, 1 implemented-and-tested, 16 missing, 3 blocked. Earlier dated notes below retain their original evidence and are not current-state claims. See `docs/central/2026-10-30_DEVELOPMENT_HANDOVER.md` for current cloud boundaries and continuation.
+
 V52 evidence update (2026-10-28): source integration and local verification advanced, but none of the 82 acceptance statuses is newly accepted. See `docs/central/2026-10-28_V52_INTEGRATION_AND_VERIFICATION_CHECKPOINT.md` for exact commit-specific test results and remaining cloud, backup, Linux and device gates.
 
 V53 evidence update (2026-10-28): the isolated signed sale-pull challenge is source-only, disabled and unapplied. Focused cryptographic, PGlite, TypeScript and build checks passed; real-account/device, lossless replication and operational acceptance are still required. No acceptance status changes. See `docs/central/2026-10-28_V53_SIGNED_PULL_DRAFT_CHECKPOINT.md`.
@@ -18,7 +20,7 @@ V53 evidence update (2026-10-28): the isolated signed sale-pull challenge is sou
 | 8 | 5 | 0 | 4 | 0 | Cloud remains development-only and disabled for production. |
 | 9 | 6 | 0 | 5 | 0 | Multi-store and secure synchronization remain unaccepted. |
 | 10 | 2 | 0 | 3 | 2 | Payment simulation and commerce only; live integrations prohibited. |
-| 11 | 2 | 0 | 3 | 0 | Focused company-isolation suite passes 15/15; wider audit open. |
+| 11 | 4 | 0 | 1 | 0 | Net SKU demand and ageing integrated; scheduled automation and user acceptance remain open. |
 | 12 | 4 | 0 | 1 | 1 | Device, browser, operations and release acceptance open. |
 
 Current automated evidence: the fresh clone at `3fd4b2f` passed complete client Vitest 996/996 across 124 files, following frozen installation, TypeScript and build. Clean-clone release and offline Playwright passed 3/3 each. After updating obsolete source-contract assertions, native QA passed 420/420 and focused server audits passed 83/83. The full Windows server suite remains non-green (345 pass, 43 optional-sync failures, 1 skip); Linux security verification is pending. These automated results do not change the 82 acceptance-unit statuses without required operational evidence.

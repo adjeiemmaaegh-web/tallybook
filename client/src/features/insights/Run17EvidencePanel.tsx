@@ -37,7 +37,7 @@ export function Run17EvidencePanel({companyId,currency,period}:{companyId:string
    setBusy(true);setError("");
    try{
      await recordRun17Review({findingId:item.id,period,action,
-       note:notes[item.id]??"",submissionKey:crypto.randomUUID()},db);
+       note:notes[item.id]??"",submissionKey:crypto.randomUUID(),expectedEvidenceKey:item.evidenceKey},db);
      setNotes(p=>({...p,[item.id]:""}));await refresh();
    }catch(e){setError(e instanceof Error?e.message:"Review could not be recorded.");}
    finally{setBusy(false);}
@@ -114,7 +114,7 @@ export function Run17EvidencePanel({companyId,currency,period}:{companyId:string
           <div className="flex gap-2">
             <button type="button" className="rounded border p-2"
               disabled={!RUN17_REVIEW_WRITES_ENABLED||busy||acknowledged||(notes[item.id]?.trim().length??0)<8}
-              onClick={()=>void review(item,"acknowledge")}>Acknowledge evidence (disabled pending QA)</button>
+              onClick={()=>void review(item,"acknowledge")}>Acknowledge evidence</button>
             <button type="button" className="rounded border p-2"
               disabled={!RUN17_REVIEW_WRITES_ENABLED||busy||!acknowledged||(notes[item.id]?.trim().length??0)<8}
               onClick={()=>void review(item,"reopen")}>Reopen review</button>
