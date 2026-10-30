@@ -11,6 +11,7 @@ import { recordConfirmedCashPartialReturn } from './cashPartialReturnPosting';
 import { calculateTrackedShiftCash, createStaff, unlockStaff, openShift, lockStaff } from '@/features/staff/staff';
 import { executeLatestSaleReversal } from '@/features/assistant/reversals';
 import { getFinancialSummary } from '@/features/reports/financialIntelligence';
+import {getInsightFindings} from '@/features/insights/insightEvidence';
 import { createBackup, parseBackup, restoreBackup } from '@/features/backup/backup';
 
 const openDB: TallybookDB[]=[];
@@ -46,6 +47,9 @@ it('atomically records two cash refunds, restores original FIFO and reports net 
   const a=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-1'),database);
   expect(a).toMatchObject({refundMethod:'cash',refundedMinor:1000,returnSequence:1,returnedTaxMinor:0});
   expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
+  const insight=await getInsightFindings('last7',new Date(),database);
+  expect(insight.find(row=>row.id===`units:${product.id}`)?.evidence).toContain('1 base units from 2 sold less 1 returned');
+  expect(insight.find(row=>row.id===`coverage:${product.id}`)?.evidence).toContain('possible replenishment 0 units');
   expect(await getFinancialSummary('month',new Date(),undefined,undefined,database)).toMatchObject({revenueMinor:1000,cogsMinor:100,salesLessCostMinor:900});
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-1'),database)).rejects.toThrow(/already recorded/);
   const b=await recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-2'),database);
@@ -55,6 +59,7 @@ it('atomically records two cash refunds, restores original FIFO and reports net 
     kind:'sale.cash_partial_refund_recorded',entityId:b.id,deliveryStatus:'local_only',
     deviceId:null,payoutEvidence:'staff_confirmed_only',payload:{cashReturn:b}});
   expect((await database.products.get(product.id))?.stockQuantity).toBe(3);
+  expect((await getInsightFindings('last7',new Date(),database)).some(row=>row.id===`units:${product.id}`)).toBe(false);
   expect(await getFinancialSummary('month',new Date(),undefined,undefined,database)).toMatchObject({revenueMinor:0,cogsMinor:0});
   await expect(recordConfirmedCashPartialReturn(request(original.sale.id,original.lines[0].id,'return-cash-3'),database)).rejects.toThrow(/quantity/);
   await expect(executeLatestSaleReversal('GHS',database,'full-after-partial')).rejects.toThrow(/couldn't find/);

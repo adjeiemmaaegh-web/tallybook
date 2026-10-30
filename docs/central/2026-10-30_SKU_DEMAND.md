@@ -1,0 +1,9 @@
+# Net unit history and stock coverage
+
+S11-02 now has a connected local implementation in `insightEvidence.ts` and `skuDemand.mjs`, displayed by the existing Insights page. It uses original sale lines, subtracts exact partial-return quantities and removes fully reversed sales. Partial returns pass the existing original-tender, amount, quantity and sequence reconciliation. Full reversal quantities must match the original sale. Invalid company, duplicate IDs, missing lines and unsafe quantities fail closed.
+
+The manual coverage scenario is `ceil(net units * 14 / calendar days)`, less current saved stock, floored at zero. Today and last-seven-day windows explicitly include today's incomplete day. All-history observations and service items have no replenishment scenario. This is observed arithmetic, with no asserted forecast confidence. Stock-outs, missing history, reservations, incoming orders and supplier lead time require human review. No order, stock reservation, payment or notification is created.
+
+The previous Insights path ignored partial returns and could overstate recorded unit sales. It also repeated summary-only demand-unavailable suggestions alongside known line-level evidence. Both are corrected. Company and staff identity are checked again before returning the report.
+
+Verification: 5/5 native demand tests; 25/25 focused inventory and cash-return client tests; TypeScript semantic check and Vite/PWA build passed. Logs are `artifacts/sku-demand-{native,client,types,build}.log`. Tests cover partial and complete returns through actual IndexedDB transactions, full reversal exclusion, stock coverage arithmetic, service/all-history exclusions, duplicate/foreign/overflow records and future sale exclusion. User acceptance and full-suite verification are not claimed. S11-02 is implemented-unverified.

@@ -2247,7 +2247,9 @@
       "name": "SKU demand and reorders",
       "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
       "files": [
-        "client/src/features/insights/localInsights.mjs"
+        "client/src/features/insights/skuDemand.mjs",
+        "client/src/features/insights/insightEvidence.ts",
+        "client/src/pages/InsightsPage.tsx"
       ],
       "acceptance": "Historical unit sales/returns plus stock support validated reorder quantities without invented confidence.",
       "requiredTests": [
@@ -2263,13 +2265,15 @@
         4,
         6
       ],
-      "status": "missing",
+      "status": "implemented-unverified",
       "evidence": [
-        "artifacts/release-v19/client-tax-final.log",
-        "artifacts/release-v19/types-release.log",
-        "artifacts/release-v19/build-release.log"
+        "docs/central/2026-10-30_SKU_DEMAND.md",
+        "artifacts/sku-demand-client.log",
+        "artifacts/sku-demand-native.log",
+        "artifacts/sku-demand-types.log",
+        "artifacts/sku-demand-build.log"
       ],
-      "verificationBoundary": "Passing client tests do not certify the entire acceptance criterion. See notes and release blockers.",
+      "verificationBoundary": "Net unit history and manual coverage scenario implemented. No automatic order, forecast confidence, lead-time or stock-out correction. User acceptance remains open.",
       "notes": "Observed sales units, reversed-sale exclusion and no-forecast caveat implemented; validated demand/reorder model remains missing."
     },
     {

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  16:26:58
+   Duration  21.49s (transform 1.26s, setup 1.23s, import 2.55s, tests 13.54s, environment 3.35s)
+

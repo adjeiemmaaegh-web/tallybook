@@ -1,0 +1,13 @@
+✔ uses integer net units and current saved stock in explicit coverage arithmetic (4.3284ms)
+✔ does not infer a planning duration from all-history or reorder a service (0.3704ms)
+✔ full reversal removes units only when recorded by the review time (1.115ms)
+✔ rejects foreign, duplicate, missing-line and unsafe quantity evidence (0.6518ms)
+✔ excludes future and outside-window sales without changing records (0.3628ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185.4915
