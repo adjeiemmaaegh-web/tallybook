@@ -9,6 +9,7 @@ import {fetchQaSaleClaims} from './qaSaleClaimsClient';
 import {loadActiveDeviceKey,type DeviceKeyScope} from './deviceKeyVault';
 import {verifiedDeviceKeyGuards} from './verifiedDeviceKeyScope';
 import type {QaSaleEvent} from './qaSalePageBoundary.mjs';
+import {verifyQaExactSalePayloads} from './qaExactSalePayload';
 
 export interface QaSaleClaimRecord extends QaSaleEvent {
   id:string;
@@ -48,9 +49,10 @@ export async function pullQaSaleClaimsToQuarantine(
   if(previous && (previous.businessProfileId!==company ||
     previous.cloudCompanyId!==cloudCompanyId || previous.deviceId!==deviceId))
     throw Error('QA cloud cursor scope is inconsistent.');
-  const page=await fetchQaSaleClaims({companyId:cloudCompanyId,deviceId,
+  const fetched=await fetchQaSaleClaims({companyId:cloudCompanyId,deviceId,
     afterUtc:previous?.afterUtc??START,
     afterOperationId:previous?.afterOperationId??''},activeDevicePrivateKey);
+  const page=await verifyQaExactSalePayloads(fetched,company);
   if(page.storeId!==scope.shopId)throw Error('QA claim store differs from enrolled shop.');
   if(previous && previous.storeId!==page.storeId)
     throw Error('QA device store changed. Review its enrollment before continuing.');

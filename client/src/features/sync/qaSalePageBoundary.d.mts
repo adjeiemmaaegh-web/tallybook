@@ -4,6 +4,7 @@ export type QaSaleReadScope={
 export type QaSaleEvent={
  operationId:string;eventId:string;storeId:string;staffId:string;actorId:string;
  payloadSha256:string;payload:Record<string,unknown>;evidenceStatus:'upload_claim_only';
+ payloadBase64?:string;
  receivedAtUtc:string;
 };
 export type QaSalePage={

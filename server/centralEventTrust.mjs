@@ -83,6 +83,6 @@ export async function verifyCentralSaleEvent(envelope, actorId, directory) {
     staffId: envelope.staffId, deviceId: envelope.deviceId, actorId,
     eventId: envelope.eventId, operationId: envelope.operationId,
     payloadSha256: createHash('sha256').update(Buffer.from(envelope.payloadBase64, 'base64url')).digest('hex'),
-    payload, financialPostingAllowed: false,
+    payload, payloadBase64:envelope.payloadBase64, financialPostingAllowed: false,
   });
 }

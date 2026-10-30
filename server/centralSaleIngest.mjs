@@ -41,6 +41,7 @@ export function createCentralSaleIngestService({resolveSession,store,clock=Date.
           staffId:verified.staffId,deviceId:verified.deviceId,actorId:principal.userId,
           eventId:verified.eventId,operationId:verified.operationId,
           payloadDigest:verified.payloadSha256,payload:verified.payload,
+          payloadBase64:verified.payloadBase64,
           receivedAtUtc:new Date(now).toISOString()};
         await tx.insertEvent(row);
         return Object.freeze({businessId:row.businessId,operationId:row.operationId,

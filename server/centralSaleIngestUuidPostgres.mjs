@@ -78,11 +78,11 @@ export function createUuidPostgresCentralSaleIngestStore(pool) {
           async insertEvent(row) {
             one(await client.query(`insert into public.company_signed_sale_events
               (company_id,local_company_id,operation_id,event_id,store_id,staff_id,device_id,actor_id,
-               payload_sha256,payload,evidence_status,received_at_utc)
-              values($1::uuid,$2,$3,$4,$5,$6,$7,$8::uuid,$9,$10::jsonb,'upload_claim_only',$11::timestamptz)
+               payload_sha256,payload,payload_base64,evidence_status,received_at_utc)
+              values($1::uuid,$2,$3,$4,$5,$6,$7,$8::uuid,$9,$10::jsonb,$11,'upload_claim_only',$12::timestamptz)
               returning event_id`,[scope(row.businessId),row.businessId,row.operationId,row.eventId,
                 row.shopId,row.staffId,row.deviceId,row.actorId,row.payloadDigest,
-                JSON.stringify(row.payload),row.receivedAtUtc]));
+                JSON.stringify(row.payload),row.payloadBase64,row.receivedAtUtc]));
           },
         });
         const result=await work(tx);

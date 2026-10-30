@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { generateKeyPairSync, sign } from 'node:crypto';
+import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { centralEventSigningBytes } from '../server/centralEventTrust.mjs';
 import { createCentralSaleIngestService } from '../server/centralSaleIngest.mjs';
 import { createUuidPostgresCentralSaleIngestStore } from '../server/centralSaleIngestUuidPostgres.mjs';
@@ -83,6 +83,7 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
       alter table public.company_local_bindings enable row level security;
       revoke all on public.company_local_bindings from anon,authenticated;`);
     await db.exec(file('../docs/security/CENTRAL_SALE_UUID_BASELINE_ISOLATED_SCHEMA.sql'));
+    await db.exec(file('../docs/security/v57_isolated_exact_sale_payload.sql'));
     await db.exec(file('../docs/security/DEVICE_KEY_UUID_ENROLLMENT_ISOLATED_SCHEMA.sql'));
     await db.exec(file('../docs/security/STAFF_SHOP_UUID_BINDING_ISOLATED_SCHEMA.sql'));
     await db.query(`insert into public.businesses(id,owner_id,name,creation_request_id)
@@ -152,6 +153,11 @@ test('UUID ownership candidate preserves binding, company scope and browser writ
     });
     const accepted=await service.ingest({session:'test',envelope:envelope()});
     assert.equal(accepted.status,'accepted');
+    const exact=(await db.query(`select payload_base64,payload_sha256 from public.company_signed_sale_events
+      where company_id=$1 and operation_id='sale:s2'`,[company])).rows[0];
+    assert.equal(exact.payload_base64,envelope().payloadBase64);
+    assert.equal(exact.payload_sha256.trim(),
+      createHash('sha256').update(Buffer.from(exact.payload_base64,'base64url')).digest('hex'));
     assert.deepEqual(await service.ingest({session:'test',envelope:envelope()}),accepted);
     assert.equal((await service.ingest({session:'test',envelope:envelope('deviceB','s3')})).status,'accepted');
     // Full private HTTP composition with a simulated Auth verifier. The test
