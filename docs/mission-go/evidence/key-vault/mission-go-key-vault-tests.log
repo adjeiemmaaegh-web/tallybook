@@ -1,0 +1,27 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client/src/auth/workspaceKeyVault.test.ts.
+ ❯ ../../tallybook-local-clone/node_modules/.pnpm/vitest@4.1.12_@types+node@2_2b08f3064ce34a7832bbf403e89a74ca/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ Pool.schedule ../../tallybook-local-clone/node_modules/.pnpm/vitest@4.1.12_@types+node@2_2b08f3064ce34a7832bbf403e89a74ca/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../tallybook-local-clone/node_modules/.pnpm/vitest@4.1.12_@types+node@2_2b08f3064ce34a7832bbf403e89a74ca/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout ../node:internal/timers:635:17
+ ❯ processTimers ../node:internal/timers:571:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+     Errors  1 error
+   Start at  08:21:54
+   Duration  158.58s (transform 2.13s, setup 33.14s, import 4.09s, tests 2.89s, environment 50.87s)
+

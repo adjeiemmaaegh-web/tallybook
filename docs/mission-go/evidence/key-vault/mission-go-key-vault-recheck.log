@@ -1,0 +1,16 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+ ↓ src/auth/workspaceKeyVault.test.ts > persists only a wrapped key; creation does not unlock or authorize
+ ↓ src/auth/workspaceKeyVault.test.ts > rejects wrong credentials and preserves the original wrapped key on duplicate creation
+ ↓ src/auth/workspaceKeyVault.test.ts > binds authenticated ciphertext to account, device and record identity across a restart
+ ↓ src/auth/workspaceKeyVault.test.ts > rejects staff PINs and legacy database names before writing
+ ↓ src/auth/workspaceKeyVault.test.ts > rejects a wrapped key copied into another identity and unsupported KDF metadata
+ ↓ src/auth/workspaceKeyVault.test.ts > cannot finish unlocking or return decrypted data after signout
+ ✓ src/auth/workspaceKeyVault.test.ts > does not accept a server protection marker without unlocking a real local key 15791ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 6 skipped (7)
+   Start at  08:33:02
+   Duration  49.75s (transform 1.92s, setup 8.04s, import 1.21s, tests 15.80s, environment 20.36s)
+

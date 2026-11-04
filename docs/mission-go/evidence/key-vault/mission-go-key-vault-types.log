@@ -1,0 +1,5 @@
+client/src/auth/workspaceKeyVault.ts(16,9): error TS2315: Type 'Uint8Array' is not generic.
+client/src/auth/workspaceKeyVault.ts(16,38): error TS2315: Type 'Uint8Array' is not generic.
+client/src/auth/workspaceKeyVault.ts(42,52): error TS2315: Type 'Uint8Array' is not generic.
+client/src/auth/workspaceKeyVault.ts(103,93): error TS2315: Type 'Uint8Array' is not generic.
+client/src/auth/workspaceKeyVault.ts(112,96): error TS2315: Type 'Uint8Array' is not generic.

@@ -1,14 +1,21 @@
 /** Operational authorization is independent of a cached cloud session.
  * No localStorage value, selected role or legacy company record grants access.
- * This boundary does not encrypt IndexedDB; protected-storage provisioning is
- * a separate prerequisite, attested by the trusted workspace service.
+ * This boundary does not encrypt IndexedDB. Verified server authorization and
+ * a matching unlocked local key are separate prerequisites, not proof that the
+ * legacy ledger has been migrated to protected storage.
  */
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  clearWorkspaceKeys,
+  assertWorkspaceKeyUnlocked,
+  unlockWorkspaceKey,
+} from "./workspaceKeyVault";
 export interface WorkspaceGrant {
   userId: string;
   localCompanyId: string;
   cloudCompanyId: string;
   staffId: string;
+  deviceId: string;
   storeIds: readonly string[];
   expiresAtEpochMs: number;
   databaseName: string;
@@ -24,6 +31,7 @@ const verificationRequests = new Set<AbortController>();
 export function lockWorkspace(broadcast = true) {
   revision++;
   active = null;
+  clearWorkspaceKeys();
   for (const request of verificationRequests) request.abort();
   verificationRequests.clear();
   if (expiryTimer) clearTimeout(expiryTimer);
@@ -98,7 +106,7 @@ export function protectWorkspaceTransaction(tx: {
  * There is deliberately no public method to install arbitrary client grants.
  * The server must fail closed until protected-storage provisioning exists.
  */
-export async function verifyOnlineWorkspace() {
+export async function verifyOnlineWorkspace(localPassphrase?: string) {
   lockWorkspace();
   const started = revision;
   if (!isSupabaseConfigured || !navigator.onLine)
@@ -159,7 +167,13 @@ export async function verifyOnlineWorkspace() {
     !grant ||
     grant.userId !== session.user.id ||
     !/^tallybook-protected-v1-[a-f0-9]{64}$/.test(grant.databaseName ?? "") ||
-    !["localCompanyId", "cloudCompanyId", "staffId", "databaseName"].every(
+    ![
+      "localCompanyId",
+      "cloudCompanyId",
+      "staffId",
+      "databaseName",
+      "deviceId",
+    ].every(
       key =>
         typeof grant[key as keyof WorkspaceGrant] === "string" &&
         String(grant[key as keyof WorkspaceGrant]).length > 0
@@ -180,23 +194,34 @@ export async function verifyOnlineWorkspace() {
       Math.min((session.expires_at ?? 0) * 1000, now + 15 * 60_000)
   )
     throw Error("Workspace authorization proof is invalid.");
-  const latest = await client.auth.getSession();
-  if (
-    started !== revision ||
-    latest.error ||
-    latest.data.session?.access_token !== session.access_token ||
-    !navigator.onLine
-  )
-    throw Error("Account changed during workspace verification.");
-  active = Object.freeze({
-    ...grant,
-    storeIds: Object.freeze([...grant.storeIds]),
-    permissions: Object.freeze([...grant.permissions]),
-  });
-  expiryTimer = setTimeout(
-    () => lockWorkspace(),
-    Math.max(1, grant.expiresAtEpochMs - Date.now())
-  );
-  for (const notify of listeners) notify();
-  return active;
+  // A server marker cannot prove that local key material is available.
+  try {
+    if (localPassphrase !== undefined)
+      await unlockWorkspaceKey(grant, localPassphrase);
+    assertWorkspaceKeyUnlocked(grant);
+    const latest = await client.auth.getSession();
+    if (
+      started !== revision ||
+      latest.error ||
+      latest.data.session?.access_token !== session.access_token ||
+      grant.expiresAtEpochMs <= Date.now() ||
+      !navigator.onLine
+    ) {
+      throw Error("Account changed during workspace verification.");
+    }
+    active = Object.freeze({
+      ...grant,
+      storeIds: Object.freeze([...grant.storeIds]),
+      permissions: Object.freeze([...grant.permissions]),
+    });
+    expiryTimer = setTimeout(
+      () => lockWorkspace(),
+      Math.max(1, grant.expiresAtEpochMs - Date.now())
+    );
+    for (const notify of listeners) notify();
+    return active;
+  } catch (error) {
+    lockWorkspace();
+    throw error;
+  }
 }

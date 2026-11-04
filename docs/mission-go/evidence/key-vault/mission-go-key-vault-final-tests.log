@@ -1,0 +1,72 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+ ✓ src/auth/workspaceKeyVault.test.ts > persists only a wrapped key; creation does not unlock or authorize 5736ms
+ ✓ src/auth/workspaceKeyVault.test.ts > rejects wrong credentials and preserves the original wrapped key on duplicate creation 23868ms
+ ✓ src/auth/workspaceKeyVault.test.ts > binds authenticated ciphertext to account, device and record identity across a restart 16572ms
+ ✓ src/auth/workspaceKeyVault.test.ts > rejects staff PINs and legacy database names before writing 3ms
+ ✓ src/auth/workspaceKeyVault.test.ts > rejects a wrapped key copied into another identity and unsupported KDF metadata 9837ms
+ ✓ src/auth/workspaceKeyVault.test.ts > cannot finish unlocking or return decrypted data after signout 10823ms
+ ✓ src/auth/workspaceKeyVault.test.ts > does not accept a server protection marker without unlocking a real local key 17515ms
+ ✓ src/auth/workspaceDatabaseBoundary.test.ts > rejects direct IndexedDB service reads and writes without mounting React 3314ms
+ ✓ src/auth/workspaceDatabaseBoundary.test.ts > retains legacy records when unauthenticated application access is refused 3645ms
+ ✓ src/auth/workspaceDatabaseBoundary.test.ts > rejects a SPA response instead of treating it as workspace authorization 3113ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > requests confirmation rather than claiming signup is immediately verified 4315ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > requests password reset only for a well-formed address, with a dedicated return path 1001ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > blocks password update without recovery link 246ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > verifies the recovery session, updates password and signs out 698ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > keeps the completed reset visible when sign-out returns an error 650ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > does not claim the password update failed when sign-out throws 399ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > fails closed when the recovery session is invalid 168ms
+ ✓ src/pages/CloudAccountRecovery.test.tsx > cloud account recovery > verifies an OTP token and removes it from the browser URL 167ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > does not contact business tables for a signed-out visitor 762ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > employee setup never offers or invokes business ownership creation 259ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > reuses the persisted request ID after a failed creation and remount 933ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > discards a previous account's delayed business lookup after sign-out 194ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > does not present a successful creation receipt without fresh verified owner membership 222ms
+ ✓ src/cloud/CloudBusinessPanel.test.tsx > shows attendant status without promoting to owner or linking local POS 91ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > shows the verified cloud identity without claiming local data encryption 993ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > switch account signs out before OAuth account selection 455ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > failed sign-out must not launch a new account session 417ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > unverified cloud identity never renders signed-in account controls 148ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > creates an email account and tells the visitor to confirm it 501ms
+ ✓ src/pages/GoogleSignInPage.test.tsx > signs in with email before offering a test workspace 184ms
+ ✓ src/auth/workspaceBoundary.test.ts > scopes a trusted contract grant to one account database and company 147ms
+ ✓ src/auth/workspaceBoundary.test.ts > aborts active transactions and denies further access at expiry 20ms
+ ✓ src/auth/workspaceBoundary.test.ts > locks on another tab signing out and never restores a grant from storage 26ms
+ ✓ src/auth/workspaceBoundary.test.ts > losing the network locks an online workspace 16ms
+ ✓ src/auth/workspaceBoundary.test.ts > cannot resurrect an authorization request that finished after signout 24ms
+ ✓ src/auth/workspaceBoundary.test.ts > aborts a stalled verification request after fifteen seconds 25ms
+ ✓ src/auth/workspaceBoundary.test.ts > rejects malformed identity authority 29ms
+ ✓ src/auth/workspaceBoundary.test.ts > rejects malformed legacy-database authority 3ms
+ ✓ src/auth/workspaceBoundary.test.ts > rejects malformed permission authority 54ms
+ ✓ src/auth/workspaceBoundary.test.ts > rejects malformed expiration authority 3ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to / 434ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /sales 20ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /inventory 21ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /reports 69ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /backup 91ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /business 32ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /assistant 31ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /staff 57ms
+ ✓ src/auth/AuthGate.test.tsx > denies anonymous direct navigation to /stores 71ms
+ ✓ src/auth/AuthGate.test.tsx > ignores the obsolete bypass flag 35ms
+ ✓ src/auth/AuthGate.test.tsx > does not grant local data merely because cloud identity verified 106ms
+ ✓ src/auth/AuthGate.test.tsx > fails closed while offline 71ms
+ ✓ src/auth/AuthGate.test.tsx > fails closed while checking 35ms
+ ✓ src/auth/AuthGate.test.tsx > fails closed while error 88ms
+ ✓ src/auth/AuthGate.test.tsx > fails closed while disabled 143ms
+ ✓ src/auth/AuthGate.test.tsx > keeps /signin outside local database providers 80ms
+ ✓ src/auth/AuthGate.test.tsx > keeps /account outside local database providers 115ms
+ ✓ src/auth/AuthGate.test.tsx > keeps /reset-password outside local database providers 138ms
+ ✓ src/auth/auth.test.tsx > redirects signed-out direct URL / to sign-in 183ms
+ ✓ src/auth/auth.test.tsx > redirects signed-out direct URL /sales to sign-in 44ms
+ ✓ src/auth/auth.test.tsx > redirects signed-out direct URL /inventory to sign-in 25ms
+ ✓ src/auth/auth.test.tsx > redirects signed-out direct URL /reports to sign-in 37ms
+ ✓ src/auth/auth.test.tsx > redirects signed-out direct URL /backup to sign-in 88ms
+
+ Test Files  8 passed (8)
+      Tests  63 passed (63)
+   Start at  08:28:17
+   Duration  453.08s (transform 20.93s, setup 70.89s, import 50.55s, tests 109.78s, environment 186.91s)
+

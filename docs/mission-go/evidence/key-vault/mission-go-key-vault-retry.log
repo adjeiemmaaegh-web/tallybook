@@ -1,0 +1,34 @@
+
+ RUN  v4.1.12 C:/Users/adjei/Documents/Codex/2026-10-25/tallybook-v19-full-source-reconciliation-and/work/v19-cloud-qa/client
+
+ ✓ src/auth/workspaceKeyVault.test.ts > persists only a wrapped key; creation does not unlock or authorize 5730ms
+ ✓ src/auth/workspaceKeyVault.test.ts > rejects wrong credentials and preserves the original wrapped key on duplicate creation 20865ms
+ × src/auth/workspaceKeyVault.test.ts > binds authenticated ciphertext to account, device and record identity across a restart 15517ms
+   → expected Uint8Array[ 112, 114, 105, 118, …(-63) ] to deeply equal Uint8Array[ 112, 114, 105, 118, …(-63) ]
+ ✓ src/auth/workspaceKeyVault.test.ts > rejects staff PINs and legacy database names before writing 91ms
+ ✓ src/auth/workspaceKeyVault.test.ts > cannot finish unlocking or return decrypted data after signout 12830ms
+ ✓ src/auth/workspaceKeyVault.test.ts > does not accept a server protection marker without unlocking a real local key 17490ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/auth/workspaceKeyVault.test.ts > binds authenticated ciphertext to account, device and record identity across a restart
+AssertionError: expected Uint8Array[ 112, 114, 105, 118, …(-63) ] to deeply equal Uint8Array[ 112, 114, 105, 118, …(-63) ]
+
+Compared values have no visual difference.
+
+ ❯ src/auth/workspaceKeyVault.test.ts:88:68
+     86|   ).rejects.toThrow(/locked/);
+     87|   await unlockWorkspaceKey(scope, password);
+     88|   expect(await openWorkspaceRecord(scope, "sales/one", encrypted)).toE…
+       |                                                                    ^
+     89|     text
+     90|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  08:25:15
+   Duration  107.53s (transform 1.95s, setup 8.13s, import 1.20s, tests 72.53s, environment 19.66s)
+

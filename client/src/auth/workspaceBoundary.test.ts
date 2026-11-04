@@ -8,6 +8,12 @@ import {
   workspaceSnapshot,
 } from "./workspaceBoundary";
 const auth = vi.hoisted(() => ({ getSession: vi.fn(), getUser: vi.fn() }));
+// Contract/state-machine tests isolate the real key-vault integration suite.
+vi.mock("./workspaceKeyVault", () => ({
+  clearWorkspaceKeys: vi.fn(),
+  assertWorkspaceKeyUnlocked: vi.fn(),
+  unlockWorkspaceKey: vi.fn(),
+}));
 vi.mock("@/lib/supabase", () => ({
   isSupabaseConfigured: true,
   getSupabaseClient: () => ({ auth }),
@@ -25,6 +31,7 @@ function proof() {
       localCompanyId: "company-a",
       cloudCompanyId: "cloud-a",
       staffId: "staff-a",
+      deviceId: "device-a",
       storeIds: ["store-a"],
       permissions: ["sell"],
       databaseName,

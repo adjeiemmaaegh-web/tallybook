@@ -1,5 +1,7 @@
 # Mission GO Package 1 — incomplete engineering checkpoint
 
+Continuation: [2026-10-31 scoped key-vault implementation](PACKAGE_1_KEY_VAULT_2026-10-31.md). That increment adds real key wrapping and lock integration; it does not complete protected ledger storage or offline authorization. This document preserves the earlier checkpoint evidence.
+
 This supersedes earlier optional-auth rollout instructions. Baseline: `ea165a5ddfbcf6dcda6af0684acb3c5c3f271516`, verified at local HEAD and fetched GitHub main/development. Work targets only `development/v19-unified-reconciliation`. No deployment, main merge, production Supabase change, data migration or payment activation is part of this checkpoint.
 
 **DO NOT DEPLOY: Package 1 is not complete. This checkpoint prevents unauthorized access but also blocks legitimate operational workspace entry until provisioning is implemented. It is not a usable release candidate.** Packages 2–6 have not been completed by this increment. No historical acceptance register item is promoted to complete by these changes.

@@ -1,0 +1,18 @@
+✔ existing Supabase Google sign-in remains the default outside the opt-in preview (133.237ms)
+✔ Supabase preview requires explicit feature flag and defaults to disabled (3.9467ms)
+✔ prior Supabase session persistence, refreshing and OAuth detection are preserved (1.3391ms)
+✔ sign-in maintains session listener cleanup and safe redirect (7.9868ms)
+✔ mandatory authentication boundary does not enable bookkeeping sync (10.6646ms)
+✔ Vercel automatic deployments remain disabled pending release approval (3.2002ms)
+✔ premium shell account button opens real /account route, not local staff PIN (2.4549ms)
+✔ auth boundary wraps providers before local ledger mounts (3.2892ms)
+✔ stage 9 account UI does not imply completed cloud synchronization (0.5749ms)
+✔ locked staff gate preserves account access without unlocking sales (0.5051ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1442.6461
