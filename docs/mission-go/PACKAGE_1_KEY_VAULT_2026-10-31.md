@@ -35,3 +35,9 @@ Continue by implementing and testing the protected record adapter and its crash-
 
 Crypto API reference reviewed: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey and https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/unwrapKey . These document the standard primitives; they do not constitute an independent security audit of this implementation.
 Verified logs: 63 focused tests and 10 native checks passed. The additional final session-recheck case passed separately. The full build completed. Earlier failing attempts are retained in evidence/key-vault.
+
+## November 4 encrypted journal increment
+
+The storage API in `client/src/auth/workspaceCheckpointJournal.ts` appends immutable encrypted payloads using expected revisions. Each transaction checks the current workspace grant and participates in sign-out cancellation. Checkpoint revision and workspace identity are authenticated during decryption. Previous revisions are retained. This journal is a storage primitive. The live Dexie ledger still needs an adapter that preserves its transaction and indexing semantics. Trusted provisioning, offline leases, safe migration, permission filtering, and owner/employee acceptance remain open. The journal alone provides no defense against rollback of the entire browser profile and no automatic recovery selection from older revisions.
+
+Seven key-vault integration tests passed, including a real encrypted journal round trip with concurrent writers, sign-out interruption, reauthorization, and inspection of raw persisted fields. The fixture uses simulated online authority and disposable IndexedDB. Run the existing key-vault Vitest file using a single thread worker. TypeScript semantic checking passed. The full application suite and the earlier staff fixture failure remain open.

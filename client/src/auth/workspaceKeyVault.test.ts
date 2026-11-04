@@ -1,3 +1,7 @@
+import {
+  appendWorkspaceCheckpoint,
+  readWorkspaceCheckpoint,
+} from "./workspaceCheckpointJournal";
 import Dexie from "dexie";
 import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -37,6 +41,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   await new Dexie("tallybook-workspace-key-vault-v1").delete();
+  await new Dexie(scope.databaseName + "-journal").delete();
 });
 async function raw() {
   const db = new Dexie("tallybook-workspace-key-vault-v1");
@@ -174,6 +179,31 @@ it("does not accept a server protection marker without unlocking a real local ke
   expect(workspaceSnapshot()).toBeNull();
   await verifyOnlineWorkspace(password);
   expect(workspaceSnapshot()?.deviceId).toBe(scope.deviceId);
+  expect(await readWorkspaceCheckpoint()).toBeNull();
+  const competing = await Promise.allSettled([
+    appendWorkspaceCheckpoint(0, text),
+    appendWorkspaceCheckpoint(0, text),
+  ]);
+  expect(competing.filter(item => item.status === "fulfilled")).toHaveLength(1);
+  expect(competing.filter(item => item.status === "rejected")).toHaveLength(1);
+  const saved = await readWorkspaceCheckpoint();
+  expect(saved?.revision).toBe(1);
+  expect(Array.from(saved!.payload)).toEqual(Array.from(text));
+  const disk = new Dexie(scope.databaseName + "-journal");
+  await disk.open();
+  const stored = await disk.table("checkpoints").toArray();
+  disk.close();
+  expect(Object.keys(stored[0]).sort()).toEqual([
+    "ciphertext",
+    "iv",
+    "revision",
+  ]);
+  const interrupted = appendWorkspaceCheckpoint(1, text);
+  lockWorkspace(false);
+  await expect(interrupted).rejects.toThrow();
+  await expect(readWorkspaceCheckpoint()).rejects.toThrow();
+  await verifyOnlineWorkspace(password);
+  expect((await readWorkspaceCheckpoint())?.revision).toBe(1);
   auth.getSession
     .mockResolvedValueOnce({ data: { session }, error: null })
     .mockRejectedValueOnce(new Error("Session recheck unavailable"));
