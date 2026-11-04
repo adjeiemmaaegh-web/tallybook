@@ -20,6 +20,7 @@ it("does not contact business tables for a signed-out visitor", async () => {
 it("reuses the persisted request ID after a failed creation and remount", async () => {
   mock.create.mockRejectedValueOnce(new Error("Connection lost"));
   const view = render(<CloudBusinessPanel />);
+  fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
   fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
   fireEvent.click(screen.getByText("Create cloud business"));
   await screen.findByText("Connection lost");
@@ -30,6 +31,7 @@ it("reuses the persisted request ID after a failed creation and remount", async 
     return { id: "cloud", owner_id: "owner", name: "Shop" };
   });
   render(<CloudBusinessPanel />);
+  fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
   fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
   fireEvent.click(screen.getByText("Create cloud business"));
   await screen.findByText("Shop");
@@ -51,6 +53,7 @@ it("discards a previous account's delayed business lookup after sign-out", async
 it("does not present a successful creation receipt without fresh verified owner membership", async () => {
   mock.create.mockResolvedValue({ id: "cloud", owner_id: "owner", name: "Shop" });
   render(<CloudBusinessPanel />);
+  fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
   fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
   fireEvent.click(screen.getByText("Create cloud business"));
   await screen.findByText("Cloud business ownership could not be verified.");
@@ -62,4 +65,18 @@ it("shows attendant status without promoting to owner or linking local POS", asy
   render(<CloudBusinessPanel />);
   expect(await screen.findByText(/Verified cloud attendant membership/)).toBeTruthy();
   expect(screen.getByText(/not a local staff unlock/)).toBeTruthy();
+});
+
+it('shows invitation instructions without a creation form for employee setup',async()=>{
+  render(<CloudBusinessPanel/>);
+  fireEvent.click(await screen.findByRole('button',{name:'I work for someone else'}));
+  expect(screen.getByText(/Give your employer your account ID/)).toBeTruthy();
+  expect(screen.queryByLabelText('Cloud business name')).toBeNull();
+  expect(mock.create).not.toHaveBeenCalled();
+});
+it('withholds setup options after a failed membership lookup',async()=>{
+  mock.lookup.mockRejectedValueOnce(Error('Membership unavailable'));
+  render(<CloudBusinessPanel/>);
+  await screen.findByText('Membership unavailable');
+  expect(screen.queryByRole('button',{name:'I own a business'})).toBeNull();
 });

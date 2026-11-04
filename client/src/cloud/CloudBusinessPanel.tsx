@@ -15,6 +15,8 @@ export function CloudBusinessPanel() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
+  const [membershipChecked,setMembershipChecked]=useState(false);
   const revision = useRef(0);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -22,7 +24,7 @@ export function CloudBusinessPanel() {
     let active = true;
     const client = getSupabaseClient();
     const refresh = async () => {
-      const started = ++revision.current;
+      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);
       setUserId(null); setBusiness(null); setAccessible([]); setError(null); setBusy(true);
       try {
         const { data: { user }, error: authError } = await client.auth.getUser();
@@ -31,7 +33,7 @@ export function CloudBusinessPanel() {
         setUserId(user.id);
         const list = await listVerifiedCloudBusinesses();
         if (active && started === revision.current) {
-          setAccessible([...list]);
+          setAccessible([...list]); setMembershipChecked(true);
           setBusiness(list[0] ?? null);
         }
       } catch (cause) {
@@ -51,7 +53,7 @@ export function CloudBusinessPanel() {
   }, []);
 
   const create = async () => {
-    if (!userId || inFlight.current || !name.trim()) return;
+    if (!membershipChecked || choice !== "owner" || !userId || inFlight.current || !name.trim()) return;
     inFlight.current = true;
     const started = revision.current;
     setBusy(true); setError(null);
@@ -97,11 +99,11 @@ export function CloudBusinessPanel() {
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : <form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><p>How will you use Tallybook?</p><div className="flex flex-wrap gap-2"><button className="secondary-action" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>I own a business</button><button className="secondary-action" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>I work for someone else</button></div>{choice==="employee"?<p>Give your employer your account ID <code>{userId}</code> so they can invite you to the correct business.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <label className="block" htmlFor="cloud-business-name">Cloud business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
-    </form>}
+    </form>:null}</div>}
     {isSupabaseConfigured && userId &&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
@@ -113,3 +115,4 @@ export function CloudBusinessPanel() {
       ?<QaDeviceEnrollmentPanel userId={userId} companyId={business.id} isOwner={business.role==='owner'}/>:null}
   </section>;
 }
+
