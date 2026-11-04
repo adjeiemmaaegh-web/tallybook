@@ -2,8 +2,8 @@ import {useEffect,useState} from 'react';
 import {acceptCloudInvitation,inviteCloudAttendant,listCloudMembers,
  revokeCloudAttendant,revokeCloudInvitation,type Run3Member} from './run3MembershipClient';
 /** Cloud membership preview. Does not grant local POS access or sync records. */
-export function Run3MembershipPanel({userId,companyId,isOwner}:{
- userId:string;companyId:string|null;isOwner:boolean
+export function Run3MembershipPanel({userId,companyId,isOwner,onAccepted}:{
+ userId:string;companyId:string|null;isOwner:boolean;onAccepted?:()=>void
 }){
  const [target,setTarget]=useState('');
  const [token,setToken]=useState('');
@@ -25,7 +25,7 @@ export function Run3MembershipPanel({userId,companyId,isOwner}:{
   <form className="space-y-2" onSubmit={e=>{e.preventDefault();void execute(async()=>{
     const receipt=await acceptCloudInvitation(token.trim());
     if(receipt.userId!==userId)throw Error('Different account accepted invitation.');
-    setToken('');setMessage('Cloud attendant membership accepted. No local data moved.');
+    setToken('');setMessage('Invitation accepted. Checking your membership.');onAccepted?.();
   });}}>
    <label className="block" htmlFor="run3-token">Invitation token for your account</label>
    <input id="run3-token" value={token} onChange={e=>setToken(e.target.value)}
@@ -73,3 +73,4 @@ export function Run3MembershipPanel({userId,companyId,isOwner}:{
   <p role="status" className="text-sm">{message}</p>
  </section>;
 }
+

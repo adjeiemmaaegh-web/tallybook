@@ -86,12 +86,12 @@ export default function GoogleSignInPage(){
 
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
-       state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
+       state.status==='offline'?<p role="status">Connect to the internet to verify your account before opening a shop.</p>:
        state.status==='signed-in'?<div className="space-y-3">
         <CloudBusinessPanel key={state.userId} accountOnly/>
         <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
-      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
-        remain on this device without signing in. Signing out does not encrypt or erase
+      <p className="op-row-sub">Sign in before opening a shop. Sales, stock, reports and local backups
+        remain on this device. Signing out does not encrypt or erase
         records stored in this browser.</p>
         <p className="break-all" role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
         <div className="flex flex-wrap gap-2">
@@ -128,9 +128,10 @@ export default function GoogleSignInPage(){
       {message?<p role="status">{message}</p>:null}
       {error?<p role="alert">{error}</p>:null}
     </section>
-    <Link href="/" className="back-link">Return to offline Tallybook</Link>
+    <Link href="/" className="back-link">Open workspace</Link>
   </div>;
 }
+
 
 
 

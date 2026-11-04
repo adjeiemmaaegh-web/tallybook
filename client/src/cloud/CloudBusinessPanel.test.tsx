@@ -80,3 +80,9 @@ it('withholds setup options after a failed membership lookup',async()=>{
   await screen.findByText('Membership unavailable');
   expect(screen.queryByRole('button',{name:'I own a business'})).toBeNull();
 });
+it('greets the verified Google user by first name and shows the profile',async()=>{
+  mock.getUser.mockResolvedValue({data:{user:{id:'owner',user_metadata:{full_name:'Isaac Newton'}}},error:null});
+  render(<CloudBusinessPanel accountOnly/>);
+  expect(await screen.findByText('Hi, Isaac')).toBeTruthy();
+  expect(screen.getByLabelText('What should we call you?')).toHaveValue('Isaac Newton');
+});

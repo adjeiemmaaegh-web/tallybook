@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { db } from '@/db/TallybookDB';
 import { useRun4CloudSession } from './useRun4CloudSession';
+import {Redirect} from 'wouter';
+import {listVerifiedCloudBusinesses} from '@/cloud/cloudMembership';
 import GoogleSignInPage from '@/pages/GoogleSignInPage';
 
 const BINDING_KEY = 'friendsTestVerifiedAuthUserId';
@@ -30,13 +32,22 @@ export async function checkTesterBinding(userId:string, isCurrent:()=>boolean,
 /** The review origin must be fresh. Never attach an existing local ledger to a new cloud user. */
 export function FriendsTestGate({children}:{children:ReactNode}){
   const {state}=useRun4CloudSession(true);
-  const [access,setAccess]=useState<{userId:string;status:'checking'|'allow'|'deny'}|null>(null);
+  const [access,setAccess]=useState<{userId:string;status:'checking'|'allow'|'deny'|'setup'}|null>(null);
   useEffect(()=>{
     const userId=state.status==='signed-in'?state.userId:null;
     if(!userId){setAccess(null);return;}
     let active=true;
     setAccess({userId,status:'checking'});
-    void checkTesterBinding(userId,()=>active).then(decision=>{if(active)setAccess({userId,status:decision==='deny'?'deny':'allow'});})
+    void (async()=>{
+      const businesses=await listVerifiedCloudBusinesses();
+      if(!active)return;
+      if(!businesses.some(business=>business.role==='owner'&&business.owner_id===userId)){
+        setAccess({userId,status:'setup'});
+        return;
+      }
+      const status=await checkTesterBinding(userId,()=>active);
+      if(active)setAccess({userId,status});
+    })()
       .catch(()=>{if(active)setAccess({userId,status:'deny'});});
     return()=>{active=false;};
   },[state.status,state.userId]);
@@ -44,10 +55,11 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   if(state.status==='checking'||state.status==='disabled')
     return <main className="mx-auto max-w-lg p-6" role="status">Checking your Tallybook account…</main>;
   if(state.status==='signed-out')return <GoogleSignInPage/>;
-  if(state.status==='offline')return <main className="mx-auto max-w-lg p-6" role="status">Connect to the internet to verify your test account, then your local records can be opened.</main>;
+  if(state.status==='offline')return <main className="mx-auto max-w-lg p-6" role="status">Connect to the internet to verify your Tallybook account before opening this workspace.</main>;
   if(state.status==='error')return <main className="mx-auto max-w-lg p-6" role="alert">Your account could not be verified. Check your connection and reload this page.</main>;
   if(!access||access.userId!==state.userId||access.status==='checking')
     return <main className="mx-auto max-w-lg p-6" role="status">Checking this browser's test workspace…</main>;
+  if(access.status==='setup')return <Redirect to='/account' replace/>;
   if(access.status==='deny')return <main className="mx-auto max-w-lg p-6 space-y-3" role="alert">
     <h1 className="text-xl font-semibold">This browser contains another local workspace</h1>
     <p>Use your own device or a new browser profile for testing. No local records were opened, changed or erased.</p>
@@ -55,4 +67,5 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   </main>;
   return <>{children}</>;
 }
+
 

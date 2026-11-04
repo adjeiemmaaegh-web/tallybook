@@ -14,11 +14,14 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
   const [userId, setUserId] = useState<string | null>(null);
   const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
   const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
+  const [draftName,setDraftName]=useState("");
+  const [profileName,setProfileName]=useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
   const [membershipChecked,setMembershipChecked]=useState(false);
+  const [membershipRevision,setMembershipRevision]=useState(0);
   const revision = useRef(0);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -33,6 +36,10 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
         if (!active || started !== revision.current) return;
         if (authError || !user) { setBusy(false); return; }
         setUserId(user.id);
+        const metadata=user.user_metadata??{};
+        const display=[metadata.preferred_name,metadata.given_name,metadata.full_name,metadata.name]
+          .find(value=>typeof value==='string'&&value.trim());
+        setProfileName(display?.trim().slice(0,80)??""); setDraftName(display?.trim().slice(0,80)??"");
         const list = await listVerifiedCloudBusinesses();
         if (active && started === revision.current) {
           setAccessible([...list]); setMembershipChecked(true);
@@ -52,8 +59,22 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
     });
     void refresh();
     return () => { active = false; revision.current++; subscription.unsubscribe(); };
-  }, []);
+  }, [membershipRevision]);
 
+  async function saveProfileName(){
+    const preferred=draftName.trim(), started=revision.current;
+    if(!preferred||preferred.length>80||!userId||inFlight.current)return;
+    inFlight.current=true;setBusy(true);setError(null);
+    try{
+      const auth=getSupabaseClient().auth;
+      const verified=await auth.getUser();
+      if(verified.error||verified.data.user?.id!==userId||started!==revision.current)throw Error("Sign in again to update your profile.");
+      const result=await auth.updateUser({data:{preferred_name:preferred}});
+      if(result.error||result.data.user?.id!==userId)throw Error("Could not save your preferred name.");
+      if(started===revision.current)setProfileName(preferred);
+    }catch(cause){if(started===revision.current)setError(cause instanceof Error?cause.message:"Could not update profile.");}
+    finally{inFlight.current=false;if(started===revision.current)setBusy(false);}
+  }
   const create = async () => {
     if (!membershipChecked || choice !== "owner" || !userId || inFlight.current || !name.trim()) return;
     inFlight.current = true;
@@ -92,6 +113,16 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
   };
 
   return <section className="rounded border p-4 space-y-3" aria-label="Cloud business account">
+    {accountOnly&&userId&&profileName&&<p className="text-xl font-semibold">Hi, {profileName.split(/\s+/)[0]}</p>}
+    {accountOnly&&userId&&<details open={profileName?undefined:true} className="rounded border p-3"><summary>My profile</summary>
+      <form onSubmit={event=>{event.preventDefault();void saveProfileName();}}>
+        <label htmlFor="preferred-name">What should we call you?</label>
+        <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>
+        <button type="submit" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
+      </form>
+      <p>Shop role: {business?.role??"Awaiting verified membership"}</p>
+      <p className="break-all">Account ID: {userId}</p>
+    </details>}
     <h2 className="font-semibold">{accountOnly ? "Business setup" : "Cloud business account"}</h2>
     <p className="text-sm">Prepare your business account for cloud services. Local sales, stock and customer records are not uploaded or linked by this step.</p>
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
@@ -101,7 +132,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
+      <p className="font-semibold">{business.name}</p>{accountOnly&&business.role==="owner"&&<Link href="/" className="primary-action">Open my workspace</Link>}<p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
         <div className="grid gap-3">
           <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
             <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create a business account for your shop.</small></span>
@@ -115,9 +146,9 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
     </form>:null}</div>}
     {isSupabaseConfigured && userId &&
-      import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"
+      (choice==="employee" || business?.role==="owner" || import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true")
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
-         isOwner={business?.role === "owner"}/> : null}
+         isOwner={business?.role === "owner"} onAccepted={()=>setMembershipRevision(value=>value+1)}/> : null}
     {error && <p role="alert">{error}</p>}
     {!accountOnly&&isSupabaseConfigured&&userId&&business&&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true'&&
@@ -125,6 +156,9 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       ?<QaDeviceEnrollmentPanel userId={userId} companyId={business.id} isOwner={business.role==='owner'}/>:null}
   </section>;
 }
+
+
+
 
 
 

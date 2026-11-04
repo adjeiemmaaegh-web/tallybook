@@ -1,7 +1,7 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
 import { lazy, Suspense, useEffect } from "react";
 import { AuthGate } from "@/auth/AuthGate";
-import { FriendsTestGate, friendsTestMode } from "@/auth/FriendsTestGate";
+import { FriendsTestGate } from "@/auth/FriendsTestGate";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
 import { lockAllStaff } from "@/features/staff/staff";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -107,7 +107,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          {friendsTestMode && location !== '/reset-password' ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
+          {!['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
@@ -115,3 +115,4 @@ function App() {
 }
 
 export default App;
+
