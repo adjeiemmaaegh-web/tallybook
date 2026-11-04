@@ -12,6 +12,21 @@ export function decideFriendsWorkspaceBinding(boundUserId:string|undefined,
   return hasExistingCompany?'deny':'bind';
 }
 
+export async function checkTesterBinding(userId:string, isCurrent:()=>boolean,
+  hasCompany=async()=>(await db.businessProfiles.count())>0):Promise<'allow'|'deny'> {
+  const existing=window.localStorage.getItem(BINDING_KEY);
+  if(existing)return isCurrent()&&existing===userId?'allow':'deny';
+  if(!navigator.locks)return 'deny';
+  return navigator.locks.request('tallybook.tester-binding.v1',{mode:'exclusive',ifAvailable:true},async lock=>{
+    if(!lock||!isCurrent())return 'deny' as const;
+    const occupied=await hasCompany();
+    if(!isCurrent())return 'deny' as const;
+    const bound=window.localStorage.getItem(BINDING_KEY)??undefined;
+    const decision=decideFriendsWorkspaceBinding(bound,occupied,userId);
+    if(decision==='bind')window.localStorage.setItem(BINDING_KEY,userId);
+    return decision==='deny'?'deny' as const:'allow' as const;
+  });
+}
 /** The review origin must be fresh. Never attach an existing local ledger to a new cloud user. */
 export function FriendsTestGate({children}:{children:ReactNode}){
   const {state}=useRun4CloudSession(true);
@@ -21,13 +36,7 @@ export function FriendsTestGate({children}:{children:ReactNode}){
     if(!userId){setAccess(null);return;}
     let active=true;
     setAccess({userId,status:'checking'});
-    void (async()=>{
-      const bound=window.localStorage.getItem(BINDING_KEY)??undefined;
-      const hasExistingCompany=(await db.businessProfiles.count())>0;
-      const decision=decideFriendsWorkspaceBinding(bound,hasExistingCompany,userId);
-      if(decision==='bind')window.localStorage.setItem(BINDING_KEY,userId);
-      return decision;
-    })().then(decision=>{if(active)setAccess({userId,status:decision==='deny'?'deny':'allow'});})
+    void checkTesterBinding(userId,()=>active).then(decision=>{if(active)setAccess({userId,status:decision==='deny'?'deny':'allow'});})
       .catch(()=>{if(active)setAccess({userId,status:'deny'});});
     return()=>{active=false;};
   },[state.status,state.userId]);
@@ -46,3 +55,4 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   </main>;
   return <>{children}</>;
 }
+
