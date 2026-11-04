@@ -80,18 +80,20 @@ export default function GoogleSignInPage(){
   }
   return <div className="home-workspace space-y-5 pb-6" style={{maxWidth:620,margin:'0 auto'}}>
     <section className="op-row-card" style={{display:'block',padding:22}}>
-      <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Cloud authentication</p>
+      <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
-        Tallybook account</h1>
-      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
-        remain on this device without signing in. Signing out does not encrypt or erase
-        records stored in this browser.</p>
+        {state.status==='signed-in' ? "Your business" : "Tallybook account"}</h1>
+
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
        state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
        state.status==='signed-in'?<div className="space-y-3">
         <CloudBusinessPanel key={state.userId} accountOnly/>
-        <p role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
+        <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
+      <p className="op-row-sub">Cloud identity is optional. Sales, stock, reports and local backups
+        remain on this device without signing in. Signing out does not encrypt or erase
+        records stored in this browser.</p>
+        <p className="break-all" role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
         <div className="flex flex-wrap gap-2">
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
@@ -99,7 +101,7 @@ export default function GoogleSignInPage(){
             onClick={()=>void signIn(true)}>Switch Google account</button>
           <Link href="/sync-status" className="underline">View local sync status</Link>
         </div>
-       </div>:
+        </details></div>:
        <div className="space-y-3">
          {state.status==='error'?<p role="alert">Cloud identity could not be verified.
            No local records were changed.</p>:null}
@@ -129,5 +131,6 @@ export default function GoogleSignInPage(){
     <Link href="/" className="back-link">Return to offline Tallybook</Link>
   </div>;
 }
+
 
 

@@ -1,3 +1,5 @@
+import './businessSetup.css';
+import { Store, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -90,7 +92,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
   };
 
   return <section className="rounded border p-4 space-y-3" aria-label="Cloud business account">
-    <h2 className="font-semibold">Cloud business account</h2>
+    <h2 className="font-semibold">{accountOnly ? "Business setup" : "Cloud business account"}</h2>
     <p className="text-sm">Prepare your business account for cloud services. Local sales, stock and customer records are not uploaded or linked by this step.</p>
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
       {accessible.length>1 ? <label className="block text-sm" htmlFor="cloud-select">Cloud company
@@ -99,7 +101,15 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><p>How will you use Tallybook?</p><div className="flex flex-wrap gap-2"><button className="secondary-action" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>I own a business</button><button className="secondary-action" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>I work for someone else</button></div>{choice==="employee"?<p>Give your employer your account ID <code>{userId}</code> so they can invite you to the correct business.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
+        <div className="grid gap-3">
+          <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
+            <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create a business account for your shop.</small></span>
+          </button>
+          <button type="button" aria-label="I work for someone else" className="tb-role-option" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>
+            <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Find your account ID to share with your employer.</small></span>
+          </button>
+        </div>{choice==="employee"?<p>Give your employer your account ID <code>{userId}</code> so they can invite you to the correct business.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <label className="block" htmlFor="cloud-business-name">Cloud business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
@@ -115,5 +125,6 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       ?<QaDeviceEnrollmentPanel userId={userId} companyId={business.id} isOwner={business.role==='owner'}/>:null}
   </section>;
 }
+
 
 
