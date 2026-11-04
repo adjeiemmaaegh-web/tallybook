@@ -1,5 +1,6 @@
 /** V19 Run 4: account controls use verified cloud session state only. */
 import {useState} from 'react';
+import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
 import {Link} from 'wouter';
 import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
@@ -89,13 +90,14 @@ export default function GoogleSignInPage(){
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
        state.status==='offline'?<p role="status">Offline. Your local Tallybook remains available.</p>:
        state.status==='signed-in'?<div className="space-y-3">
+        <CloudBusinessPanel key={state.userId} accountOnly/>
         <p role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
         <div className="flex flex-wrap gap-2">
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void signIn(true)}>Switch Google account</button>
-          <Link href="/sync-status" className="underline">Open cloud business setup and local sync status</Link>
+          <Link href="/sync-status" className="underline">View local sync status</Link>
         </div>
        </div>:
        <div className="space-y-3">
@@ -127,4 +129,5 @@ export default function GoogleSignInPage(){
     <Link href="/" className="back-link">Return to offline Tallybook</Link>
   </div>;
 }
+
 

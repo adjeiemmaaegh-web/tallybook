@@ -8,7 +8,7 @@ import {Run3MembershipPanel} from "./Run3MembershipPanel";
 import {QaDeviceEnrollmentPanel} from './QaDeviceEnrollmentPanel';
 
 /** Account identity only. Creating a cloud business does not claim local data. */
-export function CloudBusinessPanel() {
+export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}) {
   const [userId, setUserId] = useState<string | null>(null);
   const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
   const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
@@ -109,10 +109,11 @@ export function CloudBusinessPanel() {
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.role === "owner"}/> : null}
     {error && <p role="alert">{error}</p>}
-    {isSupabaseConfigured&&userId&&business&&
+    {!accountOnly&&isSupabaseConfigured&&userId&&business&&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true'&&
       import.meta.env.VITE_SUPABASE_URL==='https://lmneuqxfyxplrxjswpma.supabase.co'
       ?<QaDeviceEnrollmentPanel userId={userId} companyId={business.id} isOwner={business.role==='owner'}/>:null}
   </section>;
 }
+
 

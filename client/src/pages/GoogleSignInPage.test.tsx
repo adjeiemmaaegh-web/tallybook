@@ -8,6 +8,7 @@ const mock=vi.hoisted(()=>({
  state:{status:'signed-in' as string,userId:'user-a' as string|null,
   expiresAtEpochMs:999999999999 as number|null,generation:1}
 }));
+vi.mock('@/cloud/CloudBusinessPanel',()=>({CloudBusinessPanel:()=> <section>Business setup</section>}));
 vi.mock('wouter',()=>({Link:({children}:{children:unknown})=><span>{children as string}</span>}));
 vi.mock('@/lib/supabase',()=>({
  isSupabaseConfigured:true,
@@ -31,7 +32,7 @@ it('shows the verified cloud identity without claiming local data encryption',()
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud session verified/)).toBeTruthy();
  expect(screen.getByText(/does not encrypt or erase/)).toBeTruthy();
- expect(screen.getByText('Open cloud business setup and local sync status')).toBeTruthy();
+ expect(screen.getByText('Business setup')).toBeTruthy();
 });
 it('switch account signs out before OAuth account selection',async()=>{
  render(<GoogleSignInPage/>);
@@ -74,3 +75,4 @@ it('signs in with email before offering a test workspace',async()=>{
  await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledWith({
   email:'friend@example.com',password:'test-passphrase'}));
 });
+
