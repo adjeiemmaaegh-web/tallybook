@@ -32,7 +32,12 @@ export default function GoogleSignInPage(){
         setMessage('Sign-in submitted; your cloud session must still be verified.');
       }
       setPassword('');
-    }catch{setError('Email account action failed. Check your credentials and connection.');}
+    }catch(failure){
+      const code=typeof failure==='object'&&failure!==null&&'code' in failure?failure.code:null;
+      if(code==='email_not_confirmed')setError('Open your confirmation email, then try signing in again.');
+      else if(code==='invalid_credentials')setError('Check your email and password. If this is your first visit, choose Create email account.');
+      else setError('Email account action failed. Check your credentials and connection.');
+    }
     finally{setBusy(false);}
   }
   async function requestRecovery(){
@@ -122,3 +127,4 @@ export default function GoogleSignInPage(){
     <Link href="/" className="back-link">Return to offline Tallybook</Link>
   </div>;
 }
+

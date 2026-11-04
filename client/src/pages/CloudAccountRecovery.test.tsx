@@ -24,6 +24,15 @@ beforeEach(()=>{
 });
 afterEach(()=>cleanup());
 describe('cloud account recovery',()=>{
+  it.each([['email_not_confirmed','Open your confirmation email'],['invalid_credentials','Check your email and password']])('guides the tester after %s',async(code,message)=>{
+    mock.signInWithPassword.mockResolvedValueOnce({error:{code}});
+    render(<GoogleSignInPage/>);
+    fireEvent.change(screen.getByLabelText('Email'),{target:{value:'owner@example.test'}});
+    fireEvent.change(screen.getByLabelText('Password'),{target:{value:'local-test-password'}});
+    fireEvent.click(screen.getByRole('button',{name:'Sign in with email'}));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(mock.signUp).not.toHaveBeenCalled();
+  });
   it('requests confirmation rather than claiming signup is immediately verified',async()=>{
     render(<GoogleSignInPage/>);
     fireEvent.change(screen.getByLabelText('Email'),{target:{value:'owner@example.test'}});
