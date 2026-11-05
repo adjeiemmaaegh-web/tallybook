@@ -150,6 +150,29 @@ describe("voice input — what happens to the words", () => {
     expect(screen.getByText(/Check what I heard/)).toBeInTheDocument();
   });
 
+  it("words heard but never marked final (iOS Safari, early stop) are kept for checking, not lost or sent", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => { current().hear({ transcript: "sell three eggs", confidence: 0.95, isFinal: false }); });
+    fireEvent.click(mic()); // owner taps stop; the browser ends without a final result
+    expect(send).not.toHaveBeenCalled();
+    expect(input().value).toBe("sell three eggs");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText(/Check what I heard/)).toBeInTheDocument();
+  });
+
+  it("does not repeat words when the browser re-delivers earlier final results (Android Chrome)", () => {
+    render(<AssistantPage />);
+    fireEvent.click(mic());
+    act(() => {
+      current().hear({ transcript: "sell two eggs", confidence: 0.9, isFinal: true });
+      current().hear({ transcript: "sell two eggs", confidence: 0.9, isFinal: true }, { transcript: "to Kwame", confidence: 0.9, isFinal: true });
+      current().finish();
+    });
+    expect(send).toHaveBeenCalledWith("sell two eggs to Kwame");
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
   it("the owner can fix the words and send them", async () => {
     render(<AssistantPage />);
     speak("sell fifteen eggs", 0.5);
