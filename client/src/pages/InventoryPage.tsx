@@ -19,6 +19,7 @@ import { saveStockCountSession, updateStockCountSession, postSavedStockCount, ty
 import { db } from "@/db/TallybookDB";
 import type { StoreLocation } from "@/features/stores/storeDirectory";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { MoveToSharedShopPanel } from "@/cloud/MoveToSharedShopPanel";
 import { adjustStock, archiveProduct, categoryFormSchema, createCategory, createProduct, formatMinorAmount, getInventorySnapshot, isLowStock, productFormSchema, stockAdjustmentSchema, type CategoryFormValues, type InventoryMovement, type InventorySnapshot, type Product, type ProductFormValues, type StockAdjustmentValues, updateProduct } from "@/features/inventory/inventory";
 
 const emptySnapshot: InventorySnapshot = { categories: [], products: [], archivedProducts: [], movements: [] };
@@ -255,6 +256,7 @@ export default function InventoryPage() {
     </section>
 
     <section className="inventory-actions" aria-label="Inventory actions"><button className="primary-action" type="button" onClick={openNewProduct}><PackagePlus className="h-4 w-4" aria-hidden="true" />Add product</button><Link href="/purchases" className="secondary-action"><Truck className="h-4 w-4" aria-hidden="true" />Purchases</Link><button className="secondary-action" type="button" onClick={() => { categoryForm.reset(blankCategory); setCategoryDialogOpen(true); }}><FolderPlus className="h-4 w-4" aria-hidden="true" />Add category</button><input ref={csvUploadRef} type="file" accept=".csv,text/csv" className="sr-only" aria-label="Choose product CSV" onChange={e => void importCsv(e.target.files?.[0])} /><button type="button" className="secondary-action" disabled={importingCsv} onClick={() => csvUploadRef.current?.click()}>Import products CSV</button><button type="button" className="secondary-action" onClick={() => void resumeStockCount()}>Resume stock count</button><button type="button" className="secondary-action" onClick={downloadCatalog} disabled={!snapshot.products.length}>Export products CSV</button><button type="button" className="secondary-action" onClick={() => void beginStockCount()} disabled={!snapshot.products.length}>Count all stock</button><ArchivedRecordsAccess count={snapshot.archivedProducts.length} onOpen={() => void openArchivedRecords()} /><span className="inventory-actions-note"><History className="h-4 w-4" aria-hidden="true" />Each count change becomes a movement record.</span></section>
+    {activeCompanyId && snapshot.products.length ? <MoveToSharedShopPanel database={db} profileId={activeCompanyId} /> : null}
 
     {lowStockProducts.length ? <section className="low-stock-strip"><TrendingDown className="h-5 w-5" aria-hidden="true" /><div><p className="ledger-kicker">Low stock attention</p><strong>{lowStockProducts.map((product) => product.name).join(", ")}</strong><span> needs a count check.</span></div></section> : null}
 

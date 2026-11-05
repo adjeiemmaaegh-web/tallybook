@@ -29,7 +29,29 @@ export interface ShopReceipt {
   submissionKey: string; receiptNumber: number; currency: string; totalMinor: number;
   recordedAt: string; replayed: boolean;
   payment: { method: PaymentMethod; amountDueMinor: number; amountTenderedMinor: number; changeMinor: number; reference: string | null };
-  lines: Array<{ productId: string; name: string; quantity: number; unitPriceMinor: number; lineTotalMinor: number }>;
+  lines: Array<{ lineNo: number; productId: string; name: string; quantity: number; unitPriceMinor: number; lineTotalMinor: number; refundedQuantity: number }>;
+  refundedMinor: number;
+  refunds: ShopRefund[];
+}
+export interface ShopRefund {
+  refundId: string; refundNo: number; amountMinor: number; method: PaymentMethod; returnedToStock: boolean;
+  reason: string; actorId: string; recordedAt: string;
+  lines: Array<{ lineNo: number; productId: string; quantity: number; lineTotalMinor: number }>;
+}
+/** Leave `lines` out to void: refund everything not yet refunded. */
+export interface RefundRequest {
+  saleId: string; refundKey: string; reason: string; returnToStock: boolean;
+  lines?: Array<{ lineNo: number; quantity: number }>;
+}
+export interface OpeningImport {
+  sourceKey: string; currency: string; defaultStoreId?: string;
+  stores: Array<{ localId: string; name: string }>;
+  products: Array<{ localId: string; name: string; unitPriceMinor: number }>;
+  stock: Array<{ localProductId: string; localStoreId?: string; quantity: number }>;
+}
+export interface OpeningImportResult {
+  storesCreated: number; storesReused: number; productsCreated: number; productsReused: number;
+  stockOpened: number; stockSkipped: number; unitsOpened: number;
 }
 
 /** The server refused the request on its merits; retrying will not help. */
@@ -82,6 +104,11 @@ export const adjustShopStock = (companyId: string, change: { storeId: string; pr
   callShop<{ quantity: number }>("adjustStock", { companyId, ...change });
 export const inviteShopAttendant = (companyId: string, email: string) =>
   callShop<{ inviteToken: string; invitationId: string; email: string; expiresAtEpochMs: number }>("inviteByEmail", { companyId, email });
+
+export const refundShopSale = (companyId: string, refund: RefundRequest) =>
+  callShop<ShopReceipt>("refundSale", { companyId, ...refund });
+export const importShopOpening = (companyId: string, books: OpeningImport) =>
+  callShop<OpeningImportResult>("importOpening", { companyId, ...books });
 
 export function newSubmissionKey() {
   const bytes = new Uint8Array(18);

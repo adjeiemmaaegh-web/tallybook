@@ -6,7 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
-import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -15,7 +15,7 @@ import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
   adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
-  recordShopSale, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
+  recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   type PaymentMethod, type ShopOverview, type ShopReceipt,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -336,6 +336,10 @@ function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => voi
     <ul>{receipt.lines.map(l => <li key={l.productId}><span>{l.quantity} × {l.name}</span><span>{money(l.lineTotalMinor)}</span></li>)}</ul>
     <p className="shop-total"><span>Total</span><strong>{money(receipt.totalMinor)}</strong></p>
     <p className="shop-muted">{receipt.payment.method === "mobile" ? `Mobile money · ${receipt.payment.reference}` : receipt.payment.method === "card" ? "Card" : `Cash received ${money(receipt.payment.amountTenderedMinor)} · Change ${money(receipt.payment.changeMinor)}`}</p>
+    {(receipt.refunds ?? []).length > 0 && <div className="shop-refunds">
+      {receipt.refunds.map(r => <p key={r.refundId}><Undo2 aria-hidden="true" />Refund {r.refundNo}: {money(r.amountMinor)} by {methodLabel(r.method).toLowerCase()} · {r.reason}{r.returnedToStock ? " · back in stock" : " · not restocked"} · {new Date(r.recordedAt).toLocaleString()}</p>)}
+      <p className="shop-total"><span>Kept after refunds</span><strong>{money(receipt.totalMinor - receipt.refundedMinor)}</strong></p>
+    </div>}
     {onNext && <button type="button" className="primary-action" onClick={onNext}>New sale</button>}
   </div>;
 }
@@ -439,7 +443,8 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   useEffect(() => { if (!online) return; setError("");
     void listShopSales(companyId, storeFilter || undefined).then(setSales).catch(c => setError(message(c))); }, [companyId, storeFilter, online]);
   const emailOf = (id: string) => overview.members.find(m => m.userId === id)?.email;
-  const total = (sales ?? []).reduce((s, r) => s + r.totalMinor, 0);
+  const total = (sales ?? []).reduce((s, r) => s + r.totalMinor - (r.refundedMinor ?? 0), 0);
+  const replace = (next: ShopReceipt) => setSales(list => (list ?? []).map(r => r.saleId === next.saleId ? next : r));
   return <section className="shop-card">
     <div className="shop-card-head"><h2>{overview.role === "owner" ? "Recent sales" : "My recent sales"}</h2>
       {overview.role === "owner" && overview.stores.length > 1 && <label className="shop-field shop-store-select">Store
@@ -448,12 +453,72 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
     {!online && <p className="shop-muted">Connect to see sales.</p>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
     {sales && !sales.length && <p className="shop-muted">No sales yet.</p>}
-    {sales && sales.length > 0 && <p className="shop-total"><span>Total of last {sales.length} sale{sales.length === 1 ? "" : "s"}</span><strong>{formatMinorAmount(total, overview.currency!)}</strong></p>}
+    {sales && sales.length > 0 && <p className="shop-total"><span>Total of last {sales.length} sale{sales.length === 1 ? "" : "s"}, after refunds</span><strong>{formatMinorAmount(total, overview.currency!)}</strong></p>}
     <ul className="shop-sales">{(sales ?? []).map(r => <li key={r.saleId}>
       <button type="button" aria-expanded={open === r.saleId} onClick={() => setOpen(o => o === r.saleId ? null : r.saleId)}>
         <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{overview.role === "owner" && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""} · {methodLabel(r.payment.method)}</small></span>
-        <strong>{formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
-      {open === r.saleId && <Receipt receipt={r} />}
+        <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
+      {open === r.saleId && <><Receipt receipt={r} />
+        {overview.role === "owner" && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
     </li>)}</ul>
   </section>;
+}
+
+/** Owner-only. Refunds never change the sale: they are new records that return
+ * the money by the sale's own payment method and, optionally, the stock. */
+function RefundForm({ companyId, receipt, online, onDone }: { companyId: string; receipt: ShopReceipt; online: boolean; onDone: (r: ShopReceipt) => void }) {
+  const [open, setOpen] = useState(false);
+  const [qty, setQty] = useState<Record<number, number>>({});
+  const [reason, setReason] = useState("");
+  const [restock, setRestock] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  // Kept across a failed send so a retry can never refund twice.
+  const pending = useRef<{ key: string; body: string } | null>(null);
+  const money = (v: number) => formatMinorAmount(v, receipt.currency);
+  const left = receipt.lines.map(l => ({ ...l, left: l.quantity - (l.refundedQuantity ?? 0) })).filter(l => l.left > 0);
+  const chosen = left.filter(l => (qty[l.lineNo] ?? 0) > 0);
+  const chosenMinor = chosen.reduce((n, l) => n + (qty[l.lineNo] ?? 0) * l.unitPriceMinor, 0);
+  const leftMinor = receipt.totalMinor - receipt.refundedMinor;
+  const how = methodLabel(receipt.payment.method).toLowerCase();
+
+  const send = async (whole: boolean) => {
+    if (!reason.trim()) { setError("Say why this is being refunded."); return; }
+    const amount = whole ? leftMinor : chosenMinor;
+    if (!window.confirm(`Refund ${money(amount)} by ${how}? This can't be undone.`)) return;
+    const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
+      ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
+    const body = JSON.stringify(request);
+    if (pending.current?.body !== body) pending.current = { key: newSubmissionKey(), body };
+    setBusy(true); setError("");
+    try {
+      const next = await refundShopSale(companyId, { ...request, refundKey: pending.current.key });
+      pending.current = null; setQty({}); setReason(""); setOpen(false); onDone(next);
+    } catch (cause) {
+      const unreachable = cause instanceof ShopUnreachableError;
+      if (!unreachable) pending.current = null;
+      setError(unreachable ? "No connection. Nothing was refunded yet. Try again when you're online." : message(cause));
+    } finally { setBusy(false); }
+  };
+
+  if (!open) return <button type="button" className="secondary-action shop-refund-open" disabled={!online} onClick={() => setOpen(true)}><Undo2 aria-hidden="true" />Refund or void</button>;
+  return <form className="shop-refund" onSubmit={e => { e.preventDefault(); void send(false); }}>
+    <h3>Refund from receipt #{receipt.receiptNumber}</h3>
+    <ul className="shop-product-list">{left.map(l => <li key={l.lineNo}>
+      <div><strong>{l.name}</strong><span>{l.left} can be refunded · {money(l.unitPriceMinor)} each</span></div>
+      <div className="shop-stepper">
+        <button type="button" className="secondary-action" aria-label={`Refund one less ${l.name}`} disabled={!qty[l.lineNo]} onClick={() => setQty(q => ({ ...q, [l.lineNo]: (q[l.lineNo] ?? 0) - 1 }))}><Minus aria-hidden="true" /></button>
+        <output aria-label={`${l.name} to refund`}>{qty[l.lineNo] ?? 0}</output>
+        <button type="button" className="secondary-action" aria-label={`Refund one more ${l.name}`} disabled={(qty[l.lineNo] ?? 0) >= l.left} onClick={() => setQty(q => ({ ...q, [l.lineNo]: (q[l.lineNo] ?? 0) + 1 }))}><Plus aria-hidden="true" /></button>
+      </div></li>)}</ul>
+    <label className="shop-field">Reason<input value={reason} onChange={e => setReason(e.target.value)} maxLength={200} placeholder="e.g. customer returned it, keyed by mistake" /></label>
+    <label className="shop-check"><input type="checkbox" checked={restock} onChange={e => setRestock(e.target.checked)} />Put the items back in stock (untick if damaged)</label>
+    <p className="shop-muted">The money goes back by {how}{receipt.payment.method === "mobile" ? ": send it from your mobile money wallet." : receipt.payment.method === "card" ? ": reverse it on your card machine." : " from the till."}</p>
+    <div className="shop-actions">
+      <button className="primary-action" disabled={busy || !online || !chosen.length}>{busy ? "Refunding…" : `Refund ${money(chosenMinor)}`}</button>
+      <button type="button" className="secondary-action shop-void" disabled={busy || !online} onClick={() => void send(true)}>Void whole sale ({money(leftMinor)})</button>
+      <button type="button" className="secondary-action" disabled={busy} onClick={() => { setOpen(false); setError(""); }}>Cancel</button>
+    </div>
+    {error && <p role="alert" className="shop-alert">{error}</p>}
+  </form>;
 }

@@ -96,3 +96,14 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-cart-bar { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-radius: 14px; background: var(--ta-blue); color: #fff; font-weight: 750; text-decoration: none; box-shadow: 0 10px 24px rgba(36,84,211,.3); }
 .shop-cart-bar strong { font-size: 1.1rem; }
 @media (min-width: 760px) { .shop-cart-bar { display: none; } .shop-stock-controls input { width: 84px; } .shop-stock-controls { grid-template-columns: 84px repeat(3, auto); } }
+
+/* Refunds */
+.shop-refunds { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--ta-line, #d6d3cc); }
+.shop-refunds p { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: .88rem; }
+.shop-refunds svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.shop-refund-open { justify-self: start; margin-top: 10px; }
+.shop-refund-open svg { width: 16px; height: 16px; }
+.shop-refund { display: grid; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ta-line, #d6d3cc); }
+.shop-refund h3 { margin: 0; font-size: 1rem; }
+.shop-sales s { font-weight: 500; opacity: .6; margin-right: 4px; }
+.shop-void { color: #a12020; }

@@ -101,6 +101,41 @@ begin
   end;
   steps := steps + 1;
 
+  -- Refunds: attendant refused; owner partial refund replays on retry; void
+  -- returns the rest; stock is restored and the sale itself is unchanged.
+  perform pg_temp.refused('tallybook_shop', attendant, s_att, 'refundSale', jsonb_build_object('companyId', biz,
+    'saleId', r->'sales'->0->>'saleId', 'refundKey', replace(gen_random_uuid()::text, '-', ''), 'reason', 'x'), 'Only the business owner');
+  inv := jsonb_build_object('companyId', biz, 'saleId', r->'sales'->0->>'saleId', 'refundKey', replace(gen_random_uuid()::text, '-', ''),
+    'reason', 'Dry run partial refund', 'returnToStock', true, 'lines', jsonb_build_array(jsonb_build_object('lineNo', 1, 'quantity', 1)));
+  r := pg_temp.as_user('tallybook_shop', owner, s_owner, 'refundSale', inv);
+  if (r->>'refundedMinor')::int <> 4500 then raise exception 'partial refund wrong: %', r; end if;
+  if not (pg_temp.as_user('tallybook_shop', owner, s_owner, 'refundSale', inv)->>'replayed')::boolean then raise exception 'refund retry not replayed'; end if;
+  r := pg_temp.as_user('tallybook_shop', owner, s_owner, 'refundSale', jsonb_build_object('companyId', biz, 'saleId', r->>'saleId',
+    'refundKey', replace(gen_random_uuid()::text, '-', ''), 'reason', 'Dry run void'));
+  if (r->>'refundedMinor')::int <> 9000 or jsonb_array_length(r->'refunds') <> 2 then raise exception 'void wrong: %', r; end if;
+  if (select quantity from public.shop_store_stock where store_id = store_a and product_id = eggs) <> 5
+     or (select total_minor from public.shop_sales where business_id = biz) <> 9000
+     or (select count(*) from public.shop_refunds where business_id = biz) <> 2
+  then raise exception 'refund records wrong'; end if;
+  steps := steps + 1;
+
+  -- Opening import: atomic, reuses by name, never overwrites, second run adds nothing.
+  r := pg_temp.as_user('tallybook_shop', owner, s_owner, 'importOpening', jsonb_build_object('companyId', biz,
+    'sourceKey', 'device:dryrun', 'currency', 'GHS',
+    'stores', jsonb_build_array(jsonb_build_object('localId', 'st1', 'name', 'madina'), jsonb_build_object('localId', 'st2', 'name', 'Tema')),
+    'products', jsonb_build_array(jsonb_build_object('localId', 'p1', 'name', 'crate of EGGS', 'unitPriceMinor', 1),
+                                  jsonb_build_object('localId', 'p2', 'name', 'Milk', 'unitPriceMinor', 700)),
+    'stock', jsonb_build_array(jsonb_build_object('localProductId', 'p1', 'localStoreId', 'st1', 'quantity', 99),
+                               jsonb_build_object('localProductId', 'p2', 'localStoreId', 'st2', 'quantity', 6))));
+  if (r->>'storesCreated')::int <> 1 or (r->>'productsReused')::int <> 1 or (r->>'stockSkipped')::int <> 1 or (r->>'unitsOpened')::int <> 6
+  then raise exception 'import wrong: %', r; end if;
+  if (select unit_price_minor from public.shop_products where id = eggs) <> 4500
+     or (select quantity from public.shop_store_stock where store_id = store_a and product_id = eggs) <> 5
+  then raise exception 'import overwrote existing data'; end if;
+  perform pg_temp.refused('tallybook_shop', owner, s_owner, 'importOpening', jsonb_build_object('companyId', biz,
+    'sourceKey', 'device:dryrun', 'currency', 'NGN', 'products', jsonb_build_array(jsonb_build_object('localId', 'p9', 'name', 'X', 'unitPriceMinor', 1))), 'Nothing was imported');
+  steps := steps + 1;
+
   -- Revocation removes store access in the same transaction.
   perform pg_temp.as_user('tallybook_membership', owner, s_owner, 'revokeMember', jsonb_build_object('companyId', biz, 'targetUserId', attendant));
   if exists (select 1 from public.shop_store_assignments where user_id = attendant) then raise exception 'assignment survived revoke'; end if;

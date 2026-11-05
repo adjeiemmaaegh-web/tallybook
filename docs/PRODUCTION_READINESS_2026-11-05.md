@@ -5,10 +5,45 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 **Verdict (end of day): READY FOR STAKEHOLDER ACCEPTANCE on the live site, not yet a commercial release.** The owner-to-attendant journey is built, deployed and verified on production Supabase (rollback dry run, 7/7 stages). Remaining before calling it commercially released:
 1. hands-on acceptance with two real accounts on two phones
 2. enabling leaked-password protection in Supabase Auth
-3. refunds in the shared shop
-4. the open items from the brief: offline returning-user unlock, encrypted local storage, migrating existing browser data into the shared shop, and consolidating the historical docs
+3. ~~refunds in the shared shop~~: built, see below; it goes live with the next production deploy
+4. ~~migrating existing browser data into the shared shop~~: built as an opening-balance move, see below; same deploy
+5. the remaining open items from the brief: offline returning-user unlock, encrypted local storage, and consolidating the historical docs
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
+
+## Update — refunds/voids and one set of books (built, on the test project, not yet on production)
+
+**Refunds and voids (blocker 1).** `supabase/migrations/20261105130000_shared_shop_refunds_and_opening_import.sql`, action `refundSale`.
+- Owner only. Attendants see refunds on their sales but can't issue them, so refunds are a loss-prevention control.
+- A refund never edits the sale. It is a new append-only record (`shop_refunds`, `shop_refund_lines`) priced from the sale's own lines, returned by the sale's own payment method, with a required reason.
+- "Put the items back in stock" is on by default; untick it for damaged goods.
+- A void is a refund of everything not yet refunded. Partial refunds can't exceed what is left on each line.
+- Exactly once: keyed by `refundKey` plus a request hash, so a retry after a dropped connection replays. The screen keeps the key until the server answers.
+- Receipts and the Sales tab show each refund and the net amount kept.
+
+**One set of books (blocker 2). Decision: the shared shop becomes the live record. Each phone's past books stay on that phone as history before the switch.**
+- Facts behind the decision:
+  - The phone's books hold full history with features the shared shop doesn't have (credit, discounts, FIFO cost).
+  - Replaying that history into a server-priced, append-only ledger would invent receipts and could misstate money.
+  - What the owner needs to keep trading is the catalogue, prices and stock on hand. That is the standard opening-balance cutover.
+- How it works: Stock page → "Move to the shared shop". It is behind the phone's own owner unlock (`requirePermission("staff")`), so a cashier on a shared phone can't export the books.
+- It sends the stocked, unarchived products, open stores and units on hand to action `importOpening`, in one transaction (all or nothing).
+- What it never changes:
+  - It reuses stores and products with the same name and never overwrites a shared-shop price.
+  - It only opens stock where that store/product has no shared-shop history, so running it twice adds nothing.
+  - It refuses a currency mismatch.
+- Every run is logged in `shop_imports`, and opening stock is posted as `opening` movements.
+
+**Evidence.**
+- `qa/shared-shop-refunds-import.test.mjs`: 3 tests on real Postgres.
+- `client/src/cloud/localBooksExport.test.ts` (3) and `MoveToSharedShopPanel.test.tsx` (3).
+- 3 new refund tests in `SharedShopPage.test.tsx`.
+- Hosted dry run on the test project, extended with refund, retry, void and import stages: `DRYRUN PASS: 9 journey stages verified`, nothing left behind.
+
+**Not done:**
+- Production database and frontend deploy (waiting for the owner's go-ahead).
+- Showing a "moved to shared shop on <date>" marker inside the phone's own books.
+- Refunds for sales still recorded in the phone's own books keep using the phone's existing return flow.
 
 ## Update — same day: decisions taken and work done
 
