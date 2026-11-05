@@ -594,6 +594,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
     if (lines.length >= 2) return info("I can record several sales, stock receipts or payments in one message, one per line, each complete (for example \u201cSell 2 eggs to Kwame, cash\u201d). I couldn't read this as separate requests, so nothing was recorded. Please send them one at a time, or rewrite the lines.");
 
     const parsed = parseCommand(canonicalText, { now: options.now?.() });
+    if (parsed.entities.plannedAction) return info("That sounds like something planned, not done yet, so I haven't recorded anything. Tell me again once the sale, delivery or payment has actually happened.");
     const contextFallback = parsed.intent === "UNKNOWN" ? parsedFromContextFirst(contextFirst, canonicalText) : null;
     if (contextFallback) return handle(contextFallback);
     if (pending?.payload.kind === "stock_receipt" && parsed.confidence < CONFIDENCE_HIGH) {

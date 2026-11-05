@@ -79,13 +79,22 @@ function extractWalkIn(text: string): { walkIn: boolean; cleaned: string } {
   return WALK_IN_RE.test(text) ? { walkIn: true, cleaned: text.replace(new RegExp(WALK_IN_RE.source, "g"), " ") } : { walkIn: false, cleaned: text };
 }
 
+/** "<customer> bought/buy/don buy/took/collected/has taken ..." names the customer who bought.
+ * In Ghanaian English and pidgin "Ama buy 2 eggs" means Ama bought them; the shop buying stock is
+ * "I/we bought", "bought from Kofi" or "Kofi brought". Pronouns and question words are never customers. */
+const CUSTOMER_BUY_VERBS = String.raw`(?:bought|buys?|took|collected|taken)`;
+const CUSTOMER_BUY = new RegExp(String.raw`^(?:record\s+)?(?!(?:i|we|you|they|he|she|it|who|which|what|how|why|when|where|if|the|our|my|should|shall|can|could|may|might|must|will|would|do|does|did|let|lets|please|abeg)\s)(?!\S+\s+(?:i|we|you)\s)(${NAME})\s+(?:also\s+|just\s+|don\s+|has\s+|have\s+|already\s+)*${CUSTOMER_BUY_VERBS}\b`, "u");
+/** "took/collected/taken" also describe money ("Kwame took 50 cedis"), so they count as a sale only with items. */
+const ITEM_ONLY_BUY_VERB = /^\S+(?:\s+\S+){0,3}?\s+(?:also\s+|just\s+|don\s+|has\s+|have\s+|already\s+)*(?:took|collected|taken)\b/;
+function customerBought(text: string): boolean { return CUSTOMER_BUY.test(text) && !/\bfrom\b/.test(text); }
+
 function extractNamedCustomer(text: string): { name?: string; cleaned: string } {
   const toFor = new RegExp(String.raw`\b(?:to|for)\s+(?:customer\s+|client\s+)?(${NAME})${CUSTOMER_STOP}`, "u").exec(text);
   if (toFor && !/^(?:to|for)\s+\d/.test(toFor[0]) && !new RegExp(`^(?:to|for)\\s+${CUR}\\b`, "u").test(toFor[0])) {
     const name = cleanName(toFor[1]);
     if (name) return { name, cleaned: text.replace(toFor[0], " ") };
   }
-  const bought = new RegExp(String.raw`^(?:record\s+)?(${NAME})\s+(?:also\s+|just\s+)?bought\b`, "u").exec(text);
+  const bought = CUSTOMER_BUY.exec(text);
   if (bought) { const name = cleanName(bought[1]); if (name) return { name, cleaned: text.replace(bought[1], " ") }; }
   return { cleaned: text };
 }
@@ -262,14 +271,15 @@ const SELLING_QUESTION = /\bsells?\s+(?:the\s+)?best\b|\bsell\s+best\b|\b(?:best
 
 function scoreRecordSale(text: string, raw: string): Candidate | null {
   if (isQuestionForm(raw, text) || SELLING_QUESTION.test(text) || /\b(?:customers?|clients?|buyers?|people)\s+(?:who|that)\b|\bwho\s+(?:bought|purchased|ordered)\b/.test(text)) return null;
-  const nameBought = new RegExp(String.raw`^(?:record\s+)?(?!(?:i|we|who|which|what|how)\s)(${NAME})\s+(?:also\s+|just\s+)?bought\b`, "u").test(text) && !/\bfrom\b/.test(text);
+  const nameBought = customerBought(text);
   if (!SALE_VERB.test(text) && !RECORD_SALE_PHRASE.test(text) && !nameBought) return null;
 
   const walkIn = extractWalkIn(text);
   const payment = extractPayment(walkIn.cleaned);
   const customer = extractNamedCustomer(payment.cleaned);
   const item = extractItem(customer.cleaned);
-  const product = item?.product ?? (item ? undefined : fallbackProduct(customer.cleaned, "sell|sold|selling|bought"));
+  if (nameBought && !SALE_VERB.test(text) && ITEM_ONLY_BUY_VERB.test(text) && !item?.quantity) return null;
+  const product = item?.product ?? (item ? undefined : fallbackProduct(customer.cleaned, "sell|sold|selling|bought|buys?|took|collected|taken"));
   const entities: ParsedEntities = {
     productText: product, unit: item?.unit, quantity: item?.quantity, invalidQuantityText: item?.invalidQuantityText,
     walkIn: walkIn.walkIn || undefined, customerText: customer.name,
@@ -304,8 +314,7 @@ function scoreReceiveStock(text: string, raw: string): Candidate | null {
   const recordPurchase = /\b(?:record|log|enter|add|new)\s+(?:a\s+|new\s+)?(?:stock\s+)?(?:purchase|delivery|restock)\b|\breceive\s+stock\b|\bstock\s+(?:received|delivery)\b/.test(text);
   const restockCommand = /^restock\s+\d/.test(text);
   if (!RECEIVE_RE.test(text) && !recordPurchase && !restockCommand) return null;
-  const nameBought = new RegExp(String.raw`^(?:record\s+)?(?!(?:i|we)\s)(${NAME})\s+(?:also\s+|just\s+)?bought\b`, "u").test(text) && !/\bfrom\b/.test(text);
-  if (nameBought) return null;
+  if (customerBought(text)) return null;
   if (moneyReceipt && (detectCurrency(moneyReceipt[0]).code || detectCurrency(moneyReceipt[0]).ambiguousShilling)) return null;
 
   const supplier = extractSupplier(text);
@@ -491,6 +500,19 @@ const INTENT_PRIORITY: AssistantIntent[] = [
 ];
 
 /** The single public entry point: prepare the text, score every intent, and return the best reading with its alternatives. */
+const WRITE_INTENTS = new Set<AssistantIntent>(["RECORD_SALE", "RECEIVE_STOCK", "RECORD_CUSTOMER_PAYMENT"]);
+const FUTURE_ACT = /\b(?:will|wil|shall|would|gonna|go|fit|dey\s+go|wants?\s+to|want\s+to|wanna|going\s+to|plans?\s+to|planning\s+to|promised?\s+to|intends?\s+to|about\s+to|has\s+to|have\s+to|needs?\s+to|should|must)\s+(?:also\s+|still\s+|come\s+(?:and\s+)?)?(?:pay|buy|sell|bring|deliver|supply|send|take|collect|settle|give|restock|receive|get)\b/;
+const FUTURE_QUESTION = /\b(?:should|shall|can|could|may|might|must|do|will)\s+(?:i|we|you|he|she|they)\s+(?:also\s+|still\s+)?(?:pay|buy|sell|bring|deliver|supply|send|take|collect|settle|give|restock|receive|get)\b/;
+const FUTURE_TIME = /\b(?:tomorrow|tmrw|tmr|next\s+(?:week|month|time|year)|later\s+(?:today|this\s+week)|on\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+coming)\b/;
+const DONE_VERB = /\b(?:sold|bought|paid|repaid|settled|delivered|brought|received|took|collected|taken|got|gave|supplied|restocked|purchased)\b/;
+/** True when the request describes something planned or hoped for, not something that has happened. */
+export function describesPlannedAction(rawText: string): boolean {
+  const said = rawText.toLowerCase().replace(/[’']/g, "'");
+  const withoutFuture = said.replace(new RegExp(FUTURE_ACT.source + String.raw`[^,.;]*`, "g"), " ");
+  const done = DONE_VERB.test(withoutFuture);
+  return ((FUTURE_ACT.test(said) || FUTURE_QUESTION.test(said)) && !done) || (FUTURE_TIME.test(said) && !done && !/\b(?:yesterday|today|just|already)\b/.test(said));
+}
+
 export function parseCommand(rawText: string, options: ParseOptions = {}): ParsedCommand {
   const now = options.now ?? new Date();
   const raw = rawText;
@@ -506,6 +528,15 @@ export function parseCommand(rawText: string, options: ParseOptions = {}): Parse
     scoreTopDebtors(text, now), scoreLowStock(text), scoreBestSelling(text, now), scoreCustomersWhoBought(text, now), scoreInsights(text),
   ].filter((candidate): candidate is Candidate => candidate !== null && candidate.confidence >= 0.3)
     .sort((left, right) => right.confidence - left.confidence || INTENT_PRIORITY.indexOf(left.intent) - INTENT_PRIORITY.indexOf(right.intent));
+
+  // A sale, delivery or payment that hasn't happened yet is never offered for recording.
+  const planned = candidates.some((candidate) => WRITE_INTENTS.has(candidate.intent)) && describesPlannedAction(raw);
+  if (planned) {
+    const readOnly = candidates.filter((candidate) => !WRITE_INTENTS.has(candidate.intent));
+    candidates.length = 0;
+    candidates.push(...readOnly);
+    if (!candidates.length) return { intent: "UNKNOWN", confidence: 0, entities: { plannedAction: true }, alternatives: [], raw };
+  }
 
   if (!candidates.length) {
     const words = text.split(/\s+/);

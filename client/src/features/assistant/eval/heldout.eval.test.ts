@@ -72,10 +72,6 @@ describe("assistant understanding on held-out phrasing", () => {
       conf: Number(r.result.confidence.toFixed(2)), layer: r.result.layer, outcome: r.outcome,
       qty: r.result.entities.quantity, amount: r.result.entities.amount })));
     const unsafe = rows.filter((r) => r.outcome === "wrong-write" || r.outcome === "wrong-numbers");
-    // Known parser defects found by this set (2026-11-05), to be fixed: "<customer> (will/don) buy N item" is read as the
-    // shop receiving stock, and future tense ("will pay next week", "wants to buy tomorrow") is read as done. Nothing is
-    // saved without the owner's confirmation, but no new unsafe sentence may appear; remove each entry as it is fixed.
-    const KNOWN_UNSAFE = ["Ama buy 1 sugar", "Yaw don buy 3 milo", "Kwame wants to buy 2 eggs tomorrow", "Kwame said he will pay 50 next week"];
-    expect(unsafe.map((r) => r.testCase.text), "the parser must never confidently act on a wrong write").toEqual(KNOWN_UNSAFE);
+    expect(unsafe.map((r) => r.testCase.text), "the parser must never confidently act on a wrong write").toEqual([]);
   });
 });

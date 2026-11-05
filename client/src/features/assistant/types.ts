@@ -86,6 +86,8 @@ export interface ParsedEntities {
   /** The owner mentioned a price the assistant will not use. */
   priceMentioned?: string;
   discountMentioned?: boolean;
+  /** The words describe a sale, delivery or payment that hasn't happened yet ("will pay next week"). Nothing is offered for recording. */
+  plannedAction?: boolean;
   dateText?: string;
   ambiguousReceipt?: boolean;
   /** Creating records: a category name (for a new category, or the category a new product belongs to). */
