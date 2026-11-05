@@ -10,7 +10,7 @@ As lead/manager I chose the **server-authoritative shared shop** for multi-user 
 
 | Item | Status |
 |---|---|
-| B1 attendant sales reach the owner | **Built.** `supabase/migrations/20261105100000_shared_shop_ledger.sql` + `public.tallybook_shop` RPC; `/shop` screen for owner and attendant |
+| B1 attendant sales reach the owner | **Built.** `supabase/migrations/20261105070036_shared_shop_ledger.sql` + `public.tallybook_shop` RPC; `/shop` screen for owner and attendant |
 | B2 cloud store assignment | **Built.** `shop_stores`, `shop_store_assignments` (cascades on membership revoke) |
 | Exactly-once sale after retry | **Built.** Unique `(business, submission_key)` + request hash; write-ahead outbox in the browser; retries on reconnect, every 20 s while waiting, and on return to the app |
 | Stock, payment, receipt, financial records | One transaction: stock rows locked, oversell refused, server prices the sale, sequential receipt numbers, append-only history (triggers block UPDATE/DELETE) |
@@ -21,7 +21,7 @@ As lead/manager I chose the **server-authoritative shared shop** for multi-user 
 | Business setup UX | Dead end for attendants removed ("Open shared shop"); email instead of account ID; consistent buttons |
 | B3 migration drift | **Fixed.** `supabase/migrations` now mirrors production's recorded history exactly (3 missing migrations added under their real versions; the never-applied `001`–`003` `tb_*` files moved to `docs/history/unapplied-migrations/`) |
 | Hosted test | **Passed** on test project `lmneuqxfyxplrxjswpma` after bringing it to production parity: `qa/supabase-shop-dryrun.sql`, running as the real `authenticated`/`anon` roles, gave `DRYRUN PASS: 7 journey stages verified`, rolled back with 0 rows left. Covers setup, invite by email, wrong-account accept refused, unassigned/other-store/owner-only/stranger/expired-session refusals, sale, retry replayed, changed retry refused, oversell refused, exactly one sale/payment/movement, stock 5→3, no direct table or anon access, revocation removes store access |
-| Production database | **Pending owner go-ahead.** Production `qfyydfxwvifdvffdfgeu` matches the tested baseline (5 migrations, 6 users, 1 business, 0 attendants). Applying the additive shared-shop migration there needs explicit approval |
+| Production database | **Live.** Applied with owner approval as `20261105070036_shared_shop_ledger`. The same rollback dry run on production gave `DRYRUN PASS: 7 journey stages verified`; data unchanged afterwards (6 users, 1 business, 0 shop sales) |
 | Auth setting | Supabase advisor: leaked-password protection is **off**. Owner should enable it (Authentication → Policies) |
 | Frontend deploy | **Open.** `vercel.json` disables git deploys; deploy after the migration is live (until then `/shop` says the server doesn't support it yet) |
 
