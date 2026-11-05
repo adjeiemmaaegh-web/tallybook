@@ -11,6 +11,20 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
+## Update — Assistant understanding fixes (live on production)
+
+Measured on 144 held-out sentences in Ghanaian English, pidgin, voice-style and typo phrasing (`client/src/features/assistant/eval/heldout*.ts`). Two unsafe readings were fixed:
+- "Kwame buy 2 eggs", "Yaw don buy 3 milo", "Kwame took 3 eggs" and similar now start a sale for that customer. They are no longer read as the shop receiving stock. "I/we bought…", "bought from Kofi" and "Kofi brought…" are still deliveries.
+- Planned actions ("will pay 50 next week", "wants to buy tomorrow", "has to pay 30") are never offered for recording. The Assistant explains that nothing was recorded. The check reads the words as typed, because normalisation rewrites "pay" as "paid".
+
+| Held-out result | Before | After |
+|---|---|---|
+| Confident wrong records | 4 | 0 |
+| Recording a sale understood | 44% | 75% |
+| Overall | 55% | 60% |
+
+The tuned set is still at 100%. The full suite passes: 1,135 tests across 143 files. Deployed `main` @ `cedf891` as `dpl_7BjtxiWgM2J8DQGmQipGu8CEF5v6` (READY). The live bundle `index-be_OBPWV.js` contains the new reply, and the console is clean.
+
 ## Update — the full till in the shared shop (live on production)
 
 **Why:** a competitor review (Stockdey) showed the biggest gap was having two systems. The shared shop synced staff and stores but was a bare till; the phone's own books had credit and discounts but only for one person. The shared shop now has both.
