@@ -87,8 +87,8 @@ export default function SharedShopPage() {
 
   const business = businesses.find(b => b.id === companyId) ?? null;
 
-  if (userId === undefined) return <main className="shop-page"><p role="status">Opening your shop…</p></main>;
-  if (!userId) return <main className="shop-page"><section className="shop-card shop-empty">
+  if (userId === undefined) return <main className="shop-page"><Run18UpdateNotice /><p role="status">Opening your shop…</p></main>;
+  if (!userId) return <main className="shop-page"><Run18UpdateNotice /><section className="shop-card shop-empty">
     <h1>Shared shop</h1><p>Sign in to open the shop you own or work in.</p>
     <Link href="/signin" className="primary-action">Sign in</Link></section></main>;
 
