@@ -1,6 +1,7 @@
 /** V19 Run 4: account controls use verified cloud session state only. */
 import {useState} from 'react';
 import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
+import {Run18UpdateNotice} from '@/components/Run18UpdateNotice';
 import {Link} from 'wouter';
 import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
@@ -79,6 +80,8 @@ export default function GoogleSignInPage(){
     finally{setBusy(false);}
   }
   return <div className="home-workspace space-y-5 pb-6" style={{maxWidth:620,margin:'0 auto'}}>
+    {/* Account and shop screens sit outside AppShell; without this, visitors here never see a staged update. */}
+    <Run18UpdateNotice/>
     <section className="op-row-card" style={{display:'block',padding:22}}>
       <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>

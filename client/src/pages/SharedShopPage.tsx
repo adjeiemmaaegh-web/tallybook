@@ -11,6 +11,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { listVerifiedCloudBusinesses } from "@/cloud/cloudMembership";
+import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
   adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
@@ -92,6 +93,7 @@ export default function SharedShopPage() {
     <Link href="/signin" className="primary-action">Sign in</Link></section></main>;
 
   return <main className="shop-page">
+    <Run18UpdateNotice />
     <header className="shop-head">
       <Link href="/signin" className="shop-back"><ArrowLeft aria-hidden="true" />Account</Link>
       <div>

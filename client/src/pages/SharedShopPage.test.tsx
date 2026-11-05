@@ -125,3 +125,13 @@ describe("shared shop — attendant", () => {
     expect(second).not.toBe(first);
   });
 });
+
+describe("shared shop — app updates", () => {
+  it("shows a staged app update here too, since the shop sits outside the workspace shell", async () => {
+    const { announceRun18UpdateReady } = await import("@/features/reliability/run18UpdatePolicy");
+    render(<SharedShopPage />);
+    await screen.findByRole("button", { name: "Add one Crate of eggs" });
+    act(() => announceRun18UpdateReady(async () => {}));
+    expect(await screen.findByText(/An offline app update is ready/)).toBeInTheDocument();
+  });
+});

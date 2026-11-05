@@ -2,7 +2,13 @@
 
 Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34.0, `pnpm install --frozen-lockfile`.
 
-**Verdict: NO-GO for production release.** The website is safe for stakeholder demos of sign-in, business creation and invitations. However, the owner-to-attendant journey the release depends on does not exist end to end yet. That is an architecture gap, not a bug.
+**Verdict (end of day): READY FOR STAKEHOLDER ACCEPTANCE on the live site, not yet a commercial release.** The owner-to-attendant journey is built, deployed and verified on production Supabase (rollback dry run, 7/7 stages). Remaining before calling it commercially released:
+1. hands-on acceptance with two real accounts on two phones
+2. enabling leaked-password protection in Supabase Auth
+3. refunds in the shared shop
+4. the open items from the brief: offline returning-user unlock, encrypted local storage, migrating existing browser data into the shared shop, and consolidating the historical docs
+
+*Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
 ## Update — same day: decisions taken and work done
 
@@ -23,7 +29,9 @@ As lead/manager I chose the **server-authoritative shared shop** for multi-user 
 | Hosted test | **Passed** on test project `lmneuqxfyxplrxjswpma` after bringing it to production parity: `qa/supabase-shop-dryrun.sql`, running as the real `authenticated`/`anon` roles, gave `DRYRUN PASS: 7 journey stages verified`, rolled back with 0 rows left. Covers setup, invite by email, wrong-account accept refused, unassigned/other-store/owner-only/stranger/expired-session refusals, sale, retry replayed, changed retry refused, oversell refused, exactly one sale/payment/movement, stock 5→3, no direct table or anon access, revocation removes store access |
 | Production database | **Live.** Applied with owner approval as `20261105070036_shared_shop_ledger`. The same rollback dry run on production gave `DRYRUN PASS: 7 journey stages verified`; data unchanged afterwards (6 users, 1 business, 0 shop sales) |
 | Auth setting | Supabase advisor: leaked-password protection is **off**. Owner should enable it (Authentication → Policies) |
-| Frontend deploy | **Open.** `vercel.json` disables git deploys; deploy after the migration is live (until then `/shop` says the server doesn't support it yet) |
+| Frontend deploy | **Live.** `main` @ `c28d5ba` deployed to production (`dpl_AVVkinVUv47XZGEfjCiBwCizNn8V`, READY, aliased to tallybook-eight.vercel.app). `/shop` loads with no console errors; the live API refuses anonymous calls to `tallybook_shop` and to `shop_sales` (42501) |
+| Stale app after deploy | **Fixed in follow-up.** The "update ready" notice only rendered inside the local workspace shell, so visitors on the sign-in screen and `/shop` kept the old cached version until all tabs closed. It now renders on both screens |
+| Hands-on acceptance | **Owner to do.** Two real accounts on two phones: invite by email → assign store → sell → airplane mode mid-sale → reconnect, and confirm the owner sees one sale, one receipt and the stock drop |
 
 New evidence: `qa/shared-shop-ledger.test.mjs` runs the full owner→attendant journey on real PostgreSQL (PGlite). `client/src/cloud/shopOutbox.test.ts` (6) and `client/src/pages/SharedShopPage.test.tsx` (6) cover the client. Screens were reviewed at 1280 px and 390 px in Edge.
 
