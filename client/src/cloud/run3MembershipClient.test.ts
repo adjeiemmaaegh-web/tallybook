@@ -5,8 +5,9 @@ const auth=vi.hoisted(()=>({
  getSession:vi.fn(async()=>({data:{session:{user:{id:'attendant'},access_token:'fixture',expires_at:Math.floor(Date.now()/1000)+60}},error:null})),
  onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})
 }));
-vi.mock('@/lib/supabase',()=>({getSupabaseClient:()=>({auth})}));
-afterEach(()=>{vi.unstubAllGlobals();vi.clearAllMocks();});
+const rpc=vi.hoisted(()=>vi.fn());
+vi.mock('@/lib/supabase',()=>({getSupabaseClient:()=>({auth,rpc})}));
+afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();vi.clearAllMocks();});
 it('rejects an incomplete code before reading credentials',async()=>{
  await expect(acceptCloudInvitation('incomplete')).rejects.toThrow(/complete invitation code/);
  expect(auth.getSession).not.toHaveBeenCalled();
@@ -17,4 +18,13 @@ it('rejects the website fallback page and forbids credential forwarding on redir
  vi.stubGlobal('fetch',fetcher);
  await expect(acceptCloudInvitation('v1.'+'x'.repeat(43))).rejects.toThrow(/service is unavailable/);
  expect(fetcher).toHaveBeenCalledWith('/api/run3/membership/accept',expect.objectContaining({redirect:'error',credentials:'omit'}));
+});
+
+it('uses the authenticated database client for the stakeholder site',async()=>{
+ vi.stubGlobal('window',{location:{protocol:'https:'}});
+ vi.stubEnv('VITE_SUPABASE_URL','https://qfyydfxwvifdvffdfgeu.supabase.co');
+ rpc.mockResolvedValueOnce({data:{companyId:'shop',userId:'attendant',role:'attendant'},error:null});
+ const code='v1.'+'x'.repeat(43);
+ expect(await acceptCloudInvitation(code)).toEqual({companyId:'shop',userId:'attendant'});
+ expect(rpc).toHaveBeenCalledWith('tallybook_membership',{p_action:'accept',p_input:{inviteToken:code}});
 });

@@ -28,6 +28,12 @@ async function call(action:string,body:Record<string,string>){
     if(event!=='INITIAL_SESSION')changed=true;
   });
   try{
+    let result:unknown;
+    if(import.meta.env.VITE_SUPABASE_URL==='https://qfyydfxwvifdvffdfgeu.supabase.co'){
+      const receipt=await client.rpc('tallybook_membership',{p_action:action,p_input:body});
+      if(receipt.error)throw Error('Invitation service denied the request or is unavailable.');
+      result=receipt.data;
+    }else{
     const res=await fetch(endpoint.base+'/'+action,{
       method:'POST',credentials:'omit',cache:'no-store',redirect:'error',
       headers:{'Content-Type':'application/json',
@@ -37,7 +43,8 @@ async function call(action:string,body:Record<string,string>){
     });
     if(res.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/json')throw Error('The invitation service is unavailable on this website. Try again after your administrator connects it.');
     if(!res.ok)throw Error('Cloud membership operation was denied or unavailable.');
-    const result:unknown=await res.json();
+    result=await res.json();
+    }
     const {data:finalIdentity,error:identityError}=await client.auth.getUser();
     const {data:finalSession,error:finalError}=await client.auth.getSession();
     if(changed||identityError||finalError||
@@ -86,4 +93,5 @@ export async function listCloudMembers(companyId:string):Promise<Run3Member[]>{
     throw Error('Membership list invalid.');
   return r.members as Run3Member[];
 }
+
 
