@@ -19,19 +19,19 @@ export function Run3MembershipPanel({userId,companyId,isOwner,onAccepted}:{
   finally{setBusy(false);}
  }
  const canManage=!!companyId&&isOwner;
- return <section className="rounded border p-4 space-y-3" aria-label="Cloud membership preview">
-  <h3 className="font-semibold">Cloud membership invitations</h3>
-  <p className="text-sm">Optional account-only invitation review. Your offline business records remain on this device. No sync or local POS permission is granted.</p>
+ return <section className="rounded border p-4 space-y-3" aria-label="Join a business">
+  <h3 className="font-semibold">Have an invitation code?</h3>
+  <p className="text-sm">The code works only for the account it was created for and expires 15 minutes after the owner creates it.</p>
   <form className="space-y-2" onSubmit={e=>{e.preventDefault();void execute(async()=>{
     const receipt=await acceptCloudInvitation(token.trim());
     if(receipt.userId!==userId)throw Error('Different account accepted invitation.');
-    setToken('');setMessage('Invitation accepted. Checking your membership.');onAccepted?.();
+    setToken('');setMessage('You have joined the business. Opening your shop…');onAccepted?.();
   });}}>
-   <label className="block" htmlFor="run3-token">Invitation token for your account</label>
+   <label className="block" htmlFor="run3-token">Invitation code</label>
    <input id="run3-token" value={token} onChange={e=>setToken(e.target.value)}
     className="w-full rounded border p-2" autoComplete="off" spellCheck={false}/>
-   <button type="submit" disabled={busy||!token.trim()} className="rounded border px-3 py-2">
-    Accept invitation</button>
+   <button type="submit" disabled={busy||!token.trim()} className="primary-action">
+    Join business</button>
   </form>
   {canManage?<div className="border-t pt-3 space-y-2">
    <form className="space-y-2" onSubmit={e=>{e.preventDefault();void execute(async()=>{

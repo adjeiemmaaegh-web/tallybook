@@ -12,17 +12,23 @@ it('rejects an incomplete code before reading credentials',async()=>{
  await expect(acceptCloudInvitation('incomplete')).rejects.toThrow(/complete invitation code/);
  expect(auth.getSession).not.toHaveBeenCalled();
 });
-it('rejects the website fallback page and forbids credential forwarding on redirects',async()=>{
+it('an explicitly configured QA endpoint rejects a website fallback page and forbids credential forwarding on redirects',async()=>{
  vi.stubGlobal('window',{location:{protocol:'https:'}});
+ vi.stubEnv('VITE_TALLYBOOK_RUN3_QA_ENDPOINT','https://lmneuqxfyxplrxjswpma.supabase.co/functions/v1/tallybook-run3-qa');
+ vi.stubEnv('VITE_SUPABASE_URL','https://lmneuqxfyxplrxjswpma.supabase.co');
+ vi.stubEnv('VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW','true');
+ vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY','sb_publishable_fixture');
  const fetcher=vi.fn(async()=>new Response('<html></html>',{headers:{'content-type':'text/html'}}));
  vi.stubGlobal('fetch',fetcher);
  await expect(acceptCloudInvitation('v1.'+'x'.repeat(43))).rejects.toThrow(/service is unavailable/);
- expect(fetcher).toHaveBeenCalledWith('/api/run3/membership/accept',expect.objectContaining({redirect:'error',credentials:'omit'}));
+ expect(fetcher).toHaveBeenCalledWith('https://lmneuqxfyxplrxjswpma.supabase.co/functions/v1/tallybook-run3-qa/accept',expect.objectContaining({redirect:'error',credentials:'omit'}));
+ expect(rpc).not.toHaveBeenCalled();
 });
 
-it('uses the authenticated database client for the stakeholder site',async()=>{
+it('uses the authenticated database operation on any project without a QA endpoint',async()=>{
  vi.stubGlobal('window',{location:{protocol:'https:'}});
- vi.stubEnv('VITE_SUPABASE_URL','https://qfyydfxwvifdvffdfgeu.supabase.co');
+ vi.stubEnv('VITE_TALLYBOOK_RUN3_QA_ENDPOINT','');
+ vi.stubEnv('VITE_SUPABASE_URL','https://staging-project.supabase.co');
  rpc.mockResolvedValueOnce({data:{companyId:'shop',userId:'attendant',role:'attendant'},error:null});
  const code='v1.'+'x'.repeat(43);
  expect(await acceptCloudInvitation(code)).toEqual({companyId:'shop',userId:'attendant'});

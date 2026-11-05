@@ -21,8 +21,8 @@ it("reuses the persisted request ID after a failed creation and remount", async 
   mock.create.mockRejectedValueOnce(new Error("Connection lost"));
   const view = render(<CloudBusinessPanel />);
   fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
-  fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
-  fireEvent.click(screen.getByText("Create cloud business"));
+  fireEvent.change(await screen.findByLabelText("Business name"), { target: { value: "Shop" } });
+  fireEvent.click(screen.getByText("Create business"));
   await screen.findByText("Connection lost");
   const firstId = mock.create.mock.calls[0][1];
   view.unmount();
@@ -32,8 +32,8 @@ it("reuses the persisted request ID after a failed creation and remount", async 
   });
   render(<CloudBusinessPanel />);
   fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
-  fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
-  fireEvent.click(screen.getByText("Create cloud business"));
+  fireEvent.change(await screen.findByLabelText("Business name"), { target: { value: "Shop" } });
+  fireEvent.click(screen.getByText("Create business"));
   await screen.findByText("Shop");
   expect(mock.create).toHaveBeenLastCalledWith("Shop", firstId);
   expect(mock.unsubscribe).toHaveBeenCalled();
@@ -54,24 +54,26 @@ it("does not present a successful creation receipt without fresh verified owner 
   mock.create.mockResolvedValue({ id: "cloud", owner_id: "owner", name: "Shop" });
   render(<CloudBusinessPanel />);
   fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
-  fireEvent.change(await screen.findByLabelText("Cloud business name"), { target: { value: "Shop" } });
-  fireEvent.click(screen.getByText("Create cloud business"));
+  fireEvent.change(await screen.findByLabelText("Business name"), { target: { value: "Shop" } });
+  fireEvent.click(screen.getByText("Create business"));
   await screen.findByText("Cloud business ownership could not be verified.");
   expect(screen.queryByText("Verified cloud owner membership.")).toBeNull();
 });
-it("shows attendant status without promoting to owner or linking local POS", async () => {
+it("sends an attendant to the shared shop without promoting to owner or opening the local ledger", async () => {
   mock.getUser.mockResolvedValue({data:{user:{id:"attendant"}},error:null});
   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"attendant"});
-  render(<CloudBusinessPanel />);
-  expect(await screen.findByText(/Verified cloud attendant membership/)).toBeTruthy();
-  expect(screen.getByText(/not a local staff unlock/)).toBeTruthy();
+  render(<CloudBusinessPanel accountOnly />);
+  expect(await screen.findByText(/You work in this business/)).toBeTruthy();
+  expect(screen.getByRole("link",{name:"Open shared shop"}).getAttribute("href")).toBe("/shop");
+  expect(screen.queryByRole("link",{name:/ledger/})).toBeNull();
 });
 
 it('shows invitation instructions without a creation form for employee setup',async()=>{
   render(<CloudBusinessPanel/>);
   fireEvent.click(await screen.findByRole('button',{name:'I work for someone else'}));
-  expect(screen.getByText(/Give your employer your account ID/)).toBeTruthy();
-  expect(screen.queryByLabelText('Cloud business name')).toBeNull();
+  expect(screen.getByText(/Ask your employer to invite/)).toBeTruthy();
+  expect(screen.getByLabelText('Invitation code')).toBeTruthy();
+  expect(screen.queryByLabelText('Business name')).toBeNull();
   expect(mock.create).not.toHaveBeenCalled();
 });
 it('withholds setup options after a failed membership lookup',async()=>{
