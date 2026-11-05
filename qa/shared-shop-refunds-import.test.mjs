@@ -19,7 +19,7 @@ async function setup() {
     create function auth.jwt() returns jsonb language sql as $$select current_setting('test.claims')::jsonb$$;`);
   await db.exec(sql('supabase/migrations/20261105022238_stakeholder_session_bound_membership.sql'));
   await db.exec(sql('supabase/migrations/20261105070036_shared_shop_ledger.sql'));
-  await db.exec(sql('supabase/migrations/20261105130000_shared_shop_refunds_and_opening_import.sql'));
+  await db.exec(sql('supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql'));
   const people = {};
   for (const name of ['owner', 'attendant', 'rival']) {
     people[name] = {id: randomUUID(), session: randomUUID(), email: `${name}@demo.tallybook.test`};

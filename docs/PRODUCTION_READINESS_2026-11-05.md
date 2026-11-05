@@ -5,15 +5,15 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 **Verdict (end of day): READY FOR STAKEHOLDER ACCEPTANCE on the live site, not yet a commercial release.** The owner-to-attendant journey is built, deployed and verified on production Supabase (rollback dry run, 7/7 stages). Remaining before calling it commercially released:
 1. hands-on acceptance with two real accounts on two phones
 2. enabling leaked-password protection in Supabase Auth
-3. ~~refunds in the shared shop~~: built, see below; it goes live with the next production deploy
-4. ~~migrating existing browser data into the shared shop~~: built as an opening-balance move, see below; same deploy
+3. ~~refunds in the shared shop~~: built and live, see below
+4. ~~migrating existing browser data into the shared shop~~: built as an opening-balance move and live, see below
 5. the remaining open items from the brief: offline returning-user unlock, encrypted local storage, and consolidating the historical docs
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
-## Update — refunds/voids and one set of books (built, on the test project, not yet on production)
+## Update — refunds/voids and one set of books (live on production)
 
-**Refunds and voids (blocker 1).** `supabase/migrations/20261105130000_shared_shop_refunds_and_opening_import.sql`, action `refundSale`.
+**Refunds and voids (blocker 1).** `supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql`, action `refundSale`.
 - Owner only. Attendants see refunds on their sales but can't issue them, so refunds are a loss-prevention control.
 - A refund never edits the sale. It is a new append-only record (`shop_refunds`, `shop_refund_lines`) priced from the sale's own lines, returned by the sale's own payment method, with a required reason.
 - "Put the items back in stock" is on by default; untick it for damaged goods.
@@ -41,7 +41,7 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 - Hosted dry run on the test project, extended with refund, retry, void and import stages: `DRYRUN PASS: 9 journey stages verified`, nothing left behind.
 
 **Not done:**
-- Production database and frontend deploy (waiting for the owner's go-ahead).
+- Production database: **applied** with owner approval as `20261105110003`; the same 9-stage rollback dry run passed on production with data unchanged (6 users, 1 business, 0 refunds, 0 imports).
 - Showing a "moved to shared shop on <date>" marker inside the phone's own books.
 - Refunds for sales still recorded in the phone's own books keep using the phone's existing return flow.
 
