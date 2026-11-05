@@ -29,12 +29,13 @@ async function call(action:string,body:Record<string,string>){
   });
   try{
     const res=await fetch(endpoint.base+'/'+action,{
-      method:'POST',credentials:'omit',cache:'no-store',
+      method:'POST',credentials:'omit',cache:'no-store',redirect:'error',
       headers:{'Content-Type':'application/json',
         Authorization:'Bearer '+auth.access_token,
         ...(endpoint.key?{apikey:endpoint.key}:{})},
       body:JSON.stringify(body)
     });
+    if(res.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/json')throw Error('The invitation service is unavailable on this website. Try again after your administrator connects it.');
     if(!res.ok)throw Error('Cloud membership operation was denied or unavailable.');
     const result:unknown=await res.json();
     const {data:finalIdentity,error:identityError}=await client.auth.getUser();
@@ -61,6 +62,7 @@ export async function inviteCloudAttendant(companyId:string,targetUserId:string)
   return {inviteToken:r.inviteToken,invitationId:r.invitationId};
 }
 export async function acceptCloudInvitation(inviteToken:string){
+  if(!/^v1\.[A-Za-z0-9_-]{43}$/.test(inviteToken))throw Error('Enter the complete invitation code supplied by your shop owner.');
   const r=await call('accept',{inviteToken});
   if(r.role!=='attendant'||typeof r.companyId!=='string'||
     typeof r.userId!=='string')throw Error('Membership receipt invalid.');
@@ -84,3 +86,4 @@ export async function listCloudMembers(companyId:string):Promise<Run3Member[]>{
     throw Error('Membership list invalid.');
   return r.members as Run3Member[];
 }
+
