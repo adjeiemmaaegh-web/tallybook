@@ -40,8 +40,11 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 - 3 new refund tests in `SharedShopPage.test.tsx`.
 - Hosted dry run on the test project, extended with refund, retry, void and import stages: `DRYRUN PASS: 9 journey stages verified`, nothing left behind.
 
+**Live:**
+- Production database: applied with owner approval as `20261105110003`. The same 9-stage rollback dry run passed on production, with data unchanged afterwards (6 users, 1 business, 0 refunds, 0 imports).
+- Frontend: `main` @ `e626407` deployed (`dpl_1Hm16qYogJY3CuJRFG8gP4Tfn2D5`, READY, bundle `index-C0zNYAzE.js`). `/shop` loads with no console errors, and the live API refuses anonymous `refundSale` calls and anonymous reads of `shop_refunds` (42501).
+
 **Not done:**
-- Production database: **applied** with owner approval as `20261105110003`; the same 9-stage rollback dry run passed on production with data unchanged (6 users, 1 business, 0 refunds, 0 imports).
 - Showing a "moved to shared shop on <date>" marker inside the phone's own books.
 - Refunds for sales still recorded in the phone's own books keep using the phone's existing return flow.
 
