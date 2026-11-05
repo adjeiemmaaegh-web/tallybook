@@ -1,6 +1,7 @@
 /** Tactile Ledger design reminder: the sale screen is a receipt in progress—clear lines, one commit action, no silent partial writes or indefinite saving state. */
 /** Tallybook Africa design reminder: the POS stays compact and cobalt; payment details must be clear, local, and easy to complete on a phone. */
 import { calculateTax, taxPolicyKey } from "@/features/sales/tax";
+import { internalToolsEnabled } from "@/lib/internalTools";
 import { Check, ChevronDown, CircleAlert, CircleDollarSign, CreditCard, Eye, Minus, PackagePlus, Plus, Printer, ReceiptText, RotateCcw, Save, Share2, ShoppingBag, Smartphone, Trash2, UserRound, WalletCards } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -30,7 +31,8 @@ import {Run15PaymentSandboxPanel} from "@/features/payments/Run15PaymentSandboxP
 import { completeSale, getSaleSnapshot, paymentMethodLabel, paymentMethods, type Payment, type PaymentMethod, type Sale, type SaleCartLineInput, type SaleSnapshot } from "@/features/sales/sales";
 import { loadParkedCart, saveParkedCart, clearParkedCart, clearParkedCartIfMatches } from "@/features/sales/parkedCart";
 import { loadPendingCheckout, getPendingCheckoutStatus, savePendingCheckout, clearPendingCheckout, type PendingCheckout } from "@/features/sales/pendingCheckout";
-import { withSaleCompletionTimeout } from "@/features/sales/completion";
+import { SaleCompletionTimeoutError, withSaleCompletionTimeout } from "@/features/sales/completion";
+import { useSellerReadiness } from "@/features/sales/useSellerReadiness";
 import { recoverSavedCheckout } from "@/features/sales/recoverSavedCheckout";
 import { formatReceiptShareText, resolveReceiptDetail, shareReceiptText } from "@/features/receipts/receiptDetail";
 
@@ -82,6 +84,8 @@ export default function SalesPage() {
   const [addingProvider, setAddingProvider] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState<PendingCheckout | null>(null);
+  const [sellerCheck, setSellerCheck] = useState(0);
+  const seller = useSellerReadiness(activeCompanyId, sellerCheck);
   const [recoveryState, setRecoveryState] = useState<"empty" | "pending" | "damaged" | "unavailable">("empty");
   const [receipt, setReceipt] = useState<Sale | null>(null);
   const [receiptPayment, setReceiptPayment] = useState<Payment | undefined>();
@@ -258,6 +262,7 @@ export default function SalesPage() {
     if (paymentMethod === "mobile" && paymentPlan !== "credit" && amountPaidPreviewMinor > 0 && !mobileMoneyProviderId) return toast.error("Choose a Mobile Money provider before completing this sale.");
     completionLock.current = true;
     setSubmitting(true);
+    let journalKey: string | null = null;
     try {
       submissionKey.current ??= nanoid(18);
       // The approval is for this exact checkout key and amount, never for the whole session.
@@ -267,6 +272,7 @@ export default function SalesPage() {
       }
       const intent = { ...(saleCommerceOrderId?{commerceOrderId:saleCommerceOrderId}:{}), ...(storeMode?{storeId:saleStoreId}:{}), taxReviewKey: taxPolicyKey(profile.taxPolicy), lines: cart.map(line => ({ ...line })), customerId: customerId === "walk-in" ? undefined : customerId, discount, redeemPoints: Number(redeemPoints), paymentMethod, amountPaid: paymentPlan === "credit" ? "0" : amountPaid, currency: profile.currency, ...(paymentMethod === "mobile" ? { mobileMoneyProviderId, mobileMoneyReference } : {}), submissionKey: submissionKey.current };
       const journal = savePendingCheckout(activeCompanyId, intent);
+      journalKey = journal.intent.submissionKey;
       setPendingCheckout(journal); setRecoveryState("pending");
       const result = await withSaleCompletionTimeout(completeSale(intent));
       clearPendingCheckout(activeCompanyId, journal.intent.submissionKey);
@@ -284,11 +290,26 @@ export default function SalesPage() {
       toast.success(`Sale completed. Receipt ${result.sale.receiptNumber} is saved on this device.`);
       void refresh().catch(() => { toast.info("The receipt is saved. Refresh this page if the recent-sales list does not update immediately."); });
     } catch (error) {
+      if (journalKey) await releaseJournalIfNothingSaved(error, journalKey);
+      setSellerCheck(value => value + 1);
       toast.error(error instanceof Error ? error.message : "Checkout status is uncertain. Check recent sales before retrying.");
     } finally {
       completionLock.current = false;
       flushSync(() => setSubmitting(false));
     }
+  };
+  /** A refusal (no unlocked staff, closed shift, stock changed…) rolls the sale transaction back. Only a timeout
+   * leaves the outcome unknown. After a refusal, confirm in saved records that nothing was written, then release
+   * the recovery lock so the till is not blocked by a sale that never happened. */
+  const releaseJournalIfNothingSaved = async (error: unknown, key: string) => {
+    if (!activeCompanyId || error instanceof SaleCompletionTimeoutError) return false;
+    try {
+      const snapshot = await getSaleSnapshot();
+      if (recoverSavedCheckout(snapshot, activeCompanyId, key)) return false;
+      clearPendingCheckout(activeCompanyId, key);
+      setPendingCheckout(null); setRecoveryState("empty");
+      return true;
+    } catch { return false; }
   };
   const recoverCheckout = async () => {
     if (!activeCompanyId || !pendingCheckout || completionLock.current) return;
@@ -313,7 +334,10 @@ export default function SalesPage() {
       await refresh();
       toast.success(`Recovered saved receipt ${result.sale.receiptNumber}.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Recovery could not confirm this checkout. Keep its original key.");
+      const released = await releaseJournalIfNothingSaved(error, pendingCheckout.intent.submissionKey);
+      setSellerCheck(value => value + 1);
+      if (released) toast.error(`Nothing was saved for that sale. ${error instanceof Error ? error.message : ""}`.trim());
+      else toast.error(error instanceof Error ? error.message : "Recovery could not confirm this checkout. Keep its original key.");
     } finally { completionLock.current = false; setSubmitting(false); }
   };
   const choosePayment = (method: PaymentMethod) => { setPaymentMethod(method); if (method !== "mobile") { setMobileMoneyProviderId(""); setMobileMoneyReference(""); } if (method === "credit") { setPaymentPlan("credit"); setAmountPaid("0"); } else if (paymentPlan === "credit") { setPaymentPlan("full"); setAmountPaid(String(suggestedPaid)); } };
@@ -361,6 +385,11 @@ export default function SalesPage() {
   if (!loading && inventory.products.length === 0 && recoveryState === "empty" && !receipt) return <section className="inventory-gate sales-gate"><div className="inventory-gate-sheet"><div className="inventory-gate-head"><PackagePlus className="h-8 w-8 text-baobab" aria-hidden="true" /><span className="workspace-marker">SAL</span></div><p className="eyebrow"><span className="eyebrow-dot" />Sale record preparation</p><h1>Add stock before you open the receipt.</h1><p>A completed sale writes a receipt and reduces stock together. Add at least one active product to start that record safely.</p><div className="sales-gate-records" aria-label="Sales prerequisites"><div><span>01</span><strong>Business profile</strong><small>Ready for {profile.name}.</small></div><div><span>02</span><strong>Active product</strong><small>Still needed before a sale can begin.</small></div><div><span>03</span><strong>Sale receipt</strong><small>Will be created only when stock is available.</small></div></div><div className="inventory-gate-record"><span className="tally-status"><i /><i />One task to begin</span><span>Active product · Stock quantity</span></div><Link href="/inventory" className="primary-action">Add a product <ChevronDown className="h-4 w-4 -rotate-90" aria-hidden="true" /></Link></div></section>;
 
   return <div className="sales-page">{customerDisplayOpen ? <CustomerCartDisplay businessName={profile.name} currency={profile.currency} lines={cartLines.map(line => ({ name: line.product.name, quantity: line.quantity, unitPriceMinor: selectUnitPrice(line.product, line.quantity) }))} discountMinor={discountMinor + redemptionMinor} taxPolicy={profile.taxPolicy} onClose={() => setCustomerDisplayOpen(false)} /> : null}<section className="sales-hero"><p className="eyebrow"><span className="eyebrow-dot" />Point of sale</p><span className="workspace-marker">POS</span><h1>Make a sale.</h1><p>Choose products, review the payment, then save one complete local record.</p><div className="sales-hero-summary"><span className="stamp stamp-ready"><Check className="h-3.5 w-3.5" aria-hidden="true" />{inventory.products.length} ready to sell</span><span className="inventory-quiet-token">{cartLines.length} in cart</span><button type="button" className="secondary-action min-h-11" onClick={() => setCustomerDisplayOpen(true)}>Customer view</button></div></section>
+    {seller !== "ready" && seller !== "checking" ? <section className="sale-seller-ready" role="status" aria-label="Before you sell">
+      <div><strong>{seller === "no-staff" ? "Set up your owner PIN to start selling" : seller === "locked" ? "Unlock your staff account to sell" : "Open a shift to start selling"}</strong>
+        <p>{seller === "no-staff" ? "Every sale is recorded under a staff member. Create your owner account with a PIN, then open a shift. It takes about a minute." : seller === "locked" ? "Every sale is recorded under the staff member who made it. Unlock with your PIN, then come back here." : "Sales are counted into an open shift so the cash drawer can be checked at closing."}</p></div>
+      <Link href="/staff" className="primary-action">{seller === "no-staff" ? "Set up staff" : seller === "locked" ? "Unlock" : "Open shift"}</Link>
+    </section> : null}
     <section className="sales-builder"><div className="sale-lines-sheet"><div className="sale-sheet-head"><div><p className="ledger-kicker">Products</p><h2>Find and add items.</h2></div><span className="tally-status"><i /><i />Current sale</span></div><div className="sale-product-search"><Input aria-label="Search active products" value={productQuery} onChange={(event) => setProductQuery(event.target.value)} placeholder="Search by name, SKU or barcode" /><small>{discoverableProducts.length} available</small></div><form className="sale-product-search" onSubmit={(event) => { event.preventDefault(); scanSku(); }}><Input aria-label="Scan or enter SKU or barcode" value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Scan SKU or barcode, then Enter" /><button className="secondary-action min-h-11" type="submit">Add item</button><button className="secondary-action min-h-11" type="button" aria-expanded={cameraOpen} onClick={() => setCameraOpen((open) => !open)}>{cameraOpen ? "Hide camera" : "Scan with camera"}</button></form>{cameraOpen && <CameraBarcodeScanner onClose={() => setCameraOpen(false)} onScan={(code) => { setCameraOpen(false); addScannedCode(code); }} />}<div className="sale-add-line"><Select value={productToAdd} onValueChange={setProductToAdd}><SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger><SelectContent>{discoverableProducts.map((product) => <SelectItem key={product.id} value={product.id}>{product.name} · {availableUnits(product)} available</SelectItem>)}</SelectContent></Select><Input aria-label="Quantity to add" inputMode="numeric" value={quantityToAdd} onChange={(event) => setQuantityToAdd(event.target.value)} /><button className="secondary-action" type="button" onClick={addProduct}><Plus className="h-4 w-4" aria-hidden="true" />Add</button></div>{cartLines.length ? <div className="sale-cart-list">{cartLines.map((line, index) => <div className="sale-cart-row" key={line.productId}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{line.product.name}</strong><small>{formatMinorAmount(selectUnitPrice(line.product, line.quantity), profile.currency)} each · {availableUnits(line.product)} available</small></div><div className="sale-quantity"><button className="min-h-11 min-w-11" type="button" aria-label={`Reduce ${line.product.name} quantity`} onClick={() => line.quantity === 1 ? setCart((current) => current.filter((cartLine) => cartLine.productId !== line.productId)) : updateQuantity(line.productId, line.quantity - 1)}><Minus className="h-3.5 w-3.5" /></button><strong>{line.quantity}</strong><button className="min-h-11 min-w-11" type="button" aria-label={`Increase ${line.product.name} quantity`} onClick={() => updateQuantity(line.productId, line.quantity + 1)} disabled={line.quantity >= availableUnits(line.product)}><Plus className="h-3.5 w-3.5" /></button></div><strong>{formatMinorAmount(selectUnitPrice(line.product, line.quantity) * line.quantity, profile.currency)}</strong><button className="row-icon-action min-h-11 min-w-11" type="button" aria-label={`Remove ${line.product.name}`} onClick={() => setCart((current) => current.filter((cartLine) => cartLine.productId !== line.productId))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button></div>)}</div> : <div className="sale-empty"><ShoppingBag className="h-7 w-7 text-baobab" aria-hidden="true" /><strong>Your cart is empty.</strong><span>Search and add products to start this sale. Nothing is saved yet.</span></div>}</div><aside className="sale-totals-sheet"><p className="ledger-kicker">Cart summary</p><div className="sale-total-row"><span>Subtotal</span><strong>{formatMinorAmount(subtotalMinor, profile.currency)}</strong></div><label className="sale-discount"><span>Discount ({profile.currency})</span><Input inputMode="decimal" value={discount} onChange={(event) => setDiscount(event.target.value)} /></label>{discountMinor > 0 && staffApprovers.length > 0 && <div className="space-y-2 rounded border p-2"><p className="text-xs">For cashier sessions, a supervisor must approve this exact discount.</p><label className="block text-xs">Approving supervisor<select aria-label="Approving supervisor" className="block w-full rounded border p-2 bg-background" value={approverId} onChange={e => setApproverId(e.target.value)}><option value="">No approval selected</option>{staffApprovers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label><label className="block text-xs">Supervisor PIN<input aria-label="Supervisor approval PIN" type="password" inputMode="numeric" className="block w-full rounded border p-2" value={approverPin} onChange={e => setApproverPin(e.target.value)} /></label></div>}{taxPreview ? <div className="sale-total-row"><span>{taxPreview.policy.label} ({taxPreview.policy.rateBasisPoints / 100}%, {taxPreview.policy.priceMode === "inclusive" ? "included" : "added"})</span><strong>{formatMinorAmount(taxPreview.taxMinor, profile.currency)}</strong></div> : <p>Tax off</p>}<div className="sale-total-row sale-total-due"><span>Total</span><strong>{formatMinorAmount(totalMinor, profile.currency)}</strong></div><div className="flex flex-wrap gap-2"><button className="quiet-action" type="button" disabled={!cart.length || submitting || parkedAvailable || recoveryState !== "empty"} onClick={parkCart}>Park cart</button><button className="quiet-action" type="button" disabled={!parkedAvailable || Boolean(cart.length) || submitting || recoveryState !== "empty"} onClick={resumeCart}>Resume parked cart</button><button className="quiet-action" type="button" disabled={!parkedAvailable || submitting || recoveryState !== "empty"} onClick={() => { if (!activeCompanyId || !window.confirm("Discard the saved parked cart for this business? This cannot be undone.")) return; try { clearParkedCart(activeCompanyId); setParkedAvailable(false); setResumedParkedLines(null); toast.success("Saved parked cart discarded."); } catch { toast.error("Could not discard the parked cart. It remains saved."); } }}>Discard parked</button><button className="quiet-action" type="button" disabled={submitting || recoveryState !== "empty"} onClick={() => { setCart([]); setResumedParkedLines(null); setDiscount("0"); setAmountPaid("0"); }}>Clear cart</button></div></aside></section>
     {(recoveryState === "damaged" || recoveryState === "unavailable") ? <section className="sale-checkout" role="alert" aria-label="Checkout recovery storage problem"><h2>Checkout is blocked for safety</h2><p>{recoveryState === "damaged" ? "Saved recovery information is damaged. Do not create another sale until previous sales are reconciled and the journal is repaired." : "This browser cannot access checkout recovery storage. Restore storage access before recording sales."}</p><p>Inspect recent sales and contact an administrator for recovery. Tallybook will not discard recovery evidence automatically.</p></section> : null}
     {pendingCheckout ? <section className="sale-checkout" role="alert" aria-label="Pending checkout recovery"><h2>Checkout needs verification</h2><p>A sale was started on this device and its outcome may be uncertain. Recover using the original details and submission key; do not start a different sale until it is resolved.</p><button className="primary-action" type="button" disabled={submitting} onClick={() => void recoverCheckout()}>{submitting ? "Checking saved records…" : "Check and recover receipt"}</button><p>Any successful sale is reused without reducing stock or collecting payment again.</p></section> : null}
@@ -390,7 +419,7 @@ export default function SalesPage() {
       </div>
     </section> : null}
     <section className="recent-sales"><div className="recent-sales-head"><div><p className="ledger-kicker">Recent sales</p><h2>Every completed sale has a line.</h2></div><CircleDollarSign className="h-7 w-7 text-baobab" aria-hidden="true" /></div>{sales.sales.length ? <div>{sales.sales.slice(0, 6).map((sale) => { const payment = paymentBySaleId.get(sale.id); const receiptForSale = sales.receipts.find((item) => item.saleId === sale.id); return <div className="recent-sale-row" key={sale.id}><div><strong>{sale.receiptNumber}</strong><span>{new Date(sale.createdAt).toLocaleString()} · {sale.customerId ? "Customer" : "Walk-in"}</span></div><span className="recent-sale-payment"><strong>{paymentMethodLabel(sale.paymentMethod)}</strong>{payment?.mobileMoneyProviderName ? <small>{payment.mobileMoneyProviderName}{payment.mobileMoneyReference ? ` · Ref ${payment.mobileMoneyReference}` : ""}</small> : null}</span><strong>{formatMinorAmount(sale.totalMinor, profile.currency)}</strong>{sale.paymentMethod === "cash" && !sale.customerId && profile && currentCompanyReturnPolicy(profile.returnPolicyHistory).enabled && currentCompanyReturnPolicy(profile.returnPolicyHistory).allowCashPartial && sale.returnPolicyAtSale?.allowCashPartial ? <button type="button" className="row-receipt-action" onClick={() => setReturnReviewSaleId(sale.id)}>Review cash return (no posting)</button> : null}{receiptForSale ? <><button type="button" className="row-receipt-action" onClick={() => openReceipt(receiptForSale.id)}><Eye className="h-4 w-4" aria-hidden="true" />View receipt</button><button type="button" className="row-receipt-action" onClick={() => prepareReceiptPrint(receiptForSale.id)}><Printer className="h-4 w-4" aria-hidden="true" />Reprint</button></> : null}</div>; })}</div> : <p>No completed sales yet. Your receipts will appear here after a sale is completed.</p>}</section>
-    {activeCompanyId&&profile?<Run15PaymentSandboxPanel key={activeCompanyId} companyId={activeCompanyId} currency={profile.currency}/>:null}
+    {internalToolsEnabled&&activeCompanyId&&profile?<Run15PaymentSandboxPanel key={activeCompanyId} companyId={activeCompanyId} currency={profile.currency}/>:null}
     <CashReturnReviewDialog saleId={returnReviewSaleId} onClose={() => setReturnReviewSaleId(null)} />
     <ReceiptDetailDialog detail={selectedReceiptDetail} open={Boolean(selectedReceiptId)} onOpenChange={(open) => { if (!open) { setSelectedReceiptId(null); setReceiptManualCopyText(null); } }} manualCopyText={receiptManualCopyText} />
   </div>;

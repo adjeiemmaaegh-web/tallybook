@@ -59,7 +59,7 @@ export default function LocalAlertsPage() {
     return () => { window.removeEventListener("focus", onReturn); window.removeEventListener("pageshow", onReturn); };
   }, [refresh]);
   return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
-    <header><p className="text-sm font-semibold uppercase tracking-wide">Stage 7 · Local alerts</p>
+    <header><p className="text-sm font-semibold uppercase tracking-wide">Alerts</p>
       <h1 className="text-3xl font-bold">Stock needing attention</h1>
       <p className="mt-2 text-sm">Read-only alerts from this business's saved inventory on this device. No internet or notification permission required.</p></header>
     {!profile ? <p role="status">Set up a business to see stock alerts. <Link href="/business" className="underline">Business setup</Link></p> : <>

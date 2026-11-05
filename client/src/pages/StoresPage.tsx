@@ -45,8 +45,8 @@ export default function StoresPage() {
   useEffect(() => { let active = true; setCounts([]); if (!countStoreId) return; void listStoreStockObservations(countStoreId, db).then(rows => { if (active) setCounts(rows); }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Cannot load store counts."); }); return () => { active=false; }; }, [countStoreId, activeCompanyId]);
   const perform = async (action: () => Promise<unknown>) => { setWorking(true); setError(""); try { await action(); await refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Action failed."); } finally { setWorking(false); } };
   return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
-    <header><p className="text-sm font-semibold uppercase">Stage 9 · Multi-store</p><h1 className="text-3xl font-bold">Store directory</h1><p className="text-sm">Local company stores and staff assignments. This device does not yet synchronize sales or stock across stores.</p></header>
-    <aside role="status" className="rounded border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950" aria-label="Stage 9 release limitations">
+    <header><p className="text-sm font-semibold uppercase">Stores</p><h1 className="text-3xl font-bold">Store directory</h1><p className="text-sm">Local company stores and staff assignments. This device does not yet synchronize sales or stock across stores.</p></header>
+    <aside role="status" className="rounded border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950" aria-label="What stores on this device can do">
       <strong>Local store management only — not multi-device checkout.</strong>
       <p className="mt-1">Store assignments, physical observations and transfer requests remain on this device. Requests do not reserve or move stock. Do not use these records as authoritative stock or consolidated financial totals.</p>
       <ul className="mt-2 list-disc pl-5">
@@ -113,6 +113,6 @@ export default function StoresPage() {
       <p className="text-sm">Read-only saved invoice totals, supplier purchase costs, and return counts. This is not cash settlement, profit, tax remittance or cross-device financial consolidation.</p>
       {transactionActivity?<><ul className="text-sm">{transactionActivity.rows.map(r=><li key={r.storeId} className="border-b py-2">{r.storeName}: {r.saleCount} sales ({r.grossSaleInvoiceMinor} invoice minor units), {r.purchaseCount} purchases ({r.grossPurchaseCostMinor} cost minor units), {r.fullSaleReversalCount} full reversals, {r.cashPartialReturnCount} partial returns · {r.currency??"Currency unverified"}</li>)}</ul><p className="text-sm">Historical transactions without store attribution: {transactionActivity.unattributedHistoricalSales} sales and {transactionActivity.unattributedHistoricalPurchases} purchases.</p></>:<p className="text-sm">Invoice activity unavailable or not authorized for this staff session.</p>}
     </section>
-    <p className="text-sm">Assignments are stored only on this device. <Link href="/staff" className="underline">Manage staff</Link>. Remote attendant sales, transfers and owner-wide dashboards require Stage 8 sync completion and cross-device verification.</p>
+    <p className="text-sm">Assignments are stored only on this device. <Link href="/staff" className="underline">Manage staff</Link>. For attendants selling from their own phones, use the shared shop.</p>
   </section>;
 }

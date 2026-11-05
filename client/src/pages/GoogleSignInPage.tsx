@@ -38,7 +38,13 @@ export default function GoogleSignInPage(){
       const code=typeof failure==='object'&&failure!==null&&'code' in failure?failure.code:null;
       if(code==='email_not_confirmed')setError('Open your confirmation email, then try signing in again.');
       else if(code==='invalid_credentials')setError('Check your email and password. If this is your first visit, choose Create email account.');
-      else setError('Email account action failed. Check your credentials and connection.');
+      else if(code==='email_address_invalid')setError('That email address was not accepted. Check it, or use another address.');
+      else if(code==='user_already_exists'||code==='email_exists')setError('An account already uses this email. Choose Sign in with email, or Forgot password.');
+      else if(code==='weak_password')setError('Choose a stronger password: at least 12 characters, mixing words, numbers or symbols.');
+      else if(code==='over_email_send_rate_limit'||code==='over_request_rate_limit')setError('Too many attempts. Wait a few minutes, then try again.');
+      else if(code==='signup_disabled')setError('New email accounts are switched off at the moment. Sign in with Google instead.');
+      else if(!navigator.onLine)setError('You are offline. Connect to the internet to sign in or create an account.');
+      else setError('Email account action failed. Check your email, password and connection.');
     }
     finally{setBusy(false);}
   }
@@ -131,7 +137,6 @@ export default function GoogleSignInPage(){
       {message?<p role="status">{message}</p>:null}
       {error?<p role="alert">{error}</p>:null}
     </section>
-    <Link href="/" className="back-link">Open workspace</Link>
   </div>;
 }
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { internalToolsEnabled } from "@/lib/internalTools";
 import { Link } from "wouter";
 import { CloudBusinessPanel } from "@/cloud/CloudBusinessPanel";
 import { db } from "@/db/TallybookDB";
@@ -40,12 +41,12 @@ export default function SyncStatusPage() {
     ["Quarantined QA sale claims (not posted)", status.quarantinedQaClaims ?? 0],
   ] : [];
   return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
-    <header className="space-y-2"><p className="text-sm font-semibold uppercase tracking-wide">Stage 8 · Connected services</p>
+    <header className="space-y-2"><p className="text-sm font-semibold uppercase tracking-wide">Connected services</p>
       <h1 className="text-3xl font-bold">Local sync status</h1>
       <p className="text-sm">Read-only diagnostics for this business on this device. Automatic record upload is not configured.</p>
     </header>
     <CloudBusinessPanel />
-    {activeCompanyId?<Run14EncryptedRelayPanel key={activeCompanyId} companyId={activeCompanyId}/>:null}
+    {internalToolsEnabled&&activeCompanyId?<Run14EncryptedRelayPanel key={activeCompanyId} companyId={activeCompanyId}/>:null}
     {!profile ? <p role="status">Set up a business to inspect its local sync records. <Link href="/business" className="underline">Business setup</Link></p> : <>
       <button type="button" className="rounded border px-4 py-3 font-semibold" onClick={() => void refresh()} disabled={loading}>{loading ? "Checking…" : "Refresh status"}</button>
       {error ? <div role="alert" className="rounded border p-4"><strong>Synchronization records need attention.</strong><p>{error}</p></div> :

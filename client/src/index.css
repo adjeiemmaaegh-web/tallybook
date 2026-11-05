@@ -15,6 +15,70 @@
   --color-rule: #e4dfd0;
   --color-gold: #e8a33d;
   --color-gold-dark: #cc8a28;
+  /* Shared component tokens (buttons, dialogs, menus, toasts, sidebar). Without these,
+     bg-primary, bg-background, text-muted-foreground and every components/ui surface render colourless. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #f4f6fb;
+  --foreground: #1b2440;
+  --card: #ffffff;
+  --card-foreground: #1b2440;
+  --popover: #ffffff;
+  --popover-foreground: #1b2440;
+  --primary: #2454d3;
+  --primary-foreground: #ffffff;
+  --secondary: #e9efff;
+  --secondary-foreground: #153a9b;
+  --muted: #eef1f7;
+  --muted-foreground: #5f6984;
+  --accent: #e9efff;
+  --accent-foreground: #153a9b;
+  --destructive: #c0352b;
+  --destructive-foreground: #ffffff;
+  --border: #dfe5f0;
+  --input: #cfd7e6;
+  --ring: #2454d3;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1b2440;
+  --sidebar-primary: #2454d3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9efff;
+  --sidebar-accent-foreground: #153a9b;
+  --sidebar-border: #dfe5f0;
+  --sidebar-ring: #2454d3;
 }
 
 :root { color: var(--color-ink); background: var(--color-paper); font-family: var(--font-sans); font-synthesis: none; }
@@ -1034,3 +1098,176 @@ body { background: var(--ta-canvas); color: var(--ta-ink); font-family: var(--fo
   :root { --color-ink-soft: #41434a; --color-rule: #848489; }
   .status-chip, .backup-file-input, .quiet-action { border-width: 2px; }
 }
+
+/* ---------- Entry screens (account checks before this device's ledger) ---------- */
+.tb-entry { display: grid; min-height: 100dvh; place-items: center; padding: 24px 16px; background: var(--ta-canvas); }
+.tb-entry-wait { color: var(--ta-muted); font-weight: 600; }
+.tb-entry-card { width: 100%; max-width: 460px; background: #fff; border: 1px solid var(--ta-line); border-radius: 16px; padding: 26px 22px; box-shadow: 0 18px 40px rgba(27, 31, 59, 0.08); }
+.tb-entry-card h1 { margin: 14px 0 8px; font-family: var(--font-display); font-size: 1.45rem; line-height: 1.2; color: var(--ta-ink); }
+.tb-entry-card p { margin: 0 0 10px; color: var(--ta-ink); font-size: 0.92rem; line-height: 1.5; }
+.tb-entry-icon { display: inline-flex; width: 46px; height: 46px; align-items: center; justify-content: center; border-radius: 12px; background: var(--ta-blue-soft); color: var(--ta-blue); }
+.tb-entry-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.tb-entry-actions > * { flex: 1 1 180px; border-radius: 10px; }
+
+/* ---------- One look for every page (2026-11-05) ----------
+   Older workspaces (staff, stores, commerce, tax, refunds, cloud panels) were built from bare
+   utilities: black borders, browser-default fields, unstyled buttons. These rules give those
+   same elements the cobalt card, field and button styles used by the finished pages. */
+@layer base {
+  *, ::before, ::after { border-color: var(--border); }
+}
+:where(.page-content, .home-workspace) :is(section, form, div, details, fieldset).border:is(.p-3, .p-4, .p-5, .p-6) {
+  border-color: var(--ta-line); border-radius: 16px; background: var(--ta-card); box-shadow: 0 4px 16px rgba(23, 42, 83, .05);
+}
+:where(.page-content, .home-workspace) :is(section, form, div, details, fieldset).border :is(section, form, div, details, fieldset).border:is(.p-3, .p-4, .p-5, .p-6) {
+  box-shadow: none; background: #fbfcfe; border-radius: 12px;
+}
+:where(.page-content, .home-workspace) :where(h2, h3).font-semibold:where(:not([class*="text-"])) { color: var(--ta-ink); font-size: 1.02rem; }
+:where(.page-content, .home-workspace) :where(h1:not([class*="font-display"]):not([class*="tb-"])) { font-family: var(--font-display); color: var(--ta-ink); letter-spacing: -0.01em; }
+:where(.page-content, .home-workspace) label.block, :where(.page-content, .home-workspace) label:has(> input, > select, > textarea) {
+  color: var(--ta-ink); font-size: .82rem; font-weight: 700;
+}
+:where(.page-content, .home-workspace) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), select, textarea).border {
+  min-height: 46px; border: 1px solid var(--input); border-radius: 10px; background: #fff; color: var(--ta-ink);
+  padding: 10px 12px; font: inherit; font-size: .92rem; transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+:where(.page-content, .home-workspace) textarea.border { min-height: 88px; }
+:where(.page-content, .home-workspace) :is(input, select, textarea).border::placeholder { color: #8a93a8; }
+:where(.page-content, .home-workspace) :is(input, select, textarea).border:focus { outline: none; border-color: var(--ta-blue); box-shadow: 0 0 0 3px rgba(36, 84, 211, .16); }
+:where(.page-content, .home-workspace) input[type="checkbox"], :where(.page-content, .home-workspace) input[type="radio"] { width: 18px; height: 18px; accent-color: var(--ta-blue); vertical-align: -3px; margin-right: 6px; }
+/* Bare bordered buttons become secondary buttons; the form's submit becomes the primary one. */
+:where(.page-content, .home-workspace) button.border:not([class*="-action"]):not([role="combobox"]):not([role="tab"]):not([data-slot]),
+:where(.page-content, .home-workspace) button.rounded.bg-primary {
+  display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--ta-line); border-radius: 10px; background: #fff; color: var(--ta-ink);
+  padding: 0 16px; font-size: .88rem; font-weight: 750; transition: border-color 150ms ease, color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+:where(.page-content, .home-workspace) button.border:not([class*="-action"]):not([role="combobox"]):not([role="tab"]):not([data-slot]):hover { border-color: #aebfe9; color: var(--ta-blue); }
+:where(.page-content, .home-workspace) form button[type="submit"].border:not([class*="-action"]):not([data-slot]),
+:where(.page-content, .home-workspace) button.rounded.bg-primary {
+  border-color: var(--ta-blue); background: var(--ta-blue); color: #fff; box-shadow: 0 6px 14px rgba(36, 84, 211, .2);
+}
+:where(.page-content, .home-workspace) form button[type="submit"].border:not([class*="-action"]):not([data-slot]):hover,
+:where(.page-content, .home-workspace) button.rounded.bg-primary:hover { background: var(--ta-blue-dark); color: #fff; }
+:where(.page-content, .home-workspace) button.border:active, :where(.page-content, .home-workspace) button.rounded.bg-primary:active { transform: scale(.97); }
+:where(.page-content, .home-workspace) button:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+:where(.page-content, .home-workspace) a.underline { color: var(--ta-blue); font-weight: 650; text-underline-offset: 3px; }
+:where(.page-content, .home-workspace) p[role="alert"]:not([class]) { border-left: 3px solid var(--destructive); background: #fdf0ef; color: #8a2a22; padding: 10px 12px; border-radius: 8px; font-size: .86rem; }
+:where(.page-content, .home-workspace) p[role="status"]:not([class]) { color: var(--ta-muted); font-size: .86rem; }
+:where(.page-content, .home-workspace) summary { cursor: pointer; font-weight: 700; color: var(--ta-ink); }
+
+/* ---------- Paper-ledger surfaces → cobalt (generated by paper_to_cobalt.py, 2026-11-05) ---------- */
+.backup-sheet::before,
+.business-form-shell::before,
+.business-setup-page::before,
+.hero-ledger::after,
+.inventory-gate::before,
+.inventory-page::before,
+.inventory-record::before,
+.placeholder-page::before { display: none; }
+.archive-access-control-empty,
+.archived-products-list,
+.assistant-hero,
+.backup-boundary,
+.backup-file-input,
+.backup-hero,
+.backup-sheet,
+.business-form-shell,
+.company-clear-shell input,
+.company-create-form select,
+.company-switcher,
+.company-switcher select,
+.customer-detail,
+.customer-search,
+.customer-view-toggle button,
+.end-day-sheet,
+.end-day-total-strip > a,
+.end-day-total-strip > div,
+.form-ledger-head,
+.form-save-row,
+.inventory-dialog,
+.receipt-detail,
+.receipt-dialog-content,
+.recent-sales,
+.report-sheet,
+.reports-gate-sheet,
+.reports-periods button,
+.reports-prerequisite-list,
+.reports-total-strip > div,
+.sale-checkout,
+.sale-payment-plan button,
+.sale-quantity,
+.setup-hero,
+.today-best-seller,
+.today-dashboard-loading,
+.today-low-stock,
+.today-metric-grid article,
+.today-recent-sales,
+.today-trend { background: var(--ta-card); border-color: var(--ta-line); }
+/* Remaining page headers match the cobalt headers on Stock, Sales, Customers and Reports. */
+.setup-hero, .backup-hero, .assistant-hero { overflow: hidden; border: 0; border-radius: 20px; background: linear-gradient(135deg, #2d61e4 0%, #1d459f 100%); color: #fff; box-shadow: 0 14px 36px rgba(29,69,159,.18); }
+.setup-hero::before, .backup-hero::before, .assistant-hero::before, .setup-hero-tally { display: none; }
+.setup-hero h1, .backup-hero h1, .assistant-hero h1, .setup-hero h1 em, .backup-hero h1 em, .assistant-hero h1 em { color: #fff; font-family: var(--font-sans); font-style: normal; font-weight: 850; letter-spacing: -.04em; text-decoration: none; }
+.setup-hero h1 *, .backup-hero h1 *, .assistant-hero h1 * { color: inherit; text-decoration: none; border: 0; }
+.setup-hero p, .backup-hero p, .assistant-hero p, .setup-hero-meta, .backup-hero small, .assistant-hero small { color: rgba(255,255,255,.84) !important; }
+.setup-hero .eyebrow, .backup-hero .eyebrow, .assistant-hero .eyebrow, .backup-hero .ledger-kicker, .assistant-hero .ledger-kicker { color: rgba(255,255,255,.84); }
+.setup-hero .eyebrow-dot, .backup-hero .eyebrow-dot, .assistant-hero .eyebrow-dot { background: #fff; }
+.setup-hero .workspace-marker, .backup-hero .workspace-marker, .assistant-hero .workspace-marker { background: rgba(255,255,255,.16); color: #fff; }
+.setup-hero .stamp, .backup-hero .stamp, .assistant-hero .stamp, .backup-hero [class*="status"], .setup-hero .tally-status { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.14); color: #fff; }
+.backup-hero > *, .assistant-hero > * { border-color: rgba(255,255,255,.28) !important; }
+.backup-hero h1 em { border-bottom-color: rgba(255,255,255,.6); }
+.backup-hero [class*="backup-integrity"], .backup-hero .backup-last-export { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.12); color: #fff; }
+.backup-hero [class*="backup-integrity"] *, .backup-hero .backup-last-export * { color: #fff !important; }
+@media (max-width: 959px) { .setup-hero, .backup-hero, .assistant-hero { border-radius: 16px; padding: 24px 20px; } .setup-hero h1, .backup-hero h1, .assistant-hero h1 { font-size: 2rem; line-height: 1.05; } }
+/* Section headings on these pages: the same bold sans as the finished pages, not the thin display face. */
+.form-ledger-head, .backup-sheet, .end-day-sheet, .report-sheet { border-radius: 16px; }
+.business-form-shell { border: 1px solid var(--ta-line); border-top: 1px solid var(--ta-line); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(23,42,83,.05); }
+.form-ledger-head { border-radius: 0; background: #fff; }
+.form-ledger-head h2, .backup-sheet h2, .end-day-sheet h2, .form-section-title h3 { color: var(--ta-ink); font-family: var(--font-sans); font-weight: 800; letter-spacing: -.02em; }
+.form-ledger-head h2 { font-size: 1.35rem; line-height: 1.2; }
+.form-section, .form-save-row { padding-left: 22px; }
+.form-save-row { background: #f8f9fc; }
+.form-section-title > span { border-radius: 8px; background: var(--ta-blue-soft); color: var(--ta-blue); }
+.business-form [data-slot="input"], .business-form [data-slot="textarea"], .business-form [data-slot="select-trigger"] { border: 1px solid var(--input); border-radius: 10px; background: #fff; }
+.business-form [data-slot="input"]:focus, .business-form [data-slot="textarea"]:focus, .business-form [data-slot="select-trigger"]:focus { border-color: var(--ta-blue); box-shadow: 0 0 0 3px rgba(36,84,211,.16); }
+.business-form [data-slot="form-message"] { color: var(--destructive); }
+/* Tax and return-policy forms use bare labels: lay them out as stacked fields like the rest of the form. */
+.business-form > label, .business-form > .form-section > label { display: grid; gap: 7px; padding: 0 22px; margin-top: 16px; color: var(--ta-ink); font-size: .82rem; font-weight: 700; }
+.business-form > label:first-child { margin-top: 20px; }
+.business-form > label:has(> input[type="checkbox"]), .business-form > .form-section > label:has(> input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+.business-form > .form-section > label { padding: 0; }
+.business-form label > :is(select, textarea, input:not([type="checkbox"]):not([type="radio"])) { width: 100%; min-height: 46px; border: 1px solid var(--input); border-radius: 10px; background: #fff; padding: 10px 12px; color: var(--ta-ink); font: inherit; font-size: .92rem; font-weight: 500; }
+.business-form label > textarea { min-height: 88px; }
+.business-form label > :is(select, textarea, input):focus { outline: none; border-color: var(--ta-blue); box-shadow: 0 0 0 3px rgba(36,84,211,.16); }
+.business-form label > input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ta-blue); }
+.business-form label > span { font-weight: 700; }
+.business-form > p:not([class]), .business-form > .form-section > p:not([class]) { margin: 14px 22px 0; color: var(--ta-muted); font-size: .8rem; line-height: 1.5; }
+.business-form > .form-section > p:not([class]) { margin: 12px 0 0; }
+.business-form > [role="status"]:not([class]) { margin: 14px 22px 0; }
+.business-form > .primary-action { margin: 18px 22px 22px; }
+.form-ledger-stamp .workspace-marker, .form-ledger-stamp { display: none; }
+.backup-hero .backup-brand, .backup-hero .backup-brand *, .backup-hero .backup-identity, .backup-hero .backup-identity *, .backup-hero > p, .backup-hero > p * { color: rgba(255,255,255,.88) !important; border-color: rgba(255,255,255,.5) !important; }
+.home-shop-shortcut { margin-bottom: 18px; padding: 14px 16px; border-radius: 14px; }
+.home-shop-shortcut .op-row-title { font-size: .92rem; color: var(--ta-ink); }
+.home-shop-shortcut .op-row-sub { margin-top: 2px; font-size: .78rem; color: var(--ta-muted); }
+.home-shop-shortcut .secondary-action { flex-shrink: 0; min-height: 40px; }
+/* Report sheets that are just a heading and text (financial intelligence) get the same padded card as the rest. */
+.report-sheet:not(:has(> .report-sheet-head)) { padding: 18px 18px 16px; border-radius: 16px; box-shadow: 0 4px 16px rgba(23,42,83,.05); }
+.report-sheet:not(:has(> .report-sheet-head)) > h2 { margin: 0 0 10px; color: var(--ta-ink); font-family: var(--font-sans); font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; }
+.report-sheet:not(:has(> .report-sheet-head)) > p { margin: 6px 0 0; color: var(--ta-ink); font-size: .86rem; line-height: 1.55; }
+.report-sheet:not(:has(> .report-sheet-head)) .report-row-list { margin: 0; }
+
+/* Account page sits outside the app frame: same canvas, cards and heading weight as inside. */
+html, :root { background: var(--ta-canvas); }
+.home-workspace { padding: 16px 16px 32px; }
+.home-workspace > .op-row-card { border-color: var(--ta-line); border-radius: 18px; box-shadow: 0 4px 16px rgba(23,42,83,.05); }
+.home-workspace h1 { color: var(--ta-ink); font-family: var(--font-sans) !important; font-weight: 850; letter-spacing: -.03em; }
+.home-workspace .eyebrow { color: var(--ta-blue); }
+.home-workspace details > summary { padding: 4px 0; }
+.home-workspace details[open] > summary { margin-bottom: 10px; }
+.tb-business-name { margin: 4px 0 2px; color: var(--ta-ink); font-size: 1.15rem; font-weight: 800; }
+/* Sales: what the till still needs before a sale can be saved. */
+.sale-seller-ready { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin: 14px 0; border: 1px solid #f4c98f; border-left: 4px solid var(--ta-warning); border-radius: 14px; background: #fff8ef; padding: 14px 16px; }
+.sale-seller-ready strong { display: block; color: var(--ta-ink); font-size: .95rem; }
+.sale-seller-ready p { margin: 4px 0 0; color: #6b5a44; font-size: .82rem; line-height: 1.45; max-width: 560px; }
+.sale-seller-ready .primary-action { flex-shrink: 0; min-height: 42px; }

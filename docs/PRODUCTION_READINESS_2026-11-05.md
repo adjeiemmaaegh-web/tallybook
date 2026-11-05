@@ -11,6 +11,42 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
+## Update — entry bug, till bugs and one look across the app (not yet deployed)
+
+**Owner report:** after registering a business, the "Open this device's ledger" and "Open workspace" buttons on the profile page did nothing.
+
+**Cause.** The entry gate in front of the device ledger refused two kinds of browser:
+- a browser that already held a local business from before sign-in;
+- a browser last used by a different sign-in.
+
+The refusal page re-rendered the whole account page, with the same links, under one small heading. Every click therefore landed back on what looked like the same screen. The same gate also blocked the ledger offline, contradicting offline-first. A signed-out "Open workspace" link looped back to sign-in.
+
+**Fixed (`client/src/auth/FriendsTestGate.tsx`):**
+- An earlier local ledger on this browser gets a clear "Use the ledger already on this device?" choice. The staff PIN still guards it.
+- A browser bound to another account gets its own screen with "Open shared shop" and "Sign out".
+- An owner verified online on this browser can reopen it offline, provided the cached session matches.
+- Signed-out visitors go to `/account`.
+- The looping link is removed.
+- `/cloud-account` was a retired preview whose server check was never deployed. It now redirects to `/account`.
+- Email sign-up errors now say what is wrong: invalid address, account exists, weak password, rate limit, offline.
+
+**Till bugs found by an end-to-end browser run:**
+- Every sale requires an unlocked staff member with an open shift. This is kept by design. A new owner only learned this after building a cart. The Sales page now shows "Set up your owner PIN / Unlock / Open a shift" up front, with a link to Staff (`features/sales/useSellerReadiness.ts`).
+- A plain refusal from the sale service left the till stuck on "Checkout needs verification… outcome may be uncertain", blocking all further sales. Now only a real timeout (`SaleCompletionTimeoutError`) keeps the recovery lock. After any other refusal, the saved records are checked, and the lock is released only if nothing was written. The recovery button uses the same check, so already-stuck phones can recover.
+- Shift cash fields asked for "minor units". They now take normal money amounts (GHS 50.00).
+
+**One look across the app.**
+- The stylesheet never defined the shared theme colours (`--primary`, `--background`, `--muted-foreground`, `--border`…). So `bg-primary` buttons, dialogs, menus and toasts rendered colourless, and plain borders were black. These are now defined and mapped to the cobalt design.
+- A shared layer gives the older plain pages the same cards, fields and buttons. These were Staff, Stores, Commerce, Quotations, Insights, the tax and return-policy forms, and the account page.
+- 39 leftover beige "paper ledger" surfaces and 8 decorative margin lines were converted (generator script kept in the session scratchpad). The Business, Backup and Assistant headers now use the cobalt header.
+- Internal wording was replaced with plain labels: "Stage 9 · Multi-store", "Tallybook V10", "minor units", and the stale "V19 website update" home banner. The banner is now a shared-shop shortcut.
+- Test tooling is hidden unless a build sets `VITE_TALLYBOOK_INTERNAL_TOOLS=true`: the simulated payment sandbox, relay rehearsal, evidence panels, `/device-uat` and `/release-operations`.
+
+**Verified:**
+- A headless-Chrome run against the QA project passed every step: sign in, open the device ledger, set up the business and add a product. It then checked the staff banner and that a refusal no longer locks the till. It created a staff PIN, opened a shift, made a cash sale (stock 10→8), added a customer and made a credit sale (owes 45.00). Finally it took a repayment (owes 25.00), logged an expense, checked end of day (135.00 sold / 110.00 received), and the Assistant reported "Kwame owes 25.00".
+- Phone and desktop screenshots of every page were reviewed.
+- New tests: `auth/EntryAfterRegistration.test.tsx` and `features/sales/sellerReadiness.test.ts`.
+
 ## Update — Assistant understanding fixes (live on production)
 
 Measured on 144 held-out sentences in Ghanaian English, pidgin, voice-style and typo phrasing (`client/src/features/assistant/eval/heldout*.ts`). Two unsafe readings were fixed:

@@ -1,5 +1,6 @@
 /** Tactile Ledger design reminder: global routes wrap one reliable ledger shell and never imply unfinished features are available. */
 import { lazy, Suspense, useEffect } from "react";
+import { internalToolsEnabled } from "@/lib/internalTools";
 import { AuthGate } from "@/auth/AuthGate";
 import { FriendsTestGate } from "@/auth/FriendsTestGate";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
@@ -8,7 +9,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/sonner";
 import { ConnectionRestoredNotifier } from "@/components/ConnectionRestoredNotifier";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch, useLocation } from "wouter";
+import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/AppShell";
 import { BusinessProfileProvider } from "@/contexts/BusinessProfileContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -74,8 +75,8 @@ function Router() {
         <Route path="/expenses" component={ExpensesPage} />
         <Route path="/business-health" component={BusinessHealthPage} />
         <Route path="/backup" component={BackupPage} />
-        <Route path="/device-uat" component={Run19DeviceAcceptancePage} />
-        <Route path="/release-operations" component={Run20OperationsPage} />
+        {internalToolsEnabled ? <Route path="/device-uat" component={Run19DeviceAcceptancePage} /> : null}
+        {internalToolsEnabled ? <Route path="/release-operations" component={Run20OperationsPage} /> : null}
         <Route path="/assistant" component={AssistantPage} />
         <Route component={AppNotFound} />
       </Switch>
@@ -108,7 +109,10 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          {location === '/shop'
+          {location === '/cloud-account'
+            // Retired preview: its server check was never deployed. The account page is the real one.
+            ? <Redirect to="/account" replace />
+            : location === '/shop'
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
             ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>

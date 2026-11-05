@@ -16,11 +16,10 @@ export default function StageHome() {
   const databaseReady = status === "ready";
   const [counts, setCounts] = useState<SetupCounts | null>(null);
   const [setupError, setSetupError] = useState(false);
-  const websiteUpdate = <section className="op-row-card" style={{ display: "block", marginBottom: 18 }} aria-label="Tallybook website update">
-    <div className="op-row-title">Tallybook V19 website update</div>
-    <p className="op-row-sub" style={{ margin: "4px 0 10px" }}>Create an account with email or Google, then try the business, staff, sales and backup tools. Business records remain on this device; cloud sync is still being tested.</p>
-    <div className="flex flex-wrap gap-3"><Link href="/signin" className="secondary-action">Create account or sign in <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-      <Link href="/sync-status" className="secondary-action">Cloud business setup and sync status</Link></div>
+  const websiteUpdate = <section className="op-row-card home-shop-shortcut" aria-label="Shared shop">
+    <div><div className="op-row-title">Your shared shop</div>
+      <p className="op-row-sub">Stores, products and attendants who sell from their own phones.</p></div>
+    <Link href="/shop" className="secondary-action">Open shop <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
   </section>;
   useEffect(() => {
     let mounted = true;

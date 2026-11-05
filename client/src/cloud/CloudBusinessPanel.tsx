@@ -125,7 +125,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       <p className="break-all">Signed in as: {email || userId}</p>
     </details>}
     <h2 className="font-semibold">{accountOnly ? "Business setup" : "Cloud business account"}</h2>
-    <p className="text-sm">Prepare your business account for cloud services. Local sales, stock and customer records are not uploaded or linked by this step.</p>
+    {!business ? <p className="text-sm">Create your business account. Sales, stock and customer records on this device are not uploaded by this step.</p> : null}
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
       {accessible.length>1 ? <label className="block text-sm" htmlFor="cloud-select">Cloud company
         <select id="cloud-select" className="ml-2 rounded border p-1" value={business.id}
@@ -133,7 +133,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
+      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
         <div className="grid gap-3">
           <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
             <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create a business account for your shop.</small></span>
