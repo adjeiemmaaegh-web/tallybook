@@ -143,7 +143,6 @@ The benchmark writes:
 
 - `artifacts/intent-model/tallybook-intent-model.json`
 - `artifacts/intent-model/benchmark-report.json`
-- `artifacts/intent-model/benchmark-console.json`
 
 The benchmark source is:
 
