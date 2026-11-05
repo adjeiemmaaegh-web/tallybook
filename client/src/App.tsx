@@ -41,6 +41,7 @@ import GoogleSignInPage from "@/pages/GoogleSignInPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import SupabaseSignInPage from "@/pages/SupabaseSignInPage";
 const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
+const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -107,7 +108,11 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          {!['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
+          {location === '/shop'
+            // The shared shop is cloud-authoritative and checks the session
+            // itself; it must not mount the local ledger or its unlock gates.
+            ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>
+            : !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

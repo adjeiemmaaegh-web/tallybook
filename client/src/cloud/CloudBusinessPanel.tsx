@@ -16,6 +16,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
   const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
   const [draftName,setDraftName]=useState("");
   const [profileName,setProfileName]=useState("");
+  const [email,setEmail]=useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
         const { data: { user }, error: authError } = await client.auth.getUser();
         if (!active || started !== revision.current) return;
         if (authError || !user) { setBusy(false); return; }
-        setUserId(user.id);
+        setUserId(user.id); setEmail(user.email ?? "");
         const metadata=user.user_metadata??{};
         const display=[metadata.preferred_name,metadata.given_name,metadata.full_name,metadata.name]
           .find(value=>typeof value==='string'&&value.trim());
@@ -118,10 +119,10 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       <form onSubmit={event=>{event.preventDefault();void saveProfileName();}}>
         <label htmlFor="preferred-name">What should we call you?</label>
         <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>
-        <button type="submit" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
+        <button type="submit" className="secondary-action" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
       </form>
       <p>Shop role: {business?.role??"Awaiting verified membership"}</p>
-      <p className="break-all">Account ID: {userId}</p>
+      <p className="break-all">Signed in as: {email || userId}</p>
     </details>}
     <h2 className="font-semibold">{accountOnly ? "Business setup" : "Cloud business account"}</h2>
     <p className="text-sm">Prepare your business account for cloud services. Local sales, stock and customer records are not uploaded or linked by this step.</p>
@@ -132,21 +133,21 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="font-semibold">{business.name}</p>{accountOnly&&business.role==="owner"&&<Link href="/" className="primary-action">Open my workspace</Link>}<p className="text-sm">{business.role === "owner" ? "Verified cloud owner membership." : "Verified cloud attendant membership."} This is account membership only, not a local staff unlock. Record synchronization is not active yet.</p></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
+      <p className="font-semibold">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
         <div className="grid gap-3">
           <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
             <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create a business account for your shop.</small></span>
           </button>
           <button type="button" aria-label="I work for someone else" className="tb-role-option" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>
-            <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Find your account ID to share with your employer.</small></span>
+            <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Join the shop your employer invites you to.</small></span>
           </button>
-        </div>{choice==="employee"?<p>Give your employer your account ID <code>{userId}</code> so they can invite you to the correct business.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
-      <label className="block" htmlFor="cloud-business-name">Cloud business name</label>
+        </div>{choice==="employee"?<p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Then enter the one-time code they give you below.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
-      <button className="rounded border px-4 py-2" type="submit" disabled={!name.trim()}>Create cloud business</button>
+      <button className="primary-action" type="submit" disabled={!name.trim()}>Create business</button>
     </form>:null}</div>}
     {isSupabaseConfigured && userId &&
-      (choice==="employee" || business?.role==="owner" || import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true")
+      (choice==="employee" || (!accountOnly && import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"))
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.role === "owner"} onAccepted={()=>setMembershipRevision(value=>value+1)}/> : null}
     {error && <p role="alert">{error}</p>}

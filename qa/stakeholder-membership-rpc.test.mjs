@@ -10,7 +10,7 @@ test('authenticated invitation RPC binds actor and session to claims, enforces s
  await db.exec("create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);create table auth.sessions(id uuid,user_id uuid,not_after timestamptz);create function auth.uid() returns uuid language sql as 'select null::uuid';");
  await db.exec(sql('supabase/migrations/20261013123347_business_identity.sql'));
  await db.exec("create or replace function auth.uid() returns uuid language sql as $$select (current_setting('test.claims')::jsonb->>'sub')::uuid$$;create function auth.jwt() returns jsonb language sql as $$select current_setting('test.claims')::jsonb$$;");
- await db.exec(sql('docs/security/stakeholder_membership_candidate.sql')); const users=[randomUUID(),randomUUID(),randomUUID()],sessions=users.map(()=>randomUUID()),shops=[randomUUID(),randomUUID()];
+ await db.exec(sql('supabase/migrations/20261105022238_stakeholder_session_bound_membership.sql')); const users=[randomUUID(),randomUUID(),randomUUID()],sessions=users.map(()=>randomUUID()),shops=[randomUUID(),randomUUID()];
  for(const [i,user] of users.entries()){
  await db.query('insert into auth.users values($1)',[user]);
  await db.query('insert into auth.sessions values($1,$2,null)',[sessions[i],user]);

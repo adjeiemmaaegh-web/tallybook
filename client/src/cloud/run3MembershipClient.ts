@@ -7,8 +7,9 @@ export type Run3Member={companyId:string;userId:string;role:'owner'|'attendant';
 async function call(action:string,body:Record<string,string>){
   if(typeof window==='undefined'||window.location.protocol!=='https:')
     throw Error('Secure online account required for cloud invitations.');
+  const qaEndpoint=import.meta.env.VITE_TALLYBOOK_RUN3_QA_ENDPOINT?.trim()||'';
   const endpoint=resolveRun3Endpoint({
-    qaEndpoint:import.meta.env.VITE_TALLYBOOK_RUN3_QA_ENDPOINT,
+    qaEndpoint,
     supabaseUrl:import.meta.env.VITE_SUPABASE_URL,
     isPreview:import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true',
     publishableKey:import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -29,7 +30,9 @@ async function call(action:string,body:Record<string,string>){
   });
   try{
     let result:unknown;
-    if(import.meta.env.VITE_SUPABASE_URL==='https://qfyydfxwvifdvffdfgeu.supabase.co'){
+    // The session-bound database operation is the standard transport on every
+    // project. Only an explicitly configured QA Edge endpoint uses HTTP.
+    if(!qaEndpoint){
       const receipt=await client.rpc('tallybook_membership',{p_action:action,p_input:body});
       if(receipt.error)throw Error('Invitation service denied the request or is unavailable.');
       result=receipt.data;

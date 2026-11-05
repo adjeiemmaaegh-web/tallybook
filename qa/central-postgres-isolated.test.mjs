@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const migration = name => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8');
+const migration = name => readFileSync(new URL(`../docs/history/unapplied-migrations/${name}`, import.meta.url), 'utf8');
 
 test('draft central schema denies browser finance writes and isolates owner reads', async () => {
   const db = new PGlite();

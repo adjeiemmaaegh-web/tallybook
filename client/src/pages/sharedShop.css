@@ -1,0 +1,98 @@
+/* Shared shop — uses the app's --ta-* tokens and .primary-action/.secondary-action. Mobile first: attendants sell on phones. */
+.shop-page { max-width: 1100px; margin: 0 auto; padding: 16px 16px 96px; color: var(--ta-ink); display: grid; gap: 16px; }
+.shop-head { display: grid; gap: 10px; }
+.shop-head h1 { margin: 2px 0 0; font-family: var(--font-display); font-size: 1.9rem; line-height: 1.1; }
+.shop-back { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--ta-muted); font-weight: 700; font-size: .85rem; text-decoration: none; }
+.shop-back svg { width: 16px; height: 16px; }
+.shop-eyebrow { margin: 0; color: var(--ta-blue); font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.shop-offline { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 10px; background: #fff4e8; color: #7a3d0c; font-size: .88rem; font-weight: 700; }
+.shop-offline svg { width: 18px; height: 18px; flex: none; }
+.shop-card { display: grid; gap: 12px; align-content: start; padding: 18px; border: 1px solid var(--ta-line); border-radius: 16px; background: var(--ta-card); box-shadow: 0 4px 16px rgba(23,42,83,.05); }
+.shop-card h2 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+.shop-card h3 { margin: 0; font-size: .95rem; }
+.shop-card-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: space-between; }
+.shop-empty { max-width: 560px; }
+.shop-empty p { margin: 0; line-height: 1.5; }
+.shop-muted { margin: 0; color: var(--ta-muted); font-size: .88rem; }
+.shop-alert { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #8a1c1c; font-size: .9rem; font-weight: 650; }
+.shop-field { display: grid; gap: 6px; font-size: .85rem; font-weight: 700; }
+.shop-field small { color: var(--ta-muted); font-weight: 500; }
+.shop-field input, .shop-field select, .shop-stock-controls input { min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 10px; background: #fff; color: var(--ta-ink); font: inherit; font-weight: 500; }
+.shop-field input:focus-visible, .shop-field select:focus-visible, .shop-stock-controls input:focus-visible { outline: 3px solid var(--ta-blue); outline-offset: 1px; }
+.shop-company { max-width: 320px; }
+.shop-inline-form { display: grid; gap: 10px; }
+.shop-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.shop-check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: .9rem; }
+.shop-check input { width: 18px; height: 18px; accent-color: var(--ta-blue); }
+.shop-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 4px; border-radius: 14px; background: var(--ta-blue-soft); }
+.shop-tabs button { flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: var(--ta-ink); font-weight: 750; font-size: .88rem; white-space: nowrap; }
+.shop-tabs button[aria-pressed=true] { background: #fff; color: var(--ta-blue-dark); box-shadow: 0 2px 8px rgba(23,42,83,.08); }
+.shop-tabs .shop-refresh { margin-left: auto; padding: 0 10px; }
+.shop-tabs .shop-refresh svg { width: 18px; height: 18px; }
+.shop-store-name { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--ta-muted); font-weight: 700; font-size: .88rem; }
+.shop-store-name svg, .shop-list svg { width: 16px; height: 16px; }
+.shop-store-select { min-width: 180px; }
+.shop-product-list, .shop-list, .shop-members, .shop-sales, .shop-queue ul, .shop-receipt ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.shop-product-list li { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
+.shop-product-list li > div:first-child { display: grid; gap: 2px; }
+.shop-product-list span { color: var(--ta-muted); font-size: .85rem; }
+.shop-product-list .is-muted, .shop-list .is-muted > span { opacity: .55; }
+.shop-product-list li.is-out > div:first-child { opacity: .55; }
+.shop-product-list li.is-out .shop-stepper { display: none; }
+.shop-stepper { display: flex; align-items: center; gap: 8px; }
+.shop-product-list:not(.shop-stock-list) li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.shop-stepper .secondary-action { width: 44px; padding: 0; }
+.shop-stepper svg { width: 18px; height: 18px; }
+.shop-stepper output { min-width: 28px; text-align: center; font-weight: 800; font-size: 1.05rem; }
+.shop-stock-controls { display: grid; grid-template-columns: minmax(56px, 1fr) repeat(3, auto); gap: 6px; }
+.shop-stock-controls .secondary-action { padding: 0 11px; }
+.shop-stock-controls input { width: 100%; min-width: 0; }
+.shop-total { display: flex; justify-content: space-between; align-items: baseline; margin: 0; padding: 12px 0; border-top: 1px dashed var(--ta-line); border-bottom: 1px dashed var(--ta-line); }
+.shop-total strong { font-size: 1.5rem; }
+.shop-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.shop-segment button { min-height: 44px; border: 1px solid var(--ta-line); border-radius: 10px; background: #fff; color: var(--ta-ink); font-weight: 750; font-size: .85rem; }
+.shop-segment button[aria-pressed=true] { border-color: var(--ta-blue); background: var(--ta-blue-soft); color: var(--ta-blue-dark); box-shadow: inset 0 0 0 1px var(--ta-blue); }
+.shop-record { width: 100%; min-height: 52px; font-size: 1rem; }
+.shop-record svg { width: 20px; height: 20px; }
+.shop-queue { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--ta-line); }
+.shop-queue li { display: grid; gap: 4px; padding: 10px; border-radius: 10px; background: #fff8ec; font-size: .88rem; }
+.shop-queue li.is-rejected { background: #fdecec; }
+.shop-queue small { color: var(--ta-muted); }
+.shop-queue .secondary-action { width: fit-content; min-height: 36px; }
+.shop-receipt { display: grid; gap: 10px; }
+.shop-receipt-ok { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ta-success); font-weight: 800; font-size: 1.1rem; }
+.shop-receipt-ok svg { width: 22px; height: 22px; }
+.shop-receipt li { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
+.shop-edit { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--ta-canvas); }
+.shop-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
+.shop-list li > span { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; }
+.shop-invite { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--ta-blue-soft); }
+.shop-invite p { margin: 0; font-size: .9rem; line-height: 1.45; }
+.shop-invite code { padding: 10px; border-radius: 8px; background: #fff; font-size: .85rem; word-break: break-all; user-select: all; }
+.shop-members li { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
+.shop-member-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; word-break: break-all; }
+.shop-members fieldset { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; border: 0; }
+.shop-members legend { margin-bottom: 2px; color: var(--ta-muted); font-size: .8rem; font-weight: 700; }
+.shop-danger { width: 44px; padding: 0; color: #a12020; }
+.shop-danger svg { width: 18px; height: 18px; }
+.shop-actions svg, .shop-card-head svg, .shop-inline-form svg { width: 18px; height: 18px; }
+.shop-sales li { border: 1px solid var(--ta-line); border-radius: 12px; overflow: hidden; }
+.shop-sales li > button { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; border: 0; background: #fff; color: var(--ta-ink); text-align: left; font: inherit; font-weight: 700; }
+.shop-sales li > button small { display: block; color: var(--ta-muted); font-weight: 500; font-size: .8rem; margin-top: 2px; }
+.shop-sales .shop-receipt { padding: 0 12px 12px; }
+.shop-sell, .shop-grid { display: grid; gap: 16px; }
+@media (min-width: 760px) {
+  .shop-page { padding: 32px 32px 60px; }
+  .shop-head { grid-template-columns: auto 1fr auto; align-items: end; }
+  .shop-back { grid-column: 1 / -1; }
+  .shop-sell { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); align-items: start; }
+  .shop-checkout { position: sticky; top: 16px; }
+  .shop-grid-two { grid-template-columns: 1fr 1fr; align-items: start; }
+  .shop-stock-list li { grid-template-columns: 1fr auto; align-items: center; }
+  .shop-inline-form { grid-template-columns: 1fr auto; align-items: end; }
+}
+
+html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
+.shop-cart-bar { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-radius: 14px; background: var(--ta-blue); color: #fff; font-weight: 750; text-decoration: none; box-shadow: 0 10px 24px rgba(36,84,211,.3); }
+.shop-cart-bar strong { font-size: 1.1rem; }
+@media (min-width: 760px) { .shop-cart-bar { display: none; } .shop-stock-controls input { width: 84px; } .shop-stock-controls { grid-template-columns: 84px repeat(3, auto); } }

@@ -108,6 +108,7 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
     recognition.maxAlternatives = 1;
 
     let finalText = "";
+    let lastHeard = "";
     let confidence = 0;
     let failed = false;
 
@@ -115,15 +116,23 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
     recognition.onstart = () => { if (isCurrent()) setStatus("listening"); };
     recognition.onresult = (event) => {
       if (!isCurrent()) return;
+      // `results` holds every result of this session, so rebuild from the start
+      // each time. Accumulating from `resultIndex` duplicates words on Android
+      // Chrome, which re-delivers earlier final results with resultIndex 0.
+      const finals: string[] = [];
       let interimText = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      let finalConfidence = 0;
+      for (let index = 0; index < event.results.length; index += 1) {
         const result = event.results[index];
-        const best = result[0];
+        const best = result?.[0];
         if (!best) continue;
-        if (result.isFinal) { finalText += `${best.transcript} `; confidence = best.confidence || confidence; }
+        if (result.isFinal) { finals.push(best.transcript.trim()); finalConfidence = best.confidence || finalConfidence; }
         else interimText += best.transcript;
       }
-      setInterim((finalText + interimText).trim());
+      finalText = finals.filter(Boolean).join(" ");
+      if (finals.length) confidence = finalConfidence;
+      lastHeard = `${finalText} ${interimText}`.trim();
+      setInterim(lastHeard);
     };
     recognition.onerror = (event) => {
       if (!isCurrent()) return;
@@ -136,9 +145,14 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
       recognitionRef.current = null;
       setStatus("idle");
       setInterim("");
+      if (failed) return;
       const text = finalText.trim();
-      if (text && !failed) onResultRef.current({ text, confidence });
-      else if (!text && !failed) setError(describeVoiceError("no-speech"));
+      if (text && text === lastHeard) { onResultRef.current({ text, confidence }); return; }
+      // iOS Safari, and a session stopped mid-phrase, can end without marking the
+      // words final. Keep what the owner saw being heard, as unconfirmed (0) so
+      // it waits in the box to be checked rather than being sent.
+      if (lastHeard) { onResultRef.current({ text: lastHeard, confidence: 0 }); return; }
+      setError(describeVoiceError("no-speech"));
     };
 
     recognitionRef.current = recognition;

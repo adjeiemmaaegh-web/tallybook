@@ -20,8 +20,8 @@ test('Watchdog rejects orphan no-sale shift and event outside shift',()=>{
  assert.throws(()=>mapSingleStoreWatchdogEvents({...d,noSaleEvents:[{...d.noSaleEvents[0],createdAt:'2026-10-24T06:00:00Z'}]}));
 });
 test('SQL migrations deny direct finance writes to browsers pending trusted ingest',()=>{
- const policies=readFileSync('supabase/migrations/002_rls_policies.sql','utf8');
+ const policies=readFileSync('docs/history/unapplied-migrations/002_rls_policies.sql','utf8');
  assert.match(policies,/revoke all on public/);assert.doesNotMatch(policies,/grant\s+(insert|update|delete)\s+on/i);
- const schema=readFileSync('supabase/migrations/001_core_tables.sql','utf8');
+ const schema=readFileSync('docs/history/unapplied-migrations/001_core_tables.sql','utf8');
  for(const table of ['tb_sales','tb_payments','tb_shifts','tb_adjustments','tb_drawer_events','tb_sync_operations'])assert.match(schema,new RegExp(`create table if not exists public\\.${table}`));
 });
