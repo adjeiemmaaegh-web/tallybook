@@ -12,29 +12,46 @@ export interface ShopProduct { id: string; name: string; unitPriceMinor: number;
 export interface ShopStock { storeId: string; productId: string; quantity: number }
 export interface ShopMember { userId: string; role: ShopRole; email: string | null; storeIds: string[] }
 export interface ShopInvite { invitationId: string; email: string | null; expiresAt: string }
+/** What this person may do at the till. The owner may do everything. */
+export interface ShopPermissions { canDiscount: boolean; maxDiscountBps: number; canCredit: boolean }
+export interface ShopCustomer { id: string; name: string; phone: string | null; creditLimitMinor: number; balanceMinor: number }
 export interface ShopOverview {
   companyId: string; role: ShopRole; currency: string | null;
   stores: ShopStore[]; products: ShopProduct[]; stock: ShopStock[];
   members: ShopMember[]; pendingInvites: ShopInvite[];
+  /** Absent in an overview cached before the full till shipped. */
+  myPermissions?: ShopPermissions;
+  memberPermissions?: Record<string, ShopPermissions>;
+  customers?: ShopCustomer[];
 }
+export const NO_PERMISSIONS: ShopPermissions = { canDiscount: false, maxDiscountBps: 0, canCredit: false };
+export const permissionsOf = (overview: ShopOverview): ShopPermissions =>
+  overview.myPermissions ?? (overview.role === "owner" ? { canDiscount: true, maxDiscountBps: 10000, canCredit: true } : NO_PERMISSIONS);
+
 export type PaymentMethod = "cash" | "mobile" | "card";
+export type TenderMethod = PaymentMethod | "credit";
 export interface SaleLineInput { productId: string; quantity: number }
-export interface SaleRequest {
-  storeId: string; submissionKey: string; paymentMethod: PaymentMethod;
-  amountTenderedMinor: number; paymentReference?: string; clientRecordedAt?: string;
-  lines: SaleLineInput[];
-}
+export interface TenderInput { method: TenderMethod; amountMinor: number; tenderedMinor?: number; reference?: string; customerId?: string }
+interface SaleBase { storeId: string; submissionKey: string; clientRecordedAt?: string; lines: SaleLineInput[] }
+/** The current request: 0 to 5 tenders adding up to the server-priced total after any discount. */
+export interface TenderSaleRequest extends SaleBase { tenders: TenderInput[]; discountMinor?: number; discountReason?: string }
+/** The earlier single-payment shape. Still accepted, so sales queued before an update still send. */
+export interface LegacySaleRequest extends SaleBase { paymentMethod: PaymentMethod; amountTenderedMinor: number; paymentReference?: string }
+export type SaleRequest = TenderSaleRequest | LegacySaleRequest;
 export interface ShopReceipt {
   saleId: string; companyId: string; storeId: string; storeName: string; cashierId: string;
   submissionKey: string; receiptNumber: number; currency: string; totalMinor: number;
+  subtotalMinor?: number; discountMinor?: number; discountReason?: string | null;
+  customer?: ShopCustomer | null;
   recordedAt: string; replayed: boolean;
-  payment: { method: PaymentMethod; amountDueMinor: number; amountTenderedMinor: number; changeMinor: number; reference: string | null };
-  lines: Array<{ lineNo: number; productId: string; name: string; quantity: number; unitPriceMinor: number; lineTotalMinor: number; refundedQuantity: number }>;
+  payment: { method: TenderMethod | "split"; amountDueMinor: number; amountTenderedMinor: number; changeMinor: number; reference: string | null };
+  tenders?: Array<{ method: TenderMethod; amountMinor: number; tenderedMinor: number; reference: string | null }>;
+  lines: Array<{ lineNo: number; productId: string; name: string; quantity: number; unitPriceMinor: number; lineTotalMinor: number; lineDiscountMinor?: number; refundedQuantity: number }>;
   refundedMinor: number;
   refunds: ShopRefund[];
 }
 export interface ShopRefund {
-  refundId: string; refundNo: number; amountMinor: number; method: PaymentMethod; returnedToStock: boolean;
+  refundId: string; refundNo: number; amountMinor: number; creditMinor?: number; method: TenderMethod; returnedToStock: boolean;
   reason: string; actorId: string; recordedAt: string;
   lines: Array<{ lineNo: number; productId: string; quantity: number; lineTotalMinor: number }>;
 }
@@ -109,6 +126,18 @@ export const refundShopSale = (companyId: string, refund: RefundRequest) =>
   callShop<ShopReceipt>("refundSale", { companyId, ...refund });
 export const importShopOpening = (companyId: string, books: OpeningImport) =>
   callShop<OpeningImportResult>("importOpening", { companyId, ...books });
+
+export const saveShopCustomer = (companyId: string, customer: { customerId: string; name: string; phone?: string; creditLimitMinor?: number }) =>
+  callShop<ShopCustomer>("saveCustomer", { companyId, ...customer });
+export const recordShopRepayment = (companyId: string, repayment: { customerId: string; repaymentKey: string; amountMinor: number; method: PaymentMethod; reference?: string; storeId?: string }) =>
+  callShop<ShopCustomer & { replayed: boolean }>("recordRepayment", { companyId, ...repayment });
+export interface CustomerStatement extends ShopCustomer {
+  entries: Array<{ kind: "credit_sale" | "repayment" | "refund"; amountMinor: number; balanceAfterMinor: number;
+    receiptNumber: number | null; method: PaymentMethod | null; reference: string | null; recordedAt: string }>;
+}
+export const getCustomerStatement = (companyId: string, customerId: string) => callShop<CustomerStatement>("customerStatement", { companyId, customerId });
+export const setShopMemberPermissions = (companyId: string, userId: string, permissions: ShopPermissions) =>
+  callShop<ShopPermissions>("setMemberPermissions", { companyId, userId, ...permissions });
 
 export function newSubmissionKey() {
   const bytes = new Uint8Array(18);

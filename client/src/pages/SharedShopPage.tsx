@@ -16,14 +16,15 @@ import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } fr
 import {
   adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
   recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
-  type PaymentMethod, type ShopOverview, type ShopReceipt,
+  getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
+  type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "sell" | "stock" | "team" | "sales";
+type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 function readCache(userId: string): { businesses: Business[]; overviews: Record<string, ShopOverview> } {
@@ -36,7 +37,7 @@ function writeCache(userId: string, change: (cache: ReturnType<typeof readCache>
 function clearShopCaches() {
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
 }
-const methodLabel = (m: PaymentMethod) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : "Cash";
+const methodLabel = (m: string) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : m === "credit" ? "Credit" : m === "split" ? "Split payment" : "Cash";
 const message = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Try again.";
 
 function useOnline() {
@@ -160,9 +161,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     ? <SetupLedger companyId={business.id} onDone={refresh} />
     : <section className="shop-card shop-empty"><h2>Not open yet</h2><p>The owner hasn't finished setting up this shop. Check back soon.</p></section>;
 
+  const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["sell", "Sell"], ["stock", "Stock"], ["team", "Team"], ["sales", "Sales"]]
-    : [["sell", "Sell"], ["sales", "My sales"]];
+    ? [["sell", "Sell"], ["stock", "Stock"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
+    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
   const ctx = { companyId: business.id, overview, refresh, online, userId };
   return <>
     {error && <p role="alert" className="shop-alert">{error}</p>}
@@ -173,6 +175,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
+    {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && <SalesPanel {...ctx} />}
   </>;
 }
@@ -213,20 +216,74 @@ function StorePicker({ stores, storeId, choose }: { stores: ShopOverview["stores
     <select value={storeId} onChange={e => choose(e.target.value)}>{stores.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>;
 }
 
+type PayMode = PaymentMethod | "credit" | "split";
+const payModeLabel: Record<PayMode, string> = { cash: "Cash", mobile: "Mobile money", card: "Card", credit: "Credit", split: "Split" };
+
+/** Turns the checkout form into the tenders the server checks. Throws a plain-language error. */
+export function buildTenders(input: {
+  mode: PayMode; total: number; currency: string; tendered: string; reference: string;
+  customerId: string; paidNow: string; paidNowMethod: PaymentMethod; paidNowReference: string;
+  split: { cash: string; mobile: string; mobileReference: string; card: string };
+}): TenderInput[] {
+  const { mode, total, currency } = input;
+  const amount = (text: string) => text.trim() ? parseAmountToMinor(text, currency) : 0;
+  if (total === 0) return [];
+  if (mode === "cash") {
+    const received = input.tendered.trim() ? amount(input.tendered) : total;
+    if (received < total) throw new Error("Amount received is less than the total.");
+    return [{ method: "cash", amountMinor: total, tenderedMinor: received }];
+  }
+  if (mode === "mobile") {
+    if (!input.reference.trim()) throw new Error("Enter the mobile money reference.");
+    return [{ method: "mobile", amountMinor: total, reference: input.reference.trim() }];
+  }
+  if (mode === "card") return [{ method: "card", amountMinor: total }];
+  if (mode === "credit") {
+    if (!input.customerId) throw new Error("Choose the customer buying on credit.");
+    const now = amount(input.paidNow);
+    if (now >= total) throw new Error("They are paying it all now, so choose Cash, Mobile money or Card instead.");
+    if (now > 0 && input.paidNowMethod === "mobile" && !input.paidNowReference.trim()) throw new Error("Enter the mobile money reference.");
+    const paid: TenderInput[] = now > 0 ? [{ method: input.paidNowMethod, amountMinor: now,
+      ...(input.paidNowMethod === "mobile" ? { reference: input.paidNowReference.trim() } : {}) }] : [];
+    return [...paid, { method: "credit", amountMinor: total - now, customerId: input.customerId }];
+  }
+  const parts: TenderInput[] = [];
+  const cash = amount(input.split.cash), mobile = amount(input.split.mobile), card = amount(input.split.card);
+  if (cash) parts.push({ method: "cash", amountMinor: cash });
+  if (mobile) {
+    if (!input.split.mobileReference.trim()) throw new Error("Enter the mobile money reference.");
+    parts.push({ method: "mobile", amountMinor: mobile, reference: input.split.mobileReference.trim() });
+  }
+  if (card) parts.push({ method: "card", amountMinor: card });
+  const sum = cash + mobile + card;
+  if (sum !== total) throw new Error(`The parts add up to ${formatMinorAmount(sum, currency)} but the total is ${formatMinorAmount(total, currency)}.`);
+  return parts;
+}
+
 function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps) {
   const currency = overview.currency!;
+  const perms = permissionsOf(overview);
+  const customers = overview.customers ?? [];
   const { active, storeId, choose } = useStoreChoice(overview);
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [mode, setMode] = useState<PayMode>("cash");
   const [tendered, setTendered] = useState("");
   const [reference, setReference] = useState("");
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discount, setDiscount] = useState("");
+  const [discountReason, setDiscountReason] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [paidNow, setPaidNow] = useState("");
+  const [paidNowMethod, setPaidNowMethod] = useState<PaymentMethod>("cash");
+  const [paidNowReference, setPaidNowReference] = useState("");
+  const [split, setSplit] = useState({ cash: "", mobile: "", mobileReference: "", card: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
-  const send = useCallback((sale: Parameters<typeof recordShopSale>[1]) => recordShopSale(companyId, sale), [companyId]);
+  const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
   const reloadQueue = useCallback(() => setQueued(readOutbox(scope)), [scope]);
   const flushing = useRef(false);
@@ -255,36 +312,50 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
   const products = overview.products.filter(p => p.active);
   const lines = Object.entries(cart).filter(([, q]) => q > 0);
-  const total = lines.reduce((sum, [id, q]) => sum + q * (products.find(p => p.id === id)?.unitPriceMinor ?? 0), 0);
-  const change = (delta: number, id: string) => { setReceipt(null); setError(""); submissionKey.current = null;
-    setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
+  const subtotal = lines.reduce((sum, [id, q]) => sum + q * (products.find(p => p.id === id)?.unitPriceMinor ?? 0), 0);
+  let discountMinor = 0;
+  try { discountMinor = discountOpen && discount.trim() ? parseAmountToMinor(discount, currency) : 0; } catch { discountMinor = -1; }
+  const total = subtotal - Math.max(0, discountMinor);
+  const customer = customers.find(c => c.id === customerId);
+  const resetForm = () => { setCart({}); setTendered(""); setReference(""); setDiscount(""); setDiscountReason(""); setDiscountOpen(false);
+    setPaidNow(""); setPaidNowReference(""); setSplit({ cash: "", mobile: "", mobileReference: "", card: "" }); submissionKey.current = null; };
+  const touch = () => { setReceipt(null); setError(""); submissionKey.current = null; };
+  const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
+  const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
     <p>{overview.role === "owner" ? "Add a store under Team, then add stock under Stock." : "The owner hasn't assigned you to a store yet. Ask them to add you to the store you work in."}</p></section>;
 
   const record = async () => {
     setError("");
-    let tenderedMinor = total;
-    try { if (method === "cash") tenderedMinor = tendered.trim() ? parseAmountToMinor(tendered, currency) : total; }
-    catch (cause) { setError(message(cause)); return; }
-    if (tenderedMinor < total) { setError("Amount received is less than the total."); return; }
-    if (method === "mobile" && !reference.trim()) { setError("Enter the mobile money reference."); return; }
+    let tenders: TenderInput[];
+    try {
+      if (discountMinor < 0) throw new Error("Enter the discount as an amount, for example 5 or 2.50.");
+      if (discountMinor > subtotal) throw new Error("The discount is more than the sale.");
+      if (discountMinor * 10000 > subtotal * perms.maxDiscountBps) throw new Error(`You can give up to ${perms.maxDiscountBps / 100}% off.`);
+      if (discountMinor > 0 && !discountReason.trim()) throw new Error("Say why you are giving this discount.");
+      tenders = buildTenders({ mode, total, currency, tendered, reference, customerId, paidNow, paidNowMethod, paidNowReference, split });
+      const credit = tenders.find(t => t.method === "credit");
+      if (credit && customer && customer.balanceMinor + credit.amountMinor > customer.creditLimitMinor)
+        throw new Error(`${customer.name} can owe up to ${formatMinorAmount(customer.creditLimitMinor, currency)} and already owes ${formatMinorAmount(customer.balanceMinor, currency)}. Take more payment now or ask the owner to raise the limit.`);
+    } catch (cause) { setError(message(cause)); return; }
     submissionKey.current ??= newSubmissionKey();
-    const sale = { storeId, submissionKey: submissionKey.current, paymentMethod: method, amountTenderedMinor: tenderedMinor,
-      ...(method === "mobile" ? { paymentReference: reference.trim() } : {}), clientRecordedAt: new Date().toISOString(),
-      lines: lines.map(([productId, quantity]) => ({ productId, quantity })) };
-    const summary = lines.map(([id, q]) => `${q} × ${products.find(p => p.id === id)?.name ?? "item"}`).join(", ");
+    const sale: SaleRequest = { storeId, submissionKey: submissionKey.current, clientRecordedAt: new Date().toISOString(),
+      lines: lines.map(([productId, quantity]) => ({ productId, quantity })), tenders,
+      ...(discountMinor > 0 ? { discountMinor, discountReason: discountReason.trim() } : {}) };
+    const summary = lines.map(([id, q]) => `${q} × ${products.find(p => p.id === id)?.name ?? "item"}`).join(", ")
+      + (customer && tenders.some(t => t.method === "credit") ? ` · credit to ${customer.name}` : "");
     setBusy(true);
     try {
       const result = await submitSale(scope, sale, summary, send);
-      if (result.state === "recorded") { setReceipt(result.receipt); setCart({}); setTendered(""); setReference(""); submissionKey.current = null; void refresh(); }
-      else if (result.state === "queued") { setCart({}); setTendered(""); setReference(""); submissionKey.current = null;
-        setError("No connection. The sale is saved on this phone and will be sent automatically."); }
+      if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
+      else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
       else { submissionKey.current = null; setError(result.error); }
     } catch (cause) { setError(message(cause)); }
     finally { setBusy(false); reloadQueue(); }
   };
 
+  const splitSum = (["cash", "mobile", "card"] as const).reduce((n, k) => { try { return n + (split[k].trim() ? parseAmountToMinor(split[k], currency) : 0); } catch { return n; } }, 0);
   return <div className="shop-sell">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2><StorePicker stores={active} storeId={storeId} choose={id => { choose(id); setCart({}); }} /></div>
@@ -303,14 +374,47 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
     <section className="shop-card shop-checkout" id="shop-checkout">
       {receipt ? <Receipt receipt={receipt} onNext={() => setReceipt(null)} /> : <>
         <h2>Checkout</h2>
-        <p className="shop-total"><span>Total</span><strong>{formatMinorAmount(total, currency)}</strong></p>
-        <div className="shop-segment" role="group" aria-label="Payment method">
-          {(["cash", "mobile", "card"] as const).map(m => <button key={m} type="button" aria-pressed={method === m} onClick={() => setMethod(m)}>{m === "mobile" ? "Mobile money" : m[0]!.toUpperCase() + m.slice(1)}</button>)}
+        {discountMinor > 0 && <p className="shop-total shop-subtotal"><span>Before discount</span><span>{formatMinorAmount(subtotal, currency)}</span></p>}
+        <p className="shop-total"><span>Total</span><strong>{formatMinorAmount(Math.max(0, total), currency)}</strong></p>
+        {perms.canDiscount && (discountOpen
+          ? <div className="shop-discount">
+              <label className="shop-field">Discount ({currency}){overview.role !== "owner" && <small> up to {perms.maxDiscountBps / 100}%</small>}
+                <input inputMode="decimal" value={discount} onChange={e => { touch(); setDiscount(e.target.value); }} /></label>
+              <label className="shop-field">Reason<input value={discountReason} onChange={e => { touch(); setDiscountReason(e.target.value); }} maxLength={120} placeholder="e.g. regular customer, bulk buy" /></label>
+              <button type="button" className="secondary-action" onClick={() => { touch(); setDiscountOpen(false); setDiscount(""); setDiscountReason(""); }}>No discount</button>
+            </div>
+          : <button type="button" className="secondary-action shop-discount-open" disabled={!lines.length} onClick={() => setDiscountOpen(true)}>Add discount</button>)}
+        <div className="shop-segment shop-segment-wrap" role="group" aria-label="Payment method">
+          {modes.map(m => <button key={m} type="button" aria-pressed={mode === m} onClick={() => { touch(); setMode(m); }}>{payModeLabel[m]}</button>)}
         </div>
-        {method === "cash" && <label className="shop-field">Amount received <small>(leave empty if exact)</small>
-          <input inputMode="decimal" value={tendered} onChange={e => setTendered(e.target.value)} placeholder={formatMinorAmount(total, currency)} /></label>}
-        {method === "mobile" && <label className="shop-field">Mobile money reference
-          <input value={reference} onChange={e => setReference(e.target.value)} autoComplete="off" maxLength={80} /></label>}
+        {mode === "cash" && <label className="shop-field">Amount received <small>(leave empty if exact)</small>
+          <input inputMode="decimal" value={tendered} onChange={e => { touch(); setTendered(e.target.value); }} placeholder={formatMinorAmount(Math.max(0, total), currency)} /></label>}
+        {mode === "mobile" && <label className="shop-field">Mobile money reference
+          <input value={reference} onChange={e => { touch(); setReference(e.target.value); }} autoComplete="off" maxLength={80} /></label>}
+        {mode === "credit" && <div className="shop-credit">
+          {customers.length
+            ? <label className="shop-field">Customer
+                <select value={customerId} onChange={e => { touch(); setCustomerId(e.target.value); }}>
+                  <option value="">Choose a customer…</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}</option>)}
+                </select></label>
+            : <p className="shop-muted">No customers yet. Add one under Customers; the owner sets how much they can owe.</p>}
+          {customer && <p className="shop-muted">Owes {formatMinorAmount(customer.balanceMinor, currency)} of {formatMinorAmount(customer.creditLimitMinor, currency)} allowed.</p>}
+          <label className="shop-field">Paid now <small>(optional)</small>
+            <input inputMode="decimal" value={paidNow} onChange={e => { touch(); setPaidNow(e.target.value); }} placeholder="0" /></label>
+          {paidNow.trim() && <div className="shop-segment" role="group" aria-label="Paid now by">
+            {(["cash", "mobile", "card"] as const).map(m => <button key={m} type="button" aria-pressed={paidNowMethod === m} onClick={() => { touch(); setPaidNowMethod(m); }}>{payModeLabel[m]}</button>)}
+          </div>}
+          {paidNow.trim() && paidNowMethod === "mobile" && <label className="shop-field">Mobile money reference
+            <input value={paidNowReference} onChange={e => { touch(); setPaidNowReference(e.target.value); }} autoComplete="off" maxLength={80} /></label>}
+        </div>}
+        {mode === "split" && <div className="shop-split">
+          <label className="shop-field">Cash<input inputMode="decimal" value={split.cash} onChange={e => { touch(); setSplit(s => ({ ...s, cash: e.target.value })); }} placeholder="0" /></label>
+          <label className="shop-field">Mobile money<input inputMode="decimal" value={split.mobile} onChange={e => { touch(); setSplit(s => ({ ...s, mobile: e.target.value })); }} placeholder="0" /></label>
+          {split.mobile.trim() && <label className="shop-field">Mobile money reference<input value={split.mobileReference} onChange={e => { touch(); setSplit(s => ({ ...s, mobileReference: e.target.value })); }} autoComplete="off" maxLength={80} /></label>}
+          <label className="shop-field">Card<input inputMode="decimal" value={split.card} onChange={e => { touch(); setSplit(s => ({ ...s, card: e.target.value })); }} placeholder="0" /></label>
+          <p className="shop-muted" role="status">{splitSum === total ? "Parts add up to the total." : `Still to cover: ${formatMinorAmount(total - splitSum, currency)}`}</p>
+        </div>}
         <button type="button" className="primary-action shop-record" disabled={busy || !lines.length} onClick={() => void record()}>
           <ReceiptText aria-hidden="true" />{busy ? "Recording…" : online ? "Record sale" : "Save sale (offline)"}</button>
         {error && <p role="alert" className="shop-alert">{error}</p>}
@@ -328,16 +432,30 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   </div>;
 }
 
+function tenderText(t: NonNullable<ShopReceipt["tenders"]>[number], money: (v: number) => string) {
+  if (t.method === "cash") return t.tenderedMinor > t.amountMinor ? `Cash ${money(t.amountMinor)} (received ${money(t.tenderedMinor)})` : `Cash ${money(t.amountMinor)}`;
+  if (t.method === "mobile") return `Mobile money ${money(t.amountMinor)} · ${t.reference ?? ""}`;
+  if (t.method === "card") return `Card ${money(t.amountMinor)}`;
+  return `On credit ${money(t.amountMinor)}`;
+}
+
 function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => void }) {
   const money = (v: number) => formatMinorAmount(v, receipt.currency);
+  const discount = receipt.discountMinor ?? 0;
+  const tenders = receipt.tenders ?? [];
   return <div className="shop-receipt" aria-label={`Receipt ${receipt.receiptNumber}`}>
     <p className="shop-receipt-ok"><Check aria-hidden="true" />Sale recorded</p>
     <p className="shop-muted">Receipt #{receipt.receiptNumber} · {receipt.storeName} · {new Date(receipt.recordedAt).toLocaleString()}</p>
     <ul>{receipt.lines.map(l => <li key={l.productId}><span>{l.quantity} × {l.name}</span><span>{money(l.lineTotalMinor)}</span></li>)}</ul>
+    {discount > 0 && <p className="shop-total shop-subtotal"><span>Discount · {receipt.discountReason}</span><span>−{money(discount)}</span></p>}
     <p className="shop-total"><span>Total</span><strong>{money(receipt.totalMinor)}</strong></p>
-    <p className="shop-muted">{receipt.payment.method === "mobile" ? `Mobile money · ${receipt.payment.reference}` : receipt.payment.method === "card" ? "Card" : `Cash received ${money(receipt.payment.amountTenderedMinor)} · Change ${money(receipt.payment.changeMinor)}`}</p>
+    {tenders.length
+      ? <ul className="shop-tenders">{tenders.map((t, i) => <li key={i}><span>{tenderText(t, money)}</span></li>)}</ul>
+      : <p className="shop-muted">{receipt.payment.method === "mobile" ? `Mobile money · ${receipt.payment.reference}` : receipt.payment.method === "card" ? "Card" : `Cash received ${money(receipt.payment.amountTenderedMinor)}`}</p>}
+    {receipt.payment.changeMinor > 0 && <p className="shop-muted">Change {money(receipt.payment.changeMinor)}</p>}
+    {receipt.customer && <p className="shop-muted">Customer: {receipt.customer.name} · now owes {money(receipt.customer.balanceMinor)}</p>}
     {(receipt.refunds ?? []).length > 0 && <div className="shop-refunds">
-      {receipt.refunds.map(r => <p key={r.refundId}><Undo2 aria-hidden="true" />Refund {r.refundNo}: {money(r.amountMinor)} by {methodLabel(r.method).toLowerCase()} · {r.reason}{r.returnedToStock ? " · back in stock" : " · not restocked"} · {new Date(r.recordedAt).toLocaleString()}</p>)}
+      {receipt.refunds.map(r => <p key={r.refundId}><Undo2 aria-hidden="true" />Refund {r.refundNo}: {money(r.amountMinor)}{(r.creditMinor ?? 0) > 0 ? ` (${money(r.creditMinor!)} off what they owe${r.amountMinor > r.creditMinor! ? `, ${money(r.amountMinor - r.creditMinor!)} by ${methodLabel(r.method).toLowerCase()}` : ""})` : ` by ${methodLabel(r.method).toLowerCase()}`} · {r.reason}{r.returnedToStock ? " · back in stock" : " · not restocked"} · {new Date(r.recordedAt).toLocaleString()}</p>)}
       <p className="shop-total"><span>Kept after refunds</span><strong>{money(receipt.totalMinor - receipt.refundedMinor)}</strong></p>
     </div>}
     {onNext && <button type="button" className="primary-action" onClick={onNext}>New sale</button>}
@@ -425,6 +543,8 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
         <div className="shop-member-head"><strong>{m.email ?? "Attendant"}</strong>
           <button type="button" className="secondary-action shop-danger" disabled={busy || !online} aria-label={`Remove ${m.email ?? "attendant"}`}
             onClick={() => { if (window.confirm(`Remove ${m.email ?? "this attendant"} from the shop? They will lose access immediately.`)) void run(() => revokeCloudAttendant(companyId, m.userId)); }}><Trash2 aria-hidden="true" /></button></div>
+        <MemberPermissions key={JSON.stringify(overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS)} companyId={companyId} member={m}
+          current={overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS} online={online} refresh={refresh} />
         <fieldset><legend>Can sell in</legend>
           {overview.stores.filter(s => s.status === "active").map(s => <label key={s.id} className="shop-check">
             <input type="checkbox" checked={m.storeIds.includes(s.id)} disabled={busy || !online}
@@ -464,6 +584,153 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   </section>;
 }
 
+/** Customers who buy on credit. Attendants allowed to give credit can add a
+ * customer and take repayments; only the owner sets how much someone may owe. */
+function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
+  const currency = overview.currency!;
+  const isOwner = overview.role === "owner";
+  const customers = overview.customers ?? [];
+  const owed = customers.reduce((n, c) => n + c.balanceMinor, 0);
+  const [form, setForm] = useState({ name: "", phone: "", limit: "" });
+  const [open, setOpen] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const add = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError("");
+    try {
+      await saveShopCustomer(companyId, { customerId: crypto.randomUUID(), name: form.name, ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
+        ...(isOwner ? { creditLimitMinor: form.limit.trim() ? parseAmountToMinor(form.limit, currency) : 0 } : {}) });
+      setForm({ name: "", phone: "", limit: "" }); await refresh();
+    } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  return <div className="shop-grid shop-grid-two">
+    <section className="shop-card">
+      <div className="shop-card-head"><h2>Customers</h2>{customers.length > 0 && <p className="shop-muted">Owed to you: <strong>{formatMinorAmount(owed, currency)}</strong></p>}</div>
+      {!customers.length && <p className="shop-muted">No customers yet.</p>}
+      <ul className="shop-members">{customers.map(c => <li key={c.id}>
+        <button type="button" className="shop-customer-row" aria-expanded={open === c.id} onClick={() => setOpen(o => o === c.id ? null : c.id)}>
+          <span><strong>{c.name}</strong>{c.phone && <small>{c.phone}</small>}</span>
+          <span className={c.balanceMinor ? "shop-owes" : "shop-muted"}>{c.balanceMinor ? `Owes ${formatMinorAmount(c.balanceMinor, currency)}` : "Owes nothing"}<small>Limit {formatMinorAmount(c.creditLimitMinor, currency)}</small></span>
+        </button>
+        {open === c.id && <CustomerDetail companyId={companyId} customer={c} currency={currency} isOwner={isOwner} online={online} refresh={refresh} />}
+      </li>)}</ul>
+    </section>
+    <section className="shop-card">
+      <h2>Add a customer</h2>
+      <form className="shop-edit" onSubmit={add}>
+        <label className="shop-field">Name<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} maxLength={80} required /></label>
+        <label className="shop-field">Phone <small>(optional)</small><input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} maxLength={20} /></label>
+        {isOwner
+          ? <label className="shop-field">Can owe up to ({currency})<input inputMode="decimal" value={form.limit} onChange={e => setForm({ ...form, limit: e.target.value })} placeholder="0" /></label>
+          : <p className="shop-muted">The owner decides how much a new customer can owe. Until then they can't buy on credit.</p>}
+        <button className="primary-action" disabled={busy || !online || !form.name.trim()}>{busy ? "Saving…" : "Add customer"}</button>
+      </form>
+      {error && <p role="alert" className="shop-alert">{error}</p>}
+    </section>
+  </div>;
+}
+
+function CustomerDetail({ companyId, customer, currency, isOwner, online, refresh }: {
+  companyId: string; customer: ShopCustomer; currency: string; isOwner: boolean; online: boolean; refresh: () => Promise<void>;
+}) {
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [reference, setReference] = useState("");
+  const [limit, setLimit] = useState((customer.creditLimitMinor / currencyMinorDivisor(currency)).toString());
+  const [statement, setStatement] = useState<CustomerStatement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState("");
+  // Kept across a failed send so a retry can never record the payment twice.
+  const pending = useRef<{ key: string; body: string } | null>(null);
+  const money = (v: number) => formatMinorAmount(v, currency);
+  const loadStatement = useCallback(() => { void getCustomerStatement(companyId, customer.id).then(setStatement).catch(c => setError(message(c))); }, [companyId, customer.id]);
+  useEffect(() => { if (online) loadStatement(); }, [online, loadStatement, customer.balanceMinor]);
+
+  const repay = async (event: FormEvent) => {
+    event.preventDefault(); setError(""); setDone("");
+    let amountMinor: number;
+    try { amountMinor = parseAmountToMinor(amount, currency); } catch (cause) { setError(message(cause)); return; }
+    if (amountMinor > customer.balanceMinor) { setError(`${customer.name} only owes ${money(customer.balanceMinor)}.`); return; }
+    if (method === "mobile" && !reference.trim()) { setError("Enter the mobile money reference."); return; }
+    const request = { customerId: customer.id, amountMinor, method, ...(method === "mobile" ? { reference: reference.trim() } : {}) };
+    const body = JSON.stringify(request);
+    if (pending.current?.body !== body) pending.current = { key: newSubmissionKey(), body };
+    setBusy(true);
+    try {
+      const result = await recordShopRepayment(companyId, { ...request, repaymentKey: pending.current.key });
+      pending.current = null; setAmount(""); setReference("");
+      setDone(`Recorded ${money(amountMinor)}. ${customer.name} now owes ${money(result.balanceMinor)}.`);
+      await refresh();
+    } catch (cause) {
+      const unreachable = cause instanceof ShopUnreachableError;
+      if (!unreachable) pending.current = null;
+      setError(unreachable ? "No connection. Nothing was recorded yet. Try again when you're online." : message(cause));
+    } finally { setBusy(false); }
+  };
+  const saveLimit = async () => {
+    setBusy(true); setError(""); setDone("");
+    try {
+      await saveShopCustomer(companyId, { customerId: customer.id, name: customer.name, ...(customer.phone ? { phone: customer.phone } : {}),
+        creditLimitMinor: limit.trim() ? parseAmountToMinor(limit, currency) : 0 });
+      setDone("Limit saved."); await refresh();
+    } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  const kind = { credit_sale: "Bought on credit", repayment: "Paid", refund: "Refund taken off" } as const;
+  return <div className="shop-customer-detail">
+    {customer.balanceMinor > 0 && <form className="shop-edit" onSubmit={repay}>
+      <h3>Record a payment</h3>
+      <label className="shop-field">Amount ({currency})<input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={money(customer.balanceMinor)} required /></label>
+      <div className="shop-segment" role="group" aria-label="Paid by">
+        {(["cash", "mobile", "card"] as const).map(m => <button key={m} type="button" aria-pressed={method === m} onClick={() => setMethod(m)}>{methodLabel(m)}</button>)}
+      </div>
+      {method === "mobile" && <label className="shop-field">Mobile money reference<input value={reference} onChange={e => setReference(e.target.value)} autoComplete="off" maxLength={80} /></label>}
+      <button className="primary-action" disabled={busy || !online}>{busy ? "Recording…" : "Record payment"}</button>
+    </form>}
+    {isOwner && <div className="shop-inline-form">
+      <label className="shop-field">Can owe up to ({currency})<input inputMode="decimal" value={limit} onChange={e => setLimit(e.target.value)} /></label>
+      <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void saveLimit()}>Save limit</button>
+    </div>}
+    {done && <p role="status" className="shop-muted">{done}</p>}
+    {error && <p role="alert" className="shop-alert">{error}</p>}
+    {statement && statement.entries.length > 0 && <div className="shop-statement">
+      <h3>History</h3>
+      <ul>{statement.entries.map((e, i) => <li key={i}>
+        <span>{kind[e.kind]}{e.receiptNumber ? ` · receipt #${e.receiptNumber}` : ""}{e.method ? ` · ${methodLabel(e.method).toLowerCase()}` : ""}<small>{new Date(e.recordedAt).toLocaleString()}</small></span>
+        <span>{e.amountMinor > 0 ? "+" : "−"}{money(Math.abs(e.amountMinor))}<small>owes {money(e.balanceAfterMinor)}</small></span>
+      </li>)}</ul>
+    </div>}
+  </div>;
+}
+
+/** Owner sets what each attendant may do at the till. */
+function MemberPermissions({ companyId, member, current, online, refresh }: {
+  companyId: string; member: ShopOverview["members"][number]; current: ShopPermissions; online: boolean; refresh: () => Promise<void>;
+}) {
+  const [canDiscount, setCanDiscount] = useState(current.canDiscount);
+  const [percent, setPercent] = useState(String(current.maxDiscountBps / 100 || 10));
+  const [canCredit, setCanCredit] = useState(current.canCredit);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const dirty = canDiscount !== current.canDiscount || canCredit !== current.canCredit
+    || (canDiscount && Math.round(Number(percent) * 100) !== current.maxDiscountBps);
+  const save = async () => {
+    const bps = Math.round(Number(percent) * 100);
+    if (canDiscount && (!Number.isFinite(bps) || bps < 1 || bps > 10000)) { setError("Enter a discount limit between 0.01% and 100%."); return; }
+    setBusy(true); setError(""); setSaved(false);
+    try { await setShopMemberPermissions(companyId, member.userId, { canDiscount, maxDiscountBps: canDiscount ? bps : 0, canCredit }); setSaved(true); await refresh(); }
+    catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  return <fieldset className="shop-permissions"><legend>At the till</legend>
+    <label className="shop-check"><input type="checkbox" checked={canDiscount} disabled={busy || !online} onChange={e => { setSaved(false); setCanDiscount(e.target.checked); }} />Can give discounts</label>
+    {canDiscount && <label className="shop-field shop-percent">Up to (%)<input inputMode="decimal" value={percent} onChange={e => { setSaved(false); setPercent(e.target.value); }} disabled={busy || !online} /></label>}
+    <label className="shop-check"><input type="checkbox" checked={canCredit} disabled={busy || !online} onChange={e => { setSaved(false); setCanCredit(e.target.checked); }} />Can sell on credit and take repayments</label>
+    {(dirty || saved) && <button type="button" className="secondary-action" disabled={busy || !online || !dirty} onClick={() => void save()}>{saved && !dirty ? "Saved" : busy ? "Saving…" : "Save"}</button>}
+    {error && <p role="alert" className="shop-alert">{error}</p>}
+  </fieldset>;
+}
+
 /** Owner-only. Refunds never change the sale: they are new records that return
  * the money by the sale's own payment method and, optionally, the stock. */
 function RefundForm({ companyId, receipt, online, onDone }: { companyId: string; receipt: ShopReceipt; online: boolean; onDone: (r: ShopReceipt) => void }) {
@@ -478,14 +745,21 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
   const money = (v: number) => formatMinorAmount(v, receipt.currency);
   const left = receipt.lines.map(l => ({ ...l, left: l.quantity - (l.refundedQuantity ?? 0) })).filter(l => l.left > 0);
   const chosen = left.filter(l => (qty[l.lineNo] ?? 0) > 0);
-  const chosenMinor = chosen.reduce((n, l) => n + (qty[l.lineNo] ?? 0) * l.unitPriceMinor, 0);
+  // Same rule as the server: the first n units of a line are worth floor(n * paid / quantity).
+  const worth = (l: ShopReceipt["lines"][number], n: number) => Math.floor((n * (l.lineTotalMinor - (l.lineDiscountMinor ?? 0))) / l.quantity);
+  const chosenMinor = chosen.reduce((n, l) => n + worth(l, (l.refundedQuantity ?? 0) + qty[l.lineNo]!) - worth(l, l.refundedQuantity ?? 0), 0);
   const leftMinor = receipt.totalMinor - receipt.refundedMinor;
   const how = methodLabel(receipt.payment.method).toLowerCase();
+  const onCredit = Boolean(receipt.customer) && (receipt.tenders ?? []).some(t => t.method === "credit");
+  const route = onCredit
+    ? `It first reduces what ${receipt.customer!.name} still owes on this sale; anything more goes back as money (cash first).`
+    : receipt.payment.method === "split" ? "The money goes back as cash first, from the till."
+    : `The money goes back by ${how}${receipt.payment.method === "mobile" ? ": send it from your mobile money wallet." : receipt.payment.method === "card" ? ": reverse it on your card machine." : " from the till."}`;
 
   const send = async (whole: boolean) => {
     if (!reason.trim()) { setError("Say why this is being refunded."); return; }
     const amount = whole ? leftMinor : chosenMinor;
-    if (!window.confirm(`Refund ${money(amount)} by ${how}? This can't be undone.`)) return;
+    if (!window.confirm(`Refund ${money(amount)}? ${route} This can't be undone.`)) return;
     const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
       ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
     const body = JSON.stringify(request);
@@ -505,7 +779,7 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
   return <form className="shop-refund" onSubmit={e => { e.preventDefault(); void send(false); }}>
     <h3>Refund from receipt #{receipt.receiptNumber}</h3>
     <ul className="shop-product-list">{left.map(l => <li key={l.lineNo}>
-      <div><strong>{l.name}</strong><span>{l.left} can be refunded · {money(l.unitPriceMinor)} each</span></div>
+      <div><strong>{l.name}</strong><span>{l.left} can be refunded · {money(l.unitPriceMinor)} each{l.lineDiscountMinor ? " before discount" : ""}</span></div>
       <div className="shop-stepper">
         <button type="button" className="secondary-action" aria-label={`Refund one less ${l.name}`} disabled={!qty[l.lineNo]} onClick={() => setQty(q => ({ ...q, [l.lineNo]: (q[l.lineNo] ?? 0) - 1 }))}><Minus aria-hidden="true" /></button>
         <output aria-label={`${l.name} to refund`}>{qty[l.lineNo] ?? 0}</output>
@@ -513,7 +787,7 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
       </div></li>)}</ul>
     <label className="shop-field">Reason<input value={reason} onChange={e => setReason(e.target.value)} maxLength={200} placeholder="e.g. customer returned it, keyed by mistake" /></label>
     <label className="shop-check"><input type="checkbox" checked={restock} onChange={e => setRestock(e.target.checked)} />Put the items back in stock (untick if damaged)</label>
-    <p className="shop-muted">The money goes back by {how}{receipt.payment.method === "mobile" ? ": send it from your mobile money wallet." : receipt.payment.method === "card" ? ": reverse it on your card machine." : " from the till."}</p>
+    <p className="shop-muted">{route}</p>
     <div className="shop-actions">
       <button className="primary-action" disabled={busy || !online || !chosen.length}>{busy ? "Refunding…" : `Refund ${money(chosenMinor)}`}</button>
       <button type="button" className="secondary-action shop-void" disabled={busy || !online} onClick={() => void send(true)}>Void whole sale ({money(leftMinor)})</button>

@@ -11,6 +11,47 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
+## Update — the full till in the shared shop (built, on the test project, not yet on production)
+
+**Why:** a competitor review (Stockdey) showed the biggest gap was having two systems. The shared shop synced staff and stores but was a bare till; the phone's own books had credit and discounts but only for one person. The shared shop now has both.
+
+Built in `supabase/migrations/20261106090000_shared_shop_full_till.sql`. Every rule is enforced on the server.
+
+**Discounts**
+- Applied per sale, and a reason is required.
+- The owner can always give one. An attendant only can if the owner allowed it, up to that attendant's own maximum percentage (Team tab).
+- The discount is spread across the lines, so refunds pay back exactly what was paid, rounding included.
+
+**Split payments**
+- Up to 5 parts per sale (cash, mobile money, card, credit), which must add up to the total.
+- Change comes only from cash, and mobile money needs its reference.
+
+**Credit**
+- Only to a named customer of this business, within the credit limit the owner set.
+- Only the owner, or an attendant the owner allowed, can sell on credit.
+- Attendants can register a new customer, but only the owner sets how much they may owe. Until then the customer can't buy on credit.
+- Balances change only through permanent entries: a credit sale, a repayment, or a refund.
+
+**Repayments**
+- Each repayment is recorded once, even if retried.
+- A repayment can't be more than what the customer owes.
+- Each customer has a statement (Customers tab).
+
+**Refunds on credit sales:** a refund first reduces what the customer still owes on that sale, and the rest goes back as money (cash first).
+
+**Compatibility:** sales queued on phones in the earlier single-payment format still go through, using the earlier duplicate-check calculation.
+
+**Evidence**
+- `qa/shared-shop-full-till.test.mjs`: 4 tests on real Postgres.
+- The earlier ledger and refund/import tests now also run with this migration applied.
+- 5 new screen tests in `SharedShopPage.test.tsx`.
+- Test project: migration applied, and the hosted dry run extended with a full-till stage gave `DRYRUN PASS: 10 journey stages verified`.
+
+**Not done**
+- Production database and site deploy (waiting for the owner's go-ahead).
+- Screens not reviewed at phone width in a real browser.
+- No customer statement print or share yet.
+
 ## Update — refunds/voids and one set of books (live on production)
 
 **Refunds and voids (blocker 1).** `supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql`, action `refundSale`.

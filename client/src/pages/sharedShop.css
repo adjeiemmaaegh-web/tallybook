@@ -107,3 +107,26 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-refund h3 { margin: 0; font-size: 1rem; }
 .shop-sales s { font-weight: 500; opacity: .6; margin-right: 4px; }
 .shop-void { color: #a12020; }
+
+/* Full till: discount, credit, split, customers, permissions */
+.shop-segment-wrap { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+.shop-subtotal { padding: 4px 0; border: 0; color: var(--ta-muted); font-size: .9rem; }
+.shop-discount, .shop-credit, .shop-split { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--ta-canvas); }
+.shop-discount-open { justify-self: start; }
+.shop-tenders li { font-size: .9rem; }
+.shop-customer-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shop-customer-row > span { display: grid; gap: 2px; }
+.shop-customer-row > span:last-child { text-align: right; }
+.shop-customer-row small { color: var(--ta-muted); font-size: .8rem; font-weight: 500; }
+.shop-owes { color: #8a4b00; font-weight: 800; }
+.shop-customer-detail { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--ta-line); }
+.shop-customer-detail h3, .shop-statement h3 { margin: 0; font-size: .95rem; }
+.shop-statement ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.shop-statement li { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; }
+.shop-statement li > span { display: grid; gap: 2px; }
+.shop-statement li > span:last-child { text-align: right; font-weight: 700; }
+.shop-statement small { color: var(--ta-muted); font-weight: 500; font-size: .78rem; }
+.shop-permissions { display: grid; gap: 6px; margin: 0; padding: 10px 12px; border: 1px solid var(--ta-line); border-radius: 10px; }
+.shop-permissions legend { padding: 0 4px; font-size: .8rem; font-weight: 800; color: var(--ta-muted); }
+.shop-percent input { max-width: 120px; }
+.shop-permissions .secondary-action { justify-self: start; }

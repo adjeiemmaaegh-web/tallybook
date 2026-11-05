@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SaleRequest, ShopOverview, ShopReceipt } from "@/cloud/shopClient";
 
-const shop = vi.hoisted(() => ({ overview: vi.fn(), record: vi.fn(), sales: vi.fn(), refund: vi.fn() }));
+const shop = vi.hoisted(() => ({ overview: vi.fn(), record: vi.fn(), sales: vi.fn(), refund: vi.fn(), repay: vi.fn(), statement: vi.fn(), perms: vi.fn(), customer: vi.fn() }));
 vi.mock("@/lib/supabase", () => ({
   isSupabaseConfigured: true,
   getSupabaseClient: () => ({ auth: {
@@ -18,6 +18,10 @@ vi.mock("@/cloud/shopClient", async (orig) => ({
   recordShopSale: (_c: string, sale: SaleRequest) => shop.record(sale),
   listShopSales: shop.sales,
   refundShopSale: (_c: string, refund: unknown) => shop.refund(refund),
+  recordShopRepayment: (_c: string, repayment: unknown) => shop.repay(repayment),
+  getCustomerStatement: shop.statement,
+  setShopMemberPermissions: (_c: string, userId: string, permissions: unknown) => shop.perms(userId, permissions),
+  saveShopCustomer: (_c: string, customer: unknown) => shop.customer(customer),
 }));
 
 import SharedShopPage from "./SharedShopPage";
@@ -42,6 +46,8 @@ beforeEach(() => {
   localStorage.clear();
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
   shop.overview.mockReset(); shop.record.mockReset(); shop.sales.mockReset(); shop.refund.mockReset();
+  shop.repay.mockReset(); shop.statement.mockReset(); shop.perms.mockReset(); shop.customer.mockReset();
+  shop.statement.mockResolvedValue({ id: "c1", name: "Ama", phone: null, creditLimitMinor: 20000, balanceMinor: 6000, entries: [] });
   shop.overview.mockResolvedValue(base);
   shop.sales.mockResolvedValue([]);
 });
@@ -78,7 +84,8 @@ describe("shared shop — attendant", () => {
     expect(within(receipt).getByText(/Sale recorded/)).toBeInTheDocument();
     expect(within(receipt).getByText(/Change/)).toBeInTheDocument();
     const sent = shop.record.mock.calls[0]![0] as SaleRequest;
-    expect(sent).toMatchObject({ storeId: "st-a", paymentMethod: "cash", amountTenderedMinor: 10000, lines: [{ productId: "eggs", quantity: 2 }] });
+    expect(sent).toMatchObject({ storeId: "st-a", tenders: [{ method: "cash", amountMinor: 9000, tenderedMinor: 10000 }], lines: [{ productId: "eggs", quantity: 2 }] });
+    expect(sent).not.toHaveProperty("discountMinor");
     expect(sent).not.toHaveProperty("totalMinor"); // the server prices the sale
   });
 
@@ -195,5 +202,99 @@ describe("shared shop — owner refunds", () => {
     fireEvent.click(await screen.findByRole("button", { name: "My sales" }));
     fireEvent.click(await screen.findByRole("button", { name: /#9/ }));
     expect(screen.queryByRole("button", { name: /Refund or void/ })).toBeNull();
+  });
+});
+
+describe("shared shop — full till", () => {
+  const ama = { id: "c1", name: "Ama", phone: "0240000001", creditLimitMinor: 15000, balanceMinor: 6000 };
+  const attendantWith = (permissions: { canDiscount: boolean; maxDiscountBps: number; canCredit: boolean }) =>
+    shop.overview.mockResolvedValue({ ...base, myPermissions: permissions, customers: permissions.canCredit ? [ama] : [] });
+  const addEggs = async (n = 2) => { const add = await screen.findByRole("button", { name: "Add one Crate of eggs" }); for (let i = 0; i < n; i++) fireEvent.click(add); };
+  const pay = (name: string) => fireEvent.click(within(screen.getByRole("group", { name: "Payment method" })).getByRole("button", { name }));
+
+  it("hides discount and credit from an attendant the owner hasn't allowed", async () => {
+    attendantWith({ canDiscount: false, maxDiscountBps: 0, canCredit: false });
+    render(<SharedShopPage />);
+    await addEggs();
+    expect(screen.queryByRole("button", { name: "Add discount" })).toBeNull();
+    expect(within(screen.getByRole("group", { name: "Payment method" })).queryByRole("button", { name: "Credit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Customers" })).toBeNull();
+  });
+
+  it("gives a discount within the attendant's limit, with a reason, and pays it split between cash and mobile money", async () => {
+    attendantWith({ canDiscount: true, maxDiscountBps: 1000, canCredit: false });
+    shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale));
+    render(<SharedShopPage />);
+    await addEggs(); // 90.00
+    fireEvent.click(screen.getByRole("button", { name: "Add discount" }));
+    fireEvent.change(screen.getByLabelText(/Discount \(GHS\)/), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/more than|up to 10%/);
+    fireEvent.change(screen.getByLabelText(/Discount \(GHS\)/), { target: { value: "9" } });
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Say why you are giving this discount.");
+    fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Regular customer" } });
+    pay("Split");
+    fireEvent.change(screen.getByLabelText("Cash"), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText("Mobile money"), { target: { value: "30" } });
+    fireEvent.change(screen.getByLabelText("Mobile money reference"), { target: { value: "MP1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/parts add up to GH.*80.*total is GH.*81/);
+    expect(shop.record).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Mobile money"), { target: { value: "31" } });
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    await screen.findByLabelText("Receipt 7");
+    expect(shop.record.mock.calls[0]![0]).toMatchObject({ discountMinor: 900, discountReason: "Regular customer",
+      tenders: [{ method: "cash", amountMinor: 5000 }, { method: "mobile", amountMinor: 3100, reference: "MP1" }] });
+  });
+
+  it("sells on credit to a customer, part paid now, and refuses what would go over their limit before sending", async () => {
+    attendantWith({ canDiscount: false, maxDiscountBps: 0, canCredit: true });
+    shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale));
+    render(<SharedShopPage />);
+    await addEggs(3); // 135.00; Ama owes 60 of 150 allowed
+    pay("Credit");
+    fireEvent.change(screen.getByLabelText("Customer"), { target: { value: "c1" } });
+    expect(screen.getByText(/Owes GH.*60\.00 of GH.*150\.00 allowed/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/can owe up to .* already owes/);
+    expect(shop.record).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Paid now/), { target: { value: "45" } });
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    await screen.findByLabelText("Receipt 7");
+    expect(shop.record.mock.calls[0]![0]).toMatchObject({ tenders: [{ method: "cash", amountMinor: 4500 }, { method: "credit", amountMinor: 9000, customerId: "c1" }] });
+  });
+
+  it("records a customer's repayment once, reusing the key after a dropped connection", async () => {
+    attendantWith({ canDiscount: false, maxDiscountBps: 0, canCredit: true });
+    shop.repay.mockRejectedValueOnce(new ShopUnreachableError("offline")).mockResolvedValueOnce({ ...ama, balanceMinor: 1000, replayed: false });
+    render(<SharedShopPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Customers" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ama/ }));
+    expect(screen.queryByLabelText(/Can owe up to/)).toBeNull(); // only the owner sets limits
+    fireEvent.change(screen.getByLabelText(/^Amount/), { target: { value: "70" } });
+    fireEvent.click(screen.getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("only owes");
+    fireEvent.change(screen.getByLabelText(/^Amount/), { target: { value: "50" } });
+    fireEvent.click(screen.getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByText(/Nothing was recorded yet/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByText(/now owes GH.*10\.00/)).toBeInTheDocument();
+    const [first, second] = shop.repay.mock.calls.map(c => c[0] as { repaymentKey: string; amountMinor: number });
+    expect(second!.repaymentKey).toBe(first!.repaymentKey);
+    expect(first!.amountMinor).toBe(5000);
+  });
+
+  it("lets the owner set what each attendant may do at the till", async () => {
+    shop.overview.mockResolvedValue({ ...base, role: "owner", customers: [],
+      members: [{ userId: "att-2", role: "attendant", email: "kofi@demo.test", storeIds: ["st-a"] }], memberPermissions: {} });
+    shop.perms.mockResolvedValue({ canDiscount: true, maxDiscountBps: 500, canCredit: true });
+    render(<SharedShopPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Team" }));
+    fireEvent.click(await screen.findByLabelText("Can give discounts"));
+    fireEvent.change(screen.getByLabelText("Up to (%)"), { target: { value: "5" } });
+    fireEvent.click(screen.getByLabelText("Can sell on credit and take repayments"));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(shop.perms).toHaveBeenCalledWith("att-2", { canDiscount: true, maxDiscountBps: 500, canCredit: true }));
   });
 });

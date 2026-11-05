@@ -1,6 +1,6 @@
 # Supabase migration verification
 
-`supabase/migrations` mirrors production project `qfyydfxwvifdvffdfgeu` (checked against `supabase_migrations.schema_migrations` on 5 November 2026). Every file matches a recorded production version. The old `001`–`003` `tb_*` files were never applied anywhere and now live in `docs/history/unapplied-migrations/`. Do not re-apply recorded migrations manually. The test project is documented in `supabase/test-project/README.md`.
+`supabase/migrations` mirrors production project `qfyydfxwvifdvffdfgeu` (checked against `supabase_migrations.schema_migrations` on 5 November 2026). Every file matches a recorded production version, except `20261106090000_shared_shop_full_till.sql`, which is applied on the test project and waiting for the owner's go-ahead for production (it will be renamed to its recorded production version when applied). The old `001`–`003` `tb_*` files were never applied anywhere and now live in `docs/history/unapplied-migrations/`. Do not re-apply recorded migrations manually. The test project is documented in `supabase/test-project/README.md`.
 
 `20261013123347_business_identity.sql` creates the ownership foundation only. It does not upload local data or create cloud bookkeeping records. The authenticated caller becomes the owner through an atomic function; callers cannot write membership tables directly.
 

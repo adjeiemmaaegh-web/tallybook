@@ -136,6 +136,40 @@ begin
     'sourceKey', 'device:dryrun', 'currency', 'NGN', 'products', jsonb_build_array(jsonb_build_object('localId', 'p9', 'name', 'X', 'unitPriceMinor', 1))), 'Nothing was imported');
   steps := steps + 1;
 
+  -- Full till: discount within the attendant's limit, split cash + credit to a
+  -- customer within the owner's limit, exactly-once repayment, refund cancels debt first.
+  perform pg_temp.as_user('tallybook_shop', owner, s_owner, 'setMemberPermissions', jsonb_build_object('companyId', biz,
+    'userId', attendant, 'canDiscount', true, 'maxDiscountBps', 1000, 'canCredit', true));
+  inv := jsonb_build_object('companyId', biz, 'customerId', gen_random_uuid(), 'name', 'Dry run customer', 'creditLimitMinor', 10000);
+  perform pg_temp.as_user('tallybook_shop', owner, s_owner, 'saveCustomer', inv);
+  perform pg_temp.refused('tallybook_shop', attendant, s_att, 'recordSale', jsonb_build_object('companyId', biz, 'storeId', store_a,
+    'submissionKey', replace(gen_random_uuid()::text, '-', ''), 'lines', jsonb_build_array(jsonb_build_object('productId', eggs, 'quantity', 2)),
+    'discountMinor', 2000, 'discountReason', 'Too much', 'tenders', jsonb_build_array(jsonb_build_object('method', 'cash', 'amountMinor', 7000))), 'allowed to give');
+  sale := jsonb_build_object('companyId', biz, 'storeId', store_a, 'submissionKey', replace(gen_random_uuid()::text, '-', ''),
+    'lines', jsonb_build_array(jsonb_build_object('productId', eggs, 'quantity', 2)), 'discountMinor', 500, 'discountReason', 'Regular',
+    'tenders', jsonb_build_array(jsonb_build_object('method', 'cash', 'amountMinor', 2000),
+      jsonb_build_object('method', 'credit', 'amountMinor', 6500, 'customerId', inv->>'customerId')));
+  r := pg_temp.as_user('tallybook_shop', attendant, s_att, 'recordSale', sale);
+  if (r->>'totalMinor')::int <> 8500 or (r->'customer'->>'balanceMinor')::int <> 6500 or r->'payment'->>'method' <> 'split'
+  then raise exception 'full till sale wrong: %', r; end if;
+  if not (pg_temp.as_user('tallybook_shop', attendant, s_att, 'recordSale', sale)->>'replayed')::boolean then raise exception 'till retry not replayed'; end if;
+  perform pg_temp.refused('tallybook_shop', attendant, s_att, 'recordSale', jsonb_build_object('companyId', biz, 'storeId', store_a,
+    'submissionKey', replace(gen_random_uuid()::text, '-', ''), 'lines', jsonb_build_array(jsonb_build_object('productId', eggs, 'quantity', 1)),
+    'tenders', jsonb_build_array(jsonb_build_object('method', 'credit', 'amountMinor', 4500, 'customerId', inv->>'customerId'))), 'can owe up to');
+  err := replace(gen_random_uuid()::text, '-', '');
+  perform pg_temp.as_user('tallybook_shop', attendant, s_att, 'recordRepayment', jsonb_build_object('companyId', biz,
+    'customerId', inv->>'customerId', 'repaymentKey', err, 'amountMinor', 1500, 'method', 'mobile', 'reference', 'DRY1'));
+  if not (pg_temp.as_user('tallybook_shop', attendant, s_att, 'recordRepayment', jsonb_build_object('companyId', biz,
+    'customerId', inv->>'customerId', 'repaymentKey', err, 'amountMinor', 1500, 'method', 'mobile', 'reference', 'DRY1'))->>'replayed')::boolean
+  then raise exception 'repayment retry not replayed'; end if;
+  r := pg_temp.as_user('tallybook_shop', owner, s_owner, 'refundSale', jsonb_build_object('companyId', biz, 'saleId', r->>'saleId',
+    'refundKey', replace(gen_random_uuid()::text, '-', ''), 'reason', 'Dry run till void'));
+  if (r->'refunds'->0->>'creditMinor')::int <> 5000 or (r->'refunds'->0->>'amountMinor')::int <> 8500
+     or (r->'customer'->>'balanceMinor')::int <> 0
+  then raise exception 'till refund wrong: %', r; end if;
+  if (select count(*) from public.shop_customer_entries where business_id = biz) <> 3 then raise exception 'customer entries wrong'; end if;
+  steps := steps + 1;
+
   -- Revocation removes store access in the same transaction.
   perform pg_temp.as_user('tallybook_membership', owner, s_owner, 'revokeMember', jsonb_build_object('companyId', biz, 'targetUserId', attendant));
   if exists (select 1 from public.shop_store_assignments where user_id = attendant) then raise exception 'assignment survived revoke'; end if;
