@@ -18,7 +18,7 @@ async function setup() {
   await db.exec(sql('supabase/migrations/20261013123347_business_identity.sql'));
   await db.exec(`create or replace function auth.uid() returns uuid language sql as $$select (current_setting('test.claims')::jsonb->>'sub')::uuid$$;
     create function auth.jwt() returns jsonb language sql as $$select current_setting('test.claims')::jsonb$$;`);
-  await db.exec(sql('docs/security/stakeholder_membership_candidate.sql'));
+  await db.exec(sql('supabase/migrations/20261105022238_stakeholder_session_bound_membership.sql'));
   await db.exec(sql('supabase/migrations/20261105100000_shared_shop_ledger.sql'));
   const people = {};
   for (const name of ['owner', 'attendant', 'rival', 'stranger']) {

@@ -19,8 +19,10 @@ As lead/manager I chose the **server-authoritative shared shop** for multi-user 
 | B4 hard-coded production URL | **Fixed.** The database operation is the default on every project; only an explicit QA endpoint uses HTTP |
 | Voice input | **Fixed 2 bugs.** Words lost on iOS Safari/early stop ("didn't hear anything"); duplicated words on Android Chrome |
 | Business setup UX | Dead end for attendants removed ("Open shared shop"); email instead of account ID; consistent buttons |
-| B3 migration drift | **Open.** Needs the live project's `supabase_migrations.schema_migrations` to place the invitation SQL under its recorded version |
-| Applying to Supabase | **Open.** Needs dashboard access: apply to test project `lmneuqxfyxplrxjswpma`, run the hosted journey with 2 demo accounts, then production `qfyydfxwvifdvffdfgeu` |
+| B3 migration drift | **Fixed.** `supabase/migrations` now mirrors production's recorded history exactly (3 missing migrations added under their real versions; the never-applied `001`–`003` `tb_*` files moved to `docs/history/unapplied-migrations/`) |
+| Hosted test | **Passed** on test project `lmneuqxfyxplrxjswpma` after bringing it to production parity: `qa/supabase-shop-dryrun.sql`, running as the real `authenticated`/`anon` roles, gave `DRYRUN PASS: 7 journey stages verified`, rolled back with 0 rows left. Covers setup, invite by email, wrong-account accept refused, unassigned/other-store/owner-only/stranger/expired-session refusals, sale, retry replayed, changed retry refused, oversell refused, exactly one sale/payment/movement, stock 5→3, no direct table or anon access, revocation removes store access |
+| Production database | **Pending owner go-ahead.** Production `qfyydfxwvifdvffdfgeu` matches the tested baseline (5 migrations, 6 users, 1 business, 0 attendants). Applying the additive shared-shop migration there needs explicit approval |
+| Auth setting | Supabase advisor: leaked-password protection is **off**. Owner should enable it (Authentication → Policies) |
 | Frontend deploy | **Open.** `vercel.json` disables git deploys; deploy after the migration is live (until then `/shop` says the server doesn't support it yet) |
 
 New evidence: `qa/shared-shop-ledger.test.mjs` runs the full owner→attendant journey on real PostgreSQL (PGlite). `client/src/cloud/shopOutbox.test.ts` (6) and `client/src/pages/SharedShopPage.test.tsx` (6) cover the client. Screens were reviewed at 1280 px and 390 px in Edge.
