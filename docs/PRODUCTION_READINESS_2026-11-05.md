@@ -49,6 +49,7 @@ Built in `supabase/migrations/20261105120712_shared_shop_full_till.sql`. Every r
 
 **Live**
 - Production database: applied with owner approval as `20261105120712`. All 8 function bodies match the repo (comment- and whitespace-insensitive md5). The 10-stage rollback dry run passed on production, with data unchanged afterwards (6 users, 1 business, 0 sales, 0 customers).
+- Frontend: `main` @ `87a5700` deployed (`dpl_7VtV1oXkSYUcNcshsBKDAdr4SRLQ`, READY, bundle `index-BLfQDtrq.js`). `/shop` loads with no console errors and shows the update notice to browsers on the old build. The live API refuses anonymous `recordRepayment` calls and anonymous reads of `shop_customers` (42501).
 
 **Not done**
 - Screens not reviewed at phone width in a real browser.
