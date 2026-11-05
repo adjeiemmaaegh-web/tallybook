@@ -3,7 +3,7 @@
  * `lang` (not `language`), reports interim then final results, can fail with the same error codes, and always fires `onend`.
  * The real page and the real useVoiceInput hook run against it.
  */
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AssistantReply } from "@/features/assistant";
 
@@ -19,7 +19,7 @@ import AssistantPage from "@/pages/AssistantPage";
 type Handler<T> = ((event: T) => void) | null;
 class FakeRecognition {
   static instances: FakeRecognition[] = [];
-  lang = ""; continuous = true; interimResults = false; maxAlternatives = 0;
+  lang = ""; continuous = true; interimResults = false; maxAlternatives = 0; processLocally?: boolean;
   started = 0; stopped = 0; aborted = 0;
   onstart: Handler<undefined> = null; onresult: Handler<unknown> = null; onerror: Handler<{ error: string }> = null; onend: Handler<undefined> = null;
   constructor() { FakeRecognition.instances.push(this); }
@@ -209,11 +209,11 @@ describe("voice input — when it can't work, the owner is told why", () => {
     expect(alertText()).toMatch(/didn't hear anything/);
   });
 
-  it("says so, without starting the engine, when the device is offline", () => {
+  it("offline, without on-device voice, points to the keyboard microphone instead of starting the engine", () => {
     Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
     render(<AssistantPage />);
     fireEvent.click(mic());
-    expect(alertText()).toMatch(/needs an internet connection/);
+    expect(alertText()).toMatch(/You're offline\. Tap the microphone on your phone's keyboard/);
     expect(FakeRecognition.instances).toHaveLength(0);
   });
 
@@ -264,5 +264,68 @@ describe("voice input — cleanup", () => {
     act(() => first.finish());
     expect(mic()).toHaveAccessibleName("Stop listening"); // still listening to the second session
     expect(second.aborted).toBe(0);
+  });
+});
+
+describe("voice input — offline on this phone (on-device recognition)", () => {
+  type Status = "available" | "downloadable" | "downloading" | "unavailable";
+  const withOnDevice = (initial: Status, afterInstall: Status = "available") => {
+    let status: Status = initial;
+    const available = vi.fn(async (_options: { langs: string[]; processLocally: boolean }) => status);
+    const install = vi.fn(async (_options: { langs: string[]; processLocally: boolean }) => { status = afterInstall; return afterInstall === "available"; });
+    Object.assign(FakeRecognition, { available, install });
+    return { available, install };
+  };
+  afterEach(() => { delete (FakeRecognition as unknown as { available?: unknown }).available; delete (FakeRecognition as unknown as { install?: unknown }).install; });
+
+  it("says it works offline once the language is on the phone, and uses it with no connection", async () => {
+    const { available } = withOnDevice("available");
+    render(<AssistantPage />);
+    expect(await screen.findByText(/Works offline on this phone too/)).toBeInTheDocument();
+    expect(available).toHaveBeenCalledWith({ langs: [expect.any(String)], processLocally: true });
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    fireEvent.click(mic());
+    expect(current().started).toBe(1);
+    expect(current().processLocally).toBe(true);
+  });
+
+  it("online, keeps using the browser's more accurate speech service", async () => {
+    withOnDevice("available");
+    render(<AssistantPage />);
+    await screen.findByText(/Works offline on this phone too/);
+    fireEvent.click(mic());
+    expect(current().processLocally).toBeUndefined();
+  });
+
+  it("offers the download only on the owner's tap, then works offline", async () => {
+    const { install } = withOnDevice("downloadable");
+    render(<AssistantPage />);
+    const download = await screen.findByRole("button", { name: "Download voice for offline use" });
+    expect(install).not.toHaveBeenCalled();
+    fireEvent.click(download);
+    await waitFor(() => expect(install).toHaveBeenCalledWith({ langs: [expect.any(String)], processLocally: true }));
+    expect(await screen.findByText(/Works offline on this phone too/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /offline voice|offline use/ })).toBeNull();
+  });
+
+  it("says so when the download fails, and keeps the button", async () => {
+    withOnDevice("downloadable", "downloadable");
+    render(<AssistantPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Download voice for offline use" }));
+    expect(await screen.findByText(/didn't download/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download voice for offline use" })).toBeInTheDocument();
+  });
+
+  it("shows no download where the language can't run on the phone, or the check fails", async () => {
+    const { available } = withOnDevice("unavailable");
+    const { unmount } = render(<AssistantPage />);
+    await waitFor(() => expect(available).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: /offline use/ })).toBeNull();
+    expect(screen.getByText(/offline, use the microphone on your phone's keyboard/)).toBeInTheDocument();
+    unmount();
+    available.mockRejectedValue(new Error("blocked by policy"));
+    render(<AssistantPage />);
+    await waitFor(() => expect(available).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("button", { name: /offline use/ })).toBeNull();
   });
 });

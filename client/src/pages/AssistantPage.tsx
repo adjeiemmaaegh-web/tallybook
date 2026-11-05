@@ -237,8 +237,16 @@ function CompanyScopedAssistant() {
       {voice.supported && (
         <div className="assistant-voice-row">
           <p className={voice.error ? "assistant-voice-note assistant-voice-error" : "assistant-voice-note"} role={voice.error ? "alert" : "status"}>
-            {voice.error ?? (voice.listening ? "Listening… tap the microphone when you finish." : voiceNote ?? "Tap the microphone and speak. Voice typing needs an internet connection.")}
+            {voice.error ?? (voice.listening ? "Listening… tap the microphone when you finish." : voiceNote ?? (voice.offline === "ready"
+              ? "Tap the microphone and speak. Works offline on this phone too."
+              : "Tap the microphone and speak. This needs internet; offline, use the microphone on your phone's keyboard."))}
           </p>
+          {(voice.offline === "downloadable" || voice.offline === "downloading" || voice.preparing) && (
+            <button type="button" className="secondary-action assistant-voice-offline" onClick={() => void voice.prepareOffline()}
+              disabled={voice.preparing || voice.offline === "downloading" || voice.listening || (typeof navigator !== "undefined" && navigator.onLine === false)}>
+              {voice.preparing || voice.offline === "downloading" ? "Downloading offline voice…" : "Download voice for offline use"}
+            </button>
+          )}
           <select className="assistant-voice-language" aria-label="Voice language" value={voiceLanguage} onChange={(event) => { setVoiceLanguage(event.target.value); rememberVoiceLanguage(event.target.value); }} disabled={voice.listening}>
             {VOICE_LANGUAGES.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
           </select>

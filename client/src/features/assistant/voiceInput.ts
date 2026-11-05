@@ -6,6 +6,10 @@
  *
  * Honest limits: in most browsers recognition needs an internet connection even though the rest of the Assistant works offline,
  * and some installed-app (PWA) modes block it. When it can't work, the owner is told why instead of seeing a button that does nothing.
+ *
+ * Offline: newer Chrome can recognise speech on the device once a language pack is downloaded (`SpeechRecognition.available()` /
+ * `install()` with `processLocally`, still experimental). Where that exists the owner can download it and speak offline; everywhere
+ * else, offline, they are pointed to the microphone key on their phone's keyboard, which can do voice typing without internet.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -15,6 +19,8 @@ export interface SpeechRecognitionLike {
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
+  /** On-device only (experimental). Absent in browsers that can't do it. */
+  processLocally?: boolean;
   start(): void;
   stop(): void;
   abort(): void;
@@ -27,7 +33,32 @@ export interface SpeechRecognitionEventLike {
   resultIndex: number;
   results: ArrayLike<ArrayLike<{ transcript: string; confidence: number }> & { isFinal: boolean }>;
 }
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+interface OnDeviceOptions { langs: string[]; processLocally: true }
+type SpeechRecognitionConstructor = (new () => SpeechRecognitionLike) & {
+  available?: (options: OnDeviceOptions) => Promise<string>;
+  install?: (options: OnDeviceOptions) => Promise<boolean>;
+};
+
+/** Whether this browser can recognise `language` with no internet connection. */
+export type OfflineVoiceStatus = "ready" | "downloadable" | "downloading" | "unsupported";
+
+export async function checkOfflineVoice(language: string): Promise<OfflineVoiceStatus> {
+  const Recognition = getSpeechRecognition();
+  if (typeof Recognition?.available !== "function") return "unsupported";
+  try {
+    const status = await Recognition.available({ langs: [language], processLocally: true });
+    return status === "available" ? "ready" : status === "downloadable" || status === "downloading" ? status : "unsupported";
+  } catch { return "unsupported"; }
+}
+
+/** Downloads the on-device language pack. Only ever called from the owner's own tap. */
+export async function installOfflineVoice(language: string): Promise<boolean> {
+  const Recognition = getSpeechRecognition();
+  if (typeof Recognition?.install !== "function") return false;
+  try { return await Recognition.install({ langs: [language], processLocally: true }); } catch { return false; }
+}
+
+export const OFFLINE_KEYBOARD_HINT = "You're offline. Tap the microphone on your phone's keyboard to speak instead: phone keyboards can do voice typing without internet.";
 
 export function getSpeechRecognition(): SpeechRecognitionConstructor | undefined {
   if (typeof window === "undefined") return undefined;
@@ -69,7 +100,7 @@ export function describeVoiceError(code: string): string | null {
     case "audio-capture": return "I couldn't find a working microphone on this device.";
     case "not-allowed": return "Microphone access is blocked. Allow the microphone for this site in your browser settings, then try again.";
     case "service-not-allowed": return "This browser or installed app won't allow voice typing here. You can use the microphone key on your phone's keyboard instead.";
-    case "network": return "Voice typing needs an internet connection, because the browser sends your voice to its speech service. You can still type.";
+    case "network": return "Voice typing needs an internet connection here, because the browser sends your voice to its speech service. You can type, or use the microphone on your phone's keyboard.";
     case "language-not-supported": return "This browser doesn't support that language for voice typing. Try a different language.";
     default: return `Voice typing stopped (${code}). You can still type your message.`;
   }
@@ -89,20 +120,44 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState<OfflineVoiceStatus>("unsupported");
+  const [preparing, setPreparing] = useState(false);
+  const offlineRef = useRef<OfflineVoiceStatus>("unsupported");
+  offlineRef.current = offline;
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
+
+  useEffect(() => {
+    let live = true;
+    setOffline("unsupported");
+    if (supported) void checkOfflineVoice(language).then((status) => { if (live) setOffline(status); });
+    return () => { live = false; };
+  }, [language, supported]);
+
+  const prepareOffline = useCallback(async () => {
+    setPreparing(true); setError(null);
+    try {
+      const done = await installOfflineVoice(language);
+      const status = await checkOfflineVoice(language);
+      setOffline(status);
+      if (!done && status !== "ready") setError("The offline voice didn't download. Try again later on Wi-Fi.");
+    } finally { setPreparing(false); }
+  }, [language]);
 
   const stop = useCallback(() => { recognitionRef.current?.stop(); }, []);
 
   const start = useCallback(() => {
     const Recognition = getSpeechRecognition();
     if (!Recognition) { setError("This browser can't do voice typing. You can use the microphone key on your phone's keyboard instead."); return; }
-    if (typeof navigator !== "undefined" && navigator.onLine === false) { setError(describeVoiceError("network")); return; }
+    const offlineNow = typeof navigator !== "undefined" && navigator.onLine === false;
+    if (offlineNow && offlineRef.current !== "ready") { setError(OFFLINE_KEYBOARD_HINT); return; }
     recognitionRef.current?.abort();
 
     const recognition = new Recognition();
     recognition.lang = language;
+    // Online, the browser's speech service is the most accurate. Offline, use the downloaded on-device pack.
+    if (offlineNow) recognition.processLocally = true;
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -163,5 +218,5 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
 
   useEffect(() => () => { const recognition = recognitionRef.current; recognitionRef.current = null; recognition?.abort(); }, []);
 
-  return { supported, status, listening: status !== "idle", interim, error, start, stop, clearError: () => setError(null) };
+  return { supported, status, listening: status !== "idle", interim, error, start, stop, clearError: () => setError(null), offline, preparing, prepareOffline };
 }

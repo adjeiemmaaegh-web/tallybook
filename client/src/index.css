@@ -994,6 +994,7 @@ body { background: var(--ta-canvas); color: var(--ta-ink); font-family: var(--fo
 .assistant-voice-note { margin: 0; font-size: 0.82rem; color: var(--ink-soft, #5b6460); flex: 1 1 220px; }
 .assistant-voice-error { color: var(--clay, #a4472b); font-weight: 600; }
 .assistant-voice-language { font-size: 0.82rem; padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.18); background: transparent; color: inherit; }
+.assistant-voice-offline { font-size: 0.82rem; padding: 4px 10px; min-height: 32px; }
 @keyframes assistant-mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(164, 71, 43, 0.45); } 50% { box-shadow: 0 0 0 8px rgba(164, 71, 43, 0); } }
 .assistant-mic-live { animation: assistant-mic-pulse 1.4s ease-out infinite; }
 @media (prefers-reduced-motion: reduce) { .assistant-mic-live { animation: none; } }
