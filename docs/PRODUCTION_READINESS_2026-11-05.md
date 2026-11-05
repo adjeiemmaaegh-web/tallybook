@@ -11,11 +11,11 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
-## Update — the full till in the shared shop (built, on the test project, not yet on production)
+## Update — the full till in the shared shop (live on production)
 
 **Why:** a competitor review (Stockdey) showed the biggest gap was having two systems. The shared shop synced staff and stores but was a bare till; the phone's own books had credit and discounts but only for one person. The shared shop now has both.
 
-Built in `supabase/migrations/20261106090000_shared_shop_full_till.sql`. Every rule is enforced on the server.
+Built in `supabase/migrations/20261105120712_shared_shop_full_till.sql`. Every rule is enforced on the server.
 
 **Discounts**
 - Applied per sale, and a reason is required.
@@ -47,8 +47,10 @@ Built in `supabase/migrations/20261106090000_shared_shop_full_till.sql`. Every r
 - 5 new screen tests in `SharedShopPage.test.tsx`.
 - Test project: migration applied, and the hosted dry run extended with a full-till stage gave `DRYRUN PASS: 10 journey stages verified`.
 
+**Live**
+- Production database: applied with owner approval as `20261105120712`. All 8 function bodies match the repo (comment- and whitespace-insensitive md5). The 10-stage rollback dry run passed on production, with data unchanged afterwards (6 users, 1 business, 0 sales, 0 customers).
+
 **Not done**
-- Production database and site deploy (waiting for the owner's go-ahead).
 - Screens not reviewed at phone width in a real browser.
 - No customer statement print or share yet.
 

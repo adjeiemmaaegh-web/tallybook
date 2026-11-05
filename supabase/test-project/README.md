@@ -16,7 +16,7 @@ always rolls back. Result on 2026-11-05: `DRYRUN PASS: 7 journey stages verified
 After step 3 the extended dry run (refund, retry, void, import with reuse/no-overwrite, currency refusal) gave
 `DRYRUN PASS: 9 journey stages verified; all rows rolled back`; 0 refunds, 0 imports and 0 dry-run users left afterwards.
 
-4. `shared_shop_full_till` — same statements as `supabase/migrations/20261106090000_shared_shop_full_till.sql` (without `begin;`/`commit;`; a few comments inside
+4. `shared_shop_full_till` — same statements as `supabase/migrations/20261105120712_shared_shop_full_till.sql` (without `begin;`/`commit;`; a few comments inside
    function bodies were left out when pasting). Verified equal by a comment- and whitespace-insensitive md5 of all 8 function bodies against
    the repo migrations applied to PGlite. Adds discounts with per-attendant limits, split payments, credit customers and repayments.
 
