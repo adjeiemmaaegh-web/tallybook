@@ -146,4 +146,16 @@ describe("shared-shop IndexedDB sale outbox", () => {
     }
   });
 
+  it("never sends a new sale when older browser storage cannot be inspected", async () => {
+    const scope = newScope();
+    const deniedStorage = {
+      getItem: (_key: string): string | null => { throw new Error("SecurityError"); },
+      removeItem: (_key: string): void => { throw new Error("SecurityError"); }
+    };
+    const sender = vi.fn(async (s: SaleRequest) => receipt(s.submissionKey));
+    await expect(submitSale(scope, sale(key(15)), "Rice", sender, deniedStorage))
+      .rejects.toThrow(/storage cannot be read/i);
+    expect(sender).not.toHaveBeenCalled();
+  });
+
 });
