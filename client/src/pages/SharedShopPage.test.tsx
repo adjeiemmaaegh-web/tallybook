@@ -49,10 +49,12 @@ beforeEach(async () => {
   localStorage.clear();
   const db = new Dexie("tallybook-shared-shop-outbox-v2");
   db.version(1).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id" });
+  db.version(2).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id" });
   try {
-    await db.transaction("rw", db.table("entries"), db.table("quarantine"), async () => {
+    await db.transaction("rw", db.table("entries"), db.table("quarantine"), db.table("vaults"), async () => {
       await db.table("entries").clear();
       await db.table("quarantine").clear();
+      await db.table("vaults").clear();
     });
   } finally { db.close(); }
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
