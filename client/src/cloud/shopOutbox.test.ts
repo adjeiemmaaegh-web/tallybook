@@ -12,7 +12,7 @@ function sale(key: string): SaleRequest {
 }
 const key = (num: number) => `stageb${String(num).padStart(20, "0")}`;
 const receipt = (id: string, replayed = false) =>
-  ({ submissionKey: id, receiptNumber: 1, replayed } as ShopReceipt);
+  ({ submissionKey: id, receiptNumber: 1, replayed, companyId: "c1", storeId: "s1" } as ShopReceipt);
 const offline = async () => { throw new ShopUnreachableError("offline"); };
 function oldStorage() {
   const map = new Map<string, string>();
@@ -418,6 +418,21 @@ describe("shared-shop IndexedDB sale outbox", () => {
     await submitSale(scope,legacy,"legacy",offline);
     await submitSale(scope,split,"split",offline);
     expect((await readOutbox(scope)).map(row=>row.sale.submissionKey)).toEqual([legacy.submissionKey,split.submissionKey]);
+  });
+
+  it("retains queued evidence when a receipt matches the key but not the company or store", async()=>{
+    const scope=newScope(), original=sale(key(213));
+    const wrongCompany=async(s:SaleRequest)=>({...receipt(s.submissionKey),companyId:"another-company"});
+    const first=await submitSale(scope,original,"Cross-company receipt",wrongCompany);
+    expect(first.state).toBe("queued");
+    expect((await readOutbox(scope)).map(e=>e.sale.submissionKey)).toEqual([original.submissionKey]);
+    const wrongStore=async(s:SaleRequest)=>({...receipt(s.submissionKey),storeId:"another-store"});
+    const second=await flushOutbox(scope,wrongStore);
+    expect(second[0]?.state).toBe("queued");
+    expect((await readOutbox(scope)).map(e=>e.sale.submissionKey)).toEqual([original.submissionKey]);
+    const correct=await flushOutbox(scope,async s=>receipt(s.submissionKey,true));
+    expect(correct[0]?.state).toBe("recorded");
+    expect(await readOutbox(scope)).toEqual([]);
   });
 
 });
