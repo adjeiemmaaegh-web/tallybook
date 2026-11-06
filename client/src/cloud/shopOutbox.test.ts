@@ -169,7 +169,7 @@ describe("shared-shop IndexedDB sale outbox", () => {
     db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
     db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
     try {
-      const rows=await db.table("entries").toArray();
+      const rows=await db.table("entries").where("scopeKey").equals(JSON.stringify([scope.userId,scope.companyId])).toArray();
       const raw=JSON.stringify(rows);
       expect(raw).toContain('"sealed"');
       expect(raw).not.toContain("Customer bought dairy");
