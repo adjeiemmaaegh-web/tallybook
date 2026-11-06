@@ -33,7 +33,8 @@ describe("Stage B shared-shop offline cache redaction", () => {
       "PRIVATE_STAFF_EMAIL", "PRIVATE_INVITATION", "PRIVATE_AUDIT",
       "PRIVATE_PAYMENT", "PRIVATE_ACTOR", "private@example.com"
     ]) expect(text).not.toContain(secret);
-    expect(cleaned.businesses).toEqual([{id: "company1", name: "A Shop", role: "owner"}]);
+    expect(cleaned.businesses).toEqual([{id: "company1", name: "A Shop", role: "attendant"}]);
+    expect(cleaned.overviews.company1?.role).toBe("attendant");
     expect(cleaned.overviews.company1?.stores).toEqual([
       {id: "store1", name: "Main", status: "active"}
     ]);
