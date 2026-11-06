@@ -34,7 +34,7 @@ jobs:
         if: always()
         run: |
           mkdir -p visual-evidence
-          find . -type f \\( -name '*.png' -o -name '*.zip' \\) \\( -path '*test-results*' -o -path '*playwright-report*' \\) -exec cp --parents {} visual-evidence/ \\;
+          find . -type f \( -name '*.png' -o -name '*.zip' \) \( -path '*test-results*' -o -path '*playwright-report*' \) -exec cp --parents {} visual-evidence/ \;
           find visual-evidence -type f | head -60
       - name: Save screenshots and traces
         if: always()
