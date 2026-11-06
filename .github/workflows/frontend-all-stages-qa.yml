@@ -30,12 +30,17 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Mobile and desktop interaction, screenshot QA
         run: pnpm exec playwright test --config frontend-prototype/playwright.config.mjs
+      - name: Collect screenshots from Playwright output
+        if: always()
+        run: |
+          mkdir -p visual-evidence
+          find . -type f \\( -name '*.png' -o -name '*.zip' \\) \\( -path '*test-results*' -o -path '*playwright-report*' \\) -exec cp --parents {} visual-evidence/ \\;
+          find visual-evidence -type f | head -60
       - name: Save screenshots and traces
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tallybook-frontend-visual-evidence
-          path: |
-            frontend-prototype/test-results/
-            frontend-prototype/playwright-report/
+          path: visual-evidence/
+          if-no-files-found: error
           retention-days: 14
