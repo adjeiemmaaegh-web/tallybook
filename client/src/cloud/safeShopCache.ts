@@ -38,7 +38,7 @@ export function safeCache(input: unknown): ShopCache {
     if (!b || !string(b.id) || !string(b.name)) continue;
     businesses.push({
       id: b.id, name: b.name,
-      role: b.role === "owner" ? "owner" : "attendant",
+      role: "attendant", // Cached membership is not verified authorization.
     });
   }
 
@@ -70,7 +70,7 @@ export function safeCache(input: unknown): ShopCache {
     // Future backend fields may contain private data and must be opt-in.
     overviews[id] = {
       companyId: id,
-      role: view.role === "owner" ? "owner" : "attendant",
+      role: "attendant", // Never persist an owner privilege claim for offline use.
       currency: typeof view.currency === "string" && /^[A-Z]{3}$/.test(view.currency)
         ? view.currency : null,
       stores, products, stock,
