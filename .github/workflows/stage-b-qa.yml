@@ -1,0 +1,34 @@
+name: Stage B offline and finance QA
+
+on:
+  push:
+    branches:
+      - stage-b-offline-integrity-*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage-b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.0 --activate
+      - name: Install exact lockfile dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Atomic IndexedDB queue and shared-shop component tests
+        run: pnpm exec vitest run client/src/cloud/shopOutbox.test.ts client/src/pages/SharedShopPage.test.tsx
+      - name: Real PostgreSQL-in-process refund, finance and policy tests
+        run: node --test qa/shared-shop-refunds-import.test.mjs qa/shared-shop-full-till.test.mjs
+      - name: Typecheck
+        run: pnpm check
+      - name: Build
+        run: pnpm build
