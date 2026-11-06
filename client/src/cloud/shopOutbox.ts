@@ -119,7 +119,7 @@ async function migrateLegacy(scope: OutboxScope, storage: LegacyStorage | null) 
       for (const row of legacy) {
         const id = entryKey(scope, row.sale.submissionKey);
         const existing = await entries.get(id);
-        if (existing && !sameSale(existing.sale, row.sale)) {
+        if (existing && (isSealed(existing) || !sameSale(existing.sale, row.sale))) {
           throw new Error("Conflicting queued sale with the same submission key.");
         }
         if (!existing) {
@@ -290,15 +290,25 @@ export async function submitSale(
   const prior=await entries.get(id);
   const item:QueuedSale={sale,summary,queuedAt:new Date().toISOString(),status:"pending"};
   const candidate=await makeRow(scope,item);
+  let concurrent: StoredSale | undefined;
   await database.transaction("rw",entries,vaults,async()=>{
     const hasVault=!!(await vaults.get(scopeKey(scope)));
     if (hasVault !== isSealed(candidate))
       throw new Error("Offline queue security changed during checkout. Unlock and retry.");
     const current=await entries.get(id);
-    if (current && (!prior || !sameStored(prior,current)))
-      throw new Error("This sale was changed in another tab. Review waiting sales before retrying.");
-    if (!current) await entries.add(candidate);
+    if (current && (!prior || !sameStored(prior,current))) concurrent=current;
+    else if (!current) await entries.add(candidate);
   });
+  // Concurrent identical submissions are allowed only AFTER the already
+  // committed record is independently decrypted and compared. Otherwise,
+  // fail closed instead of reusing someone else's submission key.
+  if (concurrent) {
+    const queued=await decodeRow(scope,concurrent,!!(await vaults.get(scopeKey(scope))));
+    if (!sameSale(queued.sale,sale))
+      throw new Error("This sale key was already used with different details.");
+    if (queued.status==="rejected")
+      throw new Error("This sale was rejected. Review it before attempting a new sale.");
+  }
   return deliver(scope,sale,send);
 }
 export async function flushOutbox(
