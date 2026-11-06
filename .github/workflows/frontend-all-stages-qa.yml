@@ -36,6 +36,6 @@ jobs:
         with:
           name: tallybook-frontend-visual-evidence
           path: |
-            test-results/
-            playwright-report/
+            frontend-prototype/test-results/
+            frontend-prototype/playwright-report/
           retention-days: 14
