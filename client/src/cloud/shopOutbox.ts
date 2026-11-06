@@ -120,6 +120,12 @@ export async function readOutbox(
 ): Promise<QueuedSale[]> {
   await prepare(scope, legacyStorage);
   const rows = await entries.where("scopeKey").equals(scopeKey(scope)).toArray();
+  // Never silently treat damaged stored sales as an empty or safe queue.
+  // The source records stay untouched for owner-assisted recovery.
+  if (rows.some(row => !valid(row) || row.scopeKey !== scopeKey(scope) ||
+      row.id !== entryKey(scope, row.sale.submissionKey))) {
+    throw new Error("Stored unsent sales need recovery. Do not clear this browser's data or record more sales.");
+  }
   return rows.sort((a, b) => a.queuedAt.localeCompare(b.queuedAt) || a.id.localeCompare(b.id))
     .map(({sale, summary, queuedAt, status, error}) => ({
       sale, summary, queuedAt, status, ...(error === undefined ? {} : {error})
