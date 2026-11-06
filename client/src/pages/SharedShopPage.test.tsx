@@ -37,13 +37,28 @@ const base: ShopOverview = {
   members: [], pendingInvites: [],
   refundPolicy: {revision: 1, enabled: true, allowFullReversal: true, allowPartialReturn: true, maxAgeDays: 30},
 };
-const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => ({
-  saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
-  submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor: 9000, recordedAt: new Date().toISOString(), replayed,
-  payment: { method: "cash", amountDueMinor: 9000, amountTenderedMinor: 10000, changeMinor: 1000, reference: null },
-  lines: [{ lineNo: 1, productId: "eggs", name: "Crate of eggs", quantity: 2, unitPriceMinor: 4500, lineTotalMinor: 9000, refundedQuantity: 0 }],
-  refundedMinor: 0, refunds: [],
-});
+const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => {
+  const subtotalMinor = sale.lines.reduce((total, line) => total + line.quantity * 4500, 0);
+  const discountMinor = "discountMinor" in sale ? (sale.discountMinor ?? 0) : 0;
+  const totalMinor = subtotalMinor - discountMinor;
+  const tenderedMinor = "tenders" in sale
+    ? sale.tenders.reduce((total,t) => total + (t.tenderedMinor ?? t.amountMinor),0)
+    : sale.amountTenderedMinor;
+  return {
+    saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
+    submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor,
+    subtotalMinor, discountMinor, recordedAt: new Date().toISOString(), replayed,
+    payment: { method: "tenders" in sale ? (sale.tenders.length>1 ? "split" : sale.tenders[0]?.method ?? "cash") : sale.paymentMethod,
+      amountDueMinor: totalMinor, amountTenderedMinor: tenderedMinor,
+      changeMinor: Math.max(0,tenderedMinor-totalMinor), reference: null },
+    lines: sale.lines.map((line,i)=>({
+      lineNo: i+1, productId: line.productId, name: "Crate of eggs", quantity: line.quantity,
+      unitPriceMinor: 4500, lineTotalMinor: line.quantity*4500,
+      lineDiscountMinor: i===0 ? discountMinor : 0, refundedQuantity: 0
+    })),
+    refundedMinor: 0, refunds: [],
+  };
+};
 
 beforeEach(async () => {
   localStorage.clear();
