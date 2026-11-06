@@ -201,6 +201,47 @@ begin
     'allowPartialReturn',v_current.allow_partial_return,'maxAgeDays',v_current.max_age_days));
 end $fn$;
 
+-- Expose immutable sale/refund policy evidence to audit and owner UI.
+create or replace function private.shop_receipt(p_sale uuid, p_replayed boolean) returns jsonb
+language sql stable set search_path = '' as $
+  select jsonb_build_object(
+    'saleId', s.id, 'companyId', s.business_id, 'storeId', s.store_id, 'storeName', st.name,
+    'cashierId', s.cashier_id, 'submissionKey', s.submission_key,
+    'receiptNumber', s.receipt_number, 'currency', s.currency, 'totalMinor', s.total_minor,
+    'returnPolicyRevision', s.return_policy_revision,
+    'subtotalMinor', coalesce(s.subtotal_minor, s.total_minor), 'discountMinor', s.discount_minor,
+    'discountReason', s.discount_reason,
+    'customer', case when s.customer_id is null then null else private.shop_customer_json(s.customer_id) end,
+    'recordedAt', s.recorded_at, 'replayed', p_replayed,
+    'payment', jsonb_build_object('method', p.method, 'amountDueMinor', p.amount_due_minor,
+      'amountTenderedMinor', p.amount_tendered_minor, 'changeMinor', p.change_minor, 'reference', p.reference),
+    'tenders', coalesce((select jsonb_agg(jsonb_build_object('method', t.method, 'amountMinor', t.amount_minor,
+        'tenderedMinor', t.tendered_minor, 'reference', t.reference) order by t.tender_no)
+      from public.shop_sale_tenders t where t.sale_id = s.id),
+      jsonb_build_array(jsonb_build_object('method', p.method, 'amountMinor', p.amount_due_minor,
+        'tenderedMinor', p.amount_tendered_minor, 'reference', p.reference))),
+    'lines', (select jsonb_agg(jsonb_build_object('lineNo', l.line_no, 'productId', l.product_id, 'name', l.product_name,
+        'quantity', l.quantity, 'unitPriceMinor', l.unit_price_minor, 'lineTotalMinor', l.line_total_minor,
+        'lineDiscountMinor', l.line_discount_minor,
+        'refundedQuantity', coalesce((select sum(rl.quantity) from public.shop_refund_lines rl
+          where rl.sale_id = l.sale_id and rl.line_no = l.line_no), 0))
+        order by l.line_no) from public.shop_sale_lines l where l.sale_id = s.id),
+    'refundedMinor', coalesce((select sum(r.amount_minor) from public.shop_refunds r where r.sale_id = s.id), 0),
+    'refunds', coalesce((select jsonb_agg(jsonb_build_object('refundId', r.id, 'refundNo', r.refund_no,
+        'amountMinor', r.amount_minor, 'creditMinor', r.credit_minor, 'method', r.method,
+        'returnedToStock', r.returned_to_stock, 'reason', r.reason, 'actorId', r.actor_id, 'recordedAt', r.recorded_at,
+        'policySaleRevision', r.policy_sale_revision, 'policyDecisionRevision', r.policy_decision_revision,
+        'policyKind', r.policy_kind, 'policyCheckedAt', r.policy_checked_at,
+        'lines', (select jsonb_agg(jsonb_build_object('lineNo', rl.line_no, 'productId', rl.product_id,
+            'quantity', rl.quantity, 'lineTotalMinor', rl.line_total_minor) order by rl.line_no)
+          from public.shop_refund_lines rl where rl.refund_id = r.id)) order by r.refund_no)
+      from public.shop_refunds r where r.sale_id = s.id), '[]'::jsonb))
+  from public.shop_sales s
+  join public.shop_payments p on p.sale_id = s.id
+  join public.shop_stores st on st.id = s.store_id
+  where s.id = p_sale
+$;
+
 -- Preserve existing receipt pricing, authorization, debt-first refunds,
 -- stock movement and deduplication. Add only policy checks and evidence.
 create or replace function private.shop_refund_sale(p_actor uuid, p_session uuid, p_input jsonb)
