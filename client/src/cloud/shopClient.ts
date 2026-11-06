@@ -101,6 +101,7 @@ export async function callShop<T>(action: string, input: Record<string, unknown>
 function friendlyMessage(message: string) {
   if (/Active Auth session required|Authenticated account required/.test(message)) return "Your sign-in has expired. Sign in again.";
   if (/Business access denied/.test(message)) return "You no longer have access to this business.";
+  if (/The refund policy changed/.test(message)) return "Someone changed the refund policy. Reload and try again.";
   return message.replace(/^Invalid (\w+)$/, "Something in this request isn't valid ($1).");
 }
 
@@ -124,6 +125,22 @@ export const inviteShopAttendant = (companyId: string, email: string) =>
 
 export const refundShopSale = (companyId: string, refund: RefundRequest) =>
   callShop<ShopReceipt>("refundSale", { companyId, ...refund });
+/** Company refund policy. Default is OFF; every change is a new numbered revision. */
+export interface ShopRefundPolicy {
+  companyId: string; revision: number; refundsEnabled: boolean; allowVoid: boolean; allowPartial: boolean; maxAgeDays: number;
+  effectiveAt: string | null;
+  /** Owner only; newest first. */
+  history: Array<{ revision: number; effectiveAt: string; refundsEnabled: boolean; allowVoid: boolean; allowPartial: boolean;
+    maxAgeDays: number; reason: string; actorId: string }>;
+}
+export interface RefundPolicyChange {
+  refundsEnabled: boolean; allowVoid: boolean; allowPartial: boolean; maxAgeDays: number; reason: string;
+  /** The revision the owner was looking at; a stale value is rejected. */
+  expectedRevision: number; confirmed: true;
+}
+export const getShopRefundPolicy = (companyId: string) => callShop<ShopRefundPolicy>("refundPolicy", { companyId });
+export const setShopRefundPolicy = (companyId: string, change: RefundPolicyChange) =>
+  callShop<ShopRefundPolicy>("setRefundPolicy", { companyId, ...change });
 export const importShopOpening = (companyId: string, books: OpeningImport) =>
   callShop<OpeningImportResult>("importOpening", { companyId, ...books });
 
