@@ -37,6 +37,8 @@ async function startServer() {
     res.setHeader("X-Frame-Options","DENY");
     res.setHeader("Referrer-Policy","no-referrer");
     res.setHeader("Permissions-Policy","geolocation=(), camera=(self), microphone=(self)");
+    // Report-only until verified in real browsers (sign-in, PWA, scanning); keep identical to vercel.json.
+    res.setHeader("Content-Security-Policy-Report-Only","default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests");
     next();
   });
 

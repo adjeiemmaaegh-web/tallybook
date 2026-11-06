@@ -20,6 +20,7 @@ import {
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
+import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
@@ -27,14 +28,26 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-function readCache(userId: string): { businesses: Business[]; overviews: Record<string, ShopOverview> } {
-  try { return JSON.parse(localStorage.getItem(CACHE + userId) ?? "") ?? { businesses: [], overviews: {} }; }
-  catch { return { businesses: [], overviews: {} }; }
+type ShopCache = { businesses: Business[]; overviews: Record<string, ShopOverview> };
+const emptyCache = (): ShopCache => ({ businesses: [], overviews: {} });
+/** Cached business and shop data is sealed (AES-GCM, device key); plaintext localStorage is only read once to migrate. */
+async function readCache(userId: string): Promise<ShopCache> {
+  const sealed = await readSealedJson<ShopCache>(CACHE + userId);
+  if (sealed) return sealed;
+  try {
+    const legacy = localStorage.getItem(CACHE + userId);
+    if (!legacy) return emptyCache();
+    const parsed = (JSON.parse(legacy) as ShopCache | null) ?? emptyCache();
+    await writeSealedJson(CACHE + userId, parsed);
+    if (await readSealedJson<ShopCache>(CACHE + userId)) localStorage.removeItem(CACHE + userId); // only after it can be read back
+    return parsed;
+  } catch { return emptyCache(); }
 }
-function writeCache(userId: string, change: (cache: ReturnType<typeof readCache>) => void) {
-  try { const cache = readCache(userId); change(cache); localStorage.setItem(CACHE + userId, JSON.stringify(cache)); } catch { /* not essential */ }
+async function writeCache(userId: string, change: (cache: ShopCache) => void) {
+  try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, cache); } catch { /* not essential */ }
 }
-function clearShopCaches() {
+async function clearShopCaches() {
+  await removeSealedPrefix(CACHE);
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
 }
 const methodLabel = (m: string) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : m === "credit" ? "Credit" : m === "split" ? "Split payment" : "Cash";
@@ -67,7 +80,7 @@ export default function SharedShopPage() {
       if (!active) return;
       setUserId(id);
       if (!id) return;
-      const cached = readCache(id);
+      const cached = await readCache(id);
       if (cached.businesses.length) { setBusinesses(cached.businesses); setCompanyId(c => c ?? cached.businesses[0]!.id); }
       if (!navigator.onLine) return;
       try {
@@ -75,11 +88,11 @@ export default function SharedShopPage() {
         if (!active) return;
         setBusinesses(list); setLoadError("");
         setCompanyId(c => list.some(b => b.id === c) ? c : list[0]?.id ?? null);
-        writeCache(id, cache => { cache.businesses = list; });
+        void writeCache(id, cache => { cache.businesses = list; });
       } catch (error) { if (active && !cached.businesses.length) setLoadError(message(error)); }
     };
     const { data: { subscription } } = client.auth.onAuthStateChange(event => {
-      if (event === "SIGNED_OUT") { clearShopCaches(); setBusinesses([]); setCompanyId(null); }
+      if (event === "SIGNED_OUT") { void clearShopCaches(); setBusinesses([]); setCompanyId(null); }
       setTimeout(() => { if (active) void load(); }, 0);
     });
     void load();
@@ -142,7 +155,12 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
 }
 
 function ShopWorkspace({ userId, business, online }: { userId: string; business: Business; online: boolean }) {
-  const [overview, setOverview] = useState<ShopOverview | null>(() => readCache(userId).overviews[business.id] ?? null);
+  const [overview, setOverview] = useState<ShopOverview | null>(null);
+  useEffect(() => {
+    let live = true;
+    void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
+    return () => { live = false; };
+  }, [userId, business.id]);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("sell");
   const refresh = useCallback(async () => {
@@ -150,7 +168,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     try {
       const next = await getShopOverview(business.id);
       setOverview(next); setError("");
-      writeCache(userId, cache => { cache.overviews[business.id] = next; });
+      void writeCache(userId, cache => { cache.overviews[business.id] = next; });
     } catch (cause) { setError(message(cause)); }
   }, [business.id, userId]);
   useEffect(() => { void refresh(); }, [refresh, online]);
@@ -285,7 +303,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
-  const reloadQueue = useCallback(() => setQueued(readOutbox(scope)), [scope]);
+  const reloadQueue = useCallback(() => { void readOutbox(scope).then(setQueued); }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
@@ -299,7 +317,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   useEffect(() => { reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
   // A flaky connection can fail a request while the phone still reports
   // "online", so keep retrying while anything is waiting, and on return to the app.
-  const hasPending = queued.some(q => q.status === "pending");
+  const hasPending = queued.some(q => q.status === "queued" || q.status === "sending");
   useEffect(() => {
     if (!hasPending) return;
     const timer = window.setInterval(() => void flush(), 20_000);
@@ -350,6 +368,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
       const result = await submitSale(scope, sale, summary, send);
       if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
       else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
+      else if (result.state === "already-confirmed") { resetForm(); void refresh(); }
       else { submissionKey.current = null; setError(result.error); }
     } catch (cause) { setError(message(cause)); }
     finally { setBusy(false); reloadQueue(); }
@@ -421,11 +440,14 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
       </>}
       {queued.length > 0 && <div className="shop-queue">
         <h3>Waiting to send</h3>
-        <ul>{queued.map(q => <li key={q.sale.submissionKey} className={q.status === "rejected" ? "is-rejected" : ""}>
+        <ul>{queued.map(q => <li key={q.id} className={q.status === "rejected" || q.status === "needs-review" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
-          {q.status === "pending" ? <small>Will send when online</small> : <>
-            <small>Not recorded: {q.error}</small>
-            <button type="button" className="secondary-action" onClick={() => { dismissQueuedSale(scope, q.sale.submissionKey); reloadQueue(); }}>Dismiss</button></>}
+          {q.status === "queued" || q.status === "sending"
+            ? <small>{q.status === "sending" ? "Sending…" : q.ambiguous ? "Not confirmed yet. Checking with the server when online." : "Will send when online"}</small>
+            : <>
+              <small>{q.status === "needs-review" ? `Needs review: ${q.error}` : `Not recorded: ${q.error}`}</small>
+              <button type="button" className="secondary-action"
+                onClick={() => { void dismissQueuedSale(scope, q.id, { force: !!q.unreadable }).then(reloadQueue); }}>{q.unreadable ? "Remove unreadable sale" : "Dismiss"}</button></>}
         </li>)}</ul>
       </div>}
     </section>

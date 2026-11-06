@@ -1,96 +1,59 @@
 /**
- * Write-ahead queue for shared-shop sales.
+ * Write-ahead queue for shared-shop sales (browser binding).
  *
- * A sale is saved here BEFORE it is sent, under its submission key. If the
- * connection drops, the tab closes or the response is lost, the same request
- * is re-sent later with the same key, and the server's idempotency check
- * returns the original receipt instead of posting twice. Only a definite
- * server decision removes an entry (accepted) or parks it for review
- * (rejected, e.g. not enough stock or access removed).
+ * A sale is sealed and saved on this device BEFORE it is sent, under its
+ * submission key. If the connection drops, the tab closes or the response is
+ * lost, the sale is reconciled against the server and re-sent with the same
+ * key, so it is never lost and never posted twice. Only a definite server
+ * decision removes an entry (accepted) or parks it (rejected, e.g. not enough
+ * stock or access removed). The mechanics live in outboxCore.ts.
  */
-import { ShopRejectedError, type SaleRequest, type ShopReceipt } from "./shopClient";
+import {
+  bestAvailableLocks, createOutbox, type OutboxScope, type QueuedEntry, type SubmitResult as CoreSubmitResult,
+} from "./outboxCore";
+import { indexedDbBackend, deviceSealer, secureStorageAvailable, SecureStorageUnavailableError } from "./secureStorage";
+import { ShopRejectedError, listShopSales, type SaleRequest, type ShopReceipt } from "./shopClient";
 
-export interface QueuedSale {
-  sale: SaleRequest;
-  /** Display-only cart snapshot so the attendant can recognise the sale. */
-  summary: string;
-  queuedAt: string;
-  status: "pending" | "rejected";
-  error?: string;
-}
-export interface OutboxScope { userId: string; companyId: string }
-type Storage = Pick<globalThis.Storage, "getItem" | "setItem">;
-
-const keyFor = ({ userId, companyId }: OutboxScope) => `tallybook.shop.outbox.v1:${userId}:${companyId}`;
-
-function defaultStorage(): Storage | null {
-  try { return window.localStorage; } catch { return null; }
-}
-
-export function readOutbox(scope: OutboxScope, storage: Storage | null = defaultStorage()): QueuedSale[] {
-  if (!storage) return [];
-  try {
-    const parsed = JSON.parse(storage.getItem(keyFor(scope)) ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter(isQueuedSale) : [];
-  } catch { return []; }
-}
-
-function writeOutbox(scope: OutboxScope, entries: QueuedSale[], storage: Storage | null) {
-  if (!storage) throw new Error("This browser can't save sales while offline. Keep this page open until the sale is confirmed.");
-  storage.setItem(keyFor(scope), JSON.stringify(entries));
-}
-
-function isQueuedSale(value: unknown): value is QueuedSale {
-  const entry = value as QueuedSale;
-  return !!entry && typeof entry === "object" && typeof entry.sale?.submissionKey === "string" &&
-    (entry.status === "pending" || entry.status === "rejected");
-}
-
-function update(scope: OutboxScope, storage: Storage | null, change: (entries: QueuedSale[]) => QueuedSale[]) {
-  writeOutbox(scope, change(readOutbox(scope, storage)), storage);
-}
-
+export type { OutboxScope } from "./outboxCore";
+export type QueuedSale = QueuedEntry<SaleRequest> & { id: string };
 export type SendSale = (sale: SaleRequest) => Promise<ShopReceipt>;
-export type SubmitResult =
-  | { state: "recorded"; receipt: ShopReceipt }
-  | { state: "queued" }
-  | { state: "rejected"; error: string };
+export type SubmitResult = CoreSubmitResult<ShopReceipt>;
+
+const legacyKey = ({ userId, companyId }: OutboxScope) => `tallybook.shop.outbox.v1:${userId}:${companyId}`;
+
+async function outboxFor(scope: OutboxScope) {
+  if (!secureStorageAvailable()) throw new SecureStorageUnavailableError();
+  const outbox = createOutbox<SaleRequest, ShopReceipt>({
+    backend: indexedDbBackend(),
+    sealer: await deviceSealer(),
+    lock: bestAvailableLocks(),
+    isRejected: error => error instanceof ShopRejectedError,
+    // The server's own idempotency still protects us if this window misses an old sale.
+    lookupReceipt: async sale => (await listShopSales(scope.companyId)).find(r => r.submissionKey === sale.submissionKey) ?? null,
+  });
+  const migrated = migrations.get(legacyKey(scope)) ?? (async () => {
+    try { await outbox.migrateLegacy(scope, window.localStorage, legacyKey(scope)); } catch { /* the old copy stays where it is */ }
+  })();
+  migrations.set(legacyKey(scope), migrated);
+  await migrated;
+  return outbox;
+}
+const migrations = new Map<string, Promise<void>>();
+
+export async function readOutbox(scope: OutboxScope): Promise<QueuedSale[]> {
+  try { return await (await outboxFor(scope)).read(scope); } catch { return []; }
+}
 
 /** Save first, then send. Never loses a sale the attendant pressed "Record" on. */
-export async function submitSale(scope: OutboxScope, sale: SaleRequest, summary: string, send: SendSale,
-  storage: Storage | null = defaultStorage()): Promise<SubmitResult> {
-  update(scope, storage, entries => entries.some(e => e.sale.submissionKey === sale.submissionKey)
-    ? entries
-    : [...entries, { sale, summary, queuedAt: new Date().toISOString(), status: "pending" }]);
-  return deliver(scope, sale, send, storage);
-}
-
-async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale, storage: Storage | null): Promise<SubmitResult> {
-  try {
-    const receipt = await send(sale);
-    update(scope, storage, entries => entries.filter(e => e.sale.submissionKey !== sale.submissionKey));
-    return { state: "recorded", receipt };
-  } catch (error) {
-    if (error instanceof ShopRejectedError) {
-      update(scope, storage, entries => entries.map(e => e.sale.submissionKey === sale.submissionKey
-        ? { ...e, status: "rejected", error: error.message } : e));
-      return { state: "rejected", error: error.message };
-    }
-    return { state: "queued" };
-  }
+export async function submitSale(scope: OutboxScope, sale: SaleRequest, summary: string, send: SendSale): Promise<SubmitResult> {
+  return (await outboxFor(scope)).submit(scope, sale, summary, send);
 }
 
 /** Re-send every pending sale in the order it was recorded. Stops at the first connection failure. */
-export async function flushOutbox(scope: OutboxScope, send: SendSale, storage: Storage | null = defaultStorage()) {
-  const results: SubmitResult[] = [];
-  for (const entry of readOutbox(scope, storage).filter(e => e.status === "pending")) {
-    const result = await deliver(scope, entry.sale, send, storage);
-    results.push(result);
-    if (result.state === "queued") break;
-  }
-  return results;
+export async function flushOutbox(scope: OutboxScope, send: SendSale): Promise<SubmitResult[]> {
+  return (await outboxFor(scope)).flush(scope, send);
 }
 
-export function dismissQueuedSale(scope: OutboxScope, submissionKey: string, storage: Storage | null = defaultStorage()) {
-  update(scope, storage, entries => entries.filter(e => !(e.sale.submissionKey === submissionKey && e.status === "rejected")));
+export async function dismissQueuedSale(scope: OutboxScope, submissionKey: string, options: { force?: boolean } = {}) {
+  return (await outboxFor(scope)).dismiss(scope, submissionKey, options);
 }
