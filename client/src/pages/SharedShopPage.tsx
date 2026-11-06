@@ -28,12 +28,43 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-function readCache(userId: string): { businesses: Business[]; overviews: Record<string, ShopOverview> } {
-  try { return JSON.parse(localStorage.getItem(CACHE + userId) ?? "") ?? { businesses: [], overviews: {} }; }
-  catch { return { businesses: [], overviews: {} }; }
+interface ShopCache { businesses: Business[]; overviews: Record<string, ShopOverview> }
+const blankCache = (): ShopCache => ({ businesses: [], overviews: {} });
+/** Offline catalogue cache is deliberately a redacted display copy, NOT an
+ * authentication source and NOT the actual queue. Strip personal information
+ * and stale staff privileges before persisting to localStorage.
+ * This does not provide encryption of product/stock business data.
+ */
+function safeCache(input: ShopCache): ShopCache {
+  const overviews: Record<string, ShopOverview> = {};
+  for (const [id, view] of Object.entries(input.overviews ?? {})) {
+    if (!view || typeof view !== "object" || typeof view.companyId !== "string") continue;
+    overviews[id] = {
+      ...view, members: [], pendingInvites: [], customers: [],
+      memberPermissions: {}, myPermissions: NO_PERMISSIONS
+    };
+  }
+  return { businesses: Array.isArray(input.businesses) ? input.businesses : [], overviews };
 }
-function writeCache(userId: string, change: (cache: ReturnType<typeof readCache>) => void) {
-  try { const cache = readCache(userId); change(cache); localStorage.setItem(CACHE + userId, JSON.stringify(cache)); } catch { /* not essential */ }
+function readCache(userId: string): ShopCache {
+  try {
+    const raw = localStorage.getItem(CACHE + userId);
+    if (!raw) return blankCache();
+    const parsed = JSON.parse(raw) as ShopCache;
+    if (!parsed || typeof parsed !== "object") return blankCache();
+    const cleaned = safeCache(parsed);
+    // Existing cache could contain customer names/phones and team emails.
+    // Scrub it on the first read without touching pending sales or local ledger.
+    const redacted = JSON.stringify(cleaned);
+    if (redacted !== raw) localStorage.setItem(CACHE + userId, redacted);
+    return cleaned;
+  } catch { return blankCache(); }
+}
+function writeCache(userId: string, change: (cache: ShopCache) => void) {
+  try {
+    const cache = readCache(userId); change(cache);
+    localStorage.setItem(CACHE + userId, JSON.stringify(safeCache(cache)));
+  } catch { /* not essential to confirmed cloud operations */ }
 }
 function clearShopCaches() {
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
