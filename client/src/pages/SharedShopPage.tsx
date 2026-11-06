@@ -20,7 +20,7 @@ import {
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type ShopRefundPolicy, type TenderInput,
 } from "@/cloud/shopClient";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, lockShopOutboxVault, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { safeCache, blankCache, type ShopCache } from "@/cloud/safeShopCache";
 import { ShopOutboxVaultPanel } from "@/cloud/ShopOutboxVaultPanel";
 import { currencies } from "@/features/business/businessProfile";
@@ -300,6 +300,9 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   const [queueError, setQueueError] = useState("");
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
+  // Clear the decrypted per-account key on account change, tab navigation or
+  // sign-out. Saved ciphertext and pending sales remain intact.
+  useEffect(() => () => { lockShopOutboxVault(scope); }, [scope]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
   const reloadQueue = useCallback(async () => {
