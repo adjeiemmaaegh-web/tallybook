@@ -1,5 +1,6 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it, vi } from "vitest";
+import Dexie from "dexie";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale } from "./shopOutbox";
 import { ShopRejectedError, ShopUnreachableError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
@@ -125,4 +126,22 @@ describe("shared-shop IndexedDB sale outbox", () => {
     await expect(readOutbox(scope, storage)).rejects.toThrow(/could not be migrated/);
     expect(storage.getItem(oldKey)).not.toBeNull();
   });
+  it("fails closed on a corrupted IndexedDB sale without deleting evidence", async () => {
+    const scope = newScope(), id = key(13);
+    await submitSale(scope, sale(id), "Eggs", offline);
+    const db = new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries: "id,scopeKey,queuedAt", quarantine: "id"});
+    const storedId = JSON.stringify([scope.userId, scope.companyId, id]);
+    try {
+      await db.table("entries").update(storedId, {summary: 42});
+      await expect(readOutbox(scope)).rejects.toThrow(/need recovery/);
+      const sender = vi.fn(async (s: SaleRequest) => receipt(s.submissionKey));
+      await expect(flushOutbox(scope, sender)).rejects.toThrow(/need recovery/);
+      expect(sender).not.toHaveBeenCalled();
+      expect(await db.table("entries").get(storedId)).toBeDefined();
+    } finally {
+      db.close();
+    }
+  });
+
 });
