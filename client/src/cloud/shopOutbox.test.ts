@@ -137,6 +137,8 @@ describe("shared-shop IndexedDB sale outbox", () => {
       await expect(readOutbox(scope)).rejects.toThrow(/need recovery/);
       const sender = vi.fn(async (s: SaleRequest) => receipt(s.submissionKey));
       await expect(flushOutbox(scope, sender)).rejects.toThrow(/need recovery/);
+      // A new sale must not bypass a damaged older queue entry.
+      await expect(submitSale(scope, sale(key(14)), "New sale", sender)).rejects.toThrow(/need recovery/);
       expect(sender).not.toHaveBeenCalled();
       expect(await db.table("entries").get(storedId)).toBeDefined();
     } finally {
