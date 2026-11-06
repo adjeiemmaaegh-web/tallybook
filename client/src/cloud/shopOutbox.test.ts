@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it, vi } from "vitest";
 import Dexie from "dexie";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus, exportProtectedShopOutbox, importProtectedShopOutbox, migratePlainShopOutboxToVault } from "./shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus, exportProtectedShopOutbox, importProtectedShopOutbox, migratePlainShopOutboxToVault, exportPlainShopOutboxRecovery } from "./shopOutbox";
 import { ShopRejectedError, ShopUnreachableError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
 let serial = 0;
@@ -297,7 +297,10 @@ describe("shared-shop IndexedDB sale outbox", () => {
     await submitSale(scope, pending, "Legacy pending order", offline);
     await submitSale(scope, rejected, "Legacy rejected order", async () => { throw new ShopRejectedError("No stock"); });
     expect((await readOutbox(scope)).map(row => row.status)).toEqual(["pending","rejected"]);
-    expect(await migratePlainShopOutboxToVault(scope,pass)).toBe(2);
+    const backup=await exportPlainShopOutboxRecovery(scope,pass);
+    expect(backup).not.toContain("Legacy pending order");
+    expect(backup).not.toContain('"amountTenderedMinor"');
+    expect(await migratePlainShopOutboxToVault(scope,pass,backup)).toBe(2);
     const db = new Dexie("tallybook-shared-shop-outbox-v2");
     db.version(1).stores({entries: "id,scopeKey,queuedAt", quarantine: "id"});
     db.version(2).stores({entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id"});
@@ -329,7 +332,7 @@ describe("shared-shop IndexedDB sale outbox", () => {
     const id=JSON.stringify([scope.userId,scope.companyId,original.submissionKey]);
     try {
       await db.table("entries").update(id,{summary:99});
-      await expect(migratePlainShopOutboxToVault(scope,"Strong migration passphrase 2026")).rejects.toThrow(/need recovery/);
+      await expect(exportPlainShopOutboxRecovery(scope,"Strong migration passphrase 2026")).rejects.toThrow(/need recovery/);
       const retained=await db.table("entries").get(id);
       expect(retained.sale).toEqual(original);
       expect(retained.summary).toBe(99);
@@ -339,12 +342,28 @@ describe("shared-shop IndexedDB sale outbox", () => {
 
   it("refuses an already-encrypted queue and a missing migration source", async () => {
     const empty = newScope();
-    await expect(migratePlainShopOutboxToVault(empty,"Very strong private migration passphrase")).rejects.toThrow(/no outstanding/i);
+    await expect(migratePlainShopOutboxToVault(empty,"Very strong private migration passphrase","{}")).rejects.toThrow(/no outstanding/i);
     const protectedScope = newScope();
     await enableShopOutboxVault(protectedScope,"Another strong passphrase for protection");
     await submitSale(protectedScope,sale(key(193)),"Already protected",offline);
-    await expect(migratePlainShopOutboxToVault(protectedScope,"Another strong passphrase for protection"))
+    await expect(migratePlainShopOutboxToVault(protectedScope,"Another strong passphrase for protection","{}"))
       .rejects.toThrow(/already protected/i);
+  });
+
+  it("refuses conversion without a matching protected backup, without mutating plaintext sales", async () => {
+    const scope=newScope(), pass="A sufficiently strong recovery phrase 2026";
+    const original=sale(key(194));
+    await submitSale(scope,original,"Sale before migration",offline);
+    const backup=await exportPlainShopOutboxRecovery(scope,pass);
+    const changed={...original,submissionKey:key(195)};
+    await submitSale(scope,changed,"Second sale after the backup",offline);
+    await expect(migratePlainShopOutboxToVault(scope,pass,backup))
+      .rejects.toThrow(/does not match this account and pending sales/);
+    await expect(migratePlainShopOutboxToVault(scope,pass,"{}"))
+      .rejects.toThrow(/does not match this account and pending sales/);
+    const current=await readOutbox(scope);
+    expect(current.map(row=>row.sale.submissionKey).sort()).toEqual([original.submissionKey,changed.submissionKey].sort());
+    expect(await getShopOutboxVaultStatus(scope)).toEqual({configured:false,unlocked:false});
   });
 
 });
