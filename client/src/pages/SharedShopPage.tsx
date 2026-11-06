@@ -21,6 +21,7 @@ import {
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type ShopRefundPolicy, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
+import { safeCache, blankCache, type ShopCache } from "@/cloud/safeShopCache";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
@@ -28,24 +29,6 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-interface ShopCache { businesses: Business[]; overviews: Record<string, ShopOverview> }
-const blankCache = (): ShopCache => ({ businesses: [], overviews: {} });
-/** Offline catalogue cache is deliberately a redacted display copy, NOT an
- * authentication source and NOT the actual queue. Strip personal information
- * and stale staff privileges before persisting to localStorage.
- * This does not provide encryption of product/stock business data.
- */
-function safeCache(input: ShopCache): ShopCache {
-  const overviews: Record<string, ShopOverview> = {};
-  for (const [id, view] of Object.entries(input.overviews ?? {})) {
-    if (!view || typeof view !== "object" || typeof view.companyId !== "string") continue;
-    overviews[id] = {
-      ...view, members: [], pendingInvites: [], customers: [],
-      memberPermissions: {}, myPermissions: NO_PERMISSIONS
-    };
-  }
-  return { businesses: Array.isArray(input.businesses) ? input.businesses : [], overviews };
-}
 function readCache(userId: string): ShopCache {
   try {
     const raw = localStorage.getItem(CACHE + userId);
