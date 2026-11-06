@@ -1,47 +1,46 @@
-# Stage B — Implementation and evidence register
-Date: 2026-11-06
-Base: `0314873bf0f7e30ad8612b51be77f0a5107612d0`
-Branch: `stage-b-offline-integrity-20261106`
-Review: [Draft PR #26](https://github.com/adjeiemmaaegh-web/tallybook/pull/26)
-**Stage B acceptance: NOT PASSED. DO NOT MERGE, MIGRATE OR DEPLOY.**
+# Tallybook Stage B — Offline Integrity, Privacy and Finance
 
-## Source delta assessed
-- `client/src/cloud/shopOutbox.ts`: transactional per-sale Dexie/IndexedDB queue, keys scoped by account + company, strict idempotency key validation, duplicate request disagreement refusal, write before send, legacy v1 localStorage migration, quarantine on invalid legacy data, exact receipt-key matching. Additional fail-closed guard blocks corrupted rows without deleting recovery evidence.
-- `client/src/cloud/shopOutbox.test.ts`: race, recovery, legacy, rejected receipt, quarantine and corrupted IndexedDB regression cases authored.
-- `client/src/pages/SharedShopPage.tsx`: async queue/UI integration; strips customer/team personal fields and cached staff permissions from offline catalogue cache. Product/stock data is NOT encrypted.
-- `supabase/migrations/20261106120000_shared_shop_return_policies.sql`: **UNAPPLIED** forward-only migration for per-company return-policy revisions, defaults disabled, sale-time terms, refund authorization and historical evidence, existing-credit and stock posting retained by draft SQL.
-- `client/src/cloud/ShopRefundPolicyPanel.tsx`, `client/src/cloud/shopClient.ts`: draft owner policy editor and RPC types.
-- `qa/shared-shop-refunds-import.test.mjs`, `qa/shared-shop-full-till.test.mjs`: PGlite integration regressions authored, not certified.
-- `.github/workflows/stage-b-qa.yml`: exact Node/pnpm Vitest, PGlite, tsc and build commands declared; a workflow file is not a test result.
+**Date:** 2026-11-06  
+**Source base:** `0314873bf0f7e30ad8612b51be77f0a5107612d0`  
+**Draft branch:** `stage-b-offline-integrity-20261106`  
+**Review:** [PR #26](https://github.com/adjeiemmaaegh-web/tallybook/pull/26)  
+**Release status:** **NO-GO / NOT ACCEPTED. NO MERGE, SQL MIGRATION OR DEPLOYMENT.**
 
-## Workstream statuses (source present is not acceptance)
-| Gate | Engineering checkpoint | Evidence status |
+## Engineering work on the draft branch
+
+1. **Transactionally durable shared-shop outbox** — Dexie/IndexedDB per-sale writes, account/company scoping, preserved idempotency keys, no-network-before-durable-write, atomic queue operations, quarantined unsafe legacy entries, detected corruption/blocked storage, and safe duplicate-key reconciliation.
+2. **Protected shared-shop pending sales (opt-in)** — `client/src/cloud/shopOutbox.ts` integrated with `shopVaultCrypto.mjs`. An empty queue can be protected by a user passphrase. New pending sales are AES-256-GCM encrypted with account/business/submission-key binding, a randomly generated nonce, and memory-only nonextractable keys. Locked queues cannot send or reveal saved sales. Leaving the Sell panel clears the key.
+3. **Encrypted recovery** — portable encrypted-only JSON export and same-account/company import into an **empty** target; passphrase and every ciphertext validated before a single atomic IndexedDB restore. No silent merge or deletion. See [Stage B vault recovery protocol](STAGE_B_VAULT_RECOVERY_PROTOCOL.md).
+4. **Privacy controls** — strict allowlist of offline product/store/stock display fields, no cached customer/staff/payment references or persisted owner privileges; discard cached private data when redaction cannot be written.
+5. **Company-specific refund rules** — **UNAPPLIED** `supabase/migrations/20261106120000_shared_shop_return_policies.sql` with default OFF, per-company append-only revisions, original sale-time rules, server-side owner policy enforcement and refund evidence. Refund UI clarifies card/MoMo payout is external, not automatic.
+6. **Test coverage** — Vitest/fake IndexedDB, PGlite/PostgreSQL-in-process refund/financial tests, native WebCrypto, typed client/build, and real Chromium IndexedDB/reload/two-tab verification.
+
+## Verified evidence
+
+- **Stage B focused QA SUCCESS:** [GitHub Actions run 42177920338](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42177920338), commit `3ac1a17a87ac095bc07fdc7413553175dd9373dc`. Successful queue/privacy UI tests, native vault crypto, PGlite finance/refund-policy tests, TypeScript check, Vite/server build, and **real Chromium** reload, unlock, original-key resend, two-tab distinct-sale persistence and same-key tampering refusal.
+- Earlier focused run [42176962972](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42176962972) also passed. One earlier browser attempt timed out starting its test web server; corrected to launch Vite directly with diagnostics before the passing run.
+- Production Supabase migration list checked on 2026-11-06 still ends at `20261105120712`, so the Stage B policy migration is **not live**.
+- Supabase advisors: leaked-password protection OFF; two security-definer RPC warnings requiring independent authorization audit; 22 RLS-enabled/no-direct-policy notices (may reflect deliberate RPC-only access). No production security setting changed.
+- Broader historical release validation still reports browser/auth/offline fixture failures and dependency advisories; the focused Stage B workflow does **not** establish full release readiness.
+
+## Stage B acceptance register
+
+| Gate | Source state | Evidence status |
 |---|---|---|
-| B1 Queue persistence, idempotency, legacy migration | Implementation authored on branch | UNVERIFIED: actual crash, multi-tab and browser QA |
-| B2 Encrypted working data, key lifecycle, secure migration | Redaction only; backup encryption is separate | **NOT IMPLEMENTED**: shared-shop pending-sale payloads and catalogue remain plaintext at rest |
-| B3 Company-specific cloud refund authorization | SQL migration/UI/tests authored | UNVERIFIED: no live or isolated SQL integration pass confirmed at this exact head |
-| B4 Financial conservation / rollback / payable scope | Existing finance logic preserved in draft migration; tests authored | UNVERIFIED: no independent reconciliation attestation |
-| B5 Auth and cross-account boundaries | Server RPC membership guards and per-company account scoping; cache redaction | UNVERIFIED: security tests, revocation, concurrent devices and offline login |
-| B6 Test and acceptance | CI workflow configured | UNVERIFIED: exact-head passing Vitest, PGlite, build, browser and real-device evidence missing |
+| B1 Durable offline sale submission/retries | Implemented for cloud shared shop | Focused Vitest and real Chromium pass. Crash/quota/hardware QA open |
+| B2 Encryption, migration and recovery | Opt-in encrypted shared-shop queue + portable encrypted restore implemented | Browser recovery pass; **local device ledger/catalogue encryption absent**, legacy nonempty plaintext queue migration not implemented |
+| B3 Company-level refund policy | SQL migration/UI and PGlite tests authored | Isolated SQL tests pass; **production migration unapplied** and owner staging review required |
+| B4 Financial conservation and rollback | Existing code + focused refund/PGlite regressions | Focused pass, comprehensive independent finance/payables/reversal audit open |
+| B5 Security/authorization | Scoped keys, role-safe cache and server checks | Security definer/RLS/Auth and physical cross-account revocation QA open |
+| B6 Full acceptance | Focused pinned CI and real Chromium pass | Broad browser, dependency, two-device and physical acceptance **NOT PASSED** |
 
-## Blocking investigations and implementation work
-1. Design owner-controlled encryption and **recoverable** key lifecycle for queued sales, especially unattended offline tills and account switching. Avoid deleting or re-encrypting legacy data before verified recovery. Do not mistake encrypted export-backups for encrypted working storage.
-2. Execute GitHub Actions to completion and attach run URLs, job logs, exact head commit and outcomes. Correct any failing tests. Verify new migration against full preexisting schema.
-3. Independently confirm full/partial refunds conserve tender allocations, stock and customer credit, and no false claims of external MoMo/card payouts. Evaluate refunds and statutory consumer rights by jurisdiction.
-4. Two tabs (simultaneous queues), reload during writes, offline/reconnect, browser eviction/storage quota, corrupted records, stale role cache and account switching, two real accounts on two devices.
-5. Use an owner-approved staging environment for SQL migration drill; **no production migration** without explicit authorization.
+## Safety and next development requirements
 
-## Safety / disposition
-Production deployment and database unchanged. A draft PR is for review, not approval. No commercial release claim.
+- Design and implement safe **encryption of the separate device-local business ledger and other sensitive offline working data**. No unsupported transparent rewrite of existing financial records.
+- Provide owner-reviewed migration/recovery from nonempty plaintext queues, with backup integrity, rollback, storage pressure, browser eviction and power-loss drills. Present vault encryption clearly in first-time setup rather than burying it in POS.
+- Independently audit all sale/refund/stock/credit/tender/repayment/payable paths and their company-staff authorization.
+- Resolve external production security and dependency advisors through authorized procedures.
+- Complete full repository browser acceptance and physical two-device shop validation before commercial release or production adoption.
+- Keep PR #26 draft; **no production DB migration, payments, merge or deployment without owner authorization**.
 
-## Continuation 2026-11-06 — additional source work
-- `438988e`, `7cc4126`: block new sales when an existing IndexedDB pending-sale record is malformed; preserve evidence; add regression.
-- `52f734b`, `9b41606`, `2ce70e8`, `831f8b1`: strict allowlist for offline business/catalogue/stock cache, instead of spreading arbitrary server fields; focused privacy tests and TS fix.
-- `6ec1ce5`, `9ebe3ea`, `11b9902`: isolated AES-256-GCM vault primitives and native tests (scope-binding, password verification, tamper checking). **NOT YET WIRED TO THE LIVE QUEUE**. No claim that queued sales or the device-local ledger are encrypted at rest.
-- `42dbfbb`: stage-B QA workflow includes privacy tests; native crypto test step added.
-- Verified on CI for commit `831f8b1baeb79a07d65e39d96b1e176933b1125c`: UI branch verification job `127747479805` completed SUCCESS including TypeScript, unit/integration tests, build and Chromium screenshot capture. This is a branch verification, not full Stage B acceptance.
-- Current production Supabase migrations list ends at `20261105120712`: draft `20261106120000` return-policy migration is **not applied**.
-- Current Supabase security advisors: leaked-password protection disabled; two authenticated security-definer RPC warnings requiring authorization review; 22 RLS-without-direct-policy notices (RPC-only design may be intentional).
-- Earlier broad release-validation job `127741796690` failed several browser/auth/offline tests and a dependency audit, despite successful native, client, tsc and bundle steps. This must be independently triaged; it is not Stage B release acceptance.
-
-**Disposition:** implementation and tests advanced, Stage B **NOT FINISHED**. Remaining: integrated user-unlocked encrypted working storage with safe migration and recovery, comprehensive finance/auth review, browser/device/crash tests, full green exact-head release validation, and an explicit owner-approved release decision. NO MERGE, SQL APPLY OR DEPLOY.
+**Conclusion:** The focused encrypted-queue source increment is implemented and tested, including real Chromium. **Stage B as a whole remains OPEN / NO-GO**, particularly the separate local ledger encryption and full acceptance gates.
