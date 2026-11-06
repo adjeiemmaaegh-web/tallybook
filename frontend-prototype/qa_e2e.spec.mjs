@@ -62,3 +62,18 @@ test('mobile menu, search and filter interactions',async({page},info)=>{
  await expect(page.getByText('Premium Jasmine Rice 5kg')).toBeVisible();
  await page.screenshot({path:info.outputPath('products-filter.png'),fullPage:true});
 });
+
+
+test('reference-aligned empty and onboarding screenshots',async({page},info)=>{
+ const publicRoutes=['signin','role','employee','business','store','ready'];
+ for(const route of publicRoutes){
+   await page.goto('/#'+route);
+   await page.screenshot({path:info.outputPath('reference-'+route+'.png'),fullPage:true});
+ }
+ const operations=['dashboard','pos','sales','inventory','products','online-orders','purchases','stocktake','transfers'];
+ for(const route of operations){
+   await page.goto('/#'+route);
+   await page.locator('#preview-mode').selectOption('empty');
+   await page.screenshot({path:info.outputPath('reference-'+route+'.png'),fullPage:true});
+ }
+});
