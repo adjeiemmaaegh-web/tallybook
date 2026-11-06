@@ -15,6 +15,17 @@ export interface ShopInvite { invitationId: string; email: string | null; expire
 /** What this person may do at the till. The owner may do everything. */
 export interface ShopPermissions { canDiscount: boolean; maxDiscountBps: number; canCredit: boolean }
 export interface ShopCustomer { id: string; name: string; phone: string | null; creditLimitMinor: number; balanceMinor: number }
+export interface ShopRefundPolicy {
+  revision: number;
+  enabled: boolean;
+  allowFullReversal: boolean;
+  allowPartialReturn: boolean;
+  maxAgeDays: number;
+  effectiveAt?: string;
+  reason?: string;
+  actorId?: string;
+}
+export interface ShopRefundPolicyHistory { current: ShopRefundPolicy; history: ShopRefundPolicy[] }
 export interface ShopOverview {
   companyId: string; role: ShopRole; currency: string | null;
   stores: ShopStore[]; products: ShopProduct[]; stock: ShopStock[];
@@ -23,6 +34,8 @@ export interface ShopOverview {
   myPermissions?: ShopPermissions;
   memberPermissions?: Record<string, ShopPermissions>;
   customers?: ShopCustomer[];
+  /** Cloud-authoritative policy. Absent on older server/cached overviews: treat as disabled. */
+  refundPolicy?: ShopRefundPolicy;
 }
 export const NO_PERMISSIONS: ShopPermissions = { canDiscount: false, maxDiscountBps: 0, canCredit: false };
 export const permissionsOf = (overview: ShopOverview): ShopPermissions =>
@@ -44,6 +57,8 @@ export interface ShopReceipt {
   subtotalMinor?: number; discountMinor?: number; discountReason?: string | null;
   customer?: ShopCustomer | null;
   recordedAt: string; replayed: boolean;
+  /** Zero denotes a historic sale with no Stage B policy snapshot. */
+  returnPolicyRevision?: number;
   payment: { method: TenderMethod | "split"; amountDueMinor: number; amountTenderedMinor: number; changeMinor: number; reference: string | null };
   tenders?: Array<{ method: TenderMethod; amountMinor: number; tenderedMinor: number; reference: string | null }>;
   lines: Array<{ lineNo: number; productId: string; name: string; quantity: number; unitPriceMinor: number; lineTotalMinor: number; lineDiscountMinor?: number; refundedQuantity: number }>;
@@ -53,6 +68,10 @@ export interface ShopReceipt {
 export interface ShopRefund {
   refundId: string; refundNo: number; amountMinor: number; creditMinor?: number; method: TenderMethod; returnedToStock: boolean;
   reason: string; actorId: string; recordedAt: string;
+  policySaleRevision?: number | null;
+  policyDecisionRevision?: number | null;
+  policyKind?: "full" | "partial" | null;
+  policyCheckedAt?: string | null;
   lines: Array<{ lineNo: number; productId: string; quantity: number; lineTotalMinor: number }>;
 }
 /** Leave `lines` out to void: refund everything not yet refunded. */
@@ -122,6 +141,12 @@ export const adjustShopStock = (companyId: string, change: { storeId: string; pr
 export const inviteShopAttendant = (companyId: string, email: string) =>
   callShop<{ inviteToken: string; invitationId: string; email: string; expiresAtEpochMs: number }>("inviteByEmail", { companyId, email });
 
+export const getShopRefundPolicyHistory = (companyId: string) =>
+  callShop<ShopRefundPolicyHistory>("getRefundPolicyHistory", { companyId });
+export const setShopRefundPolicy = (companyId: string, policy: {
+  enabled: boolean; allowFullReversal: boolean; allowPartialReturn: boolean;
+  maxAgeDays: number; reason: string;
+}) => callShop<ShopRefundPolicyHistory>("setRefundPolicy", { companyId, ...policy });
 export const refundShopSale = (companyId: string, refund: RefundRequest) =>
   callShop<ShopReceipt>("refundSale", { companyId, ...refund });
 export const importShopOpening = (companyId: string, books: OpeningImport) =>

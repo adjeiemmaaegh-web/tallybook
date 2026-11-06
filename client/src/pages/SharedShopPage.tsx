@@ -8,6 +8,7 @@
 import "./sharedShop.css";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ShopRefundPolicyPanel } from "@/cloud/ShopRefundPolicyPanel";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { listVerifiedCloudBusinesses } from "@/cloud/cloudMembership";
@@ -17,9 +18,11 @@ import {
   adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
   recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
+  type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type ShopRefundPolicy, type TenderInput,
 } from "@/cloud/shopClient";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, lockShopOutboxVault, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
+import { safeCache, blankCache, type ShopCache } from "@/cloud/safeShopCache";
+import { ShopOutboxVaultPanel } from "@/cloud/ShopOutboxVaultPanel";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
@@ -27,12 +30,33 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-function readCache(userId: string): { businesses: Business[]; overviews: Record<string, ShopOverview> } {
-  try { return JSON.parse(localStorage.getItem(CACHE + userId) ?? "") ?? { businesses: [], overviews: {} }; }
-  catch { return { businesses: [], overviews: {} }; }
+function readCache(userId: string): ShopCache {
+  try {
+    const raw = localStorage.getItem(CACHE + userId);
+    if (!raw) return blankCache();
+    const parsed = JSON.parse(raw) as ShopCache;
+    if (!parsed || typeof parsed !== "object") return blankCache();
+    const cleaned = safeCache(parsed);
+    // Existing cache could contain customer names/phones and team emails.
+    // Scrub it on the first read without touching pending sales or local ledger.
+    const redacted = JSON.stringify(cleaned);
+    if (redacted !== raw) {
+      try { localStorage.setItem(CACHE + userId, redacted); }
+      catch {
+        // If privacy scrubbing fails, delete stale private cached data.
+        // The cloud ledger is still authoritative; do not use this cache.
+        try { localStorage.removeItem(CACHE + userId); } catch { /* blocked storage */ }
+        return blankCache();
+      }
+    }
+    return cleaned;
+  } catch { return blankCache(); }
 }
-function writeCache(userId: string, change: (cache: ReturnType<typeof readCache>) => void) {
-  try { const cache = readCache(userId); change(cache); localStorage.setItem(CACHE + userId, JSON.stringify(cache)); } catch { /* not essential */ }
+function writeCache(userId: string, change: (cache: ShopCache) => void) {
+  try {
+    const cache = readCache(userId); change(cache);
+    localStorage.setItem(CACHE + userId, JSON.stringify(safeCache(cache)));
+  } catch { /* not essential to confirmed cloud operations */ }
 }
 function clearShopCaches() {
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
@@ -174,7 +198,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </nav>
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}
-    {tab === "team" && isOwner && <TeamPanel {...ctx} />}
+    {tab === "team" && isOwner && <><TeamPanel {...ctx} /><ShopRefundPolicyPanel companyId={business.id} current={overview.refundPolicy} online={online} onDone={refresh} /></>}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && <SalesPanel {...ctx} />}
   </>;
@@ -281,22 +305,30 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queued, setQueued] = useState<QueuedSale[]>([]);
+  const [queueError, setQueueError] = useState("");
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
+  // Clear the decrypted per-account key on account change, tab navigation or
+  // sign-out. Saved ciphertext and pending sales remain intact.
+  useEffect(() => () => { lockShopOutboxVault(scope); }, [scope]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
-  const reloadQueue = useCallback(() => setQueued(readOutbox(scope)), [scope]);
+  const reloadQueue = useCallback(async () => {
+    try { setQueued(await readOutbox(scope)); setQueueError(""); }
+    catch (cause) { setQueued([]); setQueueError(message(cause)); }
+  }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
     flushing.current = true;
     try {
       const results = await flushOutbox(scope, send);
-      reloadQueue();
+      await reloadQueue();
       if (results.some(r => r.state === "recorded")) void refresh();
-    } finally { flushing.current = false; }
+    } catch (cause) { setQueueError(message(cause)); }
+    finally { flushing.current = false; }
   }, [scope, send, refresh, reloadQueue]);
-  useEffect(() => { reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
+  useEffect(() => { void reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
   // A flaky connection can fail a request while the phone still reports
   // "online", so keep retrying while anything is waiting, and on return to the app.
   const hasPending = queued.some(q => q.status === "pending");
@@ -321,7 +353,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
     setPaidNow(""); setPaidNowReference(""); setSplit({ cash: "", mobile: "", mobileReference: "", card: "" }); submissionKey.current = null; };
   const touch = () => { setReceipt(null); setError(""); submissionKey.current = null; };
   const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
-  const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
+  const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit && online ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
     <p>{overview.role === "owner" ? "Add a store under Team, then add stock under Stock." : "The owner hasn't assigned you to a store yet. Ask them to add you to the store you work in."}</p></section>;
@@ -335,6 +367,8 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
       if (discountMinor * 10000 > subtotal * perms.maxDiscountBps) throw new Error(`You can give up to ${perms.maxDiscountBps / 100}% off.`);
       if (discountMinor > 0 && !discountReason.trim()) throw new Error("Say why you are giving this discount.");
       tenders = buildTenders({ mode, total, currency, tendered, reference, customerId, paidNow, paidNowMethod, paidNowReference, split });
+      if (!online && tenders.some(t => t.method === "credit")) throw new Error("Customer credit requires an online balance check. Save a cash sale offline instead.");
+      if (!online && discountMinor > 0) throw new Error("Discounts need current online permission. Reconnect to apply the discount.");
       const credit = tenders.find(t => t.method === "credit");
       if (credit && customer && customer.balanceMinor + credit.amountMinor > customer.creditLimitMinor)
         throw new Error(`${customer.name} can owe up to ${formatMinorAmount(customer.creditLimitMinor, currency)} and already owes ${formatMinorAmount(customer.balanceMinor, currency)}. Take more payment now or ask the owner to raise the limit.`);
@@ -349,14 +383,16 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
     try {
       const result = await submitSale(scope, sale, summary, send);
       if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
-      else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
+      else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone, but not yet recorded in the shared shop. It will retry online; stock or access changes may require review."); }
       else { submissionKey.current = null; setError(result.error); }
     } catch (cause) { setError(message(cause)); }
-    finally { setBusy(false); reloadQueue(); }
+    finally { setBusy(false); void reloadQueue(); }
   };
 
   const splitSum = (["cash", "mobile", "card"] as const).reduce((n, k) => { try { return n + (split[k].trim() ? parseAmountToMinor(split[k], currency) : 0); } catch { return n; } }, 0);
   return <div className="shop-sell">
+    <ShopOutboxVaultPanel key={scope.userId + ":" + scope.companyId} scope={scope}
+      onStatusChange={async () => {await reloadQueue(); if (online) void flush();}} />
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2><StorePicker stores={active} storeId={storeId} choose={id => { choose(id); setCart({}); }} /></div>
       {!products.length && <p className="shop-muted">No products yet.</p>}
@@ -419,13 +455,14 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
           <ReceiptText aria-hidden="true" />{busy ? "Recording…" : online ? "Record sale" : "Save sale (offline)"}</button>
         {error && <p role="alert" className="shop-alert">{error}</p>}
       </>}
+      {queueError && <p className="shop-alert" role="alert">Pending-sales storage needs attention: {queueError}</p>}
       {queued.length > 0 && <div className="shop-queue">
         <h3>Waiting to send</h3>
         <ul>{queued.map(q => <li key={q.sale.submissionKey} className={q.status === "rejected" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
-          {q.status === "pending" ? <small>Will send when online</small> : <>
+          {q.status === "pending" ? <small>Pending server confirmation; stock or access changes may require review.</small> : <>
             <small>Not recorded: {q.error}</small>
-            <button type="button" className="secondary-action" onClick={() => { dismissQueuedSale(scope, q.sale.submissionKey); reloadQueue(); }}>Dismiss</button></>}
+            <button type="button" className="secondary-action" onClick={() => { void dismissQueuedSale(scope, q.sale.submissionKey).then(reloadQueue).catch(cause => setQueueError(message(cause))); }}>Dismiss</button></>}
         </li>)}</ul>
       </div>}
     </section>
@@ -564,6 +601,7 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
     void listShopSales(companyId, storeFilter || undefined).then(setSales).catch(c => setError(message(c))); }, [companyId, storeFilter, online]);
   const emailOf = (id: string) => overview.members.find(m => m.userId === id)?.email;
   const total = (sales ?? []).reduce((s, r) => s + r.totalMinor - (r.refundedMinor ?? 0), 0);
+  const policy = overview.refundPolicy;
   const replace = (next: ShopReceipt) => setSales(list => (list ?? []).map(r => r.saleId === next.saleId ? next : r));
   return <section className="shop-card">
     <div className="shop-card-head"><h2>{overview.role === "owner" ? "Recent sales" : "My recent sales"}</h2>
@@ -579,7 +617,11 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
         <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{overview.role === "owner" && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
-        {overview.role === "owner" && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
+        {overview.role === "owner" && r.refundedMinor < r.totalMinor && (!policy?.enabled
+          ? <p className="shop-muted">This business has not enabled refunds. Change the policy under Team if appropriate.</p>
+          : !(r.returnPolicyRevision && r.returnPolicyRevision > 0)
+            ? <p className="shop-muted">This sale predates the cloud return-policy record. It needs a separate, audited legacy review.</p>
+            : <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} policy={policy} />)}</>}
     </li>)}</ul>
   </section>;
 }
@@ -733,7 +775,7 @@ function MemberPermissions({ companyId, member, current, online, refresh }: {
 
 /** Owner-only. Refunds never change the sale: they are new records that return
  * the money by the sale's own payment method and, optionally, the stock. */
-function RefundForm({ companyId, receipt, online, onDone }: { companyId: string; receipt: ShopReceipt; online: boolean; onDone: (r: ShopReceipt) => void }) {
+function RefundForm({ companyId, receipt, online, onDone, policy }: { companyId: string; receipt: ShopReceipt; online: boolean; onDone: (r: ShopReceipt) => void; policy: ShopRefundPolicy }) {
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState<Record<number, number>>({});
   const [reason, setReason] = useState("");
@@ -749,17 +791,20 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
   const worth = (l: ShopReceipt["lines"][number], n: number) => Math.floor((n * (l.lineTotalMinor - (l.lineDiscountMinor ?? 0))) / l.quantity);
   const chosenMinor = chosen.reduce((n, l) => n + worth(l, (l.refundedQuantity ?? 0) + qty[l.lineNo]!) - worth(l, l.refundedQuantity ?? 0), 0);
   const leftMinor = receipt.totalMinor - receipt.refundedMinor;
-  const how = methodLabel(receipt.payment.method).toLowerCase();
   const onCredit = Boolean(receipt.customer) && (receipt.tenders ?? []).some(t => t.method === "credit");
+  // Ledger posting does not initiate external payment-provider refunds.
   const route = onCredit
-    ? `It first reduces what ${receipt.customer!.name} still owes on this sale; anything more goes back as money (cash first).`
-    : receipt.payment.method === "split" ? "The money goes back as cash first, from the till."
-    : `The money goes back by ${how}${receipt.payment.method === "mobile" ? ": send it from your mobile money wallet." : receipt.payment.method === "card" ? ": reverse it on your card machine." : " from the till."}`;
+    ? `Tallybook adjusts what ${receipt.customer!.name} owes. If any money is due back, arrange and verify that payment separately.`
+    : receipt.payment.method === "split" ? "Arrange the cash payout separately; Tallybook only records the refund."
+    : receipt.payment.method === "mobile" ? "Send the mobile-money repayment separately from your wallet; Tallybook does not initiate it."
+    : receipt.payment.method === "card" ? "Reverse the card payment separately through your provider; Tallybook does not initiate it."
+    : "Pay the cash back separately; Tallybook records the refund but does not hand over cash.";
 
   const send = async (whole: boolean) => {
+    if ((whole && !policy.allowFullReversal) || (!whole && !policy.allowPartialReturn)) { setError("This business policy does not allow that return type."); return; }
     if (!reason.trim()) { setError("Say why this is being refunded."); return; }
     const amount = whole ? leftMinor : chosenMinor;
-    if (!window.confirm(`Refund ${money(amount)}? ${route} This can't be undone.`)) return;
+    if (!window.confirm(`Record a refund of ${money(amount)}? ${route} Continue only once any required external cash, card, or mobile-money repayment is completed and verified. Tallybook records the ledger entry only.`)) return;
     const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
       ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
     const body = JSON.stringify(request);
@@ -771,26 +816,26 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
     } catch (cause) {
       const unreachable = cause instanceof ShopUnreachableError;
       if (!unreachable) pending.current = null;
-      setError(unreachable ? "No connection. Nothing was refunded yet. Try again when you're online." : message(cause));
+      setError(unreachable ? "No connection. The refund outcome is unconfirmed. Retry with the SAME key when online; do not record a separate refund." : message(cause));
     } finally { setBusy(false); }
   };
 
   if (!open) return <button type="button" className="secondary-action shop-refund-open" disabled={!online} onClick={() => setOpen(true)}><Undo2 aria-hidden="true" />Refund or void</button>;
   return <form className="shop-refund" onSubmit={e => { e.preventDefault(); void send(false); }}>
     <h3>Refund from receipt #{receipt.receiptNumber}</h3>
-    <ul className="shop-product-list">{left.map(l => <li key={l.lineNo}>
+    {policy.allowPartialReturn && <ul className="shop-product-list">{left.map(l => <li key={l.lineNo}>
       <div><strong>{l.name}</strong><span>{l.left} can be refunded · {money(l.unitPriceMinor)} each{l.lineDiscountMinor ? " before discount" : ""}</span></div>
       <div className="shop-stepper">
         <button type="button" className="secondary-action" aria-label={`Refund one less ${l.name}`} disabled={!qty[l.lineNo]} onClick={() => setQty(q => ({ ...q, [l.lineNo]: (q[l.lineNo] ?? 0) - 1 }))}><Minus aria-hidden="true" /></button>
         <output aria-label={`${l.name} to refund`}>{qty[l.lineNo] ?? 0}</output>
         <button type="button" className="secondary-action" aria-label={`Refund one more ${l.name}`} disabled={(qty[l.lineNo] ?? 0) >= l.left} onClick={() => setQty(q => ({ ...q, [l.lineNo]: (q[l.lineNo] ?? 0) + 1 }))}><Plus aria-hidden="true" /></button>
-      </div></li>)}</ul>
+      </div></li>)}</ul>}
     <label className="shop-field">Reason<input value={reason} onChange={e => setReason(e.target.value)} maxLength={200} placeholder="e.g. customer returned it, keyed by mistake" /></label>
     <label className="shop-check"><input type="checkbox" checked={restock} onChange={e => setRestock(e.target.checked)} />Put the items back in stock (untick if damaged)</label>
     <p className="shop-muted">{route}</p>
     <div className="shop-actions">
-      <button className="primary-action" disabled={busy || !online || !chosen.length}>{busy ? "Refunding…" : `Refund ${money(chosenMinor)}`}</button>
-      <button type="button" className="secondary-action shop-void" disabled={busy || !online} onClick={() => void send(true)}>Void whole sale ({money(leftMinor)})</button>
+      {policy.allowPartialReturn && <button className="primary-action" disabled={busy || !online || !chosen.length}>{busy ? "Refunding…" : `Refund ${money(chosenMinor)}`}</button>}
+      {policy.allowFullReversal && <button type="button" className="secondary-action shop-void" disabled={busy || !online} onClick={() => void send(true)}>Void remaining sale ({money(leftMinor)})</button>}
       <button type="button" className="secondary-action" disabled={busy} onClick={() => { setOpen(false); setError(""); }}>Cancel</button>
     </div>
     {error && <p role="alert" className="shop-alert">{error}</p>}

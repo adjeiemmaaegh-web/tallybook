@@ -1,3 +1,5 @@
+import "fake-indexeddb/auto";
+import Dexie from "dexie";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SaleRequest, ShopOverview, ShopReceipt } from "@/cloud/shopClient";
@@ -33,17 +35,43 @@ const base: ShopOverview = {
   products: [{ id: "eggs", name: "Crate of eggs", unitPriceMinor: 4500, active: true }],
   stock: [{ storeId: "st-a", productId: "eggs", quantity: 3 }],
   members: [], pendingInvites: [],
+  refundPolicy: {revision: 1, enabled: true, allowFullReversal: true, allowPartialReturn: true, maxAgeDays: 30},
 };
-const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => ({
-  saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
-  submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor: 9000, recordedAt: new Date().toISOString(), replayed,
-  payment: { method: "cash", amountDueMinor: 9000, amountTenderedMinor: 10000, changeMinor: 1000, reference: null },
-  lines: [{ lineNo: 1, productId: "eggs", name: "Crate of eggs", quantity: 2, unitPriceMinor: 4500, lineTotalMinor: 9000, refundedQuantity: 0 }],
-  refundedMinor: 0, refunds: [],
-});
+const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => {
+  const subtotalMinor = sale.lines.reduce((total, line) => total + line.quantity * 4500, 0);
+  const discountMinor = "discountMinor" in sale ? (sale.discountMinor ?? 0) : 0;
+  const totalMinor = subtotalMinor - discountMinor;
+  const tenderedMinor = "tenders" in sale
+    ? sale.tenders.reduce((total,t) => total + (t.tenderedMinor ?? t.amountMinor),0)
+    : sale.amountTenderedMinor;
+  return {
+    saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
+    submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor,
+    subtotalMinor, discountMinor, recordedAt: new Date().toISOString(), replayed,
+    payment: { method: "tenders" in sale ? (sale.tenders.length>1 ? "split" : sale.tenders[0]?.method ?? "cash") : sale.paymentMethod,
+      amountDueMinor: totalMinor, amountTenderedMinor: tenderedMinor,
+      changeMinor: Math.max(0,tenderedMinor-totalMinor), reference: null },
+    lines: sale.lines.map((line,i)=>({
+      lineNo: i+1, productId: line.productId, name: "Crate of eggs", quantity: line.quantity,
+      unitPriceMinor: 4500, lineTotalMinor: line.quantity*4500,
+      lineDiscountMinor: i===0 ? discountMinor : 0, refundedQuantity: 0
+    })),
+    refundedMinor: 0, refunds: [],
+  };
+};
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear();
+  const db = new Dexie("tallybook-shared-shop-outbox-v2");
+  db.version(1).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id" });
+  db.version(2).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id" });
+  try {
+    await db.transaction("rw", db.table("entries"), db.table("quarantine"), db.table("vaults"), async () => {
+      await db.table("entries").clear();
+      await db.table("quarantine").clear();
+      await db.table("vaults").clear();
+    });
+  } finally { db.close(); }
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
   shop.overview.mockReset(); shop.record.mockReset(); shop.sales.mockReset(); shop.refund.mockReset();
   shop.repay.mockReset(); shop.statement.mockReset(); shop.perms.mockReset(); shop.customer.mockReset();
@@ -95,7 +123,7 @@ describe("shared shop — attendant", () => {
     await addTwoEggs();
     fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
     expect(await screen.findByText(/saved on this phone/)).toBeInTheDocument();
-    expect(screen.getByText("Waiting to send")).toBeInTheDocument();
+    expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
     const firstKey = (shop.record.mock.calls[0]![0] as SaleRequest).submissionKey;
 
     shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
@@ -106,19 +134,17 @@ describe("shared shop — attendant", () => {
     expect((shop.record.mock.calls[1]![0] as SaleRequest).submissionKey).toBe(firstKey);
   });
 
-  it("keeps retrying a waiting sale on a flaky connection that still reports online", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      shop.record.mockRejectedValueOnce(new ShopUnreachableError("timeout"));
-      render(<SharedShopPage />);
-      await addTwoEggs();
-      fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
-      expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
-      shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
-      await act(async () => { await vi.advanceTimersByTimeAsync(21_000); });
-      await waitFor(() => expect(screen.queryByText("Waiting to send")).toBeNull());
-      expect(shop.record).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+  it("retries a waiting sale when the app becomes visible despite reporting online", async () => {
+    shop.record.mockRejectedValueOnce(new ShopUnreachableError("timeout"));
+    render(<SharedShopPage />);
+    await addTwoEggs();
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
+    expect(shop.record).toHaveBeenCalledTimes(1);
+    shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")); });
+    await waitFor(() => expect(screen.queryByText("Waiting to send")).toBeNull());
+    expect(shop.record).toHaveBeenCalledTimes(2);
   });
 
   it("shows the server's reason when a sale is refused, and starts a fresh key next time", async () => {
@@ -148,7 +174,7 @@ describe("shared shop — app updates", () => {
 describe("shared shop — owner refunds", () => {
   const sold = (): ShopReceipt => ({
     saleId: "sale-9", companyId: "biz", storeId: "st-a", storeName: "Madina", cashierId: "att-1", submissionKey: "k".repeat(24),
-    receiptNumber: 9, currency: "GHS", totalMinor: 13500, recordedAt: new Date().toISOString(), replayed: false,
+    receiptNumber: 9, currency: "GHS", totalMinor: 13500, recordedAt: new Date().toISOString(), replayed: false, returnPolicyRevision: 1,
     payment: { method: "cash", amountDueMinor: 13500, amountTenderedMinor: 13500, changeMinor: 0, reference: null },
     lines: [{ lineNo: 1, productId: "eggs", name: "Crate of eggs", quantity: 3, unitPriceMinor: 4500, lineTotalMinor: 13500, refundedQuantity: 0 }],
     refundedMinor: 0, refunds: [],
@@ -171,7 +197,7 @@ describe("shared shop — owner refunds", () => {
     fireEvent.click(screen.getByRole("button", { name: "Refund one more Crate of eggs" }));
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Cracked" } });
     fireEvent.click(screen.getByRole("button", { name: /^Refund GH/ }));
-    expect(await screen.findByText(/Nothing was refunded yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/refund outcome is unconfirmed/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^Refund GH/ }));
     expect(await screen.findByText(/Refund 1:/)).toBeInTheDocument();
@@ -191,7 +217,7 @@ describe("shared shop — owner refunds", () => {
     fireEvent.click(await screen.findByRole("button", { name: /#9/ }));
     fireEvent.click(screen.getByRole("button", { name: /Refund or void/ }));
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Keyed by mistake" } });
-    fireEvent.click(screen.getByRole("button", { name: /Void whole sale/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Void remaining sale/ }));
     await waitFor(() => expect(shop.refund).toHaveBeenCalledTimes(1));
     expect(shop.refund.mock.calls[0]![0]).not.toHaveProperty("lines");
   });
