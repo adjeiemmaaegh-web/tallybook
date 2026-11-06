@@ -22,6 +22,7 @@ import {
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { safeCache, blankCache, type ShopCache } from "@/cloud/safeShopCache";
+import { ShopOutboxVaultPanel } from "@/cloud/ShopOutboxVaultPanel";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
@@ -303,7 +304,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
 
   const reloadQueue = useCallback(async () => {
     try { setQueued(await readOutbox(scope)); setQueueError(""); }
-    catch (cause) { setQueueError(message(cause)); }
+    catch (cause) { setQueued([]); setQueueError(message(cause)); }
   }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
@@ -379,6 +380,8 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
 
   const splitSum = (["cash", "mobile", "card"] as const).reduce((n, k) => { try { return n + (split[k].trim() ? parseAmountToMinor(split[k], currency) : 0); } catch { return n; } }, 0);
   return <div className="shop-sell">
+    <ShopOutboxVaultPanel key={scope.userId + ":" + scope.companyId} scope={scope}
+      onStatusChange={async () => {await reloadQueue(); if (online) void flush();}} />
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2><StorePicker stores={active} storeId={storeId} choose={id => { choose(id); setCart({}); }} /></div>
       {!products.length && <p className="shop-muted">No products yet.</p>}
