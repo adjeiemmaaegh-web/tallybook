@@ -236,6 +236,94 @@ export async function getShopOutboxVaultStatus(scope:OutboxScope):Promise<{confi
   const configured=!!(await vaults.get(scopeKey(scope)));
   return {configured,unlocked:configured && unlocked.has(scopeKey(scope))};
 }
+/** Portable encrypted-only queue recovery. Never includes a passphrase or
+ * plaintext sale. A restore can only target the SAME authenticated account
+ * and business, and only when that target has no queue or vault.
+ * Export is a point-in-time snapshot: stop checkout while making a backup.
+ */
+export async function exportProtectedShopOutbox(scope: OutboxScope): Promise<string> {
+  const decoded=await prepare(scope,defaultLegacyStorage());
+  const sk=scopeKey(scope);
+  const vault=await vaults.get(sk);
+  if (!vault || !unlocked.has(sk))
+    throw new Error("Unlock a protected offline queue before exporting recovery data.");
+  const records=await entries.where("scopeKey").equals(sk).toArray();
+  if (records.length!==decoded.length || records.some(row=>!isSealed(row)))
+    throw new Error(recoveryError);
+  for (const record of records) await decodeRow(scope,record,true);
+  return JSON.stringify({
+    kind:"tallybook.shared-shop.queue.recovery.v1",
+    scope:[scope.userId,scope.companyId],
+    descriptor:vault.descriptor,
+    entries:records.sort((a,b)=>a.id.localeCompare(b.id)),
+    exportedAt:new Date().toISOString()
+  });
+}
+export async function importProtectedShopOutbox(
+  scope:OutboxScope,backupText:string,passphrase:string,
+  legacyStorage:LegacyStorage|null=defaultLegacyStorage()
+):Promise<number> {
+  scopeIsValid(scope);
+  if(typeof backupText!=="string" || backupText.length>10*1024*1024)
+    throw new Error("Encrypted recovery file is too large or invalid.");
+  let parsed:unknown;
+  try { parsed=JSON.parse(backupText); }
+  catch { throw new Error("Encrypted recovery file is not valid JSON."); }
+  if(!parsed || typeof parsed!=="object" || Array.isArray(parsed))
+    throw new Error("Encrypted recovery file has an invalid structure.");
+  const payload=parsed as Record<string,unknown>;
+  if(Object.keys(payload).sort().join(",") !==
+      ["kind","scope","descriptor","entries","exportedAt"].sort().join(",") ||
+      payload.kind!=="tallybook.shared-shop.queue.recovery.v1" ||
+      !Array.isArray(payload.scope) || payload.scope.length!==2 ||
+      payload.scope[0]!==scope.userId || payload.scope[1]!==scope.companyId ||
+      !Array.isArray(payload.entries) || payload.entries.length>500 ||
+      typeof payload.exportedAt!=="string" ||
+      !Number.isFinite(Date.parse(payload.exportedAt)))
+    throw new Error("Recovery file is not for this signed-in account and business.");
+  const descriptor=payload.descriptor as ShopVaultDescriptor;
+  // Verify the supplied passphrase and every record BEFORE the write transaction.
+  const key=await unlockShopVault(scope,passphrase,descriptor);
+  const imports:ProtectedStoredSale[]=[];
+  const ids=new Set<string>();
+  for(const raw of payload.entries){
+    if(!raw || typeof raw!=="object" || Array.isArray(raw))
+      throw new Error("Recovery file contains an invalid encrypted sale.");
+    const record=raw as Record<string,unknown>;
+    if(Object.keys(record).sort().join(",")!==["id","scopeKey","queuedAt","sealed"].sort().join(",") ||
+        typeof record.id!=="string" || record.scopeKey!==scopeKey(scope) ||
+        typeof record.queuedAt!=="string" ||
+        !Number.isFinite(Date.parse(record.queuedAt)) || ids.has(record.id))
+      throw new Error("Recovery file has duplicate or invalid sale metadata.");
+    let parts:unknown;
+    try { parts=JSON.parse(record.id); } catch { throw new Error("Recovery file has an invalid submission key."); }
+    if(!Array.isArray(parts) || parts.length!==3 ||
+        parts[0]!==scope.userId || parts[1]!==scope.companyId ||
+        typeof parts[2]!=="string")
+      throw new Error("Recovery file is not for this account and business.");
+    const sealed=record.sealed as ShopSealedPayload;
+    let item:unknown;
+    try{ item=await decryptQueuedSale(scope,parts[2],key,sealed); }
+    catch{ throw new Error("Encrypted recovery sale could not be authenticated."); }
+    if(!valid(item) || item.sale.submissionKey!==parts[2] ||
+       item.queuedAt!==record.queuedAt)
+      throw new Error("Encrypted recovery sale metadata disagrees with its contents.");
+    ids.add(record.id);
+    imports.push(record as unknown as ProtectedStoredSale);
+  }
+  if ((await prepare(scope,legacyStorage)).length)
+    throw new Error("This device already has queued sales. Restore would risk replacing or duplicating them.");
+  const sk=scopeKey(scope);
+  await database.transaction("rw",entries,vaults,async()=>{
+    if(await vaults.get(sk) || await entries.where("scopeKey").equals(sk).count())
+      throw new Error("This device already has offline sales or encryption for this account; no data was changed.");
+    await vaults.add({id:sk,descriptor});
+    for(const row of imports) await entries.add(row);
+  });
+  unlocked.set(sk,key);
+  return imports.length;
+}
+
 export type SendSale = (sale: SaleRequest) => Promise<ShopReceipt>;
 export type SubmitResult =
   | { state: "recorded"; receipt: ShopReceipt }
