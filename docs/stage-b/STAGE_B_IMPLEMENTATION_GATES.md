@@ -28,11 +28,19 @@
 | Gate | Source state | Evidence status |
 |---|---|---|
 | B1 Durable offline sale submission/retries | Implemented for cloud shared shop | Focused Vitest and real Chromium pass. Crash/quota/hardware QA open |
-| B2 Encryption, migration and recovery | Opt-in encrypted shared-shop queue + portable encrypted restore implemented | Browser recovery pass; **local device ledger/catalogue encryption absent**, legacy nonempty plaintext queue migration not implemented |
+| B2 Encryption, migration and recovery | Opt-in encrypted shared-shop queue + portable encrypted restore implemented | Browser recovery pass; **local device ledger/catalogue encryption absent**, backup-first atomic legacy nonempty plaintext queue migration implemented on draft branch; physical crash/quota/restore acceptance pending |
 | B3 Company-level refund policy | SQL migration/UI and PGlite tests authored | Isolated SQL tests pass; **production migration unapplied** and owner staging review required |
 | B4 Financial conservation and rollback | Existing code + focused refund/PGlite regressions | Focused pass, comprehensive independent finance/payables/reversal audit open |
 | B5 Security/authorization | Scoped keys, role-safe cache and server checks | Security definer/RLS/Auth and physical cross-account revocation QA open |
 | B6 Full acceptance | Focused pinned CI and real Chromium pass | Broad browser, dependency, two-device and physical acceptance **NOT PASSED** |
+
+## Additional draft engineering, 2026-11-06
+
+- `client/src/cloud/shopOutbox.ts`: explicit existing-plaintext-queue encryption, with *required* encrypted-only pre-migration recovery file, account/company/passphrase authentication, record-for-record snapshot checks, pre-commit encryption self-check, and atomic IndexedDB replacement plus vault-descriptor installation. New sales recorded after the backup invalidate migration rather than being silently omitted.
+- `client/src/cloud/ShopOutboxVaultPanel.tsx`: owner-facing two-step workflow requiring download and re-upload of the encrypted recovery file. Ordinary checkout and new vault setup do not automatically migrate preexisting financial records.
+- `client/src/cloud/shopOutbox.test.ts` and `qa/browser-stage-b-vault.spec.mjs`: new migration, rejected-transaction retention, stale backup refusal and Chromium offline reload replay regressions.
+- The separate device-local ledger remains unencrypted at rest. Existing outstanding sales are not touched by merely installing this branch; the conversion requires explicit user action.
+- **Acceptance still requires passing exact-head CI, simulated crash/quota failures, real-device backup restore, independent security and financial review.**
 
 ## Safety and next development requirements
 
