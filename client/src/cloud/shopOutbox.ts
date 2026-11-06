@@ -44,7 +44,17 @@ const legacyKey = (scope: OutboxScope) =>
   `tallybook.shop.outbox.v1:${scope.userId}:${scope.companyId}`;
 
 function defaultLegacyStorage(): LegacyStorage | null {
-  try { return window.localStorage; } catch { return null; }
+  // Node-native pure tests may not provide a browser window. A real browser
+  // refusing localStorage access is different: we cannot verify whether older
+  // unsent sales exist, so do not silently skip legacy recovery.
+  if (typeof window === "undefined") return null;
+  try {
+    const storage = window.localStorage;
+    if (!storage) throw Error("Unavailable");
+    return storage;
+  } catch {
+    throw new Error("Browser storage is blocked. Older unsent sales cannot be checked; do not clear browser data or send a new sale.");
+  }
 }
 function valid(entry: unknown): entry is QueuedSale {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
@@ -76,7 +86,11 @@ async function retainBadLegacy(scope: OutboxScope, raw: string, reason: string):
  */
 async function migrateLegacy(scope: OutboxScope, storage: LegacyStorage | null) {
   if (!storage) return;
-  const raw = storage.getItem(legacyKey(scope));
+  let raw: string | null;
+  try { raw = storage.getItem(legacyKey(scope)); }
+  catch {
+    throw new Error("Browser storage cannot be read. Older unsent sales may need recovery; do not clear this browser's data.");
+  }
   if (raw === null) return;
   let parsed: unknown;
   try { parsed = JSON.parse(raw); }
