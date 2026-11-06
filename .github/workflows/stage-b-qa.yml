@@ -40,4 +40,4 @@ jobs:
       - name: Install Chromium for real-browser queue acceptance
         run: pnpm exec playwright install --with-deps chromium
       - name: Real Chromium IndexedDB encryption, reload and two-tab QA
-        run: pnpm exec playwright test --config playwright.stage-b.config.mjs
+        run: DEBUG=pw:webserver pnpm exec playwright test --config playwright.stage-b.config.mjs
