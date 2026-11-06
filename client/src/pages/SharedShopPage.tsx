@@ -40,7 +40,15 @@ function readCache(userId: string): ShopCache {
     // Existing cache could contain customer names/phones and team emails.
     // Scrub it on the first read without touching pending sales or local ledger.
     const redacted = JSON.stringify(cleaned);
-    if (redacted !== raw) localStorage.setItem(CACHE + userId, redacted);
+    if (redacted !== raw) {
+      try { localStorage.setItem(CACHE + userId, redacted); }
+      catch {
+        // If privacy scrubbing fails, delete stale private cached data.
+        // The cloud ledger is still authoritative; do not use this cache.
+        try { localStorage.removeItem(CACHE + userId); } catch { /* blocked storage */ }
+        return blankCache();
+      }
+    }
     return cleaned;
   } catch { return blankCache(); }
 }
@@ -375,7 +383,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
     try {
       const result = await submitSale(scope, sale, summary, send);
       if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
-      else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
+      else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone, but not yet recorded in the shared shop. It will retry online; stock or access changes may require review."); }
       else { submissionKey.current = null; setError(result.error); }
     } catch (cause) { setError(message(cause)); }
     finally { setBusy(false); void reloadQueue(); }
@@ -452,7 +460,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
         <h3>Waiting to send</h3>
         <ul>{queued.map(q => <li key={q.sale.submissionKey} className={q.status === "rejected" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
-          {q.status === "pending" ? <small>Will send when online</small> : <>
+          {q.status === "pending" ? <small>Pending server confirmation; stock or access changes may require review.</small> : <>
             <small>Not recorded: {q.error}</small>
             <button type="button" className="secondary-action" onClick={() => { void dismissQueuedSale(scope, q.sale.submissionKey).then(reloadQueue).catch(cause => setQueueError(message(cause))); }}>Dismiss</button></>}
         </li>)}</ul>
