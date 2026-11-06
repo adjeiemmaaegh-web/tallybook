@@ -17,6 +17,7 @@ import {
   adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
   recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -143,7 +144,7 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   };
   return <section className="shop-card shop-empty">
     <h2>Join your employer's shop</h2>
-    <p>Ask the owner to invite <strong>{email || "the email you signed in with"}</strong>. They'll give you a one-time code that works only for this account and expires after 15 minutes.</p>
+    <p>Ask the owner to invite <strong>{email || "the email you signed in with"}</strong>. They'll give you a one-time code that works once, only for this account, and expires after 24 hours.</p>
     <form onSubmit={accept} className="shop-inline-form">
       <label className="shop-field">Invitation code
         <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="v1.…" /></label>
@@ -553,7 +554,7 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
         <button className="primary-action" disabled={busy || !online}><UserPlus aria-hidden="true" />Invite</button>
       </form>
       {issued && <div className="shop-invite" role="status">
-        <p>Send this one-time code to <strong>{issued.email}</strong>. It works only for their account and expires in 15 minutes.</p>
+        <p>Send this one-time code to <strong>{issued.email}</strong>. It works once, only for their account, and expires in 24 hours.</p>
         <code>{issued.code}</code>
         <div className="shop-actions">
           <button type="button" className="secondary-action" onClick={() => void navigator.clipboard?.writeText(issued.code).then(() => setCopied(true))}><Copy aria-hidden="true" />{copied ? "Copied" : "Copy code"}</button>
@@ -574,7 +575,69 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
         </fieldset></li>)}</ul>
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
+    <RefundPolicyCard companyId={companyId} online={online} />
   </div>;
+}
+
+/** Owner-only: whether this business allows refunds, which kinds, and for how long. Enforced by the server. */
+function RefundPolicyCard({ companyId, online }: { companyId: string; online: boolean }) {
+  const [policy, setPolicy] = useState<ShopRefundPolicy | null>(null);
+  const [form, setForm] = useState({ enabled: false, allowVoid: true, allowPartial: true, days: "30", reason: "", confirmed: false });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const adopt = useCallback((p: ShopRefundPolicy) => {
+    setPolicy(p);
+    setForm(f => ({ ...f, enabled: p.refundsEnabled, allowVoid: p.refundsEnabled ? p.allowVoid : true,
+      allowPartial: p.refundsEnabled ? p.allowPartial : true, days: String(p.maxAgeDays), reason: "", confirmed: false }));
+  }, []);
+  useEffect(() => {
+    if (!online) return;
+    let live = true;
+    getShopRefundPolicy(companyId).then(p => { if (live) adopt(p); }).catch(c => { if (live) setError(message(c)); });
+    return () => { live = false; };
+  }, [companyId, online, adopt]);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!policy) return;
+    const days = Number(form.days);
+    if (form.enabled && (!Number.isInteger(days) || days < 1 || days > 3650)) { setError("Enter the refund window as a whole number of days from 1 to 3650."); return; }
+    if (form.enabled && !form.allowVoid && !form.allowPartial) { setError("Choose which refunds are allowed."); return; }
+    setBusy(true); setError(""); setSaved(false);
+    try {
+      adopt(await setShopRefundPolicy(companyId, { refundsEnabled: form.enabled, allowVoid: form.enabled && form.allowVoid,
+        allowPartial: form.enabled && form.allowPartial, maxAgeDays: form.enabled ? days : policy.maxAgeDays,
+        reason: form.reason.trim(), expectedRevision: policy.revision, confirmed: true }));
+      setSaved(true);
+    } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  return <section className="shop-card" aria-labelledby="refund-policy-title">
+    <h2 id="refund-policy-title">Refund policy</h2>
+    {!policy ? <p className="shop-muted" role="status">{online ? "Loading…" : "Connect to the internet to see or change the refund policy."}</p> : <form onSubmit={e => void submit(e)}>
+      <p className="shop-muted">Refunds are off until you turn them on. A change applies to sales made after it; earlier sales keep the rules they were sold under. Customers may have legal rights that this setting cannot remove.</p>
+      <label className="shop-check"><input type="checkbox" checked={form.enabled} disabled={busy || !online}
+        onChange={e => { setSaved(false); setForm(f => ({ ...f, enabled: e.target.checked, confirmed: false })); }} />Allow refunds</label>
+      {form.enabled && <>
+        <label className="shop-check"><input type="checkbox" checked={form.allowVoid} disabled={busy || !online}
+          onChange={e => setForm(f => ({ ...f, allowVoid: e.target.checked }))} />Whole-sale refunds</label>
+        <label className="shop-check"><input type="checkbox" checked={form.allowPartial} disabled={busy || !online}
+          onChange={e => setForm(f => ({ ...f, allowPartial: e.target.checked }))} />Refund some items</label>
+        <label className="shop-field">Refund window (days)
+          <input inputMode="numeric" value={form.days} disabled={busy || !online} onChange={e => setForm(f => ({ ...f, days: e.target.value }))} /></label>
+      </>}
+      <label className="shop-field">Why are you changing this?
+        <input value={form.reason} maxLength={200} required disabled={busy || !online} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} /></label>
+      <label className="shop-check"><input type="checkbox" checked={form.confirmed} disabled={busy || !online}
+        onChange={e => setForm(f => ({ ...f, confirmed: e.target.checked }))} />I understand this applies to new sales</label>
+      <button className="primary-action" disabled={busy || !online || !form.confirmed || !form.reason.trim()}>Save policy</button>
+      {saved && <p role="status" className="shop-muted">Saved as version {policy.revision}.</p>}
+      {policy.history.length > 0 && <details><summary>History ({policy.history.length})</summary>
+        <ul className="shop-list">{policy.history.slice(0, 5).map(h => <li key={h.revision}>
+          <span>v{h.revision}: {h.refundsEnabled ? `${[h.allowVoid && "whole sale", h.allowPartial && "some items"].filter(Boolean).join(" and ")}, ${h.maxAgeDays} days` : "refunds off"}</span>
+          <small>{new Date(h.effectiveAt).toLocaleDateString()} · {h.reason}</small></li>)}</ul></details>}
+      {error && <p role="alert" className="shop-alert">{error}</p>}
+    </form>}
+  </section>;
 }
 
 function SalesPanel({ companyId, overview, online }: PanelProps) {

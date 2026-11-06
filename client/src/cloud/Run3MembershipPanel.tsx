@@ -21,7 +21,7 @@ export function Run3MembershipPanel({userId,companyId,isOwner,onAccepted}:{
  const canManage=!!companyId&&isOwner;
  return <section className="rounded border p-4 space-y-3" aria-label="Join a business">
   <h3 className="font-semibold">Have an invitation code?</h3>
-  <p className="text-sm">The code works only for the account it was created for and expires 15 minutes after the owner creates it.</p>
+  <p className="text-sm">The code works only for the account it was created for and expires 24 hours after the owner creates it.</p>
   <form className="space-y-2" onSubmit={e=>{e.preventDefault();void execute(async()=>{
     const receipt=await acceptCloudInvitation(token.trim());
     if(receipt.userId!==userId)throw Error('Different account accepted invitation.');
