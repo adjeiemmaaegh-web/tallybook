@@ -37,3 +37,7 @@ jobs:
         run: pnpm check
       - name: Build
         run: pnpm build
+      - name: Install Chromium for real-browser queue acceptance
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Real Chromium IndexedDB encryption, reload and two-tab QA
+        run: pnpm exec playwright test --config playwright.stage-b.config.mjs
