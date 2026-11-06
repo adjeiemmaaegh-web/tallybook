@@ -1,3 +1,5 @@
+import "fake-indexeddb/auto";
+import Dexie from "dexie";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SaleRequest, ShopOverview, ShopReceipt } from "@/cloud/shopClient";
@@ -42,8 +44,16 @@ const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => ({
   refundedMinor: 0, refunds: [],
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear();
+  const db = new Dexie("tallybook-shared-shop-outbox-v2");
+  db.version(1).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id" });
+  try {
+    await db.transaction("rw", db.table("entries"), db.table("quarantine"), async () => {
+      await db.table("entries").clear();
+      await db.table("quarantine").clear();
+    });
+  } finally { db.close(); }
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
   shop.overview.mockReset(); shop.record.mockReset(); shop.sales.mockReset(); shop.refund.mockReset();
   shop.repay.mockReset(); shop.statement.mockReset(); shop.perms.mockReset(); shop.customer.mockReset();
