@@ -451,6 +451,9 @@ describe("shared-shop IndexedDB sale outbox", () => {
       { ...receipt(original.submissionKey), currency:"not-currency" },
       { ...receipt(original.submissionKey), payment:undefined },
       { ...receipt(original.submissionKey), lines:[] },
+      { ...receipt(original.submissionKey), lines:[{...receipt(original.submissionKey).lines[0],quantity:2}] },
+      { ...receipt(original.submissionKey), lines:[{...receipt(original.submissionKey).lines[0],productId:"other-item"}] },
+      { ...receipt(original.submissionKey), payment:{...receipt(original.submissionKey).payment,amountDueMinor:400} },
       { ...receipt(original.submissionKey), refundedMinor:900 },
       { ...receipt(original.submissionKey), receiptNumber:-1 }
     ];
