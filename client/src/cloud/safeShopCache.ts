@@ -52,7 +52,7 @@ export function safeCache(input: unknown): ShopCache {
       const s = asRecord(value);
       if (!s || !string(s.id) || !string(s.name) ||
           (s.status !== "active" && s.status !== "archived")) return [];
-      return [{id: s.id, name: s.name, status: s.status}];
+      return [{id: s.id, name: s.name, status: s.status as "active" | "archived"}];
     });
     const products = listOf(view.products).flatMap(value => {
       const p = asRecord(value);
