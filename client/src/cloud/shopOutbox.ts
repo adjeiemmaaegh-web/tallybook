@@ -230,8 +230,96 @@ export async function enableShopOutboxVault(
  * record and atomically replaces every row together with its vault metadata.
  * Any concurrent sale or storage failure aborts the entire conversion.
  */
+/**
+ * Make a portable, encrypted recovery file BEFORE touching an existing
+ * plaintext queue. This file uses the same authenticated recovery envelope
+ * as an already-protected queue, and can be restored onto a fresh device.
+ * Stop checkouts while exporting, and save the file before migrating.
+ */
+export async function exportPlainShopOutboxRecovery(
+  scope:OutboxScope, passphrase:string,
+  legacyStorage:LegacyStorage|null=defaultLegacyStorage()
+):Promise<string> {
+  const current=await prepare(scope,legacyStorage);
+  const sk=scopeKey(scope);
+  if(await vaults.get(sk))throw new Error("This queue is already protected; use encrypted queue export instead.");
+  if(!current.length)throw new Error("There are no outstanding plaintext sales to back up.");
+  if(current.length>500)throw new Error("Too many pending sales for a single recovery file. Reconcile sales first.");
+  const originals=await entries.where("scopeKey").equals(sk).toArray();
+  if(originals.length!==current.length || originals.some(row=>isSealed(row)))
+    throw new Error("Offline sale records changed during backup preparation.");
+  const source=new Map(originals.map(row=>[row.id,row]));
+  const {descriptor,key}=await createShopVault(scope,passphrase);
+  const encrypted:ProtectedStoredSale[]=[];
+  for(const item of current) {
+    const id=entryKey(scope,item.sale.submissionKey);
+    const record=source.get(id);
+    if(!record || isSealed(record) || !valid(record) ||
+       !sameSale(record.sale,item.sale) || record.status!==item.status ||
+       record.summary!==item.summary || record.queuedAt!==item.queuedAt ||
+       record.error!==item.error)
+      throw new Error("Offline sales changed during backup preparation.");
+    encrypted.push({id,scopeKey:sk,queuedAt:item.queuedAt,
+      sealed:await encryptQueuedSale(scope,item.sale.submissionKey,key,item)});
+  }
+  const latest=await entries.where("scopeKey").equals(sk).toArray();
+  if(latest.length!==originals.length ||
+     latest.some(row=>!sameStored(row,source.get(row.id))))
+    throw new Error("Offline sales changed during backup export. Try again.");
+  const result=JSON.stringify({
+    kind:"tallybook.shared-shop.queue.recovery.v1",
+    scope:[scope.userId,scope.companyId],
+    descriptor,entries:encrypted.sort((a,b)=>a.id.localeCompare(b.id)),
+    exportedAt:new Date().toISOString()
+  });
+  if(result.length>10*1024*1024)
+    throw new Error("Encrypted recovery file is too large. Reconcile sales first.");
+  return result;
+}
+
+async function verifyPlainRecoveryFile(
+  scope:OutboxScope, passphrase:string, recoveryText:string,
+  expected:QueuedSale[]
+):Promise<void> {
+  if(typeof recoveryText!=="string" || recoveryText.length>10*1024*1024)
+    throw new Error("A valid encrypted recovery file is required before conversion.");
+  let data:unknown;
+  try{data=JSON.parse(recoveryText);}catch{
+    throw new Error("Encrypted recovery file is invalid; no sales were converted.");
+  }
+  if(!data || typeof data!=="object" || Array.isArray(data))
+    throw new Error("Encrypted recovery file is invalid; no sales were converted.");
+  const backup=data as Record<string,unknown>;
+  if(Object.keys(backup).sort().join(",")!==
+       ["kind","scope","descriptor","entries","exportedAt"].sort().join(",") ||
+     backup.kind!=="tallybook.shared-shop.queue.recovery.v1" ||
+     !Array.isArray(backup.scope) || backup.scope.length!==2 ||
+     backup.scope[0]!==scope.userId || backup.scope[1]!==scope.companyId ||
+     !Array.isArray(backup.entries) || backup.entries.length!==expected.length)
+    throw new Error("Recovery file does not match this account and pending sales.");
+  const key=await unlockShopVault(scope,passphrase,backup.descriptor as ShopVaultDescriptor);
+  const original=new Map(expected.map(item=>[entryKey(scope,item.sale.submissionKey),item]));
+  const seen=new Set<string>();
+  for(const entry of backup.entries) {
+    if(!entry || typeof entry!=="object" || Array.isArray(entry))
+      throw new Error("Encrypted recovery file contains invalid sale metadata.");
+    const row=entry as Record<string,unknown>;
+    if(Object.keys(row).sort().join(",")!==["id","scopeKey","queuedAt","sealed"].sort().join(",") ||
+       typeof row.id!=="string" || row.scopeKey!==scopeKey(scope) ||
+       seen.has(row.id) || !original.has(row.id))
+      throw new Error("Encrypted recovery file disagrees with the pending sale list.");
+    const item=original.get(row.id)!;
+    if(row.queuedAt!==item.queuedAt)throw new Error("Encrypted recovery file has a changed sale timestamp.");
+    const restored=await decryptQueuedSale(scope,item.sale.submissionKey,key,row.sealed as ShopSealedPayload);
+    if(!valid(restored) || JSON.stringify(restored)!==JSON.stringify(item))
+      throw new Error("Encrypted recovery file does not preserve an original sale.");
+    seen.add(row.id);
+  }
+  if(seen.size!==original.size)throw new Error("Encrypted recovery file omitted a pending sale.");
+}
+
 export async function migratePlainShopOutboxToVault(
-  scope: OutboxScope, passphrase: string,
+  scope: OutboxScope, passphrase: string, encryptedRecoveryFile: string,
   legacyStorage: LegacyStorage | null = defaultLegacyStorage()
 ): Promise<number> {
   const current = await prepare(scope,legacyStorage);
@@ -240,6 +328,9 @@ export async function migratePlainShopOutboxToVault(
   }
   const sk = scopeKey(scope);
   if (await vaults.get(sk)) throw new Error("This offline queue is already protected.");
+  // The owner must first export an encrypted-only recovery file, and this
+  // file must authenticate *every* current record, including rejected sales.
+  await verifyPlainRecoveryFile(scope,passphrase,encryptedRecoveryFile,current);
 
   const originals = await entries.where("scopeKey").equals(sk).toArray();
   if (originals.length !== current.length || originals.some(row=>isSealed(row)))
