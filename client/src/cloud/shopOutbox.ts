@@ -543,12 +543,21 @@ function receiptMatchesSale(receipt: ShopReceipt | null | undefined, scope: Outb
   const tendered = receipt.payment.amountTenderedMinor;
   const change = receipt.payment.changeMinor;
   if (![due,tendered,change].every(n=>Number.isSafeInteger(n) && n>=0) ||
+      due !== receipt.totalMinor ||
       !Number.isSafeInteger(receipt.refundedMinor) ||
       receipt.refundedMinor < 0 || receipt.refundedMinor > receipt.totalMinor) return false;
-  return receipt.lines.every(line=>line && typeof line.productId === "string" &&
+  if (!receipt.lines.every(line=>line && typeof line.productId === "string" &&
     line.productId.length>0 && Number.isSafeInteger(line.lineNo) && line.lineNo>0 &&
     Number.isSafeInteger(line.quantity) && line.quantity>0 &&
-    Number.isSafeInteger(line.lineTotalMinor) && line.lineTotalMinor>=0);
+    Number.isSafeInteger(line.lineTotalMinor) && line.lineTotalMinor>=0)) return false;
+  // The server can reorder or normalize duplicate lines, but the total
+  // quantities per product must exactly match the original submitted cart.
+  const totals=(items: Array<{productId:string;quantity:number}>)=>{
+    const map=new Map<string,number>();
+    for(const item of items) map.set(item.productId,(map.get(item.productId)??0)+item.quantity);
+    return [...map.entries()].sort(([a],[b])=>a.localeCompare(b));
+  };
+  return JSON.stringify(totals(receipt.lines))===JSON.stringify(totals(sale.lines));
 }
 
 async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale): Promise<SubmitResult> {
