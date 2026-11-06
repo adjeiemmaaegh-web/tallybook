@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it, vi } from "vitest";
 import Dexie from "dexie";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale } from "./shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus } from "./shopOutbox";
 import { ShopRejectedError, ShopUnreachableError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
 let serial = 0;
@@ -131,6 +131,7 @@ describe("shared-shop IndexedDB sale outbox", () => {
     await submitSale(scope, sale(id), "Eggs", offline);
     const db = new Dexie("tallybook-shared-shop-outbox-v2");
     db.version(1).stores({entries: "id,scopeKey,queuedAt", quarantine: "id"});
+    db.version(2).stores({entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id"});
     const storedId = JSON.stringify([scope.userId, scope.companyId, id]);
     try {
       await db.table("entries").update(storedId, {summary: 42});
@@ -156,6 +157,77 @@ describe("shared-shop IndexedDB sale outbox", () => {
     await expect(submitSale(scope, sale(key(15)), "Rice", sender, deniedStorage))
       .rejects.toThrow(/storage cannot be read/i);
     expect(sender).not.toHaveBeenCalled();
+  });
+
+  it("protects a newly configured empty queue, including the sale details and summary", async () => {
+    const scope = newScope(), passphrase = "A long and private queue recovery phrase";
+    await enableShopOutboxVault(scope,passphrase);
+    expect(await getShopOutboxVaultStatus(scope)).toEqual({configured:true,unlocked:true});
+    const item=sale(key(81));
+    await submitSale(scope,item,"Customer bought dairy and eggs",offline);
+    const db=new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
+    db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
+    try {
+      const rows=await db.table("entries").toArray();
+      const raw=JSON.stringify(rows);
+      expect(raw).toContain('"sealed"');
+      expect(raw).not.toContain("Customer bought dairy");
+      expect(raw).not.toContain('"amountTenderedMinor"');
+      expect(raw).not.toContain('"productId"');
+      expect(rows).toHaveLength(1);
+    } finally {db.close();}
+    expect((await readOutbox(scope))[0].sale).toEqual(item);
+    lockShopOutboxVault(scope);
+    expect(await getShopOutboxVaultStatus(scope)).toEqual({configured:true,unlocked:false});
+    await expect(readOutbox(scope)).rejects.toThrow(/Unlock/);
+    const sender=vi.fn(async (s:SaleRequest)=>receipt(s.submissionKey));
+    await expect(submitSale(scope,sale(key(82)),"Cannot send",sender)).rejects.toThrow(/Unlock/);
+    expect(sender).not.toHaveBeenCalled();
+    await unlockShopOutboxVault(scope,passphrase);
+    expect((await readOutbox(scope))[0].sale).toEqual(item);
+    expect(await flushOutbox(scope,sender)).toEqual([{state:"recorded",receipt:receipt(item.submissionKey)}]);
+    expect(await readOutbox(scope)).toEqual([]);
+  });
+
+  it("refuses vault activation while a legacy or rejected sale still needs review",async()=>{
+    const scope=newScope(),original=sale(key(83));
+    await submitSale(scope,original,"Pending receipt",offline);
+    await expect(enableShopOutboxVault(scope,"Private passphrase for this device")).rejects.toThrow(/Review or finish/);
+    expect((await readOutbox(scope))[0].sale).toEqual(original);
+    expect((await getShopOutboxVaultStatus(scope)).configured).toBe(false);
+  });
+
+  it("does not unlock with the wrong account, business, or passphrase",async()=>{
+    const scope=newScope();
+    await enableShopOutboxVault(scope,"private passphrase with letters and 123");
+    await submitSale(scope,sale(key(84)),"Protected order",offline);
+    lockShopOutboxVault(scope);
+    await expect(unlockShopOutboxVault(scope,"another valid but wrong passphrase")).rejects.toThrow();
+    expect((await getShopOutboxVaultStatus(scope)).unlocked).toBe(false);
+    await expect(unlockShopOutboxVault({...scope,userId:"foreign-user"},"private passphrase with letters and 123")).rejects.toThrow(/No protected offline queue/);
+    await expect(unlockShopOutboxVault({...scope,companyId:"foreign-business"},"private passphrase with letters and 123")).rejects.toThrow(/No protected offline queue/);
+    await unlockShopOutboxVault(scope,"private passphrase with letters and 123");
+    expect((await readOutbox(scope)).map(e=>e.sale.submissionKey)).toEqual([key(84)]);
+  });
+
+  it("preserves encrypted evidence and blocks replay if the sealed payload is modified",async()=>{
+    const scope=newScope();
+    await enableShopOutboxVault(scope,"This is a high entropy offline passphrase");
+    await submitSale(scope,sale(key(85)),"Protected receipt",offline);
+    const db=new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
+    db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
+    const id=JSON.stringify([scope.userId,scope.companyId,key(85)]);
+    try{
+      const raw=await db.table("entries").get(id);
+      await db.table("entries").update(id,{sealed:{...raw.sealed,data:"AAAA"}});
+      const sender=vi.fn(async(s:SaleRequest)=>receipt(s.submissionKey));
+      await expect(readOutbox(scope)).rejects.toThrow(/need recovery/i);
+      await expect(flushOutbox(scope,sender)).rejects.toThrow(/need recovery/i);
+      expect(sender).not.toHaveBeenCalled();
+      expect((await db.table("entries").get(id)).sealed.data).toBe("AAAA");
+    } finally {db.close();}
   });
 
 });
