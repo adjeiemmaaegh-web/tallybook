@@ -117,19 +117,17 @@ describe("shared shop — attendant", () => {
     expect((shop.record.mock.calls[1]![0] as SaleRequest).submissionKey).toBe(firstKey);
   });
 
-  it("keeps retrying a waiting sale on a flaky connection that still reports online", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      shop.record.mockRejectedValueOnce(new ShopUnreachableError("timeout"));
-      render(<SharedShopPage />);
-      await addTwoEggs();
-      fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
-      expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
-      shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
-      await act(async () => { await vi.advanceTimersByTimeAsync(21_000); });
-      await waitFor(() => expect(screen.queryByText("Waiting to send")).toBeNull());
-      expect(shop.record).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+  it("retries a waiting sale when the app becomes visible despite reporting online", async () => {
+    shop.record.mockRejectedValueOnce(new ShopUnreachableError("timeout"));
+    render(<SharedShopPage />);
+    await addTwoEggs();
+    fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
+    expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
+    expect(shop.record).toHaveBeenCalledTimes(1);
+    shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")); });
+    await waitFor(() => expect(screen.queryByText("Waiting to send")).toBeNull());
+    expect(shop.record).toHaveBeenCalledTimes(2);
   });
 
   it("shows the server's reason when a sale is refused, and starts a fresh key next time", async () => {
