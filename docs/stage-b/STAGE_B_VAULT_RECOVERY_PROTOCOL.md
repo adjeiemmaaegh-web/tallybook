@@ -16,6 +16,20 @@ It does **not** encrypt the separate device-local Tallybook ledger, offline cata
 4. Verify the protected state, then make a disposable sample offline sale, disconnect and reopen. Confirm the queue requires unlocking and retains the exact submission key after unlocking.
 5. If any error occurs, **do not clear browser storage**, reinstall or re-key the queue until its evidence is preserved and reviewed.
 
+## Existing plaintext pending-sales migration (draft branch only)
+
+**Never delete or automatically convert unresolved historical sales.** An explicit
+two-step workflow is now authored for owners with nonempty unencrypted queues.
+
+1. Close old app tabs, stop checkouts and choose **Protect existing unsent sales (backup required)**.
+2. Enter a strong migration passphrase twice and download the encrypted pre-migration recovery JSON. This step DOES NOT modify the original IndexedDB queue.
+3. Save the file and passphrase securely. The application requires the saved file to be **reuploaded** before continuing.
+4. It authenticates the backup passphrase and verifies **every pending or rejected sale** against the current original records. If a new sale was added after the backup, migration aborts and the plaintext queue remains unchanged.
+5. It encrypts and self-verifies all sale payloads *before* the write transaction, then rechecks source rows. Replacement of all rows and installation of the vault descriptor occur in the **same IndexedDB transaction**. Any changed row or failed transaction aborts the conversion.
+6. Reload and unlock using the same passphrase, and inspect exact original submission keys and statuses. Keep the encrypted recovery file until independent off-device restore has been tested.
+
+A downloaded file must be independently saved and protected; selecting the button does not prove operating-system persistence. The migration does not encrypt the separate device-local ledger or product catalogue. Old-version tabs cannot participate in the new transaction barrier, so close them first. The migration is not approved for production or commercial use without hardware, storage-pressure, interruption and cross-device QA.
+
 ## Encrypted recovery file
 
 1. In the **unlocked** protected queue, stop recording new transactions and choose **Export encrypted recovery file**.
@@ -45,7 +59,7 @@ Never import into an account with existing pending sales. Restore does not merge
 
 ## Release gates still open
 
-- Owner-approved encrypted migration policy for **existing** nonempty plaintext queues, with crash and rollback evidence.
+- Existing-queue encryption migration and mandatory encrypted backup flow are authored; **real hardware, quota, interruption and recovery acceptance still outstanding**.
 - Real-device storage/quota/restart and cross-tab testing, independent security review, and full release CI.
 - Separate encryption-at-rest design for the local business ledger and appropriate cached catalogue data.
 - Review commercial privacy and retention requirements for each jurisdiction.
