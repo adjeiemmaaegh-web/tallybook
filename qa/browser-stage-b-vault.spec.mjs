@@ -100,3 +100,50 @@ test("Chromium: two tabs preserve distinct protected sales and reject cross-tab 
   },id);
   expect(remain).toBe(2);
 });
+
+
+test("Chromium: existing plaintext queue converts only with complete encrypted recovery proof",async({page})=>{
+  const id=scope("migration"), pass="Owner recovery passphrase for real browser migration 2026";
+  await page.goto("/");
+  const first=await page.evaluate(async ({id,pass})=>{
+    const q=await import("/src/cloud/shopOutbox.ts");
+    const client=await import("/src/cloud/shopClient.ts");
+    const sale={submissionKey:"browserVaultMigration0000001",storeId:"store-a",
+      paymentMethod:"cash",amountTenderedMinor:750,lines:[{productId:"rice",quantity:3}]};
+    await q.submitSale(id,sale,"Private customer invoice",async()=>{throw new client.ShopUnreachableError("offline");});
+    const backup=await q.exportPlainShopOutboxRecovery(id,pass);
+    await q.migratePlainShopOutboxToVault(id,pass,backup);
+    const raw=await new Promise((resolve,reject)=>{
+      const request=indexedDB.open("tallybook-shared-shop-outbox-v2");
+      request.onerror=()=>reject(request.error);
+      request.onsuccess=()=>{
+        const db=request.result;
+        const tx=db.transaction("entries","readonly");
+        const all=tx.objectStore("entries").getAll();
+        all.onerror=()=>reject(all.error);
+        all.onsuccess=()=>{db.close();resolve(all.result);}
+      };
+    });
+    return {backup,raw,submissionKey:sale.submissionKey};
+  },{id,pass});
+  expect(first.backup).toContain("tallybook.shared-shop.queue.recovery.v1");
+  expect(first.backup).not.toContain("Private customer invoice");
+  expect(JSON.stringify(first.raw)).not.toContain("Private customer invoice");
+  expect(JSON.stringify(first.raw)).not.toContain("amountTenderedMinor");
+  await page.reload();
+  const outcome=await page.evaluate(async ({id,pass})=>{
+    const q=await import("/src/cloud/shopOutbox.ts");
+    const locked=await q.getShopOutboxVaultStatus(id);
+    await q.unlockShopOutboxVault(id,pass);
+    const before=await q.readOutbox(id);
+    const results=await q.flushOutbox(id,async sale=>({
+      submissionKey:sale.submissionKey,receiptNumber:3,replayed:true
+    }));
+    return {locked,keys:before.map(e=>e.sale.submissionKey),
+      results:results.map(e=>e.state),remaining:(await q.readOutbox(id)).length};
+  },{id,pass});
+  expect(outcome.locked).toEqual({configured:true,unlocked:false});
+  expect(outcome.keys).toEqual([first.submissionKey]);
+  expect(outcome.results).toEqual(["recorded"]);
+  expect(outcome.remaining).toBe(0);
+});
