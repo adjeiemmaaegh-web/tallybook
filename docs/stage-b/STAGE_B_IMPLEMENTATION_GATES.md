@@ -50,6 +50,13 @@
 - `docs/stage-b/LOCAL_LEDGER_ENCRYPTION_BOUNDARY.md`: confirms local Dexie `tallybook-db` v39 remains plaintext at rest; exported AES-GCM backups are not live-storage encryption. Adds a safe full-ledger architecture, migration and recovery acceptance plan. **No working ledger encryption or live DB changes implemented.**
 - Stage B is still **NOT ACCEPTED / NO-GO**: independent complete financial and authorization security review, full release browser/dependency checks, local ledger encryption, physical crash/low-memory/two-device tests, staging SQL migration drill, and owner authorization remain open.
 
+## Follow-up — verified receipts before queue discharge (2026-11-06)
+
+- Source: `client/src/cloud/shopOutbox.ts`. The outbox does **not** delete a queued sale merely because the HTTP/RPC call succeeded. It now verifies the receipt's original submission key, company/store, sale ID, positive receipt number, currency, recorded date, nonnegative safe financial values, amount due equal to receipt total, and product quantities matching the submitted cart (allowing harmless line reordering/aggregation). A failed check preserves the original queued sale for review and same-key retry.
+- Source: `client/src/cloud/shopOutbox.test.ts` and `client/src/pages/SharedShopPage.test.tsx`. Regression checks include mismatched company/store, missing sale ID, invalid refund total/currency, changed cart/amount due, and both legacy and split-tender sales. The fake UI receipt generator now reflects the submitted quantity and payment, rather than concealing a mismatch.
+- **Focused Stage B QA PASS:** [run 42204546828](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42204546828) at code commit `16c27c750213be7c5c83f2b5a63b08936a05430a`. All configured Stage B steps succeeded, including IndexedDB/component, native vault crypto, PGlite finance/refund-policy, TypeScript, build and Chromium verification.
+- This does not certify the separate local ledger's at-rest confidentiality or whole-release browser/device acceptance. Draft PR remains NO-GO.
+
 ## Safety and next development requirements
 
 - Design and implement safe **encryption of the separate device-local business ledger and other sensitive offline working data**. No unsupported transparent rewrite of existing financial records.
