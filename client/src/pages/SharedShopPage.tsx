@@ -790,7 +790,7 @@ function RefundForm({ companyId, receipt, online, onDone, policy }: { companyId:
     if ((whole && !policy.allowFullReversal) || (!whole && !policy.allowPartialReturn)) { setError("This business policy does not allow that return type."); return; }
     if (!reason.trim()) { setError("Say why this is being refunded."); return; }
     const amount = whole ? leftMinor : chosenMinor;
-    if (!window.confirm(`Record a refund of ${money(amount)}? ${route} Confirm only after arranging any required payout. This ledger entry cannot be undone.`)) return;
+    if (!window.confirm(`Record a refund of ${money(amount)}? ${route} Continue only once any required external cash, card, or mobile-money repayment is completed and verified. Tallybook records the ledger entry only.`)) return;
     const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
       ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
     const body = JSON.stringify(request);
