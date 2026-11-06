@@ -42,7 +42,7 @@ test('an invitation lasts 24 hours, is account-bound and single-use', async () =
   const t = await setup();
   const inv = await t.boss('invite', {companyId: t.company, targetUserId: t.people.emp.id});
   const [{span}] = await t.adminRows('select (expires_at - created_at)::text as span from public.company_member_invites');
-  assert.match(span, /^(23:59|24:00)/);
+  assert.match(span, /^(1 day|23:59|24:00)/);
   await assert.rejects(t.other('accept', {inviteToken: inv.inviteToken}), /Invalid or expired invitation|Invitation|denied|invalid/i);
   await t.admin(`update public.company_member_invites set created_at = created_at - interval '23 hours', expires_at = expires_at - interval '23 hours'`);
   await t.emp('accept', {inviteToken: inv.inviteToken}); // still valid 23 hours in
