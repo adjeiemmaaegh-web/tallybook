@@ -42,6 +42,14 @@
 - The separate device-local ledger remains unencrypted at rest. Existing outstanding sales are not touched by merely installing this branch; the conversion requires explicit user action.
 - **Acceptance still requires passing exact-head CI, simulated crash/quota failures, real-device backup restore, independent security and financial review.**
 
+## Continuation — financial payload validation and local-ledger boundary (2026-11-06)
+
+- `e16222a` and `98d31a4`: both older single-payment and modern split-tender offline sale formats now validate quantities, safe integer amounts, methods, dates and structure **before** durable storage or replay. Malformed stored sales fail closed without evidence deletion.
+- `99cf890`, `1c35187`, `5398d82`: receipt company ID and store ID must match the queued sale as well as the original idempotency key before clearing the queue; regression and Chromium mock updates.
+- **Stage B focused QA SUCCESS** at code commit `5398d82eea507e9dbc74ceac762aaa84dcbb5a52`: [Actions run 42203274750](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42203274750). Passed IndexedDB/Vitest, native encrypted queue, PGlite policy and finance tests, TypeScript, build, Chromium.
+- `docs/stage-b/LOCAL_LEDGER_ENCRYPTION_BOUNDARY.md`: confirms local Dexie `tallybook-db` v39 remains plaintext at rest; exported AES-GCM backups are not live-storage encryption. Adds a safe full-ledger architecture, migration and recovery acceptance plan. **No working ledger encryption or live DB changes implemented.**
+- Stage B is still **NOT ACCEPTED / NO-GO**: independent complete financial and authorization security review, full release browser/dependency checks, local ledger encryption, physical crash/low-memory/two-device tests, staging SQL migration drill, and owner authorization remain open.
+
 ## Safety and next development requirements
 
 - Design and implement safe **encryption of the separate device-local business ledger and other sensitive offline working data**. No unsupported transparent rewrite of existing financial records.
