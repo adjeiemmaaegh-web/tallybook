@@ -35,6 +35,7 @@ const base: ShopOverview = {
   products: [{ id: "eggs", name: "Crate of eggs", unitPriceMinor: 4500, active: true }],
   stock: [{ storeId: "st-a", productId: "eggs", quantity: 3 }],
   members: [], pendingInvites: [],
+  refundPolicy: {revision: 1, enabled: true, allowFullReversal: true, allowPartialReturn: true, maxAgeDays: 30},
 };
 const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => ({
   saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
@@ -158,7 +159,7 @@ describe("shared shop — app updates", () => {
 describe("shared shop — owner refunds", () => {
   const sold = (): ShopReceipt => ({
     saleId: "sale-9", companyId: "biz", storeId: "st-a", storeName: "Madina", cashierId: "att-1", submissionKey: "k".repeat(24),
-    receiptNumber: 9, currency: "GHS", totalMinor: 13500, recordedAt: new Date().toISOString(), replayed: false,
+    receiptNumber: 9, currency: "GHS", totalMinor: 13500, recordedAt: new Date().toISOString(), replayed: false, returnPolicyRevision: 1,
     payment: { method: "cash", amountDueMinor: 13500, amountTenderedMinor: 13500, changeMinor: 0, reference: null },
     lines: [{ lineNo: 1, productId: "eggs", name: "Crate of eggs", quantity: 3, unitPriceMinor: 4500, lineTotalMinor: 13500, refundedQuantity: 0 }],
     refundedMinor: 0, refunds: [],
@@ -181,7 +182,7 @@ describe("shared shop — owner refunds", () => {
     fireEvent.click(screen.getByRole("button", { name: "Refund one more Crate of eggs" }));
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Cracked" } });
     fireEvent.click(screen.getByRole("button", { name: /^Refund GH/ }));
-    expect(await screen.findByText(/Nothing was refunded yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/refund outcome is unconfirmed/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^Refund GH/ }));
     expect(await screen.findByText(/Refund 1:/)).toBeInTheDocument();
@@ -201,7 +202,7 @@ describe("shared shop — owner refunds", () => {
     fireEvent.click(await screen.findByRole("button", { name: /#9/ }));
     fireEvent.click(screen.getByRole("button", { name: /Refund or void/ }));
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Keyed by mistake" } });
-    fireEvent.click(screen.getByRole("button", { name: /Void whole sale/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Void remaining sale/ }));
     await waitFor(() => expect(shop.refund).toHaveBeenCalledTimes(1));
     expect(shop.refund.mock.calls[0]![0]).not.toHaveProperty("lines");
   });
