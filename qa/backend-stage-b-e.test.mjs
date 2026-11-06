@@ -15,7 +15,8 @@ const migrations=[
 '20261106120000_shared_shop_return_policies.sql',
 '20261106130000_shop_stage_c_read_models.sql',
 '20261106140000_shop_stage_d_stock_workflows.sql',
-'20261106150000_shop_stage_d_purchase_payables.sql'
+'20261106150000_shop_stage_d_purchase_payables.sql',
+'20261106160000_shop_stage_d_online_orders.sql'
 ];
 async function setup(){
  const db=new PGlite();
@@ -140,5 +141,47 @@ test('Stage D: partial receiving, supplier payables and zero duplicate settlemen
    await assert.rejects(t.call('owner','receivePurchase',{receiptId:id(),orderId,lines:[{lineNo:1,quantity:1}]}),/closed/);
    await assert.rejects(t.db.query('select * from public.shop_supplier_settlements'),/permission denied/);
    await assert.rejects(t.admin('update public.shop_supplier_settlements set amount_minor=1'),/append-only/);
+ }finally{await t.db.close();}
+});
+
+test('Stage D: online order does not reserve stock and can link only a matching posted sale once',async()=>{
+ const t=await setup();
+ try{
+   const orderId=id(),base={orderId,storeId:t.a,customerReference:'Web-001',
+     lines:[{productId:t.product,quantity:2}]};
+   const created=await t.call('owner','createOnlineOrder',base);
+   assert.equal(created.status,'new');assert.equal(created.stockReserved,false);
+   assert.equal((await t.call('owner','createOnlineOrder',base)).replayed,true);
+   await assert.rejects(t.call('owner','createOnlineOrder',{...base,lines:[
+     {productId:t.product,quantity:3}]}),/different details/);
+   await assert.rejects(t.call('attendant','listOnlineOrders'),/Only the owner/);
+   await assert.rejects(t.call('owner','linkOnlineOrderSale',{orderId,saleId:id()}),/Accept this online order/);
+   const accepted=await t.call('owner','acceptOnlineOrder',{orderId});
+   assert.equal(accepted.stockReserved,false);
+   assert.equal((await t.call('owner','acceptOnlineOrder',{orderId})).replayed,true);
+   const before=await t.admin('select quantity from public.shop_store_stock where store_id=$1 and product_id=$2',[t.a,t.product]);
+   assert.equal(before[0].quantity,20);
+   const receipt=await t.core('owner','recordSale',{
+     storeId:t.a,submissionKey:id().replaceAll('-',''),lines:[{productId:t.product,quantity:2}],
+     tenders:[{method:'cash',amountMinor:3000,tenderedMinor:3000}]
+   });
+   const posted=await t.call('owner','linkOnlineOrderSale',{orderId,saleId:receipt.saleId});
+   assert.equal(posted.status,'sold');assert.equal(posted.stockAdjustedByLink,false);
+   assert.equal((await t.call('owner','linkOnlineOrderSale',{orderId,saleId:receipt.saleId})).replayed,true);
+   const after=await t.admin('select quantity from public.shop_store_stock where store_id=$1 and product_id=$2',[t.a,t.product]);
+   assert.equal(after[0].quantity,18);
+   const state=await t.call('owner','listOnlineOrders');
+   assert.equal(state.orders[0].status,'sold');assert.equal(state.orders[0].saleId,receipt.saleId);
+   await assert.rejects(t.call('owner','closeOnlineOrder',{orderId,reason:'Customer cancelled'}),/Sold order/);
+   const otherId=id();
+   await t.call('owner','createOnlineOrder',{orderId:otherId,storeId:t.a,lines:[{productId:t.product,quantity:2}]});
+   await t.call('owner','acceptOnlineOrder',{orderId:otherId});
+   await assert.rejects(t.call('owner','linkOnlineOrderSale',{orderId:otherId,saleId:receipt.saleId}),/Sale is already linked/);
+   const closedId=id();
+   await t.call('owner','createOnlineOrder',{orderId:closedId,storeId:t.a,lines:[{productId:t.product,quantity:1}]});
+   await t.call('owner','closeOnlineOrder',{orderId:closedId,reason:'Customer cancelled'});
+   await assert.rejects(t.call('owner','acceptOnlineOrder',{orderId:closedId}),/Closed order/);
+   await assert.rejects(t.db.query('select * from public.shop_online_orders'),/permission denied/);
+   await assert.rejects(t.admin('delete from public.shop_online_order_fulfillments'),/append-only/);
  }finally{await t.db.close();}
 });
