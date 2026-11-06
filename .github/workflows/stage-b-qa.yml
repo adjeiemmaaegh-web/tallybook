@@ -25,7 +25,7 @@ jobs:
       - name: Install exact lockfile dependencies
         run: pnpm install --frozen-lockfile
       - name: Atomic IndexedDB queue and shared-shop component tests
-        run: pnpm exec vitest run client/src/cloud/shopOutbox.test.ts client/src/pages/SharedShopPage.test.tsx
+        run: pnpm exec vitest run client/src/cloud/shopOutbox.test.ts client/src/cloud/safeShopCache.test.ts client/src/pages/SharedShopPage.test.tsx
       - name: Real PostgreSQL-in-process refund, finance and policy tests
         run: node --test qa/shared-shop-refunds-import.test.mjs qa/shared-shop-full-till.test.mjs
       - name: Typecheck
