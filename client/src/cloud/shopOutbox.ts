@@ -522,6 +522,35 @@ export type SubmitResult =
   | { state: "queued" }
   | { state: "rejected"; error: string };
 
+/**
+ * A successful RPC transport is not proof of a saved financial transaction.
+ * Do not discard a durable pending sale until the returned receipt has the
+ * authoritative identity and minimum immutable financial evidence.
+ */
+function receiptMatchesSale(receipt: ShopReceipt | null | undefined, scope: OutboxScope, sale: SaleRequest): boolean {
+  if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) return false;
+  if (receipt.submissionKey !== sale.submissionKey ||
+      receipt.companyId !== scope.companyId || receipt.storeId !== sale.storeId ||
+      typeof receipt.saleId !== "string" || receipt.saleId.length === 0 ||
+      !Number.isSafeInteger(receipt.receiptNumber) || receipt.receiptNumber <= 0 ||
+      typeof receipt.currency !== "string" || !/^[A-Z]{3}$/.test(receipt.currency) ||
+      !Number.isSafeInteger(receipt.totalMinor) || receipt.totalMinor < 0 ||
+      typeof receipt.recordedAt !== "string" || !Number.isFinite(Date.parse(receipt.recordedAt)) ||
+      typeof receipt.replayed !== "boolean" ||
+      !Array.isArray(receipt.lines) || receipt.lines.length === 0 ||
+      !receipt.payment || typeof receipt.payment !== "object") return false;
+  const due = receipt.payment.amountDueMinor;
+  const tendered = receipt.payment.amountTenderedMinor;
+  const change = receipt.payment.changeMinor;
+  if (![due,tendered,change].every(n=>Number.isSafeInteger(n) && n>=0) ||
+      !Number.isSafeInteger(receipt.refundedMinor) ||
+      receipt.refundedMinor < 0 || receipt.refundedMinor > receipt.totalMinor) return false;
+  return receipt.lines.every(line=>line && typeof line.productId === "string" &&
+    line.productId.length>0 && Number.isSafeInteger(line.lineNo) && line.lineNo>0 &&
+    Number.isSafeInteger(line.quantity) && line.quantity>0 &&
+    Number.isSafeInteger(line.lineTotalMinor) && line.lineTotalMinor>=0);
+}
+
 async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale): Promise<SubmitResult> {
   const id = entryKey(scope, sale.submissionKey);
   const source = await entries.get(id);
@@ -532,12 +561,10 @@ async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale): P
   if (!sameSale(current.sale,sale)) throw new Error("This sale key was already used with different details.");
   try {
     const receipt = await send(sale);
-    // A matching idempotency key alone is insufficient: a receipt from a
-    // different company or store must never discharge this device's queue.
-    if (!receipt || receipt.submissionKey !== sale.submissionKey ||
-        receipt.companyId !== scope.companyId ||
-        receipt.storeId !== sale.storeId)
-      throw new Error("Server receipt identity disagrees with this account's sale. Keep the queued record for review.");
+    // Never clear a queued financial transaction for a bare success flag,
+    // malformed response or a receipt belonging to another store/company.
+    if (!receiptMatchesSale(receipt, scope, sale))
+      throw new Error("Server receipt could not be verified. Keep the queued sale and retry the original key.");
     await database.transaction("rw", entries, async () => {
       const latest=await entries.get(id);
       if (!sameStored(latest,source)) throw new Error("The pending sale changed during delivery; review before retrying.");
