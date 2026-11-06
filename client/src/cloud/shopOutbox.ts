@@ -1,96 +1,208 @@
 /**
- * Write-ahead queue for shared-shop sales.
+ * Per-sale IndexedDB write-ahead queue for the cloud-authoritative shared shop.
  *
- * A sale is saved here BEFORE it is sent, under its submission key. If the
- * connection drops, the tab closes or the response is lost, the same request
- * is re-sent later with the same key, and the server's idempotency check
- * returns the original receipt instead of posting twice. Only a definite
- * server decision removes an entry (accepted) or parks it for review
- * (rejected, e.g. not enough stock or access removed).
+ * Distinct records and IndexedDB readwrite transactions avoid the lost-update
+ * defect of localStorage read/modify/write across tabs. The server remains
+ * authoritative; repeated delivery MUST reuse the same submission key.
+ *
+ * Legacy v1 localStorage data is migrated without deleting the source until
+ * every row is durably committed. Damaged source data is retained for recovery
+ * and prevents an apparently empty/healthy queue from being shown.
+ *
+ * NOTE: IndexedDB does NOT encrypt stored payloads. Stage B storage protection
+ * and owner-key recovery need separate work before privacy acceptance.
  */
+import Dexie from "dexie";
 import { ShopRejectedError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
 export interface QueuedSale {
   sale: SaleRequest;
-  /** Display-only cart snapshot so the attendant can recognise the sale. */
   summary: string;
   queuedAt: string;
   status: "pending" | "rejected";
   error?: string;
 }
 export interface OutboxScope { userId: string; companyId: string }
-type Storage = Pick<globalThis.Storage, "getItem" | "setItem">;
+type LegacyStorage = Pick<globalThis.Storage, "getItem" | "removeItem">;
+interface StoredSale extends QueuedSale { id: string; scopeKey: string }
+interface QuarantinedLegacy {
+  id: string;
+  raw: string;
+  capturedAt: string;
+  reason: string;
+}
+const DB_NAME = "tallybook-shared-shop-outbox-v2";
+const database = new Dexie(DB_NAME);
+database.version(1).stores({ entries: "id,scopeKey,queuedAt", quarantine: "id" });
+const entries = database.table<StoredSale, string>("entries");
+const quarantine = database.table<QuarantinedLegacy, string>("quarantine");
 
-const keyFor = ({ userId, companyId }: OutboxScope) => `tallybook.shop.outbox.v1:${userId}:${companyId}`;
+const scopeKey = (scope: OutboxScope) => JSON.stringify([scope.userId, scope.companyId]);
+const entryKey = (scope: OutboxScope, submissionKey: string) =>
+  JSON.stringify([scope.userId, scope.companyId, submissionKey]);
+const legacyKey = (scope: OutboxScope) =>
+  `tallybook.shop.outbox.v1:${scope.userId}:${scope.companyId}`;
 
-function defaultStorage(): Storage | null {
+function defaultLegacyStorage(): LegacyStorage | null {
   try { return window.localStorage; } catch { return null; }
 }
-
-export function readOutbox(scope: OutboxScope, storage: Storage | null = defaultStorage()): QueuedSale[] {
-  if (!storage) return [];
+function valid(entry: unknown): entry is QueuedSale {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+  const row = entry as QueuedSale;
+  return !!row.sale && typeof row.sale === "object" && !Array.isArray(row.sale) &&
+    typeof row.sale.submissionKey === "string" &&
+    /^[A-Za-z0-9_-]{16,64}$/.test(row.sale.submissionKey) &&
+    typeof row.sale.storeId === "string" && typeof row.summary === "string" &&
+    typeof row.queuedAt === "string" && Number.isFinite(Date.parse(row.queuedAt)) &&
+    (row.status === "pending" || row.status === "rejected") &&
+    (row.error === undefined || typeof row.error === "string");
+}
+function sameSale(a: SaleRequest, b: SaleRequest): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+function scopeIsValid(scope: OutboxScope) {
+  if (!scope.userId || !scope.companyId || typeof scope.userId !== "string" ||
+      typeof scope.companyId !== "string") {
+    throw new Error("Sign in and choose a business before saving a sale.");
+  }
+}
+async function retainBadLegacy(scope: OutboxScope, raw: string, reason: string): Promise<never> {
+  const id = legacyKey(scope);
+  await quarantine.put({ id, raw, reason, capturedAt: new Date().toISOString() });
+  throw new Error("Older unsent sales could not be migrated safely. Do not clear this browser's data; ask the business owner to recover the pending sales.");
+}
+/** Import only for this signed-in account and business. Two new-version tabs
+ * serialize via IndexedDB; old-version tabs remain a mixed-version hazard.
+ */
+async function migrateLegacy(scope: OutboxScope, storage: LegacyStorage | null) {
+  if (!storage) return;
+  const raw = storage.getItem(legacyKey(scope));
+  if (raw === null) return;
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); }
+  catch { await retainBadLegacy(scope, raw, "Invalid legacy JSON"); }
+  if (!Array.isArray(parsed) || !parsed.every(valid)) {
+    await retainBadLegacy(scope, raw, "Invalid legacy sale entry");
+  }
+  const legacy = parsed as QueuedSale[];
   try {
-    const parsed = JSON.parse(storage.getItem(keyFor(scope)) ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter(isQueuedSale) : [];
-  } catch { return []; }
+    await database.transaction("rw", entries, async () => {
+      for (const row of legacy) {
+        const id = entryKey(scope, row.sale.submissionKey);
+        const existing = await entries.get(id);
+        if (existing && !sameSale(existing.sale, row.sale)) {
+          throw new Error("Conflicting queued sale with the same submission key.");
+        }
+        if (!existing) {
+          await entries.add({ ...row, id, scopeKey: scopeKey(scope) });
+        }
+      }
+    });
+  } catch {
+    await retainBadLegacy(scope, raw, "Conflicting legacy sale or storage failure");
+  }
+  // A concurrently modified legacy value is NOT removed: import it next time.
+  // Old-version tabs are not transaction participants: users should close them.
+  try {
+    if (storage.getItem(legacyKey(scope)) === raw) storage.removeItem(legacyKey(scope));
+  } catch {
+    // The durable copy is committed; leaving the source is safe and idempotent.
+  }
 }
-
-function writeOutbox(scope: OutboxScope, entries: QueuedSale[], storage: Storage | null) {
-  if (!storage) throw new Error("This browser can't save sales while offline. Keep this page open until the sale is confirmed.");
-  storage.setItem(keyFor(scope), JSON.stringify(entries));
+async function prepare(scope: OutboxScope, storage: LegacyStorage | null) {
+  scopeIsValid(scope);
+  await migrateLegacy(scope, storage);
+  const bad = await quarantine.get(legacyKey(scope));
+  if (bad) throw new Error("This account has unrecovered older queued sales. Do not clear browser storage; restore them before continuing.");
 }
-
-function isQueuedSale(value: unknown): value is QueuedSale {
-  const entry = value as QueuedSale;
-  return !!entry && typeof entry === "object" && typeof entry.sale?.submissionKey === "string" &&
-    (entry.status === "pending" || entry.status === "rejected");
+export async function readOutbox(
+  scope: OutboxScope, legacyStorage: LegacyStorage | null = defaultLegacyStorage()
+): Promise<QueuedSale[]> {
+  await prepare(scope, legacyStorage);
+  const rows = await entries.where("scopeKey").equals(scopeKey(scope)).toArray();
+  return rows.sort((a, b) => a.queuedAt.localeCompare(b.queuedAt) || a.id.localeCompare(b.id))
+    .map(({sale, summary, queuedAt, status, error}) => ({
+      sale, summary, queuedAt, status, ...(error === undefined ? {} : {error})
+    }));
 }
-
-function update(scope: OutboxScope, storage: Storage | null, change: (entries: QueuedSale[]) => QueuedSale[]) {
-  writeOutbox(scope, change(readOutbox(scope, storage)), storage);
-}
-
 export type SendSale = (sale: SaleRequest) => Promise<ShopReceipt>;
 export type SubmitResult =
   | { state: "recorded"; receipt: ShopReceipt }
   | { state: "queued" }
   | { state: "rejected"; error: string };
 
-/** Save first, then send. Never loses a sale the attendant pressed "Record" on. */
-export async function submitSale(scope: OutboxScope, sale: SaleRequest, summary: string, send: SendSale,
-  storage: Storage | null = defaultStorage()): Promise<SubmitResult> {
-  update(scope, storage, entries => entries.some(e => e.sale.submissionKey === sale.submissionKey)
-    ? entries
-    : [...entries, { sale, summary, queuedAt: new Date().toISOString(), status: "pending" }]);
-  return deliver(scope, sale, send, storage);
-}
-
-async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale, storage: Storage | null): Promise<SubmitResult> {
+async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale): Promise<SubmitResult> {
+  const id = entryKey(scope, sale.submissionKey);
   try {
     const receipt = await send(sale);
-    update(scope, storage, entries => entries.filter(e => e.sale.submissionKey !== sale.submissionKey));
-    return { state: "recorded", receipt };
+    if (receipt.submissionKey !== sale.submissionKey) {
+      throw new Error("Server returned a receipt for another sale; keep the queued record for review.");
+    }
+    await database.transaction("rw", entries, async () => {
+      const current = await entries.get(id);
+      if (current && sameSale(current.sale, sale)) await entries.delete(id);
+    });
+    return {state: "recorded", receipt};
   } catch (error) {
     if (error instanceof ShopRejectedError) {
-      update(scope, storage, entries => entries.map(e => e.sale.submissionKey === sale.submissionKey
-        ? { ...e, status: "rejected", error: error.message } : e));
-      return { state: "rejected", error: error.message };
+      await database.transaction("rw", entries, async () => {
+        const current = await entries.get(id);
+        if (current && sameSale(current.sale, sale)) {
+          await entries.update(id, {status: "rejected", error: error.message});
+        }
+      });
+      return {state: "rejected", error: error.message};
     }
-    return { state: "queued" };
+    return {state: "queued"};
   }
 }
-
-/** Re-send every pending sale in the order it was recorded. Stops at the first connection failure. */
-export async function flushOutbox(scope: OutboxScope, send: SendSale, storage: Storage | null = defaultStorage()) {
+/** Save one idempotency key in an IndexedDB transaction BEFORE sending. If
+ * quota/transaction fails, throw: NEVER send a sale that was not saved.
+ */
+export async function submitSale(
+  scope: OutboxScope, sale: SaleRequest, summary: string, send: SendSale,
+  legacyStorage: LegacyStorage | null = defaultLegacyStorage()
+): Promise<SubmitResult> {
+  await prepare(scope, legacyStorage);
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(sale.submissionKey)) {
+    throw new Error("Sale submission key is invalid.");
+  }
+  const id = entryKey(scope, sale.submissionKey);
+  await database.transaction("rw", entries, async () => {
+    const current = await entries.get(id);
+    if (current && !sameSale(current.sale, sale)) {
+      throw new Error("This sale key was already used with different details.");
+    }
+    if (!current) await entries.add({
+      id, scopeKey: scopeKey(scope), sale, summary, queuedAt: new Date().toISOString(), status: "pending"
+    });
+    if (current?.status === "rejected") {
+      throw new Error("This sale was rejected. Review it before attempting a new sale.");
+    }
+  });
+  return deliver(scope, sale, send);
+}
+export async function flushOutbox(
+  scope: OutboxScope, send: SendSale,
+  legacyStorage: LegacyStorage | null = defaultLegacyStorage()
+): Promise<SubmitResult[]> {
+  const queued = (await readOutbox(scope, legacyStorage)).filter(e => e.status === "pending");
   const results: SubmitResult[] = [];
-  for (const entry of readOutbox(scope, storage).filter(e => e.status === "pending")) {
-    const result = await deliver(scope, entry.sale, send, storage);
+  for (const row of queued) {
+    const result = await deliver(scope, row.sale, send);
     results.push(result);
     if (result.state === "queued") break;
   }
   return results;
 }
-
-export function dismissQueuedSale(scope: OutboxScope, submissionKey: string, storage: Storage | null = defaultStorage()) {
-  update(scope, storage, entries => entries.filter(e => !(e.sale.submissionKey === submissionKey && e.status === "rejected")));
+export async function dismissQueuedSale(
+  scope: OutboxScope, submissionKey: string,
+  legacyStorage: LegacyStorage | null = defaultLegacyStorage()
+): Promise<void> {
+  await prepare(scope, legacyStorage);
+  const id = entryKey(scope, submissionKey);
+  await database.transaction("rw", entries, async () => {
+    const existing = await entries.get(id);
+    if (existing?.status === "rejected") await entries.delete(id);
+  });
 }
