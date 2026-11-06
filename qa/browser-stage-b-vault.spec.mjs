@@ -46,7 +46,7 @@ test("Chromium: encrypted pending sale survives reload, unlocks and replays one 
     const sent=[];
     const results=await mod.flushOutbox(scope,async sale=>{
       sent.push(sale.submissionKey);
-      return {submissionKey:sale.submissionKey,receiptNumber:1,replayed:true};
+      return {submissionKey:sale.submissionKey,receiptNumber:1,replayed:true,companyId:scope.companyId,storeId:sale.storeId};
     });
     return {status,locked,keys:queued.map(x=>x.sale.submissionKey),
       sent,results:results.map(x=>x.state),remaining:await mod.readOutbox(scope)};
@@ -137,7 +137,7 @@ test("Chromium: existing plaintext queue converts only with complete encrypted r
     await q.unlockShopOutboxVault(id,pass);
     const before=await q.readOutbox(id);
     const results=await q.flushOutbox(id,async sale=>({
-      submissionKey:sale.submissionKey,receiptNumber:3,replayed:true
+      submissionKey:sale.submissionKey,receiptNumber:3,replayed:true,companyId:id.companyId,storeId:sale.storeId
     }));
     return {locked,keys:before.map(e=>e.sale.submissionKey),
       results:results.map(e=>e.state),remaining:(await q.readOutbox(id)).length};
