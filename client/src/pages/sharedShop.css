@@ -130,3 +130,16 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-permissions legend { padding: 0 4px; font-size: .8rem; font-weight: 800; color: var(--ta-muted); }
 .shop-percent input { max-width: 120px; }
 .shop-permissions .secondary-action { justify-self: start; }
+
+.shop-checklist ol{list-style:none;margin:.75rem 0 0;padding:0;display:grid;gap:.5rem}
+.shop-checklist li{display:flex;align-items:center;gap:.75rem;min-height:48px}
+.shop-checklist li>div{flex:1;display:grid}
+.shop-checklist li>div span{font-size:.875rem;opacity:.75}
+.shop-checklist li.is-done strong{text-decoration:line-through;opacity:.7}
+.shop-check-mark{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;flex:none;opacity:.6}
+.shop-checklist li.is-done .shop-check-mark{background:currentColor;opacity:1}
+.shop-checklist li.is-done .shop-check-mark svg{width:14px;height:14px;color:#fff}
+.shop-checklist h2 small{font-weight:400;font-size:.875rem;margin-left:.5rem}
+.shop-link{background:none;border:0;padding:0;min-height:44px;text-decoration:underline;color:inherit;font:inherit;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.shop-benefits{list-style:none;margin:.5rem 0 1rem;padding:0;display:grid;gap:.75rem;text-align:left}

@@ -1,7 +1,7 @@
 import './businessSetup.css';
 import { Store, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness } from "./businessIdentity";
 import {listVerifiedCloudBusinesses} from "./cloudMembership";
@@ -11,6 +11,7 @@ import {QaDeviceEnrollmentPanel} from './QaDeviceEnrollmentPanel';
 
 /** Account identity only. Creating a cloud business does not claim local data. */
 export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}) {
+  const [, navigate] = useLocation();
   const [userId, setUserId] = useState<string | null>(null);
   const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
   const [accessible, setAccessible] = useState<VerifiedCloudBusiness[]>([]);
@@ -104,6 +105,8 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       if (started === revision.current) {
         setBusiness(created);
         setAccessible([...verified]);
+        // Approved default: a new business opens in the cloud shop, where first-run setup continues.
+        navigate("/shop");
       }
     } catch (cause) {
       if (started === revision.current) setError(cause instanceof Error ? cause.message : "Could not create the cloud business.");

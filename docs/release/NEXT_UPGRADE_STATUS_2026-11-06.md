@@ -59,3 +59,12 @@ Branch: `feature/next-upgrade` (includes `feature/cloud-refund-policy`). Baselin
 ## GO/NO-GO
 
 **NO-GO.** Zero duplicate or lost postings and zero cross-company access are mandatory; the automated evidence supports the server side, but the browser-side evidence, CSP enforcement, onboarding UX and device acceptance do not exist yet.
+
+
+## Update 2026-11-06 (late): first-run and POS states
+
+- **UX2/UX3 (owner):** Two-step owner setup (currency, then store name; safe to retry). "Get started" checklist (store, product, opening stock, first sale) derived only from server data in `client/src/cloud/shopOnboarding.ts`. The shop is never called ready to sell until a store, an active product and stock exist, and the first-sale step stays "checking" while the sales list is unknown. Tests: `qa/shop-onboarding.test.mjs` (run), `SharedShopOnboarding.test.tsx` (not run here).
+- **UX5:** Product list now shows an owner call to action when empty, an out-of-stock notice, an offline "last saved list" notice, and a retry button when refresh fails.
+- **Decision 3:** creating a business from the account page now opens the shared shop.
+- **Decision 4:** the signed-out `/shop` screen is a short welcome with benefits and one clear sign-in/create-account action.
+- **Still open:** R4 (Vercel access), R6 device acceptance (owner testing), R7 drills, R8, local-ledger encryption/recovery package, UX4/UX6-UX9.

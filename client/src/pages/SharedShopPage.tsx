@@ -22,6 +22,7 @@ import {
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
+import { buildChecklist } from "@/cloud/shopOnboarding";
 import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
@@ -103,9 +104,16 @@ export default function SharedShopPage() {
   const business = businesses.find(b => b.id === companyId) ?? null;
 
   if (userId === undefined) return <main className="shop-page"><Run18UpdateNotice /><p role="status">Opening your shop…</p></main>;
-  if (!userId) return <main className="shop-page"><Run18UpdateNotice /><section className="shop-card shop-empty">
-    <h1>Shared shop</h1><p>Sign in to open the shop you own or work in.</p>
-    <Link href="/signin" className="primary-action">Sign in</Link></section></main>;
+  if (!userId) return <main className="shop-page"><Run18UpdateNotice /><section className="shop-card shop-empty shop-welcome" aria-labelledby="shop-welcome-title">
+    <h1 id="shop-welcome-title">Run your shop from your phone</h1>
+    <p>Tallybook keeps your stock, sales and customer credit in one place, shared between you and the people who work for you.</p>
+    <ul className="shop-benefits">
+      <li><strong>Sell offline.</strong> Sales are saved on the phone and sent when the connection returns.</li>
+      <li><strong>You stay in control.</strong> Attendants only see the stores you give them, and you set discount and credit limits.</li>
+      <li><strong>Clear records.</strong> Every sale, refund and stock change is kept and can be traced.</li>
+    </ul>
+    <Link href="/signin" className="primary-action">Sign in or create an account</Link>
+    <p className="shop-muted">Use Google, or an email and password. After signing in, choose "I own a business" to start one, or "I work for someone else" to join with the code your employer gives you.</p></section></main>;
 
   return <main className="shop-page">
     <Run18UpdateNotice />
@@ -164,6 +172,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   }, [userId, business.id]);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("sell");
+  // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
+  const [hasSale, setHasSale] = useState<boolean | null>(null);
   const refresh = useCallback(async () => {
     if (!navigator.onLine) return;
     try {
@@ -173,6 +183,13 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     } catch (cause) { setError(message(cause)); }
   }, [business.id, userId]);
   useEffect(() => { void refresh(); }, [refresh, online]);
+  const isOwnerRole = overview?.role === "owner";
+  useEffect(() => {
+    if (!isOwnerRole || hasSale === true || !online) return;
+    let live = true;
+    void Promise.resolve().then(() => listShopSales(business.id)).then(sales => { if (live && Array.isArray(sales)) setHasSale(sales.length > 0); }).catch(() => { /* stays unknown */ });
+    return () => { live = false; };
+  }, [isOwnerRole, business.id, online, hasSale, overview]);
 
   if (!overview) return error ? <p role="alert" className="shop-alert">{error}</p> : <p role="status">Loading shop…</p>;
   const isOwner = overview.role === "owner";
@@ -184,9 +201,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const tabs: Array<[Tab, string]> = isOwner
     ? [["sell", "Sell"], ["stock", "Stock"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
-  const ctx = { companyId: business.id, overview, refresh, online, userId };
+  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
-    {error && <p role="alert" className="shop-alert">{error}</p>}
+    {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
+    {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
     <nav className="shop-tabs" aria-label="Shop sections">
       {tabs.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       <button type="button" className="shop-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh"><RefreshCw aria-hidden="true" /></button>
@@ -199,21 +217,55 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   </>;
 }
 
-interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string }
+interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void }
+
+function GetStartedCard({ overview, hasSale, goTo }: { overview: ShopOverview; hasSale: boolean | null; goTo: (tab: Tab) => void }) {
+  const list = buildChecklist(overview, hasSale);
+  if (list.complete) return null;
+  return <section className="shop-card shop-checklist" aria-labelledby="shop-start-title">
+    <h2 id="shop-start-title">Get started <small>{list.doneCount} of {list.steps.length} done</small></h2>
+    <p className="shop-muted" role="status">{list.readyToSell
+      ? "Your shop can sell now. Record a first sale to finish."
+      : "Finish the first three steps before your shop can sell."}</p>
+    <ol>{list.steps.map(step => <li key={step.id} className={step.done ? "is-done" : step === list.next ? "is-next" : ""}>
+      <span className="shop-check-mark" aria-hidden="true">{step.done ? <Check /> : null}</span>
+      <div><strong>{step.title}{step.done ? <span className="sr-only"> (done)</span> : null}</strong>
+        {!step.done && <span>{step.unknown ? "Checking… connect to the internet to confirm." : step.hint}</span>}</div>
+      {step === list.next && !step.unknown && <button type="button" className="primary-action" onClick={() => goTo(step.goTo)}>{step.id === "sale" ? "Open sales" : "Do this"}</button>}
+    </li>)}</ol>
+  </section>;
+}
 
 function SetupLedger({ companyId, onDone }: { companyId: string; onDone: () => Promise<void> }) {
   const [currency, setCurrency] = useState<string>("GHS");
+  const [step, setStep] = useState<1 | 2>(1);
+  const storeId = useRef(crypto.randomUUID());
+  const [storeName, setStoreName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return <section className="shop-card shop-empty">
+    <p className="shop-eyebrow">Step {step} of 2</p>
     <h2>Set up your shared shop</h2>
-    <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. It can't change after the first sale.</p>
-    <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setBusy(true); setError("");
-      void setupShopLedger(companyId, currency).then(onDone).catch(c => setError(message(c))).finally(() => setBusy(false)); }}>
-      <label className="shop-field">Currency
-        <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c}>{c}</option>)}</select></label>
-      <button className="primary-action" disabled={busy}>{busy ? "Saving…" : "Open shop"}</button>
-    </form>
+    {step === 1
+      ? <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setStep(2); }}>
+          <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. It can't change after the first sale.</p>
+          <label className="shop-field">Currency
+            <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c}>{c}</option>)}</select></label>
+          <button className="primary-action">Next</button>
+        </form>
+      : <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setBusy(true); setError("");
+          // Both calls are safe to repeat: the ledger is set up once, and the store id is fixed per attempt.
+          void setupShopLedger(companyId, currency)
+            .then(() => storeName.trim() ? saveShopStore(companyId, storeId.current, storeName.trim()) : undefined)
+            .then(onDone).catch(c => setError(message(c))).finally(() => setBusy(false)); }}>
+          <p>Name the place you sell from. You can add more stores later under Team.</p>
+          <label className="shop-field">Store name
+            <input value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={80} placeholder="e.g. Main shop" /></label>
+          <p className="shop-muted">Currency: <strong>{currency}</strong> <button type="button" className="shop-link" onClick={() => setStep(1)} disabled={busy}>Change</button></p>
+          <div className="shop-actions">
+            <button type="button" className="secondary-action" onClick={() => setStep(1)} disabled={busy}>Back</button>
+            <button className="primary-action" disabled={busy}>{busy ? "Saving…" : "Open shop"}</button></div>
+        </form>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
   </section>;
 }
@@ -279,7 +331,7 @@ export function buildTenders(input: {
   return parts;
 }
 
-function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps) {
+function SellPanel({ companyId, overview, refresh, online, userId, goTo }: PanelProps) {
   const currency = overview.currency!;
   const perms = permissionsOf(overview);
   const customers = overview.customers ?? [];
@@ -379,7 +431,11 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   return <div className="shop-sell">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2><StorePicker stores={active} storeId={storeId} choose={id => { choose(id); setCart({}); }} /></div>
-      {!products.length && <p className="shop-muted">No products yet.</p>}
+      {!products.length && (overview.role === "owner"
+        ? <p className="shop-muted">No products yet. <button type="button" className="shop-link" onClick={() => goTo?.("stock")}>Add your first product</button></p>
+        : <p className="shop-muted">No products are available to sell yet. Ask the owner to add them.</p>)}
+      {products.length > 0 && products.every(p => stockOf(p.id) <= 0) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
+      {!online && products.length > 0 && <p className="shop-muted" role="status">Offline: this list is from the last time you were connected. Stock may have changed.</p>}
       <ul className="shop-product-list">{[...products].sort((a, b) => Number(stockOf(b.id) > 0) - Number(stockOf(a.id) > 0)).map(p => { const left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={left ? "" : "is-out"}>
         <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)} · {left ? `${left} in stock` : "Out of stock"}</span></div>
         <div className="shop-stepper">
