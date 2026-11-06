@@ -203,7 +203,7 @@ end $fn$;
 
 -- Expose immutable sale/refund policy evidence to audit and owner UI.
 create or replace function private.shop_receipt(p_sale uuid, p_replayed boolean) returns jsonb
-language sql stable set search_path = '' as $
+language sql stable set search_path = '' as $$
   select jsonb_build_object(
     'saleId', s.id, 'companyId', s.business_id, 'storeId', s.store_id, 'storeName', st.name,
     'cashierId', s.cashier_id, 'submissionKey', s.submission_key,
@@ -240,7 +240,7 @@ language sql stable set search_path = '' as $
   join public.shop_payments p on p.sale_id = s.id
   join public.shop_stores st on st.id = s.store_id
   where s.id = p_sale
-$;
+$$;
 
 -- Preserve existing receipt pricing, authorization, debt-first refunds,
 -- stock movement and deduplication. Add only policy checks and evidence.
