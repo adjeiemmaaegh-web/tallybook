@@ -281,22 +281,27 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queued, setQueued] = useState<QueuedSale[]>([]);
+  const [queueError, setQueueError] = useState("");
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
-  const reloadQueue = useCallback(() => setQueued(readOutbox(scope)), [scope]);
+  const reloadQueue = useCallback(async () => {
+    try { setQueued(await readOutbox(scope)); setQueueError(""); }
+    catch (cause) { setQueueError(message(cause)); }
+  }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
     flushing.current = true;
     try {
       const results = await flushOutbox(scope, send);
-      reloadQueue();
+      await reloadQueue();
       if (results.some(r => r.state === "recorded")) void refresh();
-    } finally { flushing.current = false; }
+    } catch (cause) { setQueueError(message(cause)); }
+    finally { flushing.current = false; }
   }, [scope, send, refresh, reloadQueue]);
-  useEffect(() => { reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
+  useEffect(() => { void reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
   // A flaky connection can fail a request while the phone still reports
   // "online", so keep retrying while anything is waiting, and on return to the app.
   const hasPending = queued.some(q => q.status === "pending");
@@ -352,7 +357,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
       else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
       else { submissionKey.current = null; setError(result.error); }
     } catch (cause) { setError(message(cause)); }
-    finally { setBusy(false); reloadQueue(); }
+    finally { setBusy(false); void reloadQueue(); }
   };
 
   const splitSum = (["cash", "mobile", "card"] as const).reduce((n, k) => { try { return n + (split[k].trim() ? parseAmountToMinor(split[k], currency) : 0); } catch { return n; } }, 0);
@@ -419,13 +424,14 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
           <ReceiptText aria-hidden="true" />{busy ? "Recording…" : online ? "Record sale" : "Save sale (offline)"}</button>
         {error && <p role="alert" className="shop-alert">{error}</p>}
       </>}
+      {queueError && <p className="shop-alert" role="alert">Pending-sales storage needs attention: {queueError}</p>}
       {queued.length > 0 && <div className="shop-queue">
         <h3>Waiting to send</h3>
         <ul>{queued.map(q => <li key={q.sale.submissionKey} className={q.status === "rejected" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
           {q.status === "pending" ? <small>Will send when online</small> : <>
             <small>Not recorded: {q.error}</small>
-            <button type="button" className="secondary-action" onClick={() => { dismissQueuedSale(scope, q.sale.submissionKey); reloadQueue(); }}>Dismiss</button></>}
+            <button type="button" className="secondary-action" onClick={() => { void dismissQueuedSale(scope, q.sale.submissionKey).then(reloadQueue).catch(cause => setQueueError(message(cause))); }}>Dismiss</button></>}
         </li>)}</ul>
       </div>}
     </section>
