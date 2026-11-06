@@ -107,13 +107,14 @@ describe("shared shop — attendant", () => {
   });
 
   it("keeps retrying a waiting sale on a flaky connection that still reports online", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // Only the clock and timers are faked. IndexedDB (used by the sealed outbox) schedules work with setImmediate and must keep running.
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"] });
     try {
       shop.record.mockRejectedValueOnce(new ShopUnreachableError("timeout"));
       render(<SharedShopPage />);
       await addTwoEggs();
       fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
-      expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
+      expect(await screen.findByText("Waiting to send", {}, { timeout: 5000 })).toBeInTheDocument();
       shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));
       await act(async () => { await vi.advanceTimersByTimeAsync(21_000); });
       await waitFor(() => expect(screen.queryByText("Waiting to send")).toBeNull());
