@@ -11,7 +11,9 @@ Baseline: `main` @ `8f29671` (cloned fresh). Toolchain: Node 24.19.0, pnpm 10.34
 
 *Morning verdict, kept for the record: NO-GO. The owner-to-attendant journey did not exist end to end.*
 
-## Update — entry bug, till bugs and one look across the app (not yet deployed)
+## Update — entry bug, till bugs and one look across the app (live on production)
+
+Deployed `main` @ `bb6b029` on 2026-11-06 as `dpl_xJcwCfFmBpCLTzrVWHTcEjXrgW1m` (READY). The live bundle `index-B4s2AOvN.js` contains the entry fix and the theme tokens; the console is clean on `/account`.
 
 **Owner report:** after registering a business, the "Open this device's ledger" and "Open workspace" buttons on the profile page did nothing.
 
