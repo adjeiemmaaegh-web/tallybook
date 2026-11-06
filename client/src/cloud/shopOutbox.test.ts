@@ -366,4 +366,58 @@ describe("shared-shop IndexedDB sale outbox", () => {
     expect(await getShopOutboxVaultStatus(scope)).toEqual({configured:false,unlocked:false});
   });
 
+  it("rejects malformed sale quantities and tender inputs before saving or sending", async () => {
+    const scope=newScope(), sender=vi.fn(async(s:SaleRequest)=>receipt(s.submissionKey));
+    const invalid=[
+      {...sale(key(201)), lines:[{productId:"p1",quantity:0}]},
+      {...sale(key(202)), lines:[{productId:"p1",quantity:1.5}]},
+      {...sale(key(203)), lines:[{productId:"p1",quantity:Number.MAX_SAFE_INTEGER}]},
+      {...sale(key(204)), amountTenderedMinor:NaN},
+      {...sale(key(205)), amountTenderedMinor:-200},
+      {...sale(key(206)), paymentMethod:"unknown"},
+      {storeId:"s1",submissionKey:key(207),lines:[{productId:"p1",quantity:1}],tenders:[{method:"cash",amountMinor:-2}]},
+      {storeId:"s1",submissionKey:key(208),lines:[],tenders:[{method:"cash",amountMinor:100}]},
+      {storeId:"s1",submissionKey:key(209),lines:[{productId:"p1",quantity:1}],tenders:[{method:"credit",amountMinor:Infinity}]}
+    ];
+    for(const value of invalid){
+      await expect(submitSale(scope,value as SaleRequest,"unsafe",sender)).rejects.toThrow(/Sale details are invalid/);
+    }
+    expect(sender).not.toHaveBeenCalled();
+    expect(await readOutbox(scope)).toEqual([]);
+  });
+
+  it("halts all pending sale replay when a persisted financial value is corrupted",async()=>{
+    const scope=newScope(),original=sale(key(210));
+    await submitSale(scope,original,"Original sale",offline);
+    const db=new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
+    db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
+    const id=JSON.stringify([scope.userId,scope.companyId,original.submissionKey]);
+    try{
+      await db.table("entries").update(id,{sale:{...original,lines:[{productId:"p1",quantity:-999}]}});
+      const sender=vi.fn(async(s:SaleRequest)=>receipt(s.submissionKey));
+      await expect(readOutbox(scope)).rejects.toThrow(/need recovery/);
+      await expect(flushOutbox(scope,sender)).rejects.toThrow(/need recovery/);
+      expect(sender).not.toHaveBeenCalled();
+      const saved=await db.table("entries").get(id);
+      expect(saved.sale.lines[0].quantity).toBe(-999);
+      expect(await db.table("entries").count()).toBeGreaterThan(0);
+    }finally{db.close();}
+  });
+
+  it("keeps compatibility with old single-payment and current split-tender queue formats",async()=>{
+    const scope=newScope();
+    const legacy=sale(key(211));
+    const split:SaleRequest={
+      storeId:"s1",submissionKey:key(212),clientRecordedAt:new Date().toISOString(),
+      lines:[{productId:"p1",quantity:1}],
+      tenders:[{method:"cash",amountMinor:300,tenderedMinor:500},
+        {method:"credit",amountMinor:200,customerId:"customer-a"}],
+      discountMinor:0,discountReason:""
+    };
+    await submitSale(scope,legacy,"legacy",offline);
+    await submitSale(scope,split,"split",offline);
+    expect((await readOutbox(scope)).map(row=>row.sale.submissionKey)).toEqual([legacy.submissionKey,split.submissionKey]);
+  });
+
 });
