@@ -65,13 +65,54 @@ function defaultLegacyStorage(): LegacyStorage | null {
     throw new Error("Browser storage is blocked. Older unsent sales cannot be checked; do not clear browser data or send a new sale.");
   }
 }
+// Validate saved financial inputs before a write or replay. These are a
+// *compatibility-safe minimum* for old single-payment and current split-tender
+// requests, not a replacement for cloud-side authoritative validation.
+function validSaleRequest(input: unknown): input is SaleRequest {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return false;
+  const s = input as Record<string, unknown>;
+  const id = (v: unknown) => typeof v === "string" && v.length > 0 && v.length <= 256;
+  const amount = (v: unknown) => typeof v === "number" &&
+    Number.isSafeInteger(v) && v >= 0 && v <= 1_000_000_000_000;
+  if (typeof s.submissionKey !== "string" ||
+      !/^[A-Za-z0-9_-]{16,64}$/.test(s.submissionKey) ||
+      !id(s.storeId) || !Array.isArray(s.lines) ||
+      s.lines.length < 1 || s.lines.length > 100) return false;
+  if (!s.lines.every((item: unknown) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+    const line = item as Record<string, unknown>;
+    return id(line.productId) && typeof line.quantity === "number" &&
+      Number.isSafeInteger(line.quantity) && line.quantity >= 1 && line.quantity <= 100_000;
+  })) return false;
+  if (s.clientRecordedAt !== undefined &&
+      (typeof s.clientRecordedAt !== "string" ||
+       !Number.isFinite(Date.parse(s.clientRecordedAt)))) return false;
+  if (s.tenders !== undefined) {
+    if (!Array.isArray(s.tenders) || s.tenders.length < 1 || s.tenders.length > 5 ||
+        s.paymentMethod !== undefined || s.amountTenderedMinor !== undefined ||
+        !s.tenders.every((value: unknown) => {
+          if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+          const tender = value as Record<string, unknown>;
+          return ["cash","mobile","card","credit"].includes(String(tender.method)) &&
+            amount(tender.amountMinor) &&
+            (tender.tenderedMinor === undefined || amount(tender.tenderedMinor)) &&
+            (tender.reference === undefined || typeof tender.reference === "string") &&
+            (tender.customerId === undefined || id(tender.customerId));
+        })) return false;
+    return (s.discountMinor === undefined || amount(s.discountMinor)) &&
+      (s.discountReason === undefined || typeof s.discountReason === "string");
+  }
+  return ["cash","mobile","card"].includes(String(s.paymentMethod)) &&
+    amount(s.amountTenderedMinor) &&
+    (s.paymentReference === undefined || typeof s.paymentReference === "string") &&
+    s.discountMinor === undefined && s.discountReason === undefined;
+}
+
 function valid(entry: unknown): entry is QueuedSale {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
   const row = entry as QueuedSale;
-  return !!row.sale && typeof row.sale === "object" && !Array.isArray(row.sale) &&
-    typeof row.sale.submissionKey === "string" &&
-    /^[A-Za-z0-9_-]{16,64}$/.test(row.sale.submissionKey) &&
-    typeof row.sale.storeId === "string" && typeof row.summary === "string" &&
+  return validSaleRequest(row.sale) &&
+    typeof row.summary === "string" && row.summary.length <= 65_536 &&
     typeof row.queuedAt === "string" && Number.isFinite(Date.parse(row.queuedAt)) &&
     (row.status === "pending" || row.status === "rejected") &&
     (row.error === undefined || typeof row.error === "string");
@@ -518,8 +559,8 @@ export async function submitSale(
   legacyStorage: LegacyStorage | null = defaultLegacyStorage()
 ): Promise<SubmitResult> {
   const existing = await prepare(scope,legacyStorage);
-  if (!/^[A-Za-z0-9_-]{16,64}$/.test(sale.submissionKey))
-    throw new Error("Sale submission key is invalid.");
+  if (!validSaleRequest(sale) || typeof summary !== "string" || summary.length > 65_536)
+    throw new Error("Sale details are invalid. Nothing was saved or sent; review the cart.");
   const id=entryKey(scope,sale.submissionKey);
   const earlier=existing.find(e=>e.sale.submissionKey===sale.submissionKey);
   if (earlier && !sameSale(earlier.sale,sale))
