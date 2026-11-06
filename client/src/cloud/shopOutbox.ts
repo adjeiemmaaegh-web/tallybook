@@ -532,8 +532,12 @@ async function deliver(scope: OutboxScope, sale: SaleRequest, send: SendSale): P
   if (!sameSale(current.sale,sale)) throw new Error("This sale key was already used with different details.");
   try {
     const receipt = await send(sale);
-    if (receipt.submissionKey !== sale.submissionKey)
-      throw new Error("Server returned a receipt for another sale; keep the queued record for review.");
+    // A matching idempotency key alone is insufficient: a receipt from a
+    // different company or store must never discharge this device's queue.
+    if (!receipt || receipt.submissionKey !== sale.submissionKey ||
+        receipt.companyId !== scope.companyId ||
+        receipt.storeId !== sale.storeId)
+      throw new Error("Server receipt identity disagrees with this account's sale. Keep the queued record for review.");
     await database.transaction("rw", entries, async () => {
       const latest=await entries.get(id);
       if (!sameStored(latest,source)) throw new Error("The pending sale changed during delivery; review before retrying.");
