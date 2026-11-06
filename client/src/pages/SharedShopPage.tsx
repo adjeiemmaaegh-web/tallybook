@@ -358,7 +358,7 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
     setPaidNow(""); setPaidNowReference(""); setSplit({ cash: "", mobile: "", mobileReference: "", card: "" }); submissionKey.current = null; };
   const touch = () => { setReceipt(null); setError(""); submissionKey.current = null; };
   const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
-  const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
+  const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit && online ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
     <p>{overview.role === "owner" ? "Add a store under Team, then add stock under Stock." : "The owner hasn't assigned you to a store yet. Ask them to add you to the store you work in."}</p></section>;
@@ -372,6 +372,8 @@ function SellPanel({ companyId, overview, refresh, online, userId }: PanelProps)
       if (discountMinor * 10000 > subtotal * perms.maxDiscountBps) throw new Error(`You can give up to ${perms.maxDiscountBps / 100}% off.`);
       if (discountMinor > 0 && !discountReason.trim()) throw new Error("Say why you are giving this discount.");
       tenders = buildTenders({ mode, total, currency, tendered, reference, customerId, paidNow, paidNowMethod, paidNowReference, split });
+      if (!online && tenders.some(t => t.method === "credit")) throw new Error("Customer credit requires an online balance check. Save a cash sale offline instead.");
+      if (!online && discountMinor > 0) throw new Error("Discounts need current online permission. Reconnect to apply the discount.");
       const credit = tenders.find(t => t.method === "credit");
       if (credit && customer && customer.balanceMinor + credit.amountMinor > customer.creditLimitMinor)
         throw new Error(`${customer.name} can owe up to ${formatMinorAmount(customer.creditLimitMinor, currency)} and already owes ${formatMinorAmount(customer.balanceMinor, currency)}. Take more payment now or ask the owner to raise the limit.`);
