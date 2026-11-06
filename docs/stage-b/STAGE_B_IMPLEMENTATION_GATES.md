@@ -33,3 +33,15 @@ Review: [Draft PR #26](https://github.com/adjeiemmaaegh-web/tallybook/pull/26)
 
 ## Safety / disposition
 Production deployment and database unchanged. A draft PR is for review, not approval. No commercial release claim.
+
+## Continuation 2026-11-06 — additional source work
+- `438988e`, `7cc4126`: block new sales when an existing IndexedDB pending-sale record is malformed; preserve evidence; add regression.
+- `52f734b`, `9b41606`, `2ce70e8`, `831f8b1`: strict allowlist for offline business/catalogue/stock cache, instead of spreading arbitrary server fields; focused privacy tests and TS fix.
+- `6ec1ce5`, `9ebe3ea`, `11b9902`: isolated AES-256-GCM vault primitives and native tests (scope-binding, password verification, tamper checking). **NOT YET WIRED TO THE LIVE QUEUE**. No claim that queued sales or the device-local ledger are encrypted at rest.
+- `42dbfbb`: stage-B QA workflow includes privacy tests; native crypto test step added.
+- Verified on CI for commit `831f8b1baeb79a07d65e39d96b1e176933b1125c`: UI branch verification job `127747479805` completed SUCCESS including TypeScript, unit/integration tests, build and Chromium screenshot capture. This is a branch verification, not full Stage B acceptance.
+- Current production Supabase migrations list ends at `20261105120712`: draft `20261106120000` return-policy migration is **not applied**.
+- Current Supabase security advisors: leaked-password protection disabled; two authenticated security-definer RPC warnings requiring authorization review; 22 RLS-without-direct-policy notices (RPC-only design may be intentional).
+- Earlier broad release-validation job `127741796690` failed several browser/auth/offline tests and a dependency audit, despite successful native, client, tsc and bundle steps. This must be independently triaged; it is not Stage B release acceptance.
+
+**Disposition:** implementation and tests advanced, Stage B **NOT FINISHED**. Remaining: integrated user-unlocked encrypted working storage with safe migration and recovery, comprehensive finance/auth review, browser/device/crash tests, full green exact-head release validation, and an explicit owner-approved release decision. NO MERGE, SQL APPLY OR DEPLOY.
