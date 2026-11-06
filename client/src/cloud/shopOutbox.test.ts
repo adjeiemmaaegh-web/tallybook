@@ -11,8 +11,16 @@ function sale(key: string): SaleRequest {
     amountTenderedMinor: 500, lines: [{ productId: "p1", quantity: 1 }] };
 }
 const key = (num: number) => `stageb${String(num).padStart(20, "0")}`;
-const receipt = (id: string, replayed = false) =>
-  ({ submissionKey: id, receiptNumber: 1, replayed, companyId: "c1", storeId: "s1" } as ShopReceipt);
+const receipt = (id: string, replayed = false): ShopReceipt =>
+  ({
+    saleId: "sale-confirmed", submissionKey: id, receiptNumber: 1, replayed,
+    companyId: "c1", storeId: "s1", currency: "GHS", totalMinor: 500,
+    recordedAt: "2026-11-06T12:00:00.000Z", refundedMinor: 0,
+    payment: {method: "cash", amountDueMinor: 500, amountTenderedMinor: 500, changeMinor: 0, reference: null},
+    lines: [{lineNo: 1, productId: "p1", name: "Item", quantity: 1, unitPriceMinor: 500,
+      lineTotalMinor: 500, refundedQuantity: 0}],
+    refunds: [], storeName: "Main", cashierId: "employee"
+  } as ShopReceipt);
 const offline = async () => { throw new ShopUnreachableError("offline"); };
 function oldStorage() {
   const map = new Map<string, string>();
@@ -432,6 +440,29 @@ describe("shared-shop IndexedDB sale outbox", () => {
     expect((await readOutbox(scope)).map(e=>e.sale.submissionKey)).toEqual([original.submissionKey]);
     const correct=await flushOutbox(scope,async s=>receipt(s.submissionKey,true));
     expect(correct[0]?.state).toBe("recorded");
+    expect(await readOutbox(scope)).toEqual([]);
+  });
+
+  it("never drops pending sales for receipts lacking financial identity or proof", async()=>{
+    const scope=newScope(), original=sale(key(214));
+    const malformed=[
+      { ...receipt(original.submissionKey), saleId:"" },
+      { ...receipt(original.submissionKey), totalMinor:NaN },
+      { ...receipt(original.submissionKey), currency:"not-currency" },
+      { ...receipt(original.submissionKey), payment:undefined },
+      { ...receipt(original.submissionKey), lines:[] },
+      { ...receipt(original.submissionKey), refundedMinor:900 },
+      { ...receipt(original.submissionKey), receiptNumber:-1 }
+    ];
+    await submitSale(scope,original,"Financial proof",offline);
+    for(const data of malformed) {
+      const result=await flushOutbox(scope, async()=>data as ShopReceipt);
+      expect(result[0]?.state).toBe("queued");
+      expect((await readOutbox(scope)).map(item=>item.sale.submissionKey))
+        .toEqual([original.submissionKey]);
+    }
+    const resolved=await flushOutbox(scope,async()=>receipt(original.submissionKey,true));
+    expect(resolved[0]?.state).toBe("recorded");
     expect(await readOutbox(scope)).toEqual([]);
   });
 
