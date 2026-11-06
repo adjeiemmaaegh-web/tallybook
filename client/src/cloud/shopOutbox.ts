@@ -219,6 +219,66 @@ export async function enableShopOutboxVault(
   });
   unlocked.set(sk,key);
 }
+/**
+ * Explicit, loss-averse migration for an existing plaintext queue.
+ * This function is intentionally NOT called by ordinary checkout or initial
+ * vault setup. A separate reviewed UI must require owner consent and an
+ * off-device recovery-copy decision before activation.
+ *
+ * Encryption and authenticated self-check happen BEFORE the transaction.
+ * The single readwrite transaction rechecks every original byte-for-byte
+ * record and atomically replaces every row together with its vault metadata.
+ * Any concurrent sale or storage failure aborts the entire conversion.
+ */
+export async function migratePlainShopOutboxToVault(
+  scope: OutboxScope, passphrase: string,
+  legacyStorage: LegacyStorage | null = defaultLegacyStorage()
+): Promise<number> {
+  const current = await prepare(scope,legacyStorage);
+  if (!current.length) {
+    throw new Error("There are no outstanding plaintext sales to migrate. Use normal offline vault setup.");
+  }
+  const sk = scopeKey(scope);
+  if (await vaults.get(sk)) throw new Error("This offline queue is already protected.");
+
+  const originals = await entries.where("scopeKey").equals(sk).toArray();
+  if (originals.length !== current.length || originals.some(row=>isSealed(row)))
+    throw new Error("Offline sale records changed during migration preparation. Nothing was converted.");
+
+  const originalById = new Map(originals.map(row=>[row.id,row]));
+  const {descriptor,key} = await createShopVault(scope,passphrase);
+  const sealed:ProtectedStoredSale[] = [];
+  for (const item of current) {
+    const id=entryKey(scope,item.sale.submissionKey);
+    const original=originalById.get(id);
+    if (!original || isSealed(original) || !valid(original) ||
+        original.queuedAt !== item.queuedAt ||
+        original.summary !== item.summary || original.status !== item.status ||
+        original.error !== item.error || !sameSale(original.sale,item.sale)) {
+      throw new Error("Offline sale changed during migration preparation. Nothing was converted.");
+    }
+    const encrypted=await encryptQueuedSale(scope,item.sale.submissionKey,key,item);
+    const restored=await decryptQueuedSale(scope,item.sale.submissionKey,key,encrypted);
+    if (!valid(restored) || JSON.stringify(restored)!==JSON.stringify(item))
+      throw new Error("Encrypted sale failed its pre-commit verification. Nothing was converted.");
+    sealed.push({id,scopeKey:sk,queuedAt:item.queuedAt,sealed:encrypted});
+  }
+
+  await database.transaction("rw", entries, vaults, async()=>{
+    if (await vaults.get(sk))
+      throw new Error("Offline vault was enabled by another tab. No sales were converted.");
+    const latest=await entries.where("scopeKey").equals(sk).toArray();
+    if (latest.length!==originals.length ||
+        latest.some(row=>!sameStored(row,originalById.get(row.id)))) {
+      throw new Error("Pending sales changed while encryption was prepared. No sales were converted.");
+    }
+    for (const item of sealed) await entries.put(item);
+    await vaults.add({id:sk,descriptor});
+  });
+  unlocked.set(sk,key);
+  return sealed.length;
+}
+
 export async function unlockShopOutboxVault(scope: OutboxScope,passphrase:string): Promise<void> {
   scopeIsValid(scope);
   const row=await vaults.get(scopeKey(scope));
