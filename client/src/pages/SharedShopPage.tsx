@@ -141,7 +141,7 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => { void getSupabaseClient().auth.getUser().then(r => setEmail(r.data.user?.email ?? "")); }, []);
+  useEffect(() => { let live = true; void getSupabaseClient().auth.getUser().then(r => { if (live) setEmail(r.data.user?.email ?? ""); }); return () => { live = false; }; }, []);
   const accept = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
@@ -356,7 +356,10 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
-  const reloadQueue = useCallback(() => { void readOutbox(scope).then(setQueued); }, [scope]);
+  // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const reloadQueue = useCallback(() => { void readOutbox(scope).then(list => { if (mounted.current) setQueued(list); }).catch(() => { /* keep the last list */ }); }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
