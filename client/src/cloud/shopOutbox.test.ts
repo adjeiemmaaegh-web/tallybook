@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it, vi } from "vitest";
 import Dexie from "dexie";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus, exportProtectedShopOutbox, importProtectedShopOutbox } from "./shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus, exportProtectedShopOutbox, importProtectedShopOutbox, migratePlainShopOutboxToVault } from "./shopOutbox";
 import { ShopRejectedError, ShopUnreachableError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
 let serial = 0;
@@ -289,6 +289,62 @@ describe("shared-shop IndexedDB sale outbox", () => {
       expect(await db.table("entries").where("scopeKey").equals(sk).count()).toBe(0);
       expect((await getShopOutboxVaultStatus(scope)).configured).toBe(false);
     }finally{db.close();}
+  });
+
+  it("atomically converts existing plaintext pending and rejected sales, preserving keys and statuses", async () => {
+    const scope = newScope(), pass = "Long passphrase for legacy migration 2026";
+    const pending = sale(key(190)), rejected = sale(key(191));
+    await submitSale(scope, pending, "Legacy pending order", offline);
+    await submitSale(scope, rejected, "Legacy rejected order", async () => { throw new ShopRejectedError("No stock"); });
+    expect((await readOutbox(scope)).map(row => row.status)).toEqual(["pending","rejected"]);
+    expect(await migratePlainShopOutboxToVault(scope,pass)).toBe(2);
+    const db = new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries: "id,scopeKey,queuedAt", quarantine: "id"});
+    db.version(2).stores({entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id"});
+    try {
+      const rows = await db.table("entries").where("scopeKey").equals(JSON.stringify([scope.userId,scope.companyId])).toArray();
+      expect(rows).toHaveLength(2);
+      const serialized = JSON.stringify(rows);
+      expect(serialized).not.toContain("Legacy pending order");
+      expect(serialized).not.toContain("amountTenderedMinor");
+      expect(rows.every(row => !!row.sealed && row.sale === undefined && row.summary === undefined)).toBe(true);
+      lockShopOutboxVault(scope);
+      await expect(readOutbox(scope)).rejects.toThrow(/Unlock/);
+      await unlockShopOutboxVault(scope,pass);
+      const saved = await readOutbox(scope);
+      expect(saved.map(row=>row.sale.submissionKey).sort()).toEqual([pending.submissionKey,rejected.submissionKey].sort());
+      expect(saved.find(row=>row.sale.submissionKey===rejected.submissionKey)?.status).toBe("rejected");
+      const sender = vi.fn(async (s:SaleRequest)=>receipt(s.submissionKey));
+      expect(await flushOutbox(scope,sender)).toEqual([{state:"recorded",receipt:receipt(pending.submissionKey)}]);
+      expect(sender).toHaveBeenCalledTimes(1);
+    } finally { db.close(); lockShopOutboxVault(scope); }
+  });
+
+  it("will not convert a damaged existing queue and preserves original plaintext evidence", async () => {
+    const scope = newScope(), original = sale(key(192));
+    await submitSale(scope,original,"Original sale",offline);
+    const db = new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries: "id,scopeKey,queuedAt", quarantine: "id"});
+    db.version(2).stores({entries: "id,scopeKey,queuedAt", quarantine: "id", vaults: "id"});
+    const id=JSON.stringify([scope.userId,scope.companyId,original.submissionKey]);
+    try {
+      await db.table("entries").update(id,{summary:99});
+      await expect(migratePlainShopOutboxToVault(scope,"Strong migration passphrase 2026")).rejects.toThrow(/need recovery/);
+      const retained=await db.table("entries").get(id);
+      expect(retained.sale).toEqual(original);
+      expect(retained.summary).toBe(99);
+      expect(await getShopOutboxVaultStatus(scope)).toEqual({configured:false,unlocked:false});
+    } finally { db.close(); }
+  });
+
+  it("refuses an already-encrypted queue and a missing migration source", async () => {
+    const empty = newScope();
+    await expect(migratePlainShopOutboxToVault(empty,"Very strong private migration passphrase")).rejects.toThrow(/no outstanding/i);
+    const protectedScope = newScope();
+    await enableShopOutboxVault(protectedScope,"Another strong passphrase for protection");
+    await submitSale(protectedScope,sale(key(193)),"Already protected",offline);
+    await expect(migratePlainShopOutboxToVault(protectedScope,"Another strong passphrase for protection"))
+      .rejects.toThrow(/already protected/i);
   });
 
 });
