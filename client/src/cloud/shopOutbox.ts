@@ -114,6 +114,13 @@ async function prepare(scope: OutboxScope, storage: LegacyStorage | null) {
   await migrateLegacy(scope, storage);
   const bad = await quarantine.get(legacyKey(scope));
   if (bad) throw new Error("This account has unrecovered older queued sales. Do not clear browser storage; restore them before continuing.");
+  // This check must precede ALL write and replay paths, not just readOutbox:
+  // otherwise a corrupt older sale can be silently bypassed by a new sale.
+  const rows = await entries.where("scopeKey").equals(scopeKey(scope)).toArray();
+  if (rows.some(row => !valid(row) || row.scopeKey !== scopeKey(scope) ||
+      row.id !== entryKey(scope, row.sale.submissionKey))) {
+    throw new Error("Stored unsent sales need recovery. Do not clear this browser's data or record more sales.");
+  }
 }
 export async function readOutbox(
   scope: OutboxScope, legacyStorage: LegacyStorage | null = defaultLegacyStorage()
