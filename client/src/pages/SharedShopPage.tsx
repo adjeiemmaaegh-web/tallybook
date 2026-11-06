@@ -794,18 +794,20 @@ function RefundForm({ companyId, receipt, online, onDone, policy }: { companyId:
   const worth = (l: ShopReceipt["lines"][number], n: number) => Math.floor((n * (l.lineTotalMinor - (l.lineDiscountMinor ?? 0))) / l.quantity);
   const chosenMinor = chosen.reduce((n, l) => n + worth(l, (l.refundedQuantity ?? 0) + qty[l.lineNo]!) - worth(l, l.refundedQuantity ?? 0), 0);
   const leftMinor = receipt.totalMinor - receipt.refundedMinor;
-  const how = methodLabel(receipt.payment.method).toLowerCase();
   const onCredit = Boolean(receipt.customer) && (receipt.tenders ?? []).some(t => t.method === "credit");
+  // Ledger posting does not initiate external payment-provider refunds.
   const route = onCredit
-    ? `It first reduces what ${receipt.customer!.name} still owes on this sale; anything more goes back as money (cash first).`
-    : receipt.payment.method === "split" ? "The money goes back as cash first, from the till."
-    : `The money goes back by ${how}${receipt.payment.method === "mobile" ? ": send it from your mobile money wallet." : receipt.payment.method === "card" ? ": reverse it on your card machine." : " from the till."}`;
+    ? `Tallybook adjusts what ${receipt.customer!.name} owes. If any money is due back, arrange and verify that payment separately.`
+    : receipt.payment.method === "split" ? "Arrange the cash payout separately; Tallybook only records the refund."
+    : receipt.payment.method === "mobile" ? "Send the mobile-money repayment separately from your wallet; Tallybook does not initiate it."
+    : receipt.payment.method === "card" ? "Reverse the card payment separately through your provider; Tallybook does not initiate it."
+    : "Pay the cash back separately; Tallybook records the refund but does not hand over cash.";
 
   const send = async (whole: boolean) => {
     if ((whole && !policy.allowFullReversal) || (!whole && !policy.allowPartialReturn)) { setError("This business policy does not allow that return type."); return; }
     if (!reason.trim()) { setError("Say why this is being refunded."); return; }
     const amount = whole ? leftMinor : chosenMinor;
-    if (!window.confirm(`Refund ${money(amount)}? ${route} This can't be undone.`)) return;
+    if (!window.confirm(`Record a refund of ${money(amount)}? ${route} Confirm only after arranging any required payout. This ledger entry cannot be undone.`)) return;
     const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
       ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
     const body = JSON.stringify(request);
