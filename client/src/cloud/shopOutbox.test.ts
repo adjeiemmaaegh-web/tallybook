@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it, vi } from "vitest";
 import Dexie from "dexie";
-import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus } from "./shopOutbox";
+import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, enableShopOutboxVault, unlockShopOutboxVault, lockShopOutboxVault, getShopOutboxVaultStatus, exportProtectedShopOutbox, importProtectedShopOutbox } from "./shopOutbox";
 import { ShopRejectedError, ShopUnreachableError, type SaleRequest, type ShopReceipt } from "./shopClient";
 
 let serial = 0;
@@ -228,6 +228,67 @@ describe("shared-shop IndexedDB sale outbox", () => {
       expect(sender).not.toHaveBeenCalled();
       expect((await db.table("entries").get(id)).sealed.data).toBe("AAAA");
     } finally {db.close();}
+  });
+
+  it("exports an encrypted-only portable queue and restores it on an empty same-account device",async()=>{
+    const scope=newScope(),pass="Long private backup passphrase with symbols 2026!";
+    await enableShopOutboxVault(scope,pass);
+    await submitSale(scope,sale(key(90)),"Protected sale to Ama",offline);
+    const exportText=await exportProtectedShopOutbox(scope);
+    expect(exportText).toContain("tallybook.shared-shop.queue.recovery.v1");
+    expect(exportText).not.toContain("Protected sale to Ama");
+    expect(exportText).not.toContain('"amountTenderedMinor"');
+    expect(JSON.parse(exportText).entries).toHaveLength(1);
+    await expect(importProtectedShopOutbox({...scope,companyId:"other"},exportText,pass))
+      .rejects.toThrow(/not for this signed-in account/i);
+
+    // Simulate a fresh browser device for the same verified account by
+    // clearing only this test scope's queue and vault records.
+    const db=new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
+    db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
+    lockShopOutboxVault(scope);
+    try{
+      const sk=JSON.stringify([scope.userId,scope.companyId]);
+      await db.transaction("rw",db.table("entries"),db.table("vaults"),async()=>{
+        await db.table("entries").where("scopeKey").equals(sk).delete();
+        await db.table("vaults").delete(sk);
+      });
+      expect((await getShopOutboxVaultStatus(scope)).configured).toBe(false);
+      await expect(importProtectedShopOutbox(scope,exportText,"incorrect recovery passphrase"))
+        .rejects.toThrow(/verification failed/i);
+      expect(await db.table("entries").where("scopeKey").equals(sk).count()).toBe(0);
+      expect((await getShopOutboxVaultStatus(scope)).configured).toBe(false);
+      expect(await importProtectedShopOutbox(scope,exportText,pass)).toBe(1);
+      expect((await readOutbox(scope))[0].sale).toEqual(sale(key(90)));
+      await expect(importProtectedShopOutbox(scope,exportText,pass))
+        .rejects.toThrow(/already has queued sales/i);
+      expect(await db.table("entries").where("scopeKey").equals(sk).count()).toBe(1);
+    }finally{db.close();}
+  });
+
+  it("rejects tampered encrypted recovery data without modifying the target",async()=>{
+    const scope=newScope(),pass="Long recovery test phrase for damaged files";
+    await enableShopOutboxVault(scope,pass);
+    await submitSale(scope,sale(key(91)),"Keep private",offline);
+    const original=JSON.parse(await exportProtectedShopOutbox(scope));
+    const tampered={...original,entries:original.entries.map((entry: {sealed:{data:string}}) =>
+      ({...entry,sealed:{...entry.sealed,data:"AAAA"}}))};
+    const db=new Dexie("tallybook-shared-shop-outbox-v2");
+    db.version(1).stores({entries:"id,scopeKey,queuedAt",quarantine:"id"});
+    db.version(2).stores({entries:"id,scopeKey,queuedAt",quarantine:"id",vaults:"id"});
+    lockShopOutboxVault(scope);
+    try{
+      const sk=JSON.stringify([scope.userId,scope.companyId]);
+      await db.transaction("rw",db.table("entries"),db.table("vaults"),async()=>{
+        await db.table("entries").where("scopeKey").equals(sk).delete();
+        await db.table("vaults").delete(sk);
+      });
+      await expect(importProtectedShopOutbox(scope,JSON.stringify(tampered),pass))
+        .rejects.toThrow(/could not be authenticated/i);
+      expect(await db.table("entries").where("scopeKey").equals(sk).count()).toBe(0);
+      expect((await getShopOutboxVaultStatus(scope)).configured).toBe(false);
+    }finally{db.close();}
   });
 
 });
