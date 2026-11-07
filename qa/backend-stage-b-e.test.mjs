@@ -212,3 +212,24 @@ test('an ambiguous preview policy schema stops the upgrade before installing the
    assert.equal((await t.db.query("select to_regprocedure('public.tallybook_shop_ops(text,jsonb)') as rpc")).rows[0].rpc,null);
  } finally {await t.db.close();}
 });
+
+test('a rejected second purchase line rolls back the entire receipt and the request ID is reusable', async () => {
+ const t = await setup();
+ try {
+   const supplierId=id(), orderId=id(), receiptId=id(), second=id();
+   await t.core('owner','saveProduct',{productId:second,name:'Oil',unitPriceMinor:900});
+   await t.call('owner','saveSupplier',{supplierId,name:'Supplier'});
+   await t.call('owner','createPurchaseOrder',{orderId,supplierId,storeId:t.a,lines:[
+     {productId:t.product,quantity:2,unitCostMinor:100},{productId:second,quantity:1,unitCostMinor:200}]});
+   const receive = (who,qty) => t.call(who,'receivePurchase',{orderId,receiptId,
+     lines:[{lineNo:1,quantity:2},{lineNo:2,quantity:qty}]});
+   await assert.rejects(receive('attendant',1),/owner/i);
+   await assert.rejects(receive('owner',2),/exceed outstanding/i);
+   assert.equal((await t.call('owner','supplierBalances')).suppliers[0].outstandingMinor,'0');
+   const stock = () => t.admin('select quantity from public.shop_store_stock where store_id=$1 and product_id=$2',[t.a,t.product]);
+   assert.equal((await stock())[0].quantity,20);
+   assert.equal((await receive('owner',1)).totalMinor,'400');
+   assert.equal((await receive('owner',1)).replayed,true);
+   assert.equal((await stock())[0].quantity,22);
+ } finally {await t.db.close();}
+});
