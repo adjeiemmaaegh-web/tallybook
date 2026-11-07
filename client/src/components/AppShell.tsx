@@ -1,5 +1,6 @@
 /** Tactile Ledger design reminder: a running ledger strip shows the saved business identity wherever owners work, with generous thumb targets. */
 import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
+import { requiresCloudOwner } from "@/auth/deviceEntry";
 import { db } from "@/db/TallybookDB";
 import { currentStaffId, STAFF_SESSION_CHANGED } from "@/features/staff/staff";
 import { Bell, Search, Users, Cloud, CloudOff, HardDriveDownload, MessageCircleQuestion, Store, Menu, X, Truck, CircleDollarSign, BarChart3, Boxes, ShoppingBag, ContactRound, LayoutDashboard, ClipboardCheck, ShieldCheck } from "lucide-react";
@@ -24,7 +25,8 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { activeCompanyId } = useBusinessProfile();
+  const { activeCompanyId, profile, companies, status } = useBusinessProfile();
+  const standalone = !requiresCloudOwner();
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -42,7 +44,7 @@ export function AppShell({ children }: AppShellProps) {
       const current=currentStaffId(activeCompanyId);
       void db.transaction("r",[db.staffMembers,db.businessProfiles],async()=>{
         const total=await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count();
-        if(!total)return !(await db.businessProfiles.get(activeCompanyId))?.staffGovernanceEnabled;
+        if(!total)return !standalone && !(await db.businessProfiles.get(activeCompanyId))?.staffGovernanceEnabled;
         if(!current)return false;
         const member=await db.staffMembers.get(current);
         return Boolean(member&&member.businessProfileId===activeCompanyId&&!member.disabledAt);
@@ -61,7 +63,7 @@ export function AppShell({ children }: AppShellProps) {
     window.addEventListener('focus',onFocus);
      document.addEventListener('visibilitychange',onFocus);
     return () => { mounted = false; window.clearInterval(timer); window.removeEventListener(STAFF_SESSION_CHANGED,onSession); window.removeEventListener('focus',onFocus); document.removeEventListener('visibilitychange',onFocus); };
-  }, [activeCompanyId, location]);
+  }, [activeCompanyId, location, standalone]);
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
   useEffect(() => {
@@ -93,6 +95,19 @@ export function AppShell({ children }: AppShellProps) {
     { title: "Settings", links: [{ href: "/business", label: "Business Setup", Icon: Store }, { href: "/staff", label: "Staff & Permissions", Icon: Users }, { href: "/backup", label: "Backup & Restore", Icon: HardDriveDownload }] },
   ];
   const groupedNav = (onNavigate?: () => void) => <>{groups.map(group => <section key={group.title} className="premium-nav-group"><h2>{group.title}</h2>{group.links.map(({ href, label, Icon }) => <Link key={href} href={href} onClick={onNavigate} aria-current={location === href ? "page" : undefined} className={`premium-nav-item ${location === href ? "premium-nav-selected" : ""}`}><Icon className="h-5 w-5 shrink-0" aria-hidden="true" /><span>{label}</span></Link>)}</section>)}<details className="premium-more-tools"><summary>More tools</summary>{[{ href: "/end-of-day", label: "End of day", Icon: Bell }, { href: "/stores", label: "Stores", Icon: Store }, { href: "/commerce", label: "Commerce drafts", Icon: Store }, { href: "/alerts", label: "Alerts", Icon: Bell }, { href: "/sync-status", label: "Sync status", Icon: Cloud }, { href: "/assistant", label: "Assistant", Icon: MessageCircleQuestion }, { href: "/device-uat", label: "Device acceptance (owner only)", Icon: ClipboardCheck }, { href: "/release-operations", label: "Release operations (owner only)", Icon: ShieldCheck }].map(({href,label,Icon})=><Link key={href} href={href} onClick={onNavigate} className="premium-nav-item"><Icon className="h-5 w-5 shrink-0" aria-hidden="true"/><span>{label}</span></Link>)}</details></>;
+  // Local setup and unlock mount only their form, never navigation or business reports.
+  if (standalone && (status !== "ready" || staffGate === "loading"))
+    return <main role="status">{status === "error" ? "Cannot open the local ledger." : "Checking local staff access"}</main>;
+  if (standalone && staffGate !== "open") {
+    const emptyDevice = !profile && companies.length === 0;
+    if ((location === "/business" && emptyDevice && !window.location.search) ||
+        (location === "/staff" && profile))
+      return <main id="main-content">{children}</main>;
+    return <main className="mx-auto mt-12 max-w-md space-y-4 p-6">
+      <h1>{emptyDevice ? "Set up this device" : "Tallybook is locked"}</h1>
+      <Link href={emptyDevice ? "/business" : "/staff"}>{emptyDevice ? "Set up business" : "Go to staff unlock"}</Link>
+    </main>;
+  }
   if (staffGate !== "open" && location !== "/staff" && location !== "/account") return <main className="mx-auto mt-12 max-w-md rounded-xl border p-6 space-y-4">
     <h1 className="text-xl font-semibold">{staffGate === "locked" ? "Tallybook is locked" : "Checking local staff access"}</h1>
     <p className="text-sm text-muted-foreground">{staffGate === "locked" ? "Unlock with your local staff PIN to access this business." : "Checking the staff records stored on this device."}</p>

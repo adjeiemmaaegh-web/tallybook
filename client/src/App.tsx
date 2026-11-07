@@ -2,6 +2,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { internalToolsEnabled } from "@/lib/internalTools";
 import { AuthGate } from "@/auth/AuthGate";
+import { requiresCloudOwner } from "@/auth/deviceEntry";
 import { FriendsTestGate } from "@/auth/FriendsTestGate";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
 import { lockAllStaff } from "@/features/staff/staff";
@@ -122,7 +123,7 @@ function App() {
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
             ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>
-            : !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
+            : requiresCloudOwner() && !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

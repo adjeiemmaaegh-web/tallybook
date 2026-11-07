@@ -5,15 +5,14 @@ test.beforeEach(async ({page}) => {
   await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
 });
 
-test('signed-out cloud account is denied without blocking offline sales', async ({page}) => {
-  await page.goto('/cloud-account', {waitUntil:'domcontentloaded'});
-  await expect(page).toHaveURL(/\/signin$/);
-  await expect(page.getByRole('button', {name:'Sign in with Google'})).toBeVisible();
+test('a signed-out account page stays outside the ledger', async ({page}) => {
+  await page.goto('/cloud-account');
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByRole('heading', {name:'Welcome to Tallybook'})).toBeVisible();
   expect(await page.evaluate(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db'))).toBe(false);
-
-  await page.goto('/sales', {waitUntil:'domcontentloaded'});
-  await expect(page).toHaveURL(/\/sales$/);
+  await page.goto('/sales');
   await expect(page.getByRole('link', {name:'Set up business'})).toBeVisible();
+  await expect(page.getByRole('button', {name:'Complete sale'})).toHaveCount(0);
 });
 
 test('a local owner PIN locks and unlocks the business workspace', async ({page}) => {
@@ -22,7 +21,7 @@ test('a local owner PIN locks and unlocks the business workspace', async ({page}
   await page.getByRole('combobox', {name:'Business type'}).click();
   await page.getByRole('option', {name:'Retail shop'}).click();
   await page.getByRole('button', {name:'Save business'}).click();
-  await expect(page.locator('#main-content').getByText('Auth Browser Test is saved on this device.')).toBeVisible();
+  await expect(page.getByRole('link',{name:'Go to staff unlock'})).toBeVisible();
 
   await page.goto('/staff', {waitUntil:'domcontentloaded'});
   await page.getByRole('textbox', {name:'Staff name'}).fill('Test Owner');
@@ -59,7 +58,7 @@ test('missing staff rows cannot reopen a protected local business', async ({page
   await page.getByRole('combobox', {name:'Business type'}).click();
   await page.getByRole('option', {name:'Retail shop'}).click();
   await page.getByRole('button', {name:'Save business'}).click();
-  await expect(page.locator('#main-content').getByText('Protected Browser Test is saved on this device.')).toBeVisible();
+  await expect(page.getByRole('link',{name:'Go to staff unlock'})).toBeVisible();
   await page.goto('/staff', {waitUntil:'domcontentloaded'});
   await page.getByRole('textbox', {name:'Staff name'}).fill('Protected Owner');
   await page.getByRole('textbox', {name:'New staff PIN'}).fill('123456');

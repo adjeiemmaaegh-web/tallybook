@@ -118,7 +118,7 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   if(state.status==='checking'||state.status==='disabled'||(access?.status==='checking'))
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
   if(state.status==='signed-out')return <Redirect to='/welcome' replace/>;
-  if(state.status==='offline'&&access?.status==='allow')return <>{children}</>;
+  if(state.status==='offline'&&access?.userId===null&&access.status==='allow')return <>{children}</>;
   if(state.status==='offline')return <EntryCard icon={<WifiOff/>} title="Connect once to open Tallybook">
     <p>The first time you open this device's ledger, Tallybook checks your account online. After that it opens offline on this device.</p>
   </EntryCard>;

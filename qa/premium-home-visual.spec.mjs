@@ -1,3 +1,4 @@
+import {unlockFixtureOwner} from './local-owner-fixture.mjs';
 import {test,expect} from '@playwright/test';
 
 /**
@@ -13,7 +14,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
   await page.goto('/business',{waitUntil:'domcontentloaded'});
   await page.evaluate(async()=>{
     const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
-    await saveBusinessProfile({name:'Visual QA Shop',country:'Ghana',currency:'GHS',businessType:'Retail'});
+    await saveBusinessProfile({name:'Visual QA Shop',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
   });
 
   const widths=[
@@ -24,6 +25,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
   for(const viewport of widths){
     await page.setViewportSize(viewport);
     await page.goto('/',{waitUntil:'domcontentloaded'});
+    await unlockFixtureOwner(page);
     await expect(page.getByRole('heading',{name:'Good to see you'})).toBeVisible();
     await expect(page.getByLabel('Today at the till')).toBeVisible();
     await expect(page.locator('.tb-dashboard-till-total')).toContainText('GHS');
@@ -88,8 +90,11 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
   }
 
   await page.goto('/reports',{waitUntil:'domcontentloaded'});
+  await unlockFixtureOwner(page);
+  await expect(page.getByRole('link',{name:'View alerts'})).toBeVisible();
   await expect(page).toHaveURL(/\/reports$/);
   await page.goto('/',{waitUntil:'domcontentloaded'});
+    await unlockFixtureOwner(page);
   await expect(page.locator('.premium-step.done')).toHaveCount(2);
   await expect(page.locator('.premium-progress')).toHaveAttribute('aria-valuenow','2');
   expect(errors).toEqual([]);

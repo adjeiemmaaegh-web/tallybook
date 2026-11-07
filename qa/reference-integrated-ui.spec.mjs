@@ -48,6 +48,5 @@ test('protected device-local ledger does not bypass owner verification for a new
   await expect(page.locator('.tb-dashboard-till-total')).toHaveCount(0);
   // Without a verified owner, the entry gate either redirects to the public
   // welcome or explains that account verification could not be completed.
-  const gateVisible=await page.getByRole('heading',{name:"We couldn't check your account"}).count();
-  expect(page.url().endsWith('/welcome') || gateVisible>0).toBe(true);
+  await expect(page.getByRole('heading',{name:"We couldn't check your account"})).toBeVisible();
 });

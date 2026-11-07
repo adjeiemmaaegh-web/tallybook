@@ -1,3 +1,4 @@
+import {unlockFixtureOwner} from './local-owner-fixture.mjs';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const { schemas } = JSON.parse(readFileSync(new URL('./fixtures/legacy-schemas.json', import.meta.url), 'utf8'));
@@ -43,9 +44,10 @@ test('owner explicitly configures tax and prepared quotation reaches a saved off
   await page.goto('/business');
   await page.evaluate(async () => {
     const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
-    await saveBusinessProfile({name:'Browser QA',country:'Ghana',currency:'GHS',businessType:'Retail'});
+    await saveBusinessProfile({name:'Browser QA',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
   });
   await page.reload();
+  await unlockFixtureOwner(page);
   await expect(page.getByRole('checkbox',{name:'Apply tax to future sales'})).not.toBeChecked();
   await page.getByRole('checkbox',{name:'Apply tax to future sales'}).check();
   await page.getByRole('combobox',{name:'Tax registration status'}).selectOption('registered');
