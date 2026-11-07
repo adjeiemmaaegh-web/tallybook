@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShopOverview } from "@/cloud/shopClient";
 
-const shop = vi.hoisted(() => ({ overview: vi.fn(), sales: vi.fn(), setup: vi.fn(), store: vi.fn() }));
+const shop = vi.hoisted(() => ({ overview: vi.fn(), readiness: vi.fn(), setup: vi.fn(), store: vi.fn() }));
 vi.mock("@/lib/supabase", () => ({
   isSupabaseConfigured: true,
   getSupabaseClient: () => ({ auth: {
@@ -15,7 +15,7 @@ vi.mock("@/cloud/cloudMembership", () => ({ listVerifiedCloudBusinesses: async (
 vi.mock("@/cloud/shopClient", async (orig) => ({
   ...(await orig<object>()),
   getShopOverview: shop.overview,
-  listShopSales: shop.sales,
+  getShopReadiness: shop.readiness,
   setupShopLedger: (...a: unknown[]) => shop.setup(...a),
   saveShopStore: (...a: unknown[]) => shop.store(...a),
 }));
@@ -27,7 +27,7 @@ const fresh = (over: Partial<ShopOverview> = {}): ShopOverview => ({
 });
 
 describe("owner first run", () => {
-  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); shop.sales.mockResolvedValue([]); });
+  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); shop.readiness.mockResolvedValue({companyId:"biz",saleCount:0}); });
 
   it("shows the checklist with the store step first and does not claim the shop can sell", async () => {
     shop.overview.mockResolvedValue(fresh());
@@ -37,13 +37,13 @@ describe("owner first run", () => {
     expect(screen.queryByText(/can sell now/)).toBeNull();
   });
 
-  it("does not mark the sale step done while the sales list is unknown", async () => {
+  it("does not mark the sale step done while the sale count is unknown", async () => {
     shop.overview.mockResolvedValue(fresh({
       stores: [{ id: "st", name: "Main", status: "active" }],
       products: [{ id: "p", name: "Eggs", unitPriceMinor: 100, active: true }],
       stock: [{ storeId: "st", productId: "p", quantity: 4 }],
     }));
-    shop.sales.mockRejectedValue(new Error("offline"));
+    shop.readiness.mockRejectedValue(new Error("offline"));
     render(<SharedShopPage />);
     expect(await screen.findByText(/can sell now/)).toBeTruthy();
     expect(screen.getByText(/3 of 4 done/)).toBeTruthy();
@@ -55,7 +55,7 @@ describe("owner first run", () => {
       products: [{ id: "p", name: "Eggs", unitPriceMinor: 100, active: true }],
       stock: [{ storeId: "st", productId: "p", quantity: 4 }],
     }));
-    shop.sales.mockResolvedValue([{ saleId: "s1" }]);
+    shop.readiness.mockResolvedValue({companyId:"biz",saleCount:1});
     render(<SharedShopPage />);
     await screen.findByRole("button", { name: "Sell" });
     await waitFor(() => expect(screen.queryByText(/Get started/)).toBeNull());

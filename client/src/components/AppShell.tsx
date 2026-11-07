@@ -25,6 +25,11 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { activeCompanyId } = useBusinessProfile();
+  return <CompanyShell key={activeCompanyId}>{children}</CompanyShell>;
+}
+
+function CompanyShell({ children }: AppShellProps) {
   const { activeCompanyId, profile, companies, status } = useBusinessProfile();
   const standalone = !requiresCloudOwner();
   const [location] = useLocation();
