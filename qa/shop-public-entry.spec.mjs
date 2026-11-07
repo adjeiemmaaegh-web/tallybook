@@ -35,7 +35,7 @@ for (const viewport of [
 
     await page.screenshot({ path: testInfo.outputPath(`shop-entry-${viewport.label}.png`), fullPage: true });
     await signIn.click();
-    await expect(page).toHaveURL(new RegExp('/signin
+    await expect(page).toHaveURL(new RegExp('/signin$'));
     await expect(page.getByRole('heading', { name: 'Tallybook account' })).toBeVisible();
     expect(errors, 'Navigation to sign-in must not raise client exceptions').toEqual([]);
   });
