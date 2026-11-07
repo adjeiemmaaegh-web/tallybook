@@ -46,6 +46,7 @@ const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./styles/ReferenceVisualSystem.css";
+import { TallybookWelcome } from "@/components/TallybookWelcome";
 
 function Router() {
   return (
@@ -113,6 +114,10 @@ function App() {
           {location === '/cloud-account'
             // Retired preview: its server check was never deployed. The account page is the real one.
             ? <Redirect to="/account" replace />
+            : location === '/welcome'
+            // Safe public first page: presents existing sign-in links only.
+            // NEVER mounts the local ledger or bypasses verified owner access.
+            ? <main className="tb-public-welcome"><TallybookWelcome variant="shop" /></main>
             : location === '/shop'
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
