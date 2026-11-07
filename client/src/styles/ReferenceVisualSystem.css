@@ -130,4 +130,4 @@ html,body{background:var(--ta-canvas);color:var(--ta-ink)}
 /* Public welcome is explicitly outside FriendsTestGate and DatabaseProvider. */
 .tb-public-welcome{max-width:1380px;margin:0 auto;padding:clamp(8px,2.5vw,25px);min-height:100dvh}
 .tb-public-welcome .tb-welcome{max-width:1340px}
-@media(max-width:640px){.tb-public-welcome{padding:0}.tb-public-welcome .tb-welcome{min-height:100dvh;border-radius:0}}
+@media(max-width:640px){.tb-public-welcome{padding:0;overflow-x:clip}.tb-public-welcome .tb-welcome{min-height:100dvh;border-radius:0;margin-inline:0;width:100%;max-width:100%}}
