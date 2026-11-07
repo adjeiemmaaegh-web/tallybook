@@ -37,10 +37,10 @@ describe("Screenshot-aligned REAL local dashboard",()=>{
       country="Ghana" currency="GHS" online={false}
       counts={{products:4,customers:2,sales:2}}/>);
     const till=screen.getByRole("region",{name:"Today at the till"});
-    await waitFor(()=>expect(within(till).getByText(formatMinorAmount(12500,"GHS"))).toBeInTheDocument());
+    await waitFor(()=>expect(till.querySelector(".tb-dashboard-till-total")?.textContent).toBe(formatMinorAmount(12500,"GHS")));
     expect(within(till).getByText(/2 recorded sales/)).toBeInTheDocument();
     expect(within(till).getByText(/Collected/)).toBeInTheDocument();
-    expect(within(till).getByText(formatMinorAmount(2500,"GHS"))).toBeInTheDocument();
+    expect(till.querySelector(".tb-dashboard-till-cells > div:nth-child(2) strong")?.textContent).toBe(formatMinorAmount(2500,"GHS"));
     expect(screen.getByText("Customer receivables")).toBeInTheDocument();
     expect(screen.getByRole("heading",{name:"Good to see you"})).toBeInTheDocument();
     expect(screen.getByText(/Test Shop/)).toBeInTheDocument();
