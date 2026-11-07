@@ -24,6 +24,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Check TypeScript
         run: pnpm check
+      - name: Check reference dashboard with report-backed component tests
+        run: pnpm exec vitest run client/src/components/PremiumHomeOverview.reference.test.tsx
       - name: Verify app build
         run: pnpm build
       - name: Install Chromium
