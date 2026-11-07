@@ -49,7 +49,7 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
         <div>
           <span className="tb-dashboard-kicker">OPERATIONS · YOUR BUSINESS</span>
           <h1>Good to see you</h1>
-          <p><strong>{companyName}</strong> · {country} · {currency}</p>
+          <p><strong>{companyName}</strong> · <span>{country} · {currency}</span></p>
           <p className="premium-identity">{online ? "Offline-first device ledger" : "Offline — records saved on this device"}</p>
         </div>
         <div className="premium-date"><strong><CalendarDays size={15} style={{display:"inline",marginRight:7}}/>{new Date().toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",year:"numeric"})}</strong><small>Local business overview</small></div>
