@@ -72,38 +72,55 @@ export default function SharedShopPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
+  const identity = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) { setUserId(null); return; }
     const client = getSupabaseClient();
-    let active = true;
-    const load = async () => {
+    let generation = 0;
+    const load = async (request: number) => {
       const { data } = await client.auth.getSession();
       const id = data.session?.user.id ?? null;
-      if (!active) return;
+      if (request !== generation) return;
+      if (identity.current !== id) { setBusinesses([]); setCompanyId(null); }
+      identity.current = id;
       setUserId(id);
       if (!id) return;
-      const cached = await readCache(id);
-      if (cached.businesses.length) { setBusinesses(cached.businesses); setCompanyId(c => c ?? cached.businesses[0]!.id); }
-      if (!navigator.onLine) return;
-      try {
-        const list = (await listVerifiedCloudBusinesses()).map(b => ({ id: b.id, name: b.name, role: b.role }));
-        if (!active) return;
-        setBusinesses(list); setLoadError("");
-        setCompanyId(c => list.some(b => b.id === c) ? c : list[0]?.id ?? null);
-        void writeCache(id, cache => { cache.businesses = list; });
-      } catch (error) { if (active && !cached.businesses.length) setLoadError(message(error)); }
+      const list = online
+        ? (await listVerifiedCloudBusinesses()).map(({id, name, role}) => ({id, name, role}))
+        : (await readCache(id)).businesses;
+      if (request !== generation) return;
+      setBusinesses(list);
+      setCompanyId(current => list.some(b => b.id === current) ? current : list[0]?.id ?? null);
+      if (online) void writeCache(id, cache => { cache.businesses = list; });
     };
-    const { data: { subscription } } = client.auth.onAuthStateChange(event => {
-      if (event === "SIGNED_OUT") { void clearShopCaches(); setBusinesses([]); setCompanyId(null); }
-      setTimeout(() => { if (active) void load(); }, 0);
+    const refreshIdentity = () => {
+      const request = ++generation;
+      setLoadError("");
+      // Supabase auth callbacks must finish before another auth call starts.
+      setTimeout(() => {
+        if (generation === request) void load(request).catch(error => {
+          if (generation === request) setLoadError(message(error));
+        });
+      }, 0);
+    };
+    const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+      if (session?.user.id !== identity.current) {
+        setUserId(undefined); setBusinesses([]); setCompanyId(null);
+      }
+      if (event === "SIGNED_OUT") {
+        ++generation; identity.current = null;
+        setUserId(null); setBusinesses([]); setCompanyId(null); setLoadError("");
+        void clearShopCaches();
+      } else refreshIdentity();
     });
-    void load();
-    return () => { active = false; subscription.unsubscribe(); };
+    refreshIdentity();
+    return () => { ++generation; subscription.unsubscribe(); };
   }, [online]);
 
   const business = businesses.find(b => b.id === companyId) ?? null;
 
+  if (loadError) return <main className="shop-page"><p role="alert">{loadError}</p><Link href="/signin">Return to account</Link></main>;
   if (userId === undefined) return <main className="shop-page"><Run18UpdateNotice /><p role="status">Opening your shop…</p></main>;
   if (!userId) return <main className="shop-page shop-landing">
     <Run18UpdateNotice />
@@ -126,7 +143,7 @@ export default function SharedShopPage() {
     </header>
     {loadError && <p role="alert" className="shop-alert">{loadError}</p>}
     {business
-      ? <ShopWorkspace key={business.id} userId={userId} business={business} online={online} />
+      ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
   </main>;
 }
@@ -162,9 +179,9 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [overview, setOverview] = useState<ShopOverview | null>(null);
   useEffect(() => {
     let live = true;
-    void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
+    if (!online) void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
     return () => { live = false; };
-  }, [userId, business.id]);
+  }, [userId, business.id, online]);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.

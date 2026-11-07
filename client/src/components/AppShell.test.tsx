@@ -6,7 +6,7 @@ import { db, initializeDatabase } from "@/db/TallybookDB";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
 import { createStaff, unlockStaff, lockStaff } from "@/features/staff/staff";
 
-vi.mock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: { name: "Accessibility Shop" }, activeCompanyId: "primary" }) }));
+vi.mock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: { name: "Accessibility Shop" }, activeCompanyId: "primary", status: "ready", companies: [{id: "primary"}] }) }));
 vi.mock("@/components/DatabaseStatus", () => ({ DatabaseStatus: () => <span>Saved on this device</span> }));
 vi.mock("@/components/BrandMark", () => ({ BrandMark: () => <span>Tallybook</span> }));
 

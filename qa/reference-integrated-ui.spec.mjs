@@ -46,7 +46,6 @@ test('protected device-local ledger does not bypass owner verification for a new
   await page.goto('/');
   await expect(page.getByRole('heading',{name:'Good to see you'})).toHaveCount(0);
   await expect(page.locator('.tb-dashboard-till-total')).toHaveCount(0);
-  // Without a verified owner, the entry gate either redirects to the public
-  // welcome or explains that account verification could not be completed.
-  await expect(page.getByRole('heading',{name:"We couldn't check your account"})).toBeVisible();
+  await expect(page).toHaveURL(/\/welcome$/);
+  expect(await page.evaluate(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db'))).toBe(false);
 });
