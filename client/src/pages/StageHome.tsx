@@ -8,6 +8,7 @@ import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { useOnlineState } from "@/hooks/useOnlineState";
 import { PremiumHomeOverview } from "@/components/PremiumHomeOverview";
+import { TallybookWelcome } from "@/components/TallybookWelcome";
 
 export default function StageHome() {
   const { status, retry } = useDatabase();
@@ -62,16 +63,12 @@ export default function StageHome() {
   }
 
   if (!profile) {
-    return (
-      <div className="home-workspace space-y-5 pb-6">
-        {websiteUpdate}
-        <section className="op-row-card" style={{ display: "block" }}>
-          <div className="op-row-title">Set up your business to get started</div>
-          <p className="op-row-sub" style={{ margin: "4px 0 10px" }}>Add your business name and the money you use. It takes under a minute.</p>
-          <Link href="/business" className="primary-action">Set up business <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-        </section>
-      </div>
-    );
+    // A brand-new local device should show a genuine first-run welcome,
+    // not a fabricated "today's sales" dashboard. Account sign-in remains
+    // optional for the offline device ledger and required for shared shops.
+    return <div className="home-workspace tb-first-run-workspace pb-6">
+      <TallybookWelcome variant="device" />
+    </div>;
   }
 
   return <>{websiteUpdate}{setupError && <p role="status">Setup progress is temporarily unavailable. Saved records were not changed.</p>}<PremiumHomeOverview companyId={activeCompanyId} companyName={profile.name} country={profile.country} currency={profile.currency} online={online} counts={counts} /></>;
