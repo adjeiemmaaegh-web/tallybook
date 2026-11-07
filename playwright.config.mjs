@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  testDir: './qa', testMatch: 'browser-release.spec.mjs', workers: 1,
+  testDir: './qa', testMatch: ['browser-release.spec.mjs', 'shop-public-entry.spec.mjs'], workers: 1,
   timeout: 120000, expect: { timeout: 15000 },
   reporter: [['list'], ['html', { outputFolder: 'artifacts/release-v19/browser-report', open: 'never' }]],
   outputDir: 'artifacts/release-v19/browser-results',
