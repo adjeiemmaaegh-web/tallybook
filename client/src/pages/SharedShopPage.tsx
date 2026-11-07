@@ -6,6 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
@@ -104,16 +105,10 @@ export default function SharedShopPage() {
   const business = businesses.find(b => b.id === companyId) ?? null;
 
   if (userId === undefined) return <main className="shop-page"><Run18UpdateNotice /><p role="status">Opening your shop…</p></main>;
-  if (!userId) return <main className="shop-page"><Run18UpdateNotice /><section className="shop-card shop-empty shop-welcome" aria-labelledby="shop-welcome-title">
-    <h1 id="shop-welcome-title">Run your shop from your phone</h1>
-    <p>Tallybook keeps your stock, sales and customer credit in one place, shared between you and the people who work for you.</p>
-    <ul className="shop-benefits">
-      <li><strong>Sell offline.</strong> Sales are saved on the phone and sent when the connection returns.</li>
-      <li><strong>You stay in control.</strong> Attendants only see the stores you give them, and you set discount and credit limits.</li>
-      <li><strong>Clear records.</strong> Every sale, refund and stock change is kept and can be traced.</li>
-    </ul>
-    <Link href="/signin" className="primary-action">Sign in or create an account</Link>
-    <p className="shop-muted">Use Google, or an email and password. After signing in, choose "I own a business" to start one, or "I work for someone else" to join with the code your employer gives you.</p></section></main>;
+  if (!userId) return <main className="shop-page shop-landing">
+    <Run18UpdateNotice />
+    <TallybookWelcome variant="shop" />
+  </main>;
 
   return <main className="shop-page">
     <Run18UpdateNotice />
