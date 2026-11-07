@@ -53,7 +53,7 @@ it('sends someone who does not own a business to account setup', async () => {
 
 it('sends a signed-out visitor to the sign-in page rather than showing it inline', () => {
   mock.status = 'signed-out'; visit();
-  expect(screen.getByText('Redirected to /account')).toBeTruthy();
+  expect(screen.getByText('Redirected to /welcome')).toBeTruthy();
 });
 
 it('lets the verified owner of this browser return offline', async () => {

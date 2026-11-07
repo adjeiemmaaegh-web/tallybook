@@ -31,23 +31,23 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-type ShopCache = { businesses: Business[]; overviews: Record<string, ShopOverview> };
+import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
 const emptyCache = (): ShopCache => ({ businesses: [], overviews: {} });
 /** Cached business and shop data is sealed (AES-GCM, device key); plaintext localStorage is only read once to migrate. */
 async function readCache(userId: string): Promise<ShopCache> {
   const sealed = await readSealedJson<ShopCache>(CACHE + userId);
-  if (sealed) return sealed;
+  if (sealed) return safeCache(sealed);
   try {
     const legacy = localStorage.getItem(CACHE + userId);
     if (!legacy) return emptyCache();
-    const parsed = (JSON.parse(legacy) as ShopCache | null) ?? emptyCache();
+    const parsed = safeCache(JSON.parse(legacy));
     await writeSealedJson(CACHE + userId, parsed);
     if (await readSealedJson<ShopCache>(CACHE + userId)) localStorage.removeItem(CACHE + userId); // only after it can be read back
     return parsed;
   } catch { return emptyCache(); }
 }
 async function writeCache(userId: string, change: (cache: ShopCache) => void) {
-  try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, cache); } catch { /* not essential */ }
+  try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, safeCache(cache)); } catch { /* not essential */ }
 }
 async function clearShopCaches() {
   await removeSealedPrefix(CACHE);
