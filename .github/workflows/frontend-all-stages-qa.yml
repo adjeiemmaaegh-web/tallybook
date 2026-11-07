@@ -1,0 +1,46 @@
+name: Tallybook All-Stage Frontend Preview QA
+on:
+  push:
+    branches: [frontend-all-stages-*]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frontend-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.0 --activate
+      - name: Install exact dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Parse and render 28 prototype routes
+        run: |
+          node --check frontend-prototype/app.js
+          node frontend-prototype/qa_node.mjs
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Mobile and desktop interaction, screenshot QA
+        run: pnpm exec playwright test --config frontend-prototype/playwright.config.mjs
+      - name: Collect screenshots from Playwright output
+        if: always()
+        run: |
+          mkdir -p visual-evidence
+          find . -type f \( -name '*.png' -o -name '*.zip' \) \( -path '*test-results*' -o -path '*playwright-report*' \) -exec cp --parents {} visual-evidence/ \;
+          find visual-evidence -type f | head -60
+      - name: Save screenshots and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-frontend-visual-evidence
+          path: visual-evidence/
+          if-no-files-found: error
+          retention-days: 14
