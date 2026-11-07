@@ -1,4 +1,5 @@
 /** V19 Run 4: account controls use verified cloud session state only. */
+import "./TallybookAccount.css";
 import {useState} from 'react';
 import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
 import {Run18UpdateNotice} from '@/components/Run18UpdateNotice';
@@ -85,13 +86,26 @@ export default function GoogleSignInPage(){
     }catch(e){setError(e instanceof Error?e.message:'Cloud sign-out failed.');}
     finally{setBusy(false);}
   }
-  return <div className="home-workspace space-y-5 pb-6" style={{maxWidth:620,margin:'0 auto'}}>
-    {/* Account and shop screens sit outside AppShell; without this, visitors here never see a staged update. */}
-    <Run18UpdateNotice/>
-    <section className="op-row-card" style={{display:'block',padding:22}}>
+  return <div className="tb-account-page">
+    <aside className="tb-account-aside" aria-label="Welcome to Tallybook">
+      <Link className="tb-account-brand" href="/"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
+      <p className="tb-account-eyebrow">YOUR BUSINESS, BETTER ORGANIZED</p>
+      <h2>Your business.<em>Beautifully in hand.</em></h2>
+      <p className="tb-account-aside-copy">An easier place to manage sales, stock and your team. Securely verify your account before opening a shared shop.</p>
+      <div className="tb-account-guide" aria-label="Account onboarding steps">
+        <div><span>01</span><strong>Sign in or create an account</strong><small>Use Google or email. Online verification required.</small></div>
+        <div><span>02</span><strong>Choose your role</strong><small>Own a business, or join the shop you work for.</small></div>
+        <div><span>03</span><strong>Open your shop</strong><small>Owners configure their business. Staff use an invitation.</small></div>
+      </div>
+      <p className="tb-account-aside-note">Already verified as an owner? <Link href="/">Open your device ledger</Link>. Access stays protected by your account and local staff permissions.</p>
+    </aside>
+    <div className="tb-account-form-area">
+      {/* Account and shop screens sit outside AppShell; staged updates still show here. */}
+      <Run18UpdateNotice/>
+      <section className="op-row-card tb-account-form">
       <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
-        {state.status==='signed-in' ? "Your business" : "Tallybook account"}</h1>
+        {state.status==='signed-in' ? "Your business" : "Welcome to Tallybook"}</h1>
 
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
@@ -136,7 +150,8 @@ export default function GoogleSignInPage(){
       </div>:null}
       {message?<p role="status">{message}</p>:null}
       {error?<p role="alert">{error}</p>:null}
-    </section>
+      </section>
+    </div>
   </div>;
 }
 
