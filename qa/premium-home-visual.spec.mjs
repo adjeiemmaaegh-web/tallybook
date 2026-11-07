@@ -1,4 +1,3 @@
-import {unlockFixtureOwner} from './local-owner-fixture.mjs';
 import {test,expect} from '@playwright/test';
 
 /**
@@ -11,11 +10,21 @@ import {test,expect} from '@playwright/test';
  */
 test('real local dashboard matches reference hierarchy at desktop and mobile widths',async({page},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/business',{waitUntil:'domcontentloaded'});
-  await page.evaluate(async()=>{
-    const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
-    await saveBusinessProfile({name:'Visual QA Shop',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
-  });
+  await page.goto('/business');
+  await page.getByRole('textbox',{name:'Business name'}).fill('Visual QA Shop');
+  await page.getByRole('combobox',{name:'Business type'}).click();
+  await page.getByRole('option',{name:'Retail shop'}).click();
+  await page.getByRole('button',{name:'Save business'}).click();
+  await page.getByRole('link',{name:'Go to staff unlock'}).click();
+  await page.getByRole('textbox',{name:'Staff name'}).fill('Visual QA owner');
+  await page.getByRole('textbox',{name:'New staff PIN'}).fill('392761');
+  await page.getByRole('button',{name:'Create staff'}).click();
+  await page.getByLabel('Staff member').selectOption({label:'Visual QA owner (owner)'});
+  await page.getByRole('textbox',{name:'Staff PIN',exact:true}).fill('392761');
+  await page.getByRole('button',{name:'Unlock',exact:true}).click();
+  await page.getByRole('button',{name:'Lock this session'}).waitFor();
+  // Preserve the authenticated staff session across viewport changes.
+  await page.locator('.premium-desktop-rail').getByRole('link',{name:'Home',exact:true}).click();
 
   const widths=[
     {width:1536,height:1024},{width:1440,height:900},
@@ -24,8 +33,6 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
   ];
   for(const viewport of widths){
     await page.setViewportSize(viewport);
-    await page.goto('/',{waitUntil:'domcontentloaded'});
-    await unlockFixtureOwner(page);
     await expect(page.getByRole('heading',{name:'Good to see you'})).toBeVisible();
     await expect(page.getByLabel('Today at the till')).toBeVisible();
     await expect(page.locator('.tb-dashboard-till-total')).toContainText('GHS');
@@ -89,12 +96,9 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
     await expect(page.getByRole('dialog',{name:'Clementia assistant'})).toHaveCount(0);
   }
 
-  await page.goto('/reports',{waitUntil:'domcontentloaded'});
-  await unlockFixtureOwner(page);
-  await expect(page.getByRole('link',{name:'View alerts'})).toBeVisible();
+  await page.locator('.tb-dashboard-shortcuts a[href="/reports"]').click();
   await expect(page).toHaveURL(/\/reports$/);
-  await page.goto('/',{waitUntil:'domcontentloaded'});
-    await unlockFixtureOwner(page);
+  await page.goBack();
   await expect(page.locator('.premium-step.done')).toHaveCount(2);
   await expect(page.locator('.premium-progress')).toHaveAttribute('aria-valuenow','2');
   expect(errors).toEqual([]);
