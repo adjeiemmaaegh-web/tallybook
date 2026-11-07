@@ -23,7 +23,7 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
         <h1 id="tb-welcome-title">Your business.<em>Beautifully in hand.</em></h1>
         <p className="tb-welcome-description">
           Keep sales, products and customers organized, even when your connection is unreliable.
-          {shop ? " Create an account to run a shared shop with your team." : " Start a workspace on this device, or sign in to run a shared shop with your team."}
+          {shop ? " Create an account to run a shared shop with your team." : " Your verified owner account can open a private workspace on this device, or you can run a shared shop with your team."}
         </p>
         <div className="tb-welcome-ctas">
           <Link href={shop ? "/signin" : "/business"} className="tb-welcome-cta-primary">
@@ -40,7 +40,7 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
         </div>
         <p className="tb-welcome-disclosure">{shop
           ? "Account creation and cloud access require an internet connection. Offline shared-shop sales have separate syncing rules."
-          : "This device's ledger works without a cloud sign-in. Local records stay in this browser and are not automatically uploaded to your shared shop."}</p>
+          : "Your owner account must be verified before first opening this device's ledger. After verification, the device ledger works offline. Local records stay in this browser and are not automatically uploaded."}</p>
       </div>
       <div className="tb-welcome-visual" aria-label="Illustrative preview of Tallybook's business dashboard; not real financial data">
         <div className="tb-welcome-orbit tb-welcome-orbit-one" aria-hidden="true"/>
