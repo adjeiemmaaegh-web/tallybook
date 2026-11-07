@@ -281,6 +281,8 @@ describe("voice input — offline on this phone (on-device recognition)", () => 
   it("says it works offline once the language is on the phone, and uses it with no connection", async () => {
     const { available } = withOnDevice("available");
     render(<AssistantPage />);
+    expect(available).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     expect(await screen.findByText(/Works offline on this phone too/)).toBeInTheDocument();
     expect(available).toHaveBeenCalledWith({ langs: [expect.any(String)], processLocally: true });
     Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
@@ -292,6 +294,7 @@ describe("voice input — offline on this phone (on-device recognition)", () => 
   it("online, keeps using the browser's more accurate speech service", async () => {
     withOnDevice("available");
     render(<AssistantPage />);
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     await screen.findByText(/Works offline on this phone too/);
     fireEvent.click(mic());
     expect(current().processLocally).toBeUndefined();
@@ -300,6 +303,7 @@ describe("voice input — offline on this phone (on-device recognition)", () => 
   it("offers the download only on the owner's tap, then works offline", async () => {
     const { install } = withOnDevice("downloadable");
     render(<AssistantPage />);
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     const download = await screen.findByRole("button", { name: "Download voice for offline use" });
     expect(install).not.toHaveBeenCalled();
     fireEvent.click(download);
@@ -311,6 +315,7 @@ describe("voice input — offline on this phone (on-device recognition)", () => 
   it("says so when the download fails, and keeps the button", async () => {
     withOnDevice("downloadable", "downloadable");
     render(<AssistantPage />);
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     fireEvent.click(await screen.findByRole("button", { name: "Download voice for offline use" }));
     expect(await screen.findByText(/didn't download/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download voice for offline use" })).toBeInTheDocument();
@@ -319,12 +324,14 @@ describe("voice input — offline on this phone (on-device recognition)", () => 
   it("shows no download where the language can't run on the phone, or the check fails", async () => {
     const { available } = withOnDevice("unavailable");
     const { unmount } = render(<AssistantPage />);
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     await waitFor(() => expect(available).toHaveBeenCalled());
     expect(screen.queryByRole("button", { name: /offline use/ })).toBeNull();
     expect(screen.getByText(/offline, use the microphone on your phone's keyboard/)).toBeInTheDocument();
     unmount();
     available.mockRejectedValue(new Error("blocked by policy"));
     render(<AssistantPage />);
+    fireEvent.click(screen.getByRole("button",{name:"Check offline voice support"}));
     await waitFor(() => expect(available).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole("button", { name: /offline use/ })).toBeNull();
   });
