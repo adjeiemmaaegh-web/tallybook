@@ -60,7 +60,7 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
         <Link href="/inventory" className="tb-dashboard-pill"><Package size={16} aria-hidden="true"/> Add product</Link>
       </nav>
       <section className="tb-dashboard-till" aria-labelledby="tb-till-heading">
-        <span id="tb-till-heading" className="tb-dashboard-till-kicker">TODAY AT THE TILL</span>
+        <span id="tb-till-heading" className="tb-dashboard-till-kicker">Today at the till</span>
         <strong className="tb-dashboard-till-total">{summary ? formatMinorAmount(summary.todaySalesMinor,currency) : "—"}</strong>
         <p>{summary ? `${summary.todayTransactions} recorded ${summary.todayTransactions===1?"sale":"sales"} · Collected ${formatMinorAmount(summary.todayMoneyReceivedMinor,currency)}` : error ? "Today's totals are unavailable. Your saved records have not changed." : "Loading your saved sales…"}</p>
         <div className="tb-dashboard-till-cells">
