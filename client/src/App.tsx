@@ -45,6 +45,7 @@ const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import "./styles/ReferenceVisualSystem.css";
 
 function Router() {
   return (
