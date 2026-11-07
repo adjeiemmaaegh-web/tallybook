@@ -1,3 +1,7 @@
+# Historical V19 source handover
+
+For the integration candidate, use the [current engineering and verification record](README.md). The dated entries below apply to earlier revisions.
+
 # Tallybook V19 — Master Development Source
 
 This is a **single consolidated development archive**, not a finished release.

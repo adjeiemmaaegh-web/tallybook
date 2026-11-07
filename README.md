@@ -1,45 +1,40 @@
-# Tallybook — Business Ledger
+# Tallybook
 
-An offline-first business ledger built with React, Vite, TypeScript, Dexie/IndexedDB, and a PWA service worker.
+Tallybook has two ledgers. The device workspace stores its own sales, stock, purchases, customer balances and reports in IndexedDB. The shared shop records team operations through session-checked PostgreSQL functions. A local backup, a shared-shop invitation and an opening-stock import each serve different purposes.
 
-## Development
+## Run locally
 
-```bash
-pnpm install
+Use Node 24.19.0 and pnpm 10.34.0 (pinned in `.node-version` and `package.json`).
+
+```sh
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The app runs locally at `http://localhost:3000`.
+Open the local Vite address. For a standalone device leave both Supabase settings empty and both account-enforcement flags false. Open **Set up business**, save the business, follow **Go to staff unlock**, create the first owner and unlock with the local PIN. The device must be under the owner's control during first enrollment. Unlock again after a full reload. Protect the browser profile and keep verified backups.
 
-## Production build
+For shared-shop use, configure the public Supabase URL and publishable key for the intended project. Sign in at `/signin`, create or join a business and open `/shop`. Cloud-configured device routes require a verified owner. Signed-out device requests route to `/welcome`. Existing device bindings survive configuration changes. See [.env.example](.env.example).
 
-```bash
+## Build and verify
+
+```sh
+pnpm check
 pnpm build
+pnpm test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000
+node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs
+pnpm exec playwright install --with-deps chromium
+pnpm exec playwright test
+pnpm exec playwright test -c playwright.auth.config.mjs
+pnpm exec playwright test -c playwright.offline.config.mjs
+pnpm exec playwright test -c playwright.visual.config.mjs
+pnpm exec playwright test -c qa/reference-integrated-ui.config.mjs
+pnpm audit --audit-level moderate
 ```
 
-The browser application is generated in `dist/public`.
+The build creates the PWA in `dist/public` and the Node server bundle in `dist/index.js`. Browser offline tests serve the production build. Database tests use disposable embedded PostgreSQL with simulated Supabase Auth tables. Real-device and hosted Auth acceptance require separate evidence.
 
-## Vercel deployment
+## Review material
 
-This repository is configured for Vercel as a Vite static application:
-
-- Build command: `pnpm build`
-- Output directory: `dist/public`
-- SPA routing: configured in `vercel.json`
-- PWA: enabled through `vite-plugin-pwa`
-
-Connect the GitHub repository to Vercel and deploy. Future pushes to the connected branch can trigger new deployments.
-
-## Data model
-
-Business records are currently stored locally in the browser using IndexedDB. Hosting the frontend on Vercel does **not** automatically create a shared cloud database or synchronize data between devices.
-
-Use the application's Backup/Restore feature to move or protect records while the app remains local-first.
-
-## Secrets
-
-No API keys or provider credentials are required by the current standalone build. Do not commit `.env` files or real credentials. Use `.env.example` as the starting point when a future feature requires environment variables.
-
-## Commercial deployment note
-
-This repository is intended to become a commercial product. Vercel's current Hobby plan is restricted to personal/non-commercial use, so use Hobby only while the deployment genuinely remains personal/non-commercial testing. Move the deployment to an appropriate paid plan before using it for commercial purposes.
+- [Architecture, migration compatibility and operating boundaries](docs/release/RC_INTEGRATION.md)
+- [Branch and PR reconciliation](docs/release/RC_RECONCILIATION.md)
+- [Verification evidence and remaining gates](docs/release/RC_QA.md)
