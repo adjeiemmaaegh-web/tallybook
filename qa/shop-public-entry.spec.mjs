@@ -10,7 +10,7 @@ for (const viewport of [
   { width: 390, height: 844, label: 'mobile' },
   { width: 1280, height: 900, label: 'desktop' },
 ]) {
-  test(`signed-out shared shop welcomes a new visitor on ${viewport.label}`, async ({ page }, testInfo) => {
+  test('signed-out shared shop welcomes a new visitor on ' + viewport.label, async ({ page }, testInfo) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -33,14 +33,9 @@ for (const viewport of [
       .toBeLessThanOrEqual(bounds.viewportWidth + 1);
     expect(errors, 'The signed-out welcome must not raise uncaught client exceptions').toEqual([]);
 
-    await page.screenshot({ path: testInfo.outputPath(`shop-entry-${viewport.label}.png`), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath('shop-entry-' + viewport.label + '.png'), fullPage: true });
     await signIn.click();
-    await expect(page).toHaveURL(new RegExp('/signin$'));
-    await expect(page.getByRole('heading', { name: 'Tallybook account' })).toBeVisible();
-    expect(errors, 'Navigation to sign-in must not raise client exceptions').toEqual([]);
-  });
-}
-));
+    await expect(page).toHaveURL(/\/signin$/);
     await expect(page.getByRole('heading', { name: 'Tallybook account' })).toBeVisible();
     expect(errors, 'Navigation to sign-in must not raise client exceptions').toEqual([]);
   });
