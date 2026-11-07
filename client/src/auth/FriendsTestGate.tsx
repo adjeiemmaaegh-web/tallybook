@@ -117,14 +117,17 @@ export function FriendsTestGate({children}:{children:ReactNode}){
 
   if(state.status==='checking'||state.status==='disabled'||(access?.status==='checking'))
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
-  if(state.status==='signed-out')return <Redirect to='/account' replace/>;
+  if(state.status==='signed-out')return <Redirect to='/welcome' replace/>;
   if(state.status==='offline'&&access?.status==='allow')return <>{children}</>;
   if(state.status==='offline')return <EntryCard icon={<WifiOff/>} title="Connect once to open Tallybook">
     <p>The first time you open this device's ledger, Tallybook checks your account online. After that it opens offline on this device.</p>
   </EntryCard>;
   if(state.status==='error')return <EntryCard icon={<ShieldCheck/>} title="We couldn't check your account">
     <p>Check your connection, then try again. Nothing on this device was changed.</p>
-    <div className="tb-entry-actions"><button type="button" className="primary-action" onClick={()=>window.location.reload()}>Try again</button></div>
+    <div className="tb-entry-actions">
+      <button type="button" className="primary-action" onClick={()=>window.location.reload()}>Try again</button>
+      <Link href="/welcome" className="secondary-action">View Tallybook welcome</Link>
+    </div>
   </EntryCard>;
   if(!access||access.userId!==state.userId)
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
