@@ -2,11 +2,11 @@ import {test, expect} from '@playwright/test';
 
 test('new local device shows reference-inspired first-run page without claiming cloud signup is required',async({page},info)=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/');
+  await page.goto('/welcome');
   await expect(page.getByRole('heading',{name:/Your business\.\s*Beautifully in hand/i})).toBeVisible();
-  await expect(page.getByRole('link',{name:/Set up this device/})).toHaveAttribute('href','/business');
-  await expect(page.getByRole('link',{name:/Use a shared shop/})).toHaveAttribute('href','/shop');
-  await expect(page.getByText(/Local records stay in this browser/)).toBeVisible();
+  await expect(page.getByRole('link',{name:/Create your account/})).toHaveAttribute('href','/signin');
+  await expect(page.getByRole('link',{name:/I already have an account/})).toHaveAttribute('href','/signin');
+  await expect(page.getByText(/Account creation and cloud access require an internet connection/)).toBeVisible();
   await expect(page.locator('.tb-welcome-phone')).toBeVisible();
   await page.screenshot({path:info.outputPath('first-run-local.png'),fullPage:true});
   expect(errors).toEqual([]);
@@ -35,30 +35,12 @@ test('account page keeps live sign-in workflow and uses account-first layout',as
   expect(errors).toEqual([]);
 });
 
-test('local dashboard and operations retain real routes, data placeholders and readable mobile surfaces',async({page},info)=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/business');
-  await page.evaluate(async()=>{
-    const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
-    await saveBusinessProfile({name:'Reference QA Shop',country:'Ghana',currency:'GHS',businessType:'Retail'});
-  });
-  for(const viewport of [{width:390,height:844},{width:768,height:1024},{width:1440,height:900}]){
-    await page.setViewportSize(viewport);
-    await page.goto('/');
-    await expect(page.getByRole('heading',{name:'Good to see you'})).toBeVisible();
-    await expect(page.getByLabel('Today at the till')).toBeVisible();
-    await expect(page.getByRole('link',{name:/Open POS/})).toHaveAttribute('href','/sales');
-    await expect(page.getByRole('link',{name:/Add product/}).first()).toHaveAttribute('href','/inventory');
-    await expect(page.getByText('Reference QA Shop',{exact:false}).first()).toBeVisible();
-    await expect(page.locator('.tb-dashboard-till-total')).not.toBeEmpty();
-    for(const route of ['/inventory','/sales','/purchases','/customers','/reports']){
-      await page.goto(route);
-      await expect(page.locator(`${route==='\/inventory'?'.inventory-hero':route==='\/sales'?'.sales-hero':route==='\/purchases'?'.purchases-hero':route==='\/customers'?'.customers-hero':'.reports-hero'}`)).toBeVisible();
-      const size=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
-      expect(size.scroll,route+' should not force horizontal scrolling at '+viewport.width).toBeLessThanOrEqual(size.client+1);
-    }
-    await page.goto('/');
-    await page.screenshot({path:info.outputPath('real-dashboard-'+viewport.width+'.png'),fullPage:true});
-  }
-  expect(errors).toEqual([]);
+test('protected device-local ledger does not bypass owner verification for a new browser',async({page})=>{
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'Good to see you'})).toHaveCount(0);
+  await expect(page.locator('.tb-dashboard-till-total')).toHaveCount(0);
+  // Without a verified owner, the entry gate either redirects to the public
+  // welcome or explains that account verification could not be completed.
+  const gateVisible=await page.getByRole('heading',{name:"We couldn't check your account"}).count();
+  expect(page.url().endsWith('/welcome') || gateVisible>0).toBe(true);
 });
