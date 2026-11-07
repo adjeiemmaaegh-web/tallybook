@@ -9,6 +9,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { FriendsTestGate, allowOfflineReturn } from './FriendsTestGate';
 
 const mock = vi.hoisted(() => ({ list: vi.fn(), status: 'signed-in' as string, profiles: [] as Array<{ name: string }>, cachedUser: null as string | null }));
+vi.mock('./verifyDeviceOwner', () => ({verifyDeviceOwner: async (pin:string) => pin === '392761'}));
 vi.mock('../cloud/cloudMembership', () => ({ listVerifiedCloudBusinesses: mock.list }));
 vi.mock('./useRun4CloudSession', () => ({ useRun4CloudSession: () => ({ state: { status: mock.status, userId: mock.status === 'signed-in' ? 'owner-1' : null } }) }));
 vi.mock('@/db/TallybookDB', () => ({ db: { businessProfiles: { count: async () => mock.profiles.length, toArray: async () => mock.profiles } } }));
@@ -29,7 +30,12 @@ it('opens a fresh browser for the verified owner and binds it', async () => {
 it('offers to open a ledger that was on this browser before sign-in, instead of a dead end', async () => {
   mock.list.mockResolvedValue(OWNER); mock.profiles = [{ name: 'Ama Local Shop' }]; visit();
   await screen.findByText('Use the ledger already on this device?');
-  expect(screen.getByText('Ama Local Shop')).toBeTruthy();
+  expect(screen.queryByText('Ama Local Shop')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Local owner PIN'), {target:{value:'000000'}});
+  fireEvent.click(screen.getByRole('button', {name:'Open it with my account'}));
+  await screen.findByText(/Could not verify the local owner/);
+  expect(localStorage.getItem('friendsTestVerifiedAuthUserId')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Local owner PIN'), {target:{value:'392761'}});
   expect(screen.queryByText('Device ledger')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Open it with my account' }));
   await screen.findByText('Device ledger');

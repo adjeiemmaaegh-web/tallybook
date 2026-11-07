@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { verifyDeviceOwner } from './verifyDeviceOwner';
 import { db } from '@/db/TallybookDB';
 import { useRun4CloudSession } from './useRun4CloudSession';
 import { Redirect, Link } from 'wouter';
@@ -36,11 +37,12 @@ export async function checkTesterBinding(userId:string, isCurrent:()=>boolean,
 }
 
 /** The owner explicitly takes over an unclaimed ledger already on this browser. The local staff PIN still guards it. */
-export async function claimExistingWorkspace(userId:string):Promise<boolean>{
+export async function claimExistingWorkspace(userId:string, pin:string, isCurrent:()=>boolean):Promise<boolean>{
   if(!navigator.locks)return false;
   return navigator.locks.request('tallybook.tester-binding.v1',{mode:'exclusive'},async()=>{
     const bound=read(BINDING_KEY);
-    if(bound&&bound!==userId)return false;
+    if (!isCurrent() || (bound && bound !== userId)) return false;
+    if (!await verifyDeviceOwner(pin) || !isCurrent()) return false;
     window.localStorage.setItem(BINDING_KEY,userId);
     return true;
   });
@@ -76,7 +78,14 @@ async function signOutHere(){
 export function FriendsTestGate({children}:{children:ReactNode}){
   const {state}=useRun4CloudSession(true);
   const [access,setAccess]=useState<Access|null>(null);
-  const [names,setNames]=useState<string[]>([]);
+  const [pin,setPin]=useState('');
+  const [claimError,setClaimError]=useState('');
+  const identity = useRef<string|null>(null);
+  useEffect(() => {
+    identity.current = state.status === 'signed-in' ? state.userId : null;
+    setPin(''); setClaimError('');
+    return () => { identity.current = null; };
+  }, [state.status, state.userId]);
   const [claiming,setClaiming]=useState(false);
   useEffect(()=>{
     let active=true;
@@ -99,9 +108,7 @@ export function FriendsTestGate({children}:{children:ReactNode}){
       }
       const bound=read(BINDING_KEY);
       if(!bound&&(await db.businessProfiles.count())>0){
-        const local=await db.businessProfiles.toArray();
         if(!active)return;
-        setNames(local.map(profile=>profile.name).filter(Boolean));
         setAccess({userId,status:'claim'});
         return;
       }
@@ -133,15 +140,22 @@ export function FriendsTestGate({children}:{children:ReactNode}){
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
   if(access.status==='setup')return <Redirect to='/account' replace/>;
   if(access.status==='claim')return <EntryCard icon={<Store/>} title="Use the ledger already on this device?">
-    <p>This browser already holds {names.length?<strong>{names.join(', ')}</strong>:'a Tallybook business'} from before you signed in.
-      Open it with your account to keep its sales, stock and customers. Your staff PIN still protects it.</p>
+    <p>Enter the local owner's PIN to link a single-company ledger to this account. Multi-company devices and ledgers without an owner PIN require separate recovery.</p>
+    <label>Local owner PIN <input type="password" inputMode="numeric" value={pin} onChange={e=>setPin(e.target.value)} /></label>
+    {claimError && <p role="status">{claimError}</p>}
     <div className="tb-entry-actions">
-      <button type="button" className="primary-action" disabled={claiming} onClick={()=>{
-        setClaiming(true);
-        void claimExistingWorkspace(access.userId!).then(ok=>{
-          if(ok){try{window.localStorage.setItem(VERIFIED_OWNER_KEY,access.userId!);}catch{/* offline return stays off */}}
-          setAccess({userId:access.userId,status:ok?'allow':'deny'});
-        }).finally(()=>setClaiming(false));
+      <button type="button" className="primary-action" disabled={claiming || !pin} onClick={async()=>{
+        const userId = access.userId!;
+        setClaiming(true); setClaimError('');
+        try {
+          if (!await claimExistingWorkspace(userId, pin, () => identity.current === userId))
+            throw new Error('Local owner verification failed');
+          if (identity.current === userId) {
+            window.localStorage.setItem(VERIFIED_OWNER_KEY,userId);
+            setAccess({userId,status:'allow'});
+          }
+        } catch { if (identity.current === userId) setClaimError('Could not verify the local owner. The ledger remains locked.'); }
+        finally { setPin(''); setClaiming(false); }
       }}>{claiming?'Opening…':'Open it with my account'}</button>
       <Link href="/shop" className="secondary-action">Open shared shop instead</Link>
     </div>
