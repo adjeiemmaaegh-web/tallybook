@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  testDir: './qa', testMatch: 'premium-home-visual.spec.mjs', workers: 1,
+  testDir: './qa', testMatch: ['premium-home-visual.spec.mjs', 'shop-public-entry.spec.mjs'], workers: 1,
   timeout: 120000, expect: { timeout: 20000 },
   reporter: [['list']],
   outputDir: 'artifacts/ui-visual',
