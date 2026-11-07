@@ -21,6 +21,7 @@ async function setup() {
   await db.exec(sql('supabase/migrations/20261105070036_shared_shop_ledger.sql'));
   await db.exec(sql('supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql'));
   await db.exec(sql('supabase/migrations/20261105120712_shared_shop_full_till.sql'));
+  await db.exec(sql('supabase/migrations/20261106120000_shared_shop_return_policies.sql'));
   const people = {};
   for (const name of ['owner', 'attendant', 'rival']) {
     people[name] = {id: randomUUID(), session: randomUUID(), email: `${name}@demo.tallybook.test`};
@@ -45,6 +46,8 @@ async function setup() {
 async function sellingShop(t) {
   const store = randomUUID(), eggs = randomUUID(), bread = randomUUID();
   await t.owner('setupLedger', {currency: 'GHS'});
+  await t.owner('setRefundPolicy', {enabled: true, allowFullReversal: true, allowPartialReturn: true,
+    maxAgeDays: 30, reason: 'Cashier return policy for testing'});
   await t.owner('saveStore', {storeId: store, name: 'Madina'});
   await t.owner('saveProduct', {productId: eggs, name: 'Crate of eggs', unitPriceMinor: 4500});
   await t.owner('saveProduct', {productId: bread, name: 'Bread', unitPriceMinor: 1200});
@@ -203,6 +206,64 @@ test('opening import brings a phone catalogue and stock in once, atomically, wit
     const reasons = await t.admin(`select reason, count(*)::int n from public.shop_stock_movements
       where business_id = '${t.company}' group by 1 order by 1`);
     assert.deepEqual(reasons, [{reason: 'opening', n: 2}, {reason: 'restock', n: 1}, {reason: 'sale', n: 1}]);
+  } finally {
+    await t.db.close();
+  }
+});
+
+
+test('Stage B cloud return policy: default deny, owner revision, nonretroactivity, replay and isolation', async () => {
+  const t = await setup();
+  try {
+    const store = randomUUID(), eggs = randomUUID();
+    await t.owner('setupLedger', {currency:'GHS'});
+    await t.owner('saveStore', {storeId:store,name:'Market'});
+    await t.owner('saveProduct', {productId:eggs,name:'Eggs',unitPriceMinor:500});
+    await t.owner('adjustStock',{storeId:store,productId:eggs,delta:12,operationId:randomUUID()});
+    const before = await t.owner('overview',{});
+    assert.deepEqual(before.refundPolicy, {revision:0,enabled:false,allowFullReversal:false,
+      allowPartialReturn:false,maxAgeDays:30});
+    const first = await t.owner('recordSale',{storeId:store,submissionKey:key(),paymentMethod:'cash',
+      amountTenderedMinor:1000,lines:[{productId:eggs,quantity:2}]});
+    assert.equal(first.returnPolicyRevision,0,'older sales stay without sale-time authorization');
+    const stale = {saleId:first.saleId,refundKey:key(),reason:'Old receipt'};
+    await assert.rejects(t.owner('refundSale',stale),/does not authorize refunds/);
+    await assert.rejects(t.attendant('setRefundPolicy', {enabled:true,allowFullReversal:true,
+      allowPartialReturn:true,maxAgeDays:30,reason:'Not the owner'}),/Only the business owner/);
+    await assert.rejects(t.owner('setRefundPolicy',{enabled:true,allowFullReversal:false,
+      allowPartialReturn:false,maxAgeDays:30,reason:'Invalid choices'}),/consistent refund settings/);
+    const enabled = await t.owner('setRefundPolicy',{enabled:true,allowFullReversal:true,
+      allowPartialReturn:true,maxAgeDays:10,reason:'Owner authorizes returns'});
+    assert.equal(enabled.current.revision,1);
+    assert.equal(enabled.history.length,1);
+    await assert.rejects(t.owner('refundSale',stale),/does not authorize refunds/);
+
+    const second = await t.owner('recordSale',{storeId:store,submissionKey:key(),paymentMethod:'cash',
+      amountTenderedMinor:1000,lines:[{productId:eggs,quantity:2}]});
+    assert.equal(second.returnPolicyRevision,1);
+    const partial = {saleId:second.saleId,refundKey:key(),reason:'Broken egg',
+      lines:[{lineNo:1,quantity:1}],returnToStock:false};
+    const credited = await t.owner('refundSale',partial);
+    assert.equal(credited.refundedMinor,500);
+    assert.equal(credited.refunds[0].policySaleRevision,1);
+    assert.equal(credited.refunds[0].policyDecisionRevision,1);
+    assert.equal(credited.refunds[0].policyKind,'partial');
+    const disabled = await t.owner('setRefundPolicy',{enabled:false,allowFullReversal:false,
+      allowPartialReturn:false,maxAgeDays:10,reason:'Owner pauses returns'});
+    assert.equal(disabled.current.revision,2);
+    await assert.rejects(t.owner('refundSale',{saleId:second.saleId,refundKey:key(),
+      reason:'Return balance'}),/does not authorize refunds/);
+    assert.equal((await t.owner('refundSale',partial)).replayed,true,
+      'same-key retry of previously accepted refund stays idempotent after disabling');
+
+    const third = await t.owner('recordSale',{storeId:store,submissionKey:key(),paymentMethod:'cash',
+      amountTenderedMinor:500,lines:[{productId:eggs,quantity:1}]});
+    assert.equal(third.returnPolicyRevision,2);
+    await assert.rejects(t.owner('refundSale',{saleId:third.saleId,refundKey:key(),reason:'No returns'}),/does not authorize refunds/);
+    assert.equal((await t.owner('getRefundPolicyHistory',{})).history.length,2);
+    await assert.rejects(t.rival('getRefundPolicyHistory',{}),/access denied/i);
+    await assert.rejects(t.admin("delete from public.shop_return_policy_revisions"),/append-only/);
+    await assert.rejects(t.db.query("select * from public.shop_return_policy_revisions"),/permission denied/);
   } finally {
     await t.db.close();
   }

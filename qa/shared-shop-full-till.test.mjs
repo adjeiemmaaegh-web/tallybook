@@ -23,6 +23,7 @@ async function setup() {
   await db.exec(sql('supabase/migrations/20261105070036_shared_shop_ledger.sql'));
   await db.exec(sql('supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql'));
   await db.exec(sql('supabase/migrations/20261105120712_shared_shop_full_till.sql'));
+  await db.exec(sql('supabase/migrations/20261106120000_shared_shop_return_policies.sql'));
   const people = {};
   for (const name of ['owner', 'attendant', 'rival']) {
     people[name] = {id: randomUUID(), session: randomUUID()};
@@ -44,6 +45,8 @@ async function setup() {
   const t = {db, people, company, rivalCompany, owner: as('owner'), attendant: as('attendant'), rival: as('rival'), admin};
   t.store = randomUUID(); t.eggs = randomUUID(); t.bread = randomUUID(); t.soap = randomUUID();
   await t.owner('setupLedger', {currency: 'GHS'});
+  await t.owner('setRefundPolicy', {enabled: true, allowFullReversal: true, allowPartialReturn: true,
+    maxAgeDays: 30, reason: 'Cashier return policy for testing'});
   await t.owner('saveStore', {storeId: t.store, name: 'Madina'});
   await t.owner('saveProduct', {productId: t.eggs, name: 'Crate of eggs', unitPriceMinor: 4500});
   await t.owner('saveProduct', {productId: t.bread, name: 'Bread', unitPriceMinor: 1200});

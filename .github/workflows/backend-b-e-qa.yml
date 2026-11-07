@@ -1,0 +1,44 @@
+name: Backend Stages B–E PostgreSQL QA
+on:
+  push:
+    branches: [backend-b-e-*]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend-postgres:
+    name: Backend migration and financial invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enforce backend-only source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0314873bf0f7e30ad8612b51be77f0a5107612d0
+          while IFS= read -r file; do
+            case "$file" in
+              supabase/migrations/*.sql|qa/*.mjs|docs/backend-stages-b-e/*.md|.github/workflows/backend-b-e-qa.yml) ;;
+              *) echo "Unexpected non-backend file in this branch: $file"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Pin pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.0 --activate
+      - name: Install exact dependency versions
+        run: pnpm install --frozen-lockfile
+      - name: Verify migrations and Stage B–E backend behavior
+        run: node --test qa/backend-stage-b-e.test.mjs qa/shared-shop-refunds-import.test.mjs qa/shared-shop-full-till.test.mjs
+      - name: Verify preexisting shop sale invariants
+        run: node --test qa/shared-shop-ledger.test.mjs
+      - name: Ensure repository types still check
+        run: pnpm exec tsc --noEmit
