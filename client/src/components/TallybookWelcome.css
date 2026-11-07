@@ -1,0 +1,82 @@
+/* Reference-aligned first-run welcome — functional links to existing Tallybook routes.
+   Local illustration uses CSS, no remote images/fonts and no fictional transactions. */
+.tb-welcome{--tb-forest:#073f37;--tb-deep:#062f2a;--tb-teal:#0a756d;--tb-mint:#e6ffea;isolation:isolate;position:relative;overflow:hidden;max-width:1280px;margin:0 auto;border-radius:24px;background:radial-gradient(ellipse at 68% 65%,#147f6b 0%,transparent 46%),linear-gradient(145deg,#084e43 0%,#0b5c50 45%,#063e38 100%);color:#f5fff9;box-shadow:0 18px 48px rgba(3,61,53,.13)}
+.tb-welcome:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(#b6f4d915 1px,transparent 1px),linear-gradient(90deg,#b6f4d915 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to bottom,transparent,#000 45%,transparent)}
+.tb-welcome-top{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:24px clamp(20px,4vw,56px);background:rgba(0,34,31,.16);border-bottom:1px solid rgba(221,255,236,.13)}
+.tb-welcome-brand{display:flex;gap:11px;align-items:center;min-width:0}
+.tb-welcome-brand-symbol{display:grid;place-items:center;width:41px;height:41px;border:1px solid rgba(214,255,234,.38);background:rgba(227,255,237,.13);border-radius:13px}
+.tb-welcome-brand strong{display:block;font-size:22px;letter-spacing:-.045em;line-height:1}
+.tb-welcome-brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:.2em;font-weight:800;color:#c4ead9}
+.tb-welcome-nav-link{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border:1px solid rgba(231,255,237,.36);border-radius:999px;text-decoration:none;color:#e7fff2;font-weight:750;font-size:13px}
+.tb-welcome-nav-link:hover{background:rgba(255,255,255,.14)}
+.tb-welcome-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);align-items:center;gap:2%;padding:68px clamp(20px,4vw,56px) 40px;min-height:570px}
+.tb-welcome-copy{position:relative;z-index:2;max-width:600px}
+.tb-welcome-kicker{display:flex;align-items:center;gap:9px;color:#b6ebd1;font-weight:850;font-size:10px;letter-spacing:.18em}
+.tb-welcome-kicker span{width:8px;height:8px;border-radius:50%;background:#84f9a9;box-shadow:0 0 0 5px #84f9a929}
+.tb-welcome h1{margin:27px 0 16px;font-size:clamp(44px,5.1vw,78px);letter-spacing:-.055em;line-height:1.02;font-weight:850;color:#fff;max-width:720px;text-wrap:balance}
+.tb-welcome h1 em{display:block;margin:6px 0 0;font-size:.86em;line-height:1.12;font-weight:400;letter-spacing:-.045em;font-family:Georgia,"Times New Roman",serif;color:#d4f5d4}
+.tb-welcome-description{max-width:505px;font-size:clamp(15px,1.4vw,17px);line-height:1.7;color:#c4e6dc}
+.tb-welcome-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:29px}
+.tb-welcome-cta-primary,.tb-welcome-cta-secondary{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:14px 23px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:800}
+.tb-welcome-cta-primary{background:#e6ffea;color:#075648;box-shadow:0 8px 25px rgba(1,39,32,.14)}
+.tb-welcome-cta-secondary{border:1px solid rgba(236,255,241,.44);color:#f6fff8;background:rgba(244,255,246,.05)}
+.tb-welcome-cta-primary:hover{background:#fff}
+.tb-welcome-cta-secondary:hover{background:rgba(244,255,246,.16)}
+.tb-welcome-assurances{display:flex;flex-wrap:wrap;align-items:center;gap:14px 19px;margin-top:28px}
+.tb-welcome-assurances span{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#d2ede2}
+.tb-welcome-disclosure{max-width:520px;margin-top:18px;color:#b2d6cc;font-size:11px;line-height:1.55}
+.tb-welcome-visual{position:relative;display:grid;place-items:center;min-height:475px}
+.tb-welcome-orbit{position:absolute;width:420px;height:420px;border:1px solid #c9f0da21;border-radius:50%;z-index:-1}
+.tb-welcome-orbit-two{width:520px;height:520px}
+.tb-welcome-phone{position:relative;display:block;width:min(310px,88%);height:495px;border:7px solid #152827;border-radius:46px;background:#152827;box-shadow:0 26px 60px rgba(0,31,27,.48),0 0 0 2px #a8e7d44f;transform:rotate(-3deg)}
+.tb-welcome-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:92px;height:16px;background:#152827;border-radius:0 0 15px 15px;z-index:3}
+.tb-welcome-phone-screen{height:100%;overflow:hidden;padding:16px 13px;background:#f4f9f7;border-radius:38px;color:#18352e}
+.tb-welcome-phone-status{display:flex;justify-content:space-between;font-size:10px;font-weight:800}
+.tb-welcome-phone-heading{display:flex;align-items:center;justify-content:space-between;margin:20px 0 14px}
+.tb-welcome-phone-heading small,.tb-welcome-phone-heading strong{display:block}
+.tb-welcome-phone-heading small{font-size:10px;color:#719287}
+.tb-welcome-phone-heading strong{font-size:16px;letter-spacing:-.03em}
+.tb-welcome-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:#dff5e9;color:#086d5f;font-weight:850;font-size:12px}
+.tb-welcome-phone-till{position:relative;overflow:hidden;background:linear-gradient(145deg,#0b7664,#034d47);border-radius:18px;color:#fff;padding:18px 16px 24px}
+.tb-welcome-phone-till>span{display:block;color:#a6e3cb;letter-spacing:.17em;font-size:8px;font-weight:800}
+.tb-welcome-phone-till strong{display:block;margin-top:13px;font-size:23px;letter-spacing:-.06em}
+.tb-welcome-phone-till small{display:block;color:#c6eee1;font-size:9px}
+.tb-welcome-mini-graph{display:flex;align-items:end;gap:6px;height:26px;margin-top:10px}
+.tb-welcome-mini-graph span{width:15%;height:40%;border-top:2px solid #c6f8ce;transform:skewY(-17deg)}
+.tb-welcome-mini-graph span:nth-child(2n){height:60%}
+.tb-welcome-mini-graph span:nth-child(3n){height:80%}
+.tb-welcome-phone-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.tb-welcome-phone-metrics>div{display:flex;flex-direction:column;gap:5px;padding:11px 8px;background:white;border:1px solid #dbeae4;border-radius:10px}
+.tb-welcome-phone-metrics svg{color:#0b8573}
+.tb-welcome-phone-metrics small{font-size:9px;color:#66877d}
+.tb-welcome-phone-metrics strong{font-size:11px}
+.tb-welcome-phone-action{display:flex;gap:9px;align-items:center;margin-top:11px;padding:12px 10px;border-radius:11px;background:#e4f4ef;color:#116a5a}
+.tb-welcome-phone-action>span{flex:1}.tb-welcome-phone-action strong{display:block;font-size:10px}.tb-welcome-phone-action small{font-size:8px}
+.tb-welcome-phone-section{margin-top:14px;display:flex;justify-content:space-between;align-items:center;font-size:10px}.tb-welcome-phone-section span{color:#467e70;font-size:9px}
+.tb-welcome-floating-note{position:absolute;left:0;bottom:86px;display:flex;align-items:center;gap:8px;padding:11px 14px;background:white;color:#145748;border-radius:13px;box-shadow:0 15px 25px #002e2838;transform:rotate(-6deg)}
+.tb-welcome-floating-note svg{color:#16a57a}
+.tb-welcome-floating-note strong,.tb-welcome-floating-note small{display:block}
+.tb-welcome-floating-note strong{font-size:11px}.tb-welcome-floating-note small{font-size:9px;color:#648d80}
+.tb-welcome-footer{display:flex;gap:10px;justify-content:space-between;padding:16px clamp(20px,4vw,56px);border-top:1px solid #effff31d;font-size:11px;color:#b5dccc;letter-spacing:.03em}
+.tb-welcome a:focus-visible{outline:3px solid #cbffc9;outline-offset:3px}
+@media(max-width:800px){
+  .tb-welcome{border-radius:17px}.tb-welcome-top{padding:19px 22px}.tb-welcome-main{display:flex;flex-direction:column;gap:15px;align-items:stretch;padding:42px 23px 0;min-height:0}
+  .tb-welcome h1{font-size:clamp(40px,8vw,59px);max-width:630px}
+  .tb-welcome-description{font-size:15px}
+  .tb-welcome-visual{min-height:470px;overflow:hidden;margin-top:8px}
+  .tb-welcome-phone{width:276px;height:485px}
+  .tb-welcome-floating-note{left:max(0px,calc(50% - 182px));bottom:92px}
+  .tb-welcome-footer{display:grid;gap:4px;padding:15px 23px}
+}
+@media(max-width:440px){
+  .tb-welcome{margin:0 -4px;border-radius:13px}
+  .tb-welcome-top{padding:18px 16px}.tb-welcome-brand strong{font-size:19px}
+  .tb-welcome-main{padding:35px 18px 0}
+  .tb-welcome-kicker{font-size:9px}.tb-welcome h1{font-size:clamp(37px,10.3vw,48px);margin-top:23px}
+  .tb-welcome-ctas{display:grid;grid-template-columns:1fr;margin-top:26px}
+  .tb-welcome-cta-primary,.tb-welcome-cta-secondary{width:100%}
+  .tb-welcome-visual{min-height:440px}
+  .tb-welcome-phone{width:245px;height:457px;transform:rotate(-3deg) translateY(26px)}
+  .tb-welcome-floating-note{left:0;bottom:64px}
+}
+@media(prefers-reduced-motion:reduce){.tb-welcome *, .tb-welcome *::before,.tb-welcome *::after{scroll-behavior:auto;animation:none}}

@@ -1,0 +1,133 @@
+/* Tallybook screenshot-inspired visual system for the REAL application.
+   Does not change finance, permissions, local IndexedDB or cloud RPC behavior.
+   Loaded last by App.tsx; only presentation and route-linked controls change. */
+:root {
+  --color-paper:#f2f8f5;--color-ink:#18352f;--color-ink-soft:#60796f;
+  --color-baobab:#0a5d55;--color-baobab-dark:#073c35;--color-rule:#daebe3;
+  --ta-blue:#08766c;--ta-blue-dark:#07524b;--ta-blue-soft:#e4f4ee;
+  --ta-canvas:#f2f8f5;--ta-card:#fff;--ta-ink:#18352f;--ta-muted:#617e74;--ta-line:#dceae4;
+  --primary:#08766c;--primary-foreground:#fff;--secondary:#e8f5ef;
+  --secondary-foreground:#075c50;--border:#dceae4;--input:#cddfd6;--ring:#0d8375;
+  --muted:#edf5f0;--muted-foreground:#60776f;--accent:#dff4e8;--accent-foreground:#075c50;
+}
+html,body{background:var(--ta-canvas);color:var(--ta-ink)}
+.app-frame{background:var(--ta-canvas)}
+.page-content{background:linear-gradient(180deg,#f8fcfa,#f2f8f5 220px)}
+.top-bar{background:#fff;border-bottom-color:#dcebe5;box-shadow:0 1px 7px rgba(7,71,59,.03)}
+.premium-desktop-rail{background:#fff;border-right-color:#dcebe5}
+.premium-nav-group h2{color:#678478}
+.premium-nav-item{color:#496b60;border-radius:10px}
+.premium-nav-item:hover{background:#e9f6ef;color:#085e53}
+.premium-nav-selected,.premium-nav-selected:hover{background:#dcf3e8;color:#065e54}
+.premium-global-search{background:#f5faf7;border-color:#d9eae2;color:#638177}
+.premium-global-search:hover{background:#e8f7ef;border-color:#a4d9c3;color:#076c60}
+.premium-rail-setup{background:linear-gradient(130deg,#e4f6ec,#f6fcf8);border-color:#cbe9da;color:#0a6457}
+.premium-rail-setup strong{color:#0a6457}
+.premium-rail-setup-icon{background:#c9ecdc}
+.premium-rail-setup small{color:#527b6b}
+.primary-action,.op-qa-btn,.tb-dashboard-open-pos{background:#08776b;color:white;border-color:#08776b}
+.primary-action:hover:not(:disabled),.tb-dashboard-open-pos:hover{background:#056156;border-color:#056156}
+.secondary-action{border-color:#cfdfd7;color:#0e6559;background:#fff}
+.secondary-action:hover:not(:disabled){border-color:#95c7b2;background:#f0faf5}
+.primary-action:focus-visible,.secondary-action:focus-visible,.premium-nav-item:focus-visible{outline:3px solid #39b995;outline-offset:3px}
+.op-row-card,.premium-card,.purchase-sheet,.customer-record,.sale-lines-sheet{border:1px solid #e0ece6;border-radius:17px;box-shadow:0 4px 18px rgba(9,74,60,.04)}
+.op-row-title,.op-money{color:#123b31}
+.op-row-sub{color:#688278}
+.op-empty,.inventory-empty,.dashboard-empty{border-color:#deebe5;border-radius:18px;background:#fff}
+.premium-mobile-drawer{background:#fff}
+.premium-mobile-overlay .premium-nav-selected{color:#075c50}
+
+/* Device dashboard: match the mobile reference hierarchy using REAL accounting data. */
+.tb-reference-dashboard.premium-home{color:#18352f}
+.tb-reference-dashboard .premium-main{min-width:0}
+.tb-dashboard-welcome{margin-bottom:14px}
+.tb-dashboard-kicker{font-size:10px;letter-spacing:.16em;font-weight:850;color:#0a8674}
+.tb-dashboard-welcome h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(27px,3.2vw,42px);font-weight:600;letter-spacing:-.035em;color:#12392f;line-height:1.15;margin:7px 0 4px}
+.tb-dashboard-welcome p{margin-top:5px;font-size:12px;color:#6a8177}
+.tb-dashboard-welcome p strong{color:#1f5546}
+.tb-dashboard-welcome .premium-identity{font-size:11px}
+.tb-dashboard-shortcuts{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:14px}
+.tb-dashboard-shortcuts a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:10px 17px;border-radius:999px;font-size:12px;font-weight:800;text-decoration:none;transition:background .2s,border-color .2s}
+.tb-dashboard-open-pos{background:#08776b;color:#fff;box-shadow:0 7px 18px #08776b22}
+.tb-dashboard-pill{background:#fff;border:1px solid #d6e9e0;color:#165e50}
+.tb-dashboard-pill:hover{background:#e7f6ee}
+.tb-dashboard-till{position:relative;overflow:hidden;margin-bottom:15px;padding:22px 26px;border-radius:19px;color:#f8fff9;background:linear-gradient(130deg,#08766d 0%,#095b55 60%,#064740 100%);box-shadow:0 12px 24px rgba(3,92,76,.13)}
+.tb-dashboard-till:after{content:"";position:absolute;right:-60px;top:-130px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#a6eed615,transparent 68%);pointer-events:none}
+.tb-dashboard-till-kicker{display:block;font-size:10px;font-weight:900;letter-spacing:.19em;text-transform:uppercase;color:#bfe8d5}
+.tb-dashboard-till-total{display:block;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,4.2vw,56px);font-weight:500;letter-spacing:-.03em;line-height:1.15;margin:12px 0 5px;overflow-wrap:anywhere}
+.tb-dashboard-till>p{margin:0 0 18px;color:#c9e9df;font-size:12px;line-height:1.5}
+.tb-dashboard-till-cells{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:580px}
+.tb-dashboard-till-cells>div{padding:14px 15px;border:1px solid #a4ead126;border-radius:13px;background:#f3fff01a}
+.tb-dashboard-till-cells span{display:block;font-weight:850;letter-spacing:.13em;font-size:9px;color:#bbebd9}
+.tb-dashboard-till-cells strong{display:block;margin:7px 0 3px;font-size:19px;font-weight:780;overflow-wrap:anywhere}
+.tb-dashboard-till-cells small{display:block;color:#c5e7dc;font-size:10px}
+.tb-reference-dashboard .premium-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.tb-reference-dashboard .premium-kpi{min-height:112px;border-radius:15px;box-shadow:0 3px 13px #125d4610}
+.tb-reference-dashboard .premium-kpi-icon{border-radius:11px}
+.tb-reference-dashboard .premium-kpi h3{font-size:10px;color:#5e8175;letter-spacing:.03em}
+.tb-reference-dashboard .premium-kpi strong{color:#15372f}
+.tb-reference-dashboard .premium-card{border-color:#ddebe4;border-radius:17px;box-shadow:0 4px 17px #1264480d}
+.tb-reference-dashboard .premium-action{border-radius:11px}
+.tb-reference-dashboard .premium-action:hover{background:#f0f9f4}
+.tb-reference-dashboard .premium-chart-period{color:#097265}
+.tb-reference-dashboard .premium-line-chart{background:#fbfefa}
+.tb-reference-dashboard .premium-step-cta{background:#e3f4e9;color:#0a7464}
+.tb-reference-dashboard .premium-progress span{background:#0c8e76}
+.tb-reference-dashboard .premium-side-help a{color:#096a5b}
+
+/* Operations: consistent Stockdey-like teal mastheads without touching actions. */
+.inventory-page,.purchases-page,.sales-page,.reports-page,.customers-page{max-width:1100px;margin-inline:auto;min-width:0}
+.inventory-hero,.purchases-hero,.sales-hero,.reports-hero,.customers-hero{position:relative;overflow:hidden;border:1px solid #0b736a;border-radius:18px;background:linear-gradient(135deg,#0a786c,#07514b);box-shadow:0 10px 24px #075e5017;padding:23px 24px}
+.inventory-hero:before,.purchases-hero:before,.sales-hero:before,.reports-hero:before,.customers-hero:before{content:"";position:absolute;width:270px;height:270px;right:-75px;top:-120px;pointer-events:none;border-radius:50%;background:#b4ffe511}
+.inventory-hero h1,.purchases-hero h1,.sales-hero h1,.reports-hero h1,.customers-hero h1{color:white;font-family:Georgia,"Times New Roman",serif;font-size:clamp(26px,3.5vw,43px);font-weight:550;line-height:1.12;letter-spacing:-.04em;margin:8px 0}
+.inventory-hero h1 em,.purchases-hero h1 em,.sales-hero h1 em,.reports-hero h1 em,.customers-hero h1 em{color:#cbf4d4}
+.inventory-hero>p,.purchases-hero>p,.sales-hero>p,.reports-hero>p,.customers-hero>p{color:#daf4e9;position:relative}
+.inventory-hero .eyebrow,.purchases-hero .eyebrow,.sales-hero .eyebrow,.reports-hero .eyebrow,.customers-hero .eyebrow{color:#bfeedd;font-weight:800;letter-spacing:.13em}
+.inventory-hero .stamp,.sales-hero .stamp,.customers-hero .stamp,.inventory-hero .inventory-quiet-token,.sales-hero .inventory-quiet-token,.customers-hero .inventory-quiet-token{background:#e7fff01e;color:#e6fff3;border:1px solid #d7f5e440}
+.inventory-hero .inventory-alert-token{color:#fff0cb}
+.purchases-hero .secondary-action,.sales-hero .secondary-action,.reports-hero .quiet-action{background:#ffffff1a;border:1px solid #e0faeb66;color:#fff}
+.purchases-hero .secondary-action:hover,.sales-hero .secondary-action:hover,.reports-hero .quiet-action:hover{background:#ffffff35;color:#fff}
+.purchases-hero .primary-action{background:#e9fff0;color:#07594b;border-color:#e9fff0}
+.purchases-hero .primary-action:hover{background:#fff}
+.purchases-hero .workspace-marker,.sales-hero .workspace-marker,.reports-hero .workspace-marker,.customers-hero .workspace-marker{background:#e5ffed22;color:#d9ffed;border-color:#e5ffed38}
+.reports-hero .reports-periods button{color:#e6faef}
+.reports-hero .reports-periods button.is-selected{color:#075749;background:#e7fff0}
+.purchases-boundary,.customer-debt-spotlight,.inventory-actions,.customer-actions{border-radius:15px}
+.purchases-grid,.sales-builder{gap:14px}
+.sale-product-search input,.customer-search input{border-color:#d9e9e1}
+.shop-page{--ta-blue:#09766b;--ta-blue-dark:#075e55;--ta-blue-soft:#e5f5ee;--ta-canvas:#f1f8f4;--ta-line:#dcece4;--ta-ink:#1b3932;--ta-muted:#607e73;max-width:1180px}
+.shop-landing{max-width:1280px;padding:18px 16px 70px}
+.shop-card{border-radius:17px;border-color:#dcebe3;box-shadow:0 5px 18px #095b4610}
+.shop-head h1{font-family:Georgia,"Times New Roman",serif;color:#0c5146;font-weight:600}
+.shop-tabs{background:#e6f4ec}
+.shop-tabs button[aria-pressed=true]{color:#086b5d;box-shadow:0 2px 8px #085a3a0d}
+.shop-cart-bar{background:#096e63;box-shadow:0 10px 25px #075d5238}
+.shop-empty{border-radius:18px}
+.shop-page .shop-actions button:focus-visible,.shop-page .shop-tabs button:focus-visible{outline:3px solid #4cbf9d;outline-offset:3px}
+@media(max-width:767px){
+  .page-content{padding:17px 12px 88px}
+  .tb-first-run-workspace{margin-inline:-2px}
+  .tb-reference-dashboard .premium-welcome{display:block}
+  .tb-reference-dashboard .premium-date{display:none}
+  .tb-reference-dashboard .premium-home{display:block}
+  .tb-dashboard-shortcuts{gap:7px}
+  .tb-dashboard-shortcuts a{min-height:39px;padding:10px 13px;font-size:11px}
+  .tb-dashboard-till{padding:21px 20px;border-radius:16px}
+  .tb-dashboard-till-cells{gap:9px}
+  .tb-dashboard-till-cells>div{padding:12px 10px}
+  .tb-dashboard-till-cells strong{font-size:15px}
+  .tb-reference-dashboard .premium-kpis{grid-template-columns:1fr;gap:10px}
+  .tb-reference-dashboard .premium-kpi{min-height:80px;padding:14px}
+  .inventory-hero,.purchases-hero,.sales-hero,.reports-hero,.customers-hero{padding:22px 18px;border-radius:15px}
+  .inventory-hero h1,.purchases-hero h1,.sales-hero h1,.reports-hero h1,.customers-hero h1{font-size:clamp(27px,8vw,38px)}
+  .shop-landing{padding:9px 9px 70px}
+  .shop-page{gap:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tb-dashboard-shortcuts a,.premium-nav-item{transition:none}
+}
+
+/* Public welcome is explicitly outside FriendsTestGate and DatabaseProvider. */
+.tb-public-welcome{max-width:1380px;margin:0 auto;padding:clamp(8px,2.5vw,25px);min-height:100dvh}
+.tb-public-welcome .tb-welcome{max-width:1340px}
+@media(max-width:640px){.tb-public-welcome{padding:0;overflow-x:clip}.tb-public-welcome .tb-welcome{min-height:100dvh;border-radius:0;margin-inline:0;width:100%;max-width:100%}}
