@@ -15,7 +15,7 @@ import { listVerifiedCloudBusinesses } from "@/cloud/cloudMembership";
 import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
-  adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
+  adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
   recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
   getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
@@ -199,7 +199,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   useEffect(() => {
     if (!isOwnerRole || hasSale === true || !online) return;
     let live = true;
-    void Promise.resolve().then(() => listShopSales(business.id)).then(sales => { if (live && Array.isArray(sales)) setHasSale(sales.length > 0); }).catch(() => { /* stays unknown */ });
+    void getShopReadiness(business.id).then(result => {
+      if (live && result.companyId === business.id && Number.isSafeInteger(result.saleCount))
+        setHasSale(result.saleCount > 0);
+    }).catch(() => { /* Older servers cannot confirm checklist progress. */ });
     return () => { live = false; };
   }, [isOwnerRole, business.id, online, hasSale, overview]);
 

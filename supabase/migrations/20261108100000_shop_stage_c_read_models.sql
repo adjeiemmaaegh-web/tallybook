@@ -1,8 +1,21 @@
 -- Backend Stage C: read-only owner/employee readiness and scoped dashboard
 -- projection. This is a NEW RPC; it never changes existing checkout routes.
--- Depends on the three shared-shop migrations and Stage B return policy.
+-- Requires the canonical refund policy and 24-hour invitation baseline.
 -- Source-only: never apply to production without a reviewed staging migration.
 begin;
+
+-- A preview database may have recorded the same two version numbers for
+-- different SQL. Stop before any DDL; its policy history needs explicit mapping.
+do $preflight$
+begin
+  if to_regclass('public.shop_refund_policy_history') is null
+     or to_regclass('public.shop_return_policy_revisions') is not null
+     or not exists (select 1 from pg_constraint
+       where conrelid = 'public.company_member_invites'::regclass
+       and conname = 'company_member_invites_expiry_24h') then
+    raise exception 'Incompatible preview schema: reconcile refund and invite history before upgrading';
+  end if;
+end $preflight$;
 
 create function private.shop_stage_c_action(
   p_action text, p_actor uuid, p_session uuid, p_input jsonb)
@@ -44,6 +57,7 @@ begin
         select 1 from public.shop_store_assignments a
         where a.business_id=v_company and a.store_id=ss.store_id and a.user_id=p_actor));
     select count(*) into v_sales from public.shop_sales s where s.business_id=v_company
+      and (v_role='owner' or s.cashier_id=p_actor)
       and (v_role='owner' or exists (
         select 1 from public.shop_store_assignments a
         where a.business_id=v_company and a.store_id=s.store_id and a.user_id=p_actor));
@@ -78,7 +92,7 @@ begin
     select currency into v_currency from public.shop_ledgers where business_id=v_company;
     select count(*),coalesce(sum(s.total_minor),0)
       into v_sales,v_gross from public.shop_sales s
-      where s.business_id=v_company and s.recorded_at>=clock_timestamp()-make_interval(days=>v_days::int)
+      where s.business_id=v_company and (v_role='owner' or s.cashier_id=p_actor) and s.recorded_at>=clock_timestamp()-make_interval(days=>v_days::int)
       and (v_store is null or s.store_id=v_store)
       and (v_role='owner' or exists (
         select 1 from public.shop_store_assignments a
@@ -86,7 +100,7 @@ begin
     select coalesce(sum(r.amount_minor),0) into v_refunds
       from public.shop_refunds r
       join public.shop_sales s on s.id=r.sale_id and s.business_id=r.business_id
-      where r.business_id=v_company and r.recorded_at>=clock_timestamp()-make_interval(days=>v_days::int)
+      where r.business_id=v_company and (v_role='owner' or s.cashier_id=p_actor) and r.recorded_at>=clock_timestamp()-make_interval(days=>v_days::int)
       and (v_store is null or s.store_id=v_store)
       and (v_role='owner' or exists (
         select 1 from public.shop_store_assignments a

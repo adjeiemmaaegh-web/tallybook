@@ -79,11 +79,11 @@ export class ShopUnreachableError extends Error {}
 // PostgREST error codes that mean "the database decided", never "network".
 const DECIDED = /^(22|23|42|P0)/;
 
-export async function callShop<T>(action: string, input: Record<string, unknown>): Promise<T> {
+export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" = "tallybook_shop"): Promise<T> {
   const client = getSupabaseClient();
   let response: Awaited<ReturnType<typeof client.rpc>>;
   try {
-    response = await client.rpc("tallybook_shop", { p_action: action, p_input: input });
+    response = await client.rpc(rpc, { p_action: action, p_input: input });
   } catch {
     throw new ShopUnreachableError("Can't reach Tallybook right now. Check your connection.");
   }
@@ -105,6 +105,8 @@ function friendlyMessage(message: string) {
   return message.replace(/^Invalid (\w+)$/, "Something in this request isn't valid ($1).");
 }
 
+export const getShopReadiness = (companyId: string) =>
+  callShop<{companyId: string; saleCount: number}>("readiness", {companyId}, "tallybook_shop_ops");
 export const getShopOverview = (companyId: string) => callShop<ShopOverview>("overview", { companyId });
 export const listShopSales = (companyId: string, storeId?: string) =>
   callShop<{ sales: ShopReceipt[] }>("listSales", storeId ? { companyId, storeId } : { companyId }).then(r => r.sales);

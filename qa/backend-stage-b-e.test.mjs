@@ -11,12 +11,12 @@ const migrations = readdirSync(new URL('../supabase/migrations/', import.meta.ur
 test('migration identifiers are unique', () => {
   assert.equal(new Set(migrations.map(name => name.split('_')[0])).size, migrations.length);
 });
-async function setup(){
+async function setup({upgrade = true} = {}){
  const db=new PGlite();
  await db.exec("create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,email text);create table auth.sessions(id uuid,user_id uuid,not_after timestamptz);create function auth.uid() returns uuid language sql as 'select null::uuid';");
  await db.exec(file(migrations[0]));
  await db.exec("create or replace function auth.uid() returns uuid language sql as $$select (current_setting('test.claims')::jsonb->>'sub')::uuid$$; create function auth.jwt() returns jsonb language sql as $$select current_setting('test.claims')::jsonb$$;");
- for(const migration of migrations.slice(1)){
+ for(const migration of migrations.slice(1).filter(name => name < '20261108')){
    try{await db.exec(file(migration));}catch(e){await db.close();throw new Error('Migration '+migration+' failed: '+e.message,{cause:e});}
  }
  const users={};
@@ -50,7 +50,13 @@ async function setup(){
  await core('owner','saveProduct',{productId:product,name:'Rice 1kg',unitPriceMinor:1500});
  await core('owner','adjustStock',{storeId:a,productId:product,delta:20,operationId:id()});
  await core('owner','assignStore',{storeId:a,userId:users.attendant.id});
- return {db,call,core,admin,users,company,otherCompany,a,b,product};
+ const applyUpgrade = async () => {
+   await db.exec('reset role');
+   for (const name of migrations.filter(name => name >= '20261108')) await db.exec(file(name));
+   await db.exec('set role authenticated');
+ };
+ if (upgrade) await applyUpgrade();
+ return {db,call,core,admin,users,company,otherCompany,a,b,product,applyUpgrade};
 }
 test('Stage C: owner readiness, restricted attendant summary, expired session and isolation',async()=>{
  const t=await setup();
@@ -177,4 +183,32 @@ test('Stage D: online order does not reserve stock and can link only a matching 
    await assert.rejects(t.db.query('select * from public.shop_online_orders'),/permission denied/);
    await assert.rejects(t.admin('delete from public.shop_online_order_fulfillments'),/append-only/);
  }finally{await t.db.close();}
+});
+
+test('upgrade preserves existing sale policy evidence and keeps other cashiers out of summaries', async () => {
+ const t = await setup({upgrade:false});
+ try {
+   await t.core('owner','setRefundPolicy',{refundsEnabled:true,allowVoid:true,allowPartial:true,
+     maxAgeDays:30,confirmed:true,reason:'Prior shop terms',expectedRevision:0});
+   const sale = await t.core('owner','recordSale',{storeId:t.a,submissionKey:id().replaceAll('-',''),
+     lines:[{productId:t.product,quantity:1}],tenders:[{method:'cash',amountMinor:1500,tenderedMinor:1500}]});
+   const snapshot = () => t.admin('select refund_policy_revision, refund_policy_snapshot from public.shop_sales where id=$1',[sale.saleId]);
+   const before = await snapshot();
+   assert.equal(before[0].refund_policy_revision,1);
+   await t.applyUpgrade();
+   assert.deepEqual(await snapshot(),before);
+   assert.equal((await t.call('owner','salesSummary')).grossMinor,'1500');
+   assert.equal((await t.call('attendant','salesSummary')).grossMinor,'0');
+   assert.equal((await t.call('attendant','readiness')).saleCount,0);
+ } finally {await t.db.close();}
+});
+
+test('an ambiguous preview policy schema stops the upgrade before installing the operations RPC', async () => {
+ const t = await setup({upgrade:false});
+ try {
+   await t.admin('create table public.shop_return_policy_revisions (revision integer)');
+   await assert.rejects(t.applyUpgrade(), /Incompatible preview schema/);
+   await t.db.exec('rollback');
+   assert.equal((await t.db.query("select to_regprocedure('public.tallybook_shop_ops(text,jsonb)') as rpc")).rows[0].rpc,null);
+ } finally {await t.db.close();}
 });
