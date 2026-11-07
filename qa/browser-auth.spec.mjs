@@ -41,6 +41,7 @@ test('a local owner PIN locks and unlocks the business workspace', async ({page}
   await page.getByRole('button', {name:'Create staff'}).click();
   await expect(page.getByText('Test Cashier — cashier')).toBeVisible();
   await page.getByRole('button', {name:'Lock this session'}).click();
+  await expect(page.getByRole('link', {name:'Open Tallybook account'})).toHaveCount(0);
   await page.getByRole('combobox', {name:'Staff member'}).selectOption({label:'Test Cashier (cashier)'});
   await page.getByRole('textbox', {name:'Staff PIN'}).fill('654321');
   await page.getByRole('button', {name:'Unlock', exact:true}).click();

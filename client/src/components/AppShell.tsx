@@ -61,7 +61,12 @@ function CompanyShell({ children }: AppShellProps) {
       .catch(() => { if (mounted && request === requestId) setStaffGate("locked"); });
     };
     refresh();
-    const onSession = () => refresh(true);
+    const onSession = () => {
+      // Drop the previous user's shell immediately. A subsequent IndexedDB
+      // check may admit a new unlock, but cannot keep the old session visible.
+      if (standalone && !currentStaffId(activeCompanyId)) setStaffGate("locked");
+      refresh(true);
+    };
     const onFocus = () => {if(document.visibilityState==="visible")refresh(true);};
     const timer = window.setInterval(onFocus,30_000);
     window.addEventListener(STAFF_SESSION_CHANGED,onSession);
