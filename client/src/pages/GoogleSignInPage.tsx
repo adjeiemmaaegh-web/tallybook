@@ -97,7 +97,7 @@ export default function GoogleSignInPage(){
         <div><span>02</span><strong>Choose your role</strong><small>Own a business, or join the shop you work for.</small></div>
         <div><span>03</span><strong>Open your shop</strong><small>Owners configure their business. Staff use an invitation.</small></div>
       </div>
-      <p className="tb-account-aside-note">Need only an offline device ledger? <Link href="/">Open the local workspace</Link>. It is separate from a shared cloud shop.</p>
+      <p className="tb-account-aside-note">Already verified as an owner? <Link href="/">Open your device ledger</Link>. Access stays protected by your account and local staff permissions.</p>
     </aside>
     <div className="tb-account-form-area">
       {/* Account and shop screens sit outside AppShell; staged updates still show here. */}
