@@ -1,5 +1,6 @@
 import { exportWatchdogCsv, type WatchdogExportEvent } from './watchdogCsvExport.ts';
 import { reconcileSales } from './financialReconciliation.ts';
+import {assertSplitPaymentLedger,type SplitTenderEvidence} from '../sales/splitTender.mjs';
 
 /** Maps an authorized, single-store snapshot; it neither changes data nor claims physical device evidence. */
 export interface ExportSnapshot {
@@ -8,11 +9,11 @@ export interface ExportSnapshot {
   sales: ReadonlyArray<{
     id:string; businessProfileId:string; createdAt:string; staffId?:string; shiftId?:string;
     currency?:string; totalMinor:number; amountPaidMinor:number; outstandingMinor:number;
-    discountMinor:number; paymentMethod:string; receiptNumber?:string; submissionKey?:string;
+    discountMinor:number; paymentMethod:string; receiptNumber?:string; submissionKey?:string;customerId?:string;splitTendersAtSale?:SplitTenderEvidence[];
   }>;
   payments: ReadonlyArray<{
     id:string; saleId:string; businessProfileId:string; method:string; amountMinor:number;
-    mobileMoneyReference?:string; mobileMoneyProviderName?:string;
+    mobileMoneyReference?:string; mobileMoneyProviderName?:string;mobileMoneyProviderId?:string;cardReference?:string;customerId?:string;
   }>;
   shifts: ReadonlyArray<{
     id:string; businessProfileId:string; staffId:string; openedAt:string; closedAt?:string;
@@ -63,7 +64,7 @@ export function mapSingleStoreWatchdogEvents(data: ExportSnapshot): WatchdogExpo
     if (paymentIds.has(p.id)) throw new Error('Duplicate payment ID.'); paymentIds.add(p.id);
     const sale=saleById.get(p.saleId);
     if(!sale) throw new Error(`Payment ${p.id} has no matching sale.`);
-    if (p.method!==sale.paymentMethod || !Number.isSafeInteger(p.amountMinor) || p.amountMinor<=0)
+    if ((sale.paymentMethod==='split'?!['cash','card','mobile'].includes(p.method):p.method!==sale.paymentMethod) || !Number.isSafeInteger(p.amountMinor) || p.amountMinor<=0)
       throw new Error(`Payment ${p.id} does not reconcile to the original sale tender.`);
     salePayments.set(sale.id,(salePayments.get(sale.id)??0)+p.amountMinor);
     if (!Number.isSafeInteger(salePayments.get(sale.id))) throw new Error('Payment sum overflow.');
@@ -78,6 +79,8 @@ export function mapSingleStoreWatchdogEvents(data: ExportSnapshot): WatchdogExpo
       saleId:sale.id,amountMinor:p.amountMinor,currency:sale.currency,reference:ref,receiptNumber:sale.receiptNumber,paymentMethod:'mobile',momoProvider:p.mobileMoneyProviderName});
   }
   for (const sale of data.sales) {
+    if(sale.paymentMethod==='split')
+      assertSplitPaymentLedger(sale,data.payments.filter(p=>p.saleId===sale.id));
     const recorded=salePayments.get(sale.id)??0;
     if (sale.paymentMethod==='wallet' || sale.paymentMethod==='credit') {
       if(recorded!==0) throw new Error(`Sale ${sale.id} has contradictory external payment records.`);
