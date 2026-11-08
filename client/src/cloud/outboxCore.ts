@@ -95,23 +95,26 @@ export function inProcessLocks(): LockRunner {
   return <T>(name: string, run: () => Promise<T>) => {
     const previous = tails.get(name) ?? Promise.resolve();
     const result = previous.then(run, run);
-    tails.set(name, result.then(() => undefined, () => undefined));
+    const tail = result.then(() => undefined, () => undefined);
+    tails.set(name, tail);
+    void tail.then(() => { if (tails.get(name) === tail) tails.delete(name); });
     return result;
   };
 }
+
+const sharedTabLocks = inProcessLocks();
 
 /** Cross-tab locks via the Web Locks API when present, otherwise in-process. */
 export function bestAvailableLocks(): LockRunner {
   type Locks = { request: (name: string, options: { mode: "exclusive" }, cb: (lock: object | null) => Promise<unknown>) => Promise<unknown> };
   const locks = (globalThis as { navigator?: { locks?: Locks } }).navigator?.locks;
-  const local = inProcessLocks();
   if (locks && typeof locks.request === "function") {
     // Standard three-argument form. A null lock (a host that grants nothing) falls back to the in-process lock
     // so work never runs unguarded.
     return <T>(name: string, run: () => Promise<T>) =>
-      locks.request(name, { mode: "exclusive" }, lock => (lock === null ? local(name, run) : run())) as Promise<T>;
+      locks.request(name, { mode: "exclusive" }, lock => (lock === null ? sharedTabLocks(name, run) : run())) as Promise<T>;
   }
-  return local;
+  return sharedTabLocks;
 }
 
 export const scopeKeyOf = ({ userId, companyId }: OutboxScope) => `${userId}:${companyId}`;
@@ -297,6 +300,7 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
         const check = await load(scopeKey, id);
         if (!check || "unreadable" in check) return { imported: 0, kept: true };
       }
+      if (legacy.getItem(legacyKey) !== raw) return { imported: ids.length, kept: true };
       legacy.removeItem(legacyKey);
       return { imported: ids.length, kept: false };
     },

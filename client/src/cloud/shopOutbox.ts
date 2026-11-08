@@ -31,10 +31,14 @@ async function outboxFor(scope: OutboxScope) {
     // The server's own idempotency still protects us if this window misses an old sale.
     lookupReceipt: async sale => (await listShopSales(scope.companyId)).find(r => r.submissionKey === sale.submissionKey) ?? null,
   });
-  const migrated = migrations.get(legacyKey(scope)) ?? (async () => {
-    try { await outbox.migrateLegacy(scope, window.localStorage, legacyKey(scope)); } catch { /* the old copy stays where it is */ }
-  })();
-  migrations.set(legacyKey(scope), migrated);
+  const key = legacyKey(scope);
+  let migrated = migrations.get(key);
+  if (!migrated) {
+    migrated = outbox.migrateLegacy(scope, window.localStorage, key)
+      .then(() => undefined)
+      .finally(() => migrations.delete(key));
+    migrations.set(key, migrated);
+  }
   await migrated;
   return outbox;
 }

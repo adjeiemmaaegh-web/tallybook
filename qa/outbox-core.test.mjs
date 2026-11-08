@@ -1,7 +1,7 @@
 // Durable encrypted outbox core (PRD R1/R2): write-ahead, multi-tab, crash, ambiguity, confidentiality.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createOutbox, createSealer, inProcessLocks, memoryBackend, scopeKeyOf, MAX_UNCONFIRMED_ATTEMPTS} from '../client/src/cloud/outboxCore.ts';
+import {createOutbox, createSealer, bestAvailableLocks, inProcessLocks, memoryBackend, scopeKeyOf, MAX_UNCONFIRMED_ATTEMPTS} from '../client/src/cloud/outboxCore.ts';
 
 const newKey = () => crypto.subtle.generateKey({name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
 const scope = {userId: 'user-1', companyId: 'co-1'};
@@ -192,4 +192,43 @@ test('legacy queue is kept when the import cannot be completed', async () => {
   const g = await outbox.migrateLegacy(scope, {getItem: k => garbage.get(k) ?? null, removeItem: k => void garbage.delete(k)}, 'legacy');
   assert.deepEqual(g, {imported: 0, kept: true});
   assert.equal(garbage.has('legacy'), true);
+});
+
+test('separate bindings without Web Locks serialize work on the same pending sale', async t => {
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+  Object.defineProperty(navigator, 'locks', {configurable: true, value: undefined});
+  t.after(() => descriptor ? Object.defineProperty(navigator, 'locks', descriptor) : delete navigator.locks);
+  const first = bestAvailableLocks();
+  const second = bestAvailableLocks();
+  const started = Promise.withResolvers();
+  const release = Promise.withResolvers();
+  const order = [];
+  const sending = first('sale-1', async () => {
+    started.resolve();
+    await release.promise;
+    order.push('recorded');
+  });
+  await started.promise;
+  const flushing = second('sale-1', async () => { order.push('reconcile'); });
+  await Promise.resolve();
+  release.resolve();
+  await Promise.all([sending, flushing]);
+  assert.deepEqual(order, ['recorded', 'reconcile']);
+});
+
+test('legacy cleanup retains a sale appended during encrypted import', async () => {
+  const {outbox} = await rig();
+  const original = [{sale: sale('k1'), status:'pending'}];
+  const updated = [...original, {sale: sale('k2'), status:'pending'}];
+  let reads = 0, removed = false;
+  const legacy = {
+    getItem: () => JSON.stringify(++reads === 1 ? original : updated),
+    removeItem: () => { removed = true; },
+  };
+  const first = await outbox.migrateLegacy(scope, legacy, 'legacy');
+  assert.equal(first.kept, true);
+  assert.equal(removed, false);
+  await outbox.migrateLegacy(scope, legacy, 'legacy');
+  assert.equal(removed, true);
+  assert.deepEqual((await outbox.read(scope)).map(row => row.id).sort(), ['k1','k2']);
 });
