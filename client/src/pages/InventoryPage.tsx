@@ -18,6 +18,7 @@ import { useDatabase } from "@/contexts/DatabaseContext";
 import { exportProductCatalogCsv, importProductCatalogCsv, type StockCountPreview } from "@/features/inventory/advancedInventory";
 import { saveStockCountSession, updateStockCountSession, postSavedStockCount, type StockCountSession } from "@/features/inventory/stage2Inventory";
 import { db } from "@/db/TallybookDB";
+import {ProductPromotionsPanel} from "@/features/inventory/ProductPromotionsPanel";
 import {validateCategoryHierarchy} from "@/features/inventory/categoryHierarchy.mjs";
 import type { StoreLocation } from "@/features/stores/storeDirectory";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -265,6 +266,7 @@ export default function InventoryPage() {
 
     {lowStockProducts.length ? <section className="low-stock-strip"><TrendingDown className="h-5 w-5" aria-hidden="true" /><div><p className="ledger-kicker">Low stock attention</p><strong>{lowStockProducts.map((product) => product.name).join(", ")}</strong><span> needs a count check.</span></div></section> : null}
 
+    {profile?.country==="Ghana"&&activeCompanyId&&snapshot.products.length>0&&<ProductPromotionsPanel companyId={activeCompanyId} country={profile.country} products={snapshot.products} onSaved={refresh} />}
     <section className="inventory-record" aria-labelledby="products-title">
       <div className="inventory-record-head"><div><p className="ledger-kicker">Active products</p><h2 id="products-title">Your shelf, clearly counted.</h2></div><span className="workspace-marker">STK</span></div>
       {recentlyArchivedProduct ? <p className="archive-success-line" role="status"><Archive className="h-4 w-4" aria-hidden="true" /><strong>{recentlyArchivedProduct}</strong> moved out of active stock and into archived records.</p> : null}
