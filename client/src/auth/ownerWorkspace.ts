@@ -24,3 +24,9 @@ export function openPrivateWorkspace(userId: string) {
   localStorage.setItem(preference(userId), '1');
   switchWorkspace(userId);
 }
+
+export function revisitOriginalLedger(userId: string) {
+  localStorage.removeItem(preference(userId));
+  sessionStorage.removeItem(tabKey);
+  window.location.assign('/');
+}

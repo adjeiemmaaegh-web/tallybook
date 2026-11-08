@@ -80,7 +80,8 @@ test('a verified owner opens Clementia alongside an unlinked PIN-less ledger', a
   await page.addInitScript(user => {
     localStorage.setItem('sb-qa-auth-token',JSON.stringify({
       access_token:'private-ledger-fixture-access-token',refresh_token:'fixture-only',
-      token_type:'bearer',expires_at:Math.floor(Date.now()/1000)+3600,user
+      token_type:'bearer',expires_at:Math.floor(Date.now()/1000)+3600,
+      user: JSON.parse(sessionStorage.getItem('qa-test-identity') || 'null') || user
     }));
   },user);
   await page.route('https://qa.invalid/auth/v1/user',route=>route.fulfill({json:user}));
@@ -113,4 +114,14 @@ test('a verified owner opens Clementia alongside an unlinked PIN-less ledger', a
     try { return (await legacy.businessProfiles.toArray()).map(p=>p.name); }
     finally { legacy.close(); }
   })).toEqual(['Original private shop']);
+  // Switch to a different Google identity in the same tab. The first
+  // account's selected database is still in sessionStorage when this starts.
+  const other = {...user, id:'4711ca99-43ac-4aae-aacd-73e58cdef255'};
+  await page.route('https://qa.invalid/auth/v1/user',route=>route.fulfill({json:other}));
+  await page.route('https://qa.invalid/rest/v1/businesses?**',route=>route.fulfill({json:[{id:company,owner_id:other.id,name:'Second shop'}]}));
+  await page.route('https://qa.invalid/rest/v1/business_members?**',route=>route.fulfill({json:[{business_id:company,user_id:other.id,role:'owner'}]}));
+  await page.evaluate(other => sessionStorage.setItem('qa-test-identity',JSON.stringify(other)),other);
+  await page.goto('/assistant');
+  await expect(page.getByRole('button',{name:'Open my private workspace'})).toBeVisible();
+  await expect(page.getByText('New owner workspace',{exact:true})).toHaveCount(0);
 });

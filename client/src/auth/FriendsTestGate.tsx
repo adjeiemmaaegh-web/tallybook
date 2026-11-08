@@ -92,9 +92,18 @@ export function FriendsTestGate({children}:{children:ReactNode}){
     let active=true;
     if(state.status==='offline'){
       setAccess({userId:null,status:'checking'});
-      void allowOfflineReturn(async()=>isSupabaseConfigured
-        ?(await getSupabaseClient().auth.getSession()).data.session?.user.id??null:null)
-        .then(ok=>{if(active)setAccess({userId:null,status:ok?'allow':'offline'});});
+      void (async () => {
+        const cached = isSupabaseConfigured
+          ? (await getSupabaseClient().auth.getSession()).data.session?.user.id : null;
+        if (!active) return;
+        const preferred = cached ? preferredWorkspace(cached) : null;
+        if (cached && preferred !== workspaceOwner) {
+          switchWorkspace(preferred);
+          return;
+        }
+        const ok = await allowOfflineReturn(async () => cached ?? null);
+        if (active) setAccess({userId:null,status:ok?'allow':'offline'});
+      })().catch(() => { if (active) setAccess({userId:null,status:'offline'}); });
       return()=>{active=false;};
     }
     const userId=state.status==='signed-in'?state.userId:null;
