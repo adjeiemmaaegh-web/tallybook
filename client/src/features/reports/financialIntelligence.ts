@@ -1,4 +1,5 @@
 import { validateTaxSnapshot } from "@/features/sales/tax";
+import {validateGhanaVatLineEvidence} from "@/features/sales/ghanaVat.mjs";
 import { businessDayKey, businessDayStart, businessDayEnd, shiftBusinessDay } from "@/features/business/businessCalendar.mjs";
 import { requirePermission } from "@/features/staff/staff";
 /** V10 Stage 3 independent reporting engine. Read-only; no inventory-cost guesses. */
@@ -115,6 +116,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   if (saleById.size!==input.sales.length) throw new Error("Financial records contain duplicate sale IDs; reconcile the ledger before reporting.");
   for (const sale of input.sales) {
     validateTaxSnapshot(sale);
+    if (sale.tax?.ghana) validateGhanaVatLineEvidence(sale, (input.saleLines ?? []).filter(line => line.saleId === sale.id));
     const wallet = sale.walletAppliedMinor ?? 0;
     if (!Number.isSafeInteger(wallet) || wallet < 0 || wallet > sale.amountPaidMinor ||
         (wallet > 0 && (!sale.customerId || sale.paymentMethod !== "wallet")))
