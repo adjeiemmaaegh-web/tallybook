@@ -49,7 +49,10 @@ test('a local owner PIN locks and unlocks the business workspace', async ({page}
   await expect(page.getByRole('button', {name:'Create staff'})).toHaveCount(0);
   // A full reload deliberately clears the in-memory PIN session. Navigate
   // within the app to verify the current unlocked session instead.
-  await page.locator('.premium-desktop-rail').getByRole('link', {name:'Sales',exact:true}).click();
+  const cashierNav = page.getByRole('navigation', {name:'Cashier navigation'});
+  await expect(cashierNav).toBeVisible();
+  await expect(page.getByRole('link', {name:'Reports', exact:true})).toHaveCount(0);
+  await cashierNav.getByRole('link', {name:'Sales',exact:true}).click();
   await expect(page.getByRole('heading', {name:'Add stock before you open the receipt.'})).toBeVisible();
 });
 

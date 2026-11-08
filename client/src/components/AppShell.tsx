@@ -4,7 +4,7 @@ import { requiresCloudOwner } from "@/auth/deviceEntry";
 import { db } from "@/db/TallybookDB";
 import { currentStaffId, STAFF_SESSION_CHANGED } from "@/features/staff/staff";
 import { Bell, Search, Users, Cloud, CloudOff, HardDriveDownload, MessageCircleQuestion, Store, Menu, X, Truck, CircleDollarSign, BarChart3, Boxes, ShoppingBag, ContactRound, LayoutDashboard, ClipboardCheck, ShieldCheck } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { BrandMark } from "@/components/BrandMark";
 import { DatabaseStatus } from "@/components/DatabaseStatus";
 import {Run18UpdateNotice} from "@/components/Run18UpdateNotice";
@@ -39,7 +39,7 @@ function CompanyShell({ children }: AppShellProps) {
   const menuCloseRef = useRef<HTMLButtonElement>(null);
   const menuDrawerRef = useRef<HTMLElement>(null);
   const mainRef=useRef<HTMLElement>(null);
-  const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open">("loading");
+  const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open" | "cashier">("loading");
   useEffect(() => {
     let mounted = true;
     let requestId = 0;
@@ -53,11 +53,12 @@ function CompanyShell({ children }: AppShellProps) {
         if(!total)return !standalone && !(await db.businessProfiles.get(activeCompanyId))?.staffGovernanceEnabled;
         if(!current)return false;
         const member=await db.staffMembers.get(current);
-        return Boolean(member&&member.businessProfileId===activeCompanyId&&!member.disabledAt);
+        if (!member || member.businessProfileId !== activeCompanyId || member.disabledAt) return false;
+        return member.role === "cashier" ? "cashier" as const : true;
       }).then(open=>{
         if (!mounted || request !== requestId) return;
         if (current !== currentStaffId(activeCompanyId)) { refresh(true); return; }
-        setStaffGate(open?"open":"locked");
+        setStaffGate(open === "cashier" ? "cashier" : open ? "open" : "locked");
       })
       .catch(() => { if (mounted && request === requestId) setStaffGate("locked"); });
     };
@@ -65,7 +66,7 @@ function CompanyShell({ children }: AppShellProps) {
     const onSession = () => {
       // Drop the previous user's shell immediately. A subsequent IndexedDB
       // check may admit a new unlock, but cannot keep the old session visible.
-      if (standalone && !currentStaffId(activeCompanyId)) setStaffGate("locked");
+      setStaffGate("loading");
       refresh(true);
     };
     const onFocus = () => {if(document.visibilityState==="visible")refresh(true);};
@@ -147,6 +148,17 @@ function CompanyShell({ children }: AppShellProps) {
       <summary>More tools</summary>{links(moreTools)}
     </details></>;
   };
+  if (staffGate === "cashier") {
+    if (location !== "/sales" && location !== "/staff") return <Redirect to="/sales" replace />;
+    return <div className="cashier-workspace">
+      <header><strong>{profile?.name || "Tallybook"}</strong><span>Cashier workspace</span></header>
+      <nav aria-label="Cashier navigation">
+        <Link href="/sales" aria-current={location === "/sales" ? "page" : undefined}>Sales</Link>
+        <Link href="/staff" aria-current={location === "/staff" ? "page" : undefined}>Staff session</Link>
+      </nav>
+      <main ref={mainRef} tabIndex={-1} id="main-content">{children}</main>
+    </div>;
+  }
   // Local setup and unlock mount only their form, never navigation or business reports.
   if (standalone && (status !== "ready" || staffGate === "loading"))
     return <main role="status">{status === "error" ? "Cannot open the local ledger." : "Checking local staff access"}</main>;
@@ -165,6 +177,7 @@ function CompanyShell({ children }: AppShellProps) {
     <p className="text-sm text-muted-foreground">{staffGate === "locked" ? "Unlock with your local staff PIN to access this business." : "Checking the staff records stored on this device."}</p>
     <Link href="/staff" className="inline-block rounded border p-3">Go to staff unlock</Link>
   </main>;
+  if (staffGate !== "open") return <main id="main-content">{children}</main>;
   return <div className="app-frame">
     <a className="skip-link" href="#main-content">Skip to page content</a><span className="screen-reader-announcer" aria-live="polite" aria-atomic="true">{pageName} page</span>
     <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
