@@ -27,3 +27,12 @@ export declare function validateGhanaVatEvidence(sale: {
     taxMinor: number; taxableMinor: number; totalMinor: number;
   };
 }): true;
+
+export declare function validateGhanaVatLineEvidence(
+  sale: Parameters<typeof validateGhanaVatEvidence>[0] & { id: string },
+  saleLines: Array<{
+    id: string; saleId: string; quantity: number;
+    unitPriceMinor: number; lineTotalMinor: number;
+    ghanaTaxTreatmentAtSale?: GhanaTaxTreatment;
+  }>
+): true;
