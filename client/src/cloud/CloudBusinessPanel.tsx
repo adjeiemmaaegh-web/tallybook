@@ -122,7 +122,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
         setBusiness(created);
         setAccessible([...verified]);
         // Approved default: a new business opens in the cloud shop, where first-run setup continues.
-        navigate("/shop");
+        navigate("/shop?view=dashboard");
       }
     } catch (cause) {
       if (started === revision.current) setError(cause instanceof Error ? cause.message : "Could not create the cloud business.");
@@ -142,7 +142,13 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
+      <p className="tb-business-name">{business.name}</p>
+      <p className="text-sm">{business.role === "owner"
+        ? "View your shop’s sales, stock and team."
+        : "Record sales at your assigned store."}</p>
+      <Link href={business.role === "owner" ? "/shop?view=dashboard" : "/shop"} className="primary-action">
+        {business.role === "owner" ? "Open owner dashboard" : "Open POS"}
+      </Link></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
           <span>You’re signed in. Create your shop or join your employer’s shop.</span>

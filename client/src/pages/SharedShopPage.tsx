@@ -230,6 +230,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       <p>{overview.stores.length} stores · {overview.products.length} products</p>
       <button className="primary-action" type="button" onClick={() => setTab("sell")}>Open POS</button>
       <button className="secondary-action" type="button" onClick={() => setTab("sales")}>Review sales</button>
+      <details><summary>Tools on this device</summary>
+        <p>Reports and Clementia use the ledger saved in this browser.</p>
+        <Link href="/">Device ledger</Link> · <Link href="/assistant">Clementia</Link>
+      </details>
     </section>}
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}

@@ -63,8 +63,8 @@ it("sends an attendant to the shared shop without promoting to owner or opening 
   mock.getUser.mockResolvedValue({data:{user:{id:"attendant"}},error:null});
   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"attendant"});
   render(<CloudBusinessPanel accountOnly />);
-  expect(await screen.findByText(/You work in this business/)).toBeTruthy();
-  expect(screen.getByRole("link",{name:"Open shared shop"}).getAttribute("href")).toBe("/shop");
+  expect(await screen.findByText(/Record sales at your assigned store/)).toBeTruthy();
+  expect(screen.getByRole("link",{name:"Open POS"}).getAttribute("href")).toBe("/shop");
   expect(screen.queryByRole("link",{name:/ledger/})).toBeNull();
 });
 
@@ -114,4 +114,11 @@ it('resumes owner setup after remount only for the same verified account', async
   await screen.findByRole('button', {name: 'I own a business'});
   expect(screen.queryByLabelText('Business name')).toBeNull();
   sessionStorage.clear();
+});
+
+it('gives a verified owner one dashboard entry', async () => {
+  mock.lookup.mockResolvedValue({id:'cloud', name:'Shop', owner_id:'owner', role:'owner'});
+  render(<CloudBusinessPanel accountOnly />);
+  expect(await screen.findByRole('link',{name:'Open owner dashboard'})).toHaveAttribute('href','/shop?view=dashboard');
+  expect(screen.queryByRole('link',{name:'Open POS'})).toBeNull();
 });
