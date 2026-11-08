@@ -2,6 +2,7 @@ import { validateTaxSnapshot } from "@/features/sales/tax";
 import {validateGhanaVatLineEvidence} from "@/features/sales/ghanaVat.mjs";
 import { businessDayKey, businessDayStart, businessDayEnd, shiftBusinessDay } from "@/features/business/businessCalendar.mjs";
 import { requirePermission } from "@/features/staff/staff";
+import {managementProfitFromRecordedFigures,type ManagementProfitResult} from "./managementProfit.mjs";
 /** V10 Stage 3 independent reporting engine. Read-only; no inventory-cost guesses. */
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -35,6 +36,8 @@ export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | 
 export interface FinancialRange { start: Date; end: Date; label: string; country?: string }
 export interface FinancialInputs { sales: Sale[]; payments: Payment[]; repayments: DebtRepayment[]; expenses: Expense[]; reversals: SaleReversal[]; customers?:Customer[]; company?:string; cashReturns?: CashPartialSaleReturn[]; saleLines?: SaleLine[]; walletTransfers?: WalletTransfer[]; customerBenefits?: CustomerBenefitEntry[]; walletCurrency?: string; purchases?: Purchase[]; supplierPayableEntries?: SupplierPayableEntry[] }
 export interface FinancialSummary {
+  /** Read-only management result; no statutory tax, depreciation, accrued costs or external settlement asserted. */
+  managementProfit?:ManagementProfitResult;
   recordedTaxMinor: number;
   salesExcludingRecordedTaxMinor: number;
   cogsMinor?: number;
@@ -260,6 +263,13 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     if (!Number.isSafeInteger(summary.salesLessCostMinor)) throw new Error("Financial totals exceed safe integer precision.");
     summary.unavailable.cogs = "";
   } else summary.unavailable.cogs = `${costs.unavailableSales} sale or reversal postings have incomplete historical cost evidence.`;
+  summary.managementProfit=managementProfitFromRecordedFigures({
+    revenueExTaxMinor:summary.salesExcludingRecordedTaxMinor,
+    cogsMinor:summary.cogsMinor,expensesMinor:summary.expensesMinor,
+    costsUnavailable:costs.unavailableSales,
+    taxUnknownSales:summary.taxEvidence?.legacyUnverifiedSales??0
+  });
+  if(summary.managementProfit.status==="available")summary.unavailable.grossProfit="";
   assertCompanyScope(company, getActiveBusinessProfileId());
   return summary;
 }
@@ -340,6 +350,9 @@ export function financialCsv(summary:FinancialSummary):string {
         : 'Unavailable: some stock units have no historical purchase or opening cost']
     ] as (string|number)[][] : []),
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
+    ['Management gross profit (recorded tax + verified FIFO cost)',summary.managementProfit?.grossProfitMinor ?? 'Unavailable'],
+    ['Management operating result after recorded expenses',summary.managementProfit?.operatingResultMinor ?? 'Unavailable'],
+    ['Management result evidence',summary.managementProfit?.reason ?? 'No reconciled cost figures available'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
     ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier payments and operating expenses may duplicate the same real-world payout; they are never netted together without external disbursement evidence. Historical liabilities, tax filing obligations and legal tax rates are not inferred.'],
