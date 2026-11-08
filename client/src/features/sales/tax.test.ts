@@ -1,12 +1,13 @@
 import { auditLocalIntegrity } from "@/features/reliability/integrity";
 import Dexie from "dexie";
 import { afterEach, expect, it, vi } from "vitest";
-import { calculateTax, taxPolicyKey, type TaxPolicy } from "./tax";
+import { calculateTax, calculateSaleTax, taxReviewKeyForSale, taxPolicyKey, validateTaxSnapshot, type TaxPolicy } from "./tax";
+import {validateGhanaVatLineEvidence} from "./ghanaVat.mjs";
 import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
 import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 import { setActiveBusinessProfileId } from "@/features/business/activeCompany";
-import { createProduct } from "@/features/inventory/inventory";
+import { createProduct, updateProduct } from "@/features/inventory/inventory";
 import { completeSale, getSaleSnapshot } from "./sales";
 import { recoverSavedCheckout } from "./recoverSavedCheckout";
 import { createBackup, parseBackup, restoreBackup } from "@/features/backup/backup";
@@ -96,4 +97,56 @@ it("denies tax changes from cashier and locked owner sessions",async()=>{
   await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/permission denied/);
   lockStaff("primary");await expect(saveBusinessProfile({...profile,taxPolicy:policy},db)).rejects.toThrow(/locked/);
   expect((await db.businessProfiles.get("primary"))?.taxPolicy).toBeUndefined();
+});
+
+const ghanaAct1151: TaxPolicy = {
+  enabled: true, registrationStatus: "registered", registrationNumber: "TEST-GRA-ONLY",
+  label: "Ghana VAT and levies (2026)", rateBasisPoints: 2000, priceMode: "exclusive",
+  scheme: "ghana-vat-2026"
+};
+it("posts a real discounted Ghana VAT sale with separate VAT/NHIL/GETFund, receipt, backup and audit", async () => {
+  const {db,product,input} = await fixture(ghanaAct1151);
+  await updateProduct(product.id, {name:"Rice",categoryId:"uncategorized",sellingPrice:"10",costPrice:"1",initialStock:"3",lowStockThreshold:"1",ghanaTaxTreatment:"standard"}, "GHS", db);
+  const taxLines = [{productId:product.id,amountMinor:1000,treatment:"standard" as const}];
+  const taxReviewKey = taxReviewKeyForSale(ghanaAct1151,taxLines);
+  const saved = await completeSale({...input,amountPaid:"9.60",taxReviewKey},db);
+  expect(saved.sale).toMatchObject({subtotalMinor:1000,discountMinor:200,totalMinor:960,amountPaidMinor:960,tax:{
+    taxMinor:160,taxableMinor:800,ghana:{standardMinor:800,taxableBaseMinor:800,vatMinor:120,nhilMinor:20,getFundMinor:20,eVatStatus:"not-certified"}
+  }});
+  expect(saved.lines[0].ghanaTaxTreatmentAtSale).toBe("standard");
+  expect(validateGhanaVatLineEvidence(saved.sale, saved.lines)).toBe(true);
+  expect(() => validateGhanaVatLineEvidence(saved.sale, [{...saved.lines[0],ghanaTaxTreatmentAtSale:"exempt"}])).toThrow(/original sale lines/);
+  expect(validateTaxSnapshot(saved.sale)).toBe(160);
+  expect((await auditLocalIntegrity(db)).issues).toEqual([]);
+  const snapshot = await getSaleSnapshot(db);
+  const receipt = resolveReceiptDetail({receiptId:saved.receipt.id,snapshot,profile:{...profile,country:"Ghana"},customers:[]})!;
+  expect(formatReceiptShareText(receipt)).toContain("VAT (15%)");
+  expect(formatReceiptShareText(receipt)).toContain("NHIL (2.5%)");
+  expect(formatReceiptShareText(receipt)).toContain("GETFund (2.5%)");
+  expect(formatReceiptShareText(receipt)).toContain("NOT A GRA-CERTIFIED E-VAT INVOICE");
+  const backup = await createBackup(db);
+  const broken = structuredClone(backup);
+  broken.records.sales[0].tax!.ghana!.nhilMinor++;
+  expect(() => validateTaxSnapshot(broken.records.sales[0])).toThrow(/Ghana VAT component/);
+  // Backups also cross-check the immutable central sale envelope, which may
+  // reject the tampering before the dedicated Ghana component validator runs.
+  expect(() => parseBackup(JSON.stringify(broken))).toThrow();
+  expect(await getFinancialSummary("today",new Date(),undefined,undefined,db)).toMatchObject({recordedTaxMinor:160,salesExcludingRecordedTaxMinor:800});
+});
+it("refuses Ghana checkout if an item lacks a reviewed tax treatment without writing a sale", async () => {
+  const {db,product,input} = await fixture(ghanaAct1151);
+  const key = taxReviewKeyForSale(ghanaAct1151,[{productId:product.id,amountMinor:1000}]);
+  await expect(completeSale({...input,amountPaid:"9.60",taxReviewKey:key},db)).rejects.toThrow(/Classify every product/);
+  expect(await db.sales.count()).toBe(0);
+  expect((await db.products.get(product.id))?.stockQuantity).toBe(3);
+});
+it("keeps zero-rated and exempt Ghana lines free of levies with stable discount allocation", () => {
+  const policy = ghanaAct1151;
+  const result = calculateSaleTax([
+    {amountMinor:10000,treatment:"standard"},
+    {amountMinor:10000,treatment:"zero-rated"},
+    {amountMinor:10000,treatment:"exempt"}
+  ],3000,policy);
+  expect(result?.ghana).toMatchObject({standardMinor:9000,zeroRatedMinor:9000,exemptMinor:9000,vatMinor:1350,nhilMinor:225,getFundMinor:225,totalMinor:28800});
+  expect(() => calculateTax(27000, policy)).toThrow(/classified product/);
 });

@@ -131,3 +131,9 @@ html,body{background:var(--ta-canvas);color:var(--ta-ink)}
 .tb-public-welcome{max-width:1380px;margin:0 auto;padding:clamp(8px,2.5vw,25px);min-height:100dvh}
 .tb-public-welcome .tb-welcome{max-width:1340px}
 @media(max-width:640px){.tb-public-welcome{padding:0;overflow-x:clip}.tb-public-welcome .tb-welcome{min-height:100dvh;border-radius:0;margin-inline:0;width:100%;max-width:100%}}
+
+.tb-device-setup { max-width: 38rem; margin: clamp(1rem, 5vw, 3rem) auto; padding: clamp(1.5rem, 5vw, 3rem); background: var(--ta-card); border: 1px solid var(--ta-line); border-radius: 1rem; }
+.tb-device-setup h1 { color: var(--ta-ink); font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 750; line-height: 1.15; }
+.tb-device-setup p { margin: .75rem 0 1.5rem; color: var(--ta-muted); }
+.tb-verified-page .primary-action { background: var(--ta-blue); color: white; }
+.tb-welcome h1 { color: white; }

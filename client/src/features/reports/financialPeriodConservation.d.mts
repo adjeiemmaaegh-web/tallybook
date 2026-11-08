@@ -9,4 +9,4 @@ export function reconcileFinancialPeriodDisplay(input: {
   refunds?: readonly {createdAt:string;refundedMinor:number}[];
   walletTransfers?: readonly {createdAt:string;kind:string;amountMinor:number}[];
   expenses?: readonly {expenseDate:string;createdAt:string;category:string;amountMinor:number}[];
-}, saleById: ReadonlyMap<string,{walletAppliedMinor?:number}>,expected:{revenue:number;collections:number;expenses:number}):{daily:{day:string;revenueMinor:number;collectionsMinor:number;expensesMinor:number}[];expenseByCategory:{category:string;amountMinor:number}[]};
+}, saleById: ReadonlyMap<string,{walletAppliedMinor?:number}>,expected:{revenue:number;collections:number;expenses:number},country?:string):{daily:{day:string;revenueMinor:number;collectionsMinor:number;expensesMinor:number}[];expenseByCategory:{category:string;amountMinor:number}[]};

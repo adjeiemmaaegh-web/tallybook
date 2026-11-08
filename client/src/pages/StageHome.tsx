@@ -1,3 +1,4 @@
+import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
 /** Adobea design reminder (Stage 1 restyle): Home opens straight into today's numbers and the four most-used actions — no explainer copy, no marketing hero. */
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
@@ -8,7 +9,7 @@ import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { useOnlineState } from "@/hooks/useOnlineState";
 import { PremiumHomeOverview } from "@/components/PremiumHomeOverview";
-import { TallybookWelcome } from "@/components/TallybookWelcome";
+
 
 export default function StageHome() {
   const { status, retry } = useDatabase();
@@ -62,14 +63,7 @@ export default function StageHome() {
     );
   }
 
-  if (!profile) {
-    // A brand-new local device should show a genuine first-run welcome,
-    // not a fabricated "today's sales" dashboard. Account sign-in remains
-    // optional for the offline device ledger and required for shared shops.
-    return <div className="home-workspace tb-first-run-workspace pb-6">
-      <TallybookWelcome variant="device" />
-    </div>;
-  }
+  if (!profile) return <DeviceBusinessSetup description="Choose a business name and currency to start keeping records on this device." />;
 
   return <>{websiteUpdate}{setupError && <p role="status">Setup progress is temporarily unavailable. Saved records were not changed.</p>}<PremiumHomeOverview companyId={activeCompanyId} companyName={profile.name} country={profile.country} currency={profile.currency} online={online} counts={counts} /></>;
 }

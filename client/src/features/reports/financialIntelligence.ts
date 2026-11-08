@@ -1,5 +1,8 @@
 import { validateTaxSnapshot } from "@/features/sales/tax";
+import {validateGhanaVatLineEvidence} from "@/features/sales/ghanaVat.mjs";
+import { businessDayKey, businessDayStart, businessDayEnd, shiftBusinessDay } from "@/features/business/businessCalendar.mjs";
 import { requirePermission } from "@/features/staff/staff";
+import {managementProfitFromRecordedFigures,type ManagementProfitResult} from "./managementProfit.mjs";
 /** V10 Stage 3 independent reporting engine. Read-only; no inventory-cost guesses. */
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -30,9 +33,11 @@ import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import {summarizeReceivableAgeing,type ReceivableAgeing} from './receivableAgeing.mjs';
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
-export interface FinancialRange { start: Date; end: Date; label: string }
+export interface FinancialRange { start: Date; end: Date; label: string; country?: string }
 export interface FinancialInputs { sales: Sale[]; payments: Payment[]; repayments: DebtRepayment[]; expenses: Expense[]; reversals: SaleReversal[]; customers?:Customer[]; company?:string; cashReturns?: CashPartialSaleReturn[]; saleLines?: SaleLine[]; walletTransfers?: WalletTransfer[]; customerBenefits?: CustomerBenefitEntry[]; walletCurrency?: string; purchases?: Purchase[]; supplierPayableEntries?: SupplierPayableEntry[] }
 export interface FinancialSummary {
+  /** Read-only management result; no statutory tax, depreciation, accrued costs or external settlement asserted. */
+  managementProfit?:ManagementProfitResult;
   recordedTaxMinor: number;
   salesExcludingRecordedTaxMinor: number;
   cogsMinor?: number;
@@ -69,22 +74,34 @@ export interface FinancialSummary {
   daily: { day: string; revenueMinor: number; collectionsMinor: number; expensesMinor: number }[];
   unavailable: { cogs: string; grossProfit: string; tax: string; supplierPayables: string };
 }
-const dayStart = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
-const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const validDate = (d: Date) => !Number.isNaN(d.getTime());
-export function financialRange(period: FinancialPeriod, now = new Date(), customStart?: string, customEnd?: string): FinancialRange {
-  const start = dayStart(now); const end = new Date(start); end.setDate(end.getDate()+1);
-  if (period === "week") { const weekday = (start.getDay()+6)%7; start.setDate(start.getDate()-weekday); }
-  if (period === "month") start.setDate(1);
-  if (period === "quarter") { start.setDate(1); start.setMonth(Math.floor(start.getMonth()/3)*3); }
-  if (period === "year") { start.setMonth(0,1); }
+export function financialRange(period: FinancialPeriod, now = new Date(), customStart?: string, customEnd?: string, country?: string): FinancialRange {
+  const ghana = country?.trim().toLowerCase() === "ghana";
+  const start = businessDayStart(now, country);
+  const end = businessDayEnd(now, country);
+  const setDay = (date: Date, value: number) => ghana ? date.setUTCDate(value) : date.setDate(value);
+  const setMonth = (date: Date, month: number, day?: number) => ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day);
+  const getDay = (date: Date) => ghana ? date.getUTCDate() : date.getDate();
+  const getMonth = (date: Date) => ghana ? date.getUTCMonth() : date.getMonth();
+  const weekday = ghana ? start.getUTCDay() : start.getDay();
+  if (period === "week") setDay(start, getDay(start) - ((weekday + 6) % 7));
+  if (period === "month") setDay(start, 1);
+  if (period === "quarter") { setDay(start, 1); setMonth(start, Math.floor(getMonth(start) / 3) * 3); }
+  if (period === "year") setMonth(start, 0, 1);
   if (period === "custom") {
-    const parse = (s?: string) => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error("Choose valid start and end dates."); const d = new Date(`${s}T12:00:00`); if (!validDate(d) || dateKey(d)!==s) throw new Error("Invalid calendar date."); return dayStart(d); };
-    const a=parse(customStart), b=parse(customEnd); if (a>b) throw new Error("The start date cannot be after the end date.");
-    const e=new Date(b); e.setDate(e.getDate()+1); if ((e.getTime()-a.getTime())/86400000>3660) throw new Error("The custom range cannot exceed ten years.");
-    return {start:a,end:e,label:`${customStart} to ${customEnd}`};
+    const parse = (value?: string) => {
+      if (!value || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) throw new Error("Choose valid start and end dates.");
+      const date = new Date(ghana ? value + "T00:00:00.000Z" : value + "T12:00:00");
+      if (!validDate(date) || businessDayKey(date, country) !== value) throw new Error("Invalid calendar date.");
+      return businessDayStart(date, country);
+    };
+    const a = parse(customStart), b = parse(customEnd);
+    if (a > b) throw new Error("The start date cannot be after the end date.");
+    const e = shiftBusinessDay(b, 1, country);
+    if ((e.getTime() - a.getTime()) / 86400000 > 3660) throw new Error("The custom range cannot exceed ten years.");
+    return { start: a, end: e, label: customStart + " to " + customEnd, country };
   }
-  return {start,end,label:period === "today"?"Today":`This ${period}`};
+  return { start, end, label: period === "today" ? "Today" : "This " + period, country };
 }
 const within = (date: string, range: FinancialRange) => { const d=new Date(date); return validDate(d)&&d>=range.start&&d<range.end; };
 const total = <T,>(rows:T[], fn:(row:T)=>number) => rows.reduce((sum,row)=>{
@@ -102,6 +119,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   if (saleById.size!==input.sales.length) throw new Error("Financial records contain duplicate sale IDs; reconcile the ledger before reporting.");
   for (const sale of input.sales) {
     validateTaxSnapshot(sale);
+    if (sale.tax?.ghana) validateGhanaVatLineEvidence(sale, (input.saleLines ?? []).filter(line => line.saleId === sale.id));
     const wallet = sale.walletAppliedMinor ?? 0;
     if (!Number.isSafeInteger(wallet) || wallet < 0 || wallet > sale.amountPaidMinor ||
         (wallet > 0 && (!sale.customerId || sale.paymentMethod !== "wallet")))
@@ -182,7 +200,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   // Rebuild the daily/category display from independent saved-event postings,
   // using exact integer arithmetic. A final net amount must never disguise an
   // overflowing daily balance, or a missing period row.
-  const periodDisplay = reconcileFinancialPeriodDisplay({sales,payments,repayments,reversals,refunds,walletTransfers,expenses},saleById,{revenue:revenueMinor,collections:collectionsMinor,expenses:expensesMinor});
+  const periodDisplay = reconcileFinancialPeriodDisplay({sales,payments,repayments,reversals,refunds,walletTransfers,expenses},saleById,{revenue:revenueMinor,collections:collectionsMinor,expenses:expensesMinor},range.country);
   // Report integrity is a hard boundary: masking a negative debt balance as zero
   // would hide duplicate repayments, mismatched reversals or damaged ledger data.
   const figures=[recordedTaxMinor,salesExcludingRecordedTaxMinor,revenueMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,collectionsMinor,expensesMinor,receivables,collectionsMinor-expensesMinor];
@@ -201,7 +219,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   return {supplierReconciliation, ...(receivableAudit?{receivableAudit}:{}),
     ...(prepaidLiability ? {prepaidLiabilityMinor:prepaidLiability.liabilityMinor,
       prepaidLiabilityCustomers:prepaidLiability.customerCount,
-      prepaidCashAudit:prepaidLiability} : {}), recordedTaxMinor,salesExcludingRecordedTaxMinor,range,revenueMinor,saleCount:sales.length,collectionsMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,expensesMinor,netRecordedCashMovementMinor:collectionsMinor-expensesMinor,currentReceivablesMinor:receivables,expenseByCategory:periodDisplay.expenseByCategory,daily:periodDisplay.daily,unavailable:{cogs:"Historical sale-line unit costs have not been established and reconciled with V9 inventory.",grossProfit:"Requires verified cost of goods sold, including purchase, return and batch costing.",tax:"Recorded single-rate tax is shown separately; historical unconfigured tax, exemptions, compound levies and statutory filing are not established.",supplierPayables:supplierLimitations}};
+      prepaidCashAudit:prepaidLiability} : {}), recordedTaxMinor,salesExcludingRecordedTaxMinor,range,revenueMinor,saleCount:sales.length,collectionsMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,expensesMinor,netRecordedCashMovementMinor:collectionsMinor-expensesMinor,currentReceivablesMinor:receivables,expenseByCategory:periodDisplay.expenseByCategory,daily:periodDisplay.daily,unavailable:{cogs:"Historical sale-line unit costs have not been established and reconciled with V9 inventory.",grossProfit:"Requires verified cost of goods sold, including purchase, return and batch costing.",tax:"Saved single-rate or opted-in Ghana VAT components are auditable; legal classification, certified e-VAT, input credits, historic unknown tax and statutory filing remain unverified.",supplierPayables:supplierLimitations}};
 }
 export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),start?:string,end?:string,database:TallybookDB=db):Promise<FinancialSummary> {
   const company=getActiveBusinessProfileId();
@@ -213,7 +231,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,suppliers,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
-  const range = financialRange(period,now,start,end);
+  const range = financialRange(period,now,start,end,profile.country);
   // Independent full-history checkout/tender reconstruction before summing any
   // selected period. A valid tax snapshot alone cannot certify cash collections.
   assertSavedSaleTenderReconciliation(scoped(sales), scoped(payments));
@@ -245,6 +263,12 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     if (!Number.isSafeInteger(summary.salesLessCostMinor)) throw new Error("Financial totals exceed safe integer precision.");
     summary.unavailable.cogs = "";
   } else summary.unavailable.cogs = `${costs.unavailableSales} sale or reversal postings have incomplete historical cost evidence.`;
+  summary.managementProfit=managementProfitFromRecordedFigures({
+    revenueExTaxMinor:summary.salesExcludingRecordedTaxMinor,
+    cogsMinor:summary.cogsMinor,expensesMinor:summary.expensesMinor,
+    costsUnavailable:costs.unavailableSales,
+    taxUnknownSales:summary.taxEvidence?.legacyUnverifiedSales??0
+  });
   assertCompanyScope(company, getActiveBusinessProfileId());
   return summary;
 }
@@ -325,6 +349,9 @@ export function financialCsv(summary:FinancialSummary):string {
         : 'Unavailable: some stock units have no historical purchase or opening cost']
     ] as (string|number)[][] : []),
     ['Sales excluding recorded tax less cost before expenses',summary.salesLessCostMinor ?? 'Unavailable'],
+    ['Management gross profit (recorded tax + verified FIFO cost)',summary.managementProfit?.grossProfitMinor ?? 'Unavailable'],
+    ['Management operating result after recorded expenses',summary.managementProfit?.operatingResultMinor ?? 'Unavailable'],
+    ['Management result evidence',summary.managementProfit?.reason ?? 'No reconciled cost figures available'],
     ...supplierRows,[],['Day','Net sales (minor)','Collections (minor)','Expenses (minor)'],
     ...summary.daily.map(d=>[d.day,d.revenueMinor,d.collectionsMinor,d.expensesMinor]),[],
     ['Disclaimer','Not a statutory profit, tax, or complete cash-flow statement. Supplier payments and operating expenses may duplicate the same real-world payout; they are never netted together without external disbursement evidence. Historical liabilities, tax filing obligations and legal tax rates are not inferred.'],

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { currencyMinorDivisor } from "@/features/inventory/inventory";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import {businessDayKey} from "@/features/business/businessCalendar.mjs";
 
 export const expenseCategories = ["transport", "rent", "utilities", "supplies", "repairs", "other"] as const;
 export type ExpenseCategory = (typeof expenseCategories)[number];
@@ -50,11 +51,11 @@ export function localExpenseDate(now = new Date()) {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
-function validateExpenseDate(expenseDate: string, now = new Date()) {
+function validateExpenseDate(expenseDate: string, now = new Date(), country?: string) {
   const [year, month, day] = expenseDate.split("-").map(Number);
   const localDate = new Date(year, month - 1, day);
   if (localDate.getFullYear() !== year || localDate.getMonth() !== month - 1 || localDate.getDate() !== day) throw new Error("Choose a valid expense date.");
-  if (expenseDate > localExpenseDate(now)) throw new Error("Choose today or an earlier expense date.");
+  if (expenseDate > businessDayKey(now, country)) throw new Error("Choose today or an earlier expense date.");
 }
 
 function parseExpenseAmount(amount: string, currency: string) {
@@ -73,7 +74,6 @@ export async function createExpense(values: CreateExpenseInput, database: Tallyb
 async function createExpenseWhileLocked(values:CreateExpenseInput,database:TallybookDB) {
   const company=getActiveBusinessProfileId();
   const input = expenseFormSchema.parse(values);
-  validateExpenseDate(input.expenseDate);
   if (!/^[A-Z]{3}$/.test(values.currency)) throw new Error("Use a valid three-letter expense currency.");
   const amountMinor = parseExpenseAmount(input.amount, values.currency);
   const now = new Date().toISOString();
@@ -98,6 +98,7 @@ async function createExpenseWhileLocked(values:CreateExpenseInput,database:Tally
       return existing;
     }
     const profile=await database.businessProfiles.get(activeId);
+    validateExpenseDate(input.expenseDate, new Date(), profile?.country);
     if(profile?.currency!==undefined&&profile.currency!==values.currency)
       throw new Error('Expense currency differs from active company currency; no FX conversion is assumed.');
     const expense: Expense = {

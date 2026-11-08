@@ -37,7 +37,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
     await expect(page.getByLabel('Today at the till')).toBeVisible();
     await expect(page.locator('.tb-dashboard-till-total')).toContainText('GHS');
     await expect(page.locator('.tb-dashboard-till-cells > div')).toHaveCount(2);
-    await expect(page.locator('.premium-kpi')).toHaveCount(4);
+    await expect(page.locator('.premium-kpi')).toHaveCount(6);
     await expect(page.getByRole('heading',{name:'Sales Overview'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Quick actions'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Getting Started with Tallybook'})).toBeVisible();
@@ -79,7 +79,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
     expect(rects.scrollWidth,'No horizontal overflow at '+viewport.width).toBeLessThanOrEqual(rects.width+1);
     if(viewport.width>=1024){
       await expect(page.locator('.premium-desktop-rail')).toBeVisible();
-      await expect(page.locator('.premium-rail-setup')).toHaveAttribute('href','/#getting-started');
+      await expect(page.locator('.premium-desktop-rail').getByRole('link',{name:'Business details'})).toHaveAttribute('href','/business');
     }else{
       await expect(page.locator('.premium-desktop-rail')).toBeHidden();
       await page.getByRole('button',{name:'Open navigation menu'}).click();

@@ -10,6 +10,7 @@ import { DatabaseStatus } from "@/components/DatabaseStatus";
 import {Run18UpdateNotice} from "@/components/Run18UpdateNotice";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
+import { internalToolsEnabled } from "@/lib/internalTools";
 import { appRoutes } from "@/lib/routes";
 import { markReportsExplored } from "@/features/business/setupProgress";
 import "./PremiumShell.css";
@@ -21,7 +22,7 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
   const { href, label, shortLabel, icon: Icon } = route;
   const [location] = useLocation();
   const isActive = location === href;
-  return <Link href={href} aria-current={isActive ? "page" : undefined} className={`nav-link ${isActive ? "nav-link-active" : ""}`}><Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.25 : 1.8} aria-hidden="true" /><span className="hidden text-sm font-semibold md:inline">{label}</span><span className="text-[0.62rem] font-semibold sm:hidden">{shortLabel}</span></Link>;
+  return <Link href={href} aria-current={isActive ? "page" : undefined} className={`nav-link ${isActive ? "nav-link-active" : ""}`}><Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.25 : 1.8} aria-hidden="true" /><span className="hidden text-sm font-semibold md:inline">{label}</span><span className="text-[0.62rem] font-semibold md:hidden">{shortLabel}</span></Link>;
 }
 
 export function AppShell({ children }: AppShellProps) {
@@ -100,11 +101,52 @@ function CompanyShell({ children }: AppShellProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [menuOpen]);
   const groups = [
-    { title: "Workspace", links: [{ href: "/", label: "Home", Icon: LayoutDashboard }, { href: "/sales", label: "Sales (POS)", Icon: ShoppingBag }, { href: "/inventory", label: "Inventory", Icon: Boxes }, { href: "/customers", label: "Customers", Icon: ContactRound }] },
-    { title: "Management", links: [{ href: "/purchases", label: "Purchases", Icon: Truck }, { href: "/expenses", label: "Expenses", Icon: CircleDollarSign }, { href: "/reports", label: "Reports", Icon: BarChart3 }] },
-    { title: "Settings", links: [{ href: "/business", label: "Business Setup", Icon: Store }, { href: "/staff", label: "Staff & Permissions", Icon: Users }, { href: "/backup", label: "Backup & Restore", Icon: HardDriveDownload }] },
+    { title: "Daily work", links: [
+      { href: "/", label: "Home", Icon: LayoutDashboard },
+      { href: "/sales", label: "Sales", Icon: ShoppingBag },
+      { href: "/inventory", label: "Stock", Icon: Boxes },
+      { href: "/customers", label: "Customers", Icon: ContactRound },
+      { href: "/assistant", label: "Clementia", Icon: MessageCircleQuestion },
+    ]},
+    { title: "Money and stock", links: [
+      { href: "/purchases", label: "Purchases", Icon: Truck },
+      { href: "/expenses", label: "Expenses", Icon: CircleDollarSign },
+      { href: "/end-of-day", label: "End of day", Icon: ClipboardCheck },
+      { href: "/reports", label: "Reports", Icon: BarChart3 },
+    ]},
+    { title: "Business settings", links: [
+      { href: "/business", label: "Business details", Icon: Store },
+      { href: "/stores", label: "Stores", Icon: Store },
+      { href: "/staff", label: "Staff and permissions", Icon: Users },
+      { href: "/backup", label: "Backup and restore", Icon: HardDriveDownload },
+    ]},
   ];
-  const groupedNav = (onNavigate?: () => void) => <>{groups.map(group => <section key={group.title} className="premium-nav-group"><h2>{group.title}</h2>{group.links.map(({ href, label, Icon }) => <Link key={href} href={href} onClick={onNavigate} aria-current={location === href ? "page" : undefined} className={`premium-nav-item ${location === href ? "premium-nav-selected" : ""}`}><Icon className="h-5 w-5 shrink-0" aria-hidden="true" /><span>{label}</span></Link>)}</section>)}<details className="premium-more-tools"><summary>More tools</summary>{[{ href: "/end-of-day", label: "End of day", Icon: Bell }, { href: "/stores", label: "Stores", Icon: Store }, { href: "/commerce", label: "Commerce drafts", Icon: Store }, { href: "/alerts", label: "Alerts", Icon: Bell }, { href: "/sync-status", label: "Sync status", Icon: Cloud }, { href: "/assistant", label: "Assistant", Icon: MessageCircleQuestion }, { href: "/device-uat", label: "Device acceptance (owner only)", Icon: ClipboardCheck }, { href: "/release-operations", label: "Release operations (owner only)", Icon: ShieldCheck }].map(({href,label,Icon})=><Link key={href} href={href} onClick={onNavigate} className="premium-nav-item"><Icon className="h-5 w-5 shrink-0" aria-hidden="true"/><span>{label}</span></Link>)}</details></>;
+  const moreTools = [
+    { href: "/quotations", label: "Quotations", Icon: ClipboardCheck },
+    { href: "/customer-benefits", label: "Customer benefits", Icon: ContactRound },
+    { href: "/commerce", label: "Commerce drafts", Icon: Store },
+    { href: "/insights", label: "Insights", Icon: BarChart3 },
+    { href: "/business-health", label: "Business health", Icon: BarChart3 },
+    { href: "/financial-intelligence", label: "Financial analysis", Icon: CircleDollarSign },
+    { href: "/alerts", label: "Alerts", Icon: Bell },
+    { href: "/sync-status", label: "Sync status", Icon: Cloud },
+    ...(internalToolsEnabled ? [
+      { href: "/device-uat", label: "Device acceptance (owner only)", Icon: ClipboardCheck },
+      { href: "/release-operations", label: "Release operations (owner only)", Icon: ShieldCheck },
+    ] : []),
+  ];
+  const groupedNav = (onNavigate?: () => void) => {
+    const links = (items: typeof moreTools) => items.map(({href, label, Icon}) =>
+      <Link key={href} href={href} onClick={onNavigate} aria-current={location === href ? "page" : undefined}
+        className={location === href ? "premium-nav-item premium-nav-selected" : "premium-nav-item"}>
+        <Icon className="h-5 w-5 shrink-0" aria-hidden="true"/><span>{label}</span>
+      </Link>);
+    return <>{groups.map(group => <section key={group.title} className="premium-nav-group">
+      <h2>{group.title}</h2>{links(group.links)}
+    </section>)}<details className="premium-more-tools" open={moreTools.some(tool => tool.href === location) || undefined}>
+      <summary>More tools</summary>{links(moreTools)}
+    </details></>;
+  };
   // Local setup and unlock mount only their form, never navigation or business reports.
   if (standalone && (status !== "ready" || staffGate === "loading"))
     return <main role="status">{status === "error" ? "Cannot open the local ledger." : "Checking local staff access"}</main>;
@@ -125,7 +167,7 @@ function CompanyShell({ children }: AppShellProps) {
   </main>;
   return <div className="app-frame">
     <a className="skip-link" href="#main-content">Skip to page content</a><span className="screen-reader-announcer" aria-live="polite" aria-atomic="true">{pageName} page</span>
-    <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><Link href="/#getting-started" className="premium-rail-setup"><span className="premium-rail-setup-icon"><LayoutDashboard className="h-5 w-5" aria-hidden="true" /></span><span><strong>Complete setup</strong><small>Let's get your business ready. Follow the steps to start.</small></span><span>Continue Setup →</span></Link><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
+    <aside className="desktop-rail premium-desktop-rail" aria-label="Primary navigation"><nav className="premium-nav-groups" aria-label="Desktop sections">{groupedNav()}</nav><p className="premium-storage-note"><CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />Records stay on this device. Keep a backup.</p></aside>
     {menuOpen && <div className="premium-mobile-overlay"><button type="button" className="premium-drawer-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /><aside ref={menuDrawerRef} id="run18-navigation-drawer" className="premium-mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile navigation"><div className="premium-drawer-heading"><BrandMark compact /><button ref={menuCloseRef} type="button" aria-label="Close menu" onClick={() => { setMenuOpen(false); menuTriggerRef.current?.focus(); }}><X className="h-5 w-5" /></button></div><nav className="premium-nav-groups">{groupedNav(() => setMenuOpen(false))}</nav></aside></div>}
     <div className="content-frame"><header className="top-bar" aria-label="Application status"><div className="premium-header-brand"><button ref={menuTriggerRef} className="premium-menu-button" type="button" aria-label="Open navigation menu" aria-controls="run18-navigation-drawer" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu className="h-5 w-5" /></button><div className="premium-header-brandmark" aria-label="Tallybook"><span className="premium-header-logo" aria-hidden="true"><BarChart3 size={25} strokeWidth={3}/></span><span className="premium-header-wordmark"><strong>Tallybook</strong><small>Manage. Grow. Together.</small></span></div><div className="mobile-brand-lockup"><BrandMark compact /></div></div><Link href="/inventory" className="premium-global-search" aria-label="Search products in inventory"><Search size={17} aria-hidden="true"/><span>Search products in inventory</span><kbd>Inventory</kbd></Link><CompanySwitcher compact /><div className="shell-top-utilities"><Link href="/alerts" aria-label="View alerts"><Bell className="h-4 w-4" aria-hidden="true" /></Link><Link href="/business" aria-label="Business settings"><Store className="h-4 w-4" aria-hidden="true" /></Link><Link href="/assistant" aria-label="Clementia assistant"><MessageCircleQuestion className="h-4 w-4" aria-hidden="true" /></Link><Link href="/backup" aria-label="Backup"><HardDriveDownload className="h-4 w-4" aria-hidden="true" /></Link><DatabaseStatus /></div><Link href="/account" className="premium-header-account" aria-label="Open Tallybook account"><span aria-hidden="true">TB</span><span><strong>My Account</strong><small>Business user</small></span></Link></header><Run18UpdateNotice/><main ref={mainRef} id="main-content" className="page-content" tabIndex={-1}>{children}</main></div>
     <ClementiaLauncher hidden={location === "/assistant" || location === "/sales" || location === "/staff"} />

@@ -1,3 +1,4 @@
+import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
 /** Tallybook Africa Stage 2 design reminder: make who owes what immediately scannable, while immutable repayments and derived balances remain the single source of truth. */
 /** Tallybook Africa Stage 2 and 9 design reminder: debt actions remain plain, mobile-first, and visible; customer balances stay derived from immutable saved records, while sharing reads only saved local facts. */
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -191,7 +192,7 @@ export default function CustomersPage() {
     finally { setSavingRepayment(false); }
   };
 
-  if (!profile) return <section className="reports-gate"><div className="reports-gate-sheet"><div className="reports-gate-brand"><strong>Tallybook</strong><span>Business ledger</span></div><span className="workspace-marker">CUS</span><p className="eyebrow"><span className="eyebrow-dot" />Customer record prerequisites</p><h1>Set the record before you add a customer.</h1><p>Your business identity and receipt currency keep customer details and future balances clear.</p><div className="reports-prerequisite-list"><div><span>01</span><strong>Business name</strong><small>Names the ledger that owns every customer record.</small></div><div><span>02</span><strong>Receipt currency</strong><small>Keeps future balances readable and comparable.</small></div><div><span>03</span><strong>Saved customer records</strong><small>Customer details, sales, and payments appear after setup.</small></div></div><p className="reports-gate-tally"><b>Two details to begin</b><span>Business name · Currency</span></p><Link href="/business" className="primary-action">Set up business</Link></div></section>;
+  if (!profile) return <DeviceBusinessSetup description="Add your business details to start saving customer records." />;
 
   return <div className="customers-page">
     <section className="customers-hero"><p className="eyebrow"><span className="eyebrow-dot" />Customers and money owed</p><span className="workspace-marker">CUS</span><h1>Know who <em>owes what.</em></h1><p>Names, contact details, sales, repayments, and outstanding balances stay together in {profile.name}'s local customer book.</p><div className="customers-hero-summary"><span className="stamp stamp-ready"><Check className="h-3.5 w-3.5" aria-hidden="true" />{activeCount} active {activeCount === 1 ? "customer" : "customers"}</span><span className="inventory-quiet-token">Open a customer to see money owed</span></div></section>

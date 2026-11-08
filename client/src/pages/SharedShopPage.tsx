@@ -6,6 +6,9 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
+import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
+import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,7 +31,7 @@ import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "dashboard" | "sell" | "stock" | "team" | "sales" | "customers";
+type Tab = "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -214,7 +217,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
@@ -225,14 +228,21 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       <button type="button" className="shop-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh"><RefreshCw aria-hidden="true" /></button>
     </nav>
     {tab === "dashboard" && isOwner && <section className="shop-card">
-      <h2>Owner dashboard</h2>
+      <SharedShopOwnerDashboard companyId={business.id} overview={overview} online={online} />
       <p>Records from {business.name}’s shared shop</p>
       <p>{overview.stores.length} stores · {overview.products.length} products</p>
       <button className="primary-action" type="button" onClick={() => setTab("sell")}>Open POS</button>
       <button className="secondary-action" type="button" onClick={() => setTab("sales")}>Review sales</button>
+      <details><summary>Tools on this device</summary>
+        <p>Reports and Clementia use the ledger saved in this browser.</p>
+        <Link href="/">Device ledger</Link> · <Link href="/assistant">Clementia</Link>
+      </details>
     </section>}
+
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}
+    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && <SalesPanel {...ctx} />}

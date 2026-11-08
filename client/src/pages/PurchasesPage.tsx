@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
+import { businessDayKey } from "@/features/business/businessCalendar.mjs";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { db } from "@/db/TallybookDB";
 import type { StoreLocation } from "@/features/stores/storeDirectory";
@@ -21,7 +22,7 @@ import { archiveSupplier, completePurchase, createSupplier, getPurchasesSnapshot
 type DraftLine = { productId: string; quantity: string; unitCost: string; batchCode: string; expiryDate: string };
 const blankSupplier: SupplierFormValues = { name: "", phone: "", email: "", address: "", notes: "" };
 const blankLine = (): DraftLine => ({ productId: "", quantity: "1", unitCost: "", batchCode: "", expiryDate: "" });
-const localDate = () => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const localDate = (country?: string) => businessDayKey(new Date(), country);
 
 function purchaseLineSummary(line: PurchaseLine, currency?: string) { return currency ? `${line.quantity} × ${formatMinorAmount(line.unitCostMinor, currency)} = ${formatMinorAmount(line.lineTotalMinor, currency)}` : `${line.quantity} × ${line.unitCostMinor} minor units = ${line.lineTotalMinor} minor units (currency unverified)`; }
 
@@ -69,7 +70,7 @@ export default function PurchasesPage() {
   const openSupplier = (supplier?: Supplier) => { setEditingSupplier(supplier ?? null); supplierForm.reset(supplier ? { name: supplier.name, phone: supplier.phone ?? "", email: supplier.email ?? "", address: supplier.address ?? "", notes: supplier.notes ?? "" } : blankSupplier); setSupplierDialog(true); };
   const saveSupplier = supplierForm.handleSubmit(async (values) => { try { const supplier = editingSupplier ? await updateSupplier(editingSupplier.id, values) : await createSupplier(values); toast.success(editingSupplier ? `${supplier.name} was updated. Earlier purchases keep their original supplier name.` : `${supplier.name} is ready for purchases.`); setSupplierDialog(false); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "We could not save this supplier."); } });
   const archive = async (supplier: Supplier) => { if (!window.confirm(`Archive ${supplier.name}? Completed purchases will remain available, but this supplier cannot be selected for a new purchase.`)) return; try { await archiveSupplier(supplier.id); toast.success(`${supplier.name} was archived. Earlier purchases remain unchanged.`); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "We could not archive this supplier."); } };
-  const openPurchase = () => { if (!suppliers.length) { toast.info("Add a supplier before recording a purchase."); openSupplier(); return; } if (!products.length) { toast.info("Add an active product before recording a purchase."); return; } setPurchaseSupplierId(suppliers[0].id); setPurchaseDate(localDate()); setPurchaseNote(""); setLines([blankLine()]); setPurchaseDialog(true); };
+  const openPurchase = () => { if (!suppliers.length) { toast.info("Add a supplier before recording a purchase."); openSupplier(); return; } if (!products.length) { toast.info("Add an active product before recording a purchase."); return; } setPurchaseSupplierId(suppliers[0].id); setPurchaseDate(localDate(profile?.country)); setPurchaseNote(""); setLines([blankLine()]); setPurchaseDialog(true); };
   const updateLine = (index: number, field: keyof DraftLine, value: string) => setLines((current) => current.map((line, lineIndex) => lineIndex === index ? { ...line, [field]: value } : line));
   const openExistingBatch = () => { const candidates = products.filter(product => product.itemKind !== "service" && product.stockQuantity > 0); if (!candidates.length) { toast.info("No active on-hand products need existing batch labels."); return; } setBatchProductId(candidates[0].id); setBatchCode(""); setBatchQuantity(""); setBatchExpiryDate(""); setExistingBatchDialog(true); };
   const saveExistingBatch = async () => { if (!batchProductId || submittingBatch) return; setSubmittingBatch(true); try { const batch = await registerBatch(batchProductId, batchCode, Number(batchQuantity), batchExpiryDate || undefined); toast.success(`Batch ${batch.batchCode} labels ${batch.quantity} existing units. No stock increase or historic purchase cost was recorded.`); setExistingBatchDialog(false); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not record the existing stock batch."); } finally { setSubmittingBatch(false); } };

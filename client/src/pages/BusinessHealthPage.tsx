@@ -1,3 +1,4 @@
+import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
 /** Tallybook Africa Stage 8 design reminder: Business Health is read-only, plainly labelled local context—not profit, tax, a cash balance, or an accounting statement. */
 import { ArrowLeft, ArrowRight, BarChart3, CircleDollarSign, ClipboardList, PackageSearch, ReceiptText, UsersRound, WalletCards } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -25,7 +26,7 @@ export default function BusinessHealthPage() {
   useEffect(() => { const update = () => { void refresh(); }; window.addEventListener("focus", update); window.addEventListener("pageshow", update); return () => { window.removeEventListener("focus", update); window.removeEventListener("pageshow", update); }; }, [refresh]);
   useEffect(() => { setSummary(null); }, [activeCompanyId]);
 
-  if (!profile) return <section className="reports-gate"><div className="reports-gate-sheet"><div className="reports-gate-brand"><strong>Tallybook</strong><span>Business ledger</span></div><span className="workspace-marker">HLTH</span><p className="eyebrow"><span className="eyebrow-dot" />Business Health prerequisites</p><h1>Set the record before you check what needs attention.</h1><p>Your business name and receipt currency give every saved figure a clear local context.</p><div className="reports-prerequisite-list"><div><span>01</span><strong>Business name</strong><small>Names the ledger these figures belong to.</small></div><div><span>02</span><strong>Receipt currency</strong><small>Keeps sales, payments, and expenses comparable.</small></div><div><span>03</span><strong>Saved records</strong><small>Sales, customer debt, expenses, and stock appear after setup.</small></div></div><p className="reports-gate-tally"><b>Two details to begin</b><span>Business name · Currency</span></p><Link href="/business" className="primary-action">Set up business</Link></div></section>;
+  if (!profile) return <DeviceBusinessSetup description="Set up your business to review its performance." />;
   const cards = summary ? [
     { label: "Sales recorded", value: formatMinorAmount(summary.salesMinor, profile.currency), note: "Completed sales in this period", icon: ReceiptText, href: "/sales" },
     { label: "Money collected", value: formatMinorAmount(summary.moneyCollectedMinor, profile.currency), note: "Sale payments and customer payments", icon: WalletCards, href: "/reports" },
