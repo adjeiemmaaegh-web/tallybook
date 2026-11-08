@@ -23,5 +23,5 @@ export function recoverSavedCheckout(snapshot: SaleSnapshot, companyId: string, 
   assertSplitPaymentLedger(sale,payments);
   if ((sale.paymentMethod!=="split"&&payments.length>1) || payments.some(payment => !Number.isSafeInteger(payment.amountMinor) || payment.amountMinor <= 0 || (sale.paymentMethod!=="split"&&payment.method !== sale.paymentMethod)) || payments.reduce((total, payment) => total + payment.amountMinor, 0) !== sale.amountPaidMinor - (sale.walletAppliedMinor ?? 0)) fail("payment does not reconcile");
   if (sale.walletAppliedMinor !== undefined && (sale.paymentMethod !== "wallet" || !Number.isSafeInteger(sale.walletAppliedMinor) || sale.walletAppliedMinor < 0 || sale.walletAppliedMinor > sale.amountPaidMinor || !sale.customerId)) fail("has invalid wallet settlement");
-  return { sale, receipt: receipts[0], payment: payments[0], payments };
+  return { sale, receipt: receipts[0], payment: payments[0] };
 }
