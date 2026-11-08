@@ -509,7 +509,14 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for (const shift of records.staffShifts) {
     if (!Number.isSafeInteger(shift.openingFloatMinor) || shift.openingFloatMinor < 0 ||
       typeof shift.openedAt !== 'string' || Number.isNaN(Date.parse(shift.openedAt)) ||
-      (shift.varianceMinor !== undefined && shift.varianceMinor !== (shift.countedCashMinor ?? 0) - (shift.expectedCashMinor ?? 0)))
+      (shift.varianceMinor !== undefined && shift.varianceMinor !== (shift.countedCashMinor ?? 0) - (shift.expectedCashMinor ?? 0)) ||
+      (shift.reviewedAt !== undefined && (!shift.closedAt || !Number.isFinite(Date.parse(shift.reviewedAt)) ||
+        shift.reviewedAt < shift.closedAt || !["accepted","attention"].includes(shift.reviewDecision ?? "") ||
+        !shift.reviewedByStaffId || shift.reviewedByStaffId===shift.staffId ||
+        !records.staffMembers.some(member=>member.id===shift.reviewedByStaffId&&member.businessProfileId===shift.businessProfileId) ||
+        shift.reviewExpectedCashMinor!==shift.expectedCashMinor ||
+        typeof shift.reviewNote!=="string" || shift.reviewNote.length>240)) ||
+      (shift.reviewedAt===undefined&&(shift.reviewDecision!==undefined||shift.reviewNote!==undefined||shift.reviewedByStaffId!==undefined)))
       throw new Error('Invalid staff shift record.');
   }
   for (const audit of records.staffAudits) if (typeof audit.action !== 'string' || !audit.action.trim() || !audit.createdAt)
