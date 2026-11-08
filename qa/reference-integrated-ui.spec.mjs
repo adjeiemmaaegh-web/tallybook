@@ -49,3 +49,27 @@ test('protected device-local ledger does not bypass owner verification for a new
   await expect(page).toHaveURL(/\/welcome$/);
   expect(await page.evaluate(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db'))).toBe(false);
 });
+
+test('verified account without a shop sees both role cards on a phone', async ({page}, info) => {
+  const user = {id: 'b8841a77-6172-4f74-adbe-024b7d6c0010', email: 'tester@example.invalid', user_metadata: {}};
+  await page.setViewportSize({width: 390, height: 844});
+  await page.addInitScript(user => {
+    localStorage.setItem('sb-qa-auth-token', JSON.stringify({
+      access_token: 'role-selection-test-access-token', refresh_token: 'fixture-only',
+      token_type: 'bearer', expires_at: Math.floor(Date.now() / 1000) + 3600, user
+    }));
+  }, user);
+  await page.route('https://qa.invalid/auth/v1/user', route => route.fulfill({json: user}));
+  for (const table of ['businesses', 'business_members']) {
+    await page.route('https://qa.invalid/rest/v1/' + table + '?**', route => route.fulfill({json: []}));
+  }
+  await page.goto('/signin');
+  await expect(page.getByRole('heading', {name: 'What will your role be?'})).toBeInViewport();
+  await expect(page.getByRole('button', {name: 'I own a business'})).toBeInViewport({ratio: 1});
+  const employee = page.getByRole('button', {name: 'I work for someone else'});
+  await expect(employee).toBeInViewport({ratio: 1});
+  await expect(page.getByLabel('What should we call you?')).toBeHidden();
+  await page.screenshot({path: info.outputPath('verified-role-selection-mobile.png')});
+  await employee.click();
+  await expect(page.getByLabel('Invitation code')).toBeVisible();
+});
