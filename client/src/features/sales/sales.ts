@@ -4,6 +4,7 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
 /** Tactile Ledger sales reminder: a completed sale is one all-or-nothing local transaction; a failed sale writes nothing. */
 import { calculateSaleTax, taxReviewKeyForSale, type TaxSnapshot } from "./tax";
 import type { GhanaTaxTreatment } from "./ghanaVat.mjs";
+import {normalizeSplitTenders,assertSplitPaymentLedger,type SplitTenderEvidence} from "./splitTender.mjs";
 import {snapshotSaleTaxConfiguration,type Run12SaleTaxConfiguration} from '@/features/reports/run12SaleTaxAudit.mjs';
 import {saleReturnPolicySnapshot,type ReturnPolicySnapshot} from '@/features/business/returnPolicy.mjs';
 import { nanoid } from "nanoid";
@@ -29,13 +30,15 @@ import type { Customer } from "@/features/customers/customers";
 import { formatMinorAmount, parseAmountToMinor, normalizeMoneyInput, type InventoryMovement, type Product } from "@/features/inventory/inventory";
 
 export const SALE_BUSINESS_ID = "primary" as const;
-export const paymentMethods = ["cash", "card", "mobile", "credit", "wallet"] as const;
+export const paymentMethods = ["cash", "card", "mobile", "credit", "wallet", "split"] as const;
 export type PaymentMethod = (typeof paymentMethods)[number];
 
 export interface Sale {
   storeId?: string;
   commerceOrderId?:string;
   tax?: TaxSnapshot;
+  /** Exact original checkout tender evidence; absent on single-method historical sales. */
+  splitTendersAtSale?: SplitTenderEvidence[];
   /** Captured on new checkouts: OFF is explicit, legacy absence remains unverified. */
   taxConfigurationAtSale?:Run12SaleTaxConfiguration;
   /** Immutable snapshot of company return terms at original checkout. */
@@ -93,6 +96,8 @@ export interface Payment {
   mobileMoneyProviderId?: string;
   mobileMoneyProviderName?: string;
   mobileMoneyReference?: string;
+  /** Manually recorded terminal/acquirer transaction ID; never PAN/CVV or bank verification. */
+  cardReference?: string;
   createdAt: string;
 }
 
@@ -120,19 +125,35 @@ export interface CustomerActivity {
 }
 
 export interface SaleCartLineInput { productId: string; quantity: number; }
-export interface CompleteSaleInput { commerceOrderId?:string; storeId?: string; taxReviewKey?: string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; submissionKey?: string; redeemPoints?: number; }
+export interface SplitTenderInput {method:"cash"|"card"|"mobile";amount:string;providerId?:string;reference?:string}
+export interface CompleteSaleInput { commerceOrderId?:string; storeId?: string; taxReviewKey?: string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; cardReference?:string; splitTenders?: SplitTenderInput[]; submissionKey?: string; redeemPoints?: number; }
 export interface SaleSnapshot { sales: Sale[]; lines: SaleLine[]; payments: Payment[]; receipts: Receipt[]; }
 
 const lineSchema = z.object({ productId: z.string().min(1), quantity: z.number().int().min(1).max(9_999_999) });
 const validMoneyValue = (value: string) => /^\d+(?:\.\d{1,2})?$/.test(normalizeMoneyInput(value));
-export const completeSaleSchema = z.object({ commerceOrderId:z.string().min(1).max(128).optional(), storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
+export const completeSaleSchema = z.object({ commerceOrderId:z.string().min(1).max(128).optional(), storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), cardReference:z.string().trim().max(120).optional(), splitTenders:z.array(z.object({method:z.enum(["cash","card","mobile"]),amount:z.string().trim().refine(validMoneyValue,"Tender must be a valid amount."),providerId:z.string().max(80).optional(),reference:z.string().max(120).optional()}).strict()).min(2).max(3).optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
 
 export function paymentMethodLabel(method: PaymentMethod) {
   if (method === "mobile") return "Mobile Money";
+  if (method === "split") return "Split payment";
   return method[0].toUpperCase() + method.slice(1);
 }
 
 function parseAmount(value: string, currency: string) { return parseAmountToMinor(value, currency); }
+function normalizeCardReference(method: PaymentMethod, value?: string) {
+  const ref=value?.trim();
+  if(method!=="card"){if(ref)throw Error("Card reference belongs only to card payments.");return undefined;}
+  if(!ref)return undefined; // Legacy card sales may have no terminal reference.
+  if(!/^[A-Za-z0-9][A-Za-z0-9 ._:/-]{2,119}$/.test(ref))throw Error("Enter a valid card terminal transaction reference.");
+  if(/^[0-9][0-9 -]{10,23}$/.test(ref)&&ref.replace(/[^0-9]/g,"").length>=12)
+    throw Error("Never enter a full card number as a card terminal reference.");
+  return ref;
+}
+function assertUnusedCardReference(payments:Payment[],company:string,reference?:string){
+  if(!reference)return;
+  if(payments.some(p=>p.businessProfileId===company&&p.method==="card"&&p.cardReference?.trim().toUpperCase()===reference.trim().toUpperCase()))
+    throw Error("Card transaction reference already exists in this company. Verify the terminal receipt before retry.");
+}
 
 function receiptNumber(now: Date) { return `TB-${now.toISOString().slice(0, 10).replaceAll("-", "")}-${nanoid(5).replaceAll("-", "_").toUpperCase()}`; }
 
@@ -179,6 +200,10 @@ export async function completeSale(values: CompleteSaleInput, database: Tallyboo
 
 async function completeSaleWhileLocked(values: CompleteSaleInput, database: TallybookDB = db) {
   const input = completeSaleSchema.parse(values);
+  if(input.paymentMethod!=="split"&&input.splitTenders)throw Error("Split tenders are allowed only for a split checkout.");
+  if(input.paymentMethod==="split"&&!input.splitTenders)throw Error("Split payment details are required.");
+  const cardReference=normalizeCardReference(input.paymentMethod,input.cardReference);
+  const splitRequest=input.splitTenders?.map(t=>({method:t.method,amountMinor:parseAmount(t.amount,input.currency),providerId:t.providerId,reference:t.reference}));
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = getActiveBusinessProfileId();
 
@@ -194,11 +219,13 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const submissionKey = input.submissionKey ?? nanoid(18);
     const existingSale = await database.sales.where("[businessProfileId+submissionKey]").equals([activeId,submissionKey]).first();
     if (existingSale) {
-      const [existingLines, existingPayment, existingReceipt] = await Promise.all([
+      const [existingLines, existingPayments, existingReceipt] = await Promise.all([
         database.saleLines.where("saleId").equals(existingSale.id).toArray(),
-        database.payments.where("saleId").equals(existingSale.id).first(),
+        database.payments.where("saleId").equals(existingSale.id).toArray(),
         database.receipts.where("saleId").equals(existingSale.id).first(),
       ]);
+      const existingPayment=existingPayments[0];
+      if(existingSale.paymentMethod==="split")assertSplitPaymentLedger(existingSale,existingPayments);
       // A submission key represents one immutable checkout intent, not an arbitrary
       // lookup key. Never acknowledge an earlier sale for a changed cart/payment.
       const expectedLines = new Map(mergedLines);
@@ -213,12 +240,14 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
         (input.paymentMethod !== "mobile" || (
           (existingPayment?.mobileMoneyProviderId ?? undefined) === (input.mobileMoneyProviderId?.trim() || undefined) &&
           (existingPayment?.mobileMoneyReference ?? undefined) === (input.mobileMoneyReference?.trim() || undefined)
-        ));
+        )) &&
+        (input.paymentMethod !== "card" || (existingPayment?.cardReference??undefined)===cardReference) &&
+        (input.paymentMethod !== "split" || JSON.stringify(existingSale.splitTendersAtSale)===JSON.stringify(normalizeSplitTenders(splitRequest!,parseAmount(input.amountPaid,input.currency),existingSale.totalMinor)));
       if (!sameLines || !samePayment) {
         throw new Error("This checkout was already submitted with different details. Start a new sale to record changes.");
       }
       if (!existingReceipt) throw new Error("The saved sale has no receipt. Open sale history for recovery before trying again.");
-      return { sale: existingSale, lines: existingLines, payment: existingPayment, receipt: existingReceipt };
+      return { sale: existingSale, lines: existingLines, payment: existingPayment, payments: existingPayments, receipt: existingReceipt };
     }
     const storeMode=await database.storeStockModes.get(activeId);
     if(storeMode) {
@@ -316,6 +345,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const tax = calculateSaleTax(taxLines, discountMinor, policy);
     const totalMinor = tax?.totalMinor ?? subtotalMinor - discountMinor;
     const amountPaidMinor = input.paymentMethod === "credit" ? 0 : parseAmount(input.amountPaid, input.currency);
+    const splitTenders = input.paymentMethod==="split" ? normalizeSplitTenders(splitRequest!,amountPaidMinor,totalMinor) : undefined;
     if (input.paymentMethod === "wallet" && !customer) throw new Error("Select a customer to spend prepaid wallet funds.");
     if (input.paymentMethod === "wallet" && amountPaidMinor > 0) {
       const walletEntries = await database.customerBenefits.where("customerId").equals(customer!.id)
@@ -350,13 +380,24 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const mobileMoneyReference = normalizeMobileReference(input.paymentMethod, mobileMoneyProviderId, input.mobileMoneyReference);
     const mobileMoneyProvider = mobileMoneyProviderId ? await database.mobileMoneyProviders.get(mobileMoneyProviderId) : undefined;
     if (mobileMoneyProviderId && (!mobileMoneyProvider || mobileMoneyProvider.businessProfileId !== activeId || !mobileMoneyProvider.active)) throw new Error("Choose a saved Mobile Money provider before recording this payment.");
-    if (input.paymentMethod === "mobile") {
-      const providerPayments = await database.payments.where("businessProfileId").equals(activeId).toArray();
-      assertUnusedMobileReference(providerPayments, activeId, mobileMoneyProviderId!, mobileMoneyReference!);
+    const priorProviderPayments = await database.payments.where("businessProfileId").equals(activeId).toArray();
+    if (input.paymentMethod === "mobile")
+      assertUnusedMobileReference(priorProviderPayments, activeId, mobileMoneyProviderId!, mobileMoneyReference!);
+    if (input.paymentMethod === "card") assertUnusedCardReference(priorProviderPayments,activeId,cardReference);
+    const splitProviders=new Map<string,string>();
+    for(const tender of splitTenders??[]){
+      if(tender.method==="mobile"){
+        const provider=await database.mobileMoneyProviders.get(tender.providerId!);
+        if(!provider||provider.businessProfileId!==activeId||!provider.active)
+          throw Error("The split MoMo provider must be an active provider for this company.");
+        splitProviders.set(provider.id,provider.name);
+        assertUnusedMobileReference(priorProviderPayments,activeId,provider.id,tender.reference!);
+      }
+      if(tender.method==="card")assertUnusedCardReference(priorProviderPayments,activeId,tender.reference);
     }
 
     assertCompanyScope(activeId, getActiveBusinessProfileId());
-    const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
+    const sale: Sale = { ...(tax ? { tax } : {}),...(splitTenders?{splitTendersAtSale:splitTenders}:{}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
     if(creditTermsAtSale)sale.creditTermsAtSale=creditTermsAtSale;
     const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor, ...(tax?.ghana ? { ghanaTaxTreatmentAtSale: product.ghanaTaxTreatment } : {}) }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
@@ -365,7 +406,19 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       await consumeRun16OrderForSale(database,activeId,linkedOrder,sale.id,now,cashier.id);
     }
     for (const movement of movements) await postStoreStockDelta(database,activeId,movement.productId,input.storeId,movement.quantityDelta,movement.id,"sale",now,movement.previousQuantity,movement.resultingQuantity,input.commerceOrderId);
-    const payment: Payment | undefined = amountPaidMinor > 0 && input.paymentMethod !== "wallet" ? { id: nanoid(14), saleId: sale.id, businessProfileId: activeId, customerId: customer?.id, method: input.paymentMethod, amountMinor: amountPaidMinor, ...(input.paymentMethod === "mobile" && mobileMoneyProvider ? { mobileMoneyProviderId: mobileMoneyProvider.id, mobileMoneyProviderName: mobileMoneyProvider.name, mobileMoneyReference } : {}), createdAt: now } : undefined;
+    const payments: Payment[] = splitTenders ? splitTenders.map(tender=>({
+      id:nanoid(14),saleId:sale.id,businessProfileId:activeId,customerId:customer?.id,
+      method:tender.method,amountMinor:tender.amountMinor,
+      ...(tender.method==="mobile"?{mobileMoneyProviderId:tender.providerId,mobileMoneyProviderName:splitProviders.get(tender.providerId!),mobileMoneyReference:tender.reference}:{}),
+      ...(tender.method==="card"?{cardReference:tender.reference}:{}),createdAt:now
+    })) : amountPaidMinor>0 && input.paymentMethod!=="wallet" ? [{
+      id:nanoid(14),saleId:sale.id,businessProfileId:activeId,customerId:customer?.id,
+      method:input.paymentMethod,amountMinor:amountPaidMinor,
+      ...(input.paymentMethod==="mobile"&&mobileMoneyProvider?{mobileMoneyProviderId:mobileMoneyProvider.id,mobileMoneyProviderName:mobileMoneyProvider.name,mobileMoneyReference}:{}),
+      ...(cardReference?{cardReference}:{}),createdAt:now
+    }] : [];
+    if(splitTenders)assertSplitPaymentLedger(sale,payments);
+    const payment = payments[0];
     const receipt: Receipt = { id: nanoid(14), saleId: sale.id, businessProfileId: activeId, receiptNumber: sale.receiptNumber, issuedAt: now };
     const activity: CustomerActivity | undefined = customer ? { id: nanoid(14), customerId: customer.id, saleId: sale.id, businessProfileId: activeId, activityType: "sale", totalMinor, amountPaidMinor, outstandingMinor, createdAt: now } : undefined;
 
@@ -414,7 +467,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     if (cashier) await database.staffAudits.add({id:nanoid(14),businessProfileId:activeId,staffId:cashier.id,action:"sale.completed",createdAt:now,details:discountApprovedBy?`${sale.id}; discount approved by ${discountApprovedBy}`:sale.id});
     await database.saleLines.bulkAdd(saleLines);
-    if (payment) await database.payments.add(payment);
+    if (payments.length) await database.payments.bulkAdd(payments);
     if (redemptionPoints && customer) {
       await database.customerBenefits.add({ id: nanoid(14), businessProfileId: activeId, customerId: customer.id,
         kind: "points", delta: -redemptionPoints, reason: `Redeemed on sale ${sale.receiptNumber}`,
@@ -443,6 +496,6 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const postingEvidence=await captureSalePostingEvidence(database,sale,saleLines,movements,updatedBatches,activity);
     await database.centralSaleEvents.add(makeCentralSaleEvent(sale,saleLines,payment,receipt,postingEvidence));
     assertCompanyScope(activeId, getActiveBusinessProfileId());
-    return { sale, lines: saleLines, payment, receipt };
+    return { sale, lines: saleLines, payment, payments, receipt };
   });
 }
