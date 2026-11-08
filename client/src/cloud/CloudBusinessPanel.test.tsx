@@ -98,3 +98,20 @@ it('presents role selection before the collapsed profile on a new verified accou
   expect(employee.compareDocumentPosition(profile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(profile.open).toBe(false);
 });
+
+it('resumes owner setup after remount only for the same verified account', async () => {
+  sessionStorage.clear();
+  const first = render(<CloudBusinessPanel accountOnly />);
+  fireEvent.click(await screen.findByRole('button', {name: 'I own a business'}));
+  await screen.findByLabelText('Business name');
+  first.unmount();
+  const resumed = render(<CloudBusinessPanel accountOnly />);
+  await screen.findByLabelText('Business name');
+  expect(mock.create).not.toHaveBeenCalled();
+  resumed.unmount();
+  mock.getUser.mockResolvedValue({data:{user:{id:'other-user'}},error:null});
+  render(<CloudBusinessPanel accountOnly />);
+  await screen.findByRole('button', {name: 'I own a business'});
+  expect(screen.queryByLabelText('Business name')).toBeNull();
+  sessionStorage.clear();
+});
