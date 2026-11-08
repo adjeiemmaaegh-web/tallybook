@@ -2,6 +2,12 @@
 
 Baseline `3caefad023a7004c628c43b0b2e639c4b43ef1ae`. Review [PR 32](https://github.com/adjeiemmaaegh-web/tallybook/pull/32). The current candidate uses the real React routes, canonical policy history and sealed outbox. Branch selection and limitations are documented in [reconciliation](RC_RECONCILIATION.md) and [architecture](RC_INTEGRATION.md).
 
+## READY FOR OWNER ACCEPTANCE TESTING
+
+All three GitHub workflows passed on application commit `4c3170310ce06f6fe32ae12af983d544172f24e7`. The [complete release run](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42427503560) passed frozen install, preflight, 948 native/server tests, 1,150 client tests, types, build, Chromium release, authentication, built-PWA offline and the dependency audit. [UI branch verification](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42427503566) and [integrated reference UI](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42427503557) passed. The previously timing-out owner-to-cashier handoff passed with the locked-shell assertion. The subsequent documentation and test-discovery changes do not modify the application.
+
+Owner acceptance covers the integrated features described in this report. Hosted two-account configuration, real hardware and browser acceptance remain open. Dedicated shared-shop authoring screens listed below are outside this candidate's verified feature set.
+
 ## Results and reproduction
 
 Use the commands in the [README](../../README.md) and the pinned release-validation workflow. Local verification used Linux, Node 24.22.1 and pnpm 10.34.0. GitHub release validation uses Node 24.19.0 and pnpm 10.34.0.

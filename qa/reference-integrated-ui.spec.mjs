@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 
-test('new local device shows reference-inspired first-run page without claiming cloud signup is required',async({page},info)=>{
+test('public welcome links a new visitor to account entry on desktop and narrow phones',async({page},info)=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/welcome');
   await expect(page.getByRole('heading',{name:/Your business\.\s*Beautifully in hand/i})).toBeVisible();
