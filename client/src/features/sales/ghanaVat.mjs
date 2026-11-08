@@ -105,3 +105,31 @@ export function validateGhanaVatEvidence(sale) {
     throw new Error("Ghana VAT saved receipt totals do not reconcile.");
   return true;
 }
+
+/** Reconstruct Ghana tax from immutable sale-line classifications and the
+ * original invoice discount. Never compare to the product's CURRENT class:
+ * owners may lawfully reclassify future stock without rewriting old receipts.
+ */
+export function validateGhanaVatLineEvidence(sale, saleLines) {
+  if (!sale?.tax?.ghana) return true;
+  validateGhanaVatEvidence(sale);
+  if (!Array.isArray(saleLines) || !saleLines.length || saleLines.length > 256)
+    throw new Error("Ghana VAT original sale lines are missing.");
+  const seen = new Set();
+  const lines = saleLines.map(line => {
+    if (!line || line.saleId !== sale.id || typeof line.id !== "string" || !line.id ||
+        seen.has(line.id) || !treatments.has(line.ghanaTaxTreatmentAtSale) ||
+        !Number.isSafeInteger(line.quantity) || line.quantity <= 0 ||
+        !safe(line.unitPriceMinor) || !safe(line.lineTotalMinor) ||
+        BigInt(line.quantity) * BigInt(line.unitPriceMinor) !== BigInt(line.lineTotalMinor))
+      throw new Error("Ghana VAT sale-line classification or amount is missing or invalid.");
+    seen.add(line.id);
+    return { amountMinor: line.lineTotalMinor, treatment: line.ghanaTaxTreatmentAtSale };
+  });
+  const result = calculateGhanaVat(lines, sale.discountMinor, sale.tax.policy.priceMode);
+  const fields = ["standardMinor", "zeroRatedMinor", "exemptMinor", "taxableBaseMinor",
+    "vatMinor", "nhilMinor", "getFundMinor", "taxMinor", "taxableMinor", "totalMinor"];
+  if (fields.some(field => result[field] !== sale.tax.ghana[field]))
+    throw new Error("Ghana VAT original sale lines do not reconcile to the receipt tax breakdown.");
+  return true;
+}
