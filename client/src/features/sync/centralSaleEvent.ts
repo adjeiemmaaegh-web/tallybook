@@ -1,6 +1,7 @@
 import type { Sale, SaleLine, Payment, Receipt } from '@/features/sales/sales';
 import {validateSalePostingEvidence,type SalePostingEvidence} from './centralSalePostingEvidence';
 import {validateCreditTerms} from '@/features/credit/creditTerms.mjs';
+import {assertSplitPaymentLedger} from '@/features/sales/splitTender.mjs';
 
 /** Immutable local checkout evidence. It is not a cloud acknowledgement or a trusted device identity. */
 export interface CentralSaleEvent {
@@ -16,17 +17,17 @@ export interface CentralSaleEvent {
   deviceId: null;
   deliveryStatus: 'local_only';
   payloadVersion: 1;
-  payload: { sale: Sale; lines: SaleLine[]; payment: Payment | null; receipt: Receipt; postingEvidence?:SalePostingEvidence };
+  payload: { sale: Sale; lines: SaleLine[]; payment: Payment | null; /** Split-only full tender evidence; old single-tender events remain unchanged. */ payments?:Payment[]; receipt: Receipt; postingEvidence?:SalePostingEvidence };
 }
 
-export function makeCentralSaleEvent(sale: Sale, lines: SaleLine[], payment: Payment | undefined, receipt: Receipt,postingEvidence?:SalePostingEvidence): CentralSaleEvent {
+export function makeCentralSaleEvent(sale: Sale, lines: SaleLine[], payment: Payment | undefined, receipt: Receipt,postingEvidence?:SalePostingEvidence,payments?:Payment[]): CentralSaleEvent {
   const event: CentralSaleEvent = {
     id: `sale:${sale.id}`, businessProfileId: sale.businessProfileId,
     operationId: `sale:${sale.id}`, entityId: sale.id, kind: 'sale.completed',
     createdAt: sale.createdAt, shopId: sale.storeId ?? null,
     staffId: sale.staffId ?? '', shiftId: sale.shiftId ?? '', deviceId: null,
     deliveryStatus: 'local_only', payloadVersion: 1,
-    payload: { sale, lines, payment: payment ?? null, receipt,...(postingEvidence?{postingEvidence}:{}) },
+    payload: { sale, lines, payment: payment ?? null, ...(sale.paymentMethod==='split'?{payments:payments??[]} : {}), receipt,...(postingEvidence?{postingEvidence}:{}) },
   };
   validateCentralSaleEvent(event);
   return event;
@@ -53,6 +54,15 @@ export function validateCentralSaleEvent(event: CentralSaleEvent): void {
       !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0 ||
       sale.totalMinor !== sale.amountPaidMinor + sale.outstandingMinor)
     throw new Error('Central sale event does not reconcile with its local checkout.');
+  if(sale.paymentMethod==='split'){
+    if(!Array.isArray(event.payload.payments) ||
+       !event.payload.payments.length ||
+       JSON.stringify(event.payload.payment)!==JSON.stringify(event.payload.payments[0]))
+      throw new Error('Central split payment envelope is missing its original first tender.');
+    assertSplitPaymentLedger(sale,event.payload.payments);
+  }else if(event.payload.payments!==undefined){
+    throw new Error('Single-method sale cannot carry a split payment event envelope.');
+  }
   if(event.payload.postingEvidence!==undefined)validateSalePostingEvidence(sale,lines,event.payload.postingEvidence);
   validateCreditTerms(sale);
 }

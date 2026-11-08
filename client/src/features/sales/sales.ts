@@ -494,7 +494,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     await database.products.bulkPut(requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { ...product, stockQuantity: product.stockQuantity - line.quantity, updatedAt: now }; }));
     await database.inventoryMovements.bulkAdd(movements);
     const postingEvidence=await captureSalePostingEvidence(database,sale,saleLines,movements,updatedBatches,activity);
-    await database.centralSaleEvents.add(makeCentralSaleEvent(sale,saleLines,payment,receipt,postingEvidence));
+    await database.centralSaleEvents.add(makeCentralSaleEvent(sale,saleLines,payment,receipt,postingEvidence,payments));
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     return { sale, lines: saleLines, payment, payments, receipt };
   });

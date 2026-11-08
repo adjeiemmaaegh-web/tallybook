@@ -276,8 +276,13 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     if (!saved || JSON.stringify(saved) !== JSON.stringify(event.payload.sale))
       throw new Error('Central sale event has no matching immutable sale.');
     const savedLines = records.saleLines.filter(line => line.saleId === event.entityId);
+    const savedPayments = records.payments.filter(payment=>payment.saleId===event.entityId);
+    const idOrder = <T extends {id:string}>(rows:T[])=>[...rows].sort((a,b)=>a.id.localeCompare(b.id));
+    const matchingTenders = saved.paymentMethod==="split"
+      ? JSON.stringify(idOrder(savedPayments))===JSON.stringify(idOrder(event.payload.payments??[]))
+      : JSON.stringify(savedPayments[0]??null)===JSON.stringify(event.payload.payment);
     if (JSON.stringify(savedLines) !== JSON.stringify(event.payload.lines) ||
-        JSON.stringify(records.payments.find(payment => payment.saleId === event.entityId) ?? null) !== JSON.stringify(event.payload.payment) ||
+        !matchingTenders ||
         JSON.stringify(records.receipts.find(receipt => receipt.saleId === event.entityId)) !== JSON.stringify(event.payload.receipt))
       throw new Error('Central sale event payload differs from saved checkout records.');
   }
