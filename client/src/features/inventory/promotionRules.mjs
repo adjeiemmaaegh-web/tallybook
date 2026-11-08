@@ -51,10 +51,13 @@ export function validateSavedPromotionPricing(sale,lines){
  if(!sale||!Array.isArray(lines))throw Error("Sale promotion evidence is unavailable.");
  for(const line of lines){
   const fields=[line.regularUnitPriceMinorAtSale,line.promotionSavingsPerUnitMinor,line.promotionRevisionAtSale];
-  const supplied=fields.filter(x=>x!==undefined).length;
-  if(supplied&&supplied!==3)throw Error("Sale promotion unit-price provenance is incomplete.");
-  if(supplied&&(!validMinor(fields[0])||!validMinor(fields[1])||!Number.isSafeInteger(fields[2])||
-      fields[2]<1||fields[1]<=0||fields[0]-fields[1]!==line.unitPriceMinor))
+  const discounted=fields[0]!==undefined||fields[1]!==undefined;
+  if(discounted&&(fields[0]===undefined||fields[1]===undefined||fields[2]===undefined))
+    throw Error("Sale promotion unit-price provenance is incomplete.");
+  if(fields[2]!==undefined&&(!Number.isSafeInteger(fields[2])||fields[2]<1))
+    throw Error("Sale promotion revision is invalid.");
+  if(discounted&&(!validMinor(fields[0])||!validMinor(fields[1])||
+      fields[1]<=0||fields[0]-fields[1]!==line.unitPriceMinor))
     throw Error("Saved promotion savings no longer match the original receipt.");
  }
  if(sale.priceReviewKeyAtSale!==undefined){
