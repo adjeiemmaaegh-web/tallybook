@@ -86,7 +86,12 @@ export default function GoogleSignInPage(){
     }catch(e){setError(e instanceof Error?e.message:'Cloud sign-out failed.');}
     finally{setBusy(false);}
   }
-  return <div className="tb-account-page">
+  const signedIn = state.status === 'signed-in';
+  return <div className={signedIn ? "tb-verified-page" : "tb-account-page"}>
+    {signedIn ? <header className="tb-verified-header">
+      <Link className="tb-account-brand" href="/welcome"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
+      <Link href="/welcome">Back to welcome</Link>
+    </header> :
     <aside className="tb-account-aside" aria-label="Welcome to Tallybook">
       <Link className="tb-account-brand" href="/"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
       <p className="tb-account-eyebrow">YOUR BUSINESS, BETTER ORGANIZED</p>
@@ -98,14 +103,14 @@ export default function GoogleSignInPage(){
         <div><span>03</span><strong>Open your shop</strong><small>Owners configure their business. Staff use an invitation.</small></div>
       </div>
       <p className="tb-account-aside-note">Already verified as an owner? <Link href="/">Open your device ledger</Link>. Access stays protected by your account and local staff permissions.</p>
-    </aside>
+    </aside>}
     <div className="tb-account-form-area">
       {/* Account and shop screens sit outside AppShell; staged updates still show here. */}
       <Run18UpdateNotice/>
-      <section className="op-row-card tb-account-form">
-      <p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
+      <section className={signedIn ? "tb-verified-body" : "op-row-card tb-account-form"}>
+      {!signedIn && <><p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
       <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
-        {state.status==='signed-in' ? "Your business" : "Welcome to Tallybook"}</h1>
+        Welcome to Tallybook</h1></>}
 
       {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:

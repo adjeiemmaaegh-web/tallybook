@@ -88,3 +88,13 @@ it('greets the verified Google user by first name and shows the profile',async()
   expect(await screen.findByText('Hi, Isaac')).toBeTruthy();
   expect(screen.getByLabelText('What should we call you?')).toHaveValue('Isaac Newton');
 });
+
+it('presents role selection before the collapsed profile on a new verified account', async () => {
+  render(<CloudBusinessPanel accountOnly />);
+  const heading = await screen.findByRole('heading', { name: 'What will your role be?', level: 1 });
+  const employee = screen.getByRole('button', { name: 'I work for someone else' });
+  const profile = screen.getByText('My profile').closest('details')!;
+  expect(heading.compareDocumentPosition(employee) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(employee.compareDocumentPosition(profile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(profile.open).toBe(false);
+});
