@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { verifyDeviceOwner } from './verifyDeviceOwner';
+import { canClaimWithPin, verifyDeviceOwner } from './verifyDeviceOwner';
 import { db } from '@/db/TallybookDB';
 import { useRun4CloudSession } from './useRun4CloudSession';
 import { Redirect, Link } from 'wouter';
@@ -55,7 +55,7 @@ export async function allowOfflineReturn(getCachedUserId:()=>Promise<string|null
   try{return (await getCachedUserId())===bound;}catch{return false;}
 }
 
-type Access={userId:string|null;status:'checking'|'allow'|'deny'|'claim'|'setup'|'offline'};
+type Access={userId:string|null;status:'checking'|'allow'|'deny'|'claim'|'recovery'|'setup'|'offline'};
 
 function EntryCard({icon,title,children}:{icon:ReactNode;title:string;children:ReactNode}){
   return <main className="tb-entry">
@@ -109,7 +109,8 @@ export function FriendsTestGate({children}:{children:ReactNode}){
       const bound=read(BINDING_KEY);
       if(!bound&&(await db.businessProfiles.count())>0){
         if(!active)return;
-        setAccess({userId,status:'claim'});
+        const eligible = await canClaimWithPin();
+        if (active) setAccess({userId,status:eligible ? 'claim' : 'recovery'});
         return;
       }
       let status=await checkTesterBinding(userId,()=>active);
@@ -139,6 +140,11 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   if(!access||access.userId!==state.userId)
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
   if(access.status==='setup')return <Redirect to='/account' replace/>;
+  if(access.status==='recovery')return <EntryCard icon={<ShieldCheck/>} title="This ledger needs owner recovery">
+    <p>This browser contains a ledger that cannot be linked using a local owner PIN. Your existing records are preserved.</p>
+    <p>Your shared shop is available with your signed-in account. Keep this browser’s site data while arranging recovery of the local records.</p>
+    <Link href="/shop?view=dashboard" className="primary-action">Open owner dashboard</Link>
+  </EntryCard>;
   if(access.status==='claim')return <EntryCard icon={<Store/>} title="Use the ledger already on this device?">
     <p>Enter the local owner's PIN to link a single-company ledger to this account. Multi-company devices and ledgers without an owner PIN require separate recovery.</p>
     <label>Local owner PIN <input type="password" inputMode="numeric" value={pin} onChange={e=>setPin(e.target.value)} /></label>
@@ -157,7 +163,7 @@ export function FriendsTestGate({children}:{children:ReactNode}){
         } catch { if (identity.current === userId) setClaimError('Could not verify the local owner. The ledger remains locked.'); }
         finally { setPin(''); setClaiming(false); }
       }}>{claiming?'Opening…':'Open it with my account'}</button>
-      <Link href="/shop" className="secondary-action">Open shared shop instead</Link>
+      <Link href="/shop?view=dashboard" className="secondary-action">Open owner dashboard</Link>
     </div>
   </EntryCard>;
   if(access.status==='deny')return <EntryCard icon={<ShieldCheck/>} title="This device's ledger belongs to another account">
