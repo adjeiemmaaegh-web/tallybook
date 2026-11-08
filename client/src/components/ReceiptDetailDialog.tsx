@@ -1,6 +1,7 @@
 /** Tallybook Africa design reminder: this focused receipt sheet stays solid, cobalt-led, touch-safe, and read-only; its actions never write local business data. */
 import { Copy, Printer, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import {renderThermalReceiptText} from "@/features/receipts/thermalReceipt.mjs";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMinorAmount } from "@/features/inventory/inventory";
@@ -16,6 +17,7 @@ interface ReceiptDetailDialogProps {
 
 export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText }: ReceiptDetailDialogProps) {
   const [manualText, setManualText] = useState<string | null>(null);
+  const [paperMm,setPaperMm] = useState<58|80>(80);
   useEffect(() => { if (open) setManualText(manualCopyText ?? null); }, [manualCopyText, open]);
   const close = () => { setManualText(null); onOpenChange(false); };
   const share = async () => {
@@ -71,6 +73,15 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
           <div className="receipt-detail-total"><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
         </section>
         {manualText ? <section className="receipt-manual-copy" aria-live="polite"><div><Copy className="h-4 w-4" aria-hidden="true" /><strong>Copy receipt text</strong></div><p>Your browser could not open sharing or copy automatically. Select and copy this text into your customer message.</p><textarea aria-label="Receipt text for manual copy" readOnly value={manualText} /></section> : null}
+        <section className="receipt-paper-settings" aria-label="Thermal receipt options">
+          <label htmlFor="thermal-paper-size">Print paper</label>
+          <select id="thermal-paper-size" aria-label="Receipt paper width" value={paperMm} onChange={event=>setPaperMm(Number(event.target.value) as 58|80)}>
+            <option value={58}>58 mm thermal</option>
+            <option value={80}>80 mm thermal</option>
+          </select>
+          <small>Choose the matching paper size in the browser printer dialog. Actual paper/driver compatibility must be tested on the printer.</small>
+        </section>
+        <pre className="receipt-thermal-output" data-paper={paperMm} aria-hidden="true">{renderThermalReceiptText(formatReceiptShareText(detail),paperMm)}</pre>
         <DialogFooter className="receipt-detail-actions">
           <button className="secondary-action" type="button" onClick={() => void share()}><Share2 className="h-4 w-4" aria-hidden="true" />Share receipt</button>
           <button className="secondary-action receipt-print-action" type="button" onClick={print}><Printer className="h-4 w-4" aria-hidden="true" />Print</button>
