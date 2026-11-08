@@ -40,7 +40,7 @@ export function TaxSettings() {
   return <section className="business-form-shell" aria-labelledby="tax-settings-title">
     <div className="form-ledger-head"><div><h2 id="tax-settings-title">Tax settings</h2><p>Tax is off until enabled by an authorized registered business. Select the applicable regime explicitly.</p></div></div>
     <form className="business-form" onSubmit={submit}>
-      <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} /> Apply configured tax to future sales</label>
+      <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} /> Apply tax to future sales</label>
       <label>Tax calculation method
         <select aria-label="Tax calculation method" value={scheme} onChange={e => setScheme(e.target.value as "single-rate" | "ghana-vat-2026")}>
           <option value="single-rate">Generic single-rate tax</option>
