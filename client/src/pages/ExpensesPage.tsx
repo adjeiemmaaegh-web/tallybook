@@ -1,3 +1,4 @@
+import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
 /** Tallybook Africa Stage 8 design reminder: expenses are a compact, local-only owner record; completed entries are shown as immutable history and never change stock, purchases, sales, collections, or debt. */
 import { ArrowLeft, BarChart3, ClipboardList, Plus, ReceiptText, Save } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -54,7 +55,7 @@ export default function ExpensesPage() {
     finally { setSaving(false); }
   };
 
-  if (!profile) return <section className="reports-gate"><div className="reports-gate-sheet"><div className="reports-gate-brand"><strong>Tallybook</strong><span>Business ledger</span></div><span className="workspace-marker">EXP</span><p className="eyebrow"><span className="eyebrow-dot" />Expense record prerequisites</p><h1>Set the record before you record spending.</h1><p>Your business name and receipt currency make each saved local expense clear and easy to understand.</p><div className="reports-prerequisite-list"><div><span>01</span><strong>Business name</strong><small>Names the record these expenses belong to.</small></div><div><span>02</span><strong>Receipt currency</strong><small>Keeps every saved amount clear and comparable.</small></div><div><span>03</span><strong>Saved expenses</strong><small>Transport, rent, repairs, and other costs appear after setup.</small></div></div><p className="reports-gate-tally"><b>Two details to begin</b><span>Business name · Currency</span></p><Link href="/business" className="primary-action">Set up business</Link></div></section>;
+  if (!profile) return <DeviceBusinessSetup description="Choose your business currency to begin recording expenses." />;
 
   return <div className="expenses-page">
     <section className="expenses-hero"><p className="eyebrow"><span className="eyebrow-dot" />Money spent on your business</p><span className="workspace-marker">EXP</span><h1>Keep spending <em>clear.</em></h1><p>Record ordinary costs on this device so you can see where money goes. Saved expenses do not change stock, supplier purchases, sales, or customer balances.</p><div className="expenses-hero-actions"><Link href="/business-health" className="primary-action"><BarChart3 className="h-4 w-4" aria-hidden="true" />Business Health</Link><Link href="/reports" className="secondary-action">Open reports</Link></div></section>

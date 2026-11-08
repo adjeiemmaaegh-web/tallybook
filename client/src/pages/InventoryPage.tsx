@@ -1,3 +1,4 @@
+import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
 /** Tactile Ledger design reminder: every product is a ledger record and every stock change is an explicit, visible movement. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Archive, Boxes, Check, ChevronDown, Clock3, FolderPlus, History, Minus, PackagePlus, PencilLine, Plus, RotateCcw, Save, Tag, TrendingDown, TrendingUp, Truck } from "lucide-react";
@@ -242,9 +243,7 @@ export default function InventoryPage() {
     requestAnimationFrame(() => archivedRecordsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
   };
 
-  if (!profile) {
-    return <section className="inventory-gate"><div className="inventory-gate-sheet"><div className="inventory-gate-head"><Boxes className="h-8 w-8 text-baobab" aria-hidden="true" /><span className="workspace-marker">STK</span></div><p className="eyebrow"><span className="eyebrow-dot" />Stock starts with a business</p><h1>Set up your business before you add stock.</h1><p>Your products, prices, and stock records need a business name and currency first. Nothing will be lost while you complete that short setup.</p><div className="inventory-gate-record"><span className="tally-status"><i /><i />Two details to begin</span><span>Business name · Currency</span></div><Link href="/business" className="primary-action">Set up your business <ChevronDown className="h-4 w-4 -rotate-90" aria-hidden="true" /></Link></div><div className="inventory-gate-note"><Clock3 className="h-4 w-4 text-clay" aria-hidden="true" /><p><strong>Your stock page is ready.</strong> Add your business details first, then your first product will start the stock record.</p></div></section>;
-  }
+  if (!profile) return <DeviceBusinessSetup description="Add your business name and currency to start tracking stock." />;
 
   return <div className="inventory-page">
     <section className="inventory-hero">
