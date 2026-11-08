@@ -8,8 +8,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { FriendsTestGate, allowOfflineReturn } from './FriendsTestGate';
 
-const mock = vi.hoisted(() => ({ list: vi.fn(), status: 'signed-in' as string, profiles: [] as Array<{ name: string }>, cachedUser: null as string | null }));
-vi.mock('./verifyDeviceOwner', () => ({verifyDeviceOwner: async (pin:string) => pin === '392761'}));
+const mock = vi.hoisted(() => ({ eligible: true, list: vi.fn(), status: 'signed-in' as string, profiles: [] as Array<{ name: string }>, cachedUser: null as string | null }));
+vi.mock('./verifyDeviceOwner', () => ({canClaimWithPin: async () => mock.eligible, verifyDeviceOwner: async (pin:string) => pin === '392761'}));
 vi.mock('../cloud/cloudMembership', () => ({ listVerifiedCloudBusinesses: mock.list }));
 vi.mock('./useRun4CloudSession', () => ({ useRun4CloudSession: () => ({ state: { status: mock.status, userId: mock.status === 'signed-in' ? 'owner-1' : null } }) }));
 vi.mock('@/db/TallybookDB', () => ({ db: { businessProfiles: { count: async () => mock.profiles.length, toArray: async () => mock.profiles } } }));
@@ -19,7 +19,7 @@ vi.mock('wouter', () => ({ Redirect: ({ to }: { to: string }) => <span>Redirecte
 const OWNER = [{ role: 'owner', owner_id: 'owner-1' }];
 function visit() { render(<FriendsTestGate><span>Device ledger</span></FriendsTestGate>); }
 
-beforeEach(() => { localStorage.clear(); mock.status = 'signed-in'; mock.profiles = []; mock.cachedUser = null; mock.list.mockReset(); });
+beforeEach(() => { localStorage.clear(); mock.eligible=true; mock.status = 'signed-in'; mock.profiles = []; mock.cachedUser = null; mock.list.mockReset(); });
 
 it('opens a fresh browser for the verified owner and binds it', async () => {
   mock.list.mockResolvedValue(OWNER); visit();
@@ -87,4 +87,15 @@ it('records the verified owner after an online check so a later offline visit ca
   mock.list.mockResolvedValue(OWNER); visit();
   await screen.findByText('Device ledger');
   await waitFor(() => expect(localStorage.getItem('tallybook.entry.verifiedOwner.v1')).toBe('owner-1'));
+});
+
+it('preserves a PIN-less ledger without asking for an impossible PIN', async () => {
+  mock.list.mockResolvedValue(OWNER);
+  mock.profiles = [{name:'Private shop'}];
+  mock.eligible = false;
+  visit();
+  await screen.findByText('This ledger needs owner recovery');
+  expect(screen.queryByLabelText('Local owner PIN')).toBeNull();
+  expect(screen.queryByText('Private shop')).toBeNull();
+  expect(localStorage.getItem('friendsTestVerifiedAuthUserId')).toBeNull();
 });
