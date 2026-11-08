@@ -1,7 +1,8 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 /** A parked cart is a device-local draft, never a reservation or financial transaction. */
 export interface ParkedCartLine { productId: string; quantity: number }
 export interface ParkedCart { version: 1; lines: ParkedCartLine[]; parkedAt: string }
-const storageKey = (companyId: string) => `tallybook:parked-cart:v1:${companyId}`;
+const storageKey = (companyId: string) => workspaceKey(`tallybook:parked-cart:v1:${companyId}`);
 export function loadParkedCart(companyId: string): ParkedCart | null {
   if (!companyId || typeof localStorage === "undefined") return null;
   try {

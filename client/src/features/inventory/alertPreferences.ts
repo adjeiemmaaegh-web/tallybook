@@ -1,3 +1,4 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 /** Device-local preferences only. Never modifies authoritative stock records. */
 export interface AlertPreferences {
   showLowStock: boolean;
@@ -8,7 +9,7 @@ const KEY_PREFIX = "tallybook:stock-alert-preferences:v1:";
 
 function storageKey(companyId: string) {
   if (!companyId || companyId.trim() !== companyId) throw new Error("Select a valid business before saving alert preferences.");
-  return KEY_PREFIX + encodeURIComponent(companyId);
+  return workspaceKey(KEY_PREFIX + encodeURIComponent(companyId));
 }
 export function loadAlertPreferences(companyId: string, storage: Pick<Storage, "getItem"> = localStorage): AlertPreferences {
   const raw = storage.getItem(storageKey(companyId));

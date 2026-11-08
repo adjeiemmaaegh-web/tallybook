@@ -1,5 +1,7 @@
+import { workspaceOwner } from "./ownerWorkspace";
 // A damaged or partly configured cloud deployment must still require account verification.
 export function requiresCloudOwner() {
+  if (workspaceOwner) return true;
   const env = import.meta.env;
   if (env.VITE_TALLYBOOK_FRIENDS_TEST_MODE === 'true' ||
       env.VITE_TALLYBOOK_REQUIRE_AUTH === 'true' ||

@@ -1,5 +1,6 @@
 /** V19 Run 4: account controls use verified cloud session state only. */
 import "./TallybookAccount.css";
+import { workspaceOwner, revisitOriginalLedger } from "@/auth/ownerWorkspace";
 import {useState} from 'react';
 import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
 import {Run18UpdateNotice} from '@/components/Run18UpdateNotice';
@@ -127,6 +128,8 @@ export default function GoogleSignInPage(){
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void signIn(true)}>Switch Google account</button>
+          {workspaceOwner === state.userId && <button type="button" className="secondary-action"
+            onClick={() => revisitOriginalLedger(state.userId!)}>Return to original ledger options</button>}
           <Link href="/sync-status" className="underline">View local sync status</Link>
         </div>
         </details></div>:
