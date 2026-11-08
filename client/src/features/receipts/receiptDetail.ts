@@ -12,6 +12,7 @@ export interface ReceiptDetail {
   sale: Sale;
   lines: SaleLine[];
   payment?: Payment;
+  payments: Payment[];
   businessName: string;
   currency: string;
   country?: string;
@@ -25,13 +26,15 @@ export function resolveReceiptDetail({ receiptId, snapshot, profile, customers }
   if (!sale) return undefined;
   const lines = snapshot.lines.filter((line) => line.saleId === sale.id);
   if (!lines.length) return undefined;
-  const payment = snapshot.payments.find((item) => item.saleId === sale.id);
+  const payments = snapshot.payments.filter((item) => item.saleId === sale.id);
+  const payment=payments[0];
   const customerName = sale.customerId ? customers.find((customer) => customer.id === sale.customerId)?.name ?? "Saved customer unavailable" : "Walk-in customer";
-  return { receipt, sale, lines, payment, businessName: profile.name, currency: profile.currency, country: profile.country, customerName };
+  return { receipt, sale, lines, payment, payments, businessName: profile.name, currency: profile.currency, country: profile.country, customerName };
 }
 
 export function receiptPaymentDescription(detail: ReceiptDetail) {
   if (detail.sale.paymentMethod === "credit") return "Credit · Pay later";
+  if (detail.sale.paymentMethod === "split") return "Split payment (cash / MoMo / card as recorded)";
   const method = paymentMethodLabel(detail.sale.paymentMethod);
   if (detail.sale.paymentMethod !== "mobile") return method;
   const provider = detail.payment?.mobileMoneyProviderName;
@@ -43,6 +46,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
   const lines = detail.lines.map((line) => `${line.productName} × ${line.quantity} — ${formatMinorAmount(line.lineTotalMinor, detail.currency)}`);
   const discount = detail.sale.discountMinor > 0 ? `Discount: ${formatMinorAmount(detail.sale.discountMinor, detail.currency)}` : undefined;
   const payment = `Payment: ${receiptPaymentDescription(detail)}`;
+  const tenderLines=detail.sale.paymentMethod==="split"?detail.payments.map(p=>`${paymentMethodLabel(p.method)}: ${formatMinorAmount(p.amountMinor,detail.currency)}${p.method==="mobile"?` · ${p.mobileMoneyProviderName??"Unknown provider"} · Ref ${p.mobileMoneyReference??"missing"}`:p.method==="card"?` · Terminal ref ${p.cardReference??"missing"}`:""}`):[];
   return [
     detail.businessName,
     `Receipt ${detail.receipt.receiptNumber}`,
@@ -82,6 +86,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
     ] : []),
     `Remaining: ${formatMinorAmount(detail.sale.outstandingMinor, detail.currency)}`,
     payment,
+    ...tenderLines,
     "",
     "Thank you for your business.",
   ].filter((line): line is string => Boolean(line)).join("\n");

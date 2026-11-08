@@ -50,6 +50,10 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         <section className="receipt-detail-meta" aria-label="Receipt information">
           <div><span>Customer</span><strong>{detail.customerName}</strong></div>
           <div><span>Payment</span><strong>{receiptPaymentDescription(detail)}</strong></div>
+          {detail.sale.paymentMethod==="split" && <div className="col-span-full" aria-label="Split tender breakdown">
+            {detail.payments.map(payment=><p key={payment.id}>{payment.method==="mobile"?"Mobile Money":payment.method==="card"?"Card":"Cash"}: {formatMinorAmount(payment.amountMinor,detail.currency)}{payment.mobileMoneyProviderName?" · "+payment.mobileMoneyProviderName:""}{payment.mobileMoneyReference?" · Ref "+payment.mobileMoneyReference:payment.cardReference?" · Terminal ref "+payment.cardReference:""}</p>)}
+            <p>Manually recorded tenders, not bank or provider settlement confirmation.</p>
+          </div>}
         </section>
         <section className="receipt-detail-items" aria-labelledby="receipt-items-title">
           <div className="receipt-detail-section-head"><h3 id="receipt-items-title">Items</h3><span>{detail.lines.length} line{detail.lines.length === 1 ? "" : "s"}</span></div>

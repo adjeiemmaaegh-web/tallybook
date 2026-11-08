@@ -2,6 +2,7 @@
  * It checks immutable saved checkout/tender evidence, without inferring gateway
  * settlement or allocating old customer repayments to individual sales.
  */
+import {assertSplitPaymentLedger} from "../sales/splitTender.mjs";
 const validMinor = n => Number.isSafeInteger(n) && n >= 0;
 const validId = s => typeof s === 'string' && s.length > 0;
 export function assertSavedSaleTenderReconciliation(sales, payments) {
@@ -26,7 +27,7 @@ export function assertSavedSaleTenderReconciliation(sales, payments) {
     const sale=bySale.get(pay.saleId);
     if (!sale || pay.businessProfileId !== sale.businessProfileId ||
         (pay.customerId ?? undefined) !== (sale.customerId ?? undefined) ||
-        pay.method !== sale.paymentMethod || pay.method === 'wallet' || pay.method === 'credit' ||
+        (sale.paymentMethod !== 'split' && pay.method !== sale.paymentMethod) || pay.method === 'wallet' || pay.method === 'credit' || pay.method === 'split' ||
         typeof pay.createdAt !== 'string' || !Number.isFinite(Date.parse(pay.createdAt))) {
       throw new Error('Sale payment is foreign, orphaned or has a mismatched original tender.');
     }
@@ -35,6 +36,7 @@ export function assertSavedSaleTenderReconciliation(sales, payments) {
     sums.set(pay.saleId,next);
   }
   for (const sale of sales) {
+    assertSplitPaymentLedger(sale,payments.filter(p=>p.saleId===sale.id));
     const externalPaid=BigInt(sale.amountPaidMinor) - BigInt(sale.walletAppliedMinor ?? 0);
     if (externalPaid !== (sums.get(sale.id) ?? 0n))
       throw new Error('Sale payments do not reconcile to the saved amount received.');

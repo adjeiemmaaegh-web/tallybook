@@ -24,7 +24,7 @@ export interface InventoryReportRow { productId: string; productName: string; st
 export interface SalesTrendPoint { dateKey: string; label: string; salesMinor: number; transactions: number; }
 export interface DashboardBestSeller { productId: string; productName: string; quantity: number; salesMinor: number; }
 export interface DashboardActivity { id: string; type: "sale" | "repayment"; label: string; amountMinor: number; createdAt: string; }
-const endOfDayPaymentMethods: readonly PaymentMethod[] = ["cash", "mobile", "card", "credit"];
+const endOfDayPaymentMethods: readonly PaymentMethod[] = ["cash", "mobile", "card", "credit", "split"];
 export interface EndOfDayMethodTotal { method: PaymentMethod; label: string; salesMinor: number; receivedMinor: number; }
 export interface EndOfDaySummary {
   generatedAt: string;
