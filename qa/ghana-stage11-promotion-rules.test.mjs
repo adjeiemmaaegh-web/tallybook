@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {validatePromotionHistory,effectivePromotionPrice,promotionPriceReviewKey} from "../client/src/features/inventory/promotionRules.mjs";
+import {validatePromotionHistory,effectivePromotionPrice,promotionPriceReviewKey,validateSavedPromotionPricing} from "../client/src/features/inventory/promotionRules.mjs";
 const t="2026-11-09T00:00:00.000Z";
 const row={version:1,productId:"p",companyId:"c",revision:1,ownerStaffId:"owner",reason:"Opening week",
  enabled:true,discountBps:1250,changedAt:t,startsAt:t,endsAt:"2026-11-20T23:59:59.999Z"};
@@ -21,4 +21,34 @@ test("promotion preview key binds amount, quantity and revision in canonical ord
  const data=[{productId:"z",quantity:2,unitPriceMinor:200,revision:0},{productId:"a",quantity:1,unitPriceMinor:900,revision:2}];
  assert.equal(promotionPriceReviewKey(data),promotionPriceReviewKey([...data].reverse()));
  assert.notEqual(promotionPriceReviewKey(data),promotionPriceReviewKey(data.map(x=>({...x,revision:x.revision+1}))));
+});
+
+/** Independently compare original sale-line promo evidence with the saved
+ * preview; later product changes must not rewrite this original unit price. */
+export function validateSavedPromotionPricing(sale,lines){
+ if(!sale||!Array.isArray(lines))throw Error("Sale promotion evidence is unavailable.");
+ for(const line of lines){
+  const fields=[line.regularUnitPriceMinorAtSale,line.promotionSavingsPerUnitMinor,line.promotionRevisionAtSale];
+  const supplied=fields.filter(x=>x!==undefined).length;
+  if(supplied&&supplied!==3)throw Error("Sale promotion unit-price provenance is incomplete.");
+  if(supplied&&(!validMinor(fields[0])||!validMinor(fields[1])||!Number.isSafeInteger(fields[2])||
+      fields[2]<1||fields[1]<=0||fields[0]-fields[1]!==line.unitPriceMinor))
+    throw Error("Saved promotion savings no longer match the original receipt.");
+ }
+ if(sale.priceReviewKeyAtSale!==undefined){
+  const key=promotionPriceReviewKey(lines.map(line=>({
+    productId:line.productId,quantity:line.quantity,
+    unitPriceMinor:line.unitPriceMinor,revision:line.promotionRevisionAtSale??0
+  })));
+  if(key!==sale.priceReviewKeyAtSale)
+    throw Error("Original sale pricing preview was altered after checkout.");
+ }
+ return true;
+}
+
+test("immutable sale pricing evidence detects altered promo savings and preview substitution",()=>{
+ const lines=[{productId:"p",quantity:2,unitPriceMinor:874,regularUnitPriceMinorAtSale:999,promotionSavingsPerUnitMinor:125,promotionRevisionAtSale:1}];
+ const key=promotionPriceReviewKey([{productId:"p",quantity:2,unitPriceMinor:874,revision:1}]);
+ assert.equal(validateSavedPromotionPricing({priceReviewKeyAtSale:key},lines),true);
+ assert.throws(()=>validateSavedPromotionPricing({priceReviewKeyAtSale:key},[{...lines[0],promotionSavingsPerUnitMinor:124}]),/savings/);
 });

@@ -44,3 +44,26 @@ export function promotionPriceReviewKey(lines) {
  return JSON.stringify([...lines].sort((a,b)=>a.productId.localeCompare(b.productId))
   .map(l=>[l.productId,l.quantity,l.unitPriceMinor,l.revision]));
 }
+
+/** Independently compare original sale-line promo evidence with the saved
+ * preview; later product changes must not rewrite this original unit price. */
+export function validateSavedPromotionPricing(sale,lines){
+ if(!sale||!Array.isArray(lines))throw Error("Sale promotion evidence is unavailable.");
+ for(const line of lines){
+  const fields=[line.regularUnitPriceMinorAtSale,line.promotionSavingsPerUnitMinor,line.promotionRevisionAtSale];
+  const supplied=fields.filter(x=>x!==undefined).length;
+  if(supplied&&supplied!==3)throw Error("Sale promotion unit-price provenance is incomplete.");
+  if(supplied&&(!validMinor(fields[0])||!validMinor(fields[1])||!Number.isSafeInteger(fields[2])||
+      fields[2]<1||fields[1]<=0||fields[0]-fields[1]!==line.unitPriceMinor))
+    throw Error("Saved promotion savings no longer match the original receipt.");
+ }
+ if(sale.priceReviewKeyAtSale!==undefined){
+  const key=promotionPriceReviewKey(lines.map(line=>({
+    productId:line.productId,quantity:line.quantity,
+    unitPriceMinor:line.unitPriceMinor,revision:line.promotionRevisionAtSale??0
+  })));
+  if(key!==sale.priceReviewKeyAtSale)
+    throw Error("Original sale pricing preview was altered after checkout.");
+ }
+ return true;
+}

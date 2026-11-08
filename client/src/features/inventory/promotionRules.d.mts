@@ -10,3 +10,8 @@ export declare function effectivePromotionPrice(product:ProductWithPromotion,reg
 export declare function promotionPriceReviewKey(lines:Array<{
  productId:string;quantity:number;unitPriceMinor:number;revision:number
 }>):string;
+
+export declare function validateSavedPromotionPricing(sale:{priceReviewKeyAtSale?:string},lines:Array<{
+ productId:string;quantity:number;unitPriceMinor:number;regularUnitPriceMinorAtSale?:number;
+ promotionSavingsPerUnitMinor?:number;promotionRevisionAtSale?:number
+}>):true;
