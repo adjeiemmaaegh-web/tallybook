@@ -1,6 +1,7 @@
 /** Stage 11 integrity audit: inspect local record relationships without mutating owner data. */
 import { validateTaxSnapshot } from "@/features/sales/tax";
 import {assertSplitPaymentLedger} from "@/features/sales/splitTender.mjs";
+import {validateSavedPromotionPricing} from "@/features/inventory/promotionRules.mjs";
 import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
 import { DATABASE_SCHEMA_VERSION, db, type TallybookDB } from "@/db/TallybookDB";
 import { expenseCategories, localExpenseDate } from "@/features/expenses/expenses";
@@ -98,6 +99,7 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
       if (lineSubtotal !== sale.subtotalMinor) issues.push(issue("sale-line-subtotal", `Sale ${sale.receiptNumber} line total does not match its saved subtotal.`, sale.id));
       try {
         assertSplitPaymentLedger(sale,salePayments);
+        validateSavedPromotionPricing(sale,saleLines);
         validateTaxSnapshot(sale);
         validateGhanaVatLineEvidence(sale, saleLines);
         if (sale.totalMinor !== (sale.tax?.totalMinor ?? sale.subtotalMinor - sale.discountMinor)) throw new Error("total mismatch");

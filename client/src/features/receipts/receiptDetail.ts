@@ -43,7 +43,7 @@ export function receiptPaymentDescription(detail: ReceiptDetail) {
 }
 
 export function formatReceiptShareText(detail: ReceiptDetail) {
-  const lines = detail.lines.map((line) => `${line.productName} × ${line.quantity} — ${formatMinorAmount(line.lineTotalMinor, detail.currency)}`);
+  const lines = detail.lines.map(line => `${line.productName} × ${line.quantity} — ${formatMinorAmount(line.lineTotalMinor,detail.currency)}${line.promotionSavingsPerUnitMinor ? ` (promotion v${line.promotionRevisionAtSale}, saved ${formatMinorAmount(line.promotionSavingsPerUnitMinor*line.quantity,detail.currency)} from original unit price)` : ""}`);
   const discount = detail.sale.discountMinor > 0 ? `Discount: ${formatMinorAmount(detail.sale.discountMinor, detail.currency)}` : undefined;
   const payment = `Payment: ${receiptPaymentDescription(detail)}`;
   const tenderLines=detail.sale.paymentMethod==="split"?detail.payments.map(p=>`${paymentMethodLabel(p.method)}: ${formatMinorAmount(p.amountMinor,detail.currency)}${p.method==="mobile"?` · ${p.mobileMoneyProviderName??"Unknown provider"} · Ref ${p.mobileMoneyReference??"missing"}`:p.method==="card"?` · Terminal ref ${p.cardReference??"missing"}`:""}`):[];

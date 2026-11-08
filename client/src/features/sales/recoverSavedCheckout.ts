@@ -2,6 +2,7 @@
 import { validateTaxSnapshot } from "./tax";
 import {assertSplitPaymentLedger} from "./splitTender.mjs";
 import {validateGhanaVatLineEvidence} from "./ghanaVat.mjs";
+import {validateSavedPromotionPricing} from "@/features/inventory/promotionRules.mjs";
 import type { SaleSnapshot } from "./sales";
 
 export function recoverSavedCheckout(snapshot: SaleSnapshot, companyId: string, submissionKey: string) {
@@ -15,6 +16,7 @@ export function recoverSavedCheckout(snapshot: SaleSnapshot, companyId: string, 
   if (receipts.length !== 1 || receipts[0].receiptNumber !== sale.receiptNumber) fail("has missing, duplicate, or mismatched receipts");
   const lines = snapshot.lines.filter(line => line.businessProfileId === companyId && line.saleId === sale.id);
   if (!lines.length || lines.some(line => !Number.isSafeInteger(line.quantity) || line.quantity <= 0 || !Number.isSafeInteger(line.unitPriceMinor) || line.unitPriceMinor < 0 || line.lineTotalMinor !== line.quantity * line.unitPriceMinor)) fail("has inconsistent item lines");
+  validateSavedPromotionPricing(sale,lines);
   validateTaxSnapshot(sale);
   if(sale.tax?.ghana)validateGhanaVatLineEvidence(sale,lines);
   const subtotal = lines.reduce((total, line) => total + line.lineTotalMinor, 0);

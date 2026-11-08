@@ -48,7 +48,7 @@ import type { StockCountSession, InventoryBatch } from "@/features/inventory/sta
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
 import { validateCentralSaleEvent } from "@/features/sync/centralSaleEvent";
 import {validateCategoryHierarchy} from "@/features/inventory/categoryHierarchy.mjs";
-import {validatePromotionHistory} from "@/features/inventory/promotionRules.mjs";
+import {validatePromotionHistory,validateSavedPromotionPricing} from "@/features/inventory/promotionRules.mjs";
 import { validateCentralOperationalEvent } from "@/features/sync/centralOperationalEvent";
 import { validateNoSaleRequest } from "@/features/drawer/noSaleEvent.mjs";
 import { validateLocalSyncDevice } from "@/features/sync/deviceRegistry";
@@ -576,6 +576,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for (const sale of records.sales) if (sale.tax?.ghana)
     validateGhanaVatLineEvidence(sale, records.saleLines.filter(line => line.saleId === sale.id));
   for (const sale of records.sales) {
+    validateSavedPromotionPricing(sale,records.saleLines.filter(line=>line.saleId===sale.id));
     validateTaxSnapshot(sale);
     if (sale.costStatus === undefined) continue;
     const lines = records.saleLines.filter(line => line.saleId === sale.id);
