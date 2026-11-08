@@ -52,6 +52,9 @@ test('a local owner PIN locks and unlocks the business workspace', async ({page}
   const cashierNav = page.getByRole('navigation', {name:'Cashier navigation'});
   await expect(cashierNav).toBeVisible();
   await expect(page.getByRole('link', {name:'Reports', exact:true})).toHaveCount(0);
+  await page.evaluate(() => window.history.pushState(null, '', '/reports'));
+  await expect(page).toHaveURL(/\/sales$/);
+  await expect(cashierNav.getByRole('link', {name:'Sales', exact:true})).toHaveAttribute('aria-current','page');
   await cashierNav.getByRole('link', {name:'Sales',exact:true}).click();
   await expect(page.getByRole('heading', {name:'Add stock before you open the receipt.'})).toBeVisible();
 });

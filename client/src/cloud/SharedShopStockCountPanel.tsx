@@ -2,16 +2,17 @@
  * applying fails on the server if stock changed since count began.
  */
 import {useCallback,useEffect,useRef,useState} from "react";
+import {openStockCount} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {getShopStockCounts,startShopStockCount,applyShopStockCount,cancelShopStockCount,type ShopStockCount} from "./shopPurchasing";
-interface Props {companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
-export function SharedShopStockCountPanel({companyId,overview,online,refresh}:Props){
+interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
+export function SharedShopStockCountPanel({userId,companyId,overview,online,refresh}:Props){
  const [counts,setCounts]=useState<ShopStockCount[]>([]);
  const [storeId,setStoreId]=useState("");const [productId,setProductId]=useState("");
  const [counted,setCounted]=useState<Record<string,string>>({});
  const [loading,setLoading]=useState(false);const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");const [status,setStatus]=useState("");
- const startKey=useRef<{storeId:string;productId:string;countId:string}|null>(null);
+ const startKey=useRef<{storeId:string;productId:string}|null>(null);
  const load=useCallback(async()=>{
   if(!online)return;
   setLoading(true);
@@ -32,9 +33,12 @@ export function SharedShopStockCountPanel({companyId,overview,online,refresh}:Pr
   if(startKey.current&&(startKey.current.storeId!==storeId||startKey.current.productId!==productId)){
     setError("An earlier count start is unresolved. Verify its status before switching the product.");return;
   }
-  startKey.current??={storeId,productId,countId:crypto.randomUUID()};
+  startKey.current??={storeId,productId};
   const saved=startKey.current;
-  void action(async()=>{await startShopStockCount(companyId,saved);startKey.current=null;},"Stock count opened");
+  void action(async()=>{
+    await openStockCount(userId, companyId, saved, sessionStorage, startShopStockCount);
+    startKey.current=null;
+  },"Stock count opened");
  };
  const apply=(item:ShopStockCount)=>{
   const text=counted[item.countId]?.trim();

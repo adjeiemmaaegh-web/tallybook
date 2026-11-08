@@ -9,3 +9,18 @@ export async function purchaseRetry(userId: string, companyId: string, kind: str
   if (!saved) storage.setItem(key, id);
   return { id, confirm() { if (storage.getItem(key) === id) storage.removeItem(key); } };
 }
+
+type StockSelection = {storeId: string; productId: string};
+
+export async function openStockCount(
+  userId: string,
+  companyId: string,
+  selection: StockSelection,
+  storage: Storage,
+  start: (companyId: string, input: StockSelection & {countId: string}) => Promise<unknown>,
+) {
+  const {storeId, productId} = selection;
+  const retry = await purchaseRetry(userId, companyId, "stock-count-start", {storeId, productId}, storage);
+  await start(companyId, {storeId, productId, countId: retry.id});
+  retry.confirm();
+}
