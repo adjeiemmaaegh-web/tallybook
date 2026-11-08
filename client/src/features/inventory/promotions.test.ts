@@ -38,7 +38,10 @@ it("owner discount is frozen in checkout unit pricing, verified in backup and ca
  expect(()=>parseBackup(stringifyBackup(backup))).not.toThrow();
  const tampered=structuredClone(backup);
  tampered.records.saleLines[0].promotionSavingsPerUnitMinor=199;
- expect(()=>parseBackup(stringifyBackup(tampered))).toThrow(/promotion/);
+ expect(()=>parseBackup(stringifyBackup(tampered))).toThrow(/payload differs/);
+ // Matching copies must still fail the independent promotion arithmetic check.
+ tampered.records.centralSaleEvents[0].payload.lines[0].promotionSavingsPerUnitMinor=199;
+ expect(()=>parseBackup(stringifyBackup(tampered))).toThrow(/promotion/i);
  const replay=await completeSale(input,database);
  expect(replay.sale.id).toBe(first.sale.id);
  expect(await database.sales.count()).toBe(1);
