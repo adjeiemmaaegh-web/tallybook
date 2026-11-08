@@ -7,6 +7,7 @@
  */
 import "./sharedShop.css";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
+import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
@@ -20,7 +21,7 @@ import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
-  recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
+  recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
   getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
@@ -180,25 +181,47 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
 }
 
 function ShopWorkspace({ userId, business, online }: { userId: string; business: Business; online: boolean }) {
-  const [overview, setOverview] = useState<ShopOverview | null>(null);
+  const [savedOverview, setOverview] = useState<ShopOverview | null>(null);
+  const revision = useRef(0);
+  const accessDenied = useRef(false);
+  const offlineOverview = useMemo(() => !online && savedOverview
+    ? safeCache({overviews: {[business.id]: savedOverview}}).overviews[business.id] ?? null
+    : null, [business.id, savedOverview, online]);
+  const overview = online ? savedOverview : offlineOverview;
   useEffect(() => {
     let live = true;
-    if (!online) void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
+    if (!online) setOverview(current => current
+      ? safeCache({overviews: {[business.id]: current}}).overviews[business.id] ?? null : null);
+    if (!online && !accessDenied.current) void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
     return () => { live = false; };
   }, [userId, business.id, online]);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>(business.role === "owner" && new URLSearchParams(window.location.search).get("view") === "dashboard" ? "dashboard" : "sell");
+  const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && new URLSearchParams(window.location.search).get("view") === "dashboard" ? "dashboard" : "sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
   const refresh = useCallback(async () => {
-    if (!navigator.onLine) return;
+    if (!online || !navigator.onLine) return;
+    const request = ++revision.current;
     try {
       const next = await getShopOverview(business.id);
+      if (request !== revision.current) return;
+      accessDenied.current = false;
       setOverview(next); setError("");
       void writeCache(userId, cache => { cache.overviews[business.id] = next; });
-    } catch (cause) { setError(message(cause)); }
-  }, [business.id, userId]);
-  useEffect(() => { void refresh(); }, [refresh, online]);
+    } catch (cause) {
+      if (request !== revision.current) return;
+      if (cause instanceof ShopRejectedError) {
+        accessDenied.current = true;
+        setOverview(null);
+        void writeCache(userId, cache => {
+          delete cache.overviews[business.id];
+          cache.businesses = cache.businesses.filter(item => item.id !== business.id);
+        });
+      }
+      setError(message(cause));
+    }
+  }, [business.id, userId, online]);
+  useEffect(() => { void refresh(); return () => { revision.current++; }; }, [refresh]);
   const isOwnerRole = overview?.role === "owner";
   useEffect(() => {
     if (!isOwnerRole || hasSale === true || !online) return;
@@ -210,7 +233,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     return () => { live = false; };
   }, [isOwnerRole, business.id, online, hasSale, overview]);
 
-  if (!overview) return error ? <p role="alert" className="shop-alert">{error}</p> : <p role="status">Loading shop…</p>;
+  if (!overview) return error ? <p role="alert" className="shop-alert">{error} <button type="button" disabled={!online} onClick={() => void refresh()}>Try again</button></p> : <p role="status">Loading shop…</p>;
   const isOwner = overview.role === "owner";
   if (!overview.currency) return isOwner
     ? <SetupLedger companyId={business.id} onDone={refresh} />
@@ -220,6 +243,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const tabs: Array<[Tab, string]> = isOwner
     ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
+  const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
@@ -241,7 +265,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </section>}
 
     {tab === "sell" && <SellPanel {...ctx} />}
-    {tab === "stock" && isOwner && <StockPanel {...ctx} />}
+    {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
     {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "orders" && isOwner && (online
@@ -249,7 +273,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       : <p role="status">Reconnect to manage online orders.</p>)}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
-    {tab === "sales" && <SalesPanel {...ctx} />}
+    {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}
   </>;
 }
 
@@ -387,6 +411,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
+  const [queueError, setQueueError] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
@@ -395,15 +420,24 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const reloadQueue = useCallback(() => { void readOutbox(scope).then(list => { if (mounted.current) setQueued(list); }).catch(() => { /* keep the last list */ }); }, [scope]);
+  const reloadQueue = useCallback(async () => {
+    try {
+      const list = await readOutbox(scope);
+      if (mounted.current) { setQueued(list); setQueueError(""); }
+    } catch {
+      if (mounted.current) setQueueError("Cannot read this device’s pending sales. Keep its saved data and retry before re-entering a sale.");
+    }
+  }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
     flushing.current = true;
     try {
       const results = await flushOutbox(scope, send);
-      reloadQueue();
-      if (results.some(r => r.state === "recorded")) void refresh();
+      await reloadQueue();
+      if (results.some(r => r.state === "recorded")) await refresh();
+    } catch (cause) {
+      if (mounted.current) setQueueError("Could not reconcile pending sales. " + message(cause));
     } finally { flushing.current = false; }
   }, [scope, send, refresh, reloadQueue]);
   useEffect(() => { reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
@@ -534,6 +568,9 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
           <ReceiptText aria-hidden="true" />{busy ? "Recording…" : online ? "Record sale" : "Save sale (offline)"}</button>
         {error && <p role="alert" className="shop-alert">{error}</p>}
       </>}
+      {queueError && <div role="alert" className="shop-alert">{queueError}
+        <button type="button" onClick={() => { if (online) void flush(); else void reloadQueue(); }}>Retry pending sales</button>
+      </div>}
       {queued.length > 0 && <div className="shop-queue">
         <h3>Waiting to send</h3>
         <ul>{queued.map(q => <li key={q.id} className={q.status === "rejected" || q.status === "needs-review" ? "is-rejected" : ""}>

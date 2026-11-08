@@ -299,3 +299,22 @@ describe("shared shop — full till", () => {
     await waitFor(() => expect(shop.perms).toHaveBeenCalledWith("att-2", { canDiscount: true, maxDiscountBps: 500, canCredit: true }));
   });
 });
+
+it("withdraws owner controls when an online shop loses connectivity", async () => {
+  shop.overview.mockResolvedValue({...base, role:"owner"});
+  render(<SharedShopPage />);
+  fireEvent.click(await screen.findByRole("button", {name:"Team"}));
+  await act(async () => { window.dispatchEvent(new Event("offline")); });
+  expect(screen.queryByRole("button", {name:"Team"})).toBeNull();
+  expect(screen.queryByRole("button", {name:"Purchasing"})).toBeNull();
+});
+
+it("closes the workspace when the server rejects a membership refresh", async () => {
+  shop.overview.mockResolvedValueOnce({...base, role:"owner"});
+  render(<SharedShopPage />);
+  await screen.findByRole("button", {name:"Purchasing"});
+  shop.overview.mockRejectedValue(new ShopRejectedError("Business access denied"));
+  fireEvent.click(screen.getByRole("button", {name:"Refresh"}));
+  expect(await screen.findByText("Business access denied")).toBeVisible();
+  expect(screen.queryByRole("navigation", {name:"Shop sections"})).toBeNull();
+});
