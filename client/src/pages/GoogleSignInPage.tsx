@@ -118,10 +118,10 @@ export default function GoogleSignInPage(){
        state.status==='signed-in'?<div className="space-y-3">
         <CloudBusinessPanel key={state.userId} accountOnly/>
         <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
-      <p className="op-row-sub">Sign in before opening a shop. Sales, stock, reports and local backups
+      <p className="op-row-sub">Sales, stock, reports and local backups
         remain on this device. Signing out does not encrypt or erase
         records stored in this browser.</p>
-        <p className="break-all" role="status">Cloud session verified for account <code>{state.userId}</code>.</p>
+        <p className="break-all" role="status">Cloud session verified. You’re signed in.</p>
         <div className="flex flex-wrap gap-2">
           <button className="secondary-action" disabled={busy} type="button"
             onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
@@ -133,7 +133,7 @@ export default function GoogleSignInPage(){
        <div className="space-y-3">
          {state.status==='error'?<p role="alert">Cloud identity could not be verified.
            No local records were changed.</p>:null}
-         <button className="primary-action" type="button" disabled={busy}
+         <button className="secondary-action" type="button" disabled={busy}
            onClick={()=>void signIn()}><LogIn className="h-4 w-4"/>
            {busy?'Opening Google…':'Sign in with Google'}</button>
          {state.status==='error'?<button className="secondary-action" type="button"

@@ -86,3 +86,11 @@
 @media (max-width: 760px) {
   .tb-verified-panel .tb-role-grid { grid-template-columns: 1fr; }
 }
+
+/* Keep the product introduction on the welcome route and the form first on phones. */
+@media (max-width: 760px) {
+  .tb-account-page .tb-account-aside { padding: 16px 22px; border-radius: 0; }
+  .tb-account-page .tb-account-aside > :not(.tb-account-brand) { display: none; }
+  .tb-account-form .flex.flex-wrap { flex-direction: column; }
+  .tb-account-form .primary-action { width: 100%; justify-content: center; }
+}
