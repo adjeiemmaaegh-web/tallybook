@@ -46,6 +46,8 @@ export function reconcileSupplierPayable(purchase, entries) {
         row.businessProfileId !== purchase.businessProfileId || row.purchaseId !== purchase.id ||
         row.supplierId !== purchase.supplierId || row.currency !== purchase.currency || !validAmount(row.amountMinor) ||
         !validSupplierLedgerTimestamp(row.createdAt) || Date.parse(row.createdAt) < Date.parse(purchase.createdAt) ||
+        (row.staffId !== undefined && (!identity(row.staffId) || !row.staffId.trim())) ||
+        (row.shiftId !== undefined && (!identity(row.shiftId) || !row.shiftId.trim())) ||
         (row.reference !== undefined && (typeof row.reference !== 'string' || row.reference.length > 120))) {
       throw new Error('Supplier payable contains a duplicate, foreign or malformed entry.');
     }
