@@ -1,5 +1,6 @@
 /** Stage 11 integrity audit: inspect local record relationships without mutating owner data. */
 import { validateTaxSnapshot } from "@/features/sales/tax";
+import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
 import { DATABASE_SCHEMA_VERSION, db, type TallybookDB } from "@/db/TallybookDB";
 import { expenseCategories, localExpenseDate } from "@/features/expenses/expenses";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -96,6 +97,7 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
       if (lineSubtotal !== sale.subtotalMinor) issues.push(issue("sale-line-subtotal", `Sale ${sale.receiptNumber} line total does not match its saved subtotal.`, sale.id));
       try {
         validateTaxSnapshot(sale);
+        validateGhanaVatLineEvidence(sale, saleLines);
         if (sale.totalMinor !== (sale.tax?.totalMinor ?? sale.subtotalMinor - sale.discountMinor)) throw new Error("total mismatch");
       } catch { issues.push(issue("sale-total", `Sale ${sale.receiptNumber} total does not reconcile with discounts and recorded tax.`, sale.id)); }
       if (sale.outstandingMinor !== sale.totalMinor - sale.amountPaidMinor || sale.outstandingMinor < 0) issues.push(issue("sale-outstanding", `Sale ${sale.receiptNumber} has an inconsistent outstanding amount.`, sale.id));
