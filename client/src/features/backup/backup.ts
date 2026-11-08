@@ -1,4 +1,5 @@
 import { taxPolicySchema, validateTaxSnapshot } from "@/features/sales/tax";
+import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
 import {validateCreditTerms} from '@/features/credit/creditTerms.mjs';
 import { allocationCost, reconstructInventoryCost, type InventoryCostEvent } from "@/features/inventory/costLedger";
 import { lockStaff, requirePermission } from "@/features/staff/staff";
@@ -556,6 +557,8 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   // saved sale. Older pre-snapshot receipts are kept legacy-unverified.
   auditRun12SaleTaxHistory(records.sales);
   for(const sale of records.sales)validateCreditTerms(sale);
+  for (const sale of records.sales) if (sale.tax?.ghana)
+    validateGhanaVatLineEvidence(sale, records.saleLines.filter(line => line.saleId === sale.id));
   for (const sale of records.sales) {
     validateTaxSnapshot(sale);
     if (sale.costStatus === undefined) continue;
