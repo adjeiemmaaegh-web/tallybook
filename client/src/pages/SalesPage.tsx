@@ -151,7 +151,7 @@ export default function SalesPage() {
     productId: line.productId, amountMinor: selectUnitPrice(line.product, line.quantity) * line.quantity,
     treatment: line.product.ghanaTaxTreatment
   }));
-  let taxPreview: ReturnType<typeof calculateSaleTax>;
+  let taxPreview: ReturnType<typeof calculateSaleTax> = undefined;
   let taxPreviewError: string | null = null;
   try {
     taxPreview = taxLines.length ? calculateSaleTax(taxLines, Math.max(0, discountMinor + redemptionMinor), profile?.taxPolicy) : undefined;
