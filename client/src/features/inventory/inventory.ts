@@ -13,6 +13,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { appendInventoryCostChange } from "./costLedger";
 import {validateCategoryHierarchy} from "./categoryHierarchy.mjs";
+import {validatePromotionHistory,type ProductPromotionRevision} from "./promotionRules.mjs";
 
 export const INVENTORY_BUSINESS_ID = "primary" as const;
 
@@ -52,6 +53,8 @@ export interface Product {
   categoryId?: string;
   /** Explicit owner classification for optional Ghana VAT. Omitted means unclassified, never assumed taxable. */
   ghanaTaxTreatment?: GhanaTaxTreatment;
+  /** Owner-authorized append-only product promotion revisions; never rewriting historical unit prices. */
+  promotionHistory?:ProductPromotionRevision[];
   sellingPriceMinor: number;
   costPriceMinor?: number;
   stockQuantity: number;
@@ -174,6 +177,7 @@ export async function getInventorySnapshot(database: TallybookDB = db): Promise<
   const categories = allCategories.filter((category) => category.businessProfileId === activeId);
   validateCategoryHierarchy(categories,activeId);
   const products = allProducts.filter((product) => product.businessProfileId === activeId);
+  for(const product of products)validatePromotionHistory(product.promotionHistory,product.id,activeId);
   const movements = allMovements.filter((movement) => movement.businessProfileId === activeId);
   return {
     categories: categories.filter((category) => !category.archivedAt),

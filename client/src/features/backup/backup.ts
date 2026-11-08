@@ -48,6 +48,7 @@ import type { StockCountSession, InventoryBatch } from "@/features/inventory/sta
 import { validateOutboxEvent } from "@/features/sync/syncFoundation";
 import { validateCentralSaleEvent } from "@/features/sync/centralSaleEvent";
 import {validateCategoryHierarchy} from "@/features/inventory/categoryHierarchy.mjs";
+import {validatePromotionHistory} from "@/features/inventory/promotionRules.mjs";
 import { validateCentralOperationalEvent } from "@/features/sync/centralOperationalEvent";
 import { validateNoSaleRequest } from "@/features/drawer/noSaleEvent.mjs";
 import { validateLocalSyncDevice } from "@/features/sync/deviceRegistry";
@@ -252,6 +253,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   if (records.businessProfiles[0].taxPolicy !== undefined) taxPolicySchema.parse(records.businessProfiles[0].taxPolicy);
   const companyId = records.businessProfiles[0].id;
   validateCategoryHierarchy(records.categories,companyId);
+  for(const product of records.products)validatePromotionHistory(product.promotionHistory,product.id,companyId);
   const index = (key: keyof BackupRecords) => new Set((records[key] as Array<{ id: string }>).map((r) => r.id));
   for (const key of recordKeys) {
     if (key === "appMeta" || key === "businessProfiles") continue;
