@@ -7,6 +7,7 @@
  */
 import "./sharedShop.css";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
+import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
@@ -240,7 +241,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </section>}
 
     {tab === "sell" && <SellPanel {...ctx} />}
-    {tab === "stock" && isOwner && <StockPanel {...ctx} />}
+    {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
     {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
