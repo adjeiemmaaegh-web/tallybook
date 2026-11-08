@@ -3,6 +3,7 @@
  * calling the report's reducers. A valid final total cannot hide an overflowing
  * intermediate day, category, or cross-source financial posting.
  */
+import {businessDayKey} from "../business/businessCalendar.mjs";
 const MAX = BigInt(Number.MAX_SAFE_INTEGER);
 const validNumber = n => Number.isSafeInteger(n);
 const amount = (n, source) => {
@@ -42,10 +43,6 @@ const validTimestamp = value => {
 };
 /** Shared strict saved-posting validator for other read-only ledger audits. */
 export const isValidFinancialPostingTimestamp = validTimestamp;
-const key = timestamp => {
-  const date = new Date(timestamp);
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-};
 const errorDate = label => {throw new Error(`Financial ${label} contains an invalid original posting date; reconcile saved evidence before reporting.`);};
 /** Verify complete history, not just visible records. This prevents invalid past
  * rows being omitted from a report through a failing date-range comparison. */
@@ -62,10 +59,11 @@ export function assertFinancialPostingDates({sales=[],payments=[],repayments=[],
 }
 /** The caller supplies ONLY rows selected for the reporting period. Original
  * source timestamps and the original reversal's wallet amount are used. */
-export function reconcileFinancialPeriodDisplay({sales=[],payments=[],repayments=[],reversals=[],refunds=[],walletTransfers=[],expenses=[]}, saleById, expected) {
+export function reconcileFinancialPeriodDisplay({sales=[],payments=[],repayments=[],reversals=[],refunds=[],walletTransfers=[],expenses=[]}, saleById, expected, country) {
   // This public pure helper may also be called independently of the report.
   // Never group a malformed posting into a different calendar day.
   assertFinancialPostingDates({sales,payments,repayments,reversals,cashReturns:refunds,walletTransfers,expenses});
+  const key = timestamp => businessDayKey(timestamp, country);
   const daily = new Map();
   const categories = new Map();
   const row = day => {let value=daily.get(day);if (!value){value={day,revenue:0n,collections:0n,expenses:0n};daily.set(day,value);}return value;};

@@ -3,11 +3,12 @@
  * UNVERIFIED (even when its original tax arithmetic is independently sound).
  * No tax return, multi-rate, exemption or payment to a tax authority.
  */
+import {validateGhanaVatEvidence} from "../sales/ghanaVat.mjs";
 const fail=message=>{throw Error('Run 12 tax evidence: '+message);};
 const safe=v=>Number.isSafeInteger(v)&&v>=0;
 const keys=(x,allowed)=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&
  Object.keys(x).every(k=>allowed.includes(k));
-const policyKeys=['enabled','registrationStatus','registrationNumber','label','rateBasisPoints','priceMode'];
+const policyKeys=['enabled','registrationStatus','registrationNumber','label','rateBasisPoints','priceMode','scheme'];
 const policyValid=p=>keys(p,policyKeys)&&
  Object.hasOwn(p,'enabled')&&typeof p.enabled==='boolean'&&
  ['unknown','not-registered','registered'].includes(p.registrationStatus)&&
@@ -15,6 +16,8 @@ const policyValid=p=>keys(p,policyKeys)&&
  typeof p.label==='string'&&p.label.trim()===p.label&&p.label.length>0&&p.label.length<=40&&
  Number.isSafeInteger(p.rateBasisPoints)&&p.rateBasisPoints>=0&&p.rateBasisPoints<=10000&&
  ['inclusive','exclusive'].includes(p.priceMode)&&
+ (p.scheme===undefined||p.scheme==='ghana-vat-2026')&&
+ (p.scheme!=='ghana-vat-2026'||(p.rateBasisPoints===2000&&(!p.enabled||(typeof p.registrationNumber==='string'&&!!p.registrationNumber.trim()))))&&
  (!p.enabled||p.registrationStatus==='registered');
 const equalPolicy=(a,b)=>!!a&&!!b&&policyValid(a)&&policyValid(b)&&
  policyKeys.every(k=>a[k]===b[k]);
@@ -45,6 +48,10 @@ export function validateRun12SaleTaxEvidence(sale){
  if(!p||p.enabled!==true||p.registrationStatus!=='registered'||
     !sale.tax||!equalPolicy(p,sale.tax.policy))
   fail('tax-charged sale lacks matching registered invoice policy');
+ if(p.scheme==='ghana-vat-2026'){
+   try{validateGhanaVatEvidence(sale)}catch(error){fail(error instanceof Error?error.message:'Ghana tax evidence invalid');}
+   return Object.freeze({verified:true,legacy:false,chargedTax:true});
+ }
  const rate=BigInt(p.rateBasisPoints);
  const divisor=p.priceMode==='inclusive'?10000n+rate:10000n;
  const tax=(base*rate*2n+divisor)/(2n*divisor);

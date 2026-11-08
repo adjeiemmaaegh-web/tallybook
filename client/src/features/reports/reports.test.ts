@@ -119,3 +119,12 @@ describe("Stage 7 local reports", () => {
     expect(report.totals).toEqual({ salesMinor: 3000, receivedMinor: 1500, outstandingDebtMinor: 1500, transactionCount: 2 });
   });
 });
+
+it("uses Ghana midnight rather than the tester's timezone when explicitly selected", () => {
+  const before = new Date("2026-11-08T23:59:59.000Z");
+  const after = new Date("2026-11-09T00:00:00.000Z");
+  expect(reportDateRange("today", before, "Ghana").start?.toISOString()).toBe("2026-11-08T00:00:00.000Z");
+  expect(reportDateRange("today", before, "Ghana").end.toISOString()).toBe("2026-11-09T00:00:00.000Z");
+  expect(reportDateRange("today", after, "Ghana").start?.toISOString()).toBe("2026-11-09T00:00:00.000Z");
+  expect(reportDateRange("last7", after, "Ghana").start?.toISOString()).toBe("2026-11-03T00:00:00.000Z");
+});

@@ -27,6 +27,18 @@ export default function FinancialIntelligencePage(){
   </section>
   {loading&&<p role="status">Calculating from saved records…</p>}{error&&<p role="alert">{error}</p>}
   {summary && !loading && <section className="report-sheet" aria-label="Historical cost reconciliation"><h2>Recorded sales and their costs</h2><p>Recorded tax after reversals: <strong>{fmt(summary.recordedTaxMinor)}</strong></p><p>Sales excluding recorded tax: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>{summary.cogsMinor === undefined ? <p>{summary.unavailable.cogs} Cost totals remain unavailable until the missing evidence is reconciled.</p> : <><p>Cost of goods sold, after reversals: <strong>{fmt(summary.cogsMinor)}</strong></p><p>Sales excluding recorded tax less cost: <strong>{fmt(summary.salesLessCostMinor!)}</strong></p><p>Costs are reconstructed from saved receipts and FIFO allocations. This amount is before expenses and any unconfigured tax obligations.</p></>}</section>}
+  {summary?.managementProfit&&!loading&&<section className="report-sheet" aria-label="Management profit and loss">
+    <h2>Profit & loss — recorded management result</h2>
+    <p>Sales after refunds, excluding only tax recorded on saved receipts: <strong>{fmt(summary.salesExcludingRecordedTaxMinor)}</strong></p>
+    {summary.managementProfit.status==="available" ? <>
+      <p>Verified cost of goods sold (FIFO, after saved returns): <strong>{fmt(summary.cogsMinor!)}</strong></p>
+      <p>Gross profit from recorded transactions: <strong>{fmt(summary.managementProfit.grossProfitMinor!)}</strong></p>
+      <p>Period operating expenses: <strong>{fmt(summary.expensesMinor)}</strong></p>
+      <p><strong>Management operating result: {fmt(summary.managementProfit.operatingResultMinor!)}</strong></p>
+    </> : <p role="status">Profit is unavailable — one or more sales/returns have unverified original stock costs. No estimate is silently substituted.</p>}
+    <p>{summary.managementProfit.reason}</p>
+    <p>Supplier payments are never expensed again here. This is not statutory profit, audited accounts, income tax due, depreciation, accrual accounting, or proof of actual bank settlement.</p>
+  </section>}
   {summary?.taxEvidence&&!loading&&
     <section className="report-sheet" aria-label="Original tax policy evidence">
       <h2>Tax configured at each original sale</h2>

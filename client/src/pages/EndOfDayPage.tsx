@@ -6,12 +6,16 @@ import { toast } from "sonner";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { getEndOfDaySummary, type EndOfDaySummary } from "@/features/reports/reports";
+import {previewManualTenderStatement} from "@/features/payments/manualSettlement.ts";
+import type {ManualTenderReconcileResult} from "@/features/payments/manualSettlement.mjs";
 
 export default function EndOfDayPage() {
   const { profile, activeCompanyId } = useBusinessProfile();
   const [summary, setSummary] = useState<EndOfDaySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [tenderComparison,setTenderComparison]=useState<ManualTenderReconcileResult|null>(null);
+  const [tenderProblem,setTenderProblem]=useState<string|null>(null);
   const refresh = useCallback(async () => {
     if (!profile) return;
     setLoading(true);
@@ -21,7 +25,7 @@ export default function EndOfDayPage() {
     finally { setLoading(false); }
   }, [activeCompanyId, profile]);
   useEffect(() => { void refresh(); const update = () => { void refresh(); }; window.addEventListener("focus", update); window.addEventListener("pageshow", update); return () => { window.removeEventListener("focus", update); window.removeEventListener("pageshow", update); }; }, [refresh]);
-  useEffect(() => { setSummary(null); }, [activeCompanyId]);
+  useEffect(() => { setSummary(null);setTenderComparison(null);setTenderProblem(null); }, [activeCompanyId]);
   const print = () => {
     if (typeof window.print !== "function") return toast.info("Printing is not available in this browser.");
     window.print();
@@ -37,6 +41,19 @@ export default function EndOfDayPage() {
       <p className="end-day-boundary"><Sunset className="h-4 w-4" aria-hidden="true" /><span>You can add late entries or payments whenever needed. This view never closes or locks your day.</span></p>
       <p className="end-day-print-disclaimer">End of day summary — not a receipt, invoice, tax document, or accounting statement.</p>
     </>}
+    <section className="end-day-sheet p-5 space-y-3" aria-labelledby="manual-tender-reconciliation">
+      <h2 id="manual-tender-reconciliation">Compare manually recorded MoMo and card tenders</h2>
+      <p>Offline, read-only comparison to a locally selected statement CSV. Columns: method, reference, amountMinor, providerId (optional). Amounts are in GHS pesewas for GHS businesses. No file is uploaded, no payment is confirmed, and no settlement is posted.</p>
+      <label className="block">Statement CSV (local file, maximum 1 MB)
+        <input type="file" accept=".csv,text/csv" onChange={event=>{const file=event.currentTarget.files?.[0];setTenderComparison(null);setTenderProblem(null);if(!file)return;
+          if(file.size>1024*1024){setTenderProblem("Statement is too large.");return;}
+          void file.text().then(text=>previewManualTenderStatement(text)).then(setTenderComparison).catch(error=>setTenderProblem(error instanceof Error?error.message:"Could not compare statement."));
+          event.currentTarget.value="";
+        }} />
+      </label>
+      {tenderProblem && <p role="alert">{tenderProblem}</p>}
+      {tenderComparison && <div role="status"><p>Exact reference and amount matches: {tenderComparison.matched}. Amount mismatches: {tenderComparison.amountMismatches}. Statement-only: {tenderComparison.statementUnmatched}. Recorded-only: {tenderComparison.ledgerUnmatched}.</p><p><strong>Matching does not prove provider settlement.</strong> Verify against your actual provider or bank records.</p></div>}
+    </section>
     <Link href="/" className="secondary-action reports-back"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back to Home</Link>
   </div>;
 }

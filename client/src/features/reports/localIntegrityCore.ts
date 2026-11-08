@@ -1,5 +1,6 @@
 /** Pure, read-only diagnostics. This is not an accounting ledger replacement. */
 import { reconcileSales } from '../integrations/financialReconciliation.ts';
+import {assertSplitPaymentLedger} from '../sales/splitTender.mjs';
 import type { Sale, Payment } from '../sales/sales';
 import type { StaffShift } from '../staff/staff';
 export interface IntegrityFinding { code:string; entityId:string; message:string }
@@ -23,7 +24,7 @@ export function inspectLocalSaleEvidence(
     ids.add(pay.id);
     const sale=saleById.get(pay.saleId);
     if(!sale) { errors.push({code:'ORPHAN_PAYMENT',entityId:pay.id,message:'Payment is not linked to a saved sale in this company'}); continue; }
-    if(pay.method!==sale.paymentMethod || !Number.isSafeInteger(pay.amountMinor) || pay.amountMinor<=0)
+    if((sale.paymentMethod==='split'?!['cash','card','mobile'].includes(pay.method):pay.method!==sale.paymentMethod) || !Number.isSafeInteger(pay.amountMinor) || pay.amountMinor<=0)
       errors.push({code:'INVALID_TENDER',entityId:pay.id,message:'Payment method or amount does not match the sale'});
     const sum=(paymentSums.get(pay.saleId)??0)+pay.amountMinor;
     if(!Number.isSafeInteger(sum)) errors.push({code:'TENDER_OVERFLOW',entityId:pay.id,message:'Tender total exceeds safe integer bounds'});
@@ -42,6 +43,8 @@ export function inspectLocalSaleEvidence(
     seenShiftIds.add(shift.id);
   }
   for(const sale of sales) {
+    try{assertSplitPaymentLedger(sale,payments.filter(row=>row.saleId===sale.id));}
+    catch{errors.push({code:'SPLIT_TENDER_MISMATCH',entityId:sale.id,message:'Split payment entries do not reconcile with the immutable original receipt'});}
     if (!sale.staffId?.trim() || !sale.shiftId?.trim() || !sale.currency)
       warnings.push({code:'LEGACY_SALE_PROVENANCE',entityId:sale.id,message:'Historical sale lacks staff, shift or currency evidence'});
     if(sale.staffId && sale.shiftId &&

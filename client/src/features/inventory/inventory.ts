@@ -7,10 +7,13 @@ import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import { z } from "zod";
+import type { GhanaTaxTreatment } from "@/features/sales/ghanaVat.mjs";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { appendInventoryCostChange } from "./costLedger";
+import {validateCategoryHierarchy} from "./categoryHierarchy.mjs";
+import {validatePromotionHistory,type ProductPromotionRevision} from "./promotionRules.mjs";
 
 export const INVENTORY_BUSINESS_ID = "primary" as const;
 
@@ -22,6 +25,8 @@ export interface ProductCategory {
   businessProfileId: string;
   name: string;
   normalizedName: string;
+  /** Optional three-level parent category; no physical stock is implied. */
+  parentCategoryId?:string;
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
@@ -46,6 +51,10 @@ export interface Product {
   /** Restricted-size local image; no remote fetch. */
   imageDataUrl?: string;
   categoryId?: string;
+  /** Explicit owner classification for optional Ghana VAT. Omitted means unclassified, never assumed taxable. */
+  ghanaTaxTreatment?: GhanaTaxTreatment;
+  /** Owner-authorized append-only product promotion revisions; never rewriting historical unit prices. */
+  promotionHistory?:ProductPromotionRevision[];
   sellingPriceMinor: number;
   costPriceMinor?: number;
   stockQuantity: number;
@@ -81,7 +90,7 @@ const nonNegativeInteger = (label: string) => z.string().trim().regex(/^\d+$/, `
 const requiredAmount = (label: string) => z.string().trim().refine((value) => /^\d+(?:\.\d{1,2})?$/.test(normalizeMoneyInput(value)), `${label} must be a valid amount.`);
 const optionalAmount = (label: string) => requiredAmount(label).optional().or(z.literal(""));
 
-export const categoryFormSchema = z.object({ name: nameSchema });
+export const categoryFormSchema = z.object({ name: nameSchema, parentCategoryId:z.string().max(80).optional() });
 
 export const productFormSchema = z.object({
   storeId: z.string().min(1).max(200).optional(),
@@ -89,6 +98,7 @@ export const productFormSchema = z.object({
   sku: optionalText(48, "Reference"),
   barcode: optionalText(64, "Barcode"),
   categoryId: z.string(),
+  ghanaTaxTreatment: z.enum(["unclassified", "standard", "zero-rated", "exempt"]).optional(),
   sellingPrice: requiredAmount("Selling price"),
   costPrice: optionalAmount("Cost price"),
   initialStock: nonNegativeInteger("Opening stock"),
@@ -165,7 +175,9 @@ export async function getInventorySnapshot(database: TallybookDB = db): Promise<
   assertCompanyScope(activeId, getActiveBusinessProfileId());
   await requirePermission("sell",database,activeId);
   const categories = allCategories.filter((category) => category.businessProfileId === activeId);
+  validateCategoryHierarchy(categories,activeId);
   const products = allProducts.filter((product) => product.businessProfileId === activeId);
+  for(const product of products)validatePromotionHistory(product.promotionHistory,product.id,activeId);
   const movements = allMovements.filter((movement) => movement.businessProfileId === activeId);
   return {
     categories: categories.filter((category) => !category.archivedAt),
@@ -186,7 +198,15 @@ export async function createCategory(values: CategoryFormValues, database: Tally
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.categories.where("normalizedName").equals(normalizedName).and((category) => category.businessProfileId === activeId && !category.archivedAt).first();
     if (duplicate) throw new Error("A category with this name already exists.");
-    const category: ProductCategory = { id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName, createdAt: now, updatedAt: now };
+    const parentCategoryId=input.parentCategoryId?.trim()||undefined;
+    const category: ProductCategory = { id: nanoid(12), businessProfileId: activeId,
+      name: input.name.trim(), normalizedName,...(parentCategoryId?{parentCategoryId}:{}) ,createdAt: now, updatedAt: now };
+    if(parentCategoryId){
+      const existing=await database.categories.where("businessProfileId").equals(activeId).toArray();
+      const parent=existing.find(row=>row.id===parentCategoryId&&!row.archivedAt);
+      if(!parent)throw Error("Choose an active parent category from this business.");
+      validateCategoryHierarchy([...existing,category],activeId);
+    }
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     await database.categories.add(category);
     assertCompanyScope(activeId, getActiveBusinessProfileId());
@@ -230,6 +250,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
       id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName,
       sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId,
       sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined,
+      ...(input.ghanaTaxTreatment && input.ghanaTaxTreatment !== "unclassified" ? { ghanaTaxTreatment: input.ghanaTaxTreatment } : {}),
       stockQuantity: initialStock, lowStockThreshold: Number(input.lowStockThreshold), createdAt: now, updatedAt: now,
     };
     const initialMovement: InventoryMovement = { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "initial", quantityDelta: initialStock, previousQuantity: 0, resultingQuantity: initialStock, note: "Opening stock", createdAt: now };
@@ -263,7 +284,7 @@ export async function updateProduct(productId: string, values: ProductFormValues
     }
     const initialStock = Number(input.initialStock);
     if (initialStock !== existing.stockQuantity) throw new Error("Use Adjust stock to change the quantity so the history remains complete.");
-    const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
+    const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, ghanaTaxTreatment: input.ghanaTaxTreatment === "unclassified" ? undefined : input.ghanaTaxTreatment ?? existing.ghanaTaxTreatment, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
       await assertUniqueProductCodes(database, existing.businessProfileId, input.sku, input.barcode, productId);
       assertCompanyScope(company, getActiveBusinessProfileId());
       await database.products.put(updated);

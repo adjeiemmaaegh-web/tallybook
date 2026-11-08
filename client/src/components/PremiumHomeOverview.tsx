@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { BarChart3, CalendarDays, CheckCircle2, ChevronDown, Circle, CircleDollarSign, GraduationCap, Lightbulb, Package, ShoppingCart, Truck, UsersRound, WalletCards, Zap } from "lucide-react";
 import { getDashboardSummary, getBusinessHealthSummary, type DashboardSummary } from "@/features/reports/reports";
+import {getFinancialSummary,type FinancialSummary} from "@/features/reports/financialIntelligence";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { hasReportsExplored, type SetupCounts } from "@/features/business/setupProgress";
 import "./PremiumHome.css";
@@ -25,12 +26,16 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
   const [summary,setSummary] = useState<DashboardSummary|null>(null);
   const [error,setError] = useState(false);
   const [expensesToday,setExpensesToday] = useState<number|null>(null);
+  const [financeToday,setFinanceToday] = useState<FinancialSummary|null>(null);
+  const [financeProblem,setFinanceProblem] = useState(false);
   useEffect(()=>{
     let active=true;
     const load=()=>{void getDashboardSummary().then(data=>{if(active){setSummary(data);setError(false);}}).catch(()=>{if(active){setSummary(null);setError(true);}});};
     const loadExpenses=()=>{void getBusinessHealthSummary("today").then(data=>{if(active)setExpensesToday(data.expensesMinor);}).catch(()=>{if(active)setExpensesToday(null);});};
-    load();loadExpenses();window.addEventListener("focus",load);window.addEventListener("focus",loadExpenses);
-    return ()=>{active=false;window.removeEventListener("focus",load);window.removeEventListener("focus",loadExpenses);};
+    const loadFinance=()=>{void getFinancialSummary("today").then(data=>{if(active){setFinanceToday(data);setFinanceProblem(false);}}).catch(()=>{if(active){setFinanceToday(null);setFinanceProblem(true);}});};
+    setFinanceToday(null);load();loadExpenses();loadFinance();
+    window.addEventListener("focus",load);window.addEventListener("focus",loadExpenses);window.addEventListener("focus",loadFinance);
+    return ()=>{active=false;window.removeEventListener("focus",load);window.removeEventListener("focus",loadExpenses);window.removeEventListener("focus",loadFinance);};
   },[companyId]);
   const done=[true,Boolean(counts?.products),Boolean(counts?.customers),Boolean(counts?.sales),hasReportsExplored(companyId)];
   const completed=done.filter(Boolean).length;
@@ -42,6 +47,10 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
     {title:"Receivables",value:summary?formatMinorAmount(summary.outstandingDebtMinor,currency):"—",detail:"Customer balances",Icon:WalletCards,color:"#137e7b"},
     {title:"Products",value:counts?String(counts.products):"—",detail:"In this device's catalogue",Icon:Package,color:"#288b79"},
     {title:"Expenses today",value:expensesToday!==null?formatMinorAmount(expensesToday,currency):"—",detail:"Recorded business expenses",Icon:ShoppingCart,color:"#b68344"},
+    {title:"Low stock now",value:summary?String(summary.lowStockProducts.length):"—",detail:"Products requiring restock",Icon:Package,color:"#ab6b36"},
+    {title:"Management result today",value:financeToday?.managementProfit?.status==="available"?
+      formatMinorAmount(financeToday.managementProfit.operatingResultMinor!,currency):"Unavailable",
+      detail:"Net of recorded tax, verified FIFO costs and expenses; not statutory profit",Icon:BarChart3,color:"#4d668b"},
   ];
   return <div className="premium-home tb-reference-dashboard">
     <div className="premium-main">
@@ -68,6 +77,8 @@ export function PremiumHomeOverview({companyId,companyName,currency,country,onli
           <div><span>OPEN BALANCE</span><strong>{summary ? formatMinorAmount(summary.outstandingDebtMinor,currency) : "—"}</strong><small>Customer receivables</small></div>
         </div>
       </section>
+      {financeProblem&&<p role="status">Management result could not be verified from local finance records. Sales and stock cards remain separate.</p>}
+      {financeToday?.managementProfit?.status==="unavailable"&&<p role="status">Profit cannot yet be calculated: {financeToday.managementProfit.reason} <Link href="/financial-intelligence">Review cost evidence</Link></p>}
       <section className="premium-kpis tb-dashboard-metrics" aria-label="Business key metrics">{cards.map(({title,value,detail,Icon,color})=><article className="premium-card premium-kpi" key={title}><span className="premium-kpi-icon" style={{background:color}}><Icon size={23}/></span><div><h3>{title}</h3><strong>{value}</strong><small>{detail}</small></div></article>)}</section>
       <div className="premium-middle">
         <section className="premium-card premium-chart" aria-label="Sales overview"><div className="premium-chart-header"><h2 className="premium-section-title"><BarChart3 size={22} color="#0c8372"/>Sales Overview</h2><Link href="/reports" className="premium-chart-period" aria-label="Open reports for the last seven days">Last 7 days <ChevronDown size={15}/></Link></div>{error?<p role="alert">Sales overview is temporarily unavailable. Saved records have not changed.</p>:summary?<><div className="premium-line-chart" aria-label="Last seven days of completed sales"><svg viewBox="0 0 700 250" preserveAspectRatio="none" role="img" aria-label="Sales line chart over the past seven days with labeled sales axis"><defs><linearGradient id="premiumSalesArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#11917b" stopOpacity=".18"/><stop offset="100%" stopColor="#11917b" stopOpacity="0"/></linearGradient></defs>{[0,0.25,0.5,0.75,1].map(fraction=><g key={fraction}><line x1="45" x2="688" y1={220-fraction*175} y2={220-fraction*175} stroke="#e8eff8" strokeWidth="1"/><text x="36" y={224-fraction*175} textAnchor="end" fontSize="12" fill="#64748b">{Math.round(max*fraction/100).toLocaleString()}</text></g>)}<polygon points={`45,230 ${summary.trend.map((point,i)=>`${45+i*(643/6)},${220-(point.salesMinor/max)*175}`).join(" ")} 688,230`} fill="url(#premiumSalesArea)"/><polyline points={summary.trend.map((point,i)=>`${45+i*(643/6)},${220-(point.salesMinor/max)*175}`).join(" ")} fill="none" stroke="#087f71" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>{summary.trend.map((point,i)=><circle key={point.dateKey} cx={45+i*(643/6)} cy={220-(point.salesMinor/max)*175} r="5" fill="#fff" stroke="#087f71" strokeWidth="3"><title>{point.label}: {formatMinorAmount(point.salesMinor,currency)}</title></circle>)}</svg><div className="premium-line-labels">{summary.trend.map((point,i)=><small key={point.dateKey} style={{left:`${(45+i*(643/6))/7}%`}}>{new Date(`${point.dateKey}T12:00:00`).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</small>)}</div>{summary.trend.every(point=>point.salesMinor===0)&&<div className="premium-chart-empty-note" role="status"><strong>No sales yet</strong><span>Start making sales to see your chart here.</span></div>}</div></>:<p role="status">Loading sales overview…</p>}</section>

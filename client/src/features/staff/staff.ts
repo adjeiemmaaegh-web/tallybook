@@ -6,12 +6,13 @@ import { nanoid } from 'nanoid';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
 import { assertCompanyScope } from '@/features/business/companyScope.mjs';
+import {validateShiftReview} from "./shiftReviewRules.mjs";
 import {makeCentralShiftEvent} from '@/features/sync/centralOperationalEvent';
 
 export type StaffRole = 'owner' | 'supervisor' | 'cashier';
 export type StaffPermission = 'sell' | 'refund' | 'discount' | 'inventory' | 'reports' | 'staff';
 export interface StaffMember { id:string; businessProfileId:string; name:string; role:StaffRole; salt:string; pinHash:string; permissions?:StaffPermission[]; webAuthn?: {credentialId:string; publicKey:string; algorithm:number; signCount:number}; disabledAt?:string; createdAt:string; }
-export interface StaffShift { id:string; businessProfileId:string; staffId:string; openedAt:string; openingFloatMinor:number; closedAt?:string; countedCashMinor?:number; expectedCashMinor?:number; varianceMinor?:number; }
+export interface StaffShift { id:string; businessProfileId:string; staffId:string; openedAt:string; openingFloatMinor:number; closedAt?:string; countedCashMinor?:number; expectedCashMinor?:number; varianceMinor?:number; reviewedAt?:string; reviewedByStaffId?:string; reviewDecision?:"accepted"|"attention"; reviewNote?:string; reviewExpectedCashMinor?:number; }
 export interface StaffAudit { id:string; businessProfileId:string; staffId:string; action:string; createdAt:string; details:string; }
 const policy:Record<StaffRole,readonly StaffPermission[]> = {owner:['sell','refund','discount','inventory','reports','staff'],supervisor:['sell','refund','discount','inventory','reports'],cashier:['sell']};
 // Verified unlocks live only in runtime memory: editing sessionStorage must never impersonate a cashier.
@@ -431,6 +432,48 @@ export async function closeShift(shiftId:string,countedCashMinor:number,database
   }));
 }
 
+/** Stage 6: company-scoped independent closed-shift review.
+ * No bank/card/MoMo settlement claim and no adjustment of sale or cash ledgers.
+ */
+export async function listClosedShiftsForReview(database:TallybookDB=db):Promise<StaffShift[]> {
+  const company=getActiveBusinessProfileId();
+  const rows=await database.transaction("r",[database.staffMembers,database.staffShifts],async()=>{
+    const actor=await requirePermission("reports",database,company);
+    if(!actor||!["owner","supervisor"].includes(actor.role))
+      throw Error("Supervisor or owner approval is required for shift reviews.");
+    return database.staffShifts.where("businessProfileId").equals(company).toArray();
+  });
+  assertCompanyScope(company,getActiveBusinessProfileId());
+  await requirePermission("reports",database,company);
+  return rows.filter(row=>Boolean(row.closedAt)).sort((a,b)=>(b.closedAt??"").localeCompare(a.closedAt??""));
+}
+export async function reviewClosedShift(shiftId:string,decision:"accepted"|"attention",note:string,database:TallybookDB=db):Promise<StaffShift>{
+  const company=getActiveBusinessProfileId();
+  if(!shiftId||typeof note!=="string")throw Error("Choose a closed shift and an appropriate note.");
+  return withCoordinatedRetailWrite(()=>database.transaction("rw",[
+    database.staffMembers,database.staffShifts,database.staffAudits,
+    database.sales,database.payments,database.repayments,database.walletTransfers,database.saleReversals,database.cashPartialReturns
+  ],async()=>{
+    const actor=await requirePermission("reports",database,company);
+    if(!actor||!["owner","supervisor"].includes(actor.role))
+      throw Error("Supervisor or owner authorization is required.");
+    const shift=await database.staffShifts.get(shiftId);
+    if(!shift||shift.businessProfileId!==company)throw Error("Shift does not belong to the active company.");
+    const expected=calculateTrackedShiftCash(shift,await getShiftCashRows(database,company));
+    const verified=validateShiftReview(shift,actor,decision,note,expected.expectedCashMinor);
+    const reviewedAt=new Date().toISOString();
+    const updated:StaffShift={...shift,reviewedAt,reviewedByStaffId:actor.id,
+      reviewDecision:verified.decision,reviewNote:verified.reason,reviewExpectedCashMinor:expected.expectedCashMinor};
+    assertCompanyScope(company,getActiveBusinessProfileId());
+    if(currentStaffId(company)!==actor.id)throw Error("Supervisor session changed during review.");
+    await database.staffShifts.put(updated);
+    await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:actor.id,
+      action:"shift.reviewed",createdAt:reviewedAt,details:shiftId+"; decision="+verified.decision+"; note="+verified.reason});
+    if(currentStaffId(company)!==actor.id||getActiveBusinessProfileId()!==company)
+      throw Error("Supervisor session changed before the review was committed.");
+    return updated;
+  }));
+}
 
 interface DiscountApproval { company: string; approverId: string; approverCredentialBinding:string; cashierId: string; cashierGeneration:number; amountMinor: number; subtotalMinor:number; expiresAt: number; }
 const discountApprovals = new Map<string, DiscountApproval>();

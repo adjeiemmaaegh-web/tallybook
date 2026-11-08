@@ -1,4 +1,5 @@
 import { requirePermission } from "@/features/staff/staff";
+import { businessDayKey, businessDayStart, businessDayEnd, shiftBusinessDay, businessDateLabel, businessWeekdayLabel } from "@/features/business/businessCalendar.mjs";
 /** Tactile Ledger Stage 7: reports read immutable local facts; they never create, edit, or reinterpret business records as accounting profit. */
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import type { Customer } from "@/features/customers/customers";
@@ -15,7 +16,7 @@ import {auditRun10CompanyReceivables} from "./run10ReceivablesAudit.mjs";
 export const reportPeriods = ["today", "last7", "all"] as const;
 export type ReportPeriod = (typeof reportPeriods)[number];
 
-export interface DateRange { period: ReportPeriod; start?: Date; end: Date; label: string; }
+export interface DateRange { period: ReportPeriod; start?: Date; end: Date; label: string; country?: string; }
 export interface SalesReportRow { id: string; receiptNumber: string; createdAt: string; paymentMethod: Sale["paymentMethod"]; totalMinor: number; receivedMinor: number; outstandingMinor: number; customerName?: string; }
 export interface PaymentReportRow { id: string; createdAt: string; source: "sale" | "repayment"; method: string; amountMinor: number; customerName?: string; }
 export interface DebtReportRow { customerId: string; customerName: string; phone: string; salesOutstandingMinor: number; repaidMinor: number; outstandingMinor: number; }
@@ -23,7 +24,7 @@ export interface InventoryReportRow { productId: string; productName: string; st
 export interface SalesTrendPoint { dateKey: string; label: string; salesMinor: number; transactions: number; }
 export interface DashboardBestSeller { productId: string; productName: string; quantity: number; salesMinor: number; }
 export interface DashboardActivity { id: string; type: "sale" | "repayment"; label: string; amountMinor: number; createdAt: string; }
-const endOfDayPaymentMethods: readonly PaymentMethod[] = ["cash", "mobile", "card", "credit"];
+const endOfDayPaymentMethods: readonly PaymentMethod[] = ["cash", "mobile", "card", "credit", "split"];
 export interface EndOfDayMethodTotal { method: PaymentMethod; label: string; salesMinor: number; receivedMinor: number; }
 export interface EndOfDaySummary {
   generatedAt: string;
@@ -62,25 +63,18 @@ export interface BusinessHealthSummary {
 }
 export interface ReportsSnapshot { range: DateRange; sales: SalesReportRow[]; payments: PaymentReportRow[]; debts: DebtReportRow[]; inventory: InventoryReportRow[]; totals: { salesMinor: number; receivedMinor: number; outstandingDebtMinor: number; transactionCount: number; }; }
 
-function startOfLocalDay(value: Date) { const day = new Date(value); day.setHours(0, 0, 0, 0); return day; }
-function endOfLocalDay(value: Date) { const day = startOfLocalDay(value); day.setDate(day.getDate() + 1); return day; }
-function localDateKey(value: Date) { const offset = value.getTimezoneOffset() * 60_000; return new Date(value.getTime() - offset).toISOString().slice(0, 10); }
-function readableDay(value: Date) { return new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(value); }
 function inRange(createdAt: string, range: DateRange) { const value = new Date(createdAt); return value >= (range.start ?? new Date(0)) && value < range.end; }
 function expenseInRange(expenseDate: string, range: DateRange) {
-  const startKey = range.start ? localDateKey(range.start) : undefined;
-  const endKey = localDateKey(range.end);
+  const startKey = range.start ? businessDayKey(range.start, range.country) : undefined;
+  const endKey = businessDayKey(range.end, range.country);
   return (!startKey || expenseDate >= startKey) && expenseDate < endKey;
 }
-
-export function reportDateRange(period: ReportPeriod, now = new Date()): DateRange {
-  const end = endOfLocalDay(now);
-  if (period === "all") return { period, end, label: "All saved records" };
-  if (period === "today") return { period, start: startOfLocalDay(now), end, label: "Today" };
-  const start = startOfLocalDay(now); start.setDate(start.getDate() - 6);
-  return { period, start, end, label: "Last 7 days" };
+export function reportDateRange(period: ReportPeriod, now = new Date(), country?: string): DateRange {
+  const end = businessDayEnd(now, country);
+  if (period === "all") return { period, end, label: "All saved records", country };
+  if (period === "today") return { period, start: businessDayStart(now, country), end, label: "Today", country };
+  return { period, start: shiftBusinessDay(now, -6, country), end, label: "Last 7 days", country };
 }
-
 function customerMap(customers: Customer[]) { return new Map(customers.map((customer) => [customer.id, customer])); }
 function salesRows(sales: Sale[], customerById: Map<string, Customer>): SalesReportRow[] {
   return sales.map((sale) => ({ id: sale.id, receiptNumber: sale.receiptNumber, createdAt: sale.createdAt, paymentMethod: sale.paymentMethod, totalMinor: sale.totalMinor, receivedMinor: sale.amountPaidMinor - (sale.walletAppliedMinor ?? 0), outstandingMinor: sale.outstandingMinor, customerName: sale.customerId ? customerById.get(sale.customerId)?.name : undefined })).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -122,7 +116,9 @@ async function sourceRecords(database: TallybookDB) {
 export async function getReportsSnapshot(period: ReportPeriod, now = new Date(), database: TallybookDB = db): Promise<ReportsSnapshot> {
   const company = getActiveBusinessProfileId();
   await requirePermission("reports", database);
-  const range = reportDateRange(period, now);
+  const selectedProfile = await database.businessProfiles.get(company);
+  assertCompanyScope(company, getActiveBusinessProfileId());
+  const range = reportDateRange(period, now, selectedProfile?.country);
   const { sales, payments, repayments, reversals, customers, products, walletTransfers } = await sourceRecords(database);
   const customerById = customerMap(customers);
   const filteredSales = sales.filter((sale) => inRange(sale.createdAt, range));
@@ -153,10 +149,10 @@ export async function getDashboardSummary(now = new Date(), database: TallybookD
     ...repayments.filter((repayment) => inRange(repayment.createdAt, today.range)).map((repayment) => ({ id: `repayment-${repayment.id}`, type: "repayment" as const, label: `Payment from ${customerById.get(repayment.customerId)?.name ?? "customer"}`, amountMinor: repayment.amountMinor, createdAt: repayment.createdAt })),
   ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 5);
   const trend: SalesTrendPoint[] = Array.from({ length: 7 }, (_, index) => {
-    const day = startOfLocalDay(now); day.setDate(day.getDate() - (6 - index));
-    const nextDay = endOfLocalDay(day);
+    const day = shiftBusinessDay(now, index - 6, today.range.country);
+    const nextDay = businessDayEnd(day, today.range.country);
     const daySales = sales.filter((sale) => { const createdAt = new Date(sale.createdAt); return createdAt >= day && createdAt < nextDay; });
-    return { dateKey: localDateKey(day), label: readableDay(day), salesMinor: daySales.reduce((sum, sale) => sum + sale.totalMinor, 0), transactions: daySales.length };
+    return { dateKey: businessDayKey(day, today.range.country), label: businessWeekdayLabel(day, today.range.country), salesMinor: daySales.reduce((sum, sale) => sum + sale.totalMinor, 0), transactions: daySales.length };
   });
   assertCompanyScope(company, getActiveBusinessProfileId());
   await requirePermission("reports",database,company);
@@ -199,7 +195,7 @@ export async function getEndOfDaySummary(now = new Date(), database: TallybookDB
   await requirePermission("reports",database,company);
   return {
     generatedAt: now.toISOString(),
-    dateLabel: new Intl.DateTimeFormat(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(now),
+    dateLabel: businessDateLabel(now, today.range.country),
     salesMinor: today.totals.salesMinor,
     salesCount: todaySales.length,
     receivedMinor: todayPayments.reduce((sum, payment) => sum + payment.amountMinor, 0) + todayRepayments.reduce((sum, repayment) => sum + repayment.amountMinor, 0) + walletTransfers.filter(t=>inRange(t.createdAt,today.range)).reduce((sum,t)=>sum+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0),

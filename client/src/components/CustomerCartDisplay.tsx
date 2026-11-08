@@ -1,9 +1,10 @@
-import { calculateTax, type TaxPolicy } from "@/features/sales/tax";
+import { calculateSaleTax, type TaxPolicy } from "@/features/sales/tax";
+import type { GhanaTaxTreatment } from "@/features/sales/ghanaVat.mjs";
 import { calculateDisplayCart, type DisplayCartLine } from "@/features/sales/customerCartSummary";
 import { useEffect } from "react";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 
-export type CustomerCartDisplayLine = DisplayCartLine;
+export type CustomerCartDisplayLine = DisplayCartLine & {ghanaTaxTreatment?: GhanaTaxTreatment};
 
 /** The customer view is deliberately presentation-only. It never reads or writes local storage. */
 export function CustomerCartDisplay({ businessName, currency, lines, discountMinor, taxPolicy, onClose }: {
@@ -15,7 +16,7 @@ export function CustomerCartDisplay({ businessName, currency, lines, discountMin
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
   let totals: ReturnType<typeof calculateDisplayCart> | null = null;
-  try { totals = calculateDisplayCart(lines, discountMinor); const tax = calculateTax(totals.totalMinor, taxPolicy); if (tax) totals.totalMinor = tax.totalMinor; } catch { /* display a review message without committing */ }
+  try { totals = calculateDisplayCart(lines, discountMinor); const tax = lines.length ? calculateSaleTax(lines.map(line => ({amountMinor: line.unitPriceMinor * line.quantity, treatment: line.ghanaTaxTreatment})), discountMinor, taxPolicy) : undefined; if (tax) totals.totalMinor = tax.totalMinor; } catch { totals = null; /* Never show an unclassified untaxed amount as the final total. */ }
   return <section role="dialog" aria-modal="true" aria-label="Customer-facing cart" className="fixed inset-0 z-[110] overflow-y-auto bg-background p-4 sm:p-10">
     <div className="mx-auto max-w-3xl space-y-7">
       <header className="flex items-start justify-between gap-4 border-b pb-5"><div><p className="text-sm uppercase tracking-widest">Customer view · not a receipt</p><h2 className="text-3xl font-bold">{businessName}</h2><p className="text-sm">Review the items before the cashier confirms the sale.</p></div><button type="button" autoFocus onClick={onClose} className="rounded border px-5 py-3 font-semibold">Close customer view</button></header>
