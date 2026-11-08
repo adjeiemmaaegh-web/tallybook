@@ -48,3 +48,41 @@
   .tb-account-form .flex.flex-wrap.gap-2{display:grid;grid-template-columns:1fr}
   .tb-account-form .primary-action,.tb-account-form .secondary-action{justify-content:center}
 }
+
+.tb-verified-page {
+  min-height: 100dvh;
+  color: #193d2c;
+  background: linear-gradient(180deg, #eff8f1, #fbfdfa 75%);
+}
+.tb-verified-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 68px;
+  padding: 12px max(18px, calc((100% - 1080px) / 2));
+  border-bottom: 1px solid #dce8df;
+  background: white;
+}
+.tb-verified-header a, .tb-verified-header .tb-account-brand small { color: #226849; }
+.tb-verified-header > a:last-child { font-size: .875rem; }
+.tb-verified-page .tb-account-form-area { max-width: 870px; margin: auto; padding: clamp(32px, 6vw, 72px) 18px; }
+.tb-role-intro { text-align: center; margin: 0 auto 28px; }
+.tb-role-intro p { font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 750; color: #447258; }
+.tb-verified-panel h1 { font-size: clamp(2.3rem, 6vw, 4.2rem); line-height: 1.09; letter-spacing: -.055em; font-weight: 800; margin: 14px 0; }
+.tb-role-intro span, .tb-verified-panel small { color: #51665a; }
+.tb-verified-panel .tb-role-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.tb-verified-panel .tb-role-option {
+  flex-direction: column; align-items: flex-start; gap: 12px;
+  background: white; border: 1px solid #dce8df; border-radius: 24px; padding: 24px;
+  box-shadow: 0 16px 38px rgb(25 66 41 / 5%);
+}
+.tb-verified-panel .tb-role-option strong { font-size: 1.32rem; letter-spacing: -.035em; }
+.tb-verified-panel .tb-role-option svg:first-child { width: 48px; height: 48px; padding: 12px; border-radius: 15px; color: #22754e; background: #e4f5e9; }
+.tb-verified-panel .tb-role-option:nth-child(2) svg:first-child { color: #526b8b; background: #edf1fa; }
+.tb-verified-panel .tb-role-option svg:last-child { margin-top: auto; color: #29865b; }
+.tb-verified-panel .tb-role-option[aria-pressed=true] { border-color: #22754e; box-shadow: inset 0 0 0 1px #22754e; }
+.tb-verified-body details { background: white; border-color: #dce8df; border-radius: 14px; }
+@media (max-width: 760px) {
+  .tb-verified-panel .tb-role-grid { grid-template-columns: 1fr; }
+}

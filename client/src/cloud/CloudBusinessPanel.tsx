@@ -1,5 +1,5 @@
 import './businessSetup.css';
-import { Store, Users } from 'lucide-react';
+import { ArrowRight, Store, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -116,19 +116,9 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
     }
   };
 
-  return <section className="rounded border p-4 space-y-3" aria-label="Cloud business account">
-    {accountOnly&&userId&&profileName&&<p className="text-xl font-semibold">Hi, {profileName.split(/\s+/)[0]}</p>}
-    {accountOnly&&userId&&<details open={profileName?undefined:true} className="rounded border p-3"><summary>My profile</summary>
-      <form onSubmit={event=>{event.preventDefault();void saveProfileName();}}>
-        <label htmlFor="preferred-name">What should we call you?</label>
-        <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>
-        <button type="submit" className="secondary-action" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
-      </form>
-      <p>Shop role: {business?.role??"Awaiting verified membership"}</p>
-      <p className="break-all">Signed in as: {email || userId}</p>
-    </details>}
-    <h2 className="font-semibold">{accountOnly ? "Business setup" : "Cloud business account"}</h2>
-    {!business ? <p className="text-sm">Create your business account. Sales, stock and customer records on this device are not uploaded by this step.</p> : null}
+  return <section className={accountOnly ? "tb-verified-panel space-y-3" : "rounded border p-4 space-y-3"} aria-label="Cloud business account">
+    {!accountOnly && <h2 className="font-semibold">Cloud business account</h2>}
+    {accountOnly && business && <h1>Your business</h1>}
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
       {accessible.length>1 ? <label className="block text-sm" htmlFor="cloud-select">Cloud company
         <select id="cloud-select" className="ml-2 rounded border p-1" value={business.id}
@@ -136,15 +126,20 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3"><h3 className="text-xl font-semibold">How will you use Tallybook?</h3>
-        <div className="grid gap-3">
+      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{accountOnly ? <div className="tb-role-intro">
+          <p>Tallybook · by Alchemy</p>
+          <h1>What will your role be?</h1>
+          <span>Choose how you’ll use your verified account.</span>
+        </div> : <h3 className="text-xl font-semibold">How will you use Tallybook?</h3>}
+        <div className="tb-role-grid grid gap-3">
           <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
-            <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create a business account for your shop.</small></span>
+            <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create my business and manage my team.</small></span><ArrowRight aria-hidden="true"/>
           </button>
           <button type="button" aria-label="I work for someone else" className="tb-role-option" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>
-            <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Join the shop your employer invites you to.</small></span>
+            <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Join my employer’s shop using an invitation.</small></span><ArrowRight aria-hidden="true"/>
           </button>
         </div>{choice==="employee"?<p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Then enter the one-time code they give you below.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+      <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
       <button className="primary-action" type="submit" disabled={!name.trim()}>Create business</button>
@@ -153,6 +148,16 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       (choice==="employee" || (!accountOnly && import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"))
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.role === "owner"} onAccepted={()=>setMembershipRevision(value=>value+1)}/> : null}
+    {accountOnly&&userId&&profileName&&<p className="text-xl font-semibold">Hi, {profileName.split(/\s+/)[0]}</p>}
+    {accountOnly&&userId&&<details className="rounded border p-3"><summary>My profile</summary>
+      <form onSubmit={event=>{event.preventDefault();void saveProfileName();}}>
+        <label htmlFor="preferred-name">What should we call you?</label>
+        <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>
+        <button type="submit" className="secondary-action" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
+      </form>
+      <p>Shop role: {business?.role??"Awaiting verified membership"}</p>
+      <p className="break-all">Signed in as: {email || userId}</p>
+    </details>}
     {error && <p role="alert">{error}</p>}
     {!accountOnly&&isSupabaseConfigured&&userId&&business&&
       import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW==='true'&&
