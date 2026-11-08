@@ -79,7 +79,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
     expect(rects.scrollWidth,'No horizontal overflow at '+viewport.width).toBeLessThanOrEqual(rects.width+1);
     if(viewport.width>=1024){
       await expect(page.locator('.premium-desktop-rail')).toBeVisible();
-      await expect(page.locator('.premium-rail-setup')).toHaveAttribute('href','/#getting-started');
+      await expect(page.locator('.premium-desktop-rail').getByRole('link',{name:'Business details'})).toHaveAttribute('href','/business');
     }else{
       await expect(page.locator('.premium-desktop-rail')).toBeHidden();
       await page.getByRole('button',{name:'Open navigation menu'}).click();

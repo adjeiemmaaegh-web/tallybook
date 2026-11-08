@@ -3,5 +3,5 @@ import { ArrowLeft, MapPinOff } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AppNotFound() {
-  return <section className="placeholder-page"><MapPinOff className="h-8 w-8 text-clay" strokeWidth={1.6} aria-hidden="true" /><p className="eyebrow mt-7"><span className="eyebrow-dot" />Route not found</p><h1>This page is not in your ledger.</h1><p>Return to the foundation screen to keep moving through the approved build stages.</p><Link href="/" className="secondary-action mt-7"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Return to foundation</Link></section>;
+  return <section className="placeholder-page"><MapPinOff className="h-8 w-8 text-clay" strokeWidth={1.6} aria-hidden="true" /><p className="eyebrow mt-7"><span className="eyebrow-dot" />Route not found</p><h1>This page is not in your ledger.</h1><p>Open Home to find your sales, stock and reports.</p><Link href="/" className="secondary-action mt-7"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back to Home</Link></section>;
 }
