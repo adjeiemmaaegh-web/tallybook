@@ -11,6 +11,7 @@ import {readRun18BoundedBackupFile} from "@/features/backup/run18ImportAdmission
 import {useRun18PassphrasePrompt} from "@/features/backup/useRun18PassphrasePrompt";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
 import { auditLocalIntegrity, type IntegrityAudit } from "@/features/reliability/integrity";
+import {rehearseDisasterRecovery,type ReadOnlyRecoveryDrill} from "@/features/backup/disasterRecoveryDrill";
 import {db} from "@/db/TallybookDB";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 
@@ -38,8 +39,11 @@ export default function BackupPage() {
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
   const [lastBackupCompanyId, setLastBackupCompanyId] = useState<string | null>(null);
   const [integrityAudit, setIntegrityAudit] = useState<IntegrityAudit | null>(null);
+  const [drilling,setDrilling]=useState(false);
+  const [drillResult,setDrillResult]=useState<ReadOnlyRecoveryDrill|null>(null);
+  const [drillError,setDrillError]=useState<string|null>(null);
 
-  useEffect(()=>{importedUnderCompany.current=null;setPendingBackup(null);setSummary(null);setPendingFileProof(null);},[activeCompanyId]);
+  useEffect(()=>{importedUnderCompany.current=null;setPendingBackup(null);setSummary(null);setPendingFileProof(null);setDrillResult(null);setDrillError(null);},[activeCompanyId]);
   useEffect(() => {
     void Promise.all([getLastBackupAt(), getLastBackupCompanyId()]).then(([at, companyId]) => { setLastBackupAt(at); setLastBackupCompanyId(companyId); }).catch(() => { setLastBackupAt(null); setLastBackupCompanyId(null); });
   }, [profile?.id]);
@@ -175,6 +179,17 @@ export default function BackupPage() {
     } catch (cause) { const text = cause instanceof Error ? cause.message : "Tallybook could not check local records."; setMessage(text); toast.error("Local record check was not completed", { description: text }); } finally { setCheckingIntegrity(false); }
   };
 
+  const runRecoveryDrill=async()=>{
+    if(drilling||restoring||readingFile||verifyingFile||exporting||passphrases.active)return;
+    setDrilling(true);setDrillResult(null);setDrillError(null);
+    const companyAtStart=getActiveBusinessProfileId();
+    try{
+      const result=await rehearseDisasterRecovery(db);
+      if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed during the rehearsal. Review the active company before trying again.");
+      setDrillResult(result);
+    }catch(error){setDrillError(error instanceof Error?error.message:"Read-only recovery drill could not finish.");}
+    finally{setDrilling(false);}
+  };
   return <div className="backup-page"><section className="backup-hero"><div className="backup-brand"><HardDriveDownload className="h-6 w-6" aria-hidden="true" /><span>LOCAL COPY</span></div><span className="workspace-marker">BKP</span><p className="eyebrow"><span className="eyebrow-dot" />Owner-controlled backup</p><h1>Keep a copy of <em>your own record.</em></h1><p>Download a complete local backup file, then use it to restore this business on a cleared or reinstalled device. Nothing is sent to a server.</p><p className="backup-identity"><b>{profile?.name ?? "This local ledger"}</b><span>Encrypted local file · verification before backup readiness</span></p><div className="backup-last-export" role="status"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /><span><b>{lastBackupAt && lastBackupCompanyId === profile?.id ? `Last checked backup for ${profile.name}: ${formatBackupDate(lastBackupAt)}` : "No verified backup file recorded for this company yet"}</b><small>{lastBackupAt && lastBackupCompanyId === profile?.id ? "An encrypted file was reselected and validated; keep it and its passphrase off-device." : "Download this company’s copy before changing or clearing it."}</small></span></div></section>
 
     <div className="backup-workspace"><section className="backup-sheet"><div className="backup-sheet-head"><div><p className="ledger-kicker">01 · Make a copy</p><h2>Download your local backup</h2></div><Download className="h-5 w-5 text-baobab" aria-hidden="true" /></div><p>Every new backup is encrypted with a passphrase, including businesses without staff. The file contains company, customer, stock and financial records. Keep the downloaded encrypted file somewhere outside this device and store the passphrase separately. Tallybook will not mark an export verified until you reselect its file and it passes decryption and record checks.</p><button className="primary-action" type="button" onClick={() => void exportLocalBackup()} disabled={exporting||readingFile||restoring||passphrases.active}>{exporting ? "Preparing encrypted backup…" : "Download encrypted backup"}<Download className="h-4 w-4" aria-hidden="true" /></button>
@@ -193,6 +208,20 @@ export default function BackupPage() {
 
       <section className="backup-sheet backup-integrity-sheet"><div className="backup-sheet-head"><div><p className="ledger-kicker">03 · Check this device</p><h2>Review local records</h2></div><SearchCheck className="h-5 w-5 text-baobab" aria-hidden="true" /></div><p>This check reads saved record links and totals only. It never changes or removes your local records.</p><button className="secondary-action" type="button" onClick={() => void checkLocalRecords()} disabled={checkingIntegrity}>{checkingIntegrity ? "Checking local records…" : "Check local records"}<SearchCheck className="h-4 w-4" aria-hidden="true" /></button>{integrityAudit ? integrityAudit.status === "clear" ? <p className="backup-integrity-clear" role="status"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Checked {integrityAudit.recordsChecked} saved records. No relationship issues found.</p> : <div className="backup-integrity-attention" role="alert"><strong>Found {integrityAudit.issues.length} item{integrityAudit.issues.length === 1 ? "" : "s"} that need attention.</strong><p>Download a fresh backup before seeking help. This check did not change anything.</p><ul>{integrityAudit.issues.slice(0, 3).map((entry, index) => <li key={`${entry.code}-${entry.recordId ?? index}`}>{entry.message}</li>)}</ul></div> : null}</section></div>
 
+    <section className="backup-sheet backup-integrity-sheet p-5 space-y-3" aria-label="Non-destructive disaster recovery rehearsal">
+      <div className="backup-sheet-head"><div><p className="ledger-kicker">04 · Recovery rehearsal</p><h2>Rehearse backup validation without changing data</h2></div><SearchCheck className="h-5 w-5 text-baobab" aria-hidden="true" /></div>
+      <p>This read-only check creates an in-memory snapshot, validates its round-trip through the backup parser, compares the identities of critical financial and stock records, and checks for a previously reselected, verified encrypted file receipt. It does not restore, clear, upload or download any data.</p>
+      <button type="button" className="secondary-action" disabled={drilling||restoring||readingFile||verifyingFile||exporting||passphrases.active} onClick={()=>void runRecoveryDrill()}>
+        {drilling?"Validating the in-memory backup…":"Run non-destructive recovery rehearsal"}
+      </button>
+      {drillError&&<p role="alert">{drillError}</p>}
+      {drillResult&&drillResult.companyId===activeCompanyId&&<div role="status" className="space-y-2">
+        <p><strong>In-memory backup round-trip validated.</strong> {drillResult.snapshotCounts.products} products, {drillResult.snapshotCounts.sales} sales, {drillResult.snapshotCounts.payments} sale tender entries, {drillResult.snapshotCounts.receipts} receipts, {drillResult.snapshotCounts.customers} customers, and {drillResult.snapshotCounts.expenses} expenses matched by original ID.</p>
+        <p>{drillResult.verifiedExternalFile?"Previously verified encrypted backup file: "+formatBackupDate(drillResult.verifiedExternalFile.verifiedAt)+".":"No verified exported backup file is recorded for this business."}</p>
+        <p><strong>{drillResult.warning}</strong></p>
+        <p>A complete disaster-recovery sign-off still requires actually preserving the encrypted file and passphrase away from this device and confirming restore on a separate test device or disposable profile.</p>
+      </div>}
+    </section>
     <section className="backup-boundary"><ShieldCheck className="h-5 w-5" aria-hidden="true" /><div><strong>Restore replaces one company’s local workspace.</strong><p>Download a fresh backup before restoring. Other companies on this phone are kept separate. Restoring does not add cloud storage or automatic sync.</p></div></section>
 
     {passphrases.dialog}
