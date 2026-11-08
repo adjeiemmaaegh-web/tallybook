@@ -37,7 +37,7 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
     await expect(page.getByLabel('Today at the till')).toBeVisible();
     await expect(page.locator('.tb-dashboard-till-total')).toContainText('GHS');
     await expect(page.locator('.tb-dashboard-till-cells > div')).toHaveCount(2);
-    await expect(page.locator('.premium-kpi')).toHaveCount(4);
+    await expect(page.locator('.premium-kpi')).toHaveCount(6);
     await expect(page.getByRole('heading',{name:'Sales Overview'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Quick actions'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Getting Started with Tallybook'})).toBeVisible();
