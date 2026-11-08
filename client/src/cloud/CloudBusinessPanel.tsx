@@ -46,6 +46,12 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
         if (active && started === revision.current) {
           setAccessible([...list]); setMembershipChecked(true);
           setBusiness(list[0] ?? null);
+          if (accountOnly && list.length === 0) {
+            try {
+              const step = sessionStorage.getItem('tallybook.setup.step:' + user.id);
+              if (step === 'owner' || step === 'employee') setChoice(step);
+            } catch { /* Continue with the role chooser when storage is unavailable. */ }
+          }
         }
       } catch (cause) {
         if (active && started === revision.current) setError(cause instanceof Error ? cause.message : "Could not check your cloud business.");
@@ -61,7 +67,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
     });
     void refresh();
     return () => { active = false; revision.current++; subscription.unsubscribe(); };
-  }, [membershipRevision]);
+  }, [accountOnly, membershipRevision]);
 
   async function saveProfileName(){
     const preferred=draftName.trim(), started=revision.current;
@@ -76,6 +82,16 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       if(started===revision.current)setProfileName(preferred);
     }catch(cause){if(started===revision.current)setError(cause instanceof Error?cause.message:"Could not update profile.");}
     finally{inFlight.current=false;if(started===revision.current)setBusy(false);}
+  }
+  function selectSetup(next: 'owner' | 'employee' | null) {
+    setChoice(next);
+    if (accountOnly && userId) {
+      try {
+        const key = 'tallybook.setup.step:' + userId;
+        if (next) sessionStorage.setItem(key, next);
+        else sessionStorage.removeItem(key);
+      } catch { /* Storage is optional for resuming setup. */ }
+    }
   }
   const create = async () => {
     if (!membershipChecked || choice !== "owner" || !userId || inFlight.current || !name.trim()) return;
@@ -126,19 +142,24 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
-      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{accountOnly ? <div className="tb-role-intro">
+      <p className="tb-business-name">{business.name}</p><p className="text-sm">{business.role === "owner" ? "You own this business. Set up stores, products and your team in the shared shop; attendants sell there from their own phones." : "You work in this business. Open the shared shop to sell in the stores you are assigned to."}</p><div className="flex flex-wrap gap-2"><Link href="/shop" className="primary-action">Open shared shop</Link>{accountOnly&&business.role==="owner"&&<Link href="/" className="secondary-action">Open this device's ledger</Link>}</div></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
-          <span>Choose how you’ll use your verified account.</span>
+          <span>You’re signed in. Create your shop or join your employer’s shop.</span>
         </div> : <h3 className="text-xl font-semibold">How will you use Tallybook?</h3>}
         <div className="tb-role-grid grid gap-3">
-          <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>setChoice("owner")}>
+          <button type="button" aria-label="I own a business" className="tb-role-option" aria-pressed={choice==="owner"} onClick={()=>selectSetup("owner")}>
             <Store aria-hidden="true"/><span><strong>I own a business</strong><small>Create my business and manage my team.</small></span><ArrowRight aria-hidden="true"/>
           </button>
-          <button type="button" aria-label="I work for someone else" className="tb-role-option" aria-pressed={choice==="employee"} onClick={()=>{setChoice("employee");setName("");}}>
+          <button type="button" aria-label="I work for someone else" className="tb-role-option" aria-pressed={choice==="employee"} onClick={()=>{selectSetup("employee");setName("");}}>
             <Users aria-hidden="true"/><span><strong>I work for someone else</strong><small>Join my employer’s shop using an invitation.</small></span><ArrowRight aria-hidden="true"/>
           </button>
-        </div>{choice==="employee"?<p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Then enter the one-time code they give you below.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        </div></>}
+        {accountOnly && choice && <div className="tb-role-intro">
+          <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
+          <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
+        </div>}
+        {choice==="employee"?<p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Then enter the one-time code they give you below.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
@@ -155,7 +176,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
         <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>
         <button type="submit" className="secondary-action" disabled={busy||!draftName.trim()||draftName.trim()===profileName}>Save name</button>
       </form>
-      <p>Shop role: {business?.role??"Awaiting verified membership"}</p>
+      <p>Shop role: {business?.role??(membershipChecked ? "No shared shop linked yet" : "Checking membership")}</p>
       <p className="break-all">Signed in as: {email || userId}</p>
     </details>}
     {error && <p role="alert">{error}</p>}
