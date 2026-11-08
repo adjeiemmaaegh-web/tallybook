@@ -23,32 +23,6 @@ test("promotion preview key binds amount, quantity and revision in canonical ord
  assert.notEqual(promotionPriceReviewKey(data),promotionPriceReviewKey(data.map(x=>({...x,revision:x.revision+1}))));
 });
 
-/** Independently compare original sale-line promo evidence with the saved
- * preview; later product changes must not rewrite this original unit price. */
-export function validateSavedPromotionPricing(sale,lines){
- if(!sale||!Array.isArray(lines))throw Error("Sale promotion evidence is unavailable.");
- for(const line of lines){
-  const fields=[line.regularUnitPriceMinorAtSale,line.promotionSavingsPerUnitMinor,line.promotionRevisionAtSale];
-  const discounted=fields[0]!==undefined||fields[1]!==undefined;
-  if(discounted&&(fields[0]===undefined||fields[1]===undefined||fields[2]===undefined))
-    throw Error("Sale promotion unit-price provenance is incomplete.");
-  if(fields[2]!==undefined&&(!Number.isSafeInteger(fields[2])||fields[2]<1))
-    throw Error("Sale promotion revision is invalid.");
-  if(discounted&&(!validMinor(fields[0])||!validMinor(fields[1])||
-      fields[1]<=0||fields[0]-fields[1]!==line.unitPriceMinor))
-    throw Error("Saved promotion savings no longer match the original receipt.");
- }
- if(sale.priceReviewKeyAtSale!==undefined){
-  const key=promotionPriceReviewKey(lines.map(line=>({
-    productId:line.productId,quantity:line.quantity,
-    unitPriceMinor:line.unitPriceMinor,revision:line.promotionRevisionAtSale??0
-  })));
-  if(key!==sale.priceReviewKeyAtSale)
-    throw Error("Original sale pricing preview was altered after checkout.");
- }
- return true;
-}
-
 test("immutable sale pricing evidence detects altered promo savings and preview substitution",()=>{
  const lines=[{productId:"p",quantity:2,unitPriceMinor:874,regularUnitPriceMinorAtSale:999,promotionSavingsPerUnitMinor:125,promotionRevisionAtSale:1}];
  const key=promotionPriceReviewKey([{productId:"p",quantity:2,unitPriceMinor:874,revision:1}]);
