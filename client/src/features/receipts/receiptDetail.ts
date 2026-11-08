@@ -54,7 +54,22 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
     "",
     `Subtotal: ${formatMinorAmount(detail.sale.subtotalMinor, detail.currency)}`,
     discount,
-    ...(detail.sale.tax ? [`${detail.sale.tax.policy.label} (${detail.sale.tax.policy.rateBasisPoints / 100}%, ${detail.sale.tax.policy.priceMode}): ${formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}`, `Before tax: ${formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}`, ...(detail.sale.tax.policy.registrationNumber ? [`Tax registration: ${detail.sale.tax.policy.registrationNumber}`] : [])] : []),
+    ...(detail.sale.tax?.ghana ? [
+      "Ghana VAT Act 1151 (2026) — " + detail.sale.tax.policy.priceMode + " prices",
+      "Taxable value: " + formatMinorAmount(detail.sale.tax.ghana.taxableBaseMinor, detail.currency),
+      "VAT (15%): " + formatMinorAmount(detail.sale.tax.ghana.vatMinor, detail.currency),
+      "NHIL (2.5%): " + formatMinorAmount(detail.sale.tax.ghana.nhilMinor, detail.currency),
+      "GETFund (2.5%): " + formatMinorAmount(detail.sale.tax.ghana.getFundMinor, detail.currency),
+      "Total VAT and levies: " + formatMinorAmount(detail.sale.tax.taxMinor, detail.currency),
+      "Zero-rated supplies (after discount): " + formatMinorAmount(detail.sale.tax.ghana.zeroRatedMinor, detail.currency),
+      "Exempt supplies (after discount): " + formatMinorAmount(detail.sale.tax.ghana.exemptMinor, detail.currency),
+      "Tax registration: " + (detail.sale.tax.policy.registrationNumber ?? "unverified"),
+      "NOT A GRA-CERTIFIED E-VAT INVOICE — official signature, QR and certification not issued by Tallybook."
+    ] : detail.sale.tax ? [
+      `${detail.sale.tax.policy.label} (${detail.sale.tax.policy.rateBasisPoints / 100}%, ${detail.sale.tax.policy.priceMode}): ${formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}`,
+      `Before tax: ${formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}`,
+      ...(detail.sale.tax.policy.registrationNumber ? [`Tax registration: ${detail.sale.tax.policy.registrationNumber}`] : [])
+    ] : []),
     `Total: ${formatMinorAmount(detail.sale.totalMinor, detail.currency)}`,
     `Settled: ${formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}`,
     ...(detail.sale.walletAppliedMinor ? [

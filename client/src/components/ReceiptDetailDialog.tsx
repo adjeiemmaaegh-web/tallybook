@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMinorAmount } from "@/features/inventory/inventory";
+import { businessDateTimeLabel } from "@/features/business/businessCalendar.mjs";
 import { formatReceiptShareText, receiptPaymentDescription, shareReceiptText, type ReceiptDetail } from "@/features/receipts/receiptDetail";
 
 interface ReceiptDetailDialogProps {
@@ -36,7 +37,7 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         <DialogHeader className="receipt-detail-header">
           <p className="ledger-kicker">Saved on this device</p>
           <DialogTitle>{detail.businessName}</DialogTitle>
-          <DialogDescription id="receipt-detail-description">Receipt {detail.receipt.receiptNumber} · {new Date(detail.receipt.issuedAt).toLocaleString()}</DialogDescription>
+          <DialogDescription id="receipt-detail-description">Receipt {detail.receipt.receiptNumber} · {businessDateTimeLabel(detail.receipt.issuedAt, detail.country)}</DialogDescription>
         </DialogHeader>
         <section className="receipt-detail-summary" aria-label="Receipt totals">
           <div><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
@@ -56,7 +57,17 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
           <div><span>Subtotal</span><strong>{formatMinorAmount(detail.sale.subtotalMinor, detail.currency)}</strong></div>
           {detail.sale.loyaltyRedeemedPoints ? <div><span>Loyalty redeemed ({detail.sale.loyaltyRedeemedPoints} pts)</span><strong>−{formatMinorAmount(detail.sale.loyaltyRedeemedMinor ?? 0, detail.currency)}</strong></div> : null}
           {detail.sale.discountMinor > (detail.sale.loyaltyRedeemedMinor ?? 0) ? <div><span>Other discounts</span><strong>−{formatMinorAmount(detail.sale.discountMinor - (detail.sale.loyaltyRedeemedMinor ?? 0), detail.currency)}</strong></div> : null}
-          {detail.sale.tax ? <><div><span>{detail.sale.tax.policy.label} ({detail.sale.tax.policy.rateBasisPoints / 100}%, {detail.sale.tax.policy.priceMode})</span><strong>{formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}</strong></div><div><span>Before tax</span><strong>{formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}</strong></div>{detail.sale.tax.policy.registrationNumber ? <p>Tax registration: {detail.sale.tax.policy.registrationNumber}</p> : null}</> : null}
+          {detail.sale.tax?.ghana ? <>
+            <div><span>Taxable value</span><strong>{formatMinorAmount(detail.sale.tax.ghana.taxableBaseMinor, detail.currency)}</strong></div>
+            <div><span>VAT (15%)</span><strong>{formatMinorAmount(detail.sale.tax.ghana.vatMinor, detail.currency)}</strong></div>
+            <div><span>NHIL (2.5%)</span><strong>{formatMinorAmount(detail.sale.tax.ghana.nhilMinor, detail.currency)}</strong></div>
+            <div><span>GETFund (2.5%)</span><strong>{formatMinorAmount(detail.sale.tax.ghana.getFundMinor, detail.currency)}</strong></div>
+            <div><span>Total VAT and levies</span><strong>{formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}</strong></div>
+            <div><span>Zero-rated supplies (after discount)</span><strong>{formatMinorAmount(detail.sale.tax.ghana.zeroRatedMinor, detail.currency)}</strong></div>
+            <div><span>Exempt supplies (after discount)</span><strong>{formatMinorAmount(detail.sale.tax.ghana.exemptMinor, detail.currency)}</strong></div>
+            <p>Tax registration: {detail.sale.tax.policy.registrationNumber}</p>
+            <p role="note">NOT A GRA-CERTIFIED E-VAT INVOICE. No official QR, signature, or certification is issued.</p>
+          </> : detail.sale.tax ? <><div><span>{detail.sale.tax.policy.label} ({detail.sale.tax.policy.rateBasisPoints / 100}%, {detail.sale.tax.policy.priceMode})</span><strong>{formatMinorAmount(detail.sale.tax.taxMinor, detail.currency)}</strong></div><div><span>Before tax</span><strong>{formatMinorAmount(detail.sale.tax.taxableMinor, detail.currency)}</strong></div>{detail.sale.tax.policy.registrationNumber ? <p>Tax registration: {detail.sale.tax.policy.registrationNumber}</p> : null}</> : null}
           <div className="receipt-detail-total"><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
         </section>
         {manualText ? <section className="receipt-manual-copy" aria-live="polite"><div><Copy className="h-4 w-4" aria-hidden="true" /><strong>Copy receipt text</strong></div><p>Your browser could not open sharing or copy automatically. Select and copy this text into your customer message.</p><textarea aria-label="Receipt text for manual copy" readOnly value={manualText} /></section> : null}
