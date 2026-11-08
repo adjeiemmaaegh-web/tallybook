@@ -15,7 +15,7 @@ type Pick = { productId: string; quantity: number };
 export default function QuotationsPage() {
   const { profile, activeCompanyId } = useBusinessProfile();
   const [customers,setCustomers] = useState<{id:string;name:string}[]>([]);
-  const [products,setProducts] = useState<{id:string;name:string;sellingPriceMinor:number}[]>([]);
+  const [products,setProducts] = useState<Array<{id:string;name:string;sellingPriceMinor:number;ghanaTaxTreatment?: "standard" | "zero-rated" | "exempt"}>>([]);
   const [quotes,setQuotes] = useState<Quotation[]>([]);
   const [customerId,setCustomerId] = useState('');
   const [productId,setProductId] = useState('');
@@ -36,7 +36,7 @@ export default function QuotationsPage() {
     const [c,p,q] = await Promise.all([getCustomerSnapshot(),getInventorySnapshot(),listQuotations()]);
     if (company !== getActiveBusinessProfileId()) return;
     setCustomers(c.customers.filter(x=>x.status==='active').map(x=>({id:x.id,name:x.name})));
-    setProducts(p.products.filter(x=>!x.archivedAt).map(x=>({id:x.id,name:x.name,sellingPriceMinor:x.sellingPriceMinor})));
+    setProducts(p.products.filter(x=>!x.archivedAt).map(x=>({id:x.id,name:x.name,sellingPriceMinor:x.sellingPriceMinor,ghanaTaxTreatment:x.ghanaTaxTreatment})));
     setQuotes(q);
   },[activeCompanyId]);
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function QuotationsPage() {
     const product = products.find(p => p.id === line.productId);
     return { productId: line.productId, amountMinor: (product?.sellingPriceMinor ?? 0) * line.quantity, treatment: product?.ghanaTaxTreatment };
   });
-  let tax: ReturnType<typeof calculateSaleTax>;
+  let tax: ReturnType<typeof calculateSaleTax> = undefined;
   let taxError: string | null = null;
   try { tax = quoteTaxLines.length ? calculateSaleTax(quoteTaxLines, 0, profile?.taxPolicy) : undefined; }
   catch (cause) { taxError = cause instanceof Error ? cause.message : "Review product tax classifications."; }
