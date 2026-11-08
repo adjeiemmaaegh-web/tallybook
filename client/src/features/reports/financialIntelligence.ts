@@ -269,7 +269,6 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     costsUnavailable:costs.unavailableSales,
     taxUnknownSales:summary.taxEvidence?.legacyUnverifiedSales??0
   });
-  if(summary.managementProfit.status==="available")summary.unavailable.grossProfit="";
   assertCompanyScope(company, getActiveBusinessProfileId());
   return summary;
 }
