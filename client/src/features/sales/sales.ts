@@ -20,6 +20,7 @@ import { assertUnusedMobileReference, normalizeMobileReference } from "./require
 import { z } from "zod";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
+import {effectivePromotionPrice,promotionPriceReviewKey} from "@/features/inventory/promotionRules.mjs";
 import { allocationCost, appendInventoryCostChange } from "@/features/inventory/costLedger";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
@@ -37,6 +38,8 @@ export interface Sale {
   storeId?: string;
   commerceOrderId?:string;
   tax?: TaxSnapshot;
+  /** Locked original pricing preview, including promotion revision and discounted unit prices. */
+  priceReviewKeyAtSale?:string;
   /** Exact original checkout tender evidence; absent on single-method historical sales. */
   splitTendersAtSale?: SplitTenderEvidence[];
   /** Captured on new checkouts: OFF is explicit, legacy absence remains unverified. */
@@ -77,6 +80,10 @@ export interface SaleLine {
   quantity: number;
   unitPriceMinor: number;
   lineTotalMinor: number;
+  /** When discounted by an owner-authorized promotion, preserve original and savings per unit. */
+  regularUnitPriceMinorAtSale?:number;
+  promotionSavingsPerUnitMinor?:number;
+  promotionRevisionAtSale?:number;
   /** Immutable classification at original Ghana-VAT posting. */
   ghanaTaxTreatmentAtSale?: GhanaTaxTreatment;
   stockTracked?: boolean;
@@ -126,12 +133,12 @@ export interface CustomerActivity {
 
 export interface SaleCartLineInput { productId: string; quantity: number; }
 export interface SplitTenderInput {method:"cash"|"card"|"mobile";amount:string;providerId?:string;reference?:string}
-export interface CompleteSaleInput { commerceOrderId?:string; storeId?: string; taxReviewKey?: string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; cardReference?:string; splitTenders?: SplitTenderInput[]; submissionKey?: string; redeemPoints?: number; }
+export interface CompleteSaleInput { commerceOrderId?:string; storeId?: string; taxReviewKey?: string; priceReviewKey?:string; lines: SaleCartLineInput[]; customerId?: string; discount: string; paymentMethod: PaymentMethod; amountPaid: string; currency: string; mobileMoneyProviderId?: string; mobileMoneyReference?: string; cardReference?:string; splitTenders?: SplitTenderInput[]; submissionKey?: string; redeemPoints?: number; }
 export interface SaleSnapshot { sales: Sale[]; lines: SaleLine[]; payments: Payment[]; receipts: Receipt[]; }
 
 const lineSchema = z.object({ productId: z.string().min(1), quantity: z.number().int().min(1).max(9_999_999) });
 const validMoneyValue = (value: string) => /^\d+(?:\.\d{1,2})?$/.test(normalizeMoneyInput(value));
-export const completeSaleSchema = z.object({ commerceOrderId:z.string().min(1).max(128).optional(), storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), cardReference:z.string().trim().max(120).optional(), splitTenders:z.array(z.object({method:z.enum(["cash","card","mobile"]),amount:z.string().trim().refine(validMoneyValue,"Tender must be a valid amount."),providerId:z.string().max(80).optional(),reference:z.string().max(120).optional()}).strict()).min(2).max(3).optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
+export const completeSaleSchema = z.object({ commerceOrderId:z.string().min(1).max(128).optional(), storeId: z.string().min(1).max(200).optional(), taxReviewKey: z.string().max(400).optional(), priceReviewKey:z.string().max(20000).optional(), lines: z.array(lineSchema).min(1, "Add at least one product."), customerId: z.string().optional(), discount: z.string().trim().refine(validMoneyValue, "Discount must be a valid amount."), paymentMethod: z.enum(paymentMethods), amountPaid: z.string().trim().refine(validMoneyValue, "Amount paid must be a valid amount."), currency: z.string().regex(/^[A-Z]{3}$/, "Use an uppercase three-letter currency code."), mobileMoneyProviderId: z.string().trim().min(1).max(80).optional(), mobileMoneyReference: z.string().trim().max(120, "Mobile Money reference must be 120 characters or fewer.").optional(), cardReference:z.string().trim().max(120).optional(), splitTenders:z.array(z.object({method:z.enum(["cash","card","mobile"]),amount:z.string().trim().refine(validMoneyValue,"Tender must be a valid amount."),providerId:z.string().max(80).optional(),reference:z.string().max(120).optional()}).strict()).min(2).max(3).optional(), submissionKey: z.string().trim().min(8).max(80).optional(), redeemPoints: z.number().int().min(0).max(1000000).optional() });
 
 export function paymentMethodLabel(method: PaymentMethod) {
   if (method === "mobile") return "Mobile Money";
@@ -241,6 +248,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
           (existingPayment?.mobileMoneyProviderId ?? undefined) === (input.mobileMoneyProviderId?.trim() || undefined) &&
           (existingPayment?.mobileMoneyReference ?? undefined) === (input.mobileMoneyReference?.trim() || undefined)
         )) &&
+        (existingSale.priceReviewKeyAtSale??undefined)===(input.priceReviewKey??undefined) &&
         (input.paymentMethod !== "card" || (existingPayment?.cardReference??undefined)===cardReference) &&
         (input.paymentMethod !== "split" || JSON.stringify(existingSale.splitTendersAtSale)===JSON.stringify(normalizeSplitTenders(splitRequest!,parseAmount(input.amountPaid,input.currency),existingSale.totalMinor)));
       if (!sameLines || !samePayment) {
@@ -305,9 +313,23 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       redemptionMinor = redemptionPoints * pointValue;
       if (!Number.isSafeInteger(redemptionMinor)) throw new Error("Loyalty redemption exceeds safe money limits.");
     }
+    const promotionPricing=new Map(requestedLines.map(line=>{
+      const product=productById.get(line.productId)!;
+      const regular=selectUnitPrice(product,line.quantity);
+      return [line.productId,effectivePromotionPrice(product,regular,now)] as const;
+    }));
+    if(linkedOrder&&[...promotionPricing.values()].some(p=>p.savingsMinor>0))
+      throw Error("Existing reserved commerce order prices cannot be changed by a newly activated POS promotion.");
+    const calculatedPriceKey=promotionPriceReviewKey(requestedLines.map(line=>({
+      productId:line.productId,quantity:line.quantity,
+      unitPriceMinor:promotionPricing.get(line.productId)!.unitPriceMinor,
+      revision:promotionPricing.get(line.productId)!.revision
+    })));
+    if((input.priceReviewKey!==undefined||[...promotionPricing.values()].some(p=>p.savingsMinor>0))&&input.priceReviewKey!==calculatedPriceKey)
+      throw Error("Promotion or product pricing changed. Reload the checkout and review the amount before saving.");
     const checkoutMoney = calculateCheckoutLines(requestedLines.map(line => ({
       productId: line.productId, quantity: line.quantity,
-      unitPriceMinor: selectUnitPrice(productById.get(line.productId)!, line.quantity),
+      unitPriceMinor: promotionPricing.get(line.productId)!.unitPriceMinor,
     })));
     const subtotalMinor = checkoutMoney.subtotalMinor;
     const manualDiscountMinor = parseAmount(input.discount, input.currency);
@@ -397,9 +419,9 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     }
 
     assertCompanyScope(activeId, getActiveBusinessProfileId());
-    const sale: Sale = { ...(tax ? { tax } : {}),...(splitTenders?{splitTendersAtSale:splitTenders}:{}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
+    const sale: Sale = { ...(tax ? { tax } : {}),...(input.priceReviewKey?{priceReviewKeyAtSale:input.priceReviewKey}:{}),...(splitTenders?{splitTendersAtSale:splitTenders}:{}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
     if(creditTermsAtSale)sale.creditTermsAtSale=creditTermsAtSale;
-    const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor, ...(tax?.ghana ? { ghanaTaxTreatmentAtSale: product.ghanaTaxTreatment } : {}) }; });
+    const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; const promotion=promotionPricing.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor, ...(promotion.savingsMinor>0?{regularUnitPriceMinorAtSale:promotion.originalUnitPriceMinor,promotionSavingsPerUnitMinor:promotion.savingsMinor,promotionRevisionAtSale:promotion.revision}:{}), ...(tax?.ghana ? { ghanaTaxTreatmentAtSale: product.ghanaTaxTreatment } : {}) }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
     if(linkedOrder){
       if(!cashier)throw Error("Unlock staff before selling a reserved customer order.");
