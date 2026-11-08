@@ -31,7 +31,7 @@ import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import {summarizeReceivableAgeing,type ReceivableAgeing} from './receivableAgeing.mjs';
 
 export type FinancialPeriod = "today" | "week" | "month" | "quarter" | "year" | "custom";
-export interface FinancialRange { start: Date; end: Date; label: string }
+export interface FinancialRange { start: Date; end: Date; label: string; country?: string }
 export interface FinancialInputs { sales: Sale[]; payments: Payment[]; repayments: DebtRepayment[]; expenses: Expense[]; reversals: SaleReversal[]; customers?:Customer[]; company?:string; cashReturns?: CashPartialSaleReturn[]; saleLines?: SaleLine[]; walletTransfers?: WalletTransfer[]; customerBenefits?: CustomerBenefitEntry[]; walletCurrency?: string; purchases?: Purchase[]; supplierPayableEntries?: SupplierPayableEntry[] }
 export interface FinancialSummary {
   recordedTaxMinor: number;
@@ -95,9 +95,9 @@ export function financialRange(period: FinancialPeriod, now = new Date(), custom
     if (a > b) throw new Error("The start date cannot be after the end date.");
     const e = shiftBusinessDay(b, 1, country);
     if ((e.getTime() - a.getTime()) / 86400000 > 3660) throw new Error("The custom range cannot exceed ten years.");
-    return { start: a, end: e, label: customStart + " to " + customEnd };
+    return { start: a, end: e, label: customStart + " to " + customEnd, country };
   }
-  return { start, end, label: period === "today" ? "Today" : "This " + period };
+  return { start, end, label: period === "today" ? "Today" : "This " + period, country };
 }
 const within = (date: string, range: FinancialRange) => { const d=new Date(date); return validDate(d)&&d>=range.start&&d<range.end; };
 const total = <T,>(rows:T[], fn:(row:T)=>number) => rows.reduce((sum,row)=>{
@@ -195,7 +195,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   // Rebuild the daily/category display from independent saved-event postings,
   // using exact integer arithmetic. A final net amount must never disguise an
   // overflowing daily balance, or a missing period row.
-  const periodDisplay = reconcileFinancialPeriodDisplay({sales,payments,repayments,reversals,refunds,walletTransfers,expenses},saleById,{revenue:revenueMinor,collections:collectionsMinor,expenses:expensesMinor});
+  const periodDisplay = reconcileFinancialPeriodDisplay({sales,payments,repayments,reversals,refunds,walletTransfers,expenses},saleById,{revenue:revenueMinor,collections:collectionsMinor,expenses:expensesMinor},range.country);
   // Report integrity is a hard boundary: masking a negative debt balance as zero
   // would hide duplicate repayments, mismatched reversals or damaged ledger data.
   const figures=[recordedTaxMinor,salesExcludingRecordedTaxMinor,revenueMinor,saleCollectionsMinor,debtCollectionsMinor,walletNetCashMinor,collectionsMinor,expensesMinor,receivables,collectionsMinor-expensesMinor];
