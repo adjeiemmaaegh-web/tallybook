@@ -2,6 +2,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { internalToolsEnabled } from "@/lib/internalTools";
 import { AuthGate } from "@/auth/AuthGate";
+import { requiresCloudOwner } from "@/auth/deviceEntry";
 import { FriendsTestGate } from "@/auth/FriendsTestGate";
 import { createCloudStaffSessionBoundary } from "@/auth/cloudStaffSessionBoundary";
 import { lockAllStaff } from "@/features/staff/staff";
@@ -45,6 +46,8 @@ const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import "./styles/ReferenceVisualSystem.css";
+import { TallybookWelcome } from "@/components/TallybookWelcome";
 
 function Router() {
   return (
@@ -112,11 +115,15 @@ function App() {
           {location === '/cloud-account'
             // Retired preview: its server check was never deployed. The account page is the real one.
             ? <Redirect to="/account" replace />
+            : location === '/welcome'
+            // Safe public first page: presents existing sign-in links only.
+            // NEVER mounts the local ledger or bypasses verified owner access.
+            ? <main className="tb-public-welcome"><TallybookWelcome variant="shop" /></main>
             : location === '/shop'
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
             ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>
-            : !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
+            : requiresCloudOwner() && !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -95,7 +95,7 @@ describe("shared shop — attendant", () => {
     await addTwoEggs();
     fireEvent.click(screen.getByRole("button", { name: /Record sale/ }));
     expect(await screen.findByText(/saved on this phone/)).toBeInTheDocument();
-    expect(screen.getByText("Waiting to send")).toBeInTheDocument();
+    expect(await screen.findByText("Waiting to send")).toBeInTheDocument();
     const firstKey = (shop.record.mock.calls[0]![0] as SaleRequest).submissionKey;
 
     shop.record.mockImplementation(async (sale: SaleRequest) => receiptFor(sale, true));

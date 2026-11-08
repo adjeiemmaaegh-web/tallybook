@@ -121,6 +121,7 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<OfflineVoiceStatus>("unsupported");
+  const [checkRequested, setCheckRequested] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const offlineRef = useRef<OfflineVoiceStatus>("unsupported");
   offlineRef.current = offline;
@@ -131,9 +132,9 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
   useEffect(() => {
     let live = true;
     setOffline("unsupported");
-    if (supported) void checkOfflineVoice(language).then((status) => { if (live) setOffline(status); });
+    if (supported && checkRequested) void checkOfflineVoice(language).then((status) => { if (live) setOffline(status); });
     return () => { live = false; };
-  }, [language, supported]);
+  }, [language, supported, checkRequested]);
 
   const prepareOffline = useCallback(async () => {
     setPreparing(true); setError(null);
@@ -218,5 +219,7 @@ export function useVoiceInput({ language, onResult }: UseVoiceInputOptions) {
 
   useEffect(() => () => { const recognition = recognitionRef.current; recognitionRef.current = null; recognition?.abort(); }, []);
 
-  return { supported, status, listening: status !== "idle", interim, error, start, stop, clearError: () => setError(null), offline, preparing, prepareOffline };
+  return { supported, status, listening: status !== "idle", interim, error, start, stop, clearError: () => setError(null), offline, preparing, prepareOffline,
+    canCheckOffline: !checkRequested && typeof getSpeechRecognition()?.available === "function",
+    checkOffline: () => setCheckRequested(true) };
 }

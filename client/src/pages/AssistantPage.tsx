@@ -241,6 +241,8 @@ function CompanyScopedAssistant() {
               ? "Tap the microphone and speak. Works offline on this phone too."
               : "Tap the microphone and speak. This needs internet; offline, use the microphone on your phone's keyboard."))}
           </p>
+          {voice.canCheckOffline && <button type="button" className="secondary-action assistant-voice-offline"
+            disabled={voice.listening} onClick={voice.checkOffline}>Check offline voice support</button>}
           {(voice.offline === "downloadable" || voice.offline === "downloading" || voice.preparing) && (
             <button type="button" className="secondary-action assistant-voice-offline" onClick={() => void voice.prepareOffline()}
               disabled={voice.preparing || voice.offline === "downloading" || voice.listening || (typeof navigator !== "undefined" && navigator.onLine === false)}>

@@ -6,6 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
@@ -14,7 +15,7 @@ import { listVerifiedCloudBusinesses } from "@/cloud/cloudMembership";
 import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
-  adjustShopStock, assignShopStore, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
+  adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
   recordShopSale, refundShopSale, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
   getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
@@ -30,23 +31,23 @@ interface Business { id: string; name: string; role: "owner" | "attendant" }
 type Tab = "sell" | "stock" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
-type ShopCache = { businesses: Business[]; overviews: Record<string, ShopOverview> };
+import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
 const emptyCache = (): ShopCache => ({ businesses: [], overviews: {} });
 /** Cached business and shop data is sealed (AES-GCM, device key); plaintext localStorage is only read once to migrate. */
 async function readCache(userId: string): Promise<ShopCache> {
   const sealed = await readSealedJson<ShopCache>(CACHE + userId);
-  if (sealed) return sealed;
+  if (sealed) return safeCache(sealed);
   try {
     const legacy = localStorage.getItem(CACHE + userId);
     if (!legacy) return emptyCache();
-    const parsed = (JSON.parse(legacy) as ShopCache | null) ?? emptyCache();
+    const parsed = safeCache(JSON.parse(legacy));
     await writeSealedJson(CACHE + userId, parsed);
     if (await readSealedJson<ShopCache>(CACHE + userId)) localStorage.removeItem(CACHE + userId); // only after it can be read back
     return parsed;
   } catch { return emptyCache(); }
 }
 async function writeCache(userId: string, change: (cache: ShopCache) => void) {
-  try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, cache); } catch { /* not essential */ }
+  try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, safeCache(cache)); } catch { /* not essential */ }
 }
 async function clearShopCaches() {
   await removeSealedPrefix(CACHE);
@@ -71,49 +72,60 @@ export default function SharedShopPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
+  const identity = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) { setUserId(null); return; }
     const client = getSupabaseClient();
-    let active = true;
-    const load = async () => {
+    let generation = 0;
+    const load = async (request: number) => {
       const { data } = await client.auth.getSession();
       const id = data.session?.user.id ?? null;
-      if (!active) return;
+      if (request !== generation) return;
+      if (identity.current !== id) { setBusinesses([]); setCompanyId(null); }
+      identity.current = id;
       setUserId(id);
       if (!id) return;
-      const cached = await readCache(id);
-      if (cached.businesses.length) { setBusinesses(cached.businesses); setCompanyId(c => c ?? cached.businesses[0]!.id); }
-      if (!navigator.onLine) return;
-      try {
-        const list = (await listVerifiedCloudBusinesses()).map(b => ({ id: b.id, name: b.name, role: b.role }));
-        if (!active) return;
-        setBusinesses(list); setLoadError("");
-        setCompanyId(c => list.some(b => b.id === c) ? c : list[0]?.id ?? null);
-        void writeCache(id, cache => { cache.businesses = list; });
-      } catch (error) { if (active && !cached.businesses.length) setLoadError(message(error)); }
+      const list = online
+        ? (await listVerifiedCloudBusinesses()).map(({id, name, role}) => ({id, name, role}))
+        : (await readCache(id)).businesses;
+      if (request !== generation) return;
+      setBusinesses(list);
+      setCompanyId(current => list.some(b => b.id === current) ? current : list[0]?.id ?? null);
+      if (online) void writeCache(id, cache => { cache.businesses = list; });
     };
-    const { data: { subscription } } = client.auth.onAuthStateChange(event => {
-      if (event === "SIGNED_OUT") { void clearShopCaches(); setBusinesses([]); setCompanyId(null); }
-      setTimeout(() => { if (active) void load(); }, 0);
+    const refreshIdentity = () => {
+      const request = ++generation;
+      setLoadError("");
+      // Supabase auth callbacks must finish before another auth call starts.
+      setTimeout(() => {
+        if (generation === request) void load(request).catch(error => {
+          if (generation === request) setLoadError(message(error));
+        });
+      }, 0);
+    };
+    const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+      if (session?.user.id !== identity.current) {
+        setUserId(undefined); setBusinesses([]); setCompanyId(null);
+      }
+      if (event === "SIGNED_OUT") {
+        ++generation; identity.current = null;
+        setUserId(null); setBusinesses([]); setCompanyId(null); setLoadError("");
+        void clearShopCaches();
+      } else refreshIdentity();
     });
-    void load();
-    return () => { active = false; subscription.unsubscribe(); };
+    refreshIdentity();
+    return () => { ++generation; subscription.unsubscribe(); };
   }, [online]);
 
   const business = businesses.find(b => b.id === companyId) ?? null;
 
+  if (loadError) return <main className="shop-page"><p role="alert">{loadError}</p><Link href="/signin">Return to account</Link></main>;
   if (userId === undefined) return <main className="shop-page"><Run18UpdateNotice /><p role="status">Opening your shop…</p></main>;
-  if (!userId) return <main className="shop-page"><Run18UpdateNotice /><section className="shop-card shop-empty shop-welcome" aria-labelledby="shop-welcome-title">
-    <h1 id="shop-welcome-title">Run your shop from your phone</h1>
-    <p>Tallybook keeps your stock, sales and customer credit in one place, shared between you and the people who work for you.</p>
-    <ul className="shop-benefits">
-      <li><strong>Sell offline.</strong> Sales are saved on the phone and sent when the connection returns.</li>
-      <li><strong>You stay in control.</strong> Attendants only see the stores you give them, and you set discount and credit limits.</li>
-      <li><strong>Clear records.</strong> Every sale, refund and stock change is kept and can be traced.</li>
-    </ul>
-    <Link href="/signin" className="primary-action">Sign in or create an account</Link>
-    <p className="shop-muted">Use Google, or an email and password. After signing in, choose "I own a business" to start one, or "I work for someone else" to join with the code your employer gives you.</p></section></main>;
+  if (!userId) return <main className="shop-page shop-landing">
+    <Run18UpdateNotice />
+    <TallybookWelcome variant="shop" />
+  </main>;
 
   return <main className="shop-page">
     <Run18UpdateNotice />
@@ -131,7 +143,7 @@ export default function SharedShopPage() {
     </header>
     {loadError && <p role="alert" className="shop-alert">{loadError}</p>}
     {business
-      ? <ShopWorkspace key={business.id} userId={userId} business={business} online={online} />
+      ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
   </main>;
 }
@@ -167,9 +179,9 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [overview, setOverview] = useState<ShopOverview | null>(null);
   useEffect(() => {
     let live = true;
-    void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
+    if (!online) void readCache(userId).then(cache => { const hit = cache.overviews[business.id]; if (live && hit) setOverview(current => current ?? hit); });
     return () => { live = false; };
-  }, [userId, business.id]);
+  }, [userId, business.id, online]);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
@@ -187,7 +199,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   useEffect(() => {
     if (!isOwnerRole || hasSale === true || !online) return;
     let live = true;
-    void Promise.resolve().then(() => listShopSales(business.id)).then(sales => { if (live && Array.isArray(sales)) setHasSale(sales.length > 0); }).catch(() => { /* stays unknown */ });
+    void getShopReadiness(business.id).then(result => {
+      if (live && result.companyId === business.id && Number.isSafeInteger(result.saleCount))
+        setHasSale(result.saleCount > 0);
+    }).catch(() => { /* Older servers cannot confirm checklist progress. */ });
     return () => { live = false; };
   }, [isOwnerRole, business.id, online, hasSale, overview]);
 

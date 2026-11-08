@@ -1,21 +1,15 @@
-# Supabase migration verification
+# Shared-shop migration verification
 
-`supabase/migrations` mirrors production project `qfyydfxwvifdvffdfgeu` (checked against `supabase_migrations.schema_migrations` on 5 November 2026). Every file matches a recorded production version. The old `001`–`003` `tb_*` files were never applied anywhere and now live in `docs/history/unapplied-migrations/`. Do not re-apply recorded migrations manually. The test project is documented in `supabase/test-project/README.md`.
+The SQL files in `migrations/` describe the candidate schema. A historical check on 5 November 2026 predates later policy, invitation and operations work. Verify the destination's actual version identifiers **and schema** separately before any future rollout. The integration branch was tested only against disposable databases.
 
-`20261013123347_business_identity.sql` creates the ownership foundation only. It does not upload local data or create cloud bookkeeping records. The authenticated caller becomes the owner through an atomic function; callers cannot write membership tables directly.
+Run the complete upgrade and transaction checks locally after a frozen dependency install.
 
-Local PostgreSQL verification (uses PGlite; no Supabase connection):
-
-```
-node --test qa/cloud-membership.test.mjs
+```sh
+node --test qa/backend-stage-b-e.test.mjs qa/shared-shop*.test.mjs qa/stakeholder-membership-rpc.test.mjs
 ```
 
-Authentication browser verification uses an isolated fake session and test-only project URL, never production credentials:
+The operations suite applies the main chain, creates representative shops and stock, then upgrades them. It checks a populated sale's policy snapshot, rejects ambiguous preview policy history and exercises rollback, replay and unauthorized calls. The four candidate migrations follow the canonical refund policy and 24-hour invitation. See the [migration compatibility notes](../docs/release/RC_INTEGRATION.md).
 
-```
-pnpm exec playwright test --config playwright.auth.config.mjs
-```
+Shared-shop browser access goes through authenticated RPCs. The operations RPC uses a pinned search path, verifies the active server session and company membership and applies action-level role restrictions. Its tables have RLS and no direct authenticated or anonymous grants. A cached device identity never authorizes a server mutation.
 
-Before a real rollout, verify Google OAuth and callback URLs in the connected test/preview environment. Then verify two real accounts against the project: private business isolation, rejected owner impersonation, authorized assignment, immediate online revocation and denied anonymous queries. The offline local identity marker is not a server authorization token.
-
-The source security model follows the Supabase guidance on [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) and [database function privileges](https://supabase.com/docs/guides/database/functions). Private security-definer functions pin the search path and verify the authenticated caller before privileged writes. Public RPC wrappers use security invoker. The second migration restricts an existing internal RLS event-trigger helper without disabling its automatic RLS behavior.
+Verify hosted OAuth callbacks, two-account isolation and online revocation separately on an owner-authorized test environment. The standalone browser tests use local staff authentication. The reference UI suite uses a non-production URL to verify signed-out cloud entry.

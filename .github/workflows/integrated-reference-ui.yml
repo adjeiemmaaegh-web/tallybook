@@ -1,0 +1,45 @@
+name: Integrated Tallybook Reference UI
+on:
+  push:
+    branches: [integrate-reference-ui-*]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Use pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.0 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check TypeScript
+        run: pnpm check
+      - name: Check reference dashboard with report-backed component tests
+        run: pnpm exec vitest run client/src/components/PremiumHomeOverview.reference.test.tsx
+      - name: Verify app build
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify real first-run, auth, shared-shop and operations
+        run: pnpm exec playwright test --config qa/reference-integrated-ui.config.mjs
+      - name: Save screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-integrated-reference-ui
+          path: |
+            qa/test-results/
+            test-results/
+            artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
