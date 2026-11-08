@@ -55,6 +55,7 @@ export function allocateSavedInvoiceMinor(totalMinor, lines) {
  * Legacy tax objects lacking their original policy remain explicitly unverified.
  * This is a DRAFT allocation, never an authorization to post a tax refund. */
 function inspectSavedReturnTax(sale, subtotalMinor, discountMinor, totalMinor) {
+  if (sale.tax?.ghana) throw new Error('Ghana VAT partial refunds require a separate per-class levy correction; no provisional tax refund is available.');
   const base = BigInt(subtotalMinor) - BigInt(discountMinor);
   if (!sale.tax) {
     if (BigInt(totalMinor) !== base) throw new Error('Original sale money does not reconcile.');
