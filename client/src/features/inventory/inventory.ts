@@ -12,6 +12,7 @@ import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { appendInventoryCostChange } from "./costLedger";
+import {validateCategoryHierarchy} from "./categoryHierarchy.mjs";
 
 export const INVENTORY_BUSINESS_ID = "primary" as const;
 
@@ -23,6 +24,8 @@ export interface ProductCategory {
   businessProfileId: string;
   name: string;
   normalizedName: string;
+  /** Optional three-level parent category; no physical stock is implied. */
+  parentCategoryId?:string;
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
@@ -84,7 +87,7 @@ const nonNegativeInteger = (label: string) => z.string().trim().regex(/^\d+$/, `
 const requiredAmount = (label: string) => z.string().trim().refine((value) => /^\d+(?:\.\d{1,2})?$/.test(normalizeMoneyInput(value)), `${label} must be a valid amount.`);
 const optionalAmount = (label: string) => requiredAmount(label).optional().or(z.literal(""));
 
-export const categoryFormSchema = z.object({ name: nameSchema });
+export const categoryFormSchema = z.object({ name: nameSchema, parentCategoryId:z.string().max(80).optional() });
 
 export const productFormSchema = z.object({
   storeId: z.string().min(1).max(200).optional(),
@@ -169,6 +172,7 @@ export async function getInventorySnapshot(database: TallybookDB = db): Promise<
   assertCompanyScope(activeId, getActiveBusinessProfileId());
   await requirePermission("sell",database,activeId);
   const categories = allCategories.filter((category) => category.businessProfileId === activeId);
+  validateCategoryHierarchy(categories,activeId);
   const products = allProducts.filter((product) => product.businessProfileId === activeId);
   const movements = allMovements.filter((movement) => movement.businessProfileId === activeId);
   return {
@@ -190,7 +194,15 @@ export async function createCategory(values: CategoryFormValues, database: Tally
     await requirePermission("inventory", database, activeId);
     const duplicate = await database.categories.where("normalizedName").equals(normalizedName).and((category) => category.businessProfileId === activeId && !category.archivedAt).first();
     if (duplicate) throw new Error("A category with this name already exists.");
-    const category: ProductCategory = { id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName, createdAt: now, updatedAt: now };
+    const parentCategoryId=input.parentCategoryId?.trim()||undefined;
+    const category: ProductCategory = { id: nanoid(12), businessProfileId: activeId,
+      name: input.name.trim(), normalizedName,...(parentCategoryId?{parentCategoryId}:{}) ,createdAt: now, updatedAt: now };
+    if(parentCategoryId){
+      const existing=await database.categories.where("businessProfileId").equals(activeId).toArray();
+      const parent=existing.find(row=>row.id===parentCategoryId&&!row.archivedAt);
+      if(!parent)throw Error("Choose an active parent category from this business.");
+      validateCategoryHierarchy([...existing,category],activeId);
+    }
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     await database.categories.add(category);
     assertCompanyScope(activeId, getActiveBusinessProfileId());
