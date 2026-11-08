@@ -1,9 +1,10 @@
 /** Tallybook Africa design reminder: receipt views are read-only local facts; sharing and printing must never mutate a sale, payment, stock record, balance, or receipt. */
 import { formatMinorAmount } from "@/features/inventory/inventory";
+import { businessDateTimeLabel } from "@/features/business/businessCalendar.mjs";
 import { shareBusinessText, type ShareBusinessTextResult } from "@/features/sharing/businessSharing";
 import { paymentMethodLabel, type Payment, type Receipt, type Sale, type SaleLine, type SaleSnapshot } from "@/features/sales/sales";
 
-export interface ReceiptDetailProfile { name: string; currency: string; }
+export interface ReceiptDetailProfile { name: string; currency: string; country?: string; }
 export interface ReceiptDetailCustomer { id: string; name: string; }
 
 export interface ReceiptDetail {
@@ -13,6 +14,7 @@ export interface ReceiptDetail {
   payment?: Payment;
   businessName: string;
   currency: string;
+  country?: string;
   customerName: string;
 }
 
@@ -25,7 +27,7 @@ export function resolveReceiptDetail({ receiptId, snapshot, profile, customers }
   if (!lines.length) return undefined;
   const payment = snapshot.payments.find((item) => item.saleId === sale.id);
   const customerName = sale.customerId ? customers.find((customer) => customer.id === sale.customerId)?.name ?? "Saved customer unavailable" : "Walk-in customer";
-  return { receipt, sale, lines, payment, businessName: profile.name, currency: profile.currency, customerName };
+  return { receipt, sale, lines, payment, businessName: profile.name, currency: profile.currency, country: profile.country, customerName };
 }
 
 export function receiptPaymentDescription(detail: ReceiptDetail) {
@@ -44,7 +46,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
   return [
     detail.businessName,
     `Receipt ${detail.receipt.receiptNumber}`,
-    new Date(detail.receipt.issuedAt).toLocaleString(),
+    businessDateTimeLabel(detail.receipt.issuedAt, detail.country),
     `Customer: ${detail.customerName}`,
     "",
     "Items",

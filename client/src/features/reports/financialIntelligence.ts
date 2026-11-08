@@ -1,4 +1,5 @@
 import { validateTaxSnapshot } from "@/features/sales/tax";
+import { businessDayKey, businessDayStart, businessDayEnd, shiftBusinessDay } from "@/features/business/businessCalendar.mjs";
 import { requirePermission } from "@/features/staff/staff";
 /** V10 Stage 3 independent reporting engine. Read-only; no inventory-cost guesses. */
 import { db, type TallybookDB } from "@/db/TallybookDB";
@@ -69,22 +70,34 @@ export interface FinancialSummary {
   daily: { day: string; revenueMinor: number; collectionsMinor: number; expensesMinor: number }[];
   unavailable: { cogs: string; grossProfit: string; tax: string; supplierPayables: string };
 }
-const dayStart = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
-const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const validDate = (d: Date) => !Number.isNaN(d.getTime());
-export function financialRange(period: FinancialPeriod, now = new Date(), customStart?: string, customEnd?: string): FinancialRange {
-  const start = dayStart(now); const end = new Date(start); end.setDate(end.getDate()+1);
-  if (period === "week") { const weekday = (start.getDay()+6)%7; start.setDate(start.getDate()-weekday); }
-  if (period === "month") start.setDate(1);
-  if (period === "quarter") { start.setDate(1); start.setMonth(Math.floor(start.getMonth()/3)*3); }
-  if (period === "year") { start.setMonth(0,1); }
+export function financialRange(period: FinancialPeriod, now = new Date(), customStart?: string, customEnd?: string, country?: string): FinancialRange {
+  const ghana = country?.trim().toLowerCase() === "ghana";
+  const start = businessDayStart(now, country);
+  const end = businessDayEnd(now, country);
+  const setDay = (date: Date, value: number) => ghana ? date.setUTCDate(value) : date.setDate(value);
+  const setMonth = (date: Date, month: number, day?: number) => ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day);
+  const getDay = (date: Date) => ghana ? date.getUTCDate() : date.getDate();
+  const getMonth = (date: Date) => ghana ? date.getUTCMonth() : date.getMonth();
+  const weekday = ghana ? start.getUTCDay() : start.getDay();
+  if (period === "week") setDay(start, getDay(start) - ((weekday + 6) % 7));
+  if (period === "month") setDay(start, 1);
+  if (period === "quarter") { setDay(start, 1); setMonth(start, Math.floor(getMonth(start) / 3) * 3); }
+  if (period === "year") setMonth(start, 0, 1);
   if (period === "custom") {
-    const parse = (s?: string) => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error("Choose valid start and end dates."); const d = new Date(`${s}T12:00:00`); if (!validDate(d) || dateKey(d)!==s) throw new Error("Invalid calendar date."); return dayStart(d); };
-    const a=parse(customStart), b=parse(customEnd); if (a>b) throw new Error("The start date cannot be after the end date.");
-    const e=new Date(b); e.setDate(e.getDate()+1); if ((e.getTime()-a.getTime())/86400000>3660) throw new Error("The custom range cannot exceed ten years.");
-    return {start:a,end:e,label:`${customStart} to ${customEnd}`};
+    const parse = (value?: string) => {
+      if (!value || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) throw new Error("Choose valid start and end dates.");
+      const date = new Date(ghana ? value + "T00:00:00.000Z" : value + "T12:00:00");
+      if (!validDate(date) || businessDayKey(date, country) !== value) throw new Error("Invalid calendar date.");
+      return businessDayStart(date, country);
+    };
+    const a = parse(customStart), b = parse(customEnd);
+    if (a > b) throw new Error("The start date cannot be after the end date.");
+    const e = shiftBusinessDay(b, 1, country);
+    if ((e.getTime() - a.getTime()) / 86400000 > 3660) throw new Error("The custom range cannot exceed ten years.");
+    return { start: a, end: e, label: customStart + " to " + customEnd };
   }
-  return {start,end,label:period === "today"?"Today":`This ${period}`};
+  return { start, end, label: period === "today" ? "Today" : "This " + period };
 }
 const within = (date: string, range: FinancialRange) => { const d=new Date(date); return validDate(d)&&d>=range.start&&d<range.end; };
 const total = <T,>(rows:T[], fn:(row:T)=>number) => rows.reduce((sum,row)=>{
@@ -213,7 +226,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   const [profile,customers,sales,payments,repayments,expenses,reversals,cashReturns,walletTransfers,events,products,lines,movements,suppliers,purchases,purchaseLines,supplierEntries,customerBenefits]=records;
   if (!profile || profile.id !== company) throw new Error("Business currency is unavailable for financial reporting.");
   const scoped = <T extends { businessProfileId: string }>(rows: T[]) => rows.filter(row => row.businessProfileId === company);
-  const range = financialRange(period,now,start,end);
+  const range = financialRange(period,now,start,end,profile.country);
   // Independent full-history checkout/tender reconstruction before summing any
   // selected period. A valid tax snapshot alone cannot certify cash collections.
   assertSavedSaleTenderReconciliation(scoped(sales), scoped(payments));
