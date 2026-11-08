@@ -2,6 +2,7 @@
  * No optimistic stock mutation and no assumed external supplier disbursement.
  */
 import {useCallback,useEffect,useRef,useState} from "react";
+import {purchaseRetry} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {currencyMinorDivisor,formatMinorAmount,parseAmountToMinor} from "@/features/inventory/inventory";
 import {
@@ -10,9 +11,9 @@ import {
  type ShopSupplierBalance,type ShopPurchaseSummary,type ShopPurchaseDetail,type SupplierPaymentMethod
 } from "./shopPurchasing";
 
-interface Props {companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
+interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
 type OrderLine={productId:string;quantity:string;unitCost:string};
-type Pending={kind:string;fingerprint:string;id:string};
+type Pending={kind:string;fingerprint:string};
 const newLine=():OrderLine=>({productId:"",quantity:"1",unitCost:""});
 const integer=(raw:string,max=100000)=> {
  if(!/^[1-9][0-9]*$/.test(raw.trim()))throw Error("Enter a positive whole number of units.");
@@ -25,7 +26,7 @@ function displayMinor(raw:string,currency:string) {
  return amount>=-BigInt(Number.MAX_SAFE_INTEGER)&&amount<=BigInt(Number.MAX_SAFE_INTEGER)
   ?formatMinorAmount(Number(amount),currency):raw+" minor units (outside display precision)";
 }
-export function SharedShopPurchasingPanel({companyId,overview,online,refresh}:Props){
+export function SharedShopPurchasingPanel({userId,companyId,overview,online,refresh}:Props){
  const currency=overview.currency??"GHS";
  const [suppliers,setSuppliers]=useState<ShopSupplierBalance[]>([]);
  const [orders,setOrders]=useState<ShopPurchaseSummary[]>([]);
@@ -78,10 +79,12 @@ export function SharedShopPurchasingPanel({companyId,overview,online,refresh}:Pr
     setError("An earlier request may still be unresolved. Reload the order and reconcile its saved server status before beginning a different operation.");
     return;
   }
-  if(!previous)operation.current={kind,fingerprint,id:crypto.randomUUID()};
+  if(!previous)operation.current={kind,fingerprint};
   setBusy(true);setError("");setNotice("");
   try{
-    const result=await work(operation.current!.id);
+    const retry=await purchaseRetry(userId,companyId,kind,payload,sessionStorage);
+    const result=await work(retry.id);
+    retry.confirm();
     operation.current=null;
     if(!mounted.current)return;
     setNotice(kind+" saved on Shared Shop. "+((result as {replayed?:boolean})?.replayed?"Existing operation confirmed.":""));

@@ -192,3 +192,10 @@
   .app-frame .top-bar { width: 100%; max-width: 100%; min-width: 0; }
   .app-frame .page-content { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; padding: 22px 22px 48px; }
 }
+
+.cashier-workspace { max-width: 80rem; margin-inline: auto; padding: 1rem; }
+.cashier-workspace > header, .cashier-workspace > nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.cashier-workspace > header { justify-content: space-between; }
+.cashier-workspace > nav { margin-block: 1rem; border-bottom: 1px solid currentColor; }
+.cashier-workspace > nav a { padding: .75rem; }
+.cashier-workspace > nav a[aria-current="page"] { font-weight: 700; text-decoration: underline; }

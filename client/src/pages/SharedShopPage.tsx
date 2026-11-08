@@ -241,8 +241,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}
-    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel companyId={business.id} overview={overview} online={online} refresh={refresh} />}
-    {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && <SalesPanel {...ctx} />}
