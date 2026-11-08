@@ -2,6 +2,7 @@ import { auditLocalIntegrity } from "@/features/reliability/integrity";
 import Dexie from "dexie";
 import { afterEach, expect, it, vi } from "vitest";
 import { calculateTax, calculateSaleTax, taxReviewKeyForSale, taxPolicyKey, validateTaxSnapshot, type TaxPolicy } from "./tax";
+import {validateGhanaVatLineEvidence} from "./ghanaVat.mjs";
 import { TallybookDB, initializeDatabase } from "@/db/TallybookDB";
 import { saveBusinessProfile } from "@/features/business/businessProfile";
 import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
@@ -113,6 +114,8 @@ it("posts a real discounted Ghana VAT sale with separate VAT/NHIL/GETFund, recei
     taxMinor:160,taxableMinor:800,ghana:{standardMinor:800,taxableBaseMinor:800,vatMinor:120,nhilMinor:20,getFundMinor:20,eVatStatus:"not-certified"}
   }});
   expect(saved.lines[0].ghanaTaxTreatmentAtSale).toBe("standard");
+  expect(validateGhanaVatLineEvidence(saved.sale, saved.lines)).toBe(true);
+  expect(() => validateGhanaVatLineEvidence(saved.sale, [{...saved.lines[0],ghanaTaxTreatmentAtSale:"exempt"}])).toThrow(/original sale lines/);
   expect(validateTaxSnapshot(saved.sale)).toBe(160);
   expect((await auditLocalIntegrity(db)).issues).toEqual([]);
   const snapshot = await getSaleSnapshot(db);
