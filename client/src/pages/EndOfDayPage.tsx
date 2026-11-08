@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { getEndOfDaySummary, type EndOfDaySummary } from "@/features/reports/reports";
-import {previewManualTenderStatement} from "@/features/payments/manualSettlement";
+import {previewManualTenderStatement} from "@/features/payments/manualSettlement.ts";
 import type {ManualTenderReconcileResult} from "@/features/payments/manualSettlement.mjs";
 
 export default function EndOfDayPage() {
