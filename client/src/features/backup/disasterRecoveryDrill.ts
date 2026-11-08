@@ -40,7 +40,7 @@ export async function rehearseDisasterRecovery(database:TallybookDB=db):Promise<
  assertCompanyScope(company,getActiveBusinessProfileId());
  const receipt=await getVerifiedBackupReceipt(database);
  const external=receipt?.companyId===company ? {
-  verifiedAt:receipt.createdAt,fileFingerprint:receipt.sha256
+  verifiedAt:receipt.verifiedAt,fileFingerprint:receipt.sha256
  } :null;
  return {companyId:company,createdAt:new Date().toISOString(),roundTripValidated:true,
   snapshotCounts:counts,verifiedExternalFile:external,externalFileRequired:true,
