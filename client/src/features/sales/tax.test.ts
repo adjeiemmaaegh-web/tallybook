@@ -124,7 +124,10 @@ it("posts a real discounted Ghana VAT sale with separate VAT/NHIL/GETFund, recei
   const backup = await createBackup(db);
   const broken = structuredClone(backup);
   broken.records.sales[0].tax!.ghana!.nhilMinor++;
-  expect(() => parseBackup(JSON.stringify(broken))).toThrow(/tax|reconcile|component/i);
+  expect(() => validateTaxSnapshot(broken.records.sales[0])).toThrow(/Ghana VAT component/);
+  // Backups also cross-check the immutable central sale envelope, which may
+  // reject the tampering before the dedicated Ghana component validator runs.
+  expect(() => parseBackup(JSON.stringify(broken))).toThrow();
   expect(await getFinancialSummary("today",new Date(),undefined,undefined,db)).toMatchObject({recordedTaxMinor:160,salesExcludingRecordedTaxMinor:800});
 });
 it("refuses Ghana checkout if an item lacks a reviewed tax treatment without writing a sale", async () => {
