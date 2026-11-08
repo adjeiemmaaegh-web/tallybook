@@ -45,7 +45,7 @@ async function outboxFor(scope: OutboxScope) {
 const migrations = new Map<string, Promise<void>>();
 
 export async function readOutbox(scope: OutboxScope): Promise<QueuedSale[]> {
-  try { return await (await outboxFor(scope)).read(scope); } catch { return []; }
+  return (await outboxFor(scope)).read(scope);
 }
 
 /** Save first, then send. Never loses a sale the attendant pressed "Record" on. */
