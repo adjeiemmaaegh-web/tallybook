@@ -49,6 +49,8 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   const activeId = getActiveBusinessProfileId();
   const sale = await latestReversibleSale(database, activeId);
   if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
+    if(sale.paymentMethod==="split")throw Error("Split-tender refund requires tender-by-tender reconciliation. No automatic refund or full reversal is authorized.");
+  if(sale.paymentMethod==="split")throw Error("Split-tender refund requires tender-by-tender reconciliation. No automatic refund or full reversal is authorized.");
   if(!/^[A-Z]{3}$/.test(currency)||sale.currency!==currency)
     throw new Error("Original sale currency is missing or differs from selected reversal currency; reconcile before a refund.");
   const profile=await database.businessProfiles.get(activeId);
