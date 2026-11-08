@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 import { postStoreStockDelta } from "@/features/stores/storeStockLedger";
 import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import { z } from "zod";
+import type { GhanaTaxTreatment } from "@/features/sales/ghanaVat.mjs";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
@@ -46,6 +47,8 @@ export interface Product {
   /** Restricted-size local image; no remote fetch. */
   imageDataUrl?: string;
   categoryId?: string;
+  /** Explicit owner classification for optional Ghana VAT. Omitted means unclassified, never assumed taxable. */
+  ghanaTaxTreatment?: GhanaTaxTreatment;
   sellingPriceMinor: number;
   costPriceMinor?: number;
   stockQuantity: number;
@@ -89,6 +92,7 @@ export const productFormSchema = z.object({
   sku: optionalText(48, "Reference"),
   barcode: optionalText(64, "Barcode"),
   categoryId: z.string(),
+  ghanaTaxTreatment: z.enum(["unclassified", "standard", "zero-rated", "exempt"]).optional(),
   sellingPrice: requiredAmount("Selling price"),
   costPrice: optionalAmount("Cost price"),
   initialStock: nonNegativeInteger("Opening stock"),
@@ -230,6 +234,7 @@ export async function createProduct(values: ProductFormValues, currency: string,
       id: nanoid(12), businessProfileId: activeId, name: input.name.trim(), normalizedName,
       sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId,
       sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined,
+      ...(input.ghanaTaxTreatment && input.ghanaTaxTreatment !== "unclassified" ? { ghanaTaxTreatment: input.ghanaTaxTreatment } : {}),
       stockQuantity: initialStock, lowStockThreshold: Number(input.lowStockThreshold), createdAt: now, updatedAt: now,
     };
     const initialMovement: InventoryMovement = { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "initial", quantityDelta: initialStock, previousQuantity: 0, resultingQuantity: initialStock, note: "Opening stock", createdAt: now };
@@ -263,7 +268,7 @@ export async function updateProduct(productId: string, values: ProductFormValues
     }
     const initialStock = Number(input.initialStock);
     if (initialStock !== existing.stockQuantity) throw new Error("Use Adjust stock to change the quantity so the history remains complete.");
-    const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
+    const updated: Product = { ...existing, name: input.name.trim(), normalizedName, sku: cleanOptional(input.sku), barcode: cleanOptional(input.barcode), categoryId: input.categoryId === "uncategorized" ? undefined : input.categoryId, sellingPriceMinor: parseAmountToMinor(input.sellingPrice, currency), costPriceMinor: input.costPrice ? parseAmountToMinor(input.costPrice, currency) : undefined, ghanaTaxTreatment: input.ghanaTaxTreatment === "unclassified" ? undefined : input.ghanaTaxTreatment ?? existing.ghanaTaxTreatment, lowStockThreshold: Number(input.lowStockThreshold), updatedAt: new Date().toISOString() };
       await assertUniqueProductCodes(database, existing.businessProfileId, input.sku, input.barcode, productId);
       assertCompanyScope(company, getActiveBusinessProfileId());
       await database.products.put(updated);

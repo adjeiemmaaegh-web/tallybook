@@ -54,6 +54,11 @@ export const businessProfileSchema = z.object({
   phone: optionalText(32, "Phone number"),
   email: optionalText(120, "Email address").refine((value) => value === "" || value === undefined || z.string().email().safeParse(value).success, "Enter a valid email address."),
   address: optionalText(160, "Address"),
+}).superRefine((values, ctx) => {
+  if (values.taxPolicy?.enabled && values.taxPolicy.scheme === "ghana-vat-2026" &&
+      (values.country.trim().toLowerCase() !== "ghana" || values.currency !== "GHS")) {
+    ctx.addIssue({ code: "custom", path: ["taxPolicy"], message: "Ghana VAT mode requires a Ghana business using GHS. Disable Ghana VAT before changing country or currency." });
+  }
 });
 
 export type BusinessProfileInput = z.infer<typeof businessProfileSchema>;
