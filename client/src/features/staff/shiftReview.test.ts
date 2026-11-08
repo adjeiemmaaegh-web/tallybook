@@ -1,0 +1,27 @@
+import Dexie from "dexie";
+import {afterEach,expect,it} from "vitest";
+import {TallybookDB,initializeDatabase} from "@/db/TallybookDB";
+import {setActiveBusinessProfileId} from "@/features/business/activeCompany";
+import {saveBusinessProfile} from "@/features/business/businessProfile";
+import {createStaff,unlockStaff,lockStaff,openShift,closeShift,reviewClosedShift,listClosedShiftsForReview} from "./staff";
+const databases:TallybookDB[]=[];
+afterEach(async()=>{lockStaff("primary");setActiveBusinessProfileId("primary");for(const database of databases.splice(0)){database.close();await new Dexie(database.name).delete();}});
+it("records a separate owner review after cashier closes a short drawer, without rewriting cash",async()=>{
+ setActiveBusinessProfileId("primary");lockStaff("primary");
+ const database=new TallybookDB("shift-review-"+crypto.randomUUID());databases.push(database);await initializeDatabase(database);
+ await saveBusinessProfile({name:"Accra retail",country:"Ghana",currency:"GHS",businessType:"Retail"},database);
+ const owner=await createStaff("Owner","owner","123456",database);await unlockStaff(owner.id,"123456",database);
+ const cashier=await createStaff("Cashier","cashier","234567",database);
+ lockStaff("primary");await unlockStaff(cashier.id,"234567",database);
+ const shift=await openShift(500,database);
+ await closeShift(shift.id,450,database);
+ await expect(reviewClosedShift(shift.id,"attention","Investigate drawer variance",database)).rejects.toThrow(/permission denied|locked/);
+ lockStaff("primary");await unlockStaff(owner.id,"123456",database);
+ const pending=(await listClosedShiftsForReview(database)).find(s=>s.id===shift.id);
+ expect(pending).toMatchObject({expectedCashMinor:500,countedCashMinor:450,varianceMinor:-50});
+ await expect(reviewClosedShift(shift.id,"accepted","",database)).rejects.toThrow(/Document/);
+ const result=await reviewClosedShift(shift.id,"attention","Counted again, short 50 pesewas",database);
+ expect(result).toMatchObject({reviewDecision:"attention",reviewedByStaffId:owner.id,varianceMinor:-50,expectedCashMinor:500,countedCashMinor:450});
+ await expect(reviewClosedShift(shift.id,"attention","Another attempt",database)).rejects.toThrow(/already/);
+ expect((await database.staffAudits.where("businessProfileId").equals("primary").toArray()).some(row=>row.action==="shift.reviewed"&&row.staffId===owner.id)).toBe(true);
+});

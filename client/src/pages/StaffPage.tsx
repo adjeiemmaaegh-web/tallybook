@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useBusinessProfile } from '@/contexts/BusinessProfileContext';
 import { businessDateTimeLabel } from '@/features/business/businessCalendar.mjs';
-import { STAFF_SESSION_CHANGED, createStaff, listStaff, unlockStaff, lockStaff, requirePermission, openShift, closeShift, currentStaffId, changeStaffStatus, previewShiftCash, changeStaffRole, setStaffPermissions, resetStaffPin, enrollStaffAuthenticator, unlockStaffWithAuthenticator, revokeStaffAuthenticator, rolePermissions, type StaffDirectoryEntry, type StaffShift, type StaffAudit } from '@/features/staff/staff';
+import { STAFF_SESSION_CHANGED, createStaff, listStaff, unlockStaff, lockStaff, requirePermission, openShift, closeShift, listClosedShiftsForReview, reviewClosedShift, currentStaffId, changeStaffStatus, previewShiftCash, changeStaffRole, setStaffPermissions, resetStaffPin, enrollStaffAuthenticator, unlockStaffWithAuthenticator, revokeStaffAuthenticator, rolePermissions, type StaffDirectoryEntry, type StaffShift, type StaffAudit } from '@/features/staff/staff';
 import { db } from '@/db/TallybookDB';
 import { formatMinorAmount, parseAmountToMinor } from '@/features/inventory/inventory';
 import { NoSalePanel } from '@/features/drawer/NoSalePanel';
@@ -12,6 +12,9 @@ export default function StaffPage(){
  const currency=activeProfile?.currency??'GHS';
  const [people,setPeople]=useState<StaffDirectoryEntry[]>([]);const [shifts,setShifts]=useState<StaffShift[]>([]);const [audit,setAudit]=useState<StaffAudit[]>([]);const [loaded,setLoaded]=useState(false);
  const [governanceEnabled,setGovernanceEnabled]=useState(false);
+ const [reviewableShifts,setReviewableShifts]=useState<StaffShift[]>([]);
+ const [reviewNote,setReviewNote]=useState("");
+ const [reviewDecision,setReviewDecision]=useState<"accepted"|"attention">("accepted");
  const [name,setName]=useState('');const [role,setRole]=useState<'owner'|'supervisor'|'cashier'>('cashier');const [pin,setPin]=useState('');const [chosen,setChosen]=useState('');const [float,setFloat]=useState('0');const [count,setCount]=useState('0');const [cashPreview,setCashPreview]=useState<{expectedCashMinor:number;movementMinor:number}|null>(null);const [busy,setBusy]=useState(false);const [unlocked,setUnlocked]=useState(false);const [resetPin,setResetPin]=useState('');
  const refresh=useCallback(async()=>{
    const members=await listStaff();
@@ -30,6 +33,11 @@ export default function StaffPage(){
        await requirePermission('reports',db,activeCompanyId);
      }catch{logs=[];}
    }
+   let reviewable:StaffShift[]=[];
+   if(active&&(active.role==="owner"||active.role==="supervisor")){
+     try{reviewable=await listClosedShiftsForReview();}catch{reviewable=[];}
+   }
+   setReviewableShifts(reviewable);
    setPeople(members);
    setGovernanceEnabled(profile?.staffGovernanceEnabled===true);
    setShifts(allShifts.sort((a,b)=>b.openedAt.localeCompare(a.openedAt)));
@@ -37,7 +45,7 @@ export default function StaffPage(){
    setAudit(logs.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,40));
    setLoaded(true);
  },[activeCompanyId]);
- useEffect(()=>{setPin('');setResetPin('');setChosen('');setUnlocked(false);setAudit([]);setLoaded(false);setGovernanceEnabled(false);void refresh().catch(()=>toast.error('Unable to load local staff.'));const onSession=()=>{setAudit([]);void refresh().catch(()=>{});};window.addEventListener(STAFF_SESSION_CHANGED,onSession);return()=>window.removeEventListener(STAFF_SESSION_CHANGED,onSession);},[refresh]);
+ useEffect(()=>{setPin('');setResetPin('');setChosen('');setUnlocked(false);setReviewableShifts([]);setReviewNote('');setAudit([]);setLoaded(false);setGovernanceEnabled(false);void refresh().catch(()=>toast.error('Unable to load local staff.'));const onSession=()=>{setAudit([]);void refresh().catch(()=>{});};window.addEventListener(STAFF_SESSION_CHANGED,onSession);return()=>window.removeEventListener(STAFF_SESSION_CHANGED,onSession);},[refresh]);
  async function run(action:()=>Promise<unknown>){setBusy(true);try{await action();setPin('');await refresh();toast.success('Staff operation saved.');}catch(e){toast.error(e instanceof Error?e.message:'Staff operation failed.');}finally{setBusy(false);}}
  const ownId=currentStaffId(activeCompanyId);const manager=unlocked&&people.find(p=>p.id===ownId)?.role==='owner';const currentShift=shifts.find(s=>s.staffId===ownId&&!s.closedAt);
  useEffect(()=>{let mounted=true;setCashPreview(null);if(currentShift)void previewShiftCash(currentShift.id).then(s=>{if(mounted)setCashPreview(s);}).catch(()=>{});return()=>{mounted=false;};},[currentShift?.id,activeCompanyId]);
@@ -46,8 +54,24 @@ export default function StaffPage(){
  {loaded&&governanceEnabled&&people.length===0&&<section role="alert" className="rounded-xl border p-4">This protected company has no staff records. Restore a verified backup before continuing.</section>}
  {loaded&&((people.length===0&&!governanceEnabled)||manager)&&<section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Create staff {people.length===0?'— set up owner first':''}</h2><div className="grid gap-2 sm:grid-cols-4"><input aria-label="Staff name" className="rounded border p-3" value={name} onChange={e=>setName(e.target.value)} placeholder="Name"/><select aria-label="Staff role" className="rounded border p-3 bg-background" value={people.length===0?'owner':role} onChange={e=>setRole(e.target.value as typeof role)} disabled={!people.length}><option value="owner">Owner</option><option value="supervisor">Supervisor</option><option value="cashier">Cashier</option></select><input aria-label="New staff PIN" className="rounded border p-3" type="password" inputMode="numeric" value={pin} onChange={e=>setPin(e.target.value)} placeholder="6–12 digit PIN"/><button className="rounded border p-3" disabled={busy} onClick={()=>void run(()=>createStaff(name,people.length===0?'owner':role,pin))}>Create staff</button></div>{people.map(x=><div className="flex items-center justify-between gap-2 border-t py-2" key={x.id}><span>{x.name} — {x.role}{x.disabledAt?' (disabled)':''}</span>{x.role!=='owner'&&manager&&<div className="flex flex-wrap items-center gap-2"><button disabled={busy} className="rounded border p-2" onClick={()=>void run(()=>changeStaffStatus(x.id,!x.disabledAt))}>{x.disabledAt?'Enable':'Disable'}</button><button disabled={busy} className="rounded border p-2" onClick={()=>void run(()=>changeStaffRole(x.id,x.role==='cashier'?'supervisor':'cashier'))}>Make {x.role==='cashier'?'supervisor':'cashier'}</button><label className="text-xs">Reset PIN<input aria-label={`New PIN for ${x.name}`} type="password" inputMode="numeric" className="block border rounded p-2" value={resetPin} onChange={e=>setResetPin(e.target.value)} /></label><button disabled={busy||resetPin.length<6} className="rounded border p-2" onClick={()=>void run(async()=>{await resetStaffPin(x.id,resetPin);setResetPin('');})}>Reset</button><div className="w-full flex flex-wrap gap-2">{rolePermissions(x.role).map(permission=><label key={permission} className="inline-flex gap-1 items-center text-xs"><input type="checkbox" checked={(x.permissions??[...rolePermissions(x.role)]).includes(permission)} onChange={e=>{const current=x.permissions??[...rolePermissions(x.role)];const next=e.target.checked?[...current,permission]:current.filter(p=>p!==permission);void run(()=>setStaffPermissions(x.id,next));}} />{permission}</label>)}</div></div>}</div>)}</section>}
  <section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Cashier shift</h2><p className="text-sm text-muted-foreground">Expected cash uses only cash movements explicitly attributed to this shift. It may exclude unrecorded petty cash, external settlements, or other adjustments. Reconcile physically before closing.</p>{currentShift?<><p>Shift opened {businessDateTimeLabel(currentShift.openedAt,activeProfile?.country)}</p><label className="block">Counted cash ({currency})<input className="block border rounded p-3 w-full" value={count} onChange={e=>setCount(e.target.value)} inputMode="numeric"/></label><p className="text-sm">Expected cash in the drawer: {cashPreview ? formatMinorAmount(cashPreview.expectedCashMinor,currency) : "Unavailable"}</p><button className="border rounded p-3" disabled={busy} onClick={()=>void run(()=>closeShift(currentShift.id,parseAmountToMinor(count,currency)))}>Close shift and record variance</button></>:<><label className="block">Opening float ({currency})<input className="block border rounded p-3 w-full" value={float} onChange={e=>setFloat(e.target.value)} inputMode="numeric"/></label><button className="border rounded p-3" disabled={busy||!unlocked} onClick={()=>void run(()=>openShift(parseAmountToMinor(float,currency)))}>Open shift</button></>}</section>
+ {unlocked&&people.some(p=>p.id===ownId&&(p.role==="owner"||p.role==="supervisor"))&&<section className="rounded-xl border p-4 space-y-3" aria-label="Supervisor cash reconciliation">
+   <h2 className="font-semibold">Independent shift settlement review</h2>
+   <p className="text-sm">Review another staff member's recorded count against saved cash tenders, refunds and wallet movements. This is an internal attestation, not bank/provider settlement or a journal adjustment.</p>
+   {reviewableShifts.filter(shift=>shift.staffId!==ownId).length===0?<p>No closed shifts from other staff to review.</p>:reviewableShifts.filter(shift=>shift.staffId!==ownId).slice(0,20).map(shift=><div className="border-b pb-3 space-y-2" key={shift.id}>
+     <p><strong>{people.find(p=>p.id===shift.staffId)?.name??"Staff"}</strong> · Closed {shift.closedAt?businessDateTimeLabel(shift.closedAt,activeProfile?.country):""}</p>
+     <p>Expected cash: {formatMinorAmount(shift.expectedCashMinor??0,currency)} · Counted: {formatMinorAmount(shift.countedCashMinor??0,currency)} · Variance: {formatMinorAmount(Math.abs(shift.varianceMinor??0),currency)} {shift.varianceMinor&&shift.varianceMinor<0?"short":shift.varianceMinor&&shift.varianceMinor>0?"over":"balanced"}</p>
+     {shift.reviewedAt?<p role="status">Reviewed {shift.reviewDecision} by {people.find(p=>p.id===shift.reviewedByStaffId)?.name??"Supervisor"}: {shift.reviewNote||"No note"}</p>:<>
+       <label>Review decision
+         <select className="block w-full border p-2 bg-background" aria-label="Supervisor shift review decision" value={reviewDecision} onChange={e=>setReviewDecision(e.target.value as "accepted"|"attention")}><option value="accepted">Accept recorded reconciliation</option><option value="attention">Flag for investigation</option></select>
+       </label>
+       <label>Review explanation<textarea aria-label="Supervisor shift review note" className="block w-full border p-2 bg-background" maxLength={240} value={reviewNote} onChange={e=>setReviewNote(e.target.value)} placeholder="Required for variance or investigation"/></label>
+       <button type="button" className="secondary-action" disabled={busy||((shift.varianceMinor!==0||reviewDecision==="attention")&&reviewNote.trim().length<4)}
+         onClick={()=>void run(async()=>{await reviewClosedShift(shift.id,reviewDecision,reviewNote);setReviewNote("");})}>Save independent review</button>
+     </>}
+   </div>)}
+ </section>}
  <NoSalePanel companyId={activeCompanyId} />
- <section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Shift history</h2><div className="space-y-1 text-sm">{shifts.filter(s=>s.staffId===ownId).slice(0,10).map(s=><p key={s.id}>{businessDateTimeLabel(s.openedAt,activeProfile?.country)} · {s.closedAt?'Closed':'Open'} · Float {s.openingFloatMinor} · Expected {s.expectedCashMinor??'—'} · Counted {s.countedCashMinor??'—'} · Variance {s.varianceMinor??'—'} (minor units)</p>)}</div></section>
+ <section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Shift history</h2><div className="space-y-1 text-sm">{shifts.filter(s=>s.staffId===ownId).slice(0,10).map(s=><p key={s.id}>{businessDateTimeLabel(s.openedAt,activeProfile?.country)} · {s.closedAt?'Closed':'Open'} · Float {s.openingFloatMinor} · Expected {s.expectedCashMinor??'—'} · Counted {s.countedCashMinor??'—'} · Variance {s.varianceMinor??'—'} · Review {s.reviewDecision??(s.closedAt?'pending':'not due')} (minor units)</p>)}</div></section>
  {audit.length>0 && <section className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Recent staff activity</h2>{audit.map(row=><p key={row.id} className="text-sm">{businessDateTimeLabel(row.createdAt,activeProfile?.country)} · {people.find(p=>p.id===row.staffId)?.name??'Former staff'} · {row.action} · {row.details}</p>)}</section>}
  </main>;
 }
