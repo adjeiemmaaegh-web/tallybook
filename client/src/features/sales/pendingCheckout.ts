@@ -1,8 +1,9 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 /** Device-local recovery journal. A pending entry is never evidence that a sale committed. */
 import type { completeSale } from "./sales";
 export type CheckoutIntent = Parameters<typeof completeSale>[0];
 export interface PendingCheckout { version: 1; companyId: string; savedAt: string; intent: CheckoutIntent & { submissionKey: string } }
-const key = (companyId: string) => `tallybook:pending-checkout:v1:${companyId}`;
+const key = (companyId: string) => workspaceKey(`tallybook:pending-checkout:v1:${companyId}`);
 export function loadPendingCheckout(companyId: string): PendingCheckout | null {
   if (!companyId || typeof localStorage === "undefined") return null;
   try {

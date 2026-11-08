@@ -1,3 +1,4 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 import Dexie, { type Table } from "dexie";
 import { nanoid } from "nanoid";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
@@ -13,7 +14,7 @@ class AssistantLocalDB extends Dexie {
   aliases!: Table<StoredAlias, string>;
   history!: Table<AssistantHistoryRecord, string>;
   constructor() {
-    super("tallybook-assistant-local");
+    super(workspaceKey("tallybook-assistant-local"));
     this.version(1).stores({
       workflows: "id, businessProfileId, name, updatedAt",
       aliases: "id, businessProfileId, phrase, kind, enabled, updatedAt",

@@ -1,3 +1,4 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 /** Tactile Ledger design reminder: every local record is deliberate, traceable, and independent of a server. */
 /** Tactile Ledger database reminder: migrations are explicit; local business identity remains one validated, owner-controlled record. */
 import Dexie, { type Table } from "dexie";
@@ -88,7 +89,7 @@ export class TallybookDB extends Dexie {
   commerceDeliveryEvents!: Table<import("@/features/commerce/run16Rules.mjs").Run16OrderEvent, string>;
   run17ReviewEvents!: Table<import("@/features/insights/run17ReviewAudit.mjs").Run17ReviewEvent, string>;
 
-  constructor(name = DATABASE_NAME) {
+  constructor(name = workspaceKey(DATABASE_NAME)) {
     super(name);
     this.version(1).stores({ appMeta: "key, updatedAt" });
     this.version(2).stores({

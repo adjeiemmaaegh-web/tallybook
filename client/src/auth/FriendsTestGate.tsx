@@ -1,3 +1,4 @@
+import { workspaceKey, workspaceOwner, preferredWorkspace, openPrivateWorkspace, switchWorkspace } from "./ownerWorkspace";
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { canClaimWithPin, verifyDeviceOwner } from './verifyDeviceOwner';
 import { db } from '@/db/TallybookDB';
@@ -7,9 +8,9 @@ import { listVerifiedCloudBusinesses } from '@/cloud/cloudMembership';
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
 import { Store, LogOut, ShieldCheck, WifiOff } from 'lucide-react';
 
-const BINDING_KEY = 'friendsTestVerifiedAuthUserId';
+const BINDING_KEY = workspaceKey('friendsTestVerifiedAuthUserId');
 /** Set after an online check proves this account owns a cloud business; lets that owner return offline. */
-const VERIFIED_OWNER_KEY = 'tallybook.entry.verifiedOwner.v1';
+const VERIFIED_OWNER_KEY = workspaceKey('tallybook.entry.verifiedOwner.v1');
 export const friendsTestMode = import.meta.env.VITE_TALLYBOOK_FRIENDS_TEST_MODE === 'true';
 
 export function decideFriendsWorkspaceBinding(boundUserId:string|undefined,
@@ -51,7 +52,7 @@ export async function claimExistingWorkspace(userId:string, pin:string, isCurren
 /** An owner who verified online on this browser may reopen its ledger offline. */
 export async function allowOfflineReturn(getCachedUserId:()=>Promise<string|null>):Promise<boolean>{
   const bound=read(BINDING_KEY), verified=read(VERIFIED_OWNER_KEY);
-  if(!bound||bound!==verified)return false;
+  if((workspaceOwner && workspaceOwner!==bound)||!bound||bound!==verified)return false;
   try{return (await getCachedUserId())===bound;}catch{return false;}
 }
 
@@ -106,6 +107,11 @@ export function FriendsTestGate({children}:{children:ReactNode}){
         setAccess({userId,status:'setup'});
         return;
       }
+      const preferred = preferredWorkspace(userId);
+      if (preferred !== workspaceOwner) {
+        switchWorkspace(preferred);
+        return;
+      }
       const bound=read(BINDING_KEY);
       if(!bound&&(await db.businessProfiles.count())>0){
         if(!active)return;
@@ -140,9 +146,16 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   if(!access||access.userId!==state.userId)
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
   if(access.status==='setup')return <Redirect to='/account' replace/>;
+  const privateEntry = <button className="primary-action" onClick={() => {
+    if (!state.userId || state.userId !== identity.current) return;
+    try { openPrivateWorkspace(state.userId); }
+    catch { setClaimError('Device storage is unavailable. Try again when browser storage is available.'); }
+  }}>Open my private workspace</button>;
   if(access.status==='recovery')return <EntryCard icon={<ShieldCheck/>} title="This ledger needs owner recovery">
     <p>This browser contains a ledger that cannot be linked using a local owner PIN. Your existing records are preserved.</p>
-    <p>Your shared shop is available with your signed-in account. Keep this browser’s site data while arranging recovery of the local records.</p>
+    <p>Start a separate workspace for your account here to use local sales, reports and Clementia. Your older records stay in their original ledger.</p>
+    {privateEntry}
+    {claimError && <p role="alert">{claimError}</p>}
     <Link href="/shop?view=dashboard" className="primary-action">Open owner dashboard</Link>
   </EntryCard>;
   if(access.status==='claim')return <EntryCard icon={<Store/>} title="Use the ledger already on this device?">
@@ -163,6 +176,7 @@ export function FriendsTestGate({children}:{children:ReactNode}){
         } catch { if (identity.current === userId) setClaimError('Could not verify the local owner. The ledger remains locked.'); }
         finally { setPin(''); setClaiming(false); }
       }}>{claiming?'Opening…':'Open it with my account'}</button>
+      {privateEntry}
       <Link href="/shop?view=dashboard" className="secondary-action">Open owner dashboard</Link>
     </div>
   </EntryCard>;

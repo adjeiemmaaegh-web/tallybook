@@ -1,3 +1,4 @@
+import { workspaceKey } from "@/auth/ownerWorkspace";
 /** Read-only, company-scoped onboarding indicators. Counts do not mutate business records. */
 export interface SetupCounts { products: number; customers: number; sales: number }
 export interface SetupStep { id: "products" | "customers" | "sales" | "backup"; title: string; href: string; done: boolean; optional?: boolean }
@@ -14,7 +15,7 @@ export function buildSetupSteps(counts: SetupCounts): SetupStep[] {
 }
 
 /** UI-only visit marker, scoped per local company; never changes ledger/business facts. */
-const reportVisitKey = (companyId: string) => `tallybook:setup-reports-visited:${companyId}`;
+const reportVisitKey = (companyId: string) => workspaceKey(`tallybook:setup-reports-visited:${companyId}`);
 export function hasReportsExplored(companyId: string): boolean {
   if (!companyId || typeof window === "undefined") return false;
   try { return window.localStorage.getItem(reportVisitKey(companyId)) === "1"; }

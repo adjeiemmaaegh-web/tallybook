@@ -73,3 +73,44 @@ test('verified account without a shop sees both role cards on a phone', async ({
   await employee.click();
   await expect(page.getByLabel('Invitation code')).toBeVisible();
 });
+
+test('a verified owner opens Clementia alongside an unlinked PIN-less ledger', async ({page}) => {
+  const user = {id:'b8841a77-6172-4f74-adbe-024b7d6c0010',email:'owner@example.invalid',user_metadata:{}};
+  const company = '1b841a77-6172-4f74-adbe-024b7d6c0011';
+  await page.addInitScript(user => {
+    localStorage.setItem('sb-qa-auth-token',JSON.stringify({
+      access_token:'private-ledger-fixture-access-token',refresh_token:'fixture-only',
+      token_type:'bearer',expires_at:Math.floor(Date.now()/1000)+3600,user
+    }));
+  },user);
+  await page.route('https://qa.invalid/auth/v1/user',route=>route.fulfill({json:user}));
+  await page.route('https://qa.invalid/rest/v1/businesses?**',route=>route.fulfill({json:[{id:company,owner_id:user.id,name:'Cloud shop'}]}));
+  await page.route('https://qa.invalid/rest/v1/business_members?**',route=>route.fulfill({json:[{business_id:company,user_id:user.id,role:'owner'}]}));
+  await page.goto('/welcome');
+  await page.evaluate(async () => {
+    const {saveBusinessProfile} = await import('/src/features/business/businessProfile.ts');
+    await saveBusinessProfile({name:'Original private shop',country:'Ghana',currency:'GHS',businessType:'Retail'});
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Open my private workspace'}).click();
+  await expect(page.getByRole('link',{name:'Enter business details'})).toBeVisible();
+  await page.goto('/business');
+  await page.getByRole('textbox',{name:'Business name'}).fill('New owner workspace');
+  await page.getByRole('combobox',{name:'Business type'}).click();
+  await page.getByRole('option',{name:'Retail shop'}).click();
+  await page.getByRole('button',{name:'Save business'}).click();
+  await expect.poll(() => page.evaluate(async () => {
+    const {db} = await import('/src/db/TallybookDB.ts');
+    return (await db.businessProfiles.toArray()).map(p=>p.name);
+  })).toEqual(['New owner workspace']);
+  await page.goto('/assistant');
+  await expect(page.getByRole('heading',{name:/Meet Clementia/})).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading',{name:/Meet Clementia/})).toBeVisible();
+  expect(await page.evaluate(async () => {
+    const {TallybookDB,DATABASE_NAME} = await import('/src/db/TallybookDB.ts');
+    const legacy = new TallybookDB(DATABASE_NAME);
+    try { return (await legacy.businessProfiles.toArray()).map(p=>p.name); }
+    finally { legacy.close(); }
+  })).toEqual(['Original private shop']);
+});
