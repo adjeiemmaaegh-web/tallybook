@@ -407,6 +407,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
+  const [queueError, setQueueError] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
@@ -415,15 +416,24 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const reloadQueue = useCallback(() => { void readOutbox(scope).then(list => { if (mounted.current) setQueued(list); }).catch(() => { /* keep the last list */ }); }, [scope]);
+  const reloadQueue = useCallback(async () => {
+    try {
+      const list = await readOutbox(scope);
+      if (mounted.current) { setQueued(list); setQueueError(""); }
+    } catch {
+      if (mounted.current) setQueueError("Cannot read this device’s pending sales. Keep its saved data and retry before re-entering a sale.");
+    }
+  }, [scope]);
   const flushing = useRef(false);
   const flush = useCallback(async () => {
     if (flushing.current || !navigator.onLine) return;
     flushing.current = true;
     try {
       const results = await flushOutbox(scope, send);
-      reloadQueue();
-      if (results.some(r => r.state === "recorded")) void refresh();
+      await reloadQueue();
+      if (results.some(r => r.state === "recorded")) await refresh();
+    } catch (cause) {
+      if (mounted.current) setQueueError("Could not reconcile pending sales. " + message(cause));
     } finally { flushing.current = false; }
   }, [scope, send, refresh, reloadQueue]);
   useEffect(() => { reloadQueue(); if (online) void flush(); }, [online, flush, reloadQueue]);
@@ -554,6 +564,9 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
           <ReceiptText aria-hidden="true" />{busy ? "Recording…" : online ? "Record sale" : "Save sale (offline)"}</button>
         {error && <p role="alert" className="shop-alert">{error}</p>}
       </>}
+      {queueError && <div role="alert" className="shop-alert">{queueError}
+        <button type="button" onClick={() => { if (online) void flush(); else void reloadQueue(); }}>Retry pending sales</button>
+      </div>}
       {queued.length > 0 && <div className="shop-queue">
         <h3>Waiting to send</h3>
         <ul>{queued.map(q => <li key={q.id} className={q.status === "rejected" || q.status === "needs-review" ? "is-rejected" : ""}>
