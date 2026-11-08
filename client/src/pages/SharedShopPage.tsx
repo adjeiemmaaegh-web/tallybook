@@ -6,6 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,7 +29,7 @@ import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "dashboard" | "sell" | "stock" | "team" | "sales" | "customers";
+type Tab = "dashboard" | "sell" | "stock" | "purchasing" | "team" | "sales" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -214,7 +215,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
@@ -233,6 +234,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </section>}
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <StockPanel {...ctx} />}
+    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && <SalesPanel {...ctx} />}
