@@ -2,7 +2,8 @@ import Dexie from "dexie";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 /** Tactile Ledger sales reminder: a completed sale is one all-or-nothing local transaction; a failed sale writes nothing. */
-import { calculateTax, taxPolicyKey, type TaxSnapshot } from "./tax";
+import { calculateSaleTax, taxReviewKeyForSale, type TaxSnapshot } from "./tax";
+import type { GhanaTaxTreatment } from "./ghanaVat.mjs";
 import {snapshotSaleTaxConfiguration,type Run12SaleTaxConfiguration} from '@/features/reports/run12SaleTaxAudit.mjs';
 import {saleReturnPolicySnapshot,type ReturnPolicySnapshot} from '@/features/business/returnPolicy.mjs';
 import { nanoid } from "nanoid";
@@ -73,6 +74,8 @@ export interface SaleLine {
   quantity: number;
   unitPriceMinor: number;
   lineTotalMinor: number;
+  /** Immutable classification at original Ghana-VAT posting. */
+  ghanaTaxTreatmentAtSale?: GhanaTaxTreatment;
   stockTracked?: boolean;
   costStatus?: "verified" | "unavailable";
   cogsMinor?: number;
@@ -303,8 +306,14 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       throw new Error('Company return policy effective time is ahead of sale posting; verify the device clock.');
     const policy = savedProfile?.taxPolicy;
     const taxConfigurationAtSale=snapshotSaleTaxConfiguration(policy);
-    if ((policy?.enabled || input.taxReviewKey !== undefined) && input.taxReviewKey !== taxPolicyKey(policy)) throw new Error("Tax settings changed or have not been reviewed. Reload checkout and review the total.");
-    const tax = calculateTax(subtotalMinor - discountMinor, policy);
+    const taxLines = checkoutMoney.lines.map(line => ({
+      productId: line.productId, amountMinor: line.lineTotalMinor,
+      treatment: productById.get(line.productId)?.ghanaTaxTreatment
+    }));
+    if ((policy?.enabled || input.taxReviewKey !== undefined) &&
+        input.taxReviewKey !== taxReviewKeyForSale(policy, taxLines))
+      throw new Error("Tax settings, product classifications or prices changed. Reload checkout and review the total.");
+    const tax = calculateSaleTax(taxLines, discountMinor, policy);
     const totalMinor = tax?.totalMinor ?? subtotalMinor - discountMinor;
     const amountPaidMinor = input.paymentMethod === "credit" ? 0 : parseAmount(input.amountPaid, input.currency);
     if (input.paymentMethod === "wallet" && !customer) throw new Error("Select a customer to spend prepaid wallet funds.");
@@ -349,7 +358,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     const sale: Sale = { ...(tax ? { tax } : {}),taxConfigurationAtSale,returnPolicyAtSale, ...(input.storeId?{storeId:input.storeId}:{}), ...(input.commerceOrderId?{commerceOrderId:input.commerceOrderId}:{}), id: nanoid(14), businessProfileId: activeId, customerId: customer?.id, receiptNumber: receiptNumber(nowDate), currency: input.currency, status: "completed", subtotalMinor, discountMinor, totalMinor, amountPaidMinor, ...(input.paymentMethod === "wallet" ? { walletAppliedMinor: amountPaidMinor } : {}), ...(redemptionPoints ? { loyaltyRedeemedPoints: redemptionPoints, loyaltyRedeemedMinor: redemptionMinor } : {}), outstandingMinor, paymentMethod: input.paymentMethod, submissionKey, createdAt: now, staffId: staffEvidence.staffId, shiftId: staffEvidence.shiftId };
     if(creditTermsAtSale)sale.creditTermsAtSale=creditTermsAtSale;
-    const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor }; });
+    const saleLines: SaleLine[] = checkoutMoney.lines.map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), saleId: sale.id, productId: product.id, businessProfileId: activeId, productName: product.name, quantity: line.quantity, unitPriceMinor: line.unitPriceMinor, lineTotalMinor: line.lineTotalMinor, ...(tax?.ghana ? { ghanaTaxTreatmentAtSale: product.ghanaTaxTreatment } : {}) }; });
     const movements: InventoryMovement[] = requestedLines.filter(line => productById.get(line.productId)!.itemKind !== "service").map((line) => { const product = productById.get(line.productId)!; return { id: nanoid(14), businessProfileId: activeId, productId: product.id, movementType: "sale", quantityDelta: -line.quantity, previousQuantity: product.stockQuantity, resultingQuantity: product.stockQuantity - line.quantity, note: `Sale ${sale.receiptNumber}`, createdAt: now }; });
     if(linkedOrder){
       if(!cashier)throw Error("Unlock staff before selling a reserved customer order.");

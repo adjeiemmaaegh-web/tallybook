@@ -1,5 +1,6 @@
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
-import { calculateTax, taxPolicyKey, type TaxSnapshot } from "@/features/sales/tax";
+import { calculateSaleTax, taxReviewKeyForSale, type TaxSnapshot } from "@/features/sales/tax";
+import type { GhanaTaxTreatment } from "@/features/sales/ghanaVat.mjs";
 import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
 import { requirePermission } from "@/features/staff/staff";
 /** Offline quotations are offers only: creating or accepting one never changes stock or financial ledgers. */
@@ -26,6 +27,7 @@ export async function createQuotation(values: QuotationInput, database: Tallyboo
     if (input.expiresAt && input.expiresAt <= now) throw new Error('Quotation expiry must be in the future.');
     const seen = new Set<string>();
     const lines: QuotationLine[] = [];
+    const taxLines: Array<{productId: string; amountMinor: number; treatment?: GhanaTaxTreatment}> = [];
     for (const line of input.lines) {
       if (seen.has(line.productId)) throw new Error('Combine duplicate products before saving the quotation.');
       seen.add(line.productId);
@@ -36,11 +38,12 @@ export async function createQuotation(values: QuotationInput, database: Tallyboo
       const lineTotalMinor = unitPriceMinor * line.quantity;
       if (!Number.isSafeInteger(lineTotalMinor) || lineTotalMinor < 0) throw new Error('Quotation amount is outside the supported range.');
       lines.push({productId: product.id, productName: product.name, quantity: line.quantity, unitPriceMinor, lineTotalMinor});
+      taxLines.push({productId: product.id, amountMinor: lineTotalMinor, treatment: product.ghanaTaxTreatment});
     }
     const subtotalMinor = lines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
     const policy = (await database.businessProfiles.get(businessProfileId))?.taxPolicy;
-    if ((policy?.enabled || input.taxReviewKey !== undefined) && input.taxReviewKey !== taxPolicyKey(policy)) throw new Error("Tax settings changed. Review the quotation again.");
-    const tax = calculateTax(subtotalMinor, policy);
+    if ((policy?.enabled || input.taxReviewKey !== undefined) && input.taxReviewKey !== taxReviewKeyForSale(policy,taxLines)) throw new Error("Tax settings changed. Review the quotation again.");
+    const tax = calculateSaleTax(taxLines, 0, policy);
     const totalMinor = tax?.totalMinor ?? subtotalMinor;
     if (!Number.isSafeInteger(totalMinor)) throw new Error('Quotation total exceeds the supported range.');
     const quote: Quotation = {...(tax ? {tax} : {}), id: nanoid(14), businessProfileId, customerId: customer.id, currency: input.currency, lines, totalMinor, status: 'draft', expiresAt: input.expiresAt, createdAt: now, updatedAt: now};
@@ -81,6 +84,7 @@ export async function previewQuotationConversion(id: string, database: Tallybook
     if (!customer || customer.businessProfileId !== activeId || customer.archivedAt || customer.status !== 'active') throw new Error('The quotation customer is unavailable.');
     let currentTotalMinor = 0;
     const lines = [] as Array<{productName:string; quantity:number; quotedMinor:number; currentMinor:number}>;
+    const taxLines: Array<{productId: string; amountMinor: number; treatment?: GhanaTaxTreatment}> = [];
     for (const line of quote.lines) {
       const product = await database.products.get(line.productId);
       if (!product || product.businessProfileId !== activeId || product.archivedAt) throw new Error(`Quoted product ${line.productName} is unavailable.`);
@@ -89,11 +93,12 @@ export async function previewQuotationConversion(id: string, database: Tallybook
       currentTotalMinor += currentMinor;
       if (!Number.isSafeInteger(currentTotalMinor)) throw new Error('Current quotation total exceeds the supported range.');
       lines.push({productName: product.name,quantity:line.quantity,quotedMinor:line.lineTotalMinor,currentMinor});
+      taxLines.push({productId: product.id, amountMinor: currentMinor, treatment: product.ghanaTaxTreatment});
     }
     const policy = (await database.businessProfiles.get(activeId))?.taxPolicy;
-    const tax = calculateTax(currentTotalMinor, policy);
+    const tax = calculateSaleTax(taxLines, 0, policy);
     currentTotalMinor = tax?.totalMinor ?? currentTotalMinor;
-    return {taxReviewKey: taxPolicyKey(policy), tax, quotationId:id, quotedTotalMinor:quote.totalMinor,currentTotalMinor,priceChanged:quote.totalMinor!==currentTotalMinor,lines};
+    return {taxReviewKey: taxReviewKeyForSale(policy,taxLines), tax, quotationId:id, quotedTotalMinor:quote.totalMinor,currentTotalMinor,priceChanged:quote.totalMinor!==currentTotalMinor,lines};
   });
 }
 

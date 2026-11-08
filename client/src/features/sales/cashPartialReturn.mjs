@@ -50,6 +50,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         Date.parse(entry.createdAt) < Date.parse(sale.createdAt)) {
       throw new Error('Cash return is not linked to a supported, fully paid original sale.');
     }
+    if (sale.tax?.ghana) throw new Error("Ghana VAT partial refund evidence requires a separate certified tax-correction process.");
     const paid = payments.filter(p => p.saleId === sale.id);
     if (paid.length !== 1 || paid[0].method !== 'cash' || paid[0].businessProfileId !== sale.businessProfileId ||
         paid[0].amountMinor !== sale.totalMinor) throw new Error('Cash return has unverified original tender evidence.');

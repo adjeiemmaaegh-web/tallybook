@@ -105,6 +105,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       throw new Error('Original sale receipt must be reconciled before refund.');
     const prior = await database.cashPartialReturns.where('originalSaleId').equals(sale.id).toArray();
     const full = await database.saleReversals.where('originalSaleId').equals(sale.id).toArray();
+    if (sale.tax?.ghana) throw new Error("Ghana VAT partial refunds require exact per-class tax correction evidence; this cash-only refund lane is not supported.");
     const plan = planPartialSaleReturn(sale, lines, prior.flatMap(item=>item.lines.map(line=>({saleLineId:line.saleLineId,quantity:line.quantity}))), values.lines);
     if (sale.tax && !plan.taxPolicyVerified) throw new Error('Saved tax settings must be reconciled before issuing this refund.');
     if (values.confirmedRefundMinor !== plan.draftAmountMinor) throw new Error('Confirmed cash refund does not equal the exact saved invoice return amount.');
