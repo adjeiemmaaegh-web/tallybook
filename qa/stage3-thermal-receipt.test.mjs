@@ -18,3 +18,7 @@ test("rejects unsupported widths and unbounded content",()=>{
  assert.throws(()=>renderThermalReceiptText("x",40),/58 mm/);
  assert.throws(()=>renderThermalReceiptText("x".repeat(20001),80),/too large/);
 });
+
+test("empty lines count toward the thermal layout limit",()=>{
+ assert.throws(()=>renderThermalReceiptText("\n".repeat(1201),58),/thermal-print length/);
+});
