@@ -1,6 +1,27 @@
 # Branch and pull-request reconciliation
 
 
+## November 9 historical branch decisions
+
+Compared 66 remote tips to `f86277756525`. Fifty tips were already ancestors, one was main, fourteen had historical divergence, and one was active key-recovery work. All fourteen historical heads match the previously inspected commits. Their dispositions below preserve the current release contracts. Physical-device, OAuth and recovery acceptance remain open.
+
+| Historical branch | Head | Disposition |
+|---|---|---|
+| `backend-b-e-20261106` | `9f14d66345fc` | Ported. Main uses the canonical return policy and operations migrations. PRs 40, 42 and 44 connect purchasing, counting, transfers and orders. |
+| `completion/cloud-foundation` | `779a934fc0c4` | Superseded by session-bound business membership and RPCs on main. |
+| `development/v19-unified-reconciliation` | `669f1cf22338` | Preserve as recovery reference. Populated-device conversion and key continuity remain separate release gates. |
+| `feat/auth-gate-2b1` | `a4b83363552c` | Superseded by the current device and shared-shop entry gates. |
+| `feature/premium-beginner-home-clementia` | `f854304053a9` | Historical home and assistant layout superseded by the integrated shell. |
+| `feature/premium-settings-business-staff-2026-10-15` | `88d35fc07f16` | Defer visual redesign of Business and Staff. Keep the verified role-entry flows. |
+| `fix/clementia-maximize-minimize-2026-10-14` | `aafab7734e2a` | Defer assistant window controls until keyboard and mobile acceptance. |
+| `frontend-all-stages-20261106` | `246d477cc4b4` | Keep as design reference. The standalone preview has no ledger bindings. |
+| `review/combined-settings-clementia-2026-10-15` | `9153c386156d` | Defer combined visual changes with the two original UI branches. |
+| `review/shop-entry-acceptance-20261107` | `a6170ef1bfdb` | Ported with current copy and stronger signed-out assertions in both browser suites. |
+| `security/auth-company-boundary-20261013` | `60c4c77ac1d8` | Retain the current membership RPC and local PIN contracts. Older server adapters remain out of the current deployed workflow. |
+| `stage-b-offline-integrity-20261106` | `d4589e2554af` | Cache allowlist ported. PR 41 verifies sealed queue retry and import. Alternative vault recovery requires separate conversion evidence. |
+| `v19/run12-supplier-tax-20261016` | `2acd7ca22017` | PR 45 ports supplier attribution validation while preserving valid timezone offsets and unknown legacy liabilities. Retain the current per-currency reports and sale-time tax snapshots. The alternate recorded-tax audit needs independent equivalence evidence before reuse. |
+| `v19/run5-tenant-service-authorization-20261016` | `3d48eb9378e2` | Keep as historical implementation of the alternative HTTP tenant service. The deployed shared shop uses session-checked database operations. |
+
 ## November 9 integration refresh
 
 Compared 55 remote branch heads to main at `56c119d` and the combined tree in PR #38. The Ghana retail source and role-entry changes are both parents of the candidate. The owner dashboard uses the incoming server read model and retains POS, sales and device-ledger navigation. Historical branch-specific deferrals and partial ports are detailed below.
