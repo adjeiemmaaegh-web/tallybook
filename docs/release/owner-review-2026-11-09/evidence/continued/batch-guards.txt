@@ -1,0 +1,13 @@
+
+> business-app@1.0.0 test /workspace/tallybook
+> vitest run storeOperations.integration purchases --maxWorkers=2
+
+
+ RUN  v4.1.12 /workspace/tallybook/client
+
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  12:31:19
+   Duration  12.26s (transform 2.13s, setup 1.19s, import 4.15s, tests 12.78s, environment 3.61s)
+

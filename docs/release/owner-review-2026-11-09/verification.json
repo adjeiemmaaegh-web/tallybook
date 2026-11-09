@@ -1,8 +1,25 @@
 {
   "baseline": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
   "decision": "NOT_READY_FOR_FULL_SCOPE_STAKEHOLDER_HANDOVER",
-  "sourceChange": "Exact BigInt aggregate debt rendering with regression",
-  "checks": {
+  "sourceChange": "Store/POS/returns, advisory schedules, CSP and authenticated customer catalogue with authoritative reservation/POS integration",
+  "hosted": {
+    "readOnly": true,
+    "lastAppliedMigration": "20261105120712",
+    "pendingRepositoryMigrations": 9,
+    "operationsRpcPresent": false,
+    "orderLinesRpcPresent": false,
+    "newMigrationApplied": false
+  },
+  "branches": {
+    "tips": 75,
+    "ancestors": 59,
+    "equivalentAdditionalTips": 2,
+    "historicalDivergentTips": 14
+  },
+  "originalAcceptanceUnits": 82,
+  "fullScopeCompletionCertified": false,
+  "productionModified": false,
+  "initialReviewChecks": {
     "nativeFinal": {
       "passed": 990,
       "failed": 0,
@@ -32,20 +49,26 @@
       "low": 1
     }
   },
-  "hosted": {
-    "readOnly": true,
-    "lastAppliedMigration": "20261105120712",
-    "pendingRepositoryMigrations": 8,
-    "operationsRpcPresent": false,
-    "orderLinesRpcPresent": false
+  "checks": {
+    "node": "24.19.0",
+    "pnpm": "10.34.0",
+    "client": {
+      "passed": 1190,
+      "files": 156
+    },
+    "native": {
+      "passed": 994,
+      "skipped": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "chromiumFunctional": 11,
+    "chromiumOffline": 4,
+    "chromiumVisual": 3,
+    "commerceChromium": 1,
+    "commerceWebkit": 1,
+    "commerceSql": 4,
+    "notes": "Full native run preceded the additional refund assertions; the focused SQL suite then passed with those assertions. Browser run preceded only the reference input maxLength correction (160 to the backend limit 80) and CI/output-directory changes. Types/build follow the final application changes."
   },
-  "branches": {
-    "tips": 75,
-    "ancestors": 59,
-    "equivalentAdditionalTips": 2,
-    "historicalDivergentTips": 14
-  },
-  "originalAcceptanceUnits": 82,
-  "fullScopeCompletionCertified": false,
-  "productionModified": false
+  "applicationCommit": "bf7abee2ace4b28b79278efe37bc82858c2c686a"
 }

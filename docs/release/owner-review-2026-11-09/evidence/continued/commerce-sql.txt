@@ -1,0 +1,12 @@
+✔ Customer catalogue reserves authoritative stock and consumes exactly one POS sale (2398.365399ms)
+✔ Customer commerce rejects stale terms, replay tampering, expired sessions and direct-table access (1571.084309ms)
+✔ Customer checkout rolls back on tender failure and enforces expiry, isolation and return terms (1481.249585ms)
+✔ Public projection excludes private data; bounded holds expire and cannot be bypassed (1520.698987ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7113.337851

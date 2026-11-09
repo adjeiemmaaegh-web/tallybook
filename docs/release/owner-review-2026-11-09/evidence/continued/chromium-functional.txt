@@ -1,0 +1,35 @@
+[WebServer] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm.
+[WebServer] (node:17028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:17042) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 11 tests using 1 worker
+
+(node:17065) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "/workspace/tallybook/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer]
+  ✓   1 qa/browser-release.spec.mjs:11:1 › every historical schema opens in native IndexedDB and preserves saved metadata (25.9s)
+  ✓   2 qa/browser-release.spec.mjs:40:1 › new setup displays Ghana, GHS, MoMo and provider fields (3.8s)
+  ✓   3 qa/browser-release.spec.mjs:49:1 › owner explicitly configures tax and prepared quotation reaches a saved offer (7.9s)
+  ✓   4 qa/browser-release.spec.mjs:82:1 › a populated v35 ledger preserves company-scoped financial history and owner locks across reopen (3.4s)
+  ✓   5 qa/browser-release.spec.mjs:131:1 › two private IndexedDB ledgers and the original survive tab workspace round trips (15.3s)
+  ✓   6 qa/browser-release.spec.mjs:153:1 › loss of the synthetic device key preserves an unreadable pending sale through reload and flush (4.0s)
+  ✓   7 qa/browser-release.spec.mjs:181:1 › two tabs without Web Locks keep one usable AES key during simultaneous first use (4.8s)
+  ✓   8 qa/browser-release.spec.mjs:213:1 › owner allocates store stock, transfers units, reserves an order and fulfills it through the POS (16.0s)
+  ✓   9 qa/browser-release.spec.mjs:272:1 › owner opts into a persisted advisory schedule, sees a result and pauses it (8.2s)
+  ✓  10 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on mobile (4.1s)
+  ✓  11 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on desktop (2.7s)
+
+  11 passed (1.7m)

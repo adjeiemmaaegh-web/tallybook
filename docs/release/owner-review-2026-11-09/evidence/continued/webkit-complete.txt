@@ -1,0 +1,43 @@
+[WebServer] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:28271) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:28284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:28307) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "/workspace/tallybook/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer]
+  ✓   1 qa/browser-auth.spec.mjs:8:1 › a signed-out account page stays outside the ledger (6.9s)
+  ✓   2 qa/browser-auth.spec.mjs:18:1 › a local owner PIN locks and unlocks the business workspace (10.7s)
+  ✓   3 qa/browser-auth.spec.mjs:62:1 › missing staff rows cannot reopen a protected local business (7.9s)
+  ✓   4 qa/browser-auth.spec.mjs:85:1 › non-extractable device key survives browser reload outside business backups (1.7s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✓   5 qa/browser-auth.spec.mjs:114:1 › a disconnected shared till preserves a scoped sale across browser restart and posts once (2.5s)
+  ✓   6 qa/browser-release.spec.mjs:11:1 › every historical schema opens in native IndexedDB and preserves saved metadata (20.4s)
+  ✓   7 qa/browser-release.spec.mjs:40:1 › new setup displays Ghana, GHS, MoMo and provider fields (6.3s)
+  ✓   8 qa/browser-release.spec.mjs:49:1 › owner explicitly configures tax and prepared quotation reaches a saved offer (27.6s)
+  ✓   9 qa/browser-release.spec.mjs:82:1 › a populated v35 ledger preserves company-scoped financial history and owner locks across reopen (5.0s)
+  ✓  10 qa/browser-release.spec.mjs:131:1 › two private IndexedDB ledgers and the original survive tab workspace round trips (20.3s)
+  ✓  11 qa/browser-release.spec.mjs:153:1 › loss of the synthetic device key preserves an unreadable pending sale through reload and flush (5.5s)
+  ✓  12 qa/browser-release.spec.mjs:181:1 › two tabs without Web Locks keep one usable AES key during simultaneous first use (6.5s)
+  ✓  13 qa/browser-release.spec.mjs:213:1 › owner allocates store stock, transfers units, reserves an order and fulfills it through the POS (30.3s)
+  ✓  14 qa/browser-release.spec.mjs:274:1 › owner opts into a persisted advisory schedule, sees a result and pauses it (25.9s)
+  ✓  15 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on mobile (11.2s)
+  ✓  16 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on desktop (13.1s)
+
+  16 passed (3.5m)

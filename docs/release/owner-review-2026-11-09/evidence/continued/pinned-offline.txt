@@ -1,0 +1,13 @@
+[WebServer] (node:24701) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:24713) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 qa/browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 1280px tax=false (18.6s)
+  ✓  2 qa/browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=false (18.3s)
+  ✓  3 qa/browser-offline.spec.mjs:5:3 › production PWA checkout and receipt survive offline reload at 390px tax=true (16.6s)
+  ✓  4 qa/browser-offline.spec.mjs:75:1 › built server enforces CSP and never substitutes HTML for failed API or asset requests (1.9s)
+
+  4 passed (59.2s)
