@@ -1,5 +1,20 @@
 # Release-candidate verification
 
+## Hosted database handoff, November 9
+
+Read-only inspection found that the production migration history ends at `20261105120712`. The core `tallybook_shop` function is present. The hosted catalog lacks `tallybook_shop_ops` and `tallybook_shop_order_lines`, which the deployed interface uses for purchasing, counts, transfers and order fulfilment.
+
+The eight subsequent repository migrations appear below in dependency order. Hosted acceptance requires the owner to reconcile this sequence against the target environment and verify the workflows with synthetic accounts. The [disposable PostgreSQL regression](../../qa/backend-stage-b-e.test.mjs) exercises the upgrade, authorization and financial invariants.
+
+1. [20261106120000_shop_refund_policy.sql](../../supabase/migrations/20261106120000_shop_refund_policy.sql)
+2. [20261106130000_invite_24h.sql](../../supabase/migrations/20261106130000_invite_24h.sql)
+3. [20261108100000_shop_stage_c_read_models.sql](../../supabase/migrations/20261108100000_shop_stage_c_read_models.sql)
+4. [20261108110000_shop_stage_d_stock_workflows.sql](../../supabase/migrations/20261108110000_shop_stage_d_stock_workflows.sql)
+5. [20261108120000_shop_stage_d_purchase_payables.sql](../../supabase/migrations/20261108120000_shop_stage_d_purchase_payables.sql)
+6. [20261108130000_shop_stage_d_online_orders.sql](../../supabase/migrations/20261108130000_shop_stage_d_online_orders.sql)
+7. [20261109010000_shop_purchase_order_read_model.sql](../../supabase/migrations/20261109010000_shop_purchase_order_read_model.sql)
+8. [20261109020000_shared_order_lines.sql](../../supabase/migrations/20261109020000_shared_order_lines.sql)
+
 ## November 9 shared-shop verification
 
 [PR 40](https://github.com/adjeiemmaaegh-web/tallybook/pull/40) passed 981 native/server and 1,165 client tests, five functional Chromium checks, four authentication checks, and three built-app offline checks. The cashier handoff includes navigating directly to Reports and returning to Sales. [Release run](https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/42535825399).
