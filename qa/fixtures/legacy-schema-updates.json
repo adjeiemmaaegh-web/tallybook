@@ -1,0 +1,59 @@
+{
+  "26": {
+    "inventoryCostEvents": "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, createdAt"
+  },
+  "27": {
+    "supplierPayableEntries": "id, businessProfileId, purchaseId, supplierId, kind, createdAt, &[businessProfileId+submissionKey]"
+  },
+  "28": {
+    "cashPartialReturns": "id, businessProfileId, originalSaleId, createdAt, &[originalSaleId+returnSequence], &[businessProfileId+submissionKey]"
+  },
+  "29": {
+    "storeStockModes": "businessProfileId, activatedAt",
+    "storeStockEntries": "id, businessProfileId, productId, storeId, kind, sourceId, transferId, createdAt, &[businessProfileId+submissionKey], [businessProfileId+productId], &[businessProfileId+productId+sequence]",
+    "storeTransferRequests": "id, businessProfileId, sourceStoreId, destinationStoreId, status, createdAt, [businessProfileId+status], &[businessProfileId+submissionKey], &[businessProfileId+dispatchKey], &[businessProfileId+completionKey], &[businessProfileId+returnProofKey], &[businessProfileId+reversesRequestId]",
+    "purchaseLines": "id, purchaseId, productId, businessProfileId, batchId",
+    "inventoryBatches": "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
+    "inventoryCostEvents": "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt"
+  },
+  "30": {
+    "noSaleEvents": "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]",
+    "syncReplicaOutbox": "id, businessProfileId, deviceId, operationId, status, [businessProfileId+status], &[businessProfileId+deviceId+sequence], &[businessProfileId+operationId]",
+    "syncReplicaInbox": "id, businessProfileId, serverCursor, receivedAt, &[businessProfileId+serverCursor]",
+    "syncReplicaCursors": "businessProfileId, updatedAt",
+    "syncReplicaConflicts": "id, businessProfileId, eventId, status, detectedAt, [businessProfileId+status]"
+  },
+  "31": {
+    "paymentSandboxIntents": "id, businessProfileId, submissionKey, status, createdAt, &[businessProfileId+submissionKey]",
+    "paymentSandboxEvents": "id, businessProfileId, intentId, createdAt, [businessProfileId+intentId], &[businessProfileId+intentId+sequence]"
+  },
+  "32": {
+    "commerceHolds": "id, businessProfileId, orderId, productId, storeId, status, expiresAt, &[businessProfileId+submissionKey], &[businessProfileId+orderId+productId], [businessProfileId+productId]",
+    "commerceDeliveryEvents": "id, businessProfileId, orderId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+orderId], &[businessProfileId+orderId+sequence]"
+  },
+  "33": {
+    "run17ReviewEvents": "id, businessProfileId, findingId, staffId, action, createdAt, &[businessProfileId+submissionKey], [businessProfileId+findingId], &[businessProfileId+findingId+sequence]"
+  },
+  "34": {
+    "walletTransfers": "id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+    "sales": "id, businessProfileId, customerId, receiptNumber, createdAt, outstandingMinor, paymentMethod, submissionKey, &[businessProfileId+submissionKey]",
+    "repayments": "id, businessProfileId, customerId, createdAt, method, submissionKey, &[businessProfileId+submissionKey]",
+    "purchases": "id, businessProfileId, supplierId, purchaseDate, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+    "expenses": "id, businessProfileId, expenseDate, category, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+    "saleReversals": "id, businessProfileId, originalSaleId, customerId, createdAt, submissionKey, &[businessProfileId+submissionKey]",
+    "customerBenefits": "id, businessProfileId, customerId, kind, createdAt, submissionKey, &[businessProfileId+submissionKey]"
+  },
+  "35": {
+    "purchaseLines": "id, purchaseId, productId, businessProfileId, batchId",
+    "inventoryBatches": "id, businessProfileId, productId, expiryDate, createdAt, receiptCostEventId",
+    "inventoryCostEvents": "id, businessProfileId, productId, [businessProfileId+productId], &[businessProfileId+productId+sequence], &[businessProfileId+sourceId], saleId, purchaseId, batchId, createdAt",
+    "noSaleEvents": "id, businessProfileId, storeId, staffId, shiftId, createdAt, &[businessProfileId+operationKey]"
+  },
+  "36": {},
+  "37": {
+    "centralSaleEvents": "id, businessProfileId, &[businessProfileId+operationId], entityId, createdAt"
+  },
+  "38": {
+    "centralOperationalEvents": "id, businessProfileId, &[businessProfileId+operationId], entityId, kind, createdAt"
+  }
+}

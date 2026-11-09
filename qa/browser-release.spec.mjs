@@ -2,6 +2,11 @@ import {unlockFixtureOwner} from './local-owner-fixture.mjs';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const { schemas } = JSON.parse(readFileSync(new URL('./fixtures/legacy-schemas.json', import.meta.url), 'utf8'));
+const updates = JSON.parse(readFileSync(new URL('./fixtures/legacy-schema-updates.json', import.meta.url), 'utf8'));
+for (const [version, changes] of Object.entries(updates)) {
+  schemas[version] = {...schemas[Number(version) - 1], ...changes};
+}
+
 
 test('every historical schema opens in native IndexedDB and preserves saved metadata', async ({ page }) => {
   await page.goto('/');
@@ -25,6 +30,7 @@ test('every historical schema opens in native IndexedDB and preserves saved meta
       } finally { upgraded.close(); await Dexie.delete(name); }
     }, { version, schema });
     expect(result.version, `schema ${version}`).toBe(result.expected);
+    expect(schemas[result.expected - 1], 'freeze the previous schema when adding a migration').toBeDefined();
     expect(result.created).toBe('2025-01-01T00:00:00.000Z');
     if (schema.products) expect(result.product.stockQuantity).toBe(7);
     expect(result.events).toBe(0); // No fabricated legacy receipts or costs.
@@ -71,4 +77,53 @@ test('owner explicitly configures tax and prepared quotation reaches a saved off
   const records=await page.evaluate(async()=>{const {db}=await import('/src/db/TallybookDB.ts');return {quotes:await db.quotations.toArray(),sales:await db.sales.count(),product:await db.products.toArray()};});
   expect(records.quotes).toHaveLength(1);expect(records.quotes[0]).toMatchObject({totalMinor:2200,tax:{taxMinor:200}});
   expect(records.sales).toBe(0);expect(records.product[0].stockQuantity).toBe(3);
+});
+
+test('a populated v35 ledger preserves company-scoped financial history and owner locks across reopen', async ({page}) => {
+  await page.goto('/');
+  const result = await page.evaluate(async schema => {
+    const {TallybookDB, initializeDatabase} = await import('/src/db/TallybookDB.ts');
+    const Dexie = Object.getPrototypeOf(TallybookDB);
+    const name = 'release-populated-' + crypto.randomUUID();
+    const old = new Dexie(name);
+    old.version(35).stores(schema);
+    const at = '2026-09-01T08:30:00.000Z';
+    const tables = ['sales','saleLines','payments','purchases','supplierPayableEntries'];
+    const snapshot = async db => Object.fromEntries(await Promise.all(tables.map(async table =>
+      [table,await db.table(table).orderBy(':id').toArray()])));
+    let upgraded;
+    try {
+      await old.open();
+      for (const [company,units] of [['primary',2],['second',3]]) {
+        const total = units * 250, saleId = company+'-sale', purchaseId = company+'-purchase';
+        await old.table('businessProfiles').put({id:company,name:'Fixture '+company,country:'Ghana',currency:'GHS',createdAt:at,updatedAt:at});
+        await old.table('sales').put({id:saleId,businessProfileId:company,receiptNumber:1,createdAt:at,
+          paymentMethod:'cash',submissionKey:'sale-retry-1',currency:'GHS',subtotalMinor:total,discountMinor:0,
+          totalMinor:total,amountPaidMinor:total,outstandingMinor:0});
+        await old.table('saleLines').put({id:company+'-line',businessProfileId:company,saleId,productId:'sku-'+company,
+          quantity:units,unitPriceMinor:250,lineTotalMinor:total});
+        await old.table('payments').put({id:company+'-payment',businessProfileId:company,saleId,method:'cash',amountMinor:total,createdAt:at});
+        await old.table('purchases').put({id:purchaseId,businessProfileId:company,supplierId:'supplier-'+company,
+          submissionKey:'purchase-retry-1',currency:'GHS',totalCostMinor:1000,createdAt:at,purchaseDate:'2026-09-01'});
+        await old.table('supplierPayableEntries').put({id:company+'-recognition',businessProfileId:company,purchaseId,
+          supplierId:'supplier-'+company,currency:'GHS',amountMinor:1000,kind:'recognition',submissionKey:'liability-retry-1',createdAt:at});
+      }
+      await old.table('staffMembers').put({id:'fixture-owner',businessProfileId:'primary',name:'Fixture owner',role:'owner',createdAt:at});
+      const before = await snapshot(old);
+      old.close();
+      upgraded = new TallybookDB(name);
+      await initializeDatabase(upgraded);
+      upgraded.close();
+      await upgraded.open();
+      return {before,after:await snapshot(upgraded),
+        governed:(await upgraded.businessProfiles.get('primary')).staffGovernanceEnabled,
+        otherGoverned:(await upgraded.businessProfiles.get('second')).staffGovernanceEnabled === true,
+        events:await upgraded.centralSaleEvents.count() + await upgraded.centralOperationalEvents.count()};
+    } finally {old.close(); upgraded?.close(); await Dexie.delete(name);}
+  }, schemas[35]);
+  expect(result.after).toEqual(result.before);
+  expect(result.after.sales.map(s => s.totalMinor)).toEqual([500,750]);
+  expect(result.governed).toBe(true);
+  expect(result.otherGoverned).toBe(false);
+  expect(result.events).toBe(0);
 });
