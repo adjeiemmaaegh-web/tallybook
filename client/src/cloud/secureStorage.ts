@@ -48,7 +48,7 @@ function openDb(): Promise<IDBDatabase> {
       for (const name of [KEYS, OUTBOX, CACHE]) if (!open.result.objectStoreNames.contains(name)) open.result.createObjectStore(name);
     };
     open.onsuccess = () => {
-      open.result.onversionchange = () => { open.result.close(); dbPromise = null; };
+      open.result.onversionchange = () => { open.result.close(); dbPromise = null; sealerPromise = null; };
       resolve(open.result);
     };
     open.onerror = () => { dbPromise = null; reject(open.error ?? new SecureStorageUnavailableError()); };
@@ -65,9 +65,13 @@ export function deviceSealer(): Promise<Sealer> {
     if (existing) return createSealer(existing);
     const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
     const tx = db.transaction(KEYS, "readwrite");
-    tx.objectStore(KEYS).put(key, DEVICE_KEY_ID);
-    await done(tx);
-    return createSealer(key);
+    const committed = done(tx);
+    const keys = tx.objectStore(KEYS);
+    // IndexedDB serializes read-write transactions even across tabs without Web Locks.
+    const winner = await request(keys.get(DEVICE_KEY_ID)) as CryptoKey | undefined;
+    if (!winner) keys.add(key, DEVICE_KEY_ID);
+    await committed;
+    return createSealer(winner ?? key);
   }).catch(error => { sealerPromise = null; throw error; });
   return sealerPromise;
 }

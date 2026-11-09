@@ -127,3 +127,53 @@ test('a populated v35 ledger preserves company-scoped financial history and owne
   expect(result.otherGoverned).toBe(false);
   expect(result.events).toBe(0);
 });
+
+test('two private IndexedDB ledgers and the original survive tab workspace round trips', async ({page}) => {
+  await page.goto('/');
+  const visit = async (owner, value) => {
+    await page.evaluate(owner => {
+      if (owner) sessionStorage.setItem('tallybook.workspace.tab.v1', owner);
+      else sessionStorage.removeItem('tallybook.workspace.tab.v1');
+    }, owner);
+    await page.reload();
+    return page.evaluate(async value => {
+      const {db} = await import('/src/db/TallybookDB.ts');
+      if (value !== null) await db.appMeta.put({key:'fixture-recovery',value,updatedAt:'2026-11-01T00:00:00Z'});
+      return (await db.appMeta.get('fixture-recovery'))?.value;
+    },value);
+  };
+  await visit(null,'original');
+  await visit('synthetic-a','owner A');
+  await visit('synthetic-b','owner B');
+  expect(await visit(null,null)).toBe('original');
+  expect(await visit('synthetic-a',null)).toBe('owner A');
+  expect(await visit('synthetic-b',null)).toBe('owner B');
+});
+
+test('loss of the synthetic device key preserves an unreadable pending sale through reload and flush', async ({page}) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const {submitSale} = await import('/src/cloud/shopOutbox.ts');
+    await submitSale({userId:'fixture-owner',companyId:'fixture-company'},
+      {submissionKey:'fixture-sale',storeId:'fixture-store',lines:[],tenders:[]}, 'Synthetic sale', async () => {throw Error('offline');});
+    const db = await new Promise((resolve,reject) => {
+      const open = indexedDB.open('tallybook-secure');
+      open.onsuccess = () => resolve(open.result); open.onerror = () => reject(open.error);
+    });
+    const tx = db.transaction('keys','readwrite');
+    tx.objectStore('keys').clear();
+    await new Promise((resolve,reject) => {tx.oncomplete=resolve; tx.onabort=()=>reject(tx.error);});
+    db.close();
+  });
+  await page.reload();
+  const result = await page.evaluate(async () => {
+    const {readOutbox,flushOutbox,dismissQueuedSale} = await import('/src/cloud/shopOutbox.ts');
+    const scope = {userId:'fixture-owner',companyId:'fixture-company'};
+    let sends = 0;
+    await flushOutbox(scope,async () => {sends++; throw Error('unexpected send');});
+    const dismissed = await dismissQueuedSale(scope,'fixture-sale');
+    const [row] = await readOutbox(scope);
+    return {sends,dismissed,status:row?.status,unreadable:row?.unreadable};
+  });
+  expect(result).toEqual({sends:0,dismissed:false,status:'needs-review',unreadable:true});
+});
