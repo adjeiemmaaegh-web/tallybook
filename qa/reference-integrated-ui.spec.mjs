@@ -125,3 +125,31 @@ test('a verified owner opens Clementia alongside an unlinked PIN-less ledger', a
   await expect(page.getByRole('button',{name:'Open my private workspace'})).toBeVisible();
   await expect(page.getByText('New owner workspace',{exact:true})).toHaveCount(0);
 });
+
+test('signed-in attendant opening an owner dashboard link lands at the till and can review personal sales', async ({page}) => {
+  const user = {id:'b8841a77-6172-4f74-adbe-024b7d6c0010',email:'attendant@example.invalid',user_metadata:{}};
+  const company = '1b841a77-6172-4f74-adbe-024b7d6c0011';
+  const owner = '1b841a77-6172-4f74-adbe-024b7d6c0012';
+  await page.addInitScript(user => localStorage.setItem('sb-qa-auth-token', JSON.stringify({
+    user, access_token:'navigation-fixture', refresh_token:'fixture-only', token_type:'bearer',
+    expires_at:Math.floor(Date.now()/1000)+3600
+  })),user);
+  await page.route('https://qa.invalid/auth/v1/user',route=>route.fulfill({json:user}));
+  await page.route('https://qa.invalid/rest/v1/businesses?**',route=>route.fulfill({json:[{id:company,name:'Fixture shop',owner_id:owner}]}));
+  await page.route('https://qa.invalid/rest/v1/business_members?**',route=>route.fulfill({json:[{business_id:company,user_id:user.id,role:'attendant'}]}));
+  await page.route('https://qa.invalid/rest/v1/rpc/tallybook_shop',route=>{
+    const action = route.request().postDataJSON().p_action;
+    if (action === 'listSales') return route.fulfill({json:{sales:[]}});
+    if (action !== 'overview') return route.abort();
+    return route.fulfill({json:{companyId:company,role:'attendant',currency:'GHS',
+      stores:[{id:'store-a',name:'Fixture store',status:'active'}],products:[],stock:[],members:[],pendingInvites:[]}});
+  });
+  await page.goto('/shop?view=dashboard');
+  const tabs = page.getByRole('navigation',{name:'Shop sections'});
+  await expect(tabs.getByRole('button',{name:'Sell',exact:true})).toHaveAttribute('aria-pressed','true');
+  for (const name of ['Dashboard','Team','Stock','Customers']) {
+    await expect(tabs.getByRole('button',{name,exact:true})).toHaveCount(0);
+  }
+  await tabs.getByRole('button',{name:'My sales'}).click();
+  await expect(page.getByRole('heading',{name:'My recent sales'})).toBeVisible();
+});
