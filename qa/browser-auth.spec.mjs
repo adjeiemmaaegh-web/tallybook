@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { chromium, test, expect } from '@playwright/test';
 
 test.beforeEach(async ({page}) => {
   page.on('pageerror', error => console.error(error.message));
@@ -108,4 +108,59 @@ test('non-extractable device key survives browser reload outside business backup
     return {extractable:key.extractable,signatureBytes:signature.byteLength};
   },scope);
   expect(reloaded).toEqual({extractable:false,signatureBytes:64});
+});
+
+
+test('a disconnected shared till preserves a scoped sale across Chromium restart and posts once', async ({}, info) => {
+  const origin = 'http://127.0.0.1:4176';
+  const scope = {userId:'fixture-attendant', companyId:'fixture-store'};
+  const sale = {submissionKey:'fixture-sale-001', storeId:'store-a', clientRecordedAt:'2026-11-01T12:00:00Z',
+    lines:[{productId:'rice',quantity:2}], tenders:[{method:'cash',amountMinor:900,tenderedMinor:1000}]};
+  const posted = [];
+  const start = async () => {
+    const context = await chromium.launchPersistentContext(info.outputPath('restart-profile'), {headless:true});
+    try {
+      await context.route(origin+'/outbox-fixture', route => route.fulfill({contentType:'text/html',body:'<title>Fixture</title>'}));
+      await context.route('**/src/cloud/shopClient.ts*', route => route.fulfill({
+        contentType:'application/javascript',
+        body:'export class ShopRejectedError extends Error {}; export const listShopSales = async () => [];'
+      }));
+      const page = await context.newPage();
+      await page.exposeFunction('recordFixtureSale', payload => {
+        posted.push(payload);
+        return {submissionKey:payload.submissionKey, receiptNumber:1};
+      });
+      await page.goto(origin+'/outbox-fixture');
+      await page.evaluate(async () => {window.outbox = await import('/src/cloud/shopOutbox.ts');});
+      return {context,page};
+    } catch (error) {await context.close(); throw error;}
+  };
+  const first = await start();
+  try {
+    await first.context.setOffline(true);
+    const result = await first.page.evaluate(async ({scope,sale}) => window.outbox.submitSale(scope,sale,'fixture sale',async () => {
+      if (navigator.onLine) throw Error('Fixture unexpectedly online');
+      throw new TypeError('Offline');
+    }), {scope,sale});
+    expect(result.state).toBe('queued');
+  } finally {await first.context.close();}
+  const second = await start();
+  try {
+    await second.context.setOffline(true);
+    const visible = await second.page.evaluate(async scope => {
+      const rows = await window.outbox.readOutbox(scope);
+      const foreignUser = await window.outbox.readOutbox({...scope,userId:'other'});
+      const foreignShop = await window.outbox.readOutbox({...scope,companyId:'other'});
+      return {sale:rows[0]?.sale,count:rows.length,other:[foreignUser.length,foreignShop.length]};
+    },scope);
+    expect(visible).toEqual({sale,count:1,other:[0,0]});
+    await second.context.setOffline(false);
+    const delivered = await second.page.evaluate(async scope => {
+      const first = await window.outbox.flushOutbox(scope,window.recordFixtureSale);
+      const next = await window.outbox.flushOutbox(scope,window.recordFixtureSale);
+      return [first.map(r=>r.state),next.length,(await window.outbox.readOutbox(scope)).length];
+    },scope);
+    expect(delivered).toEqual([['recorded'],0,0]);
+    expect(posted).toEqual([sale]);
+  } finally {await second.context.close();}
 });
