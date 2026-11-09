@@ -1,0 +1,13 @@
+
+> business-app@1.0.0 test /workspace/tallybook
+> vitest run --maxWorkers=2 --testTimeout=60000 --hookTimeout=60000
+
+
+ RUN  v4.1.12 /workspace/tallybook/client
+
+
+ Test Files  156 passed (156)
+      Tests  1190 passed (1190)
+   Start at  12:32:01
+   Duration  325.71s (transform 12.44s, setup 39.65s, import 74.39s, tests 358.51s, environment 144.71s)
+

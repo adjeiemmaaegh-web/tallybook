@@ -11,7 +11,7 @@ export async function getCashReturnReview(originalSaleId: string, database: Tall
   if (!company || typeof originalSaleId !== 'string' || !originalSaleId.trim()) throw new Error('Select a saved sale for return review.');
   return database.transaction('r', [database.businessProfiles, database.sales, database.saleLines, database.payments, database.receipts,
     database.cashPartialReturns, database.saleReversals, database.products, database.inventoryCostEvents,
-    database.inventoryBatches, database.inventoryMovements, database.staffMembers], async () => {
+    database.inventoryBatches, database.inventoryMovements, database.staffMembers, database.storeStockModes, database.storeLocations], async () => {
     const actor=await requirePermission('refund',database,company);
     const originalActorId=currentStaffId(company);
     const sale = await database.sales.get(originalSaleId);
@@ -45,8 +45,11 @@ export async function getCashReturnReview(originalSaleId: string, database: Tall
     assertCashReturnStockLinks(sale, saleLines, priorReturns,
       priorMovements.filter((item): item is NonNullable<typeof item> => Boolean(item)),
       [...costEvents, ...priorCostEvents].filter((item): item is NonNullable<typeof item> => Boolean(item)));
-    return prepareCashReturnReview({company,sale,saleLines,payments,receipts,priorReturns,fullReversals,
+    const storeMode=Boolean(await database.storeStockModes.get(company));
+    const receivingStores=storeMode?(await database.storeLocations.where("businessProfileId").equals(company).toArray()).filter(store=>store.status==="active").map(({id,name})=>({id,name})):[];
+    if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==originalActorId)throw new Error("Company or reviewer changed while reading receiving stores.");
+    return {...prepareCashReturnReview({company,sale,saleLines,payments,receipts,priorReturns,fullReversals,
       products: products.filter((p): p is NonNullable<typeof p> => Boolean(p)),
-      costEvents:costEvents.filter((e):e is NonNullable<typeof e>=>Boolean(e)),batches});
+      costEvents:costEvents.filter((e):e is NonNullable<typeof e>=>Boolean(e)),batches}),storeMode,receivingStores};
   });
 }

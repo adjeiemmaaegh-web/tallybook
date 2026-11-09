@@ -133,7 +133,7 @@ export type AssistantAction =
   /** Behaves exactly as if the owner had typed the text. */
   | { type: "say"; label: string; text: string }
   | { type: "run_plan"; label: string; plan: AssistantPlan }
-  | { type: "confirm_reversal"; label: string; token: string }
+  | { type: "confirm_reversal"; label: string; token: string; returnStoreId?: string }
   /** Opens a route verified by the application knowledge registry; it never writes business data. */
   | { type: "navigate"; label: string; href: string }
   /** Answers the question the assistant just asked. `id` is set when the answer is an existing record. */

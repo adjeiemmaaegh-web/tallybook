@@ -8,6 +8,7 @@
 import "./sharedShop.css";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
+import {SharedShopCatalogue} from "@/cloud/SharedShopCatalogue";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
@@ -269,7 +270,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "orders" && isOwner && (online
-      ? <SharedShopOrders userId={userId} companyId={business.id} overview={overview} />
+      ? <><SharedShopCatalogue key={business.id+userId} userId={userId} companyId={business.id} overview={overview} /><SharedShopOrders userId={userId} companyId={business.id} overview={overview} /></>
       : <p role="status">Reconnect to manage online orders.</p>)}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}

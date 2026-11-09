@@ -90,7 +90,7 @@ export function makeCentralSaleReversalEvent(reversal:SaleReversal,originalSale:
     id:`sale-reversal:${reversal.id}`,businessProfileId:reversal.businessProfileId,
     operationId:`sale-reversal:${reversal.id}`,entityId:reversal.id,
     kind:'sale.reversal_recorded',createdAt:reversal.createdAt,
-    shopId:originalSale.storeId??null,staffId:reversal.staffId??null,
+    shopId:reversal.returnStoreId??originalSale.storeId??null,staffId:reversal.staffId??null,
     shiftId:reversal.shiftId??null,deviceId:null,deliveryStatus:'local_only',
     payloadVersion:1,payoutEvidence:'accounting_reversal_only',payload:{reversal},
   };
@@ -116,7 +116,7 @@ export function makeCentralCashRefundEvent(cashReturn:CashPartialSaleReturn,orig
     id:`cash-refund:${cashReturn.id}`,businessProfileId:cashReturn.businessProfileId,
     operationId:`cash-refund:${cashReturn.id}`,entityId:cashReturn.id,
     kind:'sale.cash_partial_refund_recorded',createdAt:cashReturn.createdAt,
-    shopId:originalSale.storeId??null,staffId:cashReturn.staffId??null,
+    shopId:cashReturn.returnStoreId??originalSale.storeId??null,staffId:cashReturn.staffId??null,
     shiftId:cashReturn.shiftId??null,deviceId:null,deliveryStatus:'local_only',
     payloadVersion:1,payoutEvidence:'staff_confirmed_only',payload:{cashReturn},
   };
@@ -190,7 +190,7 @@ export function validateCentralOperationalEvent(event:CentralOperationalEvent,so
        event.id!==`sale-reversal:${row.id}` || event.entityId!==row.id ||
        event.businessProfileId!==row.businessProfileId || originalSale.businessProfileId!==row.businessProfileId ||
        row.originalSaleId!==originalSale.id || row.originalReceiptNumber!==originalSale.receiptNumber ||
-       event.createdAt!==row.createdAt || event.shopId!==(originalSale.storeId??null) ||
+       event.createdAt!==row.createdAt || event.shopId!==(row.returnStoreId??originalSale.storeId??null) ||
        event.staffId!==(row.staffId??null) || event.shiftId!==(row.shiftId??null) ||
        row.reversedSaleTotalMinor!==-originalSale.totalMinor ||
        row.reversedReceivedMinor!==-originalSale.amountPaidMinor ||
@@ -209,7 +209,7 @@ export function validateCentralOperationalEvent(event:CentralOperationalEvent,so
      originalSale.businessProfileId!==row.businessProfileId ||
      row.originalSaleId!==originalSale.id || row.originalReceiptNumber!==originalSale.receiptNumber ||
      event.createdAt!==row.createdAt || !Number.isFinite(Date.parse(event.createdAt)) ||
-     event.shopId!==(originalSale.storeId??null) ||
+     event.shopId!==(row.returnStoreId??originalSale.storeId??null) ||
      event.staffId!==(row.staffId??null) || event.shiftId!==(row.shiftId??null) ||
      row.refundMethod!=='cash' || row.disposition!=='restockable' ||
      !/^[A-Z]{3}$/.test(row.currency) || row.currency!==originalSale.currency ||

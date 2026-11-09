@@ -18,7 +18,7 @@ export function reconcileSaleCosts(company: string, input: {
   products: Product[]; events: InventoryCostEvent[]; movements: InventoryMovement[];
   sales: Sale[]; lines: SaleLine[]; reversals: SaleReversal[]; cashReturns?: CashPartialSaleReturn[];
   purchases:Purchase[];purchaseLines:PurchaseLine[];expectedCurrency?:string;
-}, range: { start: Date; end: Date }): {
+}, range: { start: Date; end: Date }, saleIds?: ReadonlySet<string>): {
   cogsMinor?:number;unavailableSales:number;
   inventoryValuation:Run9InventoryValuation;
   purchaseCostEvidence:Run9PurchaseCostEvidence
@@ -109,13 +109,14 @@ export function reconcileSaleCosts(company: string, input: {
           costEvent.quantityDelta !== line.quantity || costEvent.productId !== line.productId ||
           costEvent.createdAt !== ret.createdAt) throw new Error("Saved partial-return cost restoration does not reconcile.");
       const derived = allocationCost(costEvent);
-      if (within(ret.createdAt)) {
+      if (within(ret.createdAt) && (!saleIds || saleIds.has(ret.originalSaleId))) {
         if (derived === undefined) unavailableSales++;
         else cogsMinor = add(cogsMinor, -derived);
       }
     }
   }
   for (const posting of postings) {
+    if (saleIds && !saleIds.has(posting.saleId)) continue;
     const value = saleCosts.get(posting.saleId);
     if (value === undefined) unavailableSales++;
     else cogsMinor = add(cogsMinor, value * posting.sign);

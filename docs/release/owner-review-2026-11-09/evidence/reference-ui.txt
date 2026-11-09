@@ -1,0 +1,32 @@
+[WebServer] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown project config "store-dir". This will stop working in the next major version of npm.
+[WebServer] (node:5651) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:5664) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:5709) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 qa/browser-friends-recovery.spec.mjs:3:1 › password recovery stays reachable before friends-test sign-in without opening the ledger (1.9s)
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "/workspace/tallybook/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer]
+  ✓  2 qa/reference-integrated-ui.spec.mjs:3:1 › public welcome links a new visitor to account entry on desktop and narrow phones (3.7s)
+  ✓  3 qa/reference-integrated-ui.spec.mjs:22:1 › shared shop welcome directs unsigned users to the real account, with no fabricated checkout (2.7s)
+  ✓  4 qa/reference-integrated-ui.spec.mjs:32:1 › account page keeps live sign-in workflow and uses account-first layout (1.7s)
+  ✓  5 qa/reference-integrated-ui.spec.mjs:45:1 › protected device-local ledger does not bypass owner verification for a new browser (1.4s)
+  ✓  6 qa/reference-integrated-ui.spec.mjs:53:1 › verified account without a shop sees both role cards on a phone (2.2s)
+  ✓  7 qa/reference-integrated-ui.spec.mjs:77:1 › a verified owner opens Clementia alongside an unlinked PIN-less ledger (15.4s)
+  ✓  8 qa/reference-integrated-ui.spec.mjs:129:1 › signed-in attendant opening an owner dashboard link lands at the till and can review personal sales (1.7s)
+
+  8 passed (33.6s)

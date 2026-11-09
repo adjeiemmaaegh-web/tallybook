@@ -24,7 +24,7 @@ export function publishableCatalogue(items: CatalogueItem[]): CatalogueItem[] {
     Number.isSafeInteger(item.priceMinor) && item.priceMinor >= 0 && item.priceMinor <= 1_000_000_000 &&
     (item.itemKind === "stock" || item.itemKind === "service"));
 }
-export const COMMERCE_RELEASE_SCOPE = Object.freeze({ catalogue: true, localDraftOrders: true, publicStorefront: false, onlinePayments: false, reserveStock: false, fulfillOrders: false, automaticSync: false, localPublicPreview:true, authorizedPOSLink:true });
+export const COMMERCE_RELEASE_SCOPE = Object.freeze({ catalogue: true, localDraftOrders: true, publicStorefront: false, onlinePayments: false, reserveStock: true, fulfillOrders: true, automaticSync: false, localPublicPreview:true, authorizedPOSLink:true });
 export function requireCommerceCapability(name: keyof typeof COMMERCE_RELEASE_SCOPE) { if (!COMMERCE_RELEASE_SCOPE[name]) throw new Error(`Online commerce feature unavailable: ${name}`); }
 function companyId() { const id = getActiveBusinessProfileId(); if (!id || typeof id !== "string") throw new Error("Select a company first."); return id; }
 export function calculateOrderTotal(lines: CommerceOrderLine[]): number {

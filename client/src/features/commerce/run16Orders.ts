@@ -217,6 +217,7 @@ export async function consumeRun16OrderForSale(
     !order.reservationExpiresAt||Date.parse(order.reservationExpiresAt)<=Date.parse(now))
    throw Error("Order reservation expired, changed, or already sold.");
  const holds=await database.commerceHolds.where("orderId").equals(order.id).toArray();
+ for(const hold of holds)validateRun16Hold(hold);
  const stockLines=order.lines.filter(x=>x.quantity>0);
  const stocked=[];
  for(const line of stockLines){

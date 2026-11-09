@@ -91,9 +91,23 @@ test('real local dashboard matches reference hierarchy at desktop and mobile wid
 
     await page.screenshot({path:testInfo.outputPath('real-home-'+viewport.width+'.png'),fullPage:true});
     await page.getByRole('button',{name:'Let Clementia assist you'}).click();
-    await expect(page.getByRole('dialog',{name:'Clementia assistant'})).toBeVisible();
+    const assistant=page.getByRole('dialog',{name:'Clementia assistant'});
+    await expect(assistant).toBeVisible();
+    await assistant.getByRole('button',{name:'Maximize Clementia',exact:true}).click();
+    await expect(assistant).toHaveAttribute('aria-modal','true');
+    const expanded=await assistant.boundingBox();
+    expect(expanded.x).toBeGreaterThanOrEqual(0);
+    expect(expanded.x+expanded.width).toBeLessThanOrEqual(viewport.width+1);
+    expect(expanded.y+expanded.height).toBeLessThanOrEqual(viewport.height+1);
+    await page.evaluate(()=>document.querySelector('.tb-dashboard-shortcuts a').focus());
+    expect(await assistant.evaluate(panel=>panel.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('Tab');
+    expect(await assistant.evaluate(panel=>panel.contains(document.activeElement))).toBe(true);
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog',{name:'Clementia assistant'})).toHaveCount(0);
+    await expect(assistant).toHaveAttribute('aria-modal','false');
+    await page.keyboard.press('Escape');
+    await expect(assistant).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Let Clementia assist you'})).toBeFocused();
   }
 
   await page.locator('.tb-dashboard-shortcuts a[href="/reports"]').click();

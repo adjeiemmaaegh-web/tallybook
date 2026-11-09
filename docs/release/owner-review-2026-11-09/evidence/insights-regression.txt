@@ -1,0 +1,20 @@
+✔ missing evidence fails closed (9.803619ms)
+✔ reorder is threshold grounded, no purchase execution (0.488083ms)
+✔ sales pace labels itself nonforecast (1.182887ms)
+✔ debt warns absence of ageing metadata (0.255995ms)
+✔ expiry rejects other companies, invalid dates, and zero stock (9.644189ms)
+✔ automation opt-in never executes actions (0.600001ms)
+✔ rejects invalid planning horizons (0.298678ms)
+✔ rejects invalid source (1.042215ms)
+✔ no sales observation is evidence-limited (0.421914ms)
+✔ stock and debt findings show exact local evidence (1.095176ms)
+✔ non-low stock and settled debts do not trigger attention (3.122011ms)
+✔ aggregate debt remains exact beyond the safe Number range (1.161315ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 753.402051

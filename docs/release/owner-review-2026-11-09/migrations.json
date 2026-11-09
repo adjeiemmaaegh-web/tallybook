@@ -1,0 +1,110 @@
+{
+  "observedAtUtc": "2026-11-09T11:34:30Z",
+  "project": "qfyydfxwvifdvffdfgeu",
+  "source": "Supabase list_migrations and read-only catalog query",
+  "migrations": [
+    {
+      "file": "supabase/migrations/20261013123347_business_identity.sql",
+      "version": "20261013123347",
+      "sha256": "1487762baf00be344c06b950dc70607c454a6738fef8628dfdd272a69d2c1d9b",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261013123702_restrict_rls_helper.sql",
+      "version": "20261013123702",
+      "sha256": "6f3a07e37121936810929141eb693eb309bb960534e9585aa79126395bcf7250",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261014113009_company_binding_recovery_server_only.sql",
+      "version": "20261014113009",
+      "sha256": "30d5e67b3f58fa6fc4243d15944a971b82295048711d13b64d3c7931107838b2",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261014115304_company_recovery_reviewer_audit.sql",
+      "version": "20261014115304",
+      "sha256": "13e5c18e0b611dcf222b832e7dc7f734ee585d902ceead933aafd16c2090bb3d",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261105022238_stakeholder_session_bound_membership.sql",
+      "version": "20261105022238",
+      "sha256": "9315b42ee38f5c62ce71f90a2f4869c52e63d8655c1e31232ed7e11ee56a60a0",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261105070036_shared_shop_ledger.sql",
+      "version": "20261105070036",
+      "sha256": "c4673f14b3cf79b7a3bf87ebad311264ff3a74c0eac6e3662e5d7fd0bef5e1a7",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261105110003_shared_shop_refunds_and_opening_import.sql",
+      "version": "20261105110003",
+      "sha256": "faf2e7ca7bd548787bde2ba2200a775b1b051ac28f876d21646944c55aaa6149",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261105120712_shared_shop_full_till.sql",
+      "version": "20261105120712",
+      "sha256": "211dd9fd6bb8bb73fe77542977b4a36fef2e56647229536cf9e8fa9677122fc1",
+      "hostedApplied": true
+    },
+    {
+      "file": "supabase/migrations/20261106120000_shop_refund_policy.sql",
+      "version": "20261106120000",
+      "sha256": "95cd80e94c1cf473d93561ea58f93bc60ffb9b4f091d8aeae493ba8b0e49427f",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261106130000_invite_24h.sql",
+      "version": "20261106130000",
+      "sha256": "bede03b501d06e746e5cfb91846c3930d99227d4f25686ad82b1825abc129c2d",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261108100000_shop_stage_c_read_models.sql",
+      "version": "20261108100000",
+      "sha256": "8e0d283fc91f2cd7f7119b00cc853ecc2c17d11bce92b6928d4f39dd37331ab7",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261108110000_shop_stage_d_stock_workflows.sql",
+      "version": "20261108110000",
+      "sha256": "9a6c1c6dd43e71bcad68ccf054a007e8c1766cb060efabb6b4e25dbcf47260eb",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261108120000_shop_stage_d_purchase_payables.sql",
+      "version": "20261108120000",
+      "sha256": "4b43b1044839e2b3557fde9bbb907a662ff52391d1d459fd9facf5b0277b711c",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261108130000_shop_stage_d_online_orders.sql",
+      "version": "20261108130000",
+      "sha256": "755a70ed927ce8b4970311ae2e339920e890665c4c866083599cc07241d30e6d",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261109010000_shop_purchase_order_read_model.sql",
+      "version": "20261109010000",
+      "sha256": "0a0320c3dd8e1e1853631f31db001f2ac4375c9ecd3cad73fe2a3bc51408163b",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261109020000_shared_order_lines.sql",
+      "version": "20261109020000",
+      "sha256": "92580e2dd8d0b3221233290391de145d11ec1a652652467736db22b966a64d61",
+      "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261109123828_shop_public_commerce_reservations.sql",
+      "version": "20261109123828",
+      "sha256": "bff970e2e53b20082af01580a023b7f09a4d6fbfd5de154697577686eef19526",
+      "hostedApplied": false,
+      "note": "New local customer commerce migration; isolated SQL and browser verification only. Not applied to hosted service."
+    }
+  ]
+}

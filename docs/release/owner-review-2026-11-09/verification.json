@@ -1,0 +1,74 @@
+{
+  "baseline": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+  "decision": "NOT_READY_FOR_FULL_SCOPE_STAKEHOLDER_HANDOVER",
+  "sourceChange": "Store/POS/returns, advisory schedules, CSP and authenticated customer catalogue with authoritative reservation/POS integration",
+  "hosted": {
+    "readOnly": true,
+    "lastAppliedMigration": "20261105120712",
+    "pendingRepositoryMigrations": 9,
+    "operationsRpcPresent": false,
+    "orderLinesRpcPresent": false,
+    "newMigrationApplied": false
+  },
+  "branches": {
+    "tips": 75,
+    "ancestors": 59,
+    "equivalentAdditionalTips": 2,
+    "historicalDivergentTips": 14
+  },
+  "originalAcceptanceUnits": 82,
+  "fullScopeCompletionCertified": false,
+  "productionModified": false,
+  "initialReviewChecks": {
+    "nativeFinal": {
+      "passed": 990,
+      "failed": 0,
+      "skipped": 0
+    },
+    "clientFinal": {
+      "passed": 1169,
+      "files": 154,
+      "failed": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "chromium": {
+      "functional": 9,
+      "auth": 5,
+      "offline": 3,
+      "visual": 3,
+      "referenceUi": 8
+    },
+    "webkit": {
+      "status": "environment-blocked",
+      "launchFailures": 1,
+      "notRun": 6
+    },
+    "dependencyAudit": {
+      "moderateOrAbove": 0,
+      "low": 1
+    }
+  },
+  "checks": {
+    "node": "24.19.0",
+    "pnpm": "10.34.0",
+    "client": {
+      "passed": 1190,
+      "files": 156
+    },
+    "native": {
+      "passed": 994,
+      "skipped": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "chromiumFunctional": 11,
+    "chromiumOffline": 4,
+    "chromiumVisual": 3,
+    "commerceChromium": 1,
+    "commerceWebkit": 1,
+    "commerceSql": 4,
+    "notes": "Full native run preceded the additional refund assertions; the focused SQL suite then passed with those assertions. Browser run preceded only the reference input maxLength correction (160 to the backend limit 80) and CI/output-directory changes. Types/build follow the final application changes."
+  },
+  "applicationCommit": "bf7abee2ace4b28b79278efe37bc82858c2c686a"
+}

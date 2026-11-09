@@ -112,7 +112,7 @@ test('non-extractable device key survives browser reload outside business backup
 
 
 test('a disconnected shared till preserves a scoped sale across browser restart and posts once', async ({playwright, browserName}, info) => {
-  const origin = 'http://127.0.0.1:4176';
+  const origin = new URL(info.project.use.baseURL).origin;
   const scope = {userId:'fixture-attendant', companyId:'fixture-store'};
   const sale = {submissionKey:'fixture-sale-001', storeId:'store-a', clientRecordedAt:'2026-11-01T12:00:00Z',
     lines:[{productId:'rice',quantity:2}], tenders:[{method:'cash',amountMinor:900,tenderedMinor:1000}]};

@@ -6,7 +6,7 @@ import {COMMERCE_RELEASE_SCOPE,type CommerceOrder} from "./commerce";
 import {reserveRun16Order,cancelRun16Order,expireRun16Order,
  recordRun16Delivery,reservedRun16StockSummary} from "./run16Orders";
 import type {StoreLocation} from "@/features/stores/storeDirectory";
-export function Run16OrderOperations({companyId}:{companyId:string}){
+export function Run16OrderOperations({companyId,onChanged}:{companyId:string;onChanged?:()=>Promise<void>}){
  const [orders,setOrders]=useState<CommerceOrder[]>([]);
  const [stores,setStores]=useState<StoreLocation[]>([]);
  const [holds,setHolds]=useState(0);
@@ -28,10 +28,10 @@ export function Run16OrderOperations({companyId}:{companyId:string}){
  useEffect(()=>{setOrders([]);setStores([]);setHolds(0);setError("");void refresh().catch(e=>setError(e instanceof Error?e.message:"Could not read local orders."));},[refresh]);
  const perform=async(work:()=>Promise<unknown>)=>{
    if(busy)return;setBusy(true);setError("");
-   try{await work();await refresh();}catch(e){setError(e instanceof Error?e.message:"Order operation failed.");}
+   try{await work();await refresh();await onChanged?.();}catch(e){setError(e instanceof Error?e.message:"Order operation failed.");}
    finally{setBusy(false);}
  };
- return <section className="rounded border p-4 space-y-3" aria-label="Run 16 order reservations and delivery review">
+ return <section className="rounded border p-4 space-y-3" aria-label="Order reservations and delivery">
    <h2 className="text-lg font-semibold">Order reservation and delivery management</h2>
    <p className="text-sm">Saved device-local evidence only. Reservations do not charge customers. Packing, dispatch, delivery and return requests require an original saved POS sale. Online publishing and automated payments remain disabled.</p>
    <p role="status" className="text-sm">Active product holds: {holds}. Stock reservation and fulfillment activation: <strong>{COMMERCE_RELEASE_SCOPE.reserveStock&&COMMERCE_RELEASE_SCOPE.fulfillOrders?"Available":"Disabled pending release acceptance"}</strong>.</p>
@@ -58,7 +58,7 @@ export function Run16OrderOperations({companyId}:{companyId:string}){
        {["draft","prepared","ready"].includes(order.status)?<button className="rounded border p-2"
          type="button" disabled={busy||!COMMERCE_RELEASE_SCOPE.reserveStock}
          onClick={()=>void perform(()=>reserveRun16Order(order.id,storeByOrder[order.id]||undefined,60,crypto.randomUUID(),db))}>
-         Reserve for 60 minutes (release gated)</button>:null}
+         Reserve for 60 minutes</button>:null}
        {(["draft","prepared","ready","reserved","packed"].includes(order.status)&&!order.saleId)?
          <button className="rounded border p-2" type="button" disabled={busy||!(notes[order.id]?.trim())}
            onClick={()=>void perform(()=>cancelRun16Order(order.id,crypto.randomUUID(),notes[order.id],db))}>Cancel unpaid request / release holds</button>:null}
@@ -74,7 +74,7 @@ export function Run16OrderOperations({companyId}:{companyId:string}){
          <button key={action} type="button" className="rounded border p-2"
            disabled={busy||!COMMERCE_RELEASE_SCOPE.fulfillOrders||!order.saleId||!notes[order.id]?.trim()}
            onClick={()=>void perform(()=>recordRun16Delivery(order.id,action,crypto.randomUUID(),notes[order.id],db))}>
-           {label} (release gated)</button>)}
+           {label}</button>)}
      </div>
    </article>)}
  </section>;

@@ -1,0 +1,62 @@
+{
+  "applicationCommit": "a5aa13d882411447b1603720263fe2f7ce647f06",
+  "portableBrowserHarnessCommit": "806f70b43762c0c90b0486caefac386d172d6312",
+  "pinnedNodeArchiveSHA256": "14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647",
+  "pinnedNodeSource": "https://nodejs.org/dist/v24.19.0/SHASUMS256.txt",
+  "pnpm": "10.34.0",
+  "files": {
+    "batch-guards.txt": "7e1c60300226d2175ef5a64e6528899fdd8daf70bc6bd653272864333fa97570",
+    "build-node24.22.txt": "6ef8dd69579791651a7d39db92e5daba3748733b2171a3aba1d38cee620010b9",
+    "chromium-auth.txt": "7770b619048e5ab7ea9f9b8e2dabadba8bc01bfc79deba24c4166e49f0131ccb",
+    "chromium-functional.txt": "010beec158fe3327c654691064e51ae1d8db4ebc0ecc915875275c2bf9ff0434",
+    "chromium-offline-csp.txt": "deca25fe8a6baf4401927360101058eb9fe45ec15c963469520ac0ca64d3043e",
+    "chromium-reference.txt": "e78ca078e46a14fa0b6b65417aee0de2d170aabc9b5b1bfd0020863911b18e35",
+    "chromium-visual.txt": "0ceef7b487658382b0e25ca7379a5ad85ef0d9aa9f0bcb48246285ac752749a0",
+    "client-node24.22.txt": "9206401614d8eb26c7de6ca83f96817fcf678ea7ae22a93c160c14682fefef00",
+    "dependencies.txt": "45d6c7916c6920d22de5ed9470d6d337c3f708e2d4d3707f98ace05b05467a06",
+    "native-node24.22.txt": "1afb175aa0d7ae291734cb86703cfc200721a25587ab80a0215675348bc11307",
+    "pinned-build.txt": "4c90ae93ace6ab5fabfd03aa6a0a97d371224c9effbd0f756a25859c1595b662",
+    "pinned-install.txt": "8eaa8d1e10bbd432b76ed4da7e5f5b70664a57d37c46d45bba94c85782b9d9f8",
+    "pinned-offline.txt": "a9a6b37efb13c44dd3641be6cf4f48b3b1ec90c284400e9c7502720d212c7e5d",
+    "pinned-types.txt": "68f84bd215e1e5482b2cd22e4ed030a848b0d3c9c02a27f62e6a4ab595cd0584",
+    "types-node24.22.txt": "68f84bd215e1e5482b2cd22e4ed030a848b0d3c9c02a27f62e6a4ab595cd0584",
+    "verified-build.txt": "1797cd89322d0c2afc3c7558d073420b74e87cc5057b9a3f50610326962b8437",
+    "verified-client.txt": "091c6b4c0a3eaeab92cd9c71bed0fc8e6b7a57120f7381ddf28f8872205f6196",
+    "verified-native.txt": "7d53d361b95b5dd9b053d1e72131c612fbb3d4be10056ce25a69c60fa9713110",
+    "verified-types.txt": "68f84bd215e1e5482b2cd22e4ed030a848b0d3c9c02a27f62e6a4ab595cd0584",
+    "webkit-complete.txt": "1c748fa9a2c0b32f0be364fde2d6a95fa208d49e6d65ac67207c816306f76783",
+    "commerce-client.txt": "8b1e306e608017c6fe17021062d61d0751c939a207ec0653be6fea62371f5cdc",
+    "commerce-native.txt": "59562ec04c32e9f0ad280ffb4b17857a5029bd74a655e74eb39d2c447036a638",
+    "commerce-types.txt": "68f84bd215e1e5482b2cd22e4ed030a848b0d3c9c02a27f62e6a4ab595cd0584",
+    "commerce-build.txt": "c5a153c429f591099a91514c9cce404e4a4c888f4fe758cb6126f8f2e1e6d6c6",
+    "commerce-browser.txt": "37350b94876db49e905e633038f1554eb3d14e5ea2bd39c9af1a23168edb6608",
+    "commerce-functional.txt": "b315ee506d53242faf2c9b4f32d290c5d8715cd6a715b83151bcba969926f7f6",
+    "commerce-offline.txt": "4b4b47ccd4a3e8f655a2aa644d190279d4d407e909619dbaf5f1928bfcd58be1",
+    "commerce-visual.txt": "b8650b6670004dcb43fcdd60fefbd2fd8970c066efedab77edd3952e49da06d3",
+    "commerce-sql.txt": "d7436729ea9534ea54219d716f4be5bf1e17db558e0cd932c34cbc4c449912b7"
+  },
+  "latestApplicationCommit": "9c1527fc420868bde08b645f209384911844f84c",
+  "verifiedRuntime": "Node 24.19.0; pnpm 10.34.0",
+  "commerceApplicationCommit": "bf7abee2ace4b28b79278efe37bc82858c2c686a",
+  "commerceChecks": {
+    "node": "24.19.0",
+    "pnpm": "10.34.0",
+    "client": {
+      "passed": 1190,
+      "files": 156
+    },
+    "native": {
+      "passed": 994,
+      "skipped": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "chromiumFunctional": 11,
+    "chromiumOffline": 4,
+    "chromiumVisual": 3,
+    "commerceChromium": 1,
+    "commerceWebkit": 1,
+    "commerceSql": 4,
+    "notes": "Full native run preceded the additional refund assertions; the focused SQL suite then passed with those assertions. Browser run preceded only the reference input maxLength correction (160 to the backend limit 80) and CI/output-directory changes. Types/build follow the final application changes."
+  }
+}

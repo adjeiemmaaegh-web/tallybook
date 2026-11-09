@@ -209,3 +209,86 @@ test('two tabs without Web Locks keep one usable AES key during simultaneous fir
     },record)).toBe(expected);
   }
 });
+
+test('owner allocates store stock, transfers units, reserves an order and fulfills it through the POS',async({page})=>{
+ await page.goto('/business');
+ await page.evaluate(async()=>{
+  const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
+  await saveBusinessProfile({name:'Store workflow QA',country:'Ghana',currency:'GHS',businessType:'Retail shop',preferredPaymentMethod:'cash'});
+ });
+ await page.reload();await unlockFixtureOwner(page);
+ const fixture=await page.evaluate(async()=>{
+  const {createProduct}=await import('/src/features/inventory/inventory.ts');
+  const {createStore}=await import('/src/features/stores/storeDirectory.ts');
+  const {openShift}=await import('/src/features/staff/staff.ts');await openShift(0);
+  const product=await createProduct({name:'Rice',sku:'FLOW-RICE',categoryId:'uncategorized',sellingPrice:'10',costPrice:'4',initialStock:'10',lowStockThreshold:'1'},'GHS');
+  const north=await createStore('North'),south=await createStore('South');
+  history.pushState({},'','/stores');window.dispatchEvent(new PopStateEvent('popstate'));
+  return {product:product.id,north:north.id,south:south.id};
+ });
+ await page.getByLabel('Rice (10 company units) / North',{exact:true}).fill('10');
+ await page.getByRole('checkbox',{name:'I confirm the physical opening quantities and exact company-stock reconciliation.'}).check();
+ await page.getByRole('button',{name:'Activate reviewed opening stock',exact:true}).click();
+ await expect(page.getByText('Recorded local store balances',{exact:true})).toBeVisible();
+ const transfers=page.getByRole('region',{name:'Store transfer requests',exact:true});
+ await transfers.getByRole('combobox',{name:'From store',exact:true}).selectOption(fixture.north);
+ await transfers.getByRole('combobox',{name:'To store',exact:true}).selectOption(fixture.south);
+ await transfers.getByRole('combobox',{name:'Product',exact:true}).selectOption(fixture.product);
+ await transfers.getByLabel('Requested quantity',{exact:true}).fill('4');
+ await transfers.getByRole('button',{name:'Create request',exact:true}).click();
+ page.on('dialog',dialog=>dialog.accept());
+ await transfers.getByRole('button',{name:'Dispatch',exact:true}).click();
+ await transfers.getByRole('button',{name:'Confirm receipt',exact:true}).click();
+ await expect(page.getByText('South / Rice: 4 units',{exact:true})).toBeVisible();
+ await page.evaluate(()=>{history.pushState({},'','/commerce');window.dispatchEvent(new PopStateEvent('popstate'));});
+ await page.getByLabel('Customer name',{exact:true}).fill('Order customer');
+ await page.getByLabel('Requested quantity for Rice',{exact:true}).fill('2');
+ await page.getByRole('button',{name:'Save draft request',exact:true}).click();
+ const operations=page.getByRole('region',{name:'Order reservations and delivery',exact:true});
+ await operations.getByRole('combobox',{name:'Store for physical hold',exact:true}).selectOption(fixture.north);
+ await operations.getByRole('button',{name:'Reserve for 60 minutes',exact:true}).click();
+ await expect(operations.getByText('Order customer · reserved',{exact:true})).toBeVisible();
+ const orderId=await page.evaluate(async()=>{const {db}=await import('/src/db/TallybookDB.ts');return (await db.commerceOrders.toArray())[0].id;});
+ await page.evaluate(()=>{history.pushState({},'','/sales');window.dispatchEvent(new PopStateEvent('popstate'));});
+ await page.getByLabel('Reserved commerce order to fulfill').selectOption(orderId);
+ await expect(page.locator('.sale-cart-row')).toHaveCount(1);
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(page.getByLabel('Reserved commerce order to fulfill')).toHaveValue(orderId);
+ await page.getByRole('button',{name:'Complete sale',exact:true}).click();
+ await expect(page.locator('.receipt-confirmation')).toBeVisible();
+ await page.evaluate(()=>{history.pushState({},'','/commerce');window.dispatchEvent(new PopStateEvent('popstate'));});
+ await operations.getByLabel('Action note (required for logistics / cancellation)').fill('Owner confirmed each physical handling step');
+ await operations.getByRole('button',{name:'Record packing',exact:true}).click();
+ await operations.getByRole('button',{name:'Confirm physical dispatch',exact:true}).click();
+ await operations.getByRole('button',{name:'Confirm physical delivery',exact:true}).click();
+ await expect(operations.getByText('Order customer · delivered',{exact:true})).toBeVisible();
+ const state=await page.evaluate(async()=>{const {db}=await import('/src/db/TallybookDB.ts');return {sales:await db.sales.toArray(),products:await db.products.toArray(),orders:await db.commerceOrders.toArray(),holds:await db.commerceHolds.toArray()};});
+ expect(state.sales).toHaveLength(1);expect(state.sales[0].totalMinor).toBe(2000);
+ expect(state.products[0].stockQuantity).toBe(8);expect(state.orders[0].saleId).toBe(state.sales[0].id);
+ expect(state.holds[0].status).toBe('consumed');
+ await page.evaluate(()=>{history.pushState({},'','/stores');window.dispatchEvent(new PopStateEvent('popstate'));});
+ const financial=page.getByRole('region',{name:'Reconciled store sales'});
+ await expect(financial.getByText(/Contribution before expenses:.*12\.00/)).toBeVisible();
+});
+
+test('owner opts into a persisted advisory schedule, sees a result and pauses it',async({page})=>{
+ await page.goto('/business');
+ await page.evaluate(async()=>{const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');await saveBusinessProfile({name:'Schedule UI QA',country:'Ghana',currency:'GHS',businessType:'Retail shop'});});
+ await page.reload();await unlockFixtureOwner(page);
+ await page.evaluate(async()=>{
+  const {createProduct}=await import('/src/features/inventory/inventory.ts');
+  await createProduct({name:'Low stock rice',categoryId:'uncategorized',sellingPrice:'10',costPrice:'1',initialStock:'0',lowStockThreshold:'1'},'GHS');
+  history.pushState({},'','/insights');window.dispatchEvent(new PopStateEvent('popstate'));
+ });
+ const panel=page.getByRole('region',{name:'Scheduled advisory reviews'});
+ await expect(panel.getByText('Scheduling is off until the owner opts in.')).toBeVisible();
+ await panel.getByRole('button',{name:'Enable / update owner-approved reviews'}).click();
+ await expect(panel.getByText(/Last review:/)).toBeVisible();
+ await panel.getByRole('button',{name:'Pause reviews',exact:true}).click();
+ await expect(panel.getByText(/Schedule paused/)).toBeVisible();
+ const saved=await page.evaluate(async()=>{const {db}=await import('/src/db/TallybookDB.ts');return {schedule:(await db.businessProfiles.get('primary')).advisorySchedule,sales:await db.sales.count(),payments:await db.payments.count()};});
+ expect(saved.schedule.state).toBe('paused');expect(saved.schedule.lastRun.findings[0].kind).toBe('stock');
+ expect(saved.sales).toBe(0);expect(saved.payments).toBe(0);
+ await page.reload();await unlockFixtureOwner(page);
+ await expect(panel.getByText(/Schedule paused/)).toBeVisible();
+});

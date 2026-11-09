@@ -3,6 +3,7 @@ import { getCustomerDebtSummary } from "@/features/credit/credit";
 import { getInventorySnapshot } from "@/features/inventory/inventory";
 import { executeLatestSaleReversal, prepareLatestSaleReversal } from "./reversals";
 import { simulatePurchase, simulateRepayment } from "./dryRun";
+import { completeSale } from "@/features/sales/sales";
 import { useAssistantDb } from "./testKit";
 
 describe("Phase 1 transaction simulation and reversal services", () => {
@@ -55,6 +56,16 @@ describe("Phase 1 transaction simulation and reversal services", () => {
     await kit.database.saleLines.add({ ...original, id: `${original.id}-tampered` });
     await expect(executeLatestSaleReversal("GHS", kit.database, "invalid-cost-link")).rejects.toThrow(/reconciliation/);
     expect(await kit.database.products.toArray()).toEqual(before);
+    expect(await kit.database.saleReversals.count()).toBe(0);
+  });
+
+  it("does not reverse a newer sale behind an already confirmed preview", async () => {
+    const preview = await kit.assistant.send("reverse the last sale");
+    const confirm = preview.actions?.find(action => action.type === "confirm_reversal");
+    expect(confirm).toBeTruthy();
+    await completeSale({lines:[{productId:kit.products.eggs.id,quantity:1}],discount:"0",paymentMethod:"cash",amountPaid:"60",currency:"GHS"},kit.database);
+    const result = await kit.assistant.act(confirm!);
+    expect(result.text).toMatch(/latest sale changed/i);
     expect(await kit.database.saleReversals.count()).toBe(0);
   });
 

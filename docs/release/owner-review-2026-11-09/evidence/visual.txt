@@ -1,0 +1,25 @@
+[WebServer] (node:4676) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:4707) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:4757) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] warnings
+[WebServer]   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+[WebServer]   "globDirectory": "/workspace/tallybook/client/dev-dist",
+[WebServer]   "globPattern": "**/*.{js,css,html,svg,png,webp,jpg,jpeg}",
+[WebServer]   "globIgnores": [
+[WebServer]     "**/node_modules/**/*",
+[WebServer]     "sw.js",
+[WebServer]     "workbox-*.js"
+[WebServer]   ]
+[WebServer] }
+[WebServer]
+  ✓  1 qa/premium-home-visual.spec.mjs:11:1 › real local dashboard matches reference hierarchy at desktop and mobile widths (18.8s)
+  ✓  2 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on mobile (3.8s)
+  ✓  3 qa/shop-public-entry.spec.mjs:13:3 › signed-out shared shop welcomes a new visitor on desktop (2.0s)
+
+  3 passed (29.2s)

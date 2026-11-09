@@ -9,7 +9,7 @@
 | Two tabs overwrite each other or send a sale twice | **Yes** | One record per sale, per-sale and per-scope Web Locks, server idempotency key as backstop. |
 | Crash or lost response between "sent" and "confirmed" | **Yes** | State `sending` is persisted; on recovery the server's receipt is looked up before any re-send. |
 | Revoked employee's queued sale posting later | **Yes** (server) | The server checks membership on every call; a rejected sale is parked, never retried silently. |
-| Person using an unlocked device, or script running in this origin (XSS) | **No** | Encryption at rest does not stop a signed-in user or injected script. Controls: CSP (report-only today), sign-out, device security. |
+| Person using an unlocked device, or script running in this origin (XSS) | **No** | Encryption at rest does not stop a signed-in user or injected script. Controls: enforced CSP (built-app offline and injection-blocking browser checks), sign-out, device security. |
 | Lost device key / cleared browser data | **Partly** | If ciphertext survives key loss, the app can flag it for review. Clearing both storage and key removes the local evidence. Check the server for a matching receipt before re-entry. |
 | Plaintext leftovers from before this change | **Migrated** | The old `tallybook.shop.outbox.v1:*` and `tallybook.shop.cache.v1:*` localStorage entries are imported, read back and only then removed. A failed import keeps the old copy. |
 

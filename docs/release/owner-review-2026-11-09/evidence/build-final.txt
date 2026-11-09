@@ -1,0 +1,104 @@
+
+> business-app@1.0.0 build /workspace/tallybook
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.3.7 building client environment for production...
+transforming...
+node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 2123 modules transformed.
+rendering chunks...
+[plugin vite:reporter]
+(!) /workspace/tallybook/client/src/features/backup/crossTabDataLock.mjs is dynamically imported by /workspace/tallybook/client/src/main.tsx but also statically imported by /workspace/tallybook/client/src/features/assistant/assistantLocalStore.ts, /workspace/tallybook/client/src/features/assistant/reversals.ts, /workspace/tallybook/client/src/features/backup/backup.ts, /workspace/tallybook/client/src/features/backup/restoreRecovery.ts, /workspace/tallybook/client/src/features/backup/retailWriteLock.mjs, /workspace/tallybook/client/src/features/business/activeCompany.ts, /workspace/tallybook/client/src/features/customers/quotations.ts, /workspace/tallybook/client/src/features/expenses/expenses.ts, /workspace/tallybook/client/src/features/inventory/inventory.ts, /workspace/tallybook/client/src/features/purchases/purchases.ts, /workspace/tallybook/client/src/features/purchases/supplierPayables.ts, /workspace/tallybook/client/src/features/sales/cashPartialReturnPosting.ts, /workspace/tallybook/client/src/features/sales/sales.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter]
+(!) /workspace/tallybook/client/src/features/backup/restoreJournal.mjs is dynamically imported by /workspace/tallybook/client/src/main.tsx but also statically imported by /workspace/tallybook/client/src/features/backup/backup.ts, /workspace/tallybook/client/src/features/backup/restoreRecovery.ts, /workspace/tallybook/client/src/features/backup/run7RecoveryDecision.mjs, /workspace/tallybook/client/src/features/backup/run7RetailWriteBarrier.mjs, /workspace/tallybook/client/src/features/business/activeCompany.ts, /workspace/tallybook/client/src/features/release/run20LocalDiagnostics.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter]
+(!) /workspace/tallybook/client/src/db/TallybookDB.ts is dynamically imported by /workspace/tallybook/client/src/main.tsx but also statically imported by /workspace/tallybook/client/src/auth/FriendsTestGate.tsx, /workspace/tallybook/client/src/auth/verifyDeviceOwner.ts, /workspace/tallybook/client/src/cloud/QaDeviceEnrollmentPanel.tsx, /workspace/tallybook/client/src/components/AppShell.tsx, /workspace/tallybook/client/src/contexts/BusinessProfileContext.tsx, /workspace/tallybook/client/src/contexts/DatabaseContext.tsx, /workspace/tallybook/client/src/features/assistant/assistant.ts, /workspace/tallybook/client/src/features/backup/backup.ts, /workspace/tallybook/client/src/features/backup/disasterRecoveryDrill.ts, /workspace/tallybook/client/src/features/backup/restoreRecovery.ts, /workspace/tallybook/client/src/features/business/businessProfile.ts, /workspace/tallybook/client/src/features/business/returnPolicySettings.ts, /workspace/tallybook/client/src/features/commerce/Run16OrderOperations.tsx, /workspace/tallybook/client/src/features/commerce/commerce.ts, /workspace/tallybook/client/src/features/commerce/run16Orders.ts, /workspace/tallybook/client/src/features/credit/credit.ts, /workspace/tallybook/client/src/features/customers/customerBenefits.ts, /workspace/tallybook/client/src/features/customers/customers.ts, /workspace/tallybook/client/src/features/customers/quotations.ts, /workspace/tallybook/client/src/features/customers/retentionInsights.ts, /workspace/tallybook/client/src/features/customers/walletTransfers.ts, /workspace/tallybook/client/src/features/drawer/NoSalePanel.tsx, /workspace/tallybook/client/src/features/drawer/noSaleEvent.ts, /workspace/tallybook/client/src/features/expenses/expenses.ts, /workspace/tallybook/client/src/features/insights/Run17EvidencePanel.tsx, /workspace/tallybook/client/src/features/insights/insightEvidence.ts, /workspace/tallybook/client/src/features/insights/run17ReviewStore.ts, /workspace/tallybook/client/src/features/insights/run17Service.ts, /workspace/tallybook/client/src/features/integrations/watchdogBridge.ts, /workspace/tallybook/client/src/features/inventory/advancedInventory.ts, /workspace/tallybook/client/src/features/inventory/inventory.ts, /workspace/tallybook/client/src/features/inventory/promotions.ts, /workspace/tallybook/client/src/features/inventory/stage2Inventory.ts, /workspace/tallybook/client/src/features/payments/Run15PaymentSandboxPanel.tsx, /workspace/tallybook/client/src/features/payments/manualSettlement.ts, /workspace/tallybook/client/src/features/payments/mobileMoney.ts, /workspace/tallybook/client/src/features/payments/run15MockStore.ts, /workspace/tallybook/client/src/features/purchases/purchases.ts, /workspace/tallybook/client/src/features/purchases/supplierPayables.ts, /workspace/tallybook/client/src/features/release/run20CrossRunAudit.ts, /workspace/tallybook/client/src/features/release/run20LocalDiagnostics.ts, /workspace/tallybook/client/src/features/reliability/integrity.ts, /workspace/tallybook/client/src/features/reports/financialIntelligence.ts, /workspace/tallybook/client/src/features/reports/localIntegrityOverview.ts, /workspace/tallybook/client/src/features/reports/reports.ts, /workspace/tallybook/client/src/features/sales/cashPartialReturnPosting.ts, /workspace/tallybook/client/src/features/sales/cashReturnReview.ts, /workspace/tallybook/client/src/features/sales/sales.ts, /workspace/tallybook/client/src/features/sales/useSellerReadiness.ts, /workspace/tallybook/client/src/features/staff/staff.ts, /workspace/tallybook/client/src/features/stores/run13StoreTransactionActivity.ts, /workspace/tallybook/client/src/features/stores/storeDirectory.ts, /workspace/tallybook/client/src/features/stores/storeReport.ts, /workspace/tallybook/client/src/features/stores/storeStockCounts.ts, /workspace/tallybook/client/src/features/stores/storeStockLedger.ts, /workspace/tallybook/client/src/features/stores/storeTransfers.ts, /workspace/tallybook/client/src/features/sync/Run14EncryptedRelayPanel.tsx, /workspace/tallybook/client/src/features/sync/qaDeviceClient.ts, /workspace/tallybook/client/src/features/sync/qaSaleClaimInbox.ts, /workspace/tallybook/client/src/features/sync/run14LocalRelay.ts, /workspace/tallybook/client/src/pages/BackupPage.tsx, /workspace/tallybook/client/src/pages/InventoryPage.tsx, /workspace/tallybook/client/src/pages/PurchasesPage.tsx, /workspace/tallybook/client/src/pages/QuotationsPage.tsx, /workspace/tallybook/client/src/pages/Run19DeviceAcceptancePage.tsx, /workspace/tallybook/client/src/pages/SalesPage.tsx, /workspace/tallybook/client/src/pages/StaffPage.tsx, /workspace/tallybook/client/src/pages/StageHome.tsx, /workspace/tallybook/client/src/pages/StoresPage.tsx, /workspace/tallybook/client/src/pages/SyncStatusPage.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter]
+(!) /workspace/tallybook/client/src/pages/AssistantPage.tsx is dynamically imported by /workspace/tallybook/client/src/App.tsx but also statically imported by /workspace/tallybook/client/src/components/ClementiaLauncher.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+../dist/public/manifest.webmanifest                              0.37 kB
+../dist/public/index.html                                        1.12 kB │ gzip:   0.65 kB
+../dist/public/assets/SharedShopPage-Dz8IM5xF.css               11.23 kB │ gzip:   2.63 kB
+../dist/public/assets/StageHome-DX8rN6Be.css                    14.68 kB │ gzip:   3.29 kB
+../dist/public/assets/index-BjlvMMat.css                       293.36 kB │ gzip:  50.55 kB
+../dist/public/assets/minus-DM79J8vC.js                          0.11 kB │ gzip:   0.13 kB
+../dist/public/assets/plus-Ep3a9-8O.js                           0.15 kB │ gzip:   0.15 kB
+../dist/public/assets/eye-9Tf7K0wQ.js                            0.25 kB │ gzip:   0.20 kB
+../dist/public/assets/archive-DHGuJPJE.js                        0.25 kB │ gzip:   0.21 kB
+../dist/public/assets/receipt-text-oDKCnZ8-.js                   0.29 kB │ gzip:   0.20 kB
+../dist/public/assets/printer-jHATWxw9.js                        0.32 kB │ gzip:   0.23 kB
+../dist/public/assets/DeviceBusinessSetup-B1dgP-un.js            0.32 kB │ gzip:   0.23 kB
+../dist/public/assets/save-C9rkp3ne.js                           0.32 kB │ gzip:   0.22 kB
+../dist/public/assets/wallet-cards-CNJ8oPhv.js                   0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/CloudAccountPage-BjG_hG--.js               0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/archive-restore-Dr_wCUuf.js                0.34 kB │ gzip:   0.24 kB
+../dist/public/assets/clipboard-list-B2MTjGbL.js                 0.41 kB │ gzip:   0.26 kB
+../dist/public/assets/package-plus-DidYoxEi.js                   0.45 kB │ gzip:   0.30 kB
+../dist/public/assets/package-search-DHiSdlW9.js                 0.48 kB │ gzip:   0.32 kB
+../dist/public/assets/trash-2-DbczlqWI.js                        0.54 kB │ gzip:   0.33 kB
+../dist/public/assets/textarea-lcWdIav8.js                       1.07 kB │ gzip:   0.57 kB
+../dist/public/assets/businessSharing-CaxtN0xy.js                1.22 kB │ gzip:   0.67 kB
+../dist/public/assets/shopClient-BcktWTZk.js                     2.50 kB │ gzip:   1.19 kB
+../dist/public/assets/CommercePage-CkoecIib.js                   4.37 kB │ gzip:   1.75 kB
+../dist/public/assets/customerBenefits-CJuM9bz5.js               5.19 kB │ gzip:   1.79 kB
+../dist/public/assets/SyncStatusPage-D2Qyd79H.js                 5.67 kB │ gzip:   2.22 kB
+../dist/public/assets/ExpensesPage-CleDuExK.js                   5.68 kB │ gzip:   2.10 kB
+../dist/public/assets/BusinessHealthPage-C_FfqOkT.js             5.73 kB │ gzip:   2.03 kB
+../dist/public/assets/workbox-window.prod.es5-BBnX5xw4.js        5.75 kB │ gzip:   2.36 kB
+../dist/public/assets/LocalAlertsPage-Dx2m-WIj.js                6.53 kB │ gzip:   2.50 kB
+../dist/public/assets/QuotationsPage-BOg4K9yQ.js                 8.20 kB │ gzip:   2.98 kB
+../dist/public/assets/run19EvidenceEnvelope-BcDn79XB.js         10.94 kB │ gzip:   4.41 kB
+../dist/public/assets/EndOfDayPage-DzXh28fg.js                  12.26 kB │ gzip:   4.19 kB
+../dist/public/assets/InsightsPage-B4nar4aJ.js                  13.71 kB │ gzip:   5.01 kB
+../dist/public/assets/StageHome-CJUHO0Os.js                     14.75 kB │ gzip:   5.06 kB
+../dist/public/assets/StaffPage-CD6O64h5.js                     16.51 kB │ gzip:   5.08 kB
+../dist/public/assets/StoresPage-3WawnARI.js                    16.91 kB │ gzip:   4.76 kB
+../dist/public/assets/integrity-csE-7sBx.js                     17.06 kB │ gzip:   5.28 kB
+../dist/public/assets/CustomerBenefitsPage-BdyB-Iav.js          17.27 kB │ gzip:   5.18 kB
+../dist/public/assets/FinancialIntelligencePage-IUEQN5P4.js     17.30 kB │ gzip:   4.82 kB
+../dist/public/assets/Run19DeviceAcceptancePage-DiMwXUxM.js     18.02 kB │ gzip:   6.41 kB
+../dist/public/assets/financialIntelligence-D-iZZh2g.js         22.41 kB │ gzip:   7.10 kB
+../dist/public/assets/CustomersPage-BybU5Ess.js                 24.76 kB │ gzip:   6.89 kB
+../dist/public/assets/Run20OperationsPage-BfHMUXLg.js           26.87 kB │ gzip:   9.14 kB
+../dist/public/assets/BusinessSetup-BVv1B8zq.js                 28.03 kB │ gzip:   7.86 kB
+../dist/public/assets/ReportsPage-DXL-wyXz.js                   28.77 kB │ gzip:   8.41 kB
+../dist/public/assets/PurchasesPage-Dkg31gsc.js                 28.86 kB │ gzip:   8.02 kB
+../dist/public/assets/select-BQsKAK02.js                        30.51 kB │ gzip:  10.59 kB
+../dist/public/assets/BackupPage-hl0aGSev.js                    32.28 kB │ gzip:  10.58 kB
+../dist/public/assets/InventoryPage-Dfw0Ro41.js                 40.20 kB │ gzip:  11.94 kB
+../dist/public/assets/form-DYrRTZTO.js                          42.12 kB │ gzip:  15.10 kB
+../dist/public/assets/SalesPage-B12pBVHj.js                     81.64 kB │ gzip:  23.31 kB
+../dist/public/assets/SharedShopPage-elTxiRfR.js                95.28 kB │ gzip:  26.49 kB
+../dist/public/assets/index-DFy4vfZV.js                      1,206.61 kB │ gzip: 362.51 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 14.11s
+
+PWA v1.3.0
+mode      generateSW
+precache  57 entries (2178.92 KiB)
+files generated
+  ../dist/public/sw.js
+  ../dist/public/workbox-2fbc6a65.js
+
+  dist/index.js  114.5kb
+
+⚡ Done in 37ms

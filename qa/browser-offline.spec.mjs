@@ -70,3 +70,22 @@ for (const scenario of [{width:1280, tax:false}, {width:390, tax:false}, {width:
     await expect(page.getByText(ledger[0][0].receiptNumber, { exact: true })).toBeVisible();
   });
 }
+
+
+test('built server enforces CSP and never substitutes HTML for failed API or asset requests', async ({page,request}) => {
+  const response=await page.goto('/sales');
+  expect(response.headers()['content-security-policy']).toContain("script-src 'self'");
+  await page.waitForFunction(()=>document.querySelector('#root')?.childElementCount>0);
+  const result=await page.evaluate(async()=>{
+    const violations=[];
+    document.addEventListener('securitypolicyviolation',event=>violations.push(event.effectiveDirective));
+    const script=document.createElement('script');script.textContent='window.__cspInjected = true';document.body.append(script);
+    await new Promise(resolve=>setTimeout(resolve,100));
+    return {injected:window.__cspInjected===true,violations};
+  });
+  expect(result.injected).toBe(false);expect(result.violations).toContain('script-src-elem');
+  const unknown=await request.get('/api/not-a-route');expect(unknown.status()).toBe(404);expect(unknown.headers()['content-type']).toContain('application/json');
+  expect((await request.post('/sales',{data:{amount:100}})).status()).toBe(405);
+  expect((await request.get('/assets/missing.js')).status()).toBe(404);
+  expect((await request.get('/.env')).status()).toBe(404);
+});
