@@ -177,3 +177,35 @@ test('loss of the synthetic device key preserves an unreadable pending sale thro
   });
   expect(result).toEqual({sends:0,dismissed:false,status:'needs-review',unreadable:true});
 });
+
+test('two tabs without Web Locks keep one usable AES key during simultaneous first use', async ({page,context}) => {
+  const peer = await context.newPage();
+  await Promise.all([page.goto('/'),peer.goto('/')]);
+  let arrived = 0;
+  let release;
+  const barrier = new Promise(resolve => {release = resolve;});
+  for (const tab of [page,peer]) {
+    await tab.exposeFunction('keyGenerationBarrier',async () => {
+      if (++arrived === 2) release();
+      await barrier;
+    });
+    await tab.evaluate(() => {
+      Object.defineProperty(navigator,'locks',{configurable:true,value:undefined});
+      const original = crypto.subtle.generateKey.bind(crypto.subtle);
+      crypto.subtle.generateKey = async (...args) => {
+        if (args[0]?.name === 'AES-GCM') await window.keyGenerationBarrier();
+        return original(...args);
+      };
+    });
+  }
+  const [first,second] = await Promise.all([page,peer].map((tab,i) => tab.evaluate(async i => {
+    const {deviceSealer} = await import('/src/cloud/secureStorage.ts');
+    return (await deviceSealer()).seal('record-'+i,'synthetic-context');
+  },i)));
+  for (const [tab,record,expected] of [[page,second,'record-1'],[peer,first,'record-0']]) {
+    expect(await tab.evaluate(async record => {
+      const {deviceSealer} = await import('/src/cloud/secureStorage.ts');
+      return (await deviceSealer()).open(record,'synthetic-context');
+    },record)).toBe(expected);
+  }
+});
