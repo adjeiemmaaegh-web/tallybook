@@ -4,13 +4,13 @@
 
 | Threat | Mitigated? | How / why not |
 |---|---|---|
-| Someone reads a copied browser profile, storage dump or disk image of the shop queue and cache | **Yes** | Queue records and the shop cache are AES-256-GCM sealed. The key is a non-extractable `CryptoKey` in IndexedDB, so key bytes never exist in JavaScript, exports or `localStorage`. |
+| Someone obtains sealed shop records without the device key | **Yes, for the sealed payload** | AES-256-GCM protects the payload. A non-extractable key is stored in IndexedDB. Protection against copying an entire browser profile or disk image depends on platform key storage and requires device testing. |
 | Record swapped between sales, users or companies | **Yes** | The record identity (`scope`, `submissionKey`) is authenticated additional data; a moved record cannot be opened. |
 | Two tabs overwrite each other or send a sale twice | **Yes** | One record per sale, per-sale and per-scope Web Locks, server idempotency key as backstop. |
 | Crash or lost response between "sent" and "confirmed" | **Yes** | State `sending` is persisted; on recovery the server's receipt is looked up before any re-send. |
 | Revoked employee's queued sale posting later | **Yes** (server) | The server checks membership on every call; a rejected sale is parked, never retried silently. |
 | Person using an unlocked device, or script running in this origin (XSS) | **No** | Encryption at rest does not stop a signed-in user or injected script. Controls: CSP (report-only today), sign-out, device security. |
-| Lost device key / cleared browser data | **Partly** | Unsent queued sales become unreadable. They are shown as "needs review" and never deleted automatically; the owner checks the sales list before anyone re-enters them. Sales already confirmed live on the server. |
+| Lost device key / cleared browser data | **Partly** | If ciphertext survives key loss, the app can flag it for review. Clearing both storage and key removes the local evidence. Check the server for a matching receipt before re-entry. |
 | Plaintext leftovers from before this change | **Migrated** | The old `tallybook.shop.outbox.v1:*` and `tallybook.shop.cache.v1:*` localStorage entries are imported, read back and only then removed. A failed import keeps the old copy. |
 
 ## Retention and sign-out behaviour
@@ -22,7 +22,9 @@
 
 Implemented: device key, sealed queue and cache, loss detection, no silent deletion.
 
-**Not implemented:** the owner-controlled *recovery package* (device key wrapped under a separate recovery secret) and recovery-verified replacement of a ledger. It is **not needed for the shop queue and cache** (their authoritative copy is the server) but **is required before any local device-ledger data (IndexedDB/Dexie) is encrypted or migrated.** Until then the local ledger is unchanged and still protected only by the existing authenticated encrypted *export*.
+An acknowledged receipt can be retrieved from the server. A sale that never reached the server exists only in the device queue. Recovering its payload after permanent key loss requires a previously verified recovery copy. The non-extractable device key cannot be exported retrospectively.
+
+The local Dexie ledger stores readable records and indexes. Its encrypted backup protects the exported file. Application-level encryption of the active ledger remains open until a populated copy can be recovered on a clean device, reconciled against its source and safely rolled back after an interrupted conversion.
 
 ## Browser storage inventory (client/src, excluding tests)
 
