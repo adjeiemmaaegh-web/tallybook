@@ -1,4 +1,4 @@
-import { chromium, test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({page}) => {
   page.on('pageerror', error => console.error(error.message));
@@ -111,14 +111,17 @@ test('non-extractable device key survives browser reload outside business backup
 });
 
 
-test('a disconnected shared till preserves a scoped sale across Chromium restart and posts once', async ({}, info) => {
+test('a disconnected shared till preserves a scoped sale across browser restart and posts once', async ({playwright, browserName}, info) => {
   const origin = 'http://127.0.0.1:4176';
   const scope = {userId:'fixture-attendant', companyId:'fixture-store'};
   const sale = {submissionKey:'fixture-sale-001', storeId:'store-a', clientRecordedAt:'2026-11-01T12:00:00Z',
     lines:[{productId:'rice',quantity:2}], tenders:[{method:'cash',amountMinor:900,tenderedMinor:1000}]};
   const posted = [];
   const start = async () => {
-    const context = await chromium.launchPersistentContext(info.outputPath('restart-profile'), {headless:true});
+    const context = await playwright[browserName].launchPersistentContext(info.outputPath('restart-profile'), {
+      headless: true,
+      channel: info.project.use.channel,
+    });
     try {
       await context.route(origin+'/outbox-fixture', route => route.fulfill({contentType:'text/html',body:'<title>Fixture</title>'}));
       await context.route('**/src/cloud/shopClient.ts*', route => route.fulfill({
