@@ -17,7 +17,7 @@ test('vercel serves the baseline security headers', () => {
 });
 
 test('CSP is strict: no inline or eval scripts, no framing, no plugins, limited origins', () => {
-  const csp = headers['Content-Security-Policy-Report-Only'] ?? headers['Content-Security-Policy'];
+  const csp = headers['Content-Security-Policy'];
   assert.ok(csp, 'a CSP header must be configured');
   const d = Object.fromEntries(csp.split(';').map(x => x.trim()).filter(Boolean).map(x => { const [k, ...v] = x.split(/\s+/); return [k, v]; }));
   assert.deepEqual(d['script-src'], ["'self'"]);
@@ -31,6 +31,6 @@ test('CSP is strict: no inline or eval scripts, no framing, no plugins, limited 
 });
 
 test('the Node server sends the same CSP as Vercel', () => {
-  const csp = headers['Content-Security-Policy-Report-Only'] ?? headers['Content-Security-Policy'];
+  const csp = headers['Content-Security-Policy'];
   assert.ok(serverSource.includes(JSON.stringify(csp)), 'server/index.ts must carry the identical policy string');
 });

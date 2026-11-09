@@ -2,7 +2,7 @@
 
 **Decision: NOT READY for a comprehensive full-scope stakeholder handover or production certification.** The existing application passes the local checks recorded below, but the hosted database lacks required operations and the full approved scope still contains disabled functionality. Passing regression tests does not erase those gaps. The owner's follow-up requested review of the existing repository without new provider setup; no provider was selected or enabled.
 
-Reviewed main: `a55686f6689ac2a2898ee7ad89ccf9c6f6317361`. Review branch: `development/v19-owner-completion-audit`. This branch changes only debt-insight aggregation, its regression test and review evidence. No production deployment, customer-data change, hosted migration or shared-history rewrite was performed.
+Reviewed main: `a55686f6689ac2a2898ee7ad89ccf9c6f6317361`. Review branch: `development/v19-owner-completion-audit`. The initial review changed debt-insight aggregation. Continued implementation now also covers executable local store transfers and order fulfillment, historical return destinations, preview-bound reversals, scheduled advisory reviews, reconciled store contribution reporting, and enforced CSP. See DEVELOPMENT.md for the current implementation and verification record. No production deployment, customer-data change, hosted migration or shared-history rewrite was performed.
 
 ## Fixed during review
 
@@ -58,14 +58,14 @@ All eight missing hosted migrations already exist in the canonical repository. T
 
 The live security advisor reports leaked-password protection disabled. [Supabase remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). It also reports two authenticated SECURITY DEFINER RPC warnings and 22 RLS-without-policy informational findings. The RPC-only model intentionally denies direct table access; adding permissive table policies to silence those findings would weaken it. Session and membership authorization are exercised in isolated tests, but that is not an independent full production security audit. [RPC warning guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
 
-The CSP remains report-only in both Vercel and the Node server. The active local Dexie ledger, parked carts and pending device-ledger checkouts remain plaintext; encrypted exports and the sealed shared-shop queue have different protection boundaries. A permanently lost device key cannot recover never-uploaded pending sales without a previously verified recovery copy. These limitations are documented in `docs/security/OFFLINE_DATA_THREAT_MODEL.md`; passing key-loss tests proves preservation/fail-closed behavior, not recovery of the lost payload.
+CSP is now enforced in both Vercel configuration and the Node server; the built-app browser suite verifies offline checkout and blocks an injected inline script. The active local Dexie ledger, parked carts and pending device-ledger checkouts remain plaintext; encrypted exports and the sealed shared-shop queue have different protection boundaries. A permanently lost device key cannot recover never-uploaded pending sales without a previously verified recovery copy. These limitations are documented in `docs/security/OFFLINE_DATA_THREAT_MODEL.md`; passing key-loss tests proves preservation/fail-closed behavior, not recovery of the lost payload.
 
 ## Requirements and branches
 
 [TRACEABILITY.md](TRACEABILITY.md) retains all 82 original acceptance units across all 12 stages, their source paths and historical statuses, with current observations on the missing/incomplete areas. It does not silently convert historical missing statuses to complete based on test counts. In particular:
 
-- Public storefront, online payment, local reservation/fulfilment and automatic synchronization capabilities remain false in `COMMERCE_RELEASE_SCOPE`. Owner-entered shared-shop orders and matching saved sales do not implement unauthenticated public checkout.
-- `RUN17_AUTOMATIC_ACTIONS_ENABLED` remains false. Manual evidence review and the page's review-suggestions checkbox do not implement persisted permissioned scheduled automation.
+- Public storefront, online payment and automatic synchronization remain false in `COMMERCE_RELEASE_SCOPE`. Local reservation and fulfilment are now enabled and exercised through the merchant UI and POS. Owner-entered shared-shop orders and matching saved sales do not implement unauthenticated public checkout.
+- `RUN17_AUTOMATIC_ACTIONS_ENABLED` remains false for financial/external actions. A separate persisted owner-approved local advisory scheduler now supports daily/weekly review, pause/cancel, audit, bounded catch-up, concurrent-tab deduplication and restore-paused behavior. It does not send external notifications.
 - The shared-shop server ledger and the optional device-ledger synchronization architecture have different contracts. Successful shared-till replay does not prove full financial/business-data replication for the latter.
 - Full active-ledger encryption/recovery and the historical deferred branch contracts remain unclosed development/verification work. They cannot be relabelled stakeholder-only checks.
 

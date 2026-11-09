@@ -25,6 +25,22 @@ export interface StoreStockMode {
 }
 export interface OpeningStoreQuantity {storeId: string; productId: string; quantity: number}
 export const MAX_STORE_UNITS = 9_999_999;
+/** Resolve a physical return location without rewriting historical sale attribution. */
+export async function resolveReturnStore(database:TallybookDB,company:string,originalStoreId:string|undefined,requestedStoreId?:string) {
+  if(requestedStoreId!==undefined&&(typeof requestedStoreId!=="string"||!requestedStoreId.trim()||requestedStoreId.length>200))
+    throw new Error("Choose a valid receiving store.");
+  const mode=await database.storeStockModes.get(company);
+  if(!mode){
+    if(requestedStoreId!==undefined)throw new Error("Store inventory has not been activated.");
+    return originalStoreId;
+  }
+  const id=requestedStoreId??originalStoreId;
+  if(!id)throw new Error("Choose the receiving store for this historical sale; its original location is unknown.");
+  const store=await database.storeLocations.get(id);
+  if(!store||store.businessProfileId!==company||store.status!=="active")
+    throw new Error("Receiving store must be active in this company.");
+  return id;
+}
 const whole = (n:number) => Number.isSafeInteger(n) && n >= 0 && n <= MAX_STORE_UNITS;
 const requireCompany = (company:string) => {
   if (company !== getActiveBusinessProfileId()) throw new Error("Company changed during store stock posting.");
@@ -120,7 +136,7 @@ export async function activateStoreInventory(
       throw new Error("Invalid opening store allocation list.");
     return database.transaction("rw",[
       database.appMeta,database.businessProfiles,database.products,database.inventoryBatches,database.inventoryCostEvents,
-      database.storeLocations,database.storeStockEntries,database.storeStockModes,
+      database.storeLocations,database.storeStockEntries,database.storeStockModes,database.commerceHolds,
       database.staffMembers,database.staffAudits
     ],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
@@ -129,6 +145,11 @@ export async function activateStoreInventory(
         throw new Error("Unlock company owner to activate store stock.");
       if (!(await database.businessProfiles.get(company))) throw new Error("Active company missing.");
       if (await database.storeStockModes.get(company)) throw new Error("Store stock already activated.");
+      // An unscoped commitment cannot be assigned to a store by inference.
+      // Preserve the customer order until it is explicitly fulfilled or released.
+      if (await database.commerceHolds.where("businessProfileId").equals(company)
+          .and(hold => hold.status === "active").count())
+        throw new Error("Fulfill or release existing customer reservations before allocating stock to stores.");
       const products=await database.products.where("businessProfileId").equals(company).toArray();
       const stock=products.filter(p=>!p.archivedAt && p.itemKind!=="service");
       if (products.some(p=>p.itemKind!=="service" && p.archivedAt && p.stockQuantity!==0))
@@ -250,10 +271,10 @@ export async function postPairedStoreTransfer(
   ];
   const actor=staffId ? await database.staffMembers.get(staffId) : undefined;
   if(!actor || actor.businessProfileId!==company || actor.disabledAt || actor.role==="cashier" || currentStaffId(company)!==staffId) throw new Error("Verified inventory-authorized transfer actor required.");
-  if(actor.role!=="owner")for(const storeId of [source.id,destination.id]){
-    if(!await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,staffId,storeId]).first())
-      throw new Error("Transfer actor is not assigned to both stores.");
-  }
+  // Source staff authorized dispatch when the reservation was recorded.
+  // Receipt is authorized independently at the destination store.
+  if(actor.role!=="owner" && !await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,staffId,destination.id]).first())
+    throw new Error("Receiving staff is not assigned to the destination store.");
   requireCompany(company);
   await database.storeStockEntries.bulkAdd(legs);
   return transferId;

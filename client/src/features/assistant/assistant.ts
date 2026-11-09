@@ -102,6 +102,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
   let reversalRequest = "";
   let lastPlan: AssistantPlan | null = null;
   let pendingReversalToken: string | null = null;
+  let pendingReversalSaleId: string | undefined;
+  let pendingReversalCompany: string | undefined;
   /** Current application feature awaiting a short follow-up such as “add one”. */
   let appContext: AppCapability | null = null;
 
@@ -574,7 +576,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
       catch (error) { return failure(error instanceof Error ? error.message : "I couldn't simulate that sale safely."); }
     }
     if (/^(?:undo|reverse|cancel)\s+(?:the\s+)?(?:last|most recent)\s+sale/i.test(canonicalText)) {
-      try { const reversal = await prepareLatestSaleReversal(options.currency, database); pendingReversalToken = `reverse-${nanoid(12)}`; reversalRequest = text; return { kind: "preview", text: reversal.text, details: reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} units would be restored` })), actions: [{ type: "confirm_reversal", label: "Confirm reversal", token: pendingReversalToken }, { type: "cancel", label: "Cancel" }] }; }
+      try { const reversal = await prepareLatestSaleReversal(options.currency, database); pendingReversalToken = `reverse-${nanoid(12)}`; pendingReversalSaleId = reversal.saleId; pendingReversalCompany = getActiveBusinessProfileId(); reversalRequest = text; return { kind: "preview", text: reversal.text, details: reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} units would be restored` })), actions: [...(reversal.receivingStores ? reversal.receivingStores.map(store => ({ type: "confirm_reversal" as const, label: `Confirm reversal — receive at ${store.name}`, token: pendingReversalToken!, returnStoreId:store.id })) : [{ type: "confirm_reversal" as const, label: "Confirm reversal", token: pendingReversalToken }]), { type: "cancel", label: "Cancel" }] }; }
       catch (error) { return failure(error instanceof Error ? error.message : "I couldn't prepare a reversal."); }
     }
 
@@ -692,8 +694,9 @@ export function createAssistant(options: AssistantOptions): Assistant {
     if (action.type === "confirm_reversal") {
       if (!pendingReversalToken || action.token !== pendingReversalToken) return failure("This reversal preview is no longer current. Ask me to reverse the latest sale again.");
       pendingReversalToken = null;
+      if (pendingReversalCompany !== getActiveBusinessProfileId()) return failure("Company changed since the reversal preview. Review it again in the intended company.");
       try {
-        const reversal = await executeLatestSaleReversal(options.currency, database, action.token);
+        const reversal = await executeLatestSaleReversal(options.currency, database, action.token, action.returnStoreId, pendingReversalSaleId);
         const details = reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} restored` }));
         const text = `Reversal recorded for ${reversal.originalReceiptNumber}. The original sale remains in the audit history, stock was restored, and derived totals will include the correction.`;
         await recordAudit(database, { businessProfileId: getActiveBusinessProfileId(), action: "sale_reversal", outcome: "saved", summary: text, request: reversalRequest, details, recordId: reversal.id }, context().now);

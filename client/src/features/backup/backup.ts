@@ -1,3 +1,4 @@
+import {validateAdvisorySchedule} from "@/features/insights/advisoryScheduleRules";
 import { taxPolicySchema, validateTaxSnapshot } from "@/features/sales/tax";
 import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
 import {validateCreditTerms} from '@/features/credit/creditTerms.mjs';
@@ -252,6 +253,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     throw new Error("A protected company backup is missing its staff records.");
   if (records.businessProfiles[0].taxPolicy !== undefined) taxPolicySchema.parse(records.businessProfiles[0].taxPolicy);
   const companyId = records.businessProfiles[0].id;
+  for(const profile of records.businessProfiles)validateAdvisorySchedule(profile.advisorySchedule,profile.id);
   validateCategoryHierarchy(records.categories,companyId);
   for(const product of records.products)validatePromotionHistory(product.promotionHistory,product.id,companyId);
   const index = (key: keyof BackupRecords) => new Set((records[key] as Array<{ id: string }>).map((r) => r.id));
@@ -356,6 +358,12 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   for (const observation of records.storeStockObservations) {
     validateStoreStockCount(observation.observedQuantity, observation.note);
     if (!Number.isFinite(Date.parse(observation.observedAt))) throw new Error("Invalid stock observation date.");
+  }
+  for (const row of [...records.saleReversals,...records.cashPartialReturns]) {
+    if (row.returnStoreId === undefined) continue;
+    const store=records.storeLocations.find(store=>store.id===row.returnStoreId);
+    if(typeof row.returnStoreId!=="string"||!store||store.businessProfileId!==row.businessProfileId)
+      throw new Error("Return receiving store is missing or belongs to another company.");
   }
   const extensionRelationships: Array<[keyof BackupRecords, string, keyof BackupRecords]> = [
     ["syncOutbox", "deviceId", "syncDevices"], ["storeAssignments", "storeId", "storeLocations"], ["storeAssignments", "staffId", "staffMembers"],
@@ -738,7 +746,8 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     // Older backups with staff predate the marker. Restoring them must still
     // keep the company protected if its staff rows are later lost.
     await database.businessProfiles.put({...normalized.businessProfiles[0],
-      staffGovernanceEnabled:normalized.staffMembers.length ? true : undefined});
+      staffGovernanceEnabled:normalized.staffMembers.length ? true : undefined,
+      ...(normalized.businessProfiles[0].advisorySchedule?{advisorySchedule:{...normalized.businessProfiles[0].advisorySchedule,state:"paused" as const}}:{})});
     for (const key of recordKeys) if (key !== "businessProfiles" && key !== "appMeta") {
       // Importing a file never grants fresh consent to send records off-device.
       const rows = key === "syncConsents"
