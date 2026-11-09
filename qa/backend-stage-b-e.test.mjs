@@ -155,6 +155,11 @@ test('Stage D: online order does not reserve stock and can link only a matching 
      {productId:t.product,quantity:3}]}),/different details/);
    await assert.rejects(t.call('attendant','listOnlineOrders'),/Only the owner/);
    await assert.rejects(t.call('owner','linkOnlineOrderSale',{orderId,saleId:id()}),/Accept this online order/);
+   const details=(who,cid=t.company)=>t.call(who,'orderLines',{orderId},cid,'tallybook_shop_order_lines');
+   assert.deepEqual((await details('owner')).lines,[{productId:t.product,name:'Rice 1kg',quantity:2,unitPriceMinor:1500}]);
+   await assert.rejects(details('attendant'),/Only the owner/);
+   await assert.rejects(details('rival',t.otherCompany),/Order unavailable/);
+   await assert.rejects(details('outsider'),/access denied/i);
    const accepted=await t.call('owner','acceptOnlineOrder',{orderId});
    assert.equal(accepted.stockReserved,false);
    assert.equal((await t.call('owner','acceptOnlineOrder',{orderId})).replayed,true);

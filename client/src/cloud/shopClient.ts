@@ -79,7 +79,7 @@ export class ShopUnreachableError extends Error {}
 // PostgREST error codes that mean "the database decided", never "network".
 const DECIDED = /^(22|23|42|P0)/;
 
-export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" = "tallybook_shop"): Promise<T> {
+export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" | "tallybook_shop_order_lines" = "tallybook_shop"): Promise<T> {
   const client = getSupabaseClient();
   let response: Awaited<ReturnType<typeof client.rpc>>;
   try {
