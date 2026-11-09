@@ -1,0 +1,380 @@
+{
+  "baseline": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+  "branches": [
+    {
+      "branch": "origin",
+      "sha": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/backend-b-e-20261106",
+      "sha": "9f14d66345fc6172d8ba713fd54cf12a2bd72b49",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/backup/main-before-stakeholder-2026-10-30-ea165a5",
+      "sha": "ba3481eb7742b065670dbe5b5ffcb93a62ee0edb",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/completion/cloud-foundation",
+      "sha": "779a934fc0c4739db940e71bf2bec5f8c189154c",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/development/ghana-pos-stages-01-15",
+      "sha": "156b1dbf5f42d6b6fc87dfd4230d5d7f5274ba2e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/development/v19-cloud-account-sync-integration",
+      "sha": "5e837e7052829e394b4dfa4f66d883308929f779",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/development/v19-friends-web-test",
+      "sha": "9aefbdc0e88aece957d1c338d59a2ac862f10255",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/development/v19-unified-reconciliation",
+      "sha": "669f1cf223385931de67f31d3c002d60d2cfa16d",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/docs/device-ledger-recovery-boundary",
+      "sha": "f7eb378f42590d36040a4aa9581c145430393e85",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feat/auth-gate-2b1",
+      "sha": "a4b83363552c43de77124fa87d8a8c183a644605",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/feat/remote-owner-attendant-sync",
+      "sha": "9041d89dac7a607e84fbc9b57f4f4c7e2671aa41",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feat/supabase-google-auth",
+      "sha": "e92cfd3351a9a69cb6476dca13d0431660a7389d",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feature/cloud-refund-policy",
+      "sha": "49ecfa5a392007b40bdf67121d4556e897d984eb",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feature/next-upgrade",
+      "sha": "3caefad023a7004c628c43b0b2e639c4b43ef1ae",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feature/premium-beginner-home-clementia",
+      "sha": "f854304053a911550ebdd4b30bb5d6885abb515d",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/feature/premium-settings-business-staff-2026-10-15",
+      "sha": "88d35fc07f1677ea03c9225b513adf84207f37a4",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/feature/shared-shop-order-fulfilment",
+      "sha": "5cada6d6bd92c0c10bc9b61c580c38492f666813",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/feature/shared-shop-transfer-workflow",
+      "sha": "7b678b8de45709e5787ae69090b4a6069d3440d7",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/clementia-maximize-minimize-2026-10-14",
+      "sha": "aafab7734e2af2096826b7f5a1958fb0ee6ab150",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/fix/device-key-initialization-recovery",
+      "sha": "2f2dddb17be5671ef5f0c229a7ab87eb850f3d38",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/mobile-role-onboarding",
+      "sha": "ca855f54895fa617724bc6a6e591f7b3d0bd2bca",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/owner-dashboard-recovery",
+      "sha": "5ac5830a5b79662dc98ee48166af7e3436a1ac6e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/private-owner-workspace",
+      "sha": "f9ae792d487f93af331942c00d36eaf52a57a310",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/receipt-print-fallback",
+      "sha": "3611ebb3b556ea907e08d9ccfdc1149f6ce78060",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/release-navigation",
+      "sha": "c3e4dd6a4ba93f0d13d7dfd703c6f5d0b815045d",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/role-entry",
+      "sha": "019f560ded70eb030c5c01b67660405a9e66239d",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/shared-shop-offline-queue-reconciliation",
+      "sha": "f4930fe1bc818e1fc42bb1aaca8710099c6eb0a5",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/shared-shop-role-refresh",
+      "sha": "15fe306cfd22bb59989af6be0f6e7a49ac40c8db",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/supplier-event-attribution",
+      "sha": "d356cd16575e09d70bb6fcd5b08f0cce6012d8a0",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/fix/verified-shop-entry",
+      "sha": "90c5fec03257c9ec29e81d6e2a75a3ad40928ec6",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/frontend-all-stages-20261106",
+      "sha": "246d477cc4b4a93820d3cf2c6c5df2317dc1a905",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/integrate-reference-ui-20261107",
+      "sha": "d2791f83a1ad5b970eafb0e1e51b34b49e2f7d41",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/integration/rc-stabilization-20261108",
+      "sha": "3c38f8aeb4824482cb6d5cfe1f936015602d927f",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/integration/retail-and-navigation",
+      "sha": "36c40f351f24ac5ade399969b5de308533f41d28",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/main",
+      "sha": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/qa/attendant-dashboard-entry",
+      "sha": "3a6c2ac8a1d9ef50da80b270718b3561aacad908",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/qa/device-browser-engines",
+      "sha": "8bd59481cdc1b2ca6d6c7979221506eb2ed4fb50",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/qa/restart-selected-browser",
+      "sha": "155482ef68d6a0e120a278e745e3e4f316f60839",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/qa/shared-till-browser-restart",
+      "sha": "c4f9ab6d37ef1d51fab63d4210534cc5e6a190a3",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/release/shared-shop-ledger",
+      "sha": "a5c141f445393c1e1cb617ca1eed7b53d46d6175",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/review/combined-settings-clementia-2026-10-15",
+      "sha": "9153c386156d4d5905e034da83c570dd9b430369",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/review/finish-historical-reconciliation",
+      "sha": "a1529b3bc4e7ff21a8b0382b417e92b2da0d83ea",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/review/shop-entry-acceptance-20261107",
+      "sha": "a6170ef1bfdbc856d5cf4fb914aa55e291e00d39",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/security/auth-company-boundary-20261013",
+      "sha": "60c4c77ac1d8ca56fd6257e4c0f1913fee79bb2d",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/stage-b-offline-integrity-20261106",
+      "sha": "d4589e2554afabf3e1b8b286b6ddbf8433734072",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/stage9/multistore-integration-20261014",
+      "sha": "cea840632e8b4f03ceabe7ae899d0d7c5bfe3da2",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/stage9/round1-enrollment-lifecycle-20261015",
+      "sha": "359ea1666225d802629f868c52af48ef283f2b02",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/test/populated-ledger-upgrade",
+      "sha": "1e8cd5a471ebc8016c9cf00089ac3725b3ff4234",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/test/private-workspace-return",
+      "sha": "023f9a57b7d9afdf4bea03e749438f2a6b25de5e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19-windows-preview-2026-10-12",
+      "sha": "a2454494351a0533409be27fcccb864ec0d6cc3b",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run10-customer-receivables-20261016",
+      "sha": "55fc621f1179bd620d4bfa30851742f84c8a6629",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run11-company-refund-policy-20261016",
+      "sha": "8f91b8b55c06ac831866660dd352a695c803a8fe",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run12-supplier-tax-20261016",
+      "sha": "2acd7ca22017b29c0470cb1ad3e9a452a5e8d87e",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/v19/run12-supplier-tax-reconciliation-20261016",
+      "sha": "00d130d0c883f37b3dedbdda08a0888ac7bae050",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run13-multistore-development-20261016",
+      "sha": "1564457bd18727916c3ca51df4dd5312834f2cc9",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run14-secure-sync-development-20261016",
+      "sha": "f2eedd8d52a88b94478d74719d5bf8bcda89ddcc",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run15-payment-sandbox-development-20261016",
+      "sha": "f94aa45d8a99803f60c68be267b3bd9a915a16f8",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run16-public-commerce-development-20261016",
+      "sha": "eec6b3384f4c7fd659d9e858429757da2a0d3986",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run17-assistant-analytics-development-20261017",
+      "sha": "c6280f75eb4bc243c761c22990b08b7af403de9e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run18-hardening-development-20261017",
+      "sha": "017d473f6a44ca576c73d2d9ad3804300f85ba98",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run19-device-uat-development-20261017",
+      "sha": "1b6dd6738c6d248ea7469f119a135a729d312295",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run2-transactional-recovery-20261015",
+      "sha": "939e06de8eb313b64211beeb1c94e26859b4af5b",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run20-operations-release-development-20261017",
+      "sha": "f144baec03143f1f0844811084e5d6f030d56aa4",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run3-cloud-membership-20261015",
+      "sha": "e68619ff14937d4ce19951002f5a4c5e12f5f897",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run4-session-lifecycle-20261016",
+      "sha": "f983c7c924b1454c0cf0d2b215498887fd47d01e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run5-tenant-authorization-20261016",
+      "sha": "d06bdfe9b390f9f67a466278b4280cd5398a4e35",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run5-tenant-service-authorization-20261016",
+      "sha": "3d48eb9378e218d9c7cc6f80a2162d0f737378bc",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/v19/run6-staff-authorization-20261016",
+      "sha": "23b06f9f6fb5b94cc4441f3ce83f7ca3037d7bab",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run7-cross-db-recovery-20261016",
+      "sha": "ccb03e864d24917f6f1edcaeb322b8ebb9bd3e0e",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run8-migration-backup-recovery-20261016",
+      "sha": "f1884ff3925f75755a0b97824c557b096ed2e102",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/run9-inventory-financial-reconciliation-20261016",
+      "sha": "e80592b71ffec349f35b6092966093df8397ee57",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/stage-stakeholder-copy-finalization-20261109",
+      "sha": "d5132fb98d590e55f6560833df133c6efd706d69",
+      "ancestorOfReviewedMain": false
+    },
+    {
+      "branch": "origin/v19/stage21-baseline-ci-recovery-20261017",
+      "sha": "8f0e9b646938f92adc0332c64f530388099b49f5",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/stage22-finance-completion-20261017",
+      "sha": "a2c445f0f1eee41bcfb9926991ff9c23e77e88c6",
+      "ancestorOfReviewedMain": true
+    },
+    {
+      "branch": "origin/v19/stage22-financial-workflow-completion-20261017",
+      "sha": "52668cc28687ef6ce1304a601e45413bac6d3093",
+      "ancestorOfReviewedMain": true
+    }
+  ]
+}

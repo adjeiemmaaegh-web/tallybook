@@ -1,5 +1,9 @@
 # Release-candidate verification
 
+## Owner readiness review, November 9
+
+The [current repository review](owner-review-2026-11-09/REVIEW.md) records fresh local regression evidence, all 82 requirement IDs, 75 remote branch tips, and a read-only hosted migration check. The hosted database still lacks the eight migrations below and the operations/order-lines RPCs. Full-scope stakeholder readiness and production certification are **not established**. The review fixes an aggregate-debt rounding defect without changing ledger records.
+
 ## Hosted database handoff, November 9
 
 Read-only inspection found that the production migration history ends at `20261105120712`. The core `tallybook_shop` function is present. The hosted catalog lacks `tallybook_shop_ops` and `tallybook_shop_order_lines`, which the deployed interface uses for purchasing, counts, transfers and order fulfilment.

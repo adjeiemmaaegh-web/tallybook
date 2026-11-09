@@ -1,0 +1,51 @@
+{
+  "baseline": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+  "decision": "NOT_READY_FOR_FULL_SCOPE_STAKEHOLDER_HANDOVER",
+  "sourceChange": "Exact BigInt aggregate debt rendering with regression",
+  "checks": {
+    "nativeFinal": {
+      "passed": 990,
+      "failed": 0,
+      "skipped": 0
+    },
+    "clientFinal": {
+      "passed": 1169,
+      "files": 154,
+      "failed": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "chromium": {
+      "functional": 9,
+      "auth": 5,
+      "offline": 3,
+      "visual": 3,
+      "referenceUi": 8
+    },
+    "webkit": {
+      "status": "environment-blocked",
+      "launchFailures": 1,
+      "notRun": 6
+    },
+    "dependencyAudit": {
+      "moderateOrAbove": 0,
+      "low": 1
+    }
+  },
+  "hosted": {
+    "readOnly": true,
+    "lastAppliedMigration": "20261105120712",
+    "pendingRepositoryMigrations": 8,
+    "operationsRpcPresent": false,
+    "orderLinesRpcPresent": false
+  },
+  "branches": {
+    "tips": 75,
+    "ancestors": 59,
+    "equivalentAdditionalTips": 2,
+    "historicalDivergentTips": 14
+  },
+  "originalAcceptanceUnits": 82,
+  "fullScopeCompletionCertified": false,
+  "productionModified": false
+}
