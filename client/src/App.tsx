@@ -43,6 +43,7 @@ import GoogleSignInPage from "@/pages/GoogleSignInPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import SupabaseSignInPage from "@/pages/SupabaseSignInPage";
 const CloudAccountPage = lazy(() => import("@/pages/CloudAccountPage"));
+const PublicCataloguePage = lazy(() => import("@/pages/PublicCataloguePage"));
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 import { isSupabaseAuthPreviewEnabled } from "@/lib/supabaseAuthPreview";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -119,6 +120,8 @@ function App() {
             // Safe public first page: presents existing sign-in links only.
             // NEVER mounts the local ledger or bypasses verified owner access.
             ? <main className="tb-public-welcome"><TallybookWelcome variant="shop" /></main>
+            : /^\/catalogue\/[0-9a-f-]{36}$/i.test(location)
+            ? <Suspense fallback={<main role="status">Opening catalogue…</main>}><PublicCataloguePage key={location} companyId={location.split('/')[2]} /></Suspense>
             : location === '/shop'
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.

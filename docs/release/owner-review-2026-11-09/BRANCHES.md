@@ -22,7 +22,7 @@ Reviewed baseline: `a55686f6689ac2a2898ee7ad89ccf9c6f6317361`. All 75 remote tip
 | `origin/feature/premium-settings-business-staff-2026-10-15` | `88d35fc07f16` | Historical head unchanged; retain the contract-specific disposition in ../RC_RECONCILIATION.md. Deferred requirements are not certified complete. |
 | `origin/feature/shared-shop-order-fulfilment` | `5cada6d6bd92` | Already included by ancestry |
 | `origin/feature/shared-shop-transfer-workflow` | `7b678b8de457` | Already included by ancestry |
-| `origin/fix/clementia-maximize-minimize-2026-10-14` | `aafab7734e2a` | Historical head unchanged; retain the contract-specific disposition in ../RC_RECONCILIATION.md. Deferred requirements are not certified complete. |
+| `origin/fix/clementia-maximize-minimize-2026-10-14` | `aafab7734e2a` | Functionality already ported: current launcher/standalone assistant retain maximize, minimize and route restore. Current code also isolates modal focus and background scrolling. The November 9 visual suite verifies keyboard focus, Escape, return focus and bounds at widths 320–1536. No duplicate merge needed. |
 | `origin/fix/device-key-initialization-recovery` | `2f2dddb17be5` | Already included by ancestry |
 | `origin/fix/mobile-role-onboarding` | `ca855f54895f` | Already included by ancestry |
 | `origin/fix/owner-dashboard-recovery` | `5ac5830a5b79` | Already included by ancestry |

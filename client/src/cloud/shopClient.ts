@@ -32,7 +32,7 @@ export type PaymentMethod = "cash" | "mobile" | "card";
 export type TenderMethod = PaymentMethod | "credit";
 export interface SaleLineInput { productId: string; quantity: number }
 export interface TenderInput { method: TenderMethod; amountMinor: number; tenderedMinor?: number; reference?: string; customerId?: string }
-interface SaleBase { storeId: string; submissionKey: string; clientRecordedAt?: string; lines: SaleLineInput[] }
+interface SaleBase { commerceOrderId?: string; storeId: string; submissionKey: string; clientRecordedAt?: string; lines: SaleLineInput[] }
 /** The current request: 0 to 5 tenders adding up to the server-priced total after any discount. */
 export interface TenderSaleRequest extends SaleBase { tenders: TenderInput[]; discountMinor?: number; discountReason?: string }
 /** The earlier single-payment shape. Still accepted, so sales queued before an update still send. */
@@ -77,9 +77,9 @@ export class ShopRejectedError extends Error {}
 export class ShopUnreachableError extends Error {}
 
 // PostgREST error codes that mean "the database decided", never "network".
-const DECIDED = /^(22|23|42|P0)/;
+const DECIDED = /^(22|23|40|42|54|P0)/;
 
-export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" | "tallybook_shop_order_lines" = "tallybook_shop"): Promise<T> {
+export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" | "tallybook_shop_order_lines" | "tallybook_public_commerce" = "tallybook_shop"): Promise<T> {
   const client = getSupabaseClient();
   let response: Awaited<ReturnType<typeof client.rpc>>;
   try {

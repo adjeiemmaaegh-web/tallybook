@@ -4,11 +4,19 @@
 
 Reviewed main: `a55686f6689ac2a2898ee7ad89ccf9c6f6317361`. Review branch: `development/v19-owner-completion-audit`. The initial review changed debt-insight aggregation. Continued implementation now also covers executable local store transfers and order fulfillment, historical return destinations, preview-bound reversals, scheduled advisory reviews, reconciled store contribution reporting, and enforced CSP. See DEVELOPMENT.md for the current implementation and verification record. No production deployment, customer-data change, hosted migration or shared-history rewrite was performed.
 
+## Current continued verification
+
+The exact pinned runtime (Node 24.19.0, pnpm 10.34.0) now passes **1,190 client tests in 156 files, 994 native/server/SQL tests with zero skips, TypeScript and the production build**. The customer catalogue → reservation → merchant POS → collection flow executes canonical SQL from Chromium and WebKit (2/2). The updated visual suite passes 3/3, including assistant modal focus/keyboard and 320–1536px layouts. The full WebKit functional/Auth suite previously passed 16/16 at `9c1527f`; subsequent commerce source is separately covered by the two-engine integration journey. Final source-specific logs are recorded under `evidence/continued/`.
+
+WebKit's initial environment blocker was resolved by extracting the missing Debian shared libraries into a temporary browser installation. The system package database is unchanged. Playwright host validation was bypassed because it cannot discover those temporary libraries; browser execution and application assertions were not skipped. This is Linux WebKit evidence, not physical Safari/iOS acceptance.
+
+The source now includes owner-controlled public catalogue publication, authenticated customer reservations, shared stock protection, private order views, retained quote terms, atomic POS linking and manual fulfilment evidence. The new migration remains local. This improves the approved commerce workflow without authorizing hosted changes or enabling online payments.
+
 ## Fixed during review
 
 `createLocalInsights` previously added customer balances using JavaScript Number. Two individually valid balances, `9007199254740991` and `2`, produced the rounded aggregate `9007199254740992`. Aggregation now uses BigInt and renders the exact decimal string `9007199254740993`. A regression exercises the failing boundary. Existing ordinary balance behavior remains covered. No ledger records or money schemas change.
 
-## Executed verification
+## Initial review verification (superseded by the continuation below)
 
 Environment: Linux, Node **24.22.1**, Corepack pnpm **10.34.0**, frozen lockfile, Playwright Chromium 156. The repository CI pins Node 24.19.0; these local results must not be described as a run on that exact patch version. The first installation attempt failed because Corepack's default cache path was unavailable. Retrying with a writable task-specific COREPACK_HOME succeeded without dependency changes.
 
@@ -64,7 +72,7 @@ CSP is now enforced in both Vercel configuration and the Node server; the built-
 
 [TRACEABILITY.md](TRACEABILITY.md) retains all 82 original acceptance units across all 12 stages, their source paths and historical statuses, with current observations on the missing/incomplete areas. It does not silently convert historical missing statuses to complete based on test counts. In particular:
 
-- Public storefront, online payment and automatic synchronization remain false in `COMMERCE_RELEASE_SCOPE`. Local reservation and fulfilment are now enabled and exercised through the merchant UI and POS. Owner-entered shared-shop orders and matching saved sales do not implement unauthenticated public checkout.
+- Public storefront, online payment and automatic synchronization remain false in `COMMERCE_RELEASE_SCOPE`. Local reservation and fulfilment are enabled. A separate authenticated public-catalogue workflow now extends the authoritative shared-shop SQL ledger and is tested through customer and merchant browsers. The legacy device-local public flag remains disabled; it does not control the new SQL catalogue. Online payments remain disabled.
 - `RUN17_AUTOMATIC_ACTIONS_ENABLED` remains false for financial/external actions. A separate persisted owner-approved local advisory scheduler now supports daily/weekly review, pause/cancel, audit, bounded catch-up, concurrent-tab deduplication and restore-paused behavior. It does not send external notifications.
 - The shared-shop server ledger and the optional device-ledger synchronization architecture have different contracts. Successful shared-till replay does not prove full financial/business-data replication for the latter.
 - Full active-ledger encryption/recovery and the historical deferred branch contracts remain unclosed development/verification work. They cannot be relabelled stakeholder-only checks.

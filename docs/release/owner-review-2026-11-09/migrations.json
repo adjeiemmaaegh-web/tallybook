@@ -98,6 +98,13 @@
       "version": "20261109020000",
       "sha256": "92580e2dd8d0b3221233290391de145d11ec1a652652467736db22b966a64d61",
       "hostedApplied": false
+    },
+    {
+      "file": "supabase/migrations/20261109123828_shop_public_commerce_reservations.sql",
+      "version": "20261109123828",
+      "sha256": "bff970e2e53b20082af01580a023b7f09a4d6fbfd5de154697577686eef19526",
+      "hostedApplied": false,
+      "note": "New local customer commerce migration; isolated SQL and browser verification only. Not applied to hosted service."
     }
   ]
 }

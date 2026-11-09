@@ -78,12 +78,12 @@ jobs:
         run: |
           set -o pipefail
           pnpm build 2>&1 | tee artifacts/release-v19/build-ci.log
-      - name: Install Chromium browser
+      - name: Install Chromium and WebKit browsers
         id: chromium
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
           set -o pipefail
-          pnpm exec playwright install --with-deps chromium 2>&1 | tee artifacts/release-v19/browser-install-ci.log
+          pnpm exec playwright install --with-deps chromium webkit 2>&1 | tee artifacts/release-v19/browser-install-ci.log
       - name: Browser functional and IndexedDB acceptance
         if: ${{ always() && steps.chromium.outcome == 'success' }}
         run: |
@@ -99,6 +99,16 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --config playwright.offline.config.mjs 2>&1 | tee artifacts/release-v19/offline-ci.log
+      - name: WebKit functional and authentication acceptance
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.webkit.config.mjs 2>&1 | tee artifacts/release-v19/webkit-ci.log
+      - name: Customer catalogue through SQL to merchant POS
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.commerce.config.mjs 2>&1 | tee artifacts/release-v19/commerce-ci.log
       - name: Dependency vulnerability advisory check
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
