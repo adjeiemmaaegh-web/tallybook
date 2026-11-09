@@ -1,3 +1,7 @@
+import {
+  createSupplier,
+  completePurchase,
+} from "@/features/purchases/purchases";
 import { getStoreFinancialReport } from "./storeFinancialReport";
 import { createAssistant } from "@/features/assistant/assistant";
 import Dexie from "dexie";
@@ -104,6 +108,61 @@ const sale = (
   ...extra,
 });
 describe("executable local store and order lifecycle", () => {
+  it("rejects a new unlocated batch receipt after store activation without partial stock or cost writes", async () => {
+    const { database: d, north: n } = await setup();
+    const p = await createProduct(
+      {
+        name: "Batch product",
+        categoryId: "uncategorized",
+        sellingPrice: "10",
+        costPrice: "4",
+        initialStock: "0",
+        lowStockThreshold: "1",
+      },
+      "GHS",
+      d
+    );
+    const supplier = await createSupplier(
+      { name: "Supplier", phone: "", email: "", address: "", notes: "" },
+      d
+    );
+    const before = {
+      stock: await d.storeStockEntries.count(),
+      costs: await d.inventoryCostEvents.count(),
+      movements: await d.inventoryMovements.count(),
+    };
+    await expect(
+      completePurchase(
+        {
+          supplierId: supplier.id,
+          storeId: n.id,
+          purchaseDate: new Date().toISOString().slice(0, 10),
+          note: "",
+          lines: [
+            {
+              productId: p.id,
+              quantity: "2",
+              unitCost: "4",
+              batchCode: "LOT-1",
+              expiryDate: "2027-11-09",
+            },
+          ],
+          submissionKey: "batch-purchase-001",
+        },
+        "GHS",
+        d
+      )
+    ).rejects.toThrow(/batch provenance/);
+    expect(await d.purchases.count()).toBe(0);
+    expect(await d.inventoryBatches.count()).toBe(0);
+    expect({
+      stock: await d.storeStockEntries.count(),
+      costs: await d.inventoryCostEvents.count(),
+      movements: await d.inventoryMovements.count(),
+    }).toEqual(before);
+    expect((await d.products.get(p.id))?.stockQuantity).toBe(0);
+  });
+
   it("separate source and destination supervisors can dispatch and receive only at their assigned store", async () => {
     const { database: d, product: p, north: n, south: s } = await setup();
     const sender = await createStaff("Sender", "supervisor", "654321", d);

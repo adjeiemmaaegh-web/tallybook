@@ -252,6 +252,8 @@ test('owner allocates store stock, transfers units, reserves an order and fulfil
  await page.evaluate(()=>{history.pushState({},'','/sales');window.dispatchEvent(new PopStateEvent('popstate'));});
  await page.getByLabel('Reserved commerce order to fulfill').selectOption(orderId);
  await expect(page.locator('.sale-cart-row')).toHaveCount(1);
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(page.getByLabel('Reserved commerce order to fulfill')).toHaveValue(orderId);
  await page.getByRole('button',{name:'Complete sale',exact:true}).click();
  await expect(page.locator('.receipt-confirmation')).toBeVisible();
  await page.evaluate(()=>{history.pushState({},'','/commerce');window.dispatchEvent(new PopStateEvent('popstate'));});

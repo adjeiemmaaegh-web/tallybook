@@ -122,6 +122,7 @@ export default function SalesPage() {
     setCustomers(emptyCustomers);
     setSales(emptySales);
     setCart([]);
+    setSaleCommerceOrderId(""); setEligibleCommerceOrders([]);
     setPaymentMethod(preferredPaymentMethod);
     setResumedParkedLines(null);
     setCustomerId("walk-in");
@@ -256,7 +257,7 @@ export default function SalesPage() {
       .catch(()=>{if(live){setStoreAvailable(null);toast.error("Cannot verify this store's available inventory.");}});
     return ()=>{live=false;};
   },[activeCompanyId,storeMode,saleStoreId,sales]);
-  useEffect(()=>{let live=true;setEligibleCommerceOrders([]);setSaleCommerceOrderId("");
+  useEffect(()=>{let live=true;
     if(!activeCompanyId)return;
     void db.commerceOrders.where("businessProfileId").equals(activeCompanyId).toArray()
       .then(rows=>{if(live)setEligibleCommerceOrders(rows.filter(o=>o.status==="reserved"&&
@@ -443,6 +444,7 @@ export default function SalesPage() {
           submissionKey.current=null;
         }}>
         <option value="">Ordinary POS sale</option>
+        {saleCommerceOrderId && !eligibleCommerceOrders.some(order=>order.id===saleCommerceOrderId) ? <option value={saleCommerceOrderId}>Selected reservation unavailable — review before checkout</option> : null}
         {eligibleCommerceOrders.map(o=><option key={o.id} value={o.id}>{o.customerName} · {o.id.slice(0,12)}</option>)}
       </select><small>Only the exact selected reservation may be consumed with this authorized POS receipt. No remote payment is inferred.</small></label>
       {storeMode ? <label><span>Selling store</span><select aria-label="Selling store" required value={saleStoreId} onChange={event=>{setSaleStoreId(event.target.value);setCart([]);setSaleCommerceOrderId("");}}><option value="">Choose store</option>{saleStores.map(store=><option key={store.id} value={store.id}>{store.name}</option>)}</select></label> : null}<label><span>Customer</span><Select value={customerId} onValueChange={setCustomerId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="walk-in">Walk-in customer</SelectItem>{customers.customers.map((customer) => <SelectItem key={customer.id} value={customer.id}>{customer.name} · {customer.phone}</SelectItem>)}</SelectContent></Select></label><label><span>Payment method</span><Select value={paymentMethod} onValueChange={(value) => choosePayment(value as PaymentMethod)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{paymentMethods.map((method) => <SelectItem key={method} value={method}>{paymentMethodLabel(method)}</SelectItem>)}</SelectContent></Select></label><label><span>Amount paid now ({profile.currency})</span><Input aria-describedby="payment-amount-help" inputMode="decimal" disabled={paymentPlan === "credit" || paymentMethod==="split"} value={paymentMethod==="split"?String(splitPreview.paid/divisor):amountPaid} onChange={(event) => { setPaymentPlan("partial"); setAmountPaid(event.target.value); }} placeholder="0.00" /><small id="payment-amount-help">{paymentMethod === "wallet" ? `Prepaid wallet available: ${walletAvailableMinor === null ? "Select a customer" : formatMinorAmount(walletAvailableMinor, profile.currency)}. Wallet settlement is not new cash received.` : "Enter only what you received today for part payment."}</small></label></div>{paymentMethod==="card" ? <label className="block mt-3">Card terminal transaction reference (optional)
