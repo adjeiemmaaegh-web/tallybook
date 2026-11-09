@@ -1,6 +1,6 @@
 /** Tallybook Africa design reminder: this focused receipt sheet stays solid, cobalt-led, touch-safe, and read-only; its actions never write local business data. */
 import { Copy, Printer, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {renderThermalReceiptText} from "@/features/receipts/thermalReceipt.mjs";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,6 +19,11 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
   const [manualText, setManualText] = useState<string | null>(null);
   const [paperMm,setPaperMm] = useState<58|80>(80);
   useEffect(() => { if (open) setManualText(manualCopyText ?? null); }, [manualCopyText, open]);
+  const thermal = useMemo(() => {
+    if (!detail || !open) return null;
+    try { return renderThermalReceiptText(formatReceiptShareText(detail), paperMm); }
+    catch { return null; }
+  }, [detail, open, paperMm]);
   const close = () => { setManualText(null); onOpenChange(false); };
   const share = async () => {
     if (!detail) return;
@@ -30,7 +35,8 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
   };
   const print = () => {
     if (typeof window.print !== "function") return toast.info("Printing is not available in this browser.");
-    window.print();
+    try { window.print(); }
+    catch { toast.info("The browser could not open printing. Use Share receipt to copy the receipt text."); }
   };
 
   return <Dialog open={open && Boolean(detail)} onOpenChange={(nextOpen) => nextOpen ? onOpenChange(true) : close()}>
@@ -85,10 +91,11 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
           </select>
           <small>Choose the matching paper size in the browser printer dialog. Actual paper/driver compatibility must be tested on the printer.</small>
         </section>
-        <pre className="receipt-thermal-output" data-paper={paperMm} aria-hidden="true">{renderThermalReceiptText(formatReceiptShareText(detail),paperMm)}</pre>
+        <pre className="receipt-thermal-output" data-paper={paperMm} aria-hidden="true">{thermal ?? "Thermal layout unavailable."}</pre>
+        {thermal === null && <p role="status">This receipt exceeds the thermal layout limit. Use Share receipt for the full text.</p>}
         <DialogFooter className="receipt-detail-actions">
           <button className="secondary-action" type="button" onClick={() => void share()}><Share2 className="h-4 w-4" aria-hidden="true" />Share receipt</button>
-          <button className="secondary-action receipt-print-action" type="button" onClick={print}><Printer className="h-4 w-4" aria-hidden="true" />Print</button>
+          <button className="secondary-action receipt-print-action" type="button" disabled={thermal === null} onClick={print}><Printer className="h-4 w-4" aria-hidden="true" />Print</button>
           <button className="primary-action" type="button" onClick={close}>Done</button>
         </DialogFooter>
       </article> : null}
