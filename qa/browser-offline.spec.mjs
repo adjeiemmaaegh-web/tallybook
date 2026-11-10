@@ -5,7 +5,12 @@ for (const scenario of [{width:1280, tax:false}, {width:390, tax:false}, {width:
   test(`production PWA checkout and receipt survive offline reload at ${viewport.width}px tax=${scenario.tax}`, async ({ page, context }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto('/sales');
-    await page.waitForFunction(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db' && db.version >= 260));
+    // Poll from the test: waitForFunction does not await a promise-returning predicate, so the old form
+    // passed immediately and only worked while the app happened to open its database first.
+    await expect.poll(
+      () => page.evaluate(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db' && db.version >= 260)),
+      { timeout: 30000, message: 'the local database should be created by the app' },
+    ).toBe(true);
     await page.evaluate(async (withTax) => {
       const request = indexedDB.open('tallybook-db');
       const db = await new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });

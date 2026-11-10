@@ -30,6 +30,8 @@ Daily and end-of-day reports (new Reports tab for owners, "My day" for attendant
 
 Migration hygiene: every migration from `20261106120000` onward now has a rollback script (`supabase/rollback`, run newest first), proven by a test that rolls the whole chain back and applies it again. `supabase/MIGRATION_HISTORY.md` maps production's recorded versions to the repository files and lists what the test project is missing. The test project has **not** been brought up to production (it needs about a dozen migrations applied by hand).
 
+Faster first load: the local ledger's code (providers, shell, routes, offline assistant, backup, sales, forms) now loads only on its own routes, not on `/shop`. First load of the shared shop went from about 440 KB to about 231 KB gzipped; the device routes cost the same as before. The account-change staff lock in `App.tsx` is untouched. A tooltip provider and the currency list moved out of the shared path too.
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.

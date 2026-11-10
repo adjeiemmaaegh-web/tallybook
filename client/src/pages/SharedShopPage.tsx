@@ -40,7 +40,7 @@ import {
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
-import { currencies } from "@/features/business/businessProfile";
+import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
