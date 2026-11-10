@@ -28,6 +28,8 @@ Stock console (Stock tab): stock value at cost (products with no cost are left o
 
 Daily and end-of-day reports (new Reports tab for owners, "My day" for attendants): sales, refunds, net sales, money taken by method, repayments, supplier payments (owners), best sellers, sales per cashier (owners) and the cash that should be in the till, for today, yesterday, the last 7 days or this month, per store or all. It can be shared as text or sent on WhatsApp. The server read is migration `20261110150000` (`dailyReport`, read-only, rollback in `supabase/rollback`), **not yet applied to production**; until then the tab says the shop needs updating.
 
+Migration hygiene: every migration from `20261106120000` onward now has a rollback script (`supabase/rollback`, run newest first), proven by a test that rolls the whole chain back and applies it again. `supabase/MIGRATION_HISTORY.md` maps production's recorded versions to the repository files and lists what the test project is missing. The test project has **not** been brought up to production (it needs about a dozen migrations applied by hand).
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.
