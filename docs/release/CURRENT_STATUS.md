@@ -12,6 +12,10 @@ This is the single page to read first. Everything else under `docs/release/` is 
 
 Quick wins: done (zoom, PWA install, in-app confirmations, supplier archive, documentation pass, one-step transfer, WhatsApp send for receipts, balances and payment confirmations). The owner/employee choice at sign-up already existed; business type needs a server field and moves into the product-fields migration.
 
+Done in code, waiting for the database step: sales search with day, store, payment and text filters plus paging (migrations `20261110120000` indexes and `20261110130000` search, rollbacks in `supabase/rollback`). The app works without them (it falls back to the latest 50 sales, labelled), so the migrations can be applied after the app is deployed. They are not yet applied to production.
+
+Done in code: receipt share, WhatsApp and print in the shared shop, and optional client error reporting (set `VITE_TALLYBOOK_ERROR_REPORT_URL` to turn on delivery; unset, nothing leaves the device).
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.
