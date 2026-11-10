@@ -9,6 +9,7 @@ import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
+import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
 import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
@@ -780,6 +781,7 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
       </form>}
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
+      <SharedShopCatalogImport companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />
       <ul className="shop-product-list shop-stock-list">{overview.products.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
         return <li key={p.id}>
         <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{p.category ? ` · ${p.category}` : ""}{p.barcode ? ` · ${p.barcode}` : ""}{p.kind === "service" ? " · Service" : !tracked ? " · Stock not counted" : active.length ? ` · ${left} in stock` : ""}{low ? " · Low stock" : ""}</span></div>
