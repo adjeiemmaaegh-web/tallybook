@@ -6,6 +6,7 @@
  */
 import { getSupabaseClient } from "@/lib/supabase";
 import { filterSalesLocally, type LocalSalesQuery } from "./salesFilters";
+import { parseDailyReport, type DailyReport } from "./dailyReport";
 
 export type ShopRole = "owner" | "attendant";
 export interface ShopStore { id: string; name: string; status: "active" | "archived" }
@@ -189,6 +190,12 @@ export function mergeCatalog(overview: ShopOverview, catalog: ProductCatalogEntr
     return { ...product, barcode: entry.barcode, category: entry.category, kind: entry.kind, trackStock: entry.trackStock,
       lowStockThreshold: entry.lowStockThreshold, ...("costMinor" in entry ? { costMinor: entry.costMinor ?? null } : {}) };
   }) };
+}
+
+/** The shared shop's daily / end-of-day report for a day range (and optionally one store). Read-only. */
+export async function getDailyReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<DailyReport> {
+  const raw = await callShop<unknown>("dailyReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
+  return parseDailyReport(raw);
 }
 
 export const getShopReadiness = (companyId: string) =>

@@ -169,3 +169,38 @@ describe("shared shop products: the till", () => {
     expect(screen.getByText("Eggs", { selector: "strong" }).closest("li")).toHaveTextContent("Dairy · 2 in stock");
   });
 });
+
+describe("shared shop products: stock console", () => {
+  const card = (label: string) => screen.getByText(label, { selector: "span" }).closest("div") as HTMLElement;
+  const names = () => screen.getAllByRole("listitem").map(li => li.querySelector("strong")?.textContent).filter(Boolean);
+
+  it("summarises value at cost, counts, low and out of stock for the selected store", async () => {
+    await openTab("Stock");
+    await screen.findByText("Eggs");
+    expect(card("Stock value")).toHaveTextContent("GHS 60.00");              // 2 eggs × 30.00; milk has no stock, the haircut is a service
+    expect(card("Products")).toHaveTextContent("3");
+    expect(card("Products")).toHaveTextContent("2 counted");
+    expect(card("Units on hand")).toHaveTextContent("2");
+    expect(card("Low stock")).toHaveTextContent("1");                        // eggs: 2 left, level 5
+    expect(card("Out of stock")).toHaveTextContent("1");                     // milk
+  });
+
+  it("filters the list by status and by text, and offers a way back from an empty result", async () => {
+    await openTab("Stock");
+    await screen.findByText("Eggs");
+    const chip = (name: string) => within(screen.getByRole("group", { name: "Show" })).getByRole("button", { name });
+    fireEvent.click(chip("Out of stock"));
+    expect(names()).toEqual(["Milk"]);
+    fireEvent.click(chip("Low stock"));
+    expect(names()).toEqual(["Eggs"]);
+    fireEvent.click(chip("Not counted"));
+    expect(names()).toEqual(["Haircut"]);
+    fireEvent.click(chip("All"));
+    fireEvent.change(screen.getByLabelText("Search your products"), { target: { value: "6001" } });   // Eggs' barcode
+    expect(names()).toEqual(["Eggs"]);
+    fireEvent.change(screen.getByLabelText("Search your products"), { target: { value: "zzz" } });
+    expect(screen.getByText(/No products match/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show all products" }));
+    expect(names()).toHaveLength(3);
+  });
+});

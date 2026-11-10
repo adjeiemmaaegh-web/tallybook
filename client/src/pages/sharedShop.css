@@ -165,3 +165,16 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-import { margin: 12px 0; padding: 12px; border: 1px dashed var(--ta-line); border-radius: 12px; }
 .shop-import summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .shop-import-skipped, .shop-import-result ul { margin: 8px 0; padding-left: 18px; font-size: .88rem; display: grid; gap: 4px; }
+
+.shop-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 8px 0; }
+.shop-stats > div { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
+.shop-stats span, .shop-stats small { font-size: .78rem; color: var(--ta-muted); }
+.shop-stats strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.shop-stock-search { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 12px; font: inherit; margin: 4px 0; box-sizing: border-box; }
+
+.shop-report h3 { margin: 16px 0 6px; font-size: .95rem; }
+.shop-report-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.shop-report-list li { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
+.shop-report-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+ol.shop-report-list { list-style: decimal inside; }
+.shop-stat-key { border-color: var(--ta-blue, currentColor) !important; background: var(--ta-blue-soft); }

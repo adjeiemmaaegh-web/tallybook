@@ -10,6 +10,8 @@ import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
 import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
+import { SharedShopReports } from "@/cloud/SharedShopReports";
+import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } from "@/cloud/inventoryStats";
 import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
 import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
@@ -42,7 +44,7 @@ import { currencies } from "@/features/business/businessProfile";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "customers";
+type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -255,8 +257,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
-    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
@@ -288,6 +290,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}
+    {tab === "reports" && <SharedShopReports key={overview.role} companyId={business.id} overview={overview} online={online} userId={userId} shopName={business.name} />}
   </>;
 }
 
@@ -797,8 +800,12 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [stockQuery, setStockQuery] = useState("");
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
+  const stats = computeStockStats(overview.products, stockOf);
+  const listed = filterProducts(overview.products, stockQuery).filter(p => matchesFilter(p, stockOf(p.id), stockFilter));
   const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return; setNotice("");
     void run(async () => {
       const input = draftToInput(edit, currency);
@@ -836,7 +843,20 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
       <SharedShopCatalogImport companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />
-      <ul className="shop-product-list shop-stock-list">{overview.products.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
+      {active.length > 0 && overview.products.length > 0 && <div className="shop-stats" aria-label="Stock summary">
+        <div><span>Stock value</span><strong>{stats.valueMinor === null ? "Too large to show" : formatMinorAmount(stats.valueMinor, currency)}</strong>{stats.withoutCost > 0 && <small>{stats.withoutCost} product{stats.withoutCost === 1 ? "" : "s"} with no cost left out</small>}</div>
+        <div><span>Products</span><strong>{stats.products}</strong><small>{stats.counted} counted</small></div>
+        <div><span>Units on hand</span><strong>{stats.units}</strong></div>
+        <div><span>Low stock</span><strong>{stats.low}</strong></div>
+        <div><span>Out of stock</span><strong>{stats.out}</strong></div>
+      </div>}
+      {overview.products.length > 0 && <>
+        <input type="search" className="shop-stock-search" value={stockQuery} onChange={e => setStockQuery(e.target.value)} aria-label="Search your products" placeholder="Search name, category or barcode" maxLength={64} autoComplete="off" />
+        <div className="shop-chips" role="group" aria-label="Show">
+          {STOCK_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={stockFilter === f.id} onClick={() => setStockFilter(f.id)}>{f.label}</button>)}</div>
+        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
+      </>}
+      <ul className="shop-product-list shop-stock-list">{listed.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
         return <li key={p.id}>
         <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{p.category ? ` · ${p.category}` : ""}{p.barcode ? ` · ${p.barcode}` : ""}{p.kind === "service" ? " · Service" : !tracked ? " · Stock not counted" : active.length ? ` · ${left} in stock` : ""}{low ? " · Low stock" : ""}</span></div>
         <div className="shop-stock-controls">

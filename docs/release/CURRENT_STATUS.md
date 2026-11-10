@@ -24,6 +24,10 @@ CSV product import for the shared shop (Stock tab, "Import products from a file"
 
 Park and resume a cart at the till: "Set this cart aside" keeps up to five carts per store on this device only (sealed, per person and business, cleared on sign-out, dropped after a day). Resuming re-checks today's products and stock, so nothing stale is sold. Nothing is recorded or reserved while a cart is parked, and a cart is only cleared from the screen once the device has confirmed it stored it.
 
+Stock console (Stock tab): stock value at cost (products with no cost are left out and counted), products, units on hand, low and out-of-stock counts for the selected store, plus filter chips and a search box.
+
+Daily and end-of-day reports (new Reports tab for owners, "My day" for attendants): sales, refunds, net sales, money taken by method, repayments, supplier payments (owners), best sellers, sales per cashier (owners) and the cash that should be in the till, for today, yesterday, the last 7 days or this month, per store or all. It can be shared as text or sent on WhatsApp. The server read is migration `20261110150000` (`dailyReport`, read-only, rollback in `supabase/rollback`), **not yet applied to production**; until then the tab says the shop needs updating.
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.
