@@ -5,6 +5,7 @@
  * The browser never sends prices or totals it expects the server to trust.
  */
 import { getSupabaseClient } from "@/lib/supabase";
+import { filterSalesLocally, type LocalSalesQuery } from "./salesFilters";
 
 export type ShopRole = "owner" | "attendant";
 export interface ShopStore { id: string; name: string; status: "active" | "archived" }
@@ -103,6 +104,54 @@ function friendlyMessage(message: string) {
   if (/Business access denied/.test(message)) return "You no longer have access to this business.";
   if (/The refund policy changed/.test(message)) return "Someone changed the refund policy. Reload and try again.";
   return message.replace(/^Invalid (\w+)$/, "Something in this request isn't valid ($1).");
+}
+
+/** One page of sales matching the filters. Totals cover every match, not just this page. */
+export interface SalesPage {
+  sales: ShopReceipt[];
+  hasMore: boolean;
+  next: { recordedAt: string; receiptNumber: number } | null;
+  matchCount: number;
+  grossMinor: number;
+  refundedMinor: number;
+  /** True when the server cannot search yet and only its latest sales were filtered here. */
+  limited: boolean;
+}
+export interface SalesQuery extends LocalSalesQuery {
+  limit?: number;
+  before?: { recordedAt: string; receiptNumber: number } | null;
+}
+const toMinor = (value: unknown) => { const n = Number(value); return Number.isSafeInteger(n) ? n : 0; };
+
+/**
+ * Searches sales on the server. A server that has not been upgraded to the
+ * search action answers "Unknown shop operations action"; then the latest
+ * sales are fetched with the old list call and filtered here, and `limited`
+ * tells the screen to say so.
+ */
+export async function searchShopSales(companyId: string, query: SalesQuery, cashierEmail?: (id: string) => string | null | undefined): Promise<SalesPage> {
+  const input: Record<string, unknown> = { companyId };
+  if (query.storeId) input.storeId = query.storeId;
+  if (query.from) input.from = query.from;
+  if (query.to) input.to = query.to;
+  if (query.payment && query.payment !== "all") input.payment = query.payment;
+  if (query.q?.trim()) input.q = query.q.trim();
+  if (query.limit) input.limit = query.limit;
+  if (query.before) { input.beforeRecordedAt = query.before.recordedAt; input.beforeReceiptNumber = query.before.receiptNumber; }
+  try {
+    const r = await callShop<{ sales: ShopReceipt[]; hasMore: boolean; next: SalesPage["next"]; matchCount: number | string; grossMinor: string; refundedMinor: string }>(
+      "searchSales", input, "tallybook_shop_ops");
+    return { sales: r.sales, hasMore: r.hasMore, next: r.next, matchCount: Number(r.matchCount), grossMinor: toMinor(r.grossMinor), refundedMinor: toMinor(r.refundedMinor), limited: false };
+  } catch (cause) {
+    if (!(cause instanceof ShopRejectedError) || !/Unknown shop operations action/.test(cause.message)) throw cause;
+  }
+  const latest = await listShopSales(companyId, query.storeId);
+  const sales = filterSalesLocally(latest, query, cashierEmail);
+  return {
+    sales, hasMore: false, next: null, matchCount: sales.length, limited: true,
+    grossMinor: sales.reduce((n, sale) => n + sale.totalMinor, 0),
+    refundedMinor: sales.reduce((n, sale) => n + (sale.refundedMinor ?? 0), 0),
+  };
 }
 
 export const getShopReadiness = (companyId: string) =>

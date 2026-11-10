@@ -151,3 +151,8 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
   .shop-receipt[data-printing] { position: absolute; left: 0; top: 0; width: 100%; max-width: 80mm; padding: 4mm; color: #000; background: #fff; }
   .shop-receipt[data-printing] .shop-receipt-actions { display: none !important; }
 }
+
+/* Sales filters */
+.shop-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.shop-chip { min-height: 36px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .88rem; cursor: pointer; }
+.shop-chip[aria-pressed="true"] { background: var(--ta-blue-soft); border-color: var(--ta-blue, currentColor); font-weight: 700; }

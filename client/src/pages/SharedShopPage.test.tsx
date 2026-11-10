@@ -17,6 +17,12 @@ vi.mock("@/cloud/shopClient", async (orig) => ({
   getShopOverview: shop.overview,
   recordShopSale: (_c: string, sale: SaleRequest) => shop.record(sale),
   listShopSales: shop.sales,
+  // The Sales tab searches; these tests only care about which sales come back.
+  searchShopSales: async () => {
+    const sales: ShopReceipt[] = await shop.sales();
+    return { sales, hasMore: false, next: null, matchCount: sales.length, limited: false,
+      grossMinor: sales.reduce((n, r) => n + r.totalMinor, 0), refundedMinor: sales.reduce((n, r) => n + (r.refundedMinor ?? 0), 0) };
+  },
   refundShopSale: (_c: string, refund: unknown) => shop.refund(refund),
   recordShopRepayment: (_c: string, repayment: unknown) => shop.repay(repayment),
   getCustomerStatement: shop.statement,
