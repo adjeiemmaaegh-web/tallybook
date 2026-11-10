@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildReport, getRecentErrors, initErrorReporting, reportError, resetErrorReportingForTests } from "./errorReporting";
+import { buildProblemReportText, buildReport, getRecentErrors, initErrorReporting, reportError, resetErrorReportingForTests } from "./errorReporting";
 
 beforeEach(() => { resetErrorReportingForTests(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-10T10:00:00Z")); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
@@ -68,5 +68,28 @@ describe("error reporting", () => {
     window.dispatchEvent(rejection);
     const sources = getRecentErrors().map(r => `${r.source}:${r.message}`);
     expect(sources).toEqual(["window:window-failure", "promise:promise-failure"]);
+  });
+
+  it("builds a problem report with the person's note and scrubbed recent errors only", () => {
+    window.history.replaceState({}, "", "/shop?customer=Ama&token=zzz");
+    vi.stubEnv("VITE_TALLYBOOK_RELEASE", "abc1234");
+    const failure = new Error("Cannot read properties of undefined");
+    failure.stack = "Error: Cannot read properties of undefined\n    at pay (https://tallybook.app/assets/Sales-ab12.js?token=SECRET:10:5)";
+    reportError(failure, "window");
+    const text = buildProblemReportText("  I pressed Pay and it froze  ");
+    expect(text).toContain("Tallybook problem report");
+    expect(text).toContain("Release: abc1234 · Page: /shop");
+    expect(text).toContain("I pressed Pay and it froze");
+    expect(text).toContain("[window] Cannot read properties of undefined");
+    expect(text).toContain("Sales-ab12.js");
+    expect(text).not.toMatch(/Ama|zzz|SECRET|tallybook\.app/);
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("still produces a report when nothing was recorded, and caps the note", () => {
+    const text = buildProblemReportText("§".repeat(900));
+    expect(text).toContain("No errors were recorded on this device.");
+    expect(text.split("§").length - 1).toBe(500);
+    expect(buildProblemReportText("")).toContain("(nothing added)");
   });
 });

@@ -7,6 +7,7 @@
  */
 import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
+import { ReportProblem } from "@/components/ReportProblem";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
@@ -154,6 +155,7 @@ export default function SharedShopPage() {
     {business
       ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
+    <footer className="shop-foot"><ReportProblem /></footer>
   </main>;
 }
 

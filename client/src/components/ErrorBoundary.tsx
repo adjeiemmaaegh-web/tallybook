@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { reportError } from "@/lib/errorReporting";
+import { ReportProblem } from "@/components/ReportProblem";
 
 interface Props {
   children: ReactNode;
@@ -49,6 +50,7 @@ class ErrorBoundary extends Component<Props, State> {
               <RotateCcw size={16} />
               Refresh Tallybook
             </button>
+            <p className="mt-4 text-sm"><ReportProblem className="underline" /></p>
           </div>
         </div>
       );

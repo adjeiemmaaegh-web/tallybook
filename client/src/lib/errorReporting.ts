@@ -105,6 +105,29 @@ export function reportError(error: unknown, source: ErrorReport["source"] = "man
   return true;
 }
 
+/**
+ * The message a person sends to whoever looks after Tallybook, by WhatsApp,
+ * the share sheet or copy-paste. It is built from the same scrubbed reports as
+ * automatic delivery, plus whatever the person types, and is shown to them
+ * before anything is sent. No record data is included.
+ */
+export function buildProblemReportText(notes: string, errors: readonly ErrorReport[] = getRecentErrors()): string {
+  const now = buildReport("report", "manual");
+  const lines = [
+    "Tallybook problem report",
+    `Release: ${now.release} · Page: ${now.path || "/"} · ${now.online ? "online" : "offline"}`,
+    `Time: ${now.at}`,
+    `Browser: ${now.userAgent}`,
+  ];
+  const note = notes.trim().slice(0, 500);
+  lines.push("", "What happened:", note || "(nothing added)");
+  lines.push("", errors.length ? `Recent errors on this device (${errors.length}):` : "No errors were recorded on this device.");
+  for (const e of errors.slice(-5)) {
+    lines.push(`- [${e.source}] ${e.message}${e.stack ? `\n  ${e.stack.split("\n").slice(0, 4).join("\n  ")}` : ""}`);
+  }
+  return lines.join("\n");
+}
+
 /** Installs the global listeners once. Safe to call from tests and the app entry. */
 export function initErrorReporting() {
   if (installed || typeof window === "undefined") return;
