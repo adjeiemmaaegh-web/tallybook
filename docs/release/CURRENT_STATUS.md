@@ -18,6 +18,8 @@ Done in code: receipt share, WhatsApp and print in the shared shop, and free pro
 
 Done in code, waiting for the database step: shared-shop product details (barcode, category, goods or service, stock counting, low-stock level, owner-only cost) with the owner's product form and a till that sells services without stock. Migration `20261110140000` re-declares the live sale and refund functions, so it is **not applied to production yet**. The app works with or without it (an older server keeps every product a counted good, and saves fall back to name, price and availability), so it can be deployed first. Rollback: `supabase/rollback/20261110140000_shop_product_details_down.sql`.
 
+Barcode scan at the shared till: a search box that also takes camera scans (where the browser supports them) and USB or Bluetooth scanners (they type the code and press Enter). A barcode match wins; typed text adds the one product it matches or asks the person to choose; long digit-only codes are never matched by name. It needs the barcode field from the product-details step, so it is useful once that migration is applied.
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.

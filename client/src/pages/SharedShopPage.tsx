@@ -8,6 +8,8 @@
 import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
+import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
+import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
@@ -421,6 +423,9 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queueError, setQueueError] = useState("");
+  const [query, setQuery] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanNote, setScanNote] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
@@ -478,6 +483,35 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const maxFor = (id: string) => { const p = overview.products.find(item => item.id === id); return p && !tracksStock(p) ? UNTRACKED_LINE_MAX : stockOf(id); };
   const available = (p: (typeof overview.products)[number]) => !tracksStock(p) || stockOf(p.id) > 0;
   const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(maxFor(id), (c[id] ?? 0) + delta)) })); };
+  const addProduct = (product: (typeof products)[number]): boolean => {
+    const inCart = cart[product.id] ?? 0;
+    if (!available(product)) { setScanNote(`${product.name} is out of stock in this store.`); return false; }
+    if (inCart >= maxFor(product.id)) { setScanNote(`No more ${product.name} available. ${inCart} already in the cart.`); return false; }
+    change(1, product.id);
+    setScanNote(`Added ${product.name} · ${inCart + 1} in the cart`);
+    setQuery("");
+    return true;
+  };
+  /**
+   * A barcode from the camera, a USB/Bluetooth scanner (which types the code and presses Enter) or the
+   * keyboard. A barcode match wins. Typed text that is not a barcode adds the one product it matches,
+   * and asks the person to choose when it matches several. Long digit-only codes are never matched by
+   * name, so a scan can never add a different product by accident.
+   */
+  const addByCode = (raw: string, fromCamera = false): boolean => {
+    const code = normalizeCode(raw);
+    if (!code) return false;
+    const byCode = findByBarcode(products, code);
+    if (byCode) return addProduct(byCode);
+    if (!fromCamera && !/^[0-9]{6,}$/.test(code)) {
+      const matches = filterProducts(products, code);
+      if (matches.length === 1) return addProduct(matches[0]!);
+      if (matches.length > 1) { setScanNote("Several products match. Tap the one you want."); return false; }
+    }
+    setScanNote(`No product has the barcode ${code}.${overview.role === "owner" ? " Check it, or add it under Stock." : " Ask the owner to add it."}`);
+    return false;
+  };
+  const shown = filterProducts(products, query);
   const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
@@ -522,7 +556,16 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
         : <p className="shop-muted">No products are available to sell yet. Ask the owner to add them.</p>)}
       {products.length > 0 && products.every(p => !available(p)) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
       {!online && products.length > 0 && <p className="shop-muted" role="status">Offline: this list is from the last time you were connected. Stock may have changed.</p>}
-      <ul className="shop-product-list">{[...products].sort((a, b) => Number(available(b)) - Number(available(a))).map(p => { const tracked = tracksStock(p), left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={available(p) ? "" : "is-out"}>
+      {products.length > 0 && <div className="shop-search">
+        <input type="search" value={query} aria-label="Search products or scan a barcode" placeholder="Search or scan a barcode" autoComplete="off" maxLength={64}
+          onChange={e => { setQuery(e.target.value); setScanNote(""); }}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (query.trim()) addByCode(query); } }} />
+        <button type="button" className="secondary-action" aria-pressed={scanning} onClick={() => { setScanNote(""); setScanning(s => !s); }}>{scanning ? "Close camera" : "Scan"}</button>
+      </div>}
+      {scanning && <CameraBarcodeScanner onClose={() => setScanning(false)} onScan={code => { setScanning(false); addByCode(code, true); }} />}
+      <p className="shop-muted" role="status" aria-live="polite">{scanNote}</p>
+      {query.trim() && !shown.length && <p className="shop-muted">No products match “{query.trim()}”. Press Enter if this is a barcode.</p>}
+      <ul className="shop-product-list">{[...shown].sort((a, b) => Number(available(b)) - Number(available(a))).map(p => { const tracked = tracksStock(p), left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={available(p) ? "" : "is-out"}>
         <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.category ? ` · ${p.category}` : ""}{tracked ? ` · ${left ? `${left} in stock` : "Out of stock"}` : p.kind === "service" ? " · Service" : ""}</span></div>
         <div className="shop-stepper">
           <button type="button" className="secondary-action" aria-label={`Remove one ${p.name}`} disabled={!inCart} onClick={() => change(-1, p.id)}><Minus aria-hidden="true" /></button>

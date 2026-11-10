@@ -158,3 +158,6 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-chip[aria-pressed="true"] { background: var(--ta-blue-soft); border-color: var(--ta-blue, currentColor); font-weight: 700; }
 
 .shop-foot { margin-top: 24px; padding: 12px 0; text-align: center; font-size: .88rem; }
+
+.shop-search { display: flex; gap: 8px; align-items: center; }
+.shop-search input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 12px; font: inherit; }
