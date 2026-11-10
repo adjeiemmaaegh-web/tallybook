@@ -156,3 +156,5 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .shop-chip { min-height: 36px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .88rem; cursor: pointer; }
 .shop-chip[aria-pressed="true"] { background: var(--ta-blue-soft); border-color: var(--ta-blue, currentColor); font-weight: 700; }
+
+.shop-foot { margin-top: 24px; padding: 12px 0; text-align: center; font-size: .88rem; }

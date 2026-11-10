@@ -14,7 +14,7 @@ Quick wins: done (zoom, PWA install, in-app confirmations, supplier archive, doc
 
 Sales search with day, store, payment and text filters plus paging is live in production: migrations `20261110120000` (indexes) and `20261110130000` (search) were applied on 2026-11-10 (recorded as `shop_sales_hot_path_indexes` and `shop_sales_search`) and checked with a rolled-back dry run against the real data. The app falls back to the latest 50 sales, labelled, if it ever talks to a server without them. Rollback scripts are in `supabase/rollback`.
 
-Done in code: receipt share, WhatsApp and print in the shared shop, and optional client error reporting (set `VITE_TALLYBOOK_ERROR_REPORT_URL` to turn on delivery; unset, nothing leaves the device).
+Done in code: receipt share, WhatsApp and print in the shared shop, and free problem reporting. A "Report a problem" button (shared shop footer and the error screen) shows scrubbed error details plus the person's own note and lets them send it by WhatsApp, the share sheet or copy. Nothing is uploaded by Tallybook and there is no paid service. Optional settings: `VITE_TALLYBOOK_SUPPORT_WHATSAPP` (the number it opens) and `VITE_TALLYBOOK_ERROR_REPORT_URL` (automatic delivery to an https endpoint; unset by default). Server-side errors are visible for free in the Supabase logs.
 
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 

@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_TALLYBOOK_ERROR_REPORT_URL?: string;
   /** Release label attached to error reports (for example a commit short SHA). */
   readonly VITE_TALLYBOOK_RELEASE?: string;
+  /** International WhatsApp number (with +) that "Report a problem" opens. Unset: the person picks the contact. */
+  readonly VITE_TALLYBOOK_SUPPORT_WHATSAPP?: string;
 }
 
 interface ImportMeta {
