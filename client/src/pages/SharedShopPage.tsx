@@ -10,6 +10,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
 import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
+import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
 import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
@@ -64,6 +65,7 @@ async function writeCache(userId: string, change: (cache: ShopCache) => void) {
 }
 async function clearShopCaches() {
   await removeSealedPrefix(CACHE);
+  await removeSealedPrefix(PARKED_PREFIX);
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
 }
 const methodLabel = (m: string) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : m === "credit" ? "Credit" : m === "split" ? "Split payment" : "Cash";
@@ -424,6 +426,8 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queueError, setQueueError] = useState("");
+  const [parked, setParked] = useState<ParkedCart[]>([]);
+  const [parkNote, setParkNote] = useState("");
   const [query, setQuery] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanNote, setScanNote] = useState("");
@@ -512,6 +516,45 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
     setScanNote(`No product has the barcode ${code}.${overview.role === "owner" ? " Check it, or add it under Stock." : " Ask the owner to add it."}`);
     return false;
   };
+  // Parked carts live on this device only, sealed, per person, business and store.
+  useEffect(() => {
+    let live = true;
+    setParked([]); setParkNote("");
+    if (!storeId) return;
+    void readSealedJson<unknown>(parkedKey(userId, companyId, storeId)).then(value => { if (live) setParked(sanitizeParked(value)); });
+    return () => { live = false; };
+  }, [userId, companyId, storeId]);
+  /** Saves, then reads back: the cart is only cleared from the screen once the device really has it. */
+  const saveParked = async (next: ParkedCart[]): Promise<boolean> => {
+    const name = parkedKey(userId, companyId, storeId);
+    await writeSealedJson(name, next);
+    const stored = sanitizeParked(await readSealedJson<unknown>(name));
+    const ok = stored.length === next.length && next.every(c => stored.some(s => s.id === c.id));
+    if (ok) setParked(next);
+    return ok;
+  };
+  const parkNow = async () => {
+    let next: ParkedCart[];
+    try { next = parkCart(parked, cart, customerId || null); } catch (cause) { setParkNote(message(cause)); return; }
+    if (!(await saveParked(next))) { setParkNote("This device could not keep the cart. It is still on the screen, so finish the sale or write it down."); return; }
+    resetForm(); setCustomerId(""); setReceipt(null); setError("");
+    setParkNote("Cart set aside. Resume it from Parked carts when you are ready.");
+  };
+  const parkedTotal = (p: ParkedCart) => p.lines.reduce((sum, l) => sum + l.quantity * (overview.products.find(x => x.id === l.productId)?.unitPriceMinor ?? 0), 0);
+  const resumeParked = async (p: ParkedCart) => {
+    if (lines.length && !(await confirmAction("Replace the cart on the screen with this parked cart? The cart on the screen will be cleared.", { confirmLabel: "Replace cart" }))) return;
+    const restored = restoreCart(p, overview.products.map(x => ({ id: x.id, name: x.name, active: x.active, unitPriceMinor: x.unitPriceMinor, tracked: tracksStock(x) })), stockOf);
+    if (!Object.keys(restored.cart).length) { setParkNote(`Nothing in this cart can be sold now: ${restored.unavailable.join(", ")}. It stays parked until you discard it.`); return; }
+    if (!(await saveParked(parked.filter(c => c.id !== p.id)))) { setParkNote("This device could not update its parked carts. Try again."); return; }
+    touch(); setReceipt(null); resetForm(); setCart(restored.cart);
+    setCustomerId(p.customerId && customers.some(c => c.id === p.customerId) ? p.customerId : "");
+    const notes = [restored.reduced.length ? `Lowered to the stock on hand: ${restored.reduced.join(", ")}.` : "", restored.unavailable.length ? `Not available now and left out: ${restored.unavailable.join(", ")}.` : ""].filter(Boolean);
+    setParkNote(notes.length ? `Cart resumed. ${notes.join(" ")}` : "Cart resumed.");
+  };
+  const discardParked = async (p: ParkedCart) => {
+    if (!(await confirmAction("Discard this parked cart? Nothing was sold or recorded, and this cannot be undone.", { danger: true, confirmLabel: "Discard" }))) return;
+    if (!(await saveParked(parked.filter(c => c.id !== p.id)))) setParkNote("This device could not update its parked carts. Try again.");
+  };
   const shown = filterProducts(products, query);
   const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
 
@@ -580,6 +623,17 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
     <section className="shop-card shop-checkout" id="shop-checkout">
       {receipt ? <Receipt receipt={receipt} onNext={() => setReceipt(null)} /> : <>
         <h2>Checkout</h2>
+        <div className="shop-park">
+          <button type="button" className="secondary-action" disabled={!lines.length || busy} onClick={() => void parkNow()}>Set this cart aside</button>
+          {parkNote && <p role="status" className="shop-muted">{parkNote}</p>}
+          {parked.length > 0 && <div aria-label="Parked carts" role="group">
+            <p className="shop-muted"><strong>Parked carts ({parked.length})</strong></p>
+            <ul className="shop-list">{parked.map(p => { const customerName = customers.find(c => c.id === p.customerId)?.name; return <li key={p.id}>
+              <span>{parkedItemCount(p)} item{parkedItemCount(p) === 1 ? "" : "s"} · {formatMinorAmount(parkedTotal(p), currency)}{customerName ? ` · ${customerName}` : ""} · {new Date(p.parkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+              <span className="shop-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => void resumeParked(p)}>Resume</button>
+                <button type="button" className="secondary-action" disabled={busy} onClick={() => void discardParked(p)}>Discard</button></span></li>; })}</ul>
+          </div>}
+        </div>
         {discountMinor > 0 && <p className="shop-total shop-subtotal"><span>Before discount</span><span>{formatMinorAmount(subtotal, currency)}</span></p>}
         <p className="shop-total"><span>Total</span><strong>{formatMinorAmount(Math.max(0, total), currency)}</strong></p>
         {perms.canDiscount && (discountOpen

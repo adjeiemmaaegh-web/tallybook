@@ -22,6 +22,8 @@ Barcode scan at the shared till: a search box that also takes camera scans (wher
 
 CSV product import for the shared shop (Stock tab, "Import products from a file"): plain prices, columns in any order, a downloadable template, a preview that lists every skipped row with its reason, one confirmation, progress, and a safe re-run (existing names and barcodes are skipped, never changed). Up to 500 products and 2 MB per file. It uses the product-details action, so it needs that migration applied.
 
+Park and resume a cart at the till: "Set this cart aside" keeps up to five carts per store on this device only (sealed, per person and business, cleared on sign-out, dropped after a day). Resuming re-checks today's products and stock, so nothing stale is sold. Nothing is recorded or reserved while a cart is parked, and a cart is only cleared from the screen once the device has confirmed it stored it.
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.
