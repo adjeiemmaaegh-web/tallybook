@@ -1,4 +1,0 @@
-2026-10-27 dependency audit status
-No package.json or pnpm-lock.yaml changes were introduced by commits c9f736b and 03a89a2.
-A fresh pnpm audit was not run: invoking pnpm from this Windows clone asked Corepack to download the pinned pnpm 10.34.0 package, and that download was stopped. This is a tooling/network limitation, not a passing audit.
-Earlier audit evidence remains in docs/reconciliation/evidence/unified-pnpm-audit-final.json and later local QA records; it is not substituted for a fresh audit of this exact date.

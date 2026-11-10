@@ -1,5 +1,0 @@
-2026-10-27 local preview smoke, source 03a89a2f699fa34eea019f8ee1020448f0eb7efd
-Command: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/start-local-preview.ps1
-Observed: existing node_modules detected; Vite build passed in 25.57s; PWA precache generated; static asset check passed; preview announced http://127.0.0.1:4173/ with cloud/server/live payments disabled.
-HTTP check: Invoke-WebRequest http://127.0.0.1:4173/ returned STATUS=200, TYPE=text/html; charset=utf-8, LENGTH=1118.
-The temporary preview was stopped with Ctrl+C after the check. This is not physical-device or production acceptance.
