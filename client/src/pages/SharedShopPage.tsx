@@ -7,6 +7,8 @@
  */
 import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
+import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
+import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
@@ -595,11 +597,38 @@ function tenderText(t: NonNullable<ShopReceipt["tenders"]>[number], money: (v: n
   return `On credit ${money(t.amountMinor)}`;
 }
 
-function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => void }) {
+export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  const [shareNote, setShareNote] = useState("");
+  const [manualText, setManualText] = useState("");
+  const text = () => formatShopReceiptText(receipt);
+  const share = async () => {
+    setManualText("");
+    const result = await shareBusinessText({ title: `Receipt ${receipt.receiptNumber}`, text: text() });
+    if (result === "shared") setShareNote("Receipt opened in your share options.");
+    else if (result === "copied") setShareNote("Receipt text copied. Paste it into a message.");
+    else if (result === "manual") { setManualText(text()); setShareNote("Copy the receipt text below."); }
+    else setShareNote("");
+  };
+  const whatsApp = () => {
+    setManualText("");
+    const opened = openWhatsAppShare(text(), receipt.customer?.phone, countryForCurrency(receipt.currency));
+    if (opened) setShareNote(receipt.customer?.phone ? "Receipt opened in WhatsApp. Press send there." : "Receipt opened in WhatsApp. Choose the customer and press send.");
+    else { setManualText(text()); setShareNote("WhatsApp could not open. Copy the receipt text below."); }
+  };
+  const print = () => {
+    const node = root.current;
+    if (!node || typeof window.print !== "function") { setShareNote("Printing is not available in this browser. Use Share instead."); return; }
+    // The page-wide print stylesheet hides everything; only this receipt is revealed.
+    node.setAttribute("data-printing", "true");
+    const done = () => { node.removeAttribute("data-printing"); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done);
+    try { window.print(); } catch { done(); setShareNote("The browser could not open printing. Use Share instead."); }
+  };
   const money = (v: number) => formatMinorAmount(v, receipt.currency);
   const discount = receipt.discountMinor ?? 0;
   const tenders = receipt.tenders ?? [];
-  return <div className="shop-receipt" aria-label={`Receipt ${receipt.receiptNumber}`}>
+  return <div className="shop-receipt" ref={root} aria-label={`Receipt ${receipt.receiptNumber}`}>
     <p className="shop-receipt-ok"><Check aria-hidden="true" />Sale recorded</p>
     <p className="shop-muted">Receipt #{receipt.receiptNumber} · {receipt.storeName} · {new Date(receipt.recordedAt).toLocaleString()}</p>
     <ul>{receipt.lines.map(l => <li key={l.productId}><span>{l.quantity} × {l.name}</span><span>{money(l.lineTotalMinor)}</span></li>)}</ul>
@@ -614,7 +643,14 @@ function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => voi
       {receipt.refunds.map(r => <p key={r.refundId}><Undo2 aria-hidden="true" />Refund {r.refundNo}: {money(r.amountMinor)}{(r.creditMinor ?? 0) > 0 ? ` (${money(r.creditMinor!)} off what they owe${r.amountMinor > r.creditMinor! ? `, ${money(r.amountMinor - r.creditMinor!)} by ${methodLabel(r.method).toLowerCase()}` : ""})` : ` by ${methodLabel(r.method).toLowerCase()}`} · {r.reason}{r.returnedToStock ? " · back in stock" : " · not restocked"} · {new Date(r.recordedAt).toLocaleString()}</p>)}
       <p className="shop-total"><span>Kept after refunds</span><strong>{money(receipt.totalMinor - receipt.refundedMinor)}</strong></p>
     </div>}
-    {onNext && <button type="button" className="primary-action" onClick={onNext}>New sale</button>}
+    <div className="shop-receipt-actions shop-actions">
+      <button type="button" className="secondary-action" onClick={() => void share()}>Share</button>
+      <button type="button" className="secondary-action" onClick={whatsApp}>Send on WhatsApp</button>
+      <button type="button" className="secondary-action" onClick={print}>Print</button>
+    </div>
+    {shareNote && <p role="status" className="shop-muted shop-receipt-actions">{shareNote}</p>}
+    {manualText && <textarea className="shop-receipt-actions" readOnly rows={8} value={manualText} aria-label="Receipt text to copy" onFocus={e => e.currentTarget.select()} />}
+    {onNext && <button type="button" className="primary-action shop-receipt-actions" onClick={onNext}>New sale</button>}
   </div>;
 }
 
