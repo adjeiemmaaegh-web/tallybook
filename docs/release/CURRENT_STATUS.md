@@ -32,6 +32,8 @@ Migration hygiene: every migration from `20261106120000` onward now has a rollba
 
 Faster first load: the local ledger's code (providers, shell, routes, offline assistant, backup, sales, forms) now loads only on its own routes, not on `/shop`. First load of the shared shop went from about 440 KB to about 231 KB gzipped; the device routes cost the same as before. The account-change staff lock in `App.tsx` is untouched. A tooltip provider and the currency list moved out of the shared path too.
 
+Phone-width pass on the shared shop: a browser check (`qa/shop-phone-layout.spec.mjs`, run by CI) loads the real app at 360 and 320 px as an owner and as an attendant, with only the Supabase network mocked, visits every tab, and fails if anything makes the page scroll sideways or stick out, or if a field is under 16 px (which makes iPhones zoom in). It found and fixed three real problems: pages up to 64 px too wide on Sell and Stock, every field at 13.6 px, and Sales amounts clipped. Not covered: iPhone Safari itself, real keyboards and slow networks.
+
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
 Later: assistant over shared-shop data, quotations and loyalty in the shared shop, Bluetooth receipt printing, product images and variants, accounting export, app-store packaging.

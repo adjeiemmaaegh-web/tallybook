@@ -94,6 +94,11 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --config playwright.auth.config.mjs 2>&1 | tee artifacts/release-v19/auth-ci.log
+      - name: Shared shop phone-width layout
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.shop-phone.config.mjs 2>&1 | tee artifacts/release-v19/shop-phone-ci.log
       - name: Offline built-app acceptance
         if: ${{ always() && steps.chromium.outcome == 'success' && steps.build.outcome == 'success' }}
         run: |
