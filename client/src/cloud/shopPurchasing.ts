@@ -23,6 +23,10 @@ export const getShopPurchaseDetails=(companyId:string,orderId:string)=>callShop<
 export const saveShopSupplier=(companyId:string,name:string,supplierId:string)=>callShop<{
  supplierId:string;name:string;archived:boolean;replayed:boolean
 }>("saveSupplier",{companyId,supplierId,name},"tallybook_shop_ops");
+/** Archiving hides a supplier from new orders; past orders, receipts and settlements stay intact. */
+export const archiveShopSupplier=(companyId:string,supplierId:string)=>callShop<{
+ supplierId:string;archived:boolean
+}>("archiveSupplier",{companyId,supplierId},"tallybook_shop_ops");
 export const createShopPurchaseOrder=(companyId:string,input:{
  orderId:string;storeId:string;supplierId:string;reference:string;
  lines:Array<{productId:string;quantity:number;unitCostMinor:number}>;

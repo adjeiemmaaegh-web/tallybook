@@ -2,6 +2,7 @@
  * applying fails on the server if stock changed since count began.
  */
 import {useCallback,useEffect,useRef,useState} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import {openStockCount} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {getShopStockCounts,startShopStockCount,applyShopStockCount,cancelShopStockCount,type ShopStockCount} from "./shopPurchasing";
@@ -40,12 +41,12 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
     startKey.current=null;
   },"Stock count opened");
  };
- const apply=(item:ShopStockCount)=>{
+ const apply=async(item:ShopStockCount)=>{
   const text=counted[item.countId]?.trim();
   if(!text||!/^(0|[1-9][0-9]*)$/.test(text)){setError("Enter a whole counted quantity of zero or more.");return;}
   const countedQuantity=Number(text);
   if(!Number.isSafeInteger(countedQuantity)||countedQuantity>2147483647){setError("Count exceeds supported stock limit.");return;}
-  if(!window.confirm("Confirm the physical shelf count? The server will refuse to apply it if stock changed since the count started."))return;
+  if(!(await confirmAction("Confirm the physical shelf count? The server will refuse to apply it if stock changed since the count started.")))return;
   void action(()=>applyShopStockCount(companyId,{countId:item.countId,countedQuantity}),"Physical stock count");
  };
  const stores=overview.stores.filter(s=>s.status==="active");
@@ -66,7 +67,7 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
    <p>{stores.find(s=>s.id===row.storeId)?.name??row.storeId} · At count start: {row.expectedQuantity} units</p>
    <label className="shop-field">Physically counted units<input inputMode="numeric" value={counted[row.countId]??""} onChange={e=>setCounted(x=>({...x,[row.countId]:e.target.value}))}/></label>
    <div className="shop-actions"><button type="button" className="primary-action" disabled={!online||busy} onClick={()=>apply(row)}>Apply physical count</button>
-    <button type="button" className="secondary-action" disabled={!online||busy} onClick={()=>{if(window.confirm("Cancel this unposted count?"))void action(()=>cancelShopStockCount(companyId,row.countId),"Count cancelled");}}>Cancel</button></div>
+    <button type="button" className="secondary-action" disabled={!online||busy} onClick={async()=>{if(await confirmAction("Cancel this unposted count?",{danger:true}))void action(()=>cancelShopStockCount(companyId,row.countId),"Count cancelled");}}>Cancel</button></div>
   </div>)}
   <p className="shop-muted">Latest server count history (up to 100): {counts.length} records, including {counts.filter(c=>c.status==="applied").length} applied and {counts.filter(c=>c.status==="cancelled").length} cancelled.</p>
  </section>;

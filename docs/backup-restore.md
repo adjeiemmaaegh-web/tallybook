@@ -16,8 +16,8 @@ Open **Backup**, choose a Tallybook `.json` file, review its business name and r
 
 ## Safety boundary
 
-The backup file is not encrypted by Tallybook and may contain personal and business information. Keep it private. Stage 9 does not add cloud storage, automatic sync, an account, or a remote copy.
+Backups come in two forms. **Download your local backup** writes a readable `.json` file that anyone holding it can read, so keep it private. **Download encrypted backup** asks for a passphrase and encrypts the file with AES-GCM (key derived with PBKDF2); without the passphrase it cannot be opened, and Tallybook cannot recover a lost passphrase. Store the passphrase separately from the file. Older unencrypted backups still restore, after a warning. Tallybook does not upload either form anywhere: there is no automatic cloud copy.
 
 ## Stage 12 release handover
 
-The release candidate includes an owner start guide, troubleshooting guide, and release checklist alongside this restore contract. Before publishing or moving to another device, the owner should download a fresh backup, test the file with the backup workspace, and keep it private. The checklist never treats a readable JSON backup as encrypted or as a remote safety copy.
+The release candidate includes an owner start guide, troubleshooting guide, and release checklist alongside this restore contract. Before publishing or moving to another device, the owner should download a fresh backup, test the file with the backup workspace, and keep it private. The checklist never treats a readable JSON backup as encrypted, and never treats any local file as a remote safety copy.

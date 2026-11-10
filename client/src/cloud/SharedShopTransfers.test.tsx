@@ -1,4 +1,4 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {expect, it, vi} from "vitest";
 import {SharedShopTransfers} from "./SharedShopTransfers";
 import {callShop, type ShopOverview} from "./shopClient";
@@ -30,7 +30,7 @@ it("only exposes the next physical handoff and hides transfer actions offline", 
     view.rerender(<SharedShopTransfers {...props} online />);
     expect(screen.queryByRole("button", {name:"Confirm receipt"})).toBeNull();
     fireEvent.click(await screen.findByRole("button", {name:"Confirm dispatch"}));
-    expect(callShop).toHaveBeenCalledWith("dispatchTransfer", {companyId:"shop",transferId:"t1"}, "tallybook_shop_ops");
+    await waitFor(() => expect(callShop).toHaveBeenCalledWith("dispatchTransfer", {companyId:"shop",transferId:"t1"}, "tallybook_shop_ops"));
     const receive = await screen.findByRole("button", {name:"Confirm receipt"});
     expect(screen.queryByRole("button", {name:"Cancel transfer"})).toBeNull();
     fireEvent.click(receive);

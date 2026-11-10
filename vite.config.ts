@@ -19,13 +19,15 @@ export default defineConfig({
         background_color: "#F7F1E6",
         display: "standalone",
         start_url: "/",
+        id: "/",
+        scope: "/",
+        lang: "en",
+        categories: ["business", "finance", "productivity"],
         icons: [
-          {
-            src: "/tallybook-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
+          { src: "/tallybook-icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/tallybook-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          // Padded copy so Android's adaptive-icon masks never crop the mark.
+          { src: "/tallybook-icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {

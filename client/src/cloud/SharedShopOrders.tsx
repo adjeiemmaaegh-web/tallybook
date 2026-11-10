@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useRef, useState, type FormEvent} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import {callShop, listShopSales, type ShopOverview, type ShopReceipt} from "./shopClient";
 import {purchaseRetry} from "./purchaseRetry";
 import {formatMinorAmount} from "@/features/inventory/inventory";
@@ -126,13 +127,13 @@ function OrderReview({order, companyId, currency, store, busy, save}: {
           <option value="">Choose receipt</option>{sales.map(s => <option key={s.saleId} value={s.saleId}>
             #{s.receiptNumber} · {new Date(s.recordedAt).toLocaleString()} · {formatMinorAmount(s.totalMinor,currency)}
           </option>)}</select></label>
-        <button type="button" disabled={!saleId} onClick={() => {
-          if (window.confirm("Confirm this recorded receipt fulfilled the selected order?")) post("linkOnlineOrderSale",{saleId});
+        <button type="button" disabled={!saleId} onClick={async () => {
+          if (await confirmAction("Confirm this recorded receipt fulfilled the selected order?")) post("linkOnlineOrderSale",{saleId});
         }}>Link receipt</button></>}
       {(status === "accepted" || status === "new") && <>
         <label className="shop-field">Reason for closing unfulfilled<input value={reason} maxLength={200} onChange={e => setReason(e.target.value)} /></label>
-        <button type="button" disabled={reason.trim().length<3} onClick={() => {
-          if (window.confirm("Close this order as unfulfilled?")) post("closeOnlineOrder",{reason:reason.trim()});
+        <button type="button" disabled={reason.trim().length<3} onClick={async () => {
+          if (await confirmAction("Close this order as unfulfilled?", { danger: true })) post("closeOnlineOrder",{reason:reason.trim()});
         }}>Close unfulfilled</button></>}
     </fieldset>
   </article>;

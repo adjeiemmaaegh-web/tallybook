@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import {nanoid} from "nanoid";
 import {formatMinorAmount} from "@/features/inventory/inventory";
 import {getCashReturnReview} from "@/features/sales/cashReturnReview.ts";
@@ -40,10 +41,10 @@ export function CashReturnReviewDialog({saleId,onClose,onSaved}:{saleId:string|n
  },[review,lineId,quantity]);
  async function saveReturn(){
   if(!saleId||!review||!quote.result||!cashConfirmed||!stockConfirmed||saving||saved)return;
-  if(!window.confirm(
+  if(!(await confirmAction(
     "Confirm cash was ALREADY physically returned and the selected items were inspected and accepted as sellable. "+
     "This will now record a local financial and stock return. Never hand out money twice when retrying."
-  ))return;
+  )))return;
   submissionKey.current??="cash-return-"+nanoid(16);
   setSaving(true);setProblem(null);
   try{

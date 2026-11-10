@@ -6,6 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import { confirmAction } from "@/lib/confirmAction";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
@@ -697,7 +698,7 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
       <ul className="shop-members">{attendants.map(m => <li key={m.userId}>
         <div className="shop-member-head"><strong>{m.email ?? "Attendant"}</strong>
           <button type="button" className="secondary-action shop-danger" disabled={busy || !online} aria-label={`Remove ${m.email ?? "attendant"}`}
-            onClick={() => { if (window.confirm(`Remove ${m.email ?? "this attendant"} from the shop? They will lose access immediately.`)) void run(() => revokeCloudAttendant(companyId, m.userId)); }}><Trash2 aria-hidden="true" /></button></div>
+            onClick={async () => { if (await confirmAction(`Remove ${m.email ?? "this attendant"} from the shop? They will lose access immediately.`, { danger: true, confirmLabel: "Remove" })) void run(() => revokeCloudAttendant(companyId, m.userId)); }}><Trash2 aria-hidden="true" /></button></div>
         <MemberPermissions key={JSON.stringify(overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS)} companyId={companyId} member={m}
           current={overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS} online={online} refresh={refresh} />
         <fieldset><legend>Can sell in</legend>
@@ -976,7 +977,7 @@ function RefundForm({ companyId, receipt, online, onDone }: { companyId: string;
   const send = async (whole: boolean) => {
     if (!reason.trim()) { setError("Say why this is being refunded."); return; }
     const amount = whole ? leftMinor : chosenMinor;
-    if (!window.confirm(`Refund ${money(amount)}? ${route} This can't be undone.`)) return;
+    if (!(await confirmAction(`Refund ${money(amount)}? ${route} This can't be undone.`, { danger: true, confirmLabel: "Refund" }))) return;
     const request = { saleId: receipt.saleId, reason: reason.trim(), returnToStock: restock,
       ...(whole ? {} : { lines: chosen.map(l => ({ lineNo: l.lineNo, quantity: qty[l.lineNo]! })) }) };
     const body = JSON.stringify(request);

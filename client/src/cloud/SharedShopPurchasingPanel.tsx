@@ -2,11 +2,12 @@
  * No optimistic stock mutation and no assumed external supplier disbursement.
  */
 import {useCallback,useEffect,useRef,useState} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import {purchaseRetry} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {currencyMinorDivisor,formatMinorAmount,parseAmountToMinor} from "@/features/inventory/inventory";
 import {
- getShopSupplierBalances,listShopPurchaseOrders,getShopPurchaseDetails,saveShopSupplier,
+ getShopSupplierBalances,listShopPurchaseOrders,getShopPurchaseDetails,saveShopSupplier,archiveShopSupplier,
  createShopPurchaseOrder,receiveShopPurchase,closeShopPurchase,settleShopSupplier,
  type ShopSupplierBalance,type ShopPurchaseSummary,type ShopPurchaseDetail,type SupplierPaymentMethod
 } from "./shopPurchasing";
@@ -109,7 +110,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
     ()=>{setLines([newLine()]);setReference("");});
   }catch(e){setError(e instanceof Error?e.message:"Invalid order.");}
  };
- const receive=()=>{
+ const receive=async()=>{
   if(!details||details.closed)return;
   try{
    const lineItems=details.lines.filter(line=>received[line.lineNo]?.trim()).map(line=>({
@@ -120,18 +121,18 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
       return line.quantity>original.orderedQuantity-original.receivedQuantity;
    }))throw Error("Receive only outstanding quantities on this order.");
    const payload={orderId:details.orderId,lines:lineItems};
-   if(!window.confirm("Confirm these items were physically received at the correct store? This posts stock and creates supplier liability."))return;
+   if(!(await confirmAction("Confirm these items were physically received at the correct store? This posts stock and creates supplier liability.")))return;
    void safeAction("Goods receipt",payload,id=>receiveShopPurchase(companyId,{...payload,receiptId:id}),()=>setReceived({}));
   }catch(e){setError(e instanceof Error?e.message:"Invalid goods receipt.");}
  };
- const settlement=()=>{
+ const settlement=async()=>{
   if(!selectedSupplier||!paymentAttested)return;
   try{
    const amountMinor=parseAmountToMinor(supplierPayment,currency);
    if(amountMinor<=0||BigInt(amountMinor)>BigInt(selectedSupplier.outstandingMinor))
      throw Error("Supplier payment must be positive and not exceed recorded outstanding receipts.");
    const payload={supplierId,amountMinor,method:payMethod,reference:payReference.trim(),externalSettlementConfirmed:true as const};
-   if(!window.confirm("Confirm this supplier payment was ALREADY completed outside Tallybook? This action only records an attestation; it does not send money."))return;
+   if(!(await confirmAction("Confirm this supplier payment was ALREADY completed outside Tallybook? This action only records an attestation; it does not send money.")))return;
    void safeAction("Supplier settlement",payload,id=>settleShopSupplier(companyId,{...payload,settlementId:id}),
      ()=>{setSupplierPayment("");setPaymentAttested(false);setPayReference("");});
   }catch(e){setError(e instanceof Error?e.message:"Invalid supplier payment.");}
@@ -154,6 +155,12 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
     <strong>{s.name}{s.archived?" (archived)":""}</strong>
     <p>Received goods: {displayMinor(s.receivedMinor,currency)} · Manually settled: {displayMinor(s.settledMinor,currency)}</p>
     <p>Unpaid supplier balance: <strong>{displayMinor(s.outstandingMinor,currency)}</strong></p>
+    {!s.archived&&<>
+     <button className="secondary-action" type="button" disabled={!online||busy||BigInt(s.outstandingMinor)>0n}
+      onClick={async()=>{if(await confirmAction(`Archive ${s.name}? It will no longer be offered on new purchase orders. Past orders, receipts and payments stay on record.`,{danger:true,confirmLabel:"Archive"}))
+       void safeAction("Archive supplier",{supplierId:s.supplierId},()=>archiveShopSupplier(companyId,s.supplierId));}}>Archive supplier</button>
+     {BigInt(s.outstandingMinor)>0n&&<p className="shop-muted">Record the supplier payment first. A supplier you still owe can't be archived.</p>}
+    </>}
    </div>):<p>No suppliers in this shop.</p>}</div>
   </section>
   <section className="shop-card space-y-3">
@@ -182,7 +189,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
     {!details.closed&&<><button type="button" className="primary-action" disabled={!online||busy} onClick={receive}>Record physical goods receipt</button>
      <label className="shop-field">Reason for closing outstanding quantities<input value={closingReason} onChange={e=>setClosingReason(e.target.value)} maxLength={200}/></label>
      <button type="button" className="secondary-action" disabled={!online||busy||closingReason.trim().length<4}
-       onClick={()=>{if(window.confirm("Close remaining order quantities permanently?"))void safeAction("Close purchase order",{orderId:details.orderId,reason:closingReason.trim()},()=>closeShopPurchase(companyId,details.orderId,closingReason.trim()),()=>setClosingReason(""));}}>Close unreceived balance</button>
+       onClick={async()=>{if(await confirmAction("Close remaining order quantities permanently?",{danger:true}))void safeAction("Close purchase order",{orderId:details.orderId,reason:closingReason.trim()},()=>closeShopPurchase(companyId,details.orderId,closingReason.trim()),()=>setClosingReason(""));}}>Close unreceived balance</button>
     </>}
    </div>}
   </section>

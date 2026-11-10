@@ -1,4 +1,5 @@
 import { DeviceBusinessSetup } from "@/components/DeviceBusinessSetup";
+import { confirmAction } from "@/lib/confirmAction";
 /** Tactile Ledger design reminder: every product is a ledger record and every stock change is an explicit, visible movement. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Archive, Boxes, Check, ChevronDown, Clock3, FolderPlus, History, Minus, PackagePlus, PencilLine, Plus, RotateCcw, Save, Tag, TrendingDown, TrendingUp, Truck } from "lucide-react";
@@ -158,7 +159,7 @@ export default function InventoryPage() {
     setImportingCsv(true);
     try {
       const text = await file.text();
-      const approved = window.confirm("Import products into this business? Existing stock records will not be replaced. Review the file before continuing.");
+      const approved = await confirmAction("Import products into this business? Existing stock records will not be replaced. Review the file before continuing.");
       if (!approved) return;
       const records = await importProductCatalogCsv(text);
       toast.success(`${records.length} products imported.`);

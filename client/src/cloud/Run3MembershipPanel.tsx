@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import { confirmAction } from "@/lib/confirmAction";
 import {acceptCloudInvitation,inviteCloudAttendant,listCloudMembers,
  revokeCloudAttendant,revokeCloudInvitation,type Run3Member} from './run3MembershipClient';
 /** Cloud membership preview. Does not grant local POS access or sync records. */
@@ -63,7 +64,7 @@ export function Run3MembershipPanel({userId,companyId,isOwner,onAccepted}:{
      {member.userId} — {member.role}
      {member.role==='attendant'?<button type="button" disabled={busy}
       className="ml-2 underline" onClick={()=>void execute(async()=>{
-       if(!window.confirm('Remove this account from this cloud company?'))return;
+       if(!(await confirmAction('Remove this account from this cloud company?')))return;
        await revokeCloudAttendant(companyId!,member.userId);
        setMembers(before=>before.filter(m=>m.userId!==member.userId));
        setMessage('Cloud membership revoked; local files unchanged.');

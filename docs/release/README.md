@@ -1,3 +1,5 @@
+> **Current status: see [CURRENT_STATUS.md](CURRENT_STATUS.md).** Everything below is the October V19 release register and earlier handover notes. It is kept as historical evidence, and the "NO-GO / INCOMPLETE" decisions in it describe those snapshots, not the present shared shop.
+
 **12 October 2026 — latest FIN-002 period reporting continuation:** Daily and expense-category projections independently reconcile to management headline totals, reject malformed historical dates and unsafe per-day monetary precision. Native QA 449/449, separate mock 4/4 pass; full client/build/browser not run. NO-GO. See `FIN002_PERIOD_CONSERVATION_CONTINUATION_2026-10-12.md`.
 
 **Latest local update (10 October 2026):** Security helper continuation at [SECURITY_CONTINUATION_2026-10-10.md](SECURITY_CONTINUATION_2026-10-10.md) reports 171/171 local native tests, with client/build and external gates still unverified. Previous handover evidence below is historical.

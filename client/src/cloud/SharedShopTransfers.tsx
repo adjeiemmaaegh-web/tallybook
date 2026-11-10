@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useRef, useState, type FormEvent} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import {callShop, type ShopOverview} from "./shopClient";
 import {purchaseRetry} from "./purchaseRetry";
 
@@ -73,8 +74,8 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
     }, "Transfer requested. Stock will leave the source store at dispatch.");
   };
 
-  const transition = (row: Transfer, action: "dispatchTransfer" | "receiveTransfer" | "cancelTransfer", prompt: string) => {
-    if (!window.confirm(prompt)) return;
+  const transition = async (row: Transfer, action: "dispatchTransfer" | "receiveTransfer" | "cancelTransfer", prompt: string) => {
+    if (!(await confirmAction(prompt))) return;
     void save(async () => {
       await callShop(action, {companyId, transferId: row.transferId}, "tallybook_shop_ops");
     }, "Transfer updated.");
