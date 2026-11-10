@@ -28,7 +28,7 @@ import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -209,7 +209,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
     try {
-      const next = await getShopOverview(business.id);
+      let next = await getShopOverview(business.id);
+      // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
+      // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
+      try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
       if (request !== revision.current) return;
       accessDenied.current = false;
       setOverview(next); setError("");
@@ -470,7 +473,11 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const resetForm = () => { setCart({}); setTendered(""); setReference(""); setDiscount(""); setDiscountReason(""); setDiscountOpen(false);
     setPaidNow(""); setPaidNowReference(""); setSplit({ cash: "", mobile: "", mobileReference: "", card: "" }); submissionKey.current = null; };
   const touch = () => { setReceipt(null); setError(""); submissionKey.current = null; };
-  const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
+  // Services and untracked items have no stock to run out of; a line still stops at a sane size.
+  const UNTRACKED_LINE_MAX = 1000;
+  const maxFor = (id: string) => { const p = overview.products.find(item => item.id === id); return p && !tracksStock(p) ? UNTRACKED_LINE_MAX : stockOf(id); };
+  const available = (p: (typeof overview.products)[number]) => !tracksStock(p) || stockOf(p.id) > 0;
+  const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(maxFor(id), (c[id] ?? 0) + delta)) })); };
   const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
@@ -513,14 +520,14 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
       {!products.length && (overview.role === "owner"
         ? <p className="shop-muted">No products yet. <button type="button" className="shop-link" onClick={() => goTo?.("stock")}>Add your first product</button></p>
         : <p className="shop-muted">No products are available to sell yet. Ask the owner to add them.</p>)}
-      {products.length > 0 && products.every(p => stockOf(p.id) <= 0) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
+      {products.length > 0 && products.every(p => !available(p)) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
       {!online && products.length > 0 && <p className="shop-muted" role="status">Offline: this list is from the last time you were connected. Stock may have changed.</p>}
-      <ul className="shop-product-list">{[...products].sort((a, b) => Number(stockOf(b.id) > 0) - Number(stockOf(a.id) > 0)).map(p => { const left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={left ? "" : "is-out"}>
-        <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)} · {left ? `${left} in stock` : "Out of stock"}</span></div>
+      <ul className="shop-product-list">{[...products].sort((a, b) => Number(available(b)) - Number(available(a))).map(p => { const tracked = tracksStock(p), left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={available(p) ? "" : "is-out"}>
+        <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.category ? ` · ${p.category}` : ""}{tracked ? ` · ${left ? `${left} in stock` : "Out of stock"}` : p.kind === "service" ? " · Service" : ""}</span></div>
         <div className="shop-stepper">
           <button type="button" className="secondary-action" aria-label={`Remove one ${p.name}`} disabled={!inCart} onClick={() => change(-1, p.id)}><Minus aria-hidden="true" /></button>
           <output aria-label={`${p.name} in cart`}>{inCart}</output>
-          <button type="button" className="secondary-action" aria-label={`Add one ${p.name}`} disabled={inCart >= left} onClick={() => change(1, p.id)}><Plus aria-hidden="true" /></button>
+          <button type="button" className="secondary-action" aria-label={`Add one ${p.name}`} disabled={inCart >= maxFor(p.id)} onClick={() => change(1, p.id)}><Plus aria-hidden="true" /></button>
         </div></li>; })}</ul>
     </section>
     {lines.length > 0 && !receipt && <a href="#shop-checkout" className="shop-cart-bar">
@@ -657,40 +664,88 @@ export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: ()
   </div>;
 }
 
+interface ProductDraft {
+  productId: string; name: string; price: string; active: boolean;
+  barcode: string; category: string; kind: "good" | "service"; trackStock: boolean; threshold: string; cost: string;
+}
+const blankDraft = (): ProductDraft => ({ productId: crypto.randomUUID(), name: "", price: "", active: true, barcode: "", category: "", kind: "good", trackStock: true, threshold: "", cost: "" });
+const minorToText = (minor: number, currency: string) => (minor / currencyMinorDivisor(currency)).toFixed(currencyMinorDivisor(currency) === 1 ? 0 : 2);
+const draftFrom = (p: ShopOverview["products"][number], currency: string): ProductDraft => ({
+  productId: p.id, name: p.name, price: minorToText(p.unitPriceMinor, currency), active: p.active,
+  barcode: p.barcode ?? "", category: p.category ?? "", kind: p.kind ?? "good", trackStock: tracksStock(p),
+  threshold: p.lowStockThreshold == null ? "" : String(p.lowStockThreshold), cost: p.costMinor == null ? "" : minorToText(p.costMinor, currency),
+});
+/** What the owner typed, checked and turned into the server's shape. Throws a plain sentence when something is wrong. */
+function draftToInput(draft: ProductDraft, currency: string): ProductInput {
+  const service = draft.kind === "service";
+  const tracked = !service && draft.trackStock;
+  let threshold: number | null = null;
+  if (tracked && draft.threshold.trim()) {
+    if (!/^\d{1,7}$/.test(draft.threshold.trim())) throw new Error("The low-stock level must be a whole number.");
+    threshold = Number(draft.threshold.trim());
+  }
+  return {
+    productId: draft.productId, name: draft.name, unitPriceMinor: parseAmountToMinor(draft.price, currency), active: draft.active,
+    barcode: draft.barcode.trim() || null, category: draft.category.trim() || null, kind: draft.kind, trackStock: tracked,
+    lowStockThreshold: threshold, costMinor: draft.cost.trim() ? parseAmountToMinor(draft.cost, currency) : null,
+  };
+}
+
 function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   const currency = overview.currency!;
   const { active, storeId, choose } = useStoreChoice(overview);
-  const [edit, setEdit] = useState<{ productId: string; name: string; price: string; active: boolean } | null>(null);
+  const [edit, setEdit] = useState<ProductDraft | null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
-  const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return;
-    void run(async () => { await saveShopProduct(companyId, { productId: edit.productId, name: edit.name, unitPriceMinor: parseAmountToMinor(edit.price, currency), active: edit.active }); setEdit(null); }); };
+  const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return; setNotice("");
+    void run(async () => {
+      const input = draftToInput(edit, currency);
+      try { await saveShopProductFull(companyId, input); }
+      catch (cause) {
+        // A shop that has not been upgraded yet only understands name, price and availability.
+        if (!(cause instanceof ShopRejectedError) || !/Unknown shop operations action/.test(cause.message)) throw cause;
+        await saveShopProduct(companyId, { productId: input.productId, name: input.name, unitPriceMinor: input.unitPriceMinor, active: input.active });
+        setNotice("Saved the name, price and availability. Barcode, category, cost and stock settings need the shop to be updated first.");
+      }
+      setEdit(null); }); };
   const addStock = (productId: string, sign: 1 | -1) => { const n = Number(adds[productId]);
     if (!Number.isInteger(n) || n <= 0) { setError("Enter a whole number of units."); return; }
     void run(async () => { await adjustShopStock(companyId, { storeId, productId, delta: sign * n, operationId: crypto.randomUUID() }); setAdds(a => ({ ...a, [productId]: "" })); }); };
+  const isOwner = overview.role === "owner";
 
   return <div className="shop-grid">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2>
-        <button type="button" className="secondary-action" disabled={!online} onClick={() => setEdit({ productId: crypto.randomUUID(), name: "", price: "", active: true })}><Plus aria-hidden="true" />Add product</button></div>
+        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
       {edit && <form className="shop-edit" onSubmit={saveProduct}>
         <label className="shop-field">Name<input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} maxLength={120} required /></label>
         <label className="shop-field">Price ({currency})<input inputMode="decimal" value={edit.price} onChange={e => setEdit({ ...edit, price: e.target.value })} required /></label>
+        <label className="shop-field">Type
+          <select value={edit.kind} onChange={e => { const kind = e.target.value === "service" ? "service" : "good"; setEdit({ ...edit, kind, trackStock: kind === "good" ? edit.trackStock : false, threshold: kind === "good" ? edit.threshold : "" }); }}>
+            <option value="good">Goods (something you stock)</option><option value="service">Service (no stock)</option></select></label>
+        <label className="shop-field">Barcode (optional)<input value={edit.barcode} onChange={e => setEdit({ ...edit, barcode: e.target.value })} maxLength={64} autoComplete="off" inputMode="text" placeholder="Scan or type the number" /></label>
+        <label className="shop-field">Category (optional)<input value={edit.category} onChange={e => setEdit({ ...edit, category: e.target.value })} maxLength={60} placeholder="e.g. Drinks" /></label>
+        {edit.kind === "good" && <label className="shop-check"><input type="checkbox" checked={edit.trackStock} onChange={e => setEdit({ ...edit, trackStock: e.target.checked, threshold: e.target.checked ? edit.threshold : "" })} />Count stock for this product</label>}
+        {edit.kind === "good" && edit.trackStock && <label className="shop-field">Warn me when stock is at or below (optional)<input inputMode="numeric" value={edit.threshold} onChange={e => setEdit({ ...edit, threshold: e.target.value })} placeholder="e.g. 5" /></label>}
+        {isOwner && <label className="shop-field">What it costs you ({currency}, optional, only you can see this)<input inputMode="decimal" value={edit.cost} onChange={e => setEdit({ ...edit, cost: e.target.value })} /></label>}
         <label className="shop-check"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} />Available for sale</label>
         <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => setEdit(null)}>Cancel</button></div>
       </form>}
+      {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
-      <ul className="shop-product-list shop-stock-list">{overview.products.map(p => <li key={p.id}>
-        <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{active.length ? ` · ${stockOf(p.id)} in stock` : ""}</span></div>
+      <ul className="shop-product-list shop-stock-list">{overview.products.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
+        return <li key={p.id}>
+        <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{p.category ? ` · ${p.category}` : ""}{p.barcode ? ` · ${p.barcode}` : ""}{p.kind === "service" ? " · Service" : !tracked ? " · Stock not counted" : active.length ? ` · ${left} in stock` : ""}{low ? " · Low stock" : ""}</span></div>
         <div className="shop-stock-controls">
-          {active.length > 0 && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
+          {active.length > 0 && tracked && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, 1)}>Add</button>
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button></>}
-          <button type="button" className="secondary-action" disabled={!online} onClick={() => setEdit({ productId: p.id, name: p.name, price: (p.unitPriceMinor / currencyMinorDivisor(currency)).toFixed(currencyMinorDivisor(currency) === 1 ? 0 : 2), active: p.active })}>Edit</button>
-        </div></li>)}</ul>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
+        </div></li>; })}</ul>
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
   </div>;

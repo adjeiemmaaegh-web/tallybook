@@ -38,12 +38,35 @@ describe("Stage B shared-shop offline cache redaction", () => {
     expect(cleaned.overviews.company1?.stores).toEqual([
       {id: "store1", name: "Main", status: "active"}
     ]);
+    // A product from a server without catalogue details becomes an ordinary counted good.
     expect(cleaned.overviews.company1?.products).toEqual([
-      {id: "product1", name: "Rice", unitPriceMinor: 1200, active: true}
+      {id: "product1", name: "Rice", unitPriceMinor: 1200, active: true,
+        barcode: null, category: null, kind: "good", trackStock: true, lowStockThreshold: null}
     ]);
     expect(cleaned.overviews.company1?.stock).toEqual([
       {storeId: "store1", productId: "product1", quantity: 5}
     ]);
+  });
+
+  it("keeps display details so a service stays sellable offline, but never caches cost", () => {
+    const input = source();
+    input.overviews.company1.products = [
+      {id: "p1", name: "Haircut", unitPriceMinor: 5000, active: true, barcode: "6001", category: "Salon", kind: "service",
+        trackStock: false, lowStockThreshold: null, costMinor: 1234, supplierPhone: "PRIVATE_SUPPLIER_PHONE"},
+      {id: "p2", name: "Rice", unitPriceMinor: 1200, active: true, barcode: 42, category: {x: 1}, kind: "gadget",
+        trackStock: "yes", lowStockThreshold: -3, costMinor: 800},
+    ] as never;
+    const cleaned = safeCache(input);
+    const text = JSON.stringify(cleaned);
+    expect(text).not.toContain("1234");
+    expect(text).not.toContain("costMinor");
+    expect(text).not.toContain("PRIVATE_SUPPLIER_PHONE");
+    const [service, malformed] = cleaned.overviews.company1!.products;
+    expect(service).toEqual({id: "p1", name: "Haircut", unitPriceMinor: 5000, active: true,
+      barcode: "6001", category: "Salon", kind: "service", trackStock: false, lowStockThreshold: null});
+    // Malformed values fall back to safe defaults rather than being trusted.
+    expect(malformed).toEqual({id: "p2", name: "Rice", unitPriceMinor: 1200, active: true,
+      barcode: null, category: null, kind: "good", trackStock: true, lowStockThreshold: null});
   });
 
   it("never persists cached staff privileges or return-policy authority", () => {

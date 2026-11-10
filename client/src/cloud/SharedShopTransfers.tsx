@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState, type FormEvent} from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import {callShop, type ShopOverview} from "./shopClient";
+import {tracksStock} from "./productTracking";
 import {purchaseRetry} from "./purchaseRetry";
 
 type Transfer = {
@@ -35,7 +36,7 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
   const sending = useRef(false);
   const generation = useRef(0);
   const stores = overview.stores.filter(store => store.status === "active");
-  const products = overview.products.filter(item => item.active);
+  const products = overview.products.filter(item => item.active && tracksStock(item));
   const reload = useCallback(async () => {
     const current = ++generation.current;
     try {

@@ -58,7 +58,14 @@ export function safeCache(input: unknown): ShopCache {
       const p = asRecord(value);
       if (!p || !string(p.id) || !string(p.name) ||
           !count(p.unitPriceMinor) || typeof p.active !== "boolean") return [];
-      return [{id: p.id, name: p.name, unitPriceMinor: p.unitPriceMinor, active: p.active}];
+      // Display-only details survive offline so a service can still be sold. Cost is private and never cached.
+      const barcode = typeof p.barcode === "string" && p.barcode.length <= 64 ? p.barcode : null;
+      const category = typeof p.category === "string" && p.category.length <= 60 ? p.category : null;
+      const kind = p.kind === "service" ? "service" as const : "good" as const;
+      const trackStock = typeof p.trackStock === "boolean" ? p.trackStock : true;
+      const lowStockThreshold = count(p.lowStockThreshold) ? p.lowStockThreshold : null;
+      return [{id: p.id, name: p.name, unitPriceMinor: p.unitPriceMinor, active: p.active,
+        barcode, category, kind, trackStock, lowStockThreshold}];
     });
     const stock = listOf(view.stock).flatMap(value => {
       const s = asRecord(value);

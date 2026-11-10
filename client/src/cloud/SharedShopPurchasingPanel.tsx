@@ -5,6 +5,7 @@ import {useCallback,useEffect,useRef,useState} from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import {purchaseRetry} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
+import {tracksStock} from "./productTracking";
 import {currencyMinorDivisor,formatMinorAmount,parseAmountToMinor} from "@/features/inventory/inventory";
 import {
  getShopSupplierBalances,listShopPurchaseOrders,getShopPurchaseDetails,saveShopSupplier,archiveShopSupplier,
@@ -95,7 +96,8 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
   finally{if(mounted.current)setBusy(false);}
  };
  const selectedSupplier=suppliers.find(s=>s.supplierId===supplierId);
- const products=overview.products.filter(p=>p.active);
+ // Goods the shop counts; services and uncounted items have nothing to order or receive.
+ const products=overview.products.filter(p=>p.active&&tracksStock(p));
  const stores=overview.stores.filter(s=>s.status==="active");
  const uniqueLines=lines.every(l=>l.productId)&&new Set(lines.map(l=>l.productId)).size===lines.length;
  const updateLine=(index:number,change:Partial<OrderLine>)=>setLines(rows=>rows.map((row,i)=>i===index?{...row,...change}:row));
