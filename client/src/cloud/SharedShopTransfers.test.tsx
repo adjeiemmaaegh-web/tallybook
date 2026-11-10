@@ -38,3 +38,59 @@ it("only exposes the next physical handoff and hides transfer actions offline", 
     expect(callShop).toHaveBeenCalledWith("receiveTransfer", {companyId:"shop",transferId:"t1"}, "tallybook_shop_ops");
   } finally { confirm.mockRestore(); }
 });
+
+function mockTransferServer(failReceive: boolean) {
+  let status = "requested";
+  const row = {transferId:"t1", fromStoreId:"a", toStoreId:"b", productId:"eggs", quantity:6};
+  vi.mocked(callShop).mockReset();
+  vi.mocked(callShop).mockImplementation(async action => {
+    if (action === "listTransfers") return {transfers: [{...row, status}]};
+    if (action === "dispatchTransfer") status = "in_transit";
+    if (action === "receiveTransfer") {
+      if (failReceive) throw new Error("Receiving failed");
+      status = "received";
+    }
+    return {transferId: row.transferId, status};
+  });
+}
+
+async function openLedger() {
+  const props = {userId:"owner", companyId:"shop", overview, refresh: vi.fn(async () => {})};
+  render(<SharedShopTransfers {...props} online />);
+  fireEvent.click(screen.getByRole("button", {name:"Inter-store transfers"}));
+  return screen.findByRole("button", {name:"Dispatch and receive now"});
+}
+
+it("moves a requested transfer in one step: dispatch, then receive", async () => {
+  mockTransferServer(false);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  try {
+    fireEvent.click(await openLedger());
+    expect(await screen.findByText(/Store A.*Store B.*received/)).toBeInTheDocument();
+    const actions = vi.mocked(callShop).mock.calls.map(call => call[0]).filter(a => a === "dispatchTransfer" || a === "receiveTransfer");
+    expect(actions).toEqual(["dispatchTransfer", "receiveTransfer"]);
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("Move 6 × Eggs from Store A to Store B now?"));
+  } finally { confirm.mockRestore(); }
+});
+
+it("does nothing when the person declines the one-step move", async () => {
+  mockTransferServer(false);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  try {
+    fireEvent.click(await openLedger());
+    await waitFor(() => expect(confirm).toHaveBeenCalled());
+    const actions = vi.mocked(callShop).mock.calls.map(call => call[0]);
+    expect(actions).not.toContain("dispatchTransfer");
+  } finally { confirm.mockRestore(); }
+});
+
+it("leaves the transfer in transit and offers Confirm receipt if the second step fails", async () => {
+  mockTransferServer(true);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  try {
+    fireEvent.click(await openLedger());
+    expect(await screen.findByRole("alert")).toHaveTextContent("Receiving failed");
+    expect(await screen.findByRole("button", {name:"Confirm receipt"})).toBeInTheDocument();
+    expect(screen.getByText(/in transit/)).toBeInTheDocument();
+  } finally { confirm.mockRestore(); }
+});

@@ -56,6 +56,9 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
       setNotice(confirmation);
       await Promise.all([reload(), refresh()]);
     } catch (cause) {
+      // A multi-step action may have completed its first step; show what the
+      // server really holds, then the reason it stopped (reload clears errors).
+      await reload();
       setError(cause instanceof Error ? cause.message : "Transfer could not be confirmed.");
     } finally { sending.current = false; setBusy(false); }
   };
@@ -79,6 +82,24 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
     void save(async () => {
       await callShop(action, {companyId, transferId: row.transferId}, "tallybook_shop_ops");
     }, "Transfer updated.");
+  };
+  /**
+   * One-step transfer for owners moving stock they already hold at both ends
+   * (for example, a delivery they just carried over). It uses the same two
+   * server actions as the separate steps, in order, so the ledger, audit
+   * trail and replay protection are identical. If the second step fails, the
+   * transfer is left "in transit" and Confirm receipt finishes it.
+   */
+  const moveNow = async (row: Transfer) => {
+    const item = overview.products.find(p => p.id === row.productId)?.name ?? "these items";
+    const ok = await confirmAction(
+      `Move ${row.quantity} × ${item} from ${storeName(row.fromStoreId)} to ${storeName(row.toStoreId)} now? Use this only when the units are already at ${storeName(row.toStoreId)}. It records them leaving and arriving in one step.`,
+      { confirmLabel: "Move now" });
+    if (!ok) return;
+    void save(async () => {
+      await callShop("dispatchTransfer", {companyId, transferId: row.transferId}, "tallybook_shop_ops");
+      await callShop("receiveTransfer", {companyId, transferId: row.transferId}, "tallybook_shop_ops");
+    }, "Transfer completed. Stock moved from source to destination.");
   };
   const storeName = (id: string) => overview.stores.find(store => store.id === id)?.name ?? id;
 
@@ -107,6 +128,7 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
       <fieldset disabled={busy || !loaded} className="shop-actions">
         {row.status === "requested" && <>
           <button type="button" onClick={() => transition(row, "dispatchTransfer", "Confirm these units have left the source store?")}>Confirm dispatch</button>
+          <button type="button" onClick={() => void moveNow(row)}>Dispatch and receive now</button>
           <button type="button" onClick={() => transition(row, "cancelTransfer", "Cancel this transfer before dispatch?")}>Cancel transfer</button>
         </>}
         {row.status === "in_transit" && <button type="button" onClick={() => transition(row, "receiveTransfer", "Confirm these units arrived at the destination store?")}>Confirm receipt</button>}

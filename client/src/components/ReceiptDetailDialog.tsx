@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { businessDateTimeLabel } from "@/features/business/businessCalendar.mjs";
+import { openWhatsAppShare } from "@/features/sharing/businessSharing";
 import { formatReceiptShareText, receiptPaymentDescription, shareReceiptText, type ReceiptDetail } from "@/features/receipts/receiptDetail";
 
 interface ReceiptDetailDialogProps {
@@ -32,6 +33,14 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
     if (result === "shared") { setManualText(null); toast.success("Receipt opened in your device share options."); }
     else if (result === "copied") { setManualText(null); toast.success("Receipt text copied. Paste it into your customer message."); }
     else if (result === "manual") { setManualText(text); toast.info("Copy the receipt text below into your customer message."); }
+  };
+  const whatsApp = () => {
+    if (!detail) return;
+    const text = formatReceiptShareText(detail);
+    // The receipt does not carry the customer's number, so WhatsApp opens with
+    // the text ready and the owner picks the contact.
+    if (openWhatsAppShare(text)) { setManualText(null); toast.success("Receipt opened in WhatsApp. Choose the customer and press send."); }
+    else { setManualText(text); toast.info("WhatsApp could not open. Copy the receipt text below into your customer message."); }
   };
   const print = () => {
     if (typeof window.print !== "function") return toast.info("Printing is not available in this browser.");
@@ -95,6 +104,7 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         {thermal === null && <p role="status">This receipt exceeds the thermal layout limit. Use Share receipt for the full text.</p>}
         <DialogFooter className="receipt-detail-actions">
           <button className="secondary-action" type="button" onClick={() => void share()}><Share2 className="h-4 w-4" aria-hidden="true" />Share receipt</button>
+          <button className="secondary-action" type="button" onClick={whatsApp}>Send on WhatsApp</button>
           <button className="secondary-action receipt-print-action" type="button" disabled={thermal === null} onClick={print}><Printer className="h-4 w-4" aria-hidden="true" />Print</button>
           <button className="primary-action" type="button" onClick={close}>Done</button>
         </DialogFooter>
