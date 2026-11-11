@@ -27,17 +27,18 @@ describe('cloud account recovery',()=>{
   it.each([['email_not_confirmed','Open your confirmation email'],['invalid_credentials','Check your email and password']])('guides the tester after %s',async(code,message)=>{
     mock.signInWithPassword.mockResolvedValueOnce({error:{code}});
     render(<GoogleSignInPage/>);
-    fireEvent.change(screen.getByLabelText('Email'),{target:{value:'owner@example.test'}});
+    fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'owner@example.test'}});
     fireEvent.change(screen.getByLabelText('Password'),{target:{value:'local-test-password'}});
-    fireEvent.click(screen.getByRole('button',{name:'Sign in with email'}));
+    fireEvent.click(screen.getByRole('button',{name:'Sign in'}));
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
     expect(mock.signUp).not.toHaveBeenCalled();
   });
   it('requests confirmation rather than claiming signup is immediately verified',async()=>{
     render(<GoogleSignInPage/>);
-    fireEvent.change(screen.getByLabelText('Email'),{target:{value:'owner@example.test'}});
+    fireEvent.click(screen.getByRole('button',{name:'Create an account'}));
+    fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'owner@example.test'}});
     fireEvent.change(screen.getByLabelText('Password'),{target:{value:'long-password-123456'}});
-    fireEvent.click(screen.getByRole('button',{name:'Create email account'}));
+    fireEvent.click(screen.getByRole('button',{name:'Create account'}));
     await waitFor(()=>expect(mock.signUp).toHaveBeenCalledOnce());
     expect(mock.signUp.mock.calls[0][0].options.emailRedirectTo).toMatch(/\/signin$/);
     expect(screen.getByRole('status').textContent).toMatch(/confirmation emails/);
@@ -46,7 +47,7 @@ describe('cloud account recovery',()=>{
     render(<GoogleSignInPage/>);
     fireEvent.click(screen.getByRole('button',{name:'Forgot password?'}));
     expect(mock.resetPasswordForEmail).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText('Email'),{target:{value:'owner@example.test'}});
+    fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'owner@example.test'}});
     fireEvent.click(screen.getByRole('button',{name:'Forgot password?'}));
     await waitFor(()=>expect(mock.resetPasswordForEmail).toHaveBeenCalledOnce());
     expect(mock.resetPasswordForEmail.mock.calls[0][1].redirectTo).toMatch(/\/reset-password\?recovery=1$/);

@@ -1,6 +1,7 @@
 /** A password reset establishes no local company or staff authority. */
 import {useEffect,useState,type FormEvent} from 'react';
 import {Link} from 'wouter';
+import {AuthShell} from '@/components/AuthShell';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
 
 type Phase='checking'|'ready'|'invalid'|'complete';
@@ -69,20 +70,23 @@ export default function PasswordRecoveryPage(){
     }catch{setError('Password update failed. Request a new recovery link and try again.');}
     finally{setBusy(false);}
   }
-  return <main className="mx-auto max-w-md p-6 space-y-4">
-    <h1 className="text-xl font-semibold">Reset Tallybook password</h1>
-    {phase==='checking'?<p role="status">Verifying your recovery link…</p>:null}
-    {phase==='invalid'?<p role="alert">Recovery link is missing, invalid or expired. Request a new link from sign-in.</p>:null}
-    {phase==='ready'?<form className="space-y-3" onSubmit={event=>void submit(event)}>
-      <label htmlFor="recovery-new-password">New password</label>
-      <input id="recovery-new-password" className="w-full rounded border p-3" required minLength={12} type="password" autoComplete="new-password" value={password} onChange={event=>setPassword(event.target.value)}/>
-      <label htmlFor="recovery-confirm-password">Confirm new password</label>
-      <input id="recovery-confirm-password" className="w-full rounded border p-3" required minLength={12} type="password" autoComplete="new-password" value={confirmation} onChange={event=>setConfirmation(event.target.value)}/>
-      <button type="submit" disabled={busy||password.length<12||!confirmation} className="rounded border px-4 py-2">{busy?'Updating…':'Update password and sign out'}</button>
+  return <AuthShell title="Reset Tallybook password" subtitle="Choose a new password for your cloud account." tagline={false}>
+    {phase==='checking'?<p role="status" className="tb-auth-status">Verifying your recovery link…</p>:null}
+    {phase==='invalid'?<p role="alert" className="tb-auth-status">Recovery link is missing, invalid or expired. Request a new link from sign-in.</p>:null}
+    {phase==='ready'?<form className="tb-auth-form" onSubmit={event=>void submit(event)}>
+      <div className="tb-auth-field">
+        <label htmlFor="recovery-new-password">New password</label>
+        <div className="tb-auth-input"><input id="recovery-new-password" required minLength={12} type="password" autoComplete="new-password" placeholder="At least 12 characters" value={password} onChange={event=>setPassword(event.target.value)}/></div>
+      </div>
+      <div className="tb-auth-field">
+        <label htmlFor="recovery-confirm-password">Confirm new password</label>
+        <div className="tb-auth-input"><input id="recovery-confirm-password" required minLength={12} type="password" autoComplete="new-password" placeholder="Type it again" value={confirmation} onChange={event=>setConfirmation(event.target.value)}/></div>
+      </div>
+      <button type="submit" disabled={busy||password.length<12||!confirmation} className="tb-auth-submit">{busy?'Updating…':'Update password and sign out'}</button>
     </form>:null}
-    {phase==='complete'?<p role="status">{signOutConfirmed ? 'Password updated and cloud session signed out.' : 'Password updated. Cloud sign-out has not been confirmed.'} Sign in again using your new password.</p>:null}
-    {error?<p role="alert">{error}</p>:null}
-    <Link href="/signin" className="underline">Return to sign-in</Link>
-    <p className="text-sm">This resets cloud credentials only. Local business records and staff PINs are unchanged.</p>
-  </main>;
+    {phase==='complete'?<p role="status" className="tb-auth-status">{signOutConfirmed ? 'Password updated and cloud session signed out.' : 'Password updated. Cloud sign-out has not been confirmed.'} Sign in again using your new password.</p>:null}
+    {error?<p role="alert" className="tb-auth-status">{error}</p>:null}
+    <div className="tb-auth-links"><Link href="/signin" className="tb-auth-link is-strong">Return to sign-in</Link></div>
+    <p className="tb-auth-note">This resets cloud credentials only. Local business records and staff PINs are unchanged.</p>
+  </AuthShell>;
 }

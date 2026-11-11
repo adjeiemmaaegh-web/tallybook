@@ -5,7 +5,8 @@ import {useState} from 'react';
 import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
 import {Run18UpdateNotice} from '@/components/Run18UpdateNotice';
 import {Link} from 'wouter';
-import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
+import {Eye,EyeOff,LogOut,RefreshCw} from 'lucide-react';
+import {AuthShell} from '@/components/AuthShell';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
 import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
 
@@ -17,10 +18,14 @@ export default function GoogleSignInPage(){
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
   const [message,setMessage]=useState<string|null>(null);
+  const [mode,setMode]=useState<'signin'|'signup'>('signin');
+  const [showPassword,setShowPassword]=useState(false);
+  function switchMode(next:'signin'|'signup'){setMode(next);setError(null);setMessage(null);setShowPassword(false);}
   async function emailAction(mode:'signup'|'signin'){
     if(busy||!isSupabaseConfigured)return;
     const address=email.trim();
     if(!/^\S+@\S+\.\S+$/.test(address)){setError('Enter a valid email address.');return;}
+    if(!password){setError(mode==='signup'?'Choose a password.':'Enter your password.');return;}
     if(mode==='signup'&&password.length<12){setError('New passwords require at least 12 characters.');return;}
     setBusy(true);setError(null);setMessage(null);
     try{
@@ -88,81 +93,98 @@ export default function GoogleSignInPage(){
     finally{setBusy(false);}
   }
   const signedIn = state.status === 'signed-in';
-  return <div className={signedIn ? "tb-verified-page" : "tb-account-page"}>
-    {signedIn ? <header className="tb-verified-header">
+  if(signedIn) return <div className="tb-verified-page">
+    <header className="tb-verified-header">
       <Link className="tb-account-brand" href="/welcome"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
       <Link href="/welcome">Back to welcome</Link>
-    </header> :
-    <aside className="tb-account-aside" aria-label="Welcome to Tallybook">
-      <Link className="tb-account-brand" href="/"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
-      <p className="tb-account-eyebrow">YOUR BUSINESS, BETTER ORGANIZED</p>
-      <h2>Your business.<em>Beautifully in hand.</em></h2>
-      <p className="tb-account-aside-copy">An easier place to manage sales, stock and your team. Securely verify your account before opening a shared shop.</p>
-      <div className="tb-account-guide" aria-label="Account onboarding steps">
-        <div><span>01</span><strong>Sign in or create an account</strong><small>Use Google or email. Online verification required.</small></div>
-        <div><span>02</span><strong>Choose your role</strong><small>Own a business, or join the shop you work for.</small></div>
-        <div><span>03</span><strong>Open your shop</strong><small>Owners configure their business. Staff use an invitation.</small></div>
-      </div>
-      <p className="tb-account-aside-note">Already verified as an owner? <Link href="/">Open your device ledger</Link>. Access stays protected by your account and local staff permissions.</p>
-    </aside>}
+    </header>
     <div className="tb-account-form-area">
       {/* Account and shop screens sit outside AppShell; staged updates still show here. */}
       <Run18UpdateNotice/>
-      <section className={signedIn ? "tb-verified-body" : "op-row-card tb-account-form"}>
-      {!signedIn && <><p className="eyebrow"><ShieldCheck className="h-4 w-4" aria-hidden="true"/> Alchemy · Tallybook</p>
-      <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',margin:'12px 0 8px'}}>
-        Welcome to Tallybook</h1></>}
-
-      {!isSupabaseConfigured?<p role="alert">Cloud account configuration is unavailable.</p>:
-       state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
-       state.status==='offline'?<p role="status">Connect to the internet to verify your account before opening a shop.</p>:
-       state.status==='signed-in'?<div className="space-y-3">
-        <CloudBusinessPanel key={state.userId} accountOnly/>
-        <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
-      <p className="op-row-sub">Sales, stock, reports and local backups
-        remain on this device. Signing out does not encrypt or erase
-        records stored in this browser.</p>
-        <p className="break-all" role="status">Cloud session verified. You’re signed in.</p>
-        <div className="flex flex-wrap gap-2">
-          <button className="secondary-action" disabled={busy} type="button"
-            onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
-          <button className="secondary-action" disabled={busy} type="button"
-            onClick={()=>void signIn(true)}>Switch Google account</button>
-          {workspaceOwner === state.userId && <button type="button" className="secondary-action"
-            onClick={() => revisitOriginalLedger(state.userId!)}>Return to original ledger options</button>}
-          <Link href="/sync-status" className="underline">View local sync status</Link>
+      <section className="tb-verified-body">
+        <div className="space-y-3">
+          <CloudBusinessPanel key={state.userId} accountOnly/>
+          <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
+            <p className="op-row-sub">Sales, stock, reports and local backups
+              remain on this device. Signing out does not encrypt or erase
+              records stored in this browser.</p>
+            <p className="break-all" role="status">Cloud session verified. You’re signed in.</p>
+            <div className="flex flex-wrap gap-2">
+              <button className="secondary-action" disabled={busy} type="button"
+                onClick={()=>void logOut()}><LogOut className="h-4 w-4"/>Sign out</button>
+              <button className="secondary-action" disabled={busy} type="button"
+                onClick={()=>void signIn(true)}>Switch Google account</button>
+              {workspaceOwner === state.userId && <button type="button" className="secondary-action"
+                onClick={() => revisitOriginalLedger(state.userId!)}>Return to original ledger options</button>}
+              <Link href="/sync-status" className="underline">View local sync status</Link>
+            </div>
+          </details>
         </div>
-        </details></div>:
-       <div className="space-y-3">
-         {state.status==='error'?<p role="alert">Cloud identity could not be verified.
-           No local records were changed.</p>:null}
-         <button className="secondary-action" type="button" disabled={busy}
-           onClick={()=>void signIn()}><LogIn className="h-4 w-4"/>
-           {busy?'Opening Google…':'Sign in with Google'}</button>
-         {state.status==='error'?<button className="secondary-action" type="button"
-           onClick={()=>void retry()}><RefreshCw className="h-4 w-4"/>Retry</button>:null}
-       </div>}
-
-      {isSupabaseConfigured&&state.status!=='signed-in'?<div className="space-y-3 mt-5">
-        <h2 className="font-semibold">Email account</h2>
-        <label className="block" htmlFor="tb-cloud-email">Email</label>
-        <input id="tb-cloud-email" className="w-full rounded border p-3" type="email" autoComplete="email" value={email} onChange={event=>setEmail(event.target.value)}/>
-        <label className="block" htmlFor="tb-cloud-password">Password</label>
-        <input id="tb-cloud-password" className="w-full rounded border p-3" type="password" autoComplete="current-password" value={password} onChange={event=>setPassword(event.target.value)}/>
-        <div className="flex flex-wrap gap-2">
-          <button className="primary-action" type="button" disabled={busy||!email.trim()||!password} onClick={()=>void emailAction('signin')}>Sign in with email</button>
-          <button className="secondary-action" type="button" disabled={busy||!email.trim()||!password} onClick={()=>void emailAction('signup')}>Create email account</button>
-          <button className="secondary-action" type="button" disabled={busy||!email.trim()} onClick={()=>void requestRecovery()}>Forgot password?</button>
-        </div>
-        <p className="text-sm">Use at least 12 characters for a new password. Email confirmation and recovery require internet access.</p>
-      </div>:null}
-      {message?<p role="status">{message}</p>:null}
-      {error?<p role="alert">{error}</p>:null}
+        {message?<p role="status">{message}</p>:null}
+        {error?<p role="alert">{error}</p>:null}
       </section>
     </div>
   </div>;
+
+  const signup=mode==='signup';
+  return <AuthShell
+    title={signup?'Create your account':'Welcome back'}
+    subtitle={signup?'Start with your email, or continue with Google':'Sign in to your Tallybook workspace'}
+    notice={<Run18UpdateNotice/>}
+    footer={<p className="tb-auth-note">Already verified as an owner? <Link href="/">Open your device ledger</Link>. Access stays protected by your account and local staff permissions.</p>}>
+    {!isSupabaseConfigured?<p role="alert" className="tb-auth-status">Cloud account configuration is unavailable.</p>:<>
+      {state.status==='checking'?<p role="status" className="tb-auth-status">Verifying session with Supabase…</p>:null}
+      {state.status==='offline'?<p role="status" className="tb-auth-status">Connect to the internet to verify your account before opening a shop.</p>:null}
+      {state.status==='error'?<div className="tb-auth-status" role="alert">Cloud identity could not be verified. No local records were changed.
+        <button className="tb-auth-link tb-auth-retry" type="button" onClick={()=>void retry()}><RefreshCw className="inline h-4 w-4" aria-hidden="true"/> Retry</button></div>:null}
+
+      <button className="tb-auth-google" type="button" disabled={busy} onClick={()=>void signIn()}>
+        <GoogleMark/>{busy?'Opening Google…':'Continue with Google'}
+      </button>
+      <p className="tb-auth-divider">Or continue with email</p>
+
+      <form className="tb-auth-form" noValidate onSubmit={event=>{event.preventDefault();void emailAction(mode);}}>
+        <div className="tb-auth-field">
+          <label htmlFor="tb-cloud-email">Email address</label>
+          <div className="tb-auth-input"><input id="tb-cloud-email" type="email" autoComplete="email" inputMode="email" placeholder="you@business.com" value={email} onChange={event=>setEmail(event.target.value)}/></div>
+        </div>
+        <div className="tb-auth-field">
+          <label htmlFor="tb-cloud-password">Password</label>
+          <div className="tb-auth-input has-toggle">
+            <input id="tb-cloud-password" type={showPassword?'text':'password'} autoComplete={signup?'new-password':'current-password'} placeholder="Your password" value={password} onChange={event=>setPassword(event.target.value)}/>
+            <button type="button" className="tb-auth-eye" aria-label={showPassword?'Hide password':'Show password'} aria-pressed={showPassword} onClick={()=>setShowPassword(value=>!value)}>
+              {showPassword?<EyeOff size={22} aria-hidden="true"/>:<Eye size={22} aria-hidden="true"/>}
+            </button>
+          </div>
+          {signup?<p className="tb-auth-hint">Use at least 12 characters. Email confirmation and recovery need internet access.</p>:null}
+        </div>
+        <button className="tb-auth-submit" type="submit" disabled={busy}>
+          {busy?(signup?'Creating account…':'Signing in…'):(signup?'Create account':'Sign in')}
+        </button>
+      </form>
+
+      <div className="tb-auth-links">
+        {signup?<>
+          <span className="tb-auth-hint">Already have an account?</span>
+          <button className="tb-auth-link is-strong" type="button" onClick={()=>switchMode('signin')}>Sign in</button>
+        </>:<>
+          <button className="tb-auth-link" type="button" disabled={busy} onClick={()=>void requestRecovery()}>Forgot password?</button>
+          <span aria-hidden="true"/>
+          <button className="tb-auth-link is-strong" type="button" onClick={()=>switchMode('signup')}>Create an account</button>
+        </>}
+      </div>
+      {message?<p role="status" className="tb-auth-status">{message}</p>:null}
+      {error?<p role="alert" className="tb-auth-status">{error}</p>:null}
+    </>}
+  </AuthShell>;
 }
 
-
-
-
+/** The Google "G" in its brand colours (the brand guidelines ask for the multicolour mark on a white button). */
+function GoogleMark(){
+  return <svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.5 5.8c4.4-4.1 7-10.1 7-17.5z"/>
+    <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/>
+    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+  </svg>;
+}
