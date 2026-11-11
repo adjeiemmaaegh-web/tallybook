@@ -6,3 +6,9 @@ test('rejects invalid source',()=>assert.throws(()=>createLocalInsights({}),Type
 test('no sales observation is evidence-limited',()=>assert.match(createLocalInsights(base())[0].title,/No completed sales/));
 test('stock and debt findings show exact local evidence',()=>{const snapshot=base(); snapshot.inventory=[{productName:'Soap',stockQuantity:2,lowStockThreshold:3,isLowStock:true}];snapshot.debts=[{outstandingMinor:250}];snapshot.sales=[{id:'s1'}];const findings=createLocalInsights(snapshot);assert.deepEqual(findings.map(f=>f.id),['stock','debt','sales']);assert.match(findings[0].evidence,/Soap: 2/);assert.match(findings[1].evidence,/250/)});
 test('non-low stock and settled debts do not trigger attention',()=>{const snapshot=base(); snapshot.inventory=[{productName:'Soap',stockQuantity:20,lowStockThreshold:3,isLowStock:false}];snapshot.debts=[{outstandingMinor:0}];assert.deepEqual(createLocalInsights(snapshot).map(f=>f.id),['sales'])});
+test('aggregate debt remains exact beyond the safe Number range',()=>{
+  const snapshot=base();
+  snapshot.debts=[{outstandingMinor:Number.MAX_SAFE_INTEGER},{outstandingMinor:2}];
+  const finding=createLocalInsights(snapshot).find(item=>item.id==='debt');
+  assert.match(finding.evidence,/9007199254740993 minor currency units/);
+});
