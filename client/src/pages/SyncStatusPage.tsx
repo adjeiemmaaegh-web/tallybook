@@ -40,7 +40,7 @@ export default function SyncStatusPage() {
     ["Reviewed conflicts", status.reviewedConflicts],
     ["Quarantined QA sale claims (not posted)", status.quarantinedQaClaims ?? 0],
   ] : [];
-  return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
+  return <section className="ds-page">
     <header className="space-y-2"><p className="text-sm font-semibold uppercase tracking-wide">Connected services</p>
       <h1 className="text-3xl font-bold">Local sync status</h1>
       <p className="text-sm">Read-only diagnostics for this business on this device. Automatic record upload is not configured.</p>

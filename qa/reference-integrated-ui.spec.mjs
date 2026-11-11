@@ -151,5 +151,5 @@ test('signed-in attendant opening an owner dashboard link lands at the till and 
     await expect(tabs.getByRole('button',{name,exact:true})).toHaveCount(0);
   }
   await tabs.getByRole('button',{name:'My sales'}).click();
-  await expect(page.getByRole('heading',{name:'My recent sales'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'My sales',exact:true})).toBeVisible();
 });

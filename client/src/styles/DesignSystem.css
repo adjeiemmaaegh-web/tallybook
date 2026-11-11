@@ -1,0 +1,297 @@
+/* Tallybook design system (loaded last, after ReferenceVisualSystem.css).
+ *
+ * One set of tokens and one look for the parts every screen shares: page heroes,
+ * page headers, buttons, form fields, cards, notices, chips and focus rings.
+ * Earlier stylesheets grew page by page and disagreed (serif and sans titles,
+ * teal and blue heroes, pill and square buttons, 36px and 44px controls); this file
+ * is where they are reconciled. It only changes presentation.
+ *
+ *   Colour    teal is the one brand colour; blue is not used for surfaces.
+ *   Type      one sans family. Page title 28-36px/700, section title 18-20px/650,
+ *             body 15-16px, small 13px, eyebrow 11px caps. Nothing under 12px.
+ *   Space     4px steps: 4 8 12 16 24 32.
+ *   Shape     controls 12px, cards 16px, heroes 20px, chips full round.
+ *   Targets   interactive controls are at least 44px tall.
+ */
+:root {
+  --ds-primary: #08766c;
+  --ds-primary-dark: #07524b;
+  --ds-primary-soft: #e4f4ee;
+  --ds-ink: #18352f;
+  --ds-muted: #557367;
+  --ds-line: #dceae4;
+  --ds-line-strong: #c3d8cf;
+  --ds-surface: #ffffff;
+  --ds-canvas: #f2f8f5;
+  --ds-warn-bg: #fff8e6;
+  --ds-warn-line: #ecd08a;
+  --ds-warn-ink: #5c4204;
+  --ds-danger: #b42318;
+  --ds-danger-soft: #fdecea;
+  --ds-focus: #1d9e86;
+  --ds-radius-control: 12px;
+  --ds-radius-card: 16px;
+  --ds-radius-hero: 20px;
+  --ds-shadow-card: 0 2px 14px rgba(9, 74, 60, .05);
+  --ds-shadow-hero: 0 12px 30px rgba(7, 82, 75, .18);
+  --ds-title: clamp(1.75rem, 1.2rem + 2.2vw, 2.25rem);
+}
+
+body { font-family: var(--font-sans); }
+
+/* ---------- Titles: one family, no squeezed letters ---------- */
+.page-content :is(h1, h2, h3), .tb-account-form h1, .tb-dashboard-welcome h1, .tb-dashboard-till-total {
+  font-family: var(--font-sans) !important;
+}
+.page-content h1 { font-size: var(--ds-title); font-weight: 700 !important; line-height: 1.2 !important; letter-spacing: -.01em !important; color: var(--ds-ink); text-wrap: balance; }
+.page-content h2 { font-size: clamp(1.1rem, 1.02rem + .4vw, 1.25rem); font-weight: 650; line-height: 1.3; letter-spacing: 0; }
+.page-content h3 { font-size: 1rem; font-weight: 650; letter-spacing: 0; }
+.tb-account-form h1 { font-weight: 700 !important; letter-spacing: -.01em !important; }
+.tb-dashboard-till-total { font-weight: 700; letter-spacing: -.01em; }
+
+/* ---------- Page heroes: the same teal card on every screen ---------- */
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) {
+  position: relative; overflow: hidden; border: 0; border-radius: var(--ds-radius-hero);
+  padding: clamp(20px, 3.4vw, 32px); color: #fff;
+  background: linear-gradient(135deg, var(--ds-primary) 0%, var(--ds-primary-dark) 100%);
+  box-shadow: var(--ds-shadow-hero);
+}
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero)::before { display: none; }
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) h1 {
+  max-width: 24ch; margin: 8px 0 12px; color: #fff; font-size: var(--ds-title); font-weight: 700 !important;
+  line-height: 1.2 !important; letter-spacing: -.01em !important;
+}
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) h1 em { color: #bff0dc; font-style: normal; font-weight: 700; }
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) > p:not(.eyebrow) {
+  max-width: 62ch; margin: 0 0 8px; color: rgba(255, 255, 255, .9); font-size: .95rem; line-height: 1.6;
+}
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) .eyebrow {
+  color: rgba(255, 255, 255, .88); font-size: .72rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase;
+}
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) .eyebrow-dot { background: #fff; }
+/* Decorative three-letter tags (RPT, EXP, STK...) add noise and mean nothing to a shop owner. */
+.page-content .workspace-marker { display: none; }
+
+/* Buttons that sit on a hero: translucent, white text; the chosen one is solid white. */
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero)
+  :is(.secondary-action, .quiet-action, .reports-periods button, a.secondary-action) {
+  min-height: 44px; border: 1px solid rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .12); color: #fff;
+}
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero)
+  :is(.secondary-action, .quiet-action, .reports-periods button):hover:not(:disabled) { background: rgba(255, 255, 255, .22); color: #fff; }
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) .primary-action,
+.page-content .reports-hero .reports-periods button.is-selected,
+.page-content .reports-hero .reports-periods button[aria-pressed="true"] {
+  border-color: #fff; background: #fff; color: var(--ds-primary-dark); box-shadow: none;
+}
+.page-content .reports-periods { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.page-content .reports-periods button { border-radius: 999px; padding: 0 16px; font-size: .875rem; font-weight: 650; }
+
+/* ---------- Buttons ---------- */
+.page-content :is(.primary-action, .secondary-action) {
+  min-height: 44px; padding: 0 18px; border-radius: var(--ds-radius-control);
+  font-size: .9375rem; font-weight: 650; letter-spacing: 0; line-height: 1.2; text-transform: none;
+}
+.page-content .primary-action { border: 1px solid var(--ds-primary); background: var(--ds-primary); color: #fff; box-shadow: none; }
+.page-content .primary-action:hover:not(:disabled) { border-color: var(--ds-primary-dark); background: var(--ds-primary-dark); }
+.page-content .secondary-action { border: 1px solid var(--ds-line-strong); background: #fff; color: var(--ds-primary-dark); }
+.page-content .secondary-action:hover:not(:disabled) { border-color: var(--ds-primary); background: var(--ds-primary-soft); }
+.page-content :is(.primary-action, .secondary-action):disabled { opacity: .55; cursor: not-allowed; }
+.tb-dashboard-shortcuts a { border-radius: var(--ds-radius-control); font-size: .875rem; font-weight: 650; min-height: 44px; }
+.tb-account-form :is(.primary-action, .secondary-action) { border-radius: var(--ds-radius-control); min-height: 48px; }
+/* A form's single submit button spans the card on a phone, so it is never a small floating chip. */
+@media (max-width: 640px) {
+  .page-content form:not(.assistant-composer) > .primary-action:last-child, .page-content .ds-page form > button[type="submit"]:last-child { width: 100%; }
+}
+
+/* ---------- Form fields ---------- */
+.page-content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), select, textarea),
+.business-form [data-slot="select-trigger"] {
+  min-height: 44px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-control);
+  background: #fff; color: var(--ds-ink); font-size: 1rem;
+}
+.page-content textarea { padding-top: 10px; padding-bottom: 10px; }
+.business-form [data-slot="select-trigger"] { width: 100%; }
+.page-content :is(input, select, textarea)::placeholder { color: #6c8a7f; }
+.page-content :is(input, select, textarea, button, a, summary):focus-visible,
+.business-form [data-slot="select-trigger"]:focus-visible {
+  outline: 3px solid var(--ds-focus); outline-offset: 2px;
+}
+.page-content :is(input[type="checkbox"], input[type="radio"]) { width: 20px; height: 20px; accent-color: var(--ds-primary); }
+.page-content label { font-size: .875rem; font-weight: 600; color: var(--ds-ink); }
+
+/* ---------- Pages that were built with raw utility classes (.ds-page) ---------- */
+.ds-page { display: grid; gap: 20px; width: 100%; max-width: 64rem; margin-inline: auto; padding: 4px 0 24px; color: var(--ds-ink); }
+.ds-page > * { min-width: 0; }
+.ds-page > header { display: grid; gap: 6px; padding: 4px 2px 0; }
+.ds-page > header > p:first-child { margin: 0; color: var(--ds-primary); font-size: .72rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.ds-page > header h1 { margin: 0; }
+.ds-page > header > p:not(:first-child), .ds-page > header > p:only-of-type { margin: 0; max-width: 62ch; color: var(--ds-muted); font-size: .95rem; line-height: 1.6; }
+.ds-page :is(section, form, fieldset, details, aside, article):not(.ds-flat) {
+  min-width: 0; padding: 16px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-card);
+  background: var(--ds-surface); box-shadow: var(--ds-shadow-card);
+}
+.ds-page :is(section, form, fieldset) > h2:first-child, .ds-page legend { margin: 0 0 12px; font-size: 1.125rem; font-weight: 650; color: var(--ds-ink); }
+.ds-page legend { padding: 0 6px; }
+.ds-page :is(section, form) { display: grid; gap: 12px; align-content: start; }
+.ds-page label { display: grid; gap: 6px; font-size: .875rem; font-weight: 600; }
+.ds-page label:has(> input[type="checkbox"]), .ds-page label:has(> input[type="radio"]) { display: flex; align-items: center; gap: 10px; }
+.ds-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { width: 100%; padding: 0 12px; margin-top: 0 !important; }
+.ds-page textarea { padding: 10px 12px; }
+.ds-page button:not(.primary-action):not(.secondary-action):not([class*="shop-"]) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px;
+  border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-control); background: #fff;
+  color: var(--ds-primary-dark); font: inherit; font-size: .9375rem; font-weight: 650; cursor: pointer; width: auto;
+}
+.ds-page button:not(.primary-action):not(.secondary-action):hover:not(:disabled) { border-color: var(--ds-primary); background: var(--ds-primary-soft); }
+.ds-page button:disabled { opacity: .55; cursor: not-allowed; }
+.ds-page button[type="submit"]:not(.secondary-action), .ds-page form > button:last-child:not(.secondary-action):not([type="button"]) {
+  border-color: var(--ds-primary); background: var(--ds-primary); color: #fff;
+}
+.ds-page button[type="submit"]:not(.secondary-action):hover:not(:disabled) { border-color: var(--ds-primary-dark); background: var(--ds-primary-dark); color: #fff; }
+.ds-page :is(.grid, [class*="grid-cols"]) { gap: 12px; }
+.ds-page ul { padding-left: 20px; }
+.ds-page :is(table) { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.ds-page :is(th, td) { padding: 10px 8px; border-bottom: 1px solid var(--ds-line); text-align: left; vertical-align: top; }
+.ds-page th { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ds-muted); }
+.ds-page :is(p.text-muted-foreground, .text-muted-foreground) { color: var(--ds-muted); }
+
+/* Notices: amber for "read this first", red for errors, on every page. */
+.ds-page aside, .page-content .ds-notice {
+  border-color: var(--ds-warn-line) !important; background: var(--ds-warn-bg) !important; color: var(--ds-warn-ink) !important;
+  box-shadow: none; font-size: .9rem; line-height: 1.55;
+}
+.ds-page aside :is(p, ul) { margin: 4px 0 0; }
+.ds-page :is([role="alert"]) { border-color: #f0b9b3; background: var(--ds-danger-soft); color: var(--ds-danger); box-shadow: none; }
+
+/* Summary figures (label over big number) */
+.ds-page :is(.rounded-lg, .rounded-md, .rounded-xl, .rounded, .rounded):not(button):not(input):not(select):not(textarea):not(section):not(form):not(aside):not(fieldset) {
+  border-radius: var(--ds-radius-card);
+}
+.ds-page [class*="border"][class*="p-3"]:not(button):not(input):not(select) { padding: 12px 14px; border-color: var(--ds-line); background: #fff; }
+
+/* ---------- Cards on the hero-led pages ---------- */
+.page-content :is(.op-row-card, .premium-card, .purchase-sheet, .customer-record, .sale-lines-sheet, .expense-sheet, .end-day-sheet) {
+  border-radius: var(--ds-radius-card);
+}
+.page-content .ledger-kicker, .page-content .eyebrow { font-size: .72rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.page-content :is(.op-row-sub, .dashboard-empty p, .inventory-empty p) { color: var(--ds-muted); }
+
+/* Chips and counters */
+.page-content :is(.status-chip, .stamp) { font-size: .75rem; }
+
+/* ---------- Small screens ---------- */
+@media (max-width: 640px) {
+  .ds-page { gap: 16px; }
+  .ds-page :is(section, form, fieldset, details, aside, article):not(.ds-flat) { padding: 14px; }
+}
+
+/* ---------- Print keeps clean pages ---------- */
+@media print {
+  .page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+    .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) { background: #fff; color: #000; box-shadow: none; }
+}
+
+/* ---------- Leftover blue surfaces move to the brand teal ---------- */
+.page-content .customer-debt-spotlight {
+  background: linear-gradient(135deg, var(--ds-primary), var(--ds-primary-dark)); box-shadow: var(--ds-shadow-hero);
+  border-radius: var(--ds-radius-card);
+}
+.page-content .customer-debt-spotlight :is(.ledger-kicker, span) { color: rgba(255, 255, 255, .88); }
+.page-content .customer-debt-spotlight .primary-action, .page-content .customer-debt-spotlight a { background: #fff; border-color: #fff; color: var(--ds-primary-dark); }
+.page-content .receipt-detail-header { background: linear-gradient(135deg, var(--ds-primary), var(--ds-primary-dark)); }
+.page-content .sales-page .sale-totals-sheet { border-color: var(--ds-line); background: linear-gradient(180deg, #f6fbf8, #fff); }
+.page-content :is(.sale-confirmation-grid > div, .mobile-money-provider-add) { border-color: var(--ds-line); }
+.page-content .mobile-money-provider-add { background: #f6fbf8; }
+.page-content :is(.sales-gate-records, .customer-gate-records, .reports-gate-records) { background: #f6fbf8; }
+.page-content :is(.sales-gate-records, .customer-gate-records, .reports-gate-records) > div { border-color: var(--ds-line); }
+.clementia-launcher { background: linear-gradient(130deg, var(--ds-primary), var(--ds-primary-dark)) !important; box-shadow: 0 12px 28px rgba(7, 82, 75, .28) !important; }
+.clementia-launcher:focus-visible, .clementia-panel-header a:focus-visible, .clementia-panel-header button:focus-visible,
+.clementia-panel-header > button[aria-pressed]:focus-visible, .assistant-page > .assistant-minimize:focus-visible { outline-color: var(--ds-focus); }
+
+/* ---------- Text never drops below 12px; stat cards share one rhythm ---------- */
+.page-content :is(.op-stat-card .op-label, .op-stat-card .op-sub, .op-label, .op-sub, .op-row-sub, .ledger-kicker) { font-size: max(.75rem, 12px); }
+.page-content .op-stat-card { border-radius: var(--ds-radius-card); border-color: var(--ds-line); padding: 14px; }
+.page-content .op-stat-card .op-value { font-family: var(--font-sans); font-weight: 700; color: var(--ds-ink); }
+
+/* Space between a hero and the action row or content that follows it */
+.page-content :is(.setup-hero, .inventory-hero, .customers-hero, .sales-hero, .reports-hero, .end-day-hero,
+  .backup-hero, .assistant-hero, .purchases-hero, .expenses-hero, .health-hero) + * { margin-top: 16px; }
+
+/* The assistant's send button is a fixed square; the shared button padding must not widen it. */
+.page-content .assistant-send, .clementia-panel .assistant-send { width: 46px; min-width: 46px; padding: 0; }
+
+/* Secondary tools inside the Reports hero: one tidy, wrapping row of equal-height buttons. */
+.page-content .report-contextual-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.page-content .report-contextual-links :is(.quiet-action, a.quiet-action, label.quiet-action) {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: var(--ds-radius-control);
+  font-size: .8125rem; font-weight: 600; line-height: 1.2; text-decoration: none; text-align: left;
+}
+.page-content .report-contextual-links label.quiet-action input {
+  width: auto; min-height: 32px; margin: 0; padding: 0 8px; border-radius: 8px; border-color: transparent; font-size: .875rem;
+}
+.page-content .assistant-composer :is(input, textarea, .input) { min-width: 0; }
+
+/* ---------- Report and end-of-day sheets: soft teal headers, one neutral stat-card style ---------- */
+.page-content :is(.report-sheet-head, .end-day-sheet-head) { background: var(--ds-primary-soft); border-bottom-color: var(--ds-line); }
+.page-content :is(.report-sheet, .end-day-sheet) { border-radius: var(--ds-radius-card); overflow: hidden; border-color: var(--ds-line); }
+.page-content .end-day-total-strip > div, .page-content .end-day-total-strip > a {
+  background: #fff !important; border-top: 4px solid var(--ds-primary) !important;
+}
+.page-content .end-day-total-strip > a:hover, .page-content .end-day-total-strip > a:focus-visible { background: var(--ds-primary-soft) !important; outline-color: var(--ds-focus); }
+.page-content .end-day-total-strip :is(.end-day-sales-total, .end-day-received-total, .end-day-unpaid-total, .end-day-customers-total) strong { color: var(--ds-ink); }
+.page-content .end-day-total-strip svg { color: var(--ds-primary); }
+.page-content .end-day-attention { border-left-color: var(--ds-warn-line); background: var(--ds-warn-bg); }
+
+/* Small status tags inside heroes are round chips, like every other chip in the app. */
+.page-content :is(.customers-hero, .inventory-hero, .sales-hero, .purchases-hero, .reports-hero, .setup-hero, .backup-hero)
+  :is(.hero-chip, .hero-stat, .stamp, .status-chip, [class*="hero"] > div > span) { border-radius: 999px; }
+
+/* ---------- App shell: brand teal throughout (header mark, selected navigation, account chip) ---------- */
+.premium-header-brandmark svg, .premium-header-logo { background: linear-gradient(145deg, var(--ds-primary), var(--ds-primary-dark)) !important; color: #fff; }
+.premium-header-brandmark .font-display { color: var(--ds-ink); }
+@media (min-width: 960px) {
+  .premium-nav-selected, .premium-nav-selected:hover { color: var(--ds-primary-dark) !important; background: #dcf3e8 !important; box-shadow: none !important; font-weight: 700; }
+  .premium-nav-selected svg, .premium-nav-selected:hover svg { color: var(--ds-primary) !important; stroke: currentColor; }
+}
+.premium-header-account :is(.premium-avatar, [class*="avatar"]), .premium-header-account > span:first-child { background: var(--ds-primary) !important; color: #fff; }
+
+/* ---------- Assistant launcher: a compact pill on desktop, never a tall card over the page ---------- */
+@media (min-width: 1024px) {
+  body .clementia-launcher {
+    right: 24px; bottom: 24px; width: auto; height: auto; min-height: 52px; display: inline-flex; align-items: center; gap: 0;
+    padding: 8px 22px 8px 72px; border-radius: 999px;
+  }
+  body .clementia-launcher .clementia-avatar { left: 8px; bottom: 5px; width: 54px; height: 54px; overflow: hidden; border-radius: 50%; background: #fff; align-items: end; }
+  body .clementia-launcher .clementia-avatar svg { width: 62px; height: 62px; filter: none; }
+  body .clementia-launcher .clementia-launcher-copy small, body .clementia-launcher .clementia-launcher-arrow { display: none; }
+  body .clementia-launcher .clementia-launcher-label { font-size: .9375rem; font-weight: 700; letter-spacing: 0; line-height: 1.2; white-space: nowrap; }
+}
+body .clementia-launcher .clementia-launcher-copy { white-space: nowrap; }
+
+/* ---------- Contrast: every text colour meets 4.5:1 on the surface it sits on ---------- */
+:root { --ta-muted: #4a665b; --color-ink-soft: #4a665b; --muted-foreground: #4a665b; --ds-muted: #4a665b; }
+.mobile-nav .nav-link { color: #4a665b; }
+.mobile-nav .nav-link > span[class*="0.62rem"] { font-size: .75rem; color: inherit; }
+.mobile-nav .nav-link[aria-current="page"], .mobile-nav .nav-link.is-active { color: var(--ds-primary-dark); }
+.tb-reference-dashboard .premium-kpi h3 { font-size: .75rem; color: #3f5f54; }
+.premium-line-labels small, body .premium-chart .premium-line-labels small { font-size: .6875rem; color: #4a5d72; }
+body .premium-action small, body .premium-actions .premium-action small { color: #4a5b6b; }
+body .premium-step.done .premium-step-cta { background: #e7f8ef; color: #0e6b49; }
+.premium-nav-group h2 { color: #4f6277; }
+.premium-storage-note { color: #4f6277; }
+.page-content :is(.stamp-neutral) { color: #3f5f54; }
+.page-content :is(.ledger-kicker) { color: #3f5f54; }
+.page-content :is(.report-sheet-head, .end-day-sheet-head) .ledger-kicker { color: #2f5247; }
+.page-content :is(.customer-view-toggle button:not(.is-selected), .customer-empty p, .archived-products-panel-head .ledger-kicker) { color: #3f5f54; }
+body [data-sonner-toast][data-type="success"] [data-title] { color: #0b6b2b; }
