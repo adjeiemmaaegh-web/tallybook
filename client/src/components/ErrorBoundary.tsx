@@ -1,7 +1,9 @@
 import { cn } from "@/lib/utils";
 /** Tactile Ledger design reminder: errors preserve calm, offer recovery, and never expose private technical details. */
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { Component, ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { reportError } from "@/lib/errorReporting";
+import { ReportProblem } from "@/components/ReportProblem";
 
 interface Props {
   children: ReactNode;
@@ -20,6 +22,10 @@ class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    reportError(error, "react");
   }
 
   render() {
@@ -44,6 +50,7 @@ class ErrorBoundary extends Component<Props, State> {
               <RotateCcw size={16} />
               Refresh Tallybook
             </button>
+            <p className="mt-4 text-sm"><ReportProblem className="underline" /></p>
           </div>
         </div>
       );

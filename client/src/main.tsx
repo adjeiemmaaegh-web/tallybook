@@ -4,6 +4,9 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import {announceRun18UpdateReady} from "@/features/reliability/run18UpdatePolicy";
+import { initErrorReporting } from "@/lib/errorReporting";
+
+initErrorReporting();
 
 if ("serviceWorker" in navigator) {
   let apply:((reloadPage?:boolean)=>Promise<void>)|null=null;

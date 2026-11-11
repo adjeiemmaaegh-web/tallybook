@@ -7,6 +7,10 @@
  */
 import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
+import { ReportProblem } from "@/components/ReportProblem";
+import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
+import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
+import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
@@ -21,7 +25,7 @@ import { listVerifiedCloudBusinesses } from "@/cloud/cloudMembership";
 import { Run18UpdateNotice } from "@/components/Run18UpdateNotice";
 import { acceptCloudInvitation, revokeCloudAttendant, revokeCloudInvitation } from "@/cloud/run3MembershipClient";
 import {
-  adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, listShopSales, newSubmissionKey,
+  adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
   getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
@@ -151,6 +155,7 @@ export default function SharedShopPage() {
     {business
       ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
+    <footer className="shop-foot"><ReportProblem /></footer>
   </main>;
 }
 
@@ -595,11 +600,38 @@ function tenderText(t: NonNullable<ShopReceipt["tenders"]>[number], money: (v: n
   return `On credit ${money(t.amountMinor)}`;
 }
 
-function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => void }) {
+export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  const [shareNote, setShareNote] = useState("");
+  const [manualText, setManualText] = useState("");
+  const text = () => formatShopReceiptText(receipt);
+  const share = async () => {
+    setManualText("");
+    const result = await shareBusinessText({ title: `Receipt ${receipt.receiptNumber}`, text: text() });
+    if (result === "shared") setShareNote("Receipt opened in your share options.");
+    else if (result === "copied") setShareNote("Receipt text copied. Paste it into a message.");
+    else if (result === "manual") { setManualText(text()); setShareNote("Copy the receipt text below."); }
+    else setShareNote("");
+  };
+  const whatsApp = () => {
+    setManualText("");
+    const opened = openWhatsAppShare(text(), receipt.customer?.phone, countryForCurrency(receipt.currency));
+    if (opened) setShareNote(receipt.customer?.phone ? "Receipt opened in WhatsApp. Press send there." : "Receipt opened in WhatsApp. Choose the customer and press send.");
+    else { setManualText(text()); setShareNote("WhatsApp could not open. Copy the receipt text below."); }
+  };
+  const print = () => {
+    const node = root.current;
+    if (!node || typeof window.print !== "function") { setShareNote("Printing is not available in this browser. Use Share instead."); return; }
+    // The page-wide print stylesheet hides everything; only this receipt is revealed.
+    node.setAttribute("data-printing", "true");
+    const done = () => { node.removeAttribute("data-printing"); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done);
+    try { window.print(); } catch { done(); setShareNote("The browser could not open printing. Use Share instead."); }
+  };
   const money = (v: number) => formatMinorAmount(v, receipt.currency);
   const discount = receipt.discountMinor ?? 0;
   const tenders = receipt.tenders ?? [];
-  return <div className="shop-receipt" aria-label={`Receipt ${receipt.receiptNumber}`}>
+  return <div className="shop-receipt" ref={root} aria-label={`Receipt ${receipt.receiptNumber}`}>
     <p className="shop-receipt-ok"><Check aria-hidden="true" />Sale recorded</p>
     <p className="shop-muted">Receipt #{receipt.receiptNumber} · {receipt.storeName} · {new Date(receipt.recordedAt).toLocaleString()}</p>
     <ul>{receipt.lines.map(l => <li key={l.productId}><span>{l.quantity} × {l.name}</span><span>{money(l.lineTotalMinor)}</span></li>)}</ul>
@@ -614,7 +646,14 @@ function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: () => voi
       {receipt.refunds.map(r => <p key={r.refundId}><Undo2 aria-hidden="true" />Refund {r.refundNo}: {money(r.amountMinor)}{(r.creditMinor ?? 0) > 0 ? ` (${money(r.creditMinor!)} off what they owe${r.amountMinor > r.creditMinor! ? `, ${money(r.amountMinor - r.creditMinor!)} by ${methodLabel(r.method).toLowerCase()}` : ""})` : ` by ${methodLabel(r.method).toLowerCase()}`} · {r.reason}{r.returnedToStock ? " · back in stock" : " · not restocked"} · {new Date(r.recordedAt).toLocaleString()}</p>)}
       <p className="shop-total"><span>Kept after refunds</span><strong>{money(receipt.totalMinor - receipt.refundedMinor)}</strong></p>
     </div>}
-    {onNext && <button type="button" className="primary-action" onClick={onNext}>New sale</button>}
+    <div className="shop-receipt-actions shop-actions">
+      <button type="button" className="secondary-action" onClick={() => void share()}>Share</button>
+      <button type="button" className="secondary-action" onClick={whatsApp}>Send on WhatsApp</button>
+      <button type="button" className="secondary-action" onClick={print}>Print</button>
+    </div>
+    {shareNote && <p role="status" className="shop-muted shop-receipt-actions">{shareNote}</p>}
+    {manualText && <textarea className="shop-receipt-actions" readOnly rows={8} value={manualText} aria-label="Receipt text to copy" onFocus={e => e.currentTarget.select()} />}
+    {onNext && <button type="button" className="primary-action shop-receipt-actions" onClick={onNext}>New sale</button>}
   </div>;
 }
 
@@ -774,31 +813,71 @@ function RefundPolicyCard({ companyId, online }: { companyId: string; online: bo
 }
 
 function SalesPanel({ companyId, overview, online }: PanelProps) {
-  const [sales, setSales] = useState<ShopReceipt[] | null>(null);
+  const [page, setPage] = useState<SalesPage | null>(null);
+  const [sales, setSales] = useState<ShopReceipt[]>([]);
   const [storeFilter, setStoreFilter] = useState("");
+  const [preset, setPreset] = useState<DatePreset>("all");
+  const [payment, setPayment] = useState<PaymentFilter>("all");
+  const [text, setText] = useState("");
+  const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState("");
-  useEffect(() => { if (!online) return; setError("");
-    void listShopSales(companyId, storeFilter || undefined).then(setSales).catch(c => setError(message(c))); }, [companyId, storeFilter, online]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const request = useRef(0);
+  const isOwner = overview.role === "owner";
   const emailOf = (id: string) => overview.members.find(m => m.userId === id)?.email;
-  const total = (sales ?? []).reduce((s, r) => s + r.totalMinor - (r.refundedMinor ?? 0), 0);
-  const replace = (next: ShopReceipt) => setSales(list => (list ?? []).map(r => r.saleId === next.saleId ? next : r));
+  const queryNow = () => ({ storeId: storeFilter || undefined, ...dayRange(preset), payment, q, limit: 25 });
+  // Wait for a pause in typing so each keystroke is not a server call.
+  useEffect(() => { const id = setTimeout(() => setQ(text), 300); return () => clearTimeout(id); }, [text]);
+  useEffect(() => {
+    if (!online) return;
+    const mine = ++request.current;
+    setError("");
+    void searchShopSales(companyId, queryNow(), emailOf)
+      .then(result => { if (mine === request.current) { setPage(result); setSales(result.sales); setOpen(null); } })
+      .catch(c => { if (mine === request.current) setError(message(c)); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, storeFilter, preset, payment, q, online]);
+  const more = async () => {
+    if (!page?.next || loadingMore) return;
+    const mine = request.current;
+    setLoadingMore(true);
+    try {
+      const next = await searchShopSales(companyId, { ...queryNow(), before: page.next }, emailOf);
+      if (mine !== request.current) return;
+      setSales(list => [...list, ...next.sales]);
+      setPage(current => current ? { ...current, hasMore: next.hasMore, next: next.next } : next);
+    } catch (c) { if (mine === request.current) setError(message(c)); }
+    finally { setLoadingMore(false); }
+  };
+  const replace = (next: ShopReceipt) => setSales(list => list.map(r => r.saleId === next.saleId ? next : r));
+  const filtering = preset !== "all" || payment !== "all" || q.trim() !== "" || storeFilter !== "";
+  const clear = () => { setPreset("all"); setPayment("all"); setText(""); setQ(""); setStoreFilter(""); };
   return <section className="shop-card">
-    <div className="shop-card-head"><h2>{overview.role === "owner" ? "Recent sales" : "My recent sales"}</h2>
-      {overview.role === "owner" && overview.stores.length > 1 && <label className="shop-field shop-store-select">Store
+    <div className="shop-card-head"><h2>{isOwner ? "Sales" : "My sales"}</h2>
+      {isOwner && overview.stores.length > 1 && <label className="shop-field shop-store-select">Store
         <select value={storeFilter} onChange={e => setStoreFilter(e.target.value)}><option value="">All stores</option>
           {overview.stores.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}</div>
+    <label className="shop-field">Search
+      <input type="search" value={text} onChange={e => setText(e.target.value)} maxLength={60} autoComplete="off"
+        placeholder={isOwner ? "Receipt #, customer or cashier" : "Receipt # or customer"} aria-label="Search sales" /></label>
+    <div className="shop-chips" role="group" aria-label="Date">
+      {DATE_PRESETS.map(d => <button key={d.id} type="button" className="shop-chip" aria-pressed={preset === d.id} onClick={() => setPreset(d.id)}>{d.label}</button>)}</div>
+    <div className="shop-chips" role="group" aria-label="How it was paid">
+      {PAYMENT_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={payment === f.id} onClick={() => setPayment(f.id)}>{f.label}</button>)}</div>
     {!online && <p className="shop-muted">Connect to see sales.</p>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
-    {sales && !sales.length && <p className="shop-muted">No sales yet.</p>}
-    {sales && sales.length > 0 && <p className="shop-total"><span>Total of last {sales.length} sale{sales.length === 1 ? "" : "s"}, after refunds</span><strong>{formatMinorAmount(total, overview.currency!)}</strong></p>}
-    <ul className="shop-sales">{(sales ?? []).map(r => <li key={r.saleId}>
+    {page?.limited && <p className="shop-muted" role="note">Showing your latest sales only. Older sales appear here once the shop is updated.</p>}
+    {page && !sales.length && <p className="shop-muted">{filtering ? "No sales match these filters." : "No sales yet."} {filtering && <button type="button" className="shop-link" onClick={clear}>Clear filters</button>}</p>}
+    {page && page.matchCount > 0 && <p className="shop-total"><span>{page.matchCount} sale{page.matchCount === 1 ? "" : "s"}{filtering ? " found" : ""}, after refunds</span><strong>{formatMinorAmount(page.grossMinor - page.refundedMinor, overview.currency!)}</strong></p>}
+    <ul className="shop-sales">{sales.map(r => <li key={r.saleId}>
       <button type="button" aria-expanded={open === r.saleId} onClick={() => setOpen(o => o === r.saleId ? null : r.saleId)}>
-        <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{overview.role === "owner" && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""} · {methodLabel(r.payment.method)}</small></span>
+        <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
-        {overview.role === "owner" && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
+        {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
     </li>)}</ul>
+    {page?.hasMore && <button type="button" className="secondary-action" disabled={loadingMore || !online} onClick={() => void more()}>{loadingMore ? "Loading…" : "Show older sales"}</button>}
   </section>;
 }
 

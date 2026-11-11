@@ -143,3 +143,18 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-link{background:none;border:0;padding:0;min-height:44px;text-decoration:underline;color:inherit;font:inherit;cursor:pointer}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .shop-benefits{list-style:none;margin:.5rem 0 1rem;padding:0;display:grid;gap:.75rem;text-align:left}
+
+/* Print only the receipt that was asked for. The app-wide print rules hide
+   everything on the page, so a receipt must opt back in explicitly. */
+@media print {
+  .shop-receipt[data-printing], .shop-receipt[data-printing] * { visibility: visible !important; }
+  .shop-receipt[data-printing] { position: absolute; left: 0; top: 0; width: 100%; max-width: 80mm; padding: 4mm; color: #000; background: #fff; }
+  .shop-receipt[data-printing] .shop-receipt-actions { display: none !important; }
+}
+
+/* Sales filters */
+.shop-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.shop-chip { min-height: 36px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .88rem; cursor: pointer; }
+.shop-chip[aria-pressed="true"] { background: var(--ta-blue-soft); border-color: var(--ta-blue, currentColor); font-weight: 700; }
+
+.shop-foot { margin-top: 24px; padding: 12px 0; text-align: center; font-size: .88rem; }
