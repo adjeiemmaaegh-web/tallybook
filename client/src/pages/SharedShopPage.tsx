@@ -35,6 +35,8 @@ import {getRefundRequests} from "@/cloud/refundRequestData";
 import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import {SharedShopAttendantHome} from "@/cloud/SharedShopAttendantHome";
+import {SharedShopAccountMenu} from "@/cloud/SharedShopAccountMenu";
+import {shopStorePreferenceKey,authorizedStoreChoice} from "@/cloud/shopStorePreference";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -51,7 +53,7 @@ import {
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
-import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
+import { readSealedJson, removeSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
 import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
@@ -78,10 +80,13 @@ async function readCache(userId: string): Promise<ShopCache> {
 async function writeCache(userId: string, change: (cache: ShopCache) => void) {
   try { const cache = await readCache(userId); change(cache); await writeSealedJson(CACHE + userId, safeCache(cache)); } catch { /* not essential */ }
 }
-async function clearShopCaches() {
-  await removeSealedPrefix(CACHE);
-  await removeSealedPrefix(PARKED_PREFIX);
-  try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
+/** Sign-out clears only the departing user’s view caches and parked drafts.
+ * Do not delete another staff member’s cache or any saved sale outbox entry.
+ */
+async function clearShopCaches(userId: string) {
+  await removeSealedJson(CACHE + userId);
+  await removeSealedPrefix(PARKED_PREFIX + userId + ":");
+  try { localStorage.removeItem(CACHE + userId); } catch { /* ignore */ }
 }
 const methodLabel = (m: string) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : m === "credit" ? "Credit" : m === "split" ? "Split payment" : "Cash";
 const message = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Try again.";
@@ -139,9 +144,10 @@ export default function SharedShopPage() {
         setUserId(undefined); setBusinesses([]); setCompanyId(null);
       }
       if (event === "SIGNED_OUT") {
+        const departingUserId = identity.current;
         ++generation; identity.current = null;
         setUserId(null); setBusinesses([]); setCompanyId(null); setLoadError("");
-        void clearShopCaches();
+        if (departingUserId) void clearShopCaches(departingUserId);
       } else refreshIdentity();
     });
     refreshIdentity();
@@ -165,6 +171,7 @@ export default function SharedShopPage() {
         <p className="shop-eyebrow">Shared shop{business ? ` · ${business.role === "owner" ? "Owner" : "Attendant"}` : ""}</p>
         <h1>{business?.name ?? "Your shop"}</h1>
       </div>
+      <SharedShopAccountMenu key={userId} userId={userId} role={business?.role ?? null} shopName={business?.name ?? null}/>
       {!online && <p className="shop-offline" role="status"><CloudOff aria-hidden="true" />Offline — sales are saved and sent when you reconnect</p>}
       {businesses.length > 1 && <label className="shop-field shop-company">Business
         <select value={companyId ?? ""} onChange={e => setCompanyId(e.target.value)}>
@@ -391,14 +398,18 @@ function SetupLedger({ companyId, onDone }: { companyId: string; onDone: () => P
   </section>;
 }
 
-function useStoreChoice(overview: ShopOverview) {
+function useStoreChoice(overview: ShopOverview, userId: string) {
   const active = overview.stores.filter(s => s.status === "active");
+  const key = shopStorePreferenceKey(userId, overview.companyId);
   const [storeId, setStoreId] = useState(() => {
-    try { const saved = localStorage.getItem("tallybook.shop.store:" + overview.companyId); if (saved && active.some(s => s.id === saved)) return saved; } catch { /* ignore */ }
-    return active[0]?.id ?? "";
+    try { return authorizedStoreChoice(active, localStorage.getItem(key)); } catch { return authorizedStoreChoice(active, null); }
   });
-  useEffect(() => { if (!active.some(s => s.id === storeId)) setStoreId(active[0]?.id ?? ""); }, [active, storeId]);
-  const choose = (id: string) => { setStoreId(id); try { localStorage.setItem("tallybook.shop.store:" + overview.companyId, id); } catch { /* ignore */ } };
+  useEffect(() => { if (!active.some(s => s.id === storeId)) setStoreId(authorizedStoreChoice(active, null)); }, [active, storeId]);
+  const choose = (id: string) => {
+    if (!active.some(s => s.id === id)) return;
+    setStoreId(id);
+    try { localStorage.setItem(key, id); } catch { /* optional UI preference */ }
+  };
   return { active, storeId, choose };
 }
 
@@ -456,7 +467,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
   const currency = overview.currency!;
   const perms = permissionsOf(overview);
   const customers = overview.customers ?? [];
-  const { active, storeId, choose } = useStoreChoice(overview);
+  const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [mode, setMode] = useState<PayMode>("cash");
   const [tendered, setTendered] = useState("");
@@ -484,7 +495,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
   // The quotation this cart came from, with the items it held, so it is only marked sold if the sale really is that quotation.
   const fromQuote = useRef<QuoteStart | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
-  const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
+  const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale, userId), [companyId,userId]);
 
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
@@ -859,9 +870,9 @@ function draftToInput(draft: ProductDraft, currency: string): ProductInput {
   };
 }
 
-function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
+function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps) {
   const currency = overview.currency!;
-  const { active, storeId, choose } = useStoreChoice(overview);
+  const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [edit, setEdit] = useState<ProductDraft | null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -1156,9 +1167,10 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
     {page && page.matchCount > 0 && <p className="shop-total"><span>{page.matchCount} sale{page.matchCount === 1 ? "" : "s"}{filtering ? " found" : ""}, after refunds</span><strong>{formatMinorAmount(page.grossMinor - page.refundedMinor, overview.currency!)}</strong></p>}
     <ul className="shop-sales">{sales.map(r => <li key={r.saleId}>
       <button type="button" aria-expanded={open === r.saleId} onClick={() => setOpen(o => o === r.saleId ? null : r.saleId)}>
-        <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
+        <span>#{r.receiptNumber} · Posted {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner ? " · Cashier: " + (emailOf(r.cashierId) ?? "Staff ID " + r.cashierId) : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
+        {isOwner && <p className="shop-muted tb-shop-sales-attribution" role="note"><strong>Recorded by:</strong> {emailOf(r.cashierId) ?? "Staff member (account not in current roster)"} · <strong>Staff ID:</strong> <code>{r.cashierId}</code> · <strong>Server posted:</strong> {new Date(r.recordedAt).toLocaleString()}. Offline transactions may have been entered earlier than this server timestamp.</p>}
         {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}
         {!isOwner && r.refundedMinor < r.totalMinor && <RequestRefundForm companyId={companyId} receipt={r} online={online} onSent={() => setRequestTick(n => n + 1)} />}</>}
     </li>)}</ul>

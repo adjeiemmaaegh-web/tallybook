@@ -5,7 +5,15 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createFileSyncJournal,validateJournalEvent,evaluateJournalEvent} from '../syncJournal.mjs';
 const sample=(overrides={})=>({organizationId:'business-a',deviceId:'device-a',eventId:'event-a',operationId:'order-a',payloadDigest:'a'.repeat(64),...overrides});
-const sandbox=async fn=>{const dir=await mkdtemp(join(tmpdir(),'tb-journal-'));try{await fn(join(dir,'events.jsonl'));}finally{await rm(dir,{recursive:true,force:true});}};
+const sandbox=async fn=>{
+  const dir=await mkdtemp(join(tmpdir(),'tb-journal-'));
+  try { await fn(join(dir,'events.jsonl')); }
+  finally {
+    // CI filesystems can briefly report ENOTEMPTY while journal lock files are released.
+    // Retry transient cleanup errors only; other errors and exhausted retries still fail.
+    await rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:75});
+  }
+};
 test('reject malformed IDs, hashes, or extra fields',()=>{assert.throws(()=>validateJournalEvent(sample({payloadDigest:'zz'})));assert.throws(()=>validateJournalEvent(sample({extra:'secret'})));});
 test('evaluate company isolation and event idempotency',()=>{const a=sample();assert.equal(evaluateJournalEvent([a],a).status,'duplicate');assert.equal(evaluateJournalEvent([a],sample({payloadDigest:'b'.repeat(64)})).reason,'event-id-reuse');assert.equal(evaluateJournalEvent([a],sample({eventId:'event-b'})).reason,'operation-id-reuse');assert.equal(evaluateJournalEvent([a],sample({organizationId:'business-b'})).status,'new');});
 test('durably stage and reload, reject exact replays',()=>sandbox(async file=>{const j=createFileSyncJournal(file);assert.equal((await j.stageEvent(sample())).status,'stored');assert.equal((await j.stageEvent(sample())).status,'duplicate');assert.equal((await createFileSyncJournal(file).inspect('business-a')).length,1);}));
