@@ -187,6 +187,13 @@ begin
   -- acknowledge two different closing amounts.
   perform 1 from public.businesses where id=v_company for update;
   if not found then raise exception 'Business access denied' using errcode='42501'; end if;
+  -- Lock the actor's membership against concurrent removal/downgrades until
+  -- the shift transition is committed. The initial role check alone is not
+  -- sufficient if an owner revokes access while this request is waiting.
+  perform 1 from public.business_members
+    where business_id=v_company and user_id=p_actor for share;
+  if not found then raise exception 'Business access denied' using errcode='42501'; end if;
+  v_role := private.shop_member_role(p_actor,p_session,v_company);
 
   if p_action = 'openShift' then
     v_shift_id := private.shop_uuid(p_input,'shiftId');
@@ -197,10 +204,12 @@ begin
       raise exception 'Opening note must be 4 to 240 characters' using errcode='22023'; end if;
     perform 1 from public.shop_stores where business_id=v_company and id=v_store and status='active';
     if not found then raise exception 'Store unavailable' using errcode='42501'; end if;
-    if v_role='attendant' and not exists (
-        select 1 from public.shop_store_assignments where business_id=v_company
-          and store_id=v_store and user_id=p_actor) then
-      raise exception 'You are not assigned to this store' using errcode='42501'; end if;
+    if v_role='attendant' then
+      -- Prevent an assignment revocation from racing a just-opened shift.
+      perform 1 from public.shop_store_assignments
+        where business_id=v_company and store_id=v_store and user_id=p_actor for share;
+      if not found then raise exception 'You are not assigned to this store' using errcode='42501'; end if;
+    end if;
     select * into v_shift from public.shop_staff_shifts where id=v_shift_id for update;
     if found then
       if v_shift.business_id<>v_company or v_shift.staff_id<>p_actor
