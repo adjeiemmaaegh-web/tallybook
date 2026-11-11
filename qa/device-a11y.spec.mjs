@@ -40,3 +40,19 @@ test('every local-ledger screen has no WCAG A/AA violations at 390px', async ({ 
   }
   expect(problems, problems.join('\n')).toEqual([]);
 });
+
+for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+  test(`public landing page has no WCAG A/AA violations at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/welcome');
+    await page.getByRole('heading', { level: 1 }).waitFor();
+    await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important}' });
+    // Open every question so the answers are scanned too.
+    await page.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));
+    await page.waitForTimeout(300);
+    await page.evaluate(axeSource);
+    const found = await page.evaluate(async () => (await axe.run({ runOnly: ['wcag2a', 'wcag2aa'] })).violations
+      .flatMap(v => v.nodes.map(n => `${v.id}: ${n.target.slice(-1)[0]} (${n.any[0]?.data?.contrastRatio ?? ''})`)));
+    expect(found, found.join('\n')).toEqual([]);
+  });
+}
