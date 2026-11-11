@@ -133,8 +133,8 @@ const layoutReport = () => {
 };
 
 const TABS = {
-  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
-  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'My sales', 'My day'],
+  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Ask', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
+  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'Ask', 'My sales', 'My day'],
 };
 
 for (const width of [360, 320]) {
@@ -153,6 +153,7 @@ for (const width of [360, 320]) {
         await page.getByRole('button', { name: tab, exact: true }).click();
         await page.waitForTimeout(500);
         if (tab === 'Sell') { for (const name of ['Add one Crate of eggs', `Add one ${'Extra long product name for layout testing 500g family pack'}`]) await page.getByRole('button', { name }).click({ trial: false }).catch(() => {}); }
+        if (tab === 'Ask') { for (const q of ['What did I sell today?', 'What is low on stock?', 'Draft an order for what is low']) { await page.getByLabel('Your question').fill(q); await page.getByLabel('Your question').press('Enter'); await page.waitForTimeout(300); } }
         if (tab === 'Sales') await page.locator('.shop-sales li button').first().click().catch(() => {});
         if (tab === 'My sales') { await page.locator('.shop-sales li button').first().click().catch(() => {}); await page.getByRole('button', { name: 'Ask the owner for a refund' }).click().catch(() => {}); }
         if (tab === 'Stock') { await page.getByRole('button', { name: /Add product/ }).click().catch(() => {}); await page.getByText('Import products from a file').click().catch(() => {}); }

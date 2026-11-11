@@ -26,6 +26,7 @@ Eight of the migrations were applied through the Supabase connector, which recor
 | 20261111065040 `shop_join_codes` | `20261111120000_shop_join_codes.sql` |
 | 20261111065118 `shop_expenses` | `20261111130000_shop_expenses.sql` |
 | 20261111065155 `shop_refund_requests` | `20261111140000_shop_refund_requests.sql` |
+| 20261111070921 `shop_profit_report` | `20261111150000_shop_profit_report.sql` |
 
 After applying the last two, the definitions of `shop_stage_g_product_action`, `shop_stage_h_daily_report`, `shop_record_sale`, `shop_refund_sale` and `tallybook_shop_ops` in production were compared (md5 of `pg_get_functiondef`) with the repository chain replayed in a scratch database: all five identical.
 
@@ -59,5 +60,3 @@ Until it is brought up to date it cannot be used to rehearse a production upgrad
 See [rollback/README.md](rollback/README.md). Every migration from `20261106120000` onward has a rollback script, and `qa/migration-rollbacks.test.mjs` rolls the whole chain back and forward again.
 
 Check after applying the tier 4 set: a hash of every shop function's definition in production was compared with the repository chain replayed in a scratch database. 29 of 32 are byte-identical; the other three (`shop_refund_policy_action`, `shop_stage_c_action`, `shop_stage_f_sales_search`, applied earlier) differ only in SQL comments, and are identical once comments and whitespace are removed.
-
-Not applied to production yet (tier 5): `20261111150000_shop_profit_report.sql`.

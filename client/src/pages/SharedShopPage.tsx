@@ -25,6 +25,8 @@ import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
 import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
 import {ShopHelp} from "@/cloud/ShopHelp";
+import {SharedShopAsk} from "@/cloud/SharedShopAsk";
+import type {PurchaseDraft} from "@/cloud/shopAssistant";
 import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
 import {getRefundRequests} from "@/cloud/refundRequests";
 import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
@@ -51,7 +53,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -230,6 +232,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [stockAccess, setStockAccess] = useState<ShopStockAccess | null>(null);
   // Owner: how many refund requests are waiting. A server without refund requests leaves it at zero.
   const [pendingRefunds, setPendingRefunds] = useState(0);
+  // A purchase order drafted by Ask, waiting for the owner on the Purchasing tab. Nothing is ordered until they post it.
+  const [purchaseDraft, setPurchaseDraft] = useState<PurchaseDraft | null>(null);
   const refresh = useCallback(async () => {
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
@@ -281,10 +285,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
-       ["sales", "My sales"], ["reports", "My day"]];
+       ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess, shopName: business.name };
   return <>
@@ -308,12 +312,13 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
-    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} draft={purchaseDraft} onDraftUsed={() => setPurchaseDraft(null)} />}
     {tab === "stock-counts" && (isOwner || stockAccess?.canManageStock) && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "receive" && !isOwner && stockAccess?.canManageStock && <SharedShopReceiveGoods userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "orders" && isOwner && (online
       ? <SharedShopOrders userId={userId} companyId={business.id} overview={overview} />
       : <p role="status">Reconnect to manage online orders.</p>)}
+    {tab === "ask" && <SharedShopAsk companyId={business.id} overview={overview} online={online} onDraft={isOwner ? draft => { setPurchaseDraft(draft); setTab("purchasing"); } : undefined} />}
     {tab === "refund-requests" && isOwner && <OwnerRefundRequests companyId={business.id} overview={overview} online={online} refresh={refresh} onChanged={() => void refresh()} />}
     {tab === "expenses" && isOwner && <SharedShopExpenses companyId={business.id} overview={overview} online={online} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}

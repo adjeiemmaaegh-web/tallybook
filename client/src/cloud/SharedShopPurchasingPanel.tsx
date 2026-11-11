@@ -6,6 +6,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import {purchaseRetry} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {tracksStock} from "./productTracking";
+import type {PurchaseDraft} from "./shopAssistant";
 import {currencyMinorDivisor,formatMinorAmount,parseAmountToMinor} from "@/features/inventory/inventory";
 import {
  getShopSupplierBalances,listShopPurchaseOrders,getShopPurchaseDetails,saveShopSupplier,archiveShopSupplier,
@@ -13,7 +14,7 @@ import {
  type ShopSupplierBalance,type ShopPurchaseSummary,type ShopPurchaseDetail,type SupplierPaymentMethod
 } from "./shopPurchasing";
 
-interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
+interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>;draft?:PurchaseDraft|null;onDraftUsed?:()=>void}
 type OrderLine={productId:string;quantity:string;unitCost:string};
 type Pending={kind:string;fingerprint:string};
 const newLine=():OrderLine=>({productId:"",quantity:"1",unitCost:""});
@@ -28,7 +29,7 @@ function displayMinor(raw:string,currency:string) {
  return amount>=-BigInt(Number.MAX_SAFE_INTEGER)&&amount<=BigInt(Number.MAX_SAFE_INTEGER)
   ?formatMinorAmount(Number(amount),currency):raw+" minor units (outside display precision)";
 }
-export function SharedShopPurchasingPanel({userId,companyId,overview,online,refresh}:Props){
+export function SharedShopPurchasingPanel({userId,companyId,overview,online,refresh,draft,onDraftUsed}:Props){
  const currency=overview.currency??"GHS";
  const [suppliers,setSuppliers]=useState<ShopSupplierBalance[]>([]);
  const [orders,setOrders]=useState<ShopPurchaseSummary[]>([]);
@@ -67,6 +68,19 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
   if(online)void load();
   return()=>{mounted.current=false;};
  },[companyId,load,online]);
+ // A draft from Ask only fills in the form. The owner still picks the supplier, adds costs and posts it.
+ useEffect(()=>{
+  if(!draft)return;
+  const divisor=currencyMinorDivisor(currency);
+  setStoreId(draft.storeId);
+  setLines(draft.lines.map(l=>{
+   const cost=overview.products.find(p=>p.id===l.productId)?.costMinor;
+   return {productId:l.productId,quantity:String(l.quantity),unitCost:cost==null?"":(cost/divisor).toFixed(divisor===1?0:2)};
+  }));
+  setNotice(`Draft from Ask for ${draft.storeName}: choose a supplier, check the amounts and costs, then create the order. Nothing is ordered yet.`);
+  onDraftUsed?.();
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[draft]);
  useEffect(()=>{
   let live=true;setDetails(null);setReceived({});
   if(online&&selectedOrder)void getShopPurchaseDetails(companyId,selectedOrder)
