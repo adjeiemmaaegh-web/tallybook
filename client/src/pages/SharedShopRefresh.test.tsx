@@ -15,7 +15,7 @@ vi.mock("@/cloud/cloudMembership", () => ({ listVerifiedCloudBusinesses: async (
 vi.mock("@/cloud/shopClient", async (orig) => ({ ...(await orig<object>()), getShopOverview: shop.overview, getProductCatalog: shop.catalog,
   getArchivedCustomerIds: shop.archived, getShopReadiness: async () => ({ companyId: "biz", saleCount: 1 }) }));
 vi.mock("@/cloud/shopPurchasing", async (orig) => ({ ...(await orig<object>()), getShopStockAccess: shop.access }));
-vi.mock("@/cloud/refundRequests", async (orig) => ({ ...(await orig<object>()), getRefundRequests: shop.refunds }));
+vi.mock("@/cloud/refundRequestData", async (orig) => ({ ...(await orig<object>()), getRefundRequests: shop.refunds }));
 
 import SharedShopPage from "./SharedShopPage";
 

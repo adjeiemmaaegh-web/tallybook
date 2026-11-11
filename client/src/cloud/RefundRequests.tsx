@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { approveRefundRequest, cancelRefundRequest, declineRefundRequest, describeItems, getMyRefundRequests, getRefundRequests, requestShopRefund,
-  type RefundRequest } from "./refundRequests";
+  type RefundRequest } from "./refundRequestData";
 import type { ShopOverview, ShopReceipt } from "./shopClient";
 
 const when = (iso: string) => new Date(iso).toLocaleString();
