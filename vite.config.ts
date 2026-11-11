@@ -33,7 +33,7 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: "/index.html",
-        globPatterns: ["**/*.{js,css,html,svg,png,webp,jpg,jpeg}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,webp,jpg,jpeg,woff2}"],
         // Offline app-shell precache includes split route chunks. Do not
         // cache or request Google Fonts or third-party scripts by default.
         runtimeCaching: [],

@@ -32,7 +32,7 @@ test('shared shop welcome directs unsigned users to the real account, with no fa
 test('account page keeps live sign-in workflow and uses account-first layout',async({page},info)=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/signin');
-  await expect(page.getByRole('heading',{name:'Welcome to Tallybook'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Welcome back'})).toBeVisible();
   await expect(page.getByRole('heading',{name:/Your business\.\s*Beautifully in hand/i})).toBeVisible();
   await expect(page.getByRole('link',{name:/Open your device ledger/})).toHaveAttribute('href','/');
   await expect(page.locator('.tb-account-form')).toBeVisible();
@@ -151,5 +151,5 @@ test('signed-in attendant opening an owner dashboard link lands at the till and 
     await expect(tabs.getByRole('button',{name,exact:true})).toHaveCount(0);
   }
   await tabs.getByRole('button',{name:'My sales'}).click();
-  await expect(page.getByRole('heading',{name:'My recent sales'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'My sales',exact:true})).toBeVisible();
 });

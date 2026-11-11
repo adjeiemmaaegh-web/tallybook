@@ -8,7 +8,7 @@ test.beforeEach(async ({page}) => {
 test('a signed-out account page stays outside the ledger', async ({page}) => {
   await page.goto('/cloud-account');
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole('heading', {name:'Welcome to Tallybook'})).toBeVisible();
+  await expect(page.getByRole('heading', {name:'Welcome back'})).toBeVisible();
   expect(await page.evaluate(async () => (await indexedDB.databases()).some(db => db.name === 'tallybook-db'))).toBe(false);
   await page.goto('/sales');
   await expect(page.getByRole('link', {name:'Set up business'})).toBeVisible();

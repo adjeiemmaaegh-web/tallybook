@@ -45,7 +45,7 @@ export default function StoresPage() {
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => { let active = true; setCounts([]); if (!countStoreId) return; void listStoreStockObservations(countStoreId, db).then(rows => { if (active) setCounts(rows); }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Cannot load store counts."); }); return () => { active=false; }; }, [countStoreId, activeCompanyId]);
   const perform = async (action: () => Promise<unknown>) => { setWorking(true); setError(""); try { await action(); await refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Action failed."); } finally { setWorking(false); } };
-  return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
+  return <section className="ds-page">
     <header><p className="text-sm font-semibold uppercase">Stores</p><h1 className="text-3xl font-bold">Store directory</h1><p className="text-sm">Local company stores and staff assignments. This device does not yet synchronize sales or stock across stores.</p></header>
     <aside role="status" className="rounded border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950" aria-label="What stores on this device can do">
       <strong>Local store management only — not multi-device checkout.</strong>

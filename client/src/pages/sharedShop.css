@@ -122,6 +122,7 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-tenders li { font-size: .9rem; }
 .shop-customer-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .shop-customer-row > span { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.shop-customer-row > span:last-child { flex: 0 0 auto; overflow-wrap: normal; white-space: nowrap; }
 .shop-quote { min-width: 0; overflow-wrap: anywhere; }
 .shop-quote ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .shop-quote li { display: flex; justify-content: space-between; gap: 12px; }
@@ -186,10 +187,10 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-import summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .shop-import-skipped, .shop-import-result ul { margin: 8px 0; padding-left: 18px; font-size: .88rem; display: grid; gap: 4px; }
 
-.shop-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 8px 0; }
+.shop-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 156px), 1fr)); gap: 8px; margin: 8px 0; }
 .shop-stats > div { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
 .shop-stats span, .shop-stats small { font-size: .78rem; color: var(--ta-muted); }
-.shop-stats strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.shop-stats strong { font-size: 1.15rem; white-space: nowrap; }
 .shop-stock-search { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 12px; font: inherit; margin: 4px 0; box-sizing: border-box; }
 
 .shop-report h3 { margin: 16px 0 6px; font-size: .95rem; }
@@ -245,6 +246,9 @@ ol.shop-report-list { list-style: decimal inside; }
 .tb-shop-setup>h2{font-size:clamp(1.6rem,5vw,2.15rem);letter-spacing:-.04em;color:#0c4639}
 .tb-shop-setup .primary-action{border-radius:14px;min-height:48px}
 @media(max-width:600px){.tb-shop-home{gap:15px}.tb-shop-home-hero{padding:23px 20px;border-radius:20px}.tb-shop-home-metric{padding:14px;border-radius:15px}.tb-shop-home-actions{grid-template-columns:1fr}.tb-shop-home-metric strong{font-size:1.22rem}.tb-shop-home-section-head h3{font-size:1.1rem}}
+
+/* Every shop button is at least 44px tall, wherever it sits (headers, cards, dashboards). */
+.shop-page :is(.primary-action, .secondary-action) { min-height: 44px; }
 
 /* Shared device: account avatar/dropdown never moves checkout tabs or overlays the store picker. */
 .shop-head{position:relative;min-height:58px;padding-right:88px}

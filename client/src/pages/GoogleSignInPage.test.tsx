@@ -59,9 +59,11 @@ it('unverified cloud identity never renders signed-in account controls',()=>{
 it('creates an email account and tells the visitor to confirm it',async()=>{
  mock.state.status='signed-out';
  render(<GoogleSignInPage/>);
- fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.click(screen.getByRole('button',{name:'Create an account'}));
+ expect(screen.getByRole('heading',{name:'Create your account'})).toBeTruthy();
+ fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'friend@example.com'}});
  fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
- fireEvent.click(screen.getByText('Create email account'));
+ fireEvent.click(screen.getByRole('button',{name:'Create account'}));
  await waitFor(()=>expect(mock.emailSignUp).toHaveBeenCalledWith(expect.objectContaining({
   email:'friend@example.com',password:'test-passphrase'})));
  expect(screen.getByText(/follow that link before signing in/)).toBeTruthy();
@@ -69,10 +71,39 @@ it('creates an email account and tells the visitor to confirm it',async()=>{
 it('signs in with email before offering a test workspace',async()=>{
  mock.state.status='signed-out';
  render(<GoogleSignInPage/>);
- fireEvent.change(screen.getByLabelText('Email'),{target:{value:'friend@example.com'}});
+ fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'friend@example.com'}});
  fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
- fireEvent.click(screen.getByText('Sign in with email'));
+ fireEvent.click(screen.getByRole('button',{name:'Sign in'}));
  await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledWith({
   email:'friend@example.com',password:'test-passphrase'}));
 });
 
+it('shows and hides the typed password, and returns to sign-in from the create-account view',()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ const password=screen.getByLabelText('Password') as HTMLInputElement;
+ fireEvent.change(password,{target:{value:'secret-value'}});
+ expect(password.type).toBe('password');
+ fireEvent.click(screen.getByRole('button',{name:'Show password'}));
+ expect(password.type).toBe('text');
+ expect(screen.getByRole('button',{name:'Hide password'}).getAttribute('aria-pressed')).toBe('true');
+ fireEvent.click(screen.getByRole('button',{name:'Create an account'}));
+ expect(screen.getByRole('button',{name:'Show password'}).getAttribute('aria-pressed')).toBe('false');
+ fireEvent.click(screen.getByRole('button',{name:'Sign in'}));
+ expect(screen.getByRole('heading',{name:'Welcome back'})).toBeTruthy();
+});
+it('pressing Enter in the form submits it; an empty form explains what is missing instead of failing silently',async()=>{
+ mock.state.status='signed-out';
+ render(<GoogleSignInPage/>);
+ const submit=screen.getByRole('button',{name:'Sign in'}) as HTMLButtonElement;
+ expect(submit.disabled).toBe(false);
+ fireEvent.click(submit);
+ expect(await screen.findByRole('alert')).toHaveTextContent('Enter a valid email address.');
+ fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'friend@example.com'}});
+ fireEvent.click(submit);
+ await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('Enter your password.'));
+ expect(mock.emailSignIn).not.toHaveBeenCalled();
+ fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
+ fireEvent.submit(submit.closest('form') as HTMLFormElement);
+ await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledTimes(1));
+});

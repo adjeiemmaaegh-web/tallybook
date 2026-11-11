@@ -58,7 +58,7 @@ export default function LocalAlertsPage() {
     window.addEventListener("pageshow", onReturn);
     return () => { window.removeEventListener("focus", onReturn); window.removeEventListener("pageshow", onReturn); };
   }, [refresh]);
-  return <section className="mx-auto max-w-3xl space-y-5 p-4 sm:p-8">
+  return <section className="ds-page">
     <header><p className="text-sm font-semibold uppercase tracking-wide">Alerts</p>
       <h1 className="text-3xl font-bold">Stock needing attention</h1>
       <p className="mt-2 text-sm">Read-only alerts from this business's saved inventory on this device. No internet or notification permission required.</p></header>

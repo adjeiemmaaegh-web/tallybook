@@ -99,6 +99,11 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --config playwright.shop-phone.config.mjs 2>&1 | tee artifacts/release-v19/shop-phone-ci.log
+      - name: Local-ledger accessibility scan
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.a11y.config.mjs 2>&1 | tee artifacts/release-v19/a11y-ci.log
       - name: Offline built-app acceptance
         if: ${{ always() && steps.chromium.outcome == 'success' && steps.build.outcome == 'success' }}
         run: |

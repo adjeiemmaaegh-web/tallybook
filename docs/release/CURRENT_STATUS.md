@@ -1,5 +1,7 @@
 # Current status (updated 2026-11-11)
 
+**Production-readiness verdict (2026-11-11): ready for a controlled pilot, not yet an open launch.** The evidence, the gaps and who closes each, the go-live steps and the rollback are in [PRODUCTION_READINESS_2026-11-11.md](PRODUCTION_READINESS_2026-11-11.md).
+
 This is the single page to read first. Everything else under `docs/release/` is a dated snapshot of an earlier stage and is kept as evidence only. In particular `blockers.json` and `traceability.json` are the October V19 registers: automated QA scripts read them, so they are not edited by hand, and their "NO-GO / INCOMPLETE" wording does not describe today's shared shop.
 
 ## What is deployed and verified

@@ -11,6 +11,7 @@ const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 const DeviceWorkspace = lazy(() => import("@/DeviceWorkspace"));
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./styles/ReferenceVisualSystem.css";
+import "./styles/DesignSystem.css";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 
 function App() {
