@@ -3,12 +3,13 @@ import { ArrowRight, ClipboardList, Package, ReceiptText, ShoppingCart, Store } 
 import type { ShopOverview } from "./shopClient";
 
 type AttendantDestination = "sell" | "sales" | "reports";
-export function SharedShopAttendantHome({shopName,overview,userId,onNavigate}:{
- shopName:string;overview:ShopOverview;userId:string;
+export function SharedShopAttendantHome({shopName,overview,onNavigate}:{
+ shopName:string;overview:ShopOverview;
  onNavigate:(destination:AttendantDestination)=>void;
 }){
- const member=overview.members.find(row=>row.userId===userId&&row.role==="attendant");
- const assigned=overview.stores.filter(store=>store.status==="active"&&member?.storeIds.includes(store.id));
+ // The server already filters an attendant overview to assigned active stores.
+ // Its members array is intentionally empty to protect other staff identities.
+ const assigned=overview.stores.filter(store=>store.status==="active");
  const canSell=assigned.length>0;
  const listedProducts=overview.products.filter(product=>product.active).length;
  return <section className="tb-shop-home tb-attendant-home" aria-label="Attendant home">

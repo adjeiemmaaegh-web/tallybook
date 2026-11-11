@@ -309,7 +309,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       {tabs.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       <button type="button" className="shop-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh"><RefreshCw aria-hidden="true" /></button>
     </nav>
-    {tab === "home" && !isOwner && <SharedShopAttendantHome shopName={business.name} overview={overview} userId={userId} onNavigate={setTab} />}
+    {tab === "home" && !isOwner && <SharedShopAttendantHome shopName={business.name} overview={overview} onNavigate={setTab} />}
     {tab === "dashboard" && isOwner && <section className="shop-card">
       <SharedShopOwnerDashboard companyId={business.id} businessName={business.name} overview={overview} online={online} onNavigate={setTab} />
       <details><summary>Tools on this device</summary>
