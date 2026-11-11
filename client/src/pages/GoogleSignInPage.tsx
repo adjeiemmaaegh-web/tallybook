@@ -8,6 +8,7 @@ import {Link,useLocation} from 'wouter';
 import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
 import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
+import {confirmSharedDeviceHandover} from '@/cloud/sharedDeviceHandover';
 
 export default function GoogleSignInPage(){
   const {state,retry,signOut}=useRun4CloudSession(isSupabaseConfigured);
@@ -68,6 +69,7 @@ export default function GoogleSignInPage(){
     setBusy(true);setError(null);
     try{
       if(selectAccount){
+        if(state.status !== "signed-in" || !state.userId || !await confirmSharedDeviceHandover(state.userId)) return;
         const confirmed=await signOut();
         if(!confirmed)throw Error('Could not confirm cloud sign-out before switching.');
       }
@@ -83,6 +85,7 @@ export default function GoogleSignInPage(){
   async function logOut(){
     if(busy)return;setBusy(true);setError(null);
     try{
+      if(state.status !== 'signed-in' || !state.userId || !await confirmSharedDeviceHandover(state.userId)) return;
       if(!await signOut())throw Error('Sign-out could not be confirmed. Cloud access stays locked.');
     }catch(e){setError(e instanceof Error?e.message:'Cloud sign-out failed.');}
     finally{setBusy(false);}
