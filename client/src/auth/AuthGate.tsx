@@ -13,7 +13,7 @@ export function AuthGate({children,signIn,accountSignIn,passwordRecovery,enabled
   // This also keeps a signed-out cloud-route redirect outside the ledger tree.
   if(location==='/signin')return <>{signIn}</>;
   if(location==='/reset-password')return <>{passwordRecovery??signIn}</>;
-  if(location==='/account')return <>{accountSignIn??signIn}</>;
+  if(location==='/account'||location==='/settings')return <>{accountSignIn??signIn}</>;
   // Preserve offline sales, inventory, reports and backup in every mode.
   // Only the opt-in cloud-account route requires a validated online session.
   if(!enabled||location!=='/cloud-account')return <>{children}</>;

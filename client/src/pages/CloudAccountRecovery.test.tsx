@@ -14,7 +14,7 @@ vi.mock('@/auth/useRun4CloudSession',()=>({useRun4CloudSession:()=>({
   state:{status:'signed-out',userId:null,expiresAtEpochMs:null,generation:0},
   retry:vi.fn(),signOut:mock.signOut
 })}));
-vi.mock('wouter',()=>({Link:({href,children}:{href:string;children:React.ReactNode})=><a href={href}>{children}</a>}));
+vi.mock('wouter',()=>({Link:({href,children}:{href:string;children:React.ReactNode})=><a href={href}>{children}</a>,useLocation:()=>['/',()=>{}]}));
 beforeEach(()=>{
   vi.clearAllMocks();
   window.history.replaceState(null,'','/');

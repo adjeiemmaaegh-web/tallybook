@@ -9,7 +9,7 @@ const mock=vi.hoisted(()=>({
   expiresAtEpochMs:999999999999 as number|null,generation:1}
 }));
 vi.mock('@/cloud/CloudBusinessPanel',()=>({CloudBusinessPanel:()=> <section>Business setup</section>}));
-vi.mock('wouter',()=>({Link:({children}:{children:unknown})=><span>{children as string}</span>,useLocation:()=>['/',()=>{}]}));
+vi.mock('wouter',()=>({Link:({children}:{children:unknown})=><span>{children as string}</span>,useLocation:()=>['/settings',()=>{}]}));
 vi.mock('@/lib/supabase',()=>({
  isSupabaseConfigured:true,
  getSupabaseClient:()=>({auth:{signInWithOAuth:mock.oauth,signInWithPassword:mock.emailSignIn,signUp:mock.emailSignUp}})

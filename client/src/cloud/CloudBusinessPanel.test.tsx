@@ -64,7 +64,7 @@ it("sends an attendant to the shared shop without promoting to owner or opening 
   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"attendant"});
   render(<CloudBusinessPanel accountOnly />);
   expect(await screen.findByText(/Record sales at your assigned store/)).toBeTruthy();
-  expect(screen.getByRole("link",{name:"Open POS"}).getAttribute("href")).toBe("/shop");
+  expect(screen.getByRole("link",{name:"Open attendant home"}).getAttribute("href")).toBe("/shop?view=home");
   expect(screen.queryByRole("link",{name:/ledger/})).toBeNull();
 });
 

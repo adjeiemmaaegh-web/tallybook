@@ -167,3 +167,9 @@ test('a disconnected shared till preserves a scoped sale across browser restart 
     expect(posted).toEqual([sale]);
   } finally {await second.context.close();}
 });
+
+
+test('account settings never mounts the local ledger database',async({page})=>{
+  await page.goto('/settings');
+  expect(await page.evaluate(async()=> (await indexedDB.databases()).some(db=>db.name==='tallybook-db'))).toBe(false);
+});
