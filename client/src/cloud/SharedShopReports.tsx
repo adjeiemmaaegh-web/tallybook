@@ -55,7 +55,7 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
 
   const m = (value: number) => formatMinorAmount(value, currency);
   const periodLabel = PERIODS.find(p => p.id === period)!.label;
-  const cashierName = (id: string) => overview.members.find(x => x.userId === id)?.email ?? (id === userId ? "You" : "Staff member");
+  const cashierName = (id: string) => overview.members.find(x => x.userId === id)?.email ?? (id === userId ? "You" : "Staff ID " + id);
   const text = () => report ? formatReportText(report, {
     shopName, storeName: stores.find(s => s.id === storeId)?.name ?? null, periodLabel, currency, cashierName }) : "";
   const share = async () => {

@@ -29,7 +29,13 @@ async function outboxFor(scope: OutboxScope) {
     lock: bestAvailableLocks(),
     isRejected: error => error instanceof ShopRejectedError,
     // The server's own idempotency still protects us if this window misses an old sale.
-    lookupReceipt: async sale => (await listShopSales(scope.companyId)).find(r => r.submissionKey === sale.submissionKey) ?? null,
+    lookupReceipt: async sale => {
+      const receipt=(await listShopSales(scope.companyId)).find(row=>row.submissionKey===sale.submissionKey)??null;
+      // Do not consume an A outbox entry because B posted a matching key.
+      if(receipt && (receipt.cashierId!==scope.userId || receipt.companyId!==scope.companyId))
+        throw new ShopRejectedError("A server receipt uses a different cashier or business. Preserve this original sale for review.");
+      return receipt;
+    },
   });
   const key = legacyKey(scope);
   let migrated = migrations.get(key);

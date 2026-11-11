@@ -70,6 +70,14 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
    <div className="shop-actions"><button type="button" className="primary-action" disabled={!online||busy} onClick={()=>apply(row)}>Apply physical count</button>
     <button type="button" className="secondary-action" disabled={!online||busy} onClick={async()=>{if(await confirmAction("Cancel this unposted count?",{danger:true}))void action(()=>cancelShopStockCount(companyId,row.countId),"Count cancelled");}}>Cancel</button></div>
   </div>)}
+  {overview.role==="owner"&&counts.some(c=>c.status==="applied")&&<details className="tb-shop-count-history"><summary>Review inventory differences</summary>
+    <p className="shop-muted">Recorded physical counts can identify when a stock discrepancy was found. A discrepancy does not, by itself, establish which employee caused it.</p>
+    <ul className="shop-list">{counts.filter(c=>c.status==="applied").map(c=><li key={c.countId}>
+      <span><strong>{products.find(p=>p.id===c.productId)?.name??c.productId}</strong> · {stores.find(s=>s.id===c.storeId)?.name??c.storeId}
+        <small>Count started {new Date(c.createdAt).toLocaleString()} · Expected {c.expectedQuantity} · Counted {c.countedQuantity??"—"} · Difference {c.countedQuantity===null?"—":c.countedQuantity-c.expectedQuantity}</small>
+      </span>
+    </li>)}</ul>
+  </details>}
   <p className="shop-muted">Latest server count history (up to 100): {counts.length} records, including {counts.filter(c=>c.status==="applied").length} applied and {counts.filter(c=>c.status==="cancelled").length} cancelled.</p>
  </section>;
 }

@@ -223,8 +223,49 @@ export const getShopReadiness = (companyId: string) =>
 export const getShopOverview = (companyId: string) => callShop<ShopOverview>("overview", { companyId });
 export const listShopSales = (companyId: string, storeId?: string) =>
   callShop<{ sales: ShopReceipt[] }>("listSales", storeId ? { companyId, storeId } : { companyId }).then(r => r.sales);
-export const recordShopSale = (companyId: string, sale: SaleRequest) =>
-  callShop<ShopReceipt>("recordSale", { companyId, ...sale });
+/**
+ * When a shared device has a known cashier, pin the exact Supabase access token
+ * from that cashier before any await on the HTTP send. A stale A outbox MUST NOT
+ * be uploaded using B's active Supabase session after a mid-flight account switch.
+ * The server still verifies JWT, membership, store access and receipt idempotency.
+ */
+export async function recordShopSaleForCashier(companyId:string,sale:SaleRequest,expectedUserId:string):Promise<ShopReceipt> {
+  const {data,error}=await getSupabaseClient().auth.getSession();
+  const session=data.session;
+  if(error||!session?.access_token||session.user.id!==expectedUserId)
+    throw new ShopUnreachableError("The cashier account changed. This sale remains queued for its original cashier to sync.");
+  const url=import.meta.env.VITE_SUPABASE_URL?.trim();
+  const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+  if(!url||!key)throw new ShopUnreachableError("Shared shop connection is not configured.");
+  let response:Response;
+  try {
+    response=await fetch(new URL("/rest/v1/rpc/tallybook_shop",url).toString(),{
+      method:"POST",
+      headers:{"apikey":key,"Authorization":"Bearer "+session.access_token,"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify({p_action:"recordSale",p_input:{companyId,...sale}}),
+    });
+  } catch { throw new ShopUnreachableError("Can't reach Tallybook right now. This cashier's sale is still queued."); }
+  let payload:unknown;
+  try { payload=await response.json(); }
+  catch { throw new ShopUnreachableError("Could not verify the sale response. Keep the original cashier's pending sale."); }
+  if(!response.ok){
+    const problem=payload&&typeof payload==="object"&&!Array.isArray(payload)?payload as {code?:unknown;message?:unknown}:{};
+    const code=typeof problem.code==="string"?problem.code:"";
+    const description=typeof problem.message==="string"?problem.message:"Tallybook could not process this sale.";
+    if(DECIDED.test(code))throw new ShopRejectedError(friendlyMessage(description));
+    if(code==="PGRST202")throw new ShopRejectedError("The shared shop isn't available on this server yet.");
+    throw new ShopUnreachableError("Tallybook could not verify this cashier's sale. It remains queued for reconciliation.");
+  }
+  if(!payload||typeof payload!=="object"||Array.isArray(payload))
+    throw new ShopUnreachableError("Unexpected response. The sale stays queued until its outcome is checked.");
+  const receipt=payload as ShopReceipt;
+  if(receipt.companyId!==companyId||receipt.cashierId!==expectedUserId||receipt.submissionKey!==sale.submissionKey)
+    throw new ShopUnreachableError("Receipt identity did not match the original cashier. Check the server before retrying.");
+  return receipt;
+}
+/** Recording a sale requires its intended cashier; never fall back to whoever happens to be logged in. */
+export const recordShopSale = (companyId:string,sale:SaleRequest,expectedUserId:string) =>
+  recordShopSaleForCashier(companyId,sale,expectedUserId);
 export const setupShopLedger = (companyId: string, currency: string) => callShop("setupLedger", { companyId, currency });
 export const saveShopStore = (companyId: string, storeId: string, name: string) => callShop("saveStore", { companyId, storeId, name });
 export const setShopStoreStatus = (companyId: string, storeId: string, status: "active" | "archived") =>

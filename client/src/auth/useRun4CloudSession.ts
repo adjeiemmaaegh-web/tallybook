@@ -25,7 +25,7 @@ export function useRun4CloudSession(enabled=true,requireServerProof=false){
       auth:{
         getSession:()=>client.auth.getSession(),
         getUser:()=>client.auth.getUser(),
-        signOut:()=>client.auth.signOut(),
+        signOut:()=>client.auth.signOut({scope:'local'}),
         onAuthStateChange:callback=>client.auth.onAuthStateChange(event=>callback(event))
       },
       isOnline:()=>navigator.onLine,
