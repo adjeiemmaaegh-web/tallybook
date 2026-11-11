@@ -16,7 +16,7 @@ export function SharedShopActivityAudit({companyId,overview,online}:{
  const [error,setError]=useState("");
  const run=useRef(0);
  const currency=overview.currency??"GHS";
- const nameOf=(id:string)=>overview.members.find(m=>m.userId===id)?.email??"Staff ID "+id;
+ const nameOf=(id:string,email?:string|null)=>email??overview.members.find(m=>m.userId===id)?.email??"Staff ID "+id;
  const storeName=(id:string|null)=>id?overview.stores.find(s=>s.id===id)?.name??id:"All locations";
  const productName=(id:string|null)=>id?overview.products.find(p=>p.id===id)?.name??id:null;
  const amount=(minor:string|null)=>!minor?"":/^-?[0-9]{1,15}$/.test(minor)&&Number.isSafeInteger(Number(minor))
@@ -50,7 +50,7 @@ export function SharedShopActivityAudit({companyId,overview,online}:{
    <div className="tb-shop-audit-title"><strong>{e.kind.replaceAll("_"," ").toUpperCase()}</strong>
     <span>{new Date(e.serverRecordedAt).toLocaleString()}</span></div>
    <p>{e.detail}</p>
-   <small><strong>Actor:</strong> {nameOf(e.actorId)} · <strong>Store:</strong> {storeName(e.storeId)}</small>
+   <small><strong>Actor:</strong> {nameOf(e.actorId,e.actorEmail)} · <strong>Store:</strong> {storeName(e.storeId)}</small>
    {e.productId&&<small><strong>Product:</strong> {productName(e.productId)}</small>}
    {e.delta!==null&&<small><strong>Quantity change:</strong> {e.delta>0?"+":""}{e.delta} units · After: {e.quantityAfter??"unknown"}</small>}
    {e.amountMinor&&<small><strong>Recorded amount:</strong> {amount(e.amountMinor)}</small>}
