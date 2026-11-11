@@ -53,7 +53,7 @@ import {
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
-import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
+import { readSealedJson, removeSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
 import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
@@ -84,7 +84,7 @@ async function writeCache(userId: string, change: (cache: ShopCache) => void) {
  * Do not delete another staff member’s cache or any saved sale outbox entry.
  */
 async function clearShopCaches(userId: string) {
-  await removeSealedPrefix(CACHE + userId);
+  await removeSealedJson(CACHE + userId);
   await removeSealedPrefix(PARKED_PREFIX + userId + ":");
   try { localStorage.removeItem(CACHE + userId); } catch { /* ignore */ }
 }

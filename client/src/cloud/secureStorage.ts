@@ -159,6 +159,15 @@ export async function writeSealedJson(name: string, value: unknown): Promise<voi
   } catch { /* not essential */ }
 }
 
+/** Delete exactly one outgoing user's cached shop view, never a similar user ID prefix. */
+export async function removeSealedJson(name:string):Promise<void>{
+  try {
+    const tx=(await openDb()).transaction(CACHE,"readwrite");
+    tx.objectStore(CACHE).delete(name);
+    await done(tx);
+  } catch { /* Cache cleanup is best effort and must not destroy sale outboxes. */ }
+}
+
 /** Remove cached values whose name starts with the prefix (sign-out, account switch). */
 export async function removeSealedPrefix(prefix: string): Promise<void> {
   try {
