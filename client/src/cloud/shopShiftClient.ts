@@ -2,14 +2,14 @@
 import {callShop,type ShopRole} from "./shopClient";
 
 export interface ShopShift {
- shiftId:string;companyId:string;storeId:string;staffId:string;
+ shiftId:string;companyId:string;storeId:string;staffId:string;staffEmail?:string|null;
  openedAt:string;openingCashMinor:string;openingNote:string|null;
  closedAt:string|null;closedBy:string|null;forcedClose:boolean;
  closingCashMinor:string|null;closingNote:string|null;
  reviewedAt:string|null;reviewedBy:string|null;reviewDecision:"accepted"|"needs-investigation"|null;reviewNote:string|null;
 }
 export interface ShopAuditEvent {
- kind:string;eventKey:string;actorId:string;
+ kind:string;eventKey:string;actorId:string;actorEmail?:string|null;
  storeId:string|null;productId:string|null;delta:number|null;quantityAfter:number|null;
  detail:string;sourceId:string;amountMinor:string|null;
  serverRecordedAt:string;deviceReportedAt:string|null;
