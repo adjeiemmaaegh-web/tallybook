@@ -245,3 +245,31 @@ ol.shop-report-list { list-style: decimal inside; }
 .tb-shop-setup>h2{font-size:clamp(1.6rem,5vw,2.15rem);letter-spacing:-.04em;color:#0c4639}
 .tb-shop-setup .primary-action{border-radius:14px;min-height:48px}
 @media(max-width:600px){.tb-shop-home{gap:15px}.tb-shop-home-hero{padding:23px 20px;border-radius:20px}.tb-shop-home-metric{padding:14px;border-radius:15px}.tb-shop-home-actions{grid-template-columns:1fr}.tb-shop-home-metric strong{font-size:1.22rem}.tb-shop-home-section-head h3{font-size:1.1rem}}
+
+/* Shared device: account avatar/dropdown never moves checkout tabs or overlays the store picker. */
+.shop-head{position:relative;min-height:58px;padding-right:88px}
+.tb-shop-account-wrap{position:absolute;right:0;top:0;z-index:30}
+.tb-shop-account-menu summary{display:inline-flex;align-items:center;gap:7px;min-height:46px;padding:4px 8px 4px 5px;cursor:pointer;list-style:none;border-radius:14px;border:1px solid #cee5d9;background:#fff;color:#075d51;box-shadow:0 3px 10px #0c6c5713;font-weight:800}
+.tb-shop-account-menu summary::-webkit-details-marker{display:none}
+.tb-shop-account-menu summary:focus-visible,.tb-shop-account-panel :is(a,button):focus-visible{outline:3px solid #168e78;outline-offset:3px}
+.tb-shop-account-avatar{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:#087568;color:#fff;font-size:.85rem;letter-spacing:.01em}
+.tb-shop-account-label{font-size:.72rem}
+.tb-shop-account-panel{position:absolute;right:0;top:calc(100% + 8px);width:min(340px,calc(100vw - 32px));max-height:min(78dvh,620px);overflow-y:auto;padding:14px;border:1px solid #d8e9e1;background:#fff;border-radius:18px;box-shadow:0 16px 45px #063f3433;display:grid;gap:8px}
+.tb-shop-account-panel p{margin:0;overflow-wrap:anywhere}
+.tb-shop-account-name{font-size:1rem;color:#143a31;font-weight:850}
+.tb-shop-account-email{font-size:.83rem;color:#547369}
+.tb-shop-account-role{margin-bottom:6px!important;font-size:.75rem;color:#126e5e;font-weight:750}
+.tb-shop-account-panel :is(a,button){width:100%;display:flex;align-items:center;gap:12px;border:0;border-radius:12px;background:transparent;color:#183e33;min-height:46px;text-decoration:none;padding:10px;text-align:left;font-size:.88rem;font-weight:750}
+.tb-shop-account-panel :is(a,button):hover:not(:disabled){background:#edf8f3}
+.tb-shop-account-panel :is(a,button) svg{height:19px;width:19px;flex:none}
+.tb-shop-account-panel .tb-shop-account-signout{border-top:1px solid #e0eee7;border-radius:0;color:#ae463a}
+.tb-shop-account-help{padding:8px 10px;font-size:.74rem;line-height:1.55;color:#58766a}
+.tb-shop-account-error{position:absolute;right:0;top:calc(100% + 8px);width:min(340px,calc(100vw - 32px))}
+.tb-shop-sales-attribution{padding:12px;border:1px solid #daeae2;border-radius:12px;background:#f4faf6;overflow-wrap:anywhere}
+.tb-shop-sales-attribution code{word-break:break-all}
+.tb-shop-count-history{border:1px solid #daeae2;border-radius:14px;padding:13px}
+.tb-shop-count-history summary{font-weight:800;color:#0b695c;cursor:pointer}
+.tb-shop-count-history .shop-list{margin-top:12px}
+.tb-shop-count-history li{line-height:1.5}
+.tb-shop-count-history small{display:block;color:#536f64}
+@media(max-width:600px){.shop-head{padding-right:88px}.tb-shop-account-panel{max-height:70dvh}}

@@ -1167,9 +1167,10 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
     {page && page.matchCount > 0 && <p className="shop-total"><span>{page.matchCount} sale{page.matchCount === 1 ? "" : "s"}{filtering ? " found" : ""}, after refunds</span><strong>{formatMinorAmount(page.grossMinor - page.refundedMinor, overview.currency!)}</strong></p>}
     <ul className="shop-sales">{sales.map(r => <li key={r.saleId}>
       <button type="button" aria-expanded={open === r.saleId} onClick={() => setOpen(o => o === r.saleId ? null : r.saleId)}>
-        <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
+        <span>#{r.receiptNumber} · Posted {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner ? " · Cashier: " + (emailOf(r.cashierId) ?? "Staff ID " + r.cashierId) : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
+        {isOwner && <p className="shop-muted tb-shop-sales-attribution" role="note"><strong>Recorded by:</strong> {emailOf(r.cashierId) ?? "Staff member (account not in current roster)"} · <strong>Staff ID:</strong> <code>{r.cashierId}</code> · <strong>Server posted:</strong> {new Date(r.recordedAt).toLocaleString()}. Offline transactions may have been entered earlier than this server timestamp.</p>}
         {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}
         {!isOwner && r.refundedMinor < r.totalMinor && <RequestRefundForm companyId={companyId} receipt={r} online={online} onSent={() => setRequestTick(n => n + 1)} />}</>}
     </li>)}</ul>
