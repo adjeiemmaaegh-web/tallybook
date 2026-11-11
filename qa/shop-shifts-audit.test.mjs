@@ -113,6 +113,7 @@ test('owner audit records cashier, server time, movement and stable pagination',
   assert.equal(movement.delta,-2);assert.equal(movement.actorId,t.people.day.id);
   const observed=all.events.find(x=>x.kind==='sale'&&x.sourceId===sale.saleId);
   assert.ok(observed.serverRecordedAt);
+  assert.equal(observed.actorEmail,'day@demo.tallybook.test');
   assert.equal(Date.parse(observed.deviceReportedAt),Date.parse('2026-11-10T11:00:00Z'));
   await denied(shifts(t.day,'auditEvents',{}),/Only the business owner/);
   await denied(shifts(t.stranger,'auditEvents',{},t.company),/access denied/i);
