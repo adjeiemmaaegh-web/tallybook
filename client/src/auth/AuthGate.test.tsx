@@ -22,7 +22,7 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 describe('Run 4 offline-safe AuthGate',()=>{
  it('keeps account screens outside the local ledger tree',()=>{
-  for(const path of ['/signin','/account']){
+  for(const path of ['/signin','/account','/settings']){
    mock.location=path;
    const view=render(<AuthGate enabled signIn={<span>Sign in</span>}>
      <span>Local ledger mounted</span>
@@ -43,7 +43,7 @@ describe('Run 4 offline-safe AuthGate',()=>{
   expect(useRun4CloudSession).not.toHaveBeenCalled();
  });
  it('keeps the account preview screen outside the local ledger tree',()=>{
-  mock.location='/account';
+  mock.location='/settings';
   render(<AuthGate enabled signIn={<span>Google sign in</span>} accountSignIn={<span>Account preview sign in</span>}>
     <span>Local ledger mounted</span>
   </AuthGate>);
