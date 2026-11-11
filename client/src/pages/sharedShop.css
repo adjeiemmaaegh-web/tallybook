@@ -277,3 +277,27 @@ ol.shop-report-list { list-style: decimal inside; }
 .tb-shop-count-history li{line-height:1.5}
 .tb-shop-count-history small{display:block;color:#536f64}
 @media(max-width:600px){.shop-head{padding-right:88px}.tb-shop-account-panel{max-height:70dvh}}
+
+/* Shared-shop staff handover and owner activity audit. Responsive, touch-first. */
+.tb-shifts .shop-card-head svg,.tb-shop-audit .shop-card-head svg{width:18px;height:18px;vertical-align:middle}
+.tb-shift-entry{border:1px solid #d2e7de;border-radius:18px;padding:17px;background:linear-gradient(140deg,#f1faf5,#fff)}
+.tb-shift-entry>div{display:grid;gap:12px}
+.tb-shift-entry .shop-field textarea,.tb-shift-review .shop-field textarea{border:1px solid var(--ta-line);border-radius:11px;padding:10px 12px;background:#fff;color:var(--ta-ink);font:inherit;width:100%;min-height:76px;resize:vertical}
+.tb-shift-active{display:grid;gap:9px}
+.tb-shift-eyebrow{margin:0;font-size:.72rem;font-weight:850;color:#0b7160;letter-spacing:.05em}
+.tb-shift-history{display:grid;gap:12px}
+.tb-shift-history ul,.tb-shop-audit-events{list-style:none;display:grid;gap:10px;padding:0;margin:0}
+.tb-shift-history li{border:1px solid #d8e9e0;border-radius:14px;background:#fff;padding:14px;display:grid;gap:10px}
+.tb-shift-history li>div:first-child{display:grid;gap:5px;min-width:0}
+.tb-shift-history li small{display:block;font-size:.79rem;color:#526e62;overflow-wrap:anywhere}
+.tb-shift-review>div{display:grid;gap:10px}
+.tb-shift-warning,.tb-shop-audit-disclaimer{display:flex;gap:10px;align-items:flex-start;margin:2px 0 0;padding:11px 12px;border-radius:12px;background:#f1f6f3;color:#426758;font-size:.78rem;line-height:1.5}
+.tb-shift-warning svg{width:18px;height:18px;flex:none}
+.tb-shop-audit-events li{border:1px solid #d8e9e0;background:#fff;border-radius:14px;padding:13px;display:grid;gap:6px;min-width:0}
+.tb-shop-audit-events .tb-shop-audit-title{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.tb-shop-audit-events .tb-shop-audit-title strong{font-size:.76rem;color:#076f5c;letter-spacing:.025em}
+.tb-shop-audit-events .tb-shop-audit-title span{color:#5b7768;font-size:.78rem}
+.tb-shop-audit-events p{margin:0;font-size:.86rem}
+.tb-shop-audit-events small{font-size:.76rem;color:#526c61;overflow-wrap:anywhere}
+.tb-shop-audit-events .tb-shop-audit-source{font-size:.7rem;color:#789083}
+@media(min-width:680px){.tb-shift-history ul{grid-template-columns:repeat(2,minmax(0,1fr))}}

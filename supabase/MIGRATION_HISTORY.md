@@ -1,5 +1,8 @@
 # Migration history: repository vs the hosted projects
 
+**New source-only development migration:** `20261111180000_shop_staff_shifts_audit.sql` adds cloud shift openings, closings, manager review and the owner activity audit RPC. It is committed for isolated PostgreSQL testing but is **not** authorized/applied to production. Its rollback removes stored shift/event history. Do not run against a live store without separate release and migration approval.
+
+
 Checked on 2026-11-10 against the two Supabase projects.
 
 ## Production ("Tallybook")

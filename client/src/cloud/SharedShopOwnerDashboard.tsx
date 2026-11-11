@@ -2,7 +2,7 @@
  * Missing figures stay unavailable; device data is never silently merged with the shared shop.
  */
 import {useEffect,useState} from "react";
-import { ArrowRight, BarChart3, ClipboardList, Package, RefreshCw, ShoppingCart, Users, Wallet } from "lucide-react";
+import { ArrowRight, BarChart3, ClipboardList, Clock3, History, Package, RefreshCw, ShoppingCart, Users, Wallet } from "lucide-react";
 import type {ShopOverview} from "./shopClient";
 import {callShop} from "./shopClient";
 import {getShopSupplierBalances,type ShopSupplierBalance} from "./shopPurchasing";
@@ -12,7 +12,7 @@ interface SalesSummary {
  salesCount:number;grossMinor:string;refundMinor:string;netSalesMinor:string;
  customerCreditOutstandingMinor:string|null;
 }
-type OwnerDestination = "sell" | "stock" | "team" | "reports";
+type OwnerDestination = "sell" | "stock" | "team" | "reports" | "shifts" | "audit";
 const amount=(value:string|undefined|null,currency:string)=>{
  if(value===undefined||value===null||!/^-?[0-9]+$/.test(value))return "Unavailable";
  const minor=BigInt(value);
@@ -75,6 +75,8 @@ export function SharedShopOwnerDashboard({companyId,businessName,overview,online
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("sell")}><ShoppingCart aria-hidden="true"/><span>New sale<small>Open POS</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("stock")}><Package aria-hidden="true"/><span>Manage stock<small>Products and quantities</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("reports")}><BarChart3 aria-hidden="true"/><span>Reports<small>Review business performance</small></span><ArrowRight aria-hidden="true"/></button>
+     <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("shifts")}><Clock3 aria-hidden="true"/><span>Staff shifts<small>Opening, closing and review</small></span><ArrowRight aria-hidden="true"/></button>
+     <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("audit")}><History aria-hidden="true"/><span>Activity audit<small>Who changed stock or recorded sales</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("team")}><Users aria-hidden="true"/><span>Team & stores<small>Control authorized access</small></span><ArrowRight aria-hidden="true"/></button>
    </div>
    <p className="tb-shop-home-note">Sales figures are rolling 24-hour and 7-day totals, not calendar-day close figures. Only verified server responses are shown. Provider settlements, bank balances, taxes, unrecorded expenses and unsynchronized sales are not included in these figures.</p>
