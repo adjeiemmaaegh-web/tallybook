@@ -60,3 +60,5 @@ Until it is brought up to date it cannot be used to rehearse a production upgrad
 See [rollback/README.md](rollback/README.md). Every migration from `20261106120000` onward has a rollback script, and `qa/migration-rollbacks.test.mjs` rolls the whole chain back and forward again.
 
 Check after applying the tier 4 set: a hash of every shop function's definition in production was compared with the repository chain replayed in a scratch database. 29 of 32 are byte-identical; the other three (`shop_refund_policy_action`, `shop_stage_c_action`, `shop_stage_f_sales_search`, applied earlier) differ only in SQL comments, and are identical once comments and whitespace are removed.
+
+Not applied to production yet (tier 5): `20261111160000_shop_quotations.sql`.

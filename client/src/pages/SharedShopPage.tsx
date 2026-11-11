@@ -25,6 +25,8 @@ import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
 import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
 import {ShopHelp} from "@/cloud/ShopHelp";
+import {SharedShopQuotes, type QuoteStart} from "@/cloud/SharedShopQuotes";
+import {convertShopQuotation} from "@/cloud/quotations";
 import {SharedShopAsk} from "@/cloud/SharedShopAsk";
 import type {PurchaseDraft} from "@/cloud/shopAssistant";
 import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
@@ -53,7 +55,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -234,6 +236,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [pendingRefunds, setPendingRefunds] = useState(0);
   // A purchase order drafted by Ask, waiting for the owner on the Purchasing tab. Nothing is ordered until they post it.
   const [purchaseDraft, setPurchaseDraft] = useState<PurchaseDraft | null>(null);
+  // A quotation the person chose to sell now. The till loads its items; nothing is sold until they take payment.
+  const [quoteStart, setQuoteStart] = useState<QuoteStart | null>(null);
   const refresh = useCallback(async () => {
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
@@ -285,12 +289,12 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
-       ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
+       ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
-  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess, shopName: business.name };
+  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess, shopName: business.name, quoteStart, onQuoteStarted: () => setQuoteStart(null) };
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
@@ -311,6 +315,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </section>}
 
     {tab === "sell" && <SellPanel {...ctx} />}
+    {tab === "quotes" && <SharedShopQuotes companyId={business.id} overview={overview} online={online} shopName={business.name} userId={userId} onStartSale={start => { setQuoteStart(start); setTab("sell"); }} />}
     {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
     {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} draft={purchaseDraft} onDraftUsed={() => setPurchaseDraft(null)} />}
     {tab === "stock-counts" && (isOwner || stockAccess?.canManageStock) && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
@@ -328,7 +333,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   </>;
 }
 
-interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null; shopName?: string }
+interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null; shopName?: string; quoteStart?: QuoteStart | null; onQuoteStarted?: () => void }
 
 function GetStartedCard({ overview, hasSale, goTo }: { overview: ShopOverview; hasSale: boolean | null; goTo: (tab: Tab) => void }) {
   const list = buildChecklist(overview, hasSale);
@@ -442,7 +447,7 @@ export function buildTenders(input: {
   return parts;
 }
 
-function SellPanel({ companyId, overview, refresh, online, userId, goTo }: PanelProps) {
+function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteStart, onQuoteStarted }: PanelProps) {
   const currency = overview.currency!;
   const perms = permissionsOf(overview);
   const customers = overview.customers ?? [];
@@ -465,17 +470,33 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [queueError, setQueueError] = useState("");
   const [parked, setParked] = useState<ParkedCart[]>([]);
   const [parkNote, setParkNote] = useState("");
+  const [quoteNote, setQuoteNote] = useState("");
   const [query, setQuery] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanNote, setScanNote] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
+  // The quotation this cart came from, with the items it held, so it is only marked sold if the sale really is that quotation.
+  const fromQuote = useRef<QuoteStart | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  // "Start a sale from this" on a quotation: load its items into an empty cart at its store. Prices and stock are checked again at checkout.
+  useEffect(() => {
+    if (!quoteStart) return;
+    const usable = quoteStart.lines.filter(l => overview.products.some(p => p.id === l.productId && p.active));
+    if (quoteStart.storeId && active.some(s => s.id === quoteStart.storeId)) choose(quoteStart.storeId);
+    setCart(Object.fromEntries(usable.map(l => [l.productId, l.quantity])));
+    submissionKey.current = null; setReceipt(null); setError("");
+    fromQuote.current = usable.length === quoteStart.lines.length ? quoteStart : null;
+    setQuoteNote(usable.length === quoteStart.lines.length ? `Loaded from the quotation for ${quoteStart.customerName}. Check the items, then take payment.`
+      : `Loaded from the quotation for ${quoteStart.customerName}, but some items are no longer for sale and were left out.`);
+    onQuoteStarted?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteStart]);
   const reloadQueue = useCallback(async () => {
     try {
       const list = await readOutbox(scope);
@@ -620,7 +641,13 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
     setBusy(true);
     try {
       const result = await submitSale(scope, sale, summary, send);
-      if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
+      if (result.state === "recorded") {
+        setReceipt(result.receipt); resetForm(); void refresh(); setQuoteNote("");
+        const quote = fromQuote.current; fromQuote.current = null;
+        const sold = new Map(result.receipt.lines.map(l => [l.productId, l.quantity]));
+        if (quote && quote.lines.length === sold.size && quote.lines.every(l => sold.get(l.productId) === l.quantity))
+          void convertShopQuotation(companyId, quote.quoteId, result.receipt.saleId).catch(() => { /* the sale stands; the quotation can be marked by hand */ });
+      }
       else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
       else if (result.state === "already-confirmed") { resetForm(); void refresh(); }
       else { submissionKey.current = null; setError(result.error); }
@@ -662,6 +689,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
         <h2>Checkout</h2>
         <div className="shop-park">
           <button type="button" className="secondary-action" disabled={!lines.length || busy} onClick={() => void parkNow()}>Set this cart aside</button>
+          {quoteNote && <p role="status" className="shop-muted">{quoteNote}</p>}
           {parkNote && <p role="status" className="shop-muted">{parkNote}</p>}
           {parked.length > 0 && <div aria-label="Parked carts" role="group">
             <p className="shop-muted"><strong>Parked carts ({parked.length})</strong></p>

@@ -158,6 +158,9 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
   .shop-statement[data-printing], .shop-statement[data-printing] * { visibility: visible !important; }
   .shop-statement[data-printing] { position: absolute; left: 0; top: 0; width: 100%; max-width: 80mm; padding: 4mm; color: #000; background: #fff; }
   .shop-statement[data-printing] .shop-statement-actions { display: none !important; }
+  .shop-quote[data-printing], .shop-quote[data-printing] * { visibility: visible !important; }
+  .shop-quote[data-printing] { position: absolute; left: 0; top: 0; width: 100%; max-width: 120mm; padding: 6mm; color: #000; background: #fff; }
+  .shop-quote[data-printing] .shop-quote-actions { display: none !important; }
 }
 
 /* Sales filters */

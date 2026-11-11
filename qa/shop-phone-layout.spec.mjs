@@ -93,6 +93,9 @@ async function mock(page, role, hits) {
         receivableOrders: { orders: [{ orderId: 'o1', storeId: 'st-a', reference: 'INV-2026-0042', supplierName: 'Wholesale Traders Limited of Kumasi', createdAt: new Date().toISOString(),
           lines: [{ lineNo: 1, productId: 'eggs', name: 'Extra long product name for layout testing 500g family pack', orderedQuantity: 120, receivedQuantity: 40 }] }] },
         archivedCustomers: { customerIds: [] },
+        listQuotations: { quotations: [{ quotationId: 'q1', quoteNo: 12, storeId: 'st-a', customerId: null, customerName: 'Mr Mensah of the Kumasi Central Market Traders Association', validUntil: '2099-01-01',
+          note: 'Delivery to the shop is free for orders above this amount, otherwise charged separately', totalMinor: '129300000', status: 'open', createdBy: 'u-att', createdAt: new Date().toISOString(), saleId: null,
+          lines: [{ productId: 'long', name: 'Extra long product name for layout testing 500g family pack', quantity: 120, unitPriceMinor: 1077500, lineTotalMinor: 129300000 }] }] },
         profitReport: { companyId: BIZ, from: new Date().toISOString(), to: new Date().toISOString(), storeId: null, netRevenueMinor: '129300000', coveredRevenueMinor: '100000000', uncoveredRevenueMinor: '29300000',
           costOfGoodsMinor: '70000000', grossProfitMinor: '30000000', marginBps: 3000, expenses: { count: 3, totalMinor: '4500000' }, netProfitMinor: '25500000',
           saleLines: { total: 40, withCost: 30 }, topByProfit: [{ name: 'Extra long product name for layout testing 500g family pack', quantity: 120, revenueMinor: '50000000', profitMinor: '15000000' }] },
@@ -133,8 +136,8 @@ const layoutReport = () => {
 };
 
 const TABS = {
-  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Ask', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
-  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'Ask', 'My sales', 'My day'],
+  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Quotes', 'Ask', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
+  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'Quotes', 'Ask', 'My sales', 'My day'],
 };
 
 for (const width of [360, 320]) {
@@ -154,6 +157,7 @@ for (const width of [360, 320]) {
         await page.waitForTimeout(500);
         if (tab === 'Sell') { for (const name of ['Add one Crate of eggs', `Add one ${'Extra long product name for layout testing 500g family pack'}`]) await page.getByRole('button', { name }).click({ trial: false }).catch(() => {}); }
         if (tab === 'Ask') { for (const q of ['What did I sell today?', 'What is low on stock?', 'Draft an order for what is low']) { await page.getByLabel('Your question').fill(q); await page.getByLabel('Your question').press('Enter'); await page.waitForTimeout(300); } }
+        if (tab === 'Quotes') { await page.locator('.shop-customer-row').first().click().catch(() => {}); }
         if (tab === 'Sales') await page.locator('.shop-sales li button').first().click().catch(() => {});
         if (tab === 'My sales') { await page.locator('.shop-sales li button').first().click().catch(() => {}); await page.getByRole('button', { name: 'Ask the owner for a refund' }).click().catch(() => {}); }
         if (tab === 'Stock') { await page.getByRole('button', { name: /Add product/ }).click().catch(() => {}); await page.getByText('Import products from a file').click().catch(() => {}); }
