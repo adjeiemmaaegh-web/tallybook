@@ -192,10 +192,17 @@ begin
   -- Lock the actor's membership against concurrent removal/downgrades until
   -- the shift transition is committed. The initial role check alone is not
   -- sufficient if an owner revokes access while this request is waiting.
-  perform 1 from public.business_members
-    where business_id=v_company and user_id=p_actor for share;
+  select m.role into v_role from public.business_members m
+    where m.business_id=v_company and m.user_id=p_actor for share;
   if not found then raise exception 'Business access denied' using errcode='42501'; end if;
-  v_role := private.shop_member_role(p_actor,p_session,v_company);
+  if v_role='owner' and not exists (
+      select 1 from public.businesses where id=v_company and owner_id=p_actor) then
+    raise exception 'Business access denied' using errcode='42501'; end if;
+  -- Verify and hold the actual Auth session until this write commits.
+  perform 1 from auth.sessions s
+    where s.id=p_session and s.user_id=p_actor
+      and (s.not_after is null or s.not_after>clock_timestamp()) for share;
+  if not found then raise exception 'Active Auth session required' using errcode='42501'; end if;
 
   if p_action = 'openShift' then
     v_shift_id := private.shop_uuid(p_input,'shiftId');
