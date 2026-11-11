@@ -98,6 +98,15 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
           <Row label="Cash" value={report.supplierPayments.cash} /><Row label="Mobile money" value={report.supplierPayments.mobile} />
           <Row label="Card" value={report.supplierPayments.card} /><Row label="Bank" value={report.supplierPayments.bank} />
         </ul></>}
+      {isOwner && report.expenses.count > 0 && <>
+        <h3>Expenses</h3>
+        <ul className="shop-report-list" aria-label="Expenses">
+          <Row label={`${report.expenses.count} recorded`} value={report.expenses.totalMinor} strong />
+          {report.expenses.cash > 0 && <Row label="Cash (taken from the till)" value={report.expenses.cash} />}
+          {report.expenses.mobile > 0 && <Row label="Mobile money" value={report.expenses.mobile} />}
+          {report.expenses.card > 0 && <Row label="Card" value={report.expenses.card} />}
+          {report.expenses.bank > 0 && <Row label="Bank" value={report.expenses.bank} />}
+        </ul></>}
       {report.topProducts.length > 0 && <>
         <h3>Best sellers</h3>
         <ol className="shop-report-list" aria-label="Best sellers">{report.topProducts.map(p => <li key={p.name}><span>{p.name} × {p.quantity}</span><span>{m(p.revenueMinor)}</span></li>)}</ol></>}

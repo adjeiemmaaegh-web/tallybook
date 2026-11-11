@@ -89,6 +89,13 @@ async function mock(page, role, hits) {
         listTransfers: { transfers: [{ transferId: 't1', fromStoreId: 'st-a', toStoreId: 'st-b', productId: 'long', quantity: 6, status: 'requested', requestedAt: new Date().toISOString() }] },
         listOnlineOrders: { orders: [{ orderId: 'oo1', storeId: 'st-a', quotedTotalMinor: '27000', customerReference: 'Ama, 024 000 0001', status: 'accepted', saleId: null, createdAt: new Date().toISOString() }] },
         salesSummary: { companyId: BIZ, role, days: 7, currency: 'GHS', salesCount: 24, grossMinor: '1293000', refundMinor: '13500', netSalesMinor: '1279500', customerCreditOutstandingMinor: '45000' },
+        stockAccess: role === 'owner' ? { canManageStock: true, members: [{ userId: 'u-att', canManageStock: true }] } : { canManageStock: true },
+        receivableOrders: { orders: [{ orderId: 'o1', storeId: 'st-a', reference: 'INV-2026-0042', supplierName: 'Wholesale Traders Limited of Kumasi', createdAt: new Date().toISOString(),
+          lines: [{ lineNo: 1, productId: 'eggs', name: 'Extra long product name for layout testing 500g family pack', orderedQuantity: 120, receivedQuantity: 40 }] }] },
+        archivedCustomers: { customerIds: [] },
+        listJoinCodes: { codes: [{ codeId: 'k1', status: 'pending', createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86_400_000).toISOString(), usedBy: null, usedAt: null }] },
+        listExpenses: { expenses: [{ expenseId: 'e1', storeId: 'st-a', category: 'transport', amountMinor: '12500000', method: 'mobile', expenseDate: '2026-11-10',
+          note: 'Taxi to the wholesale market and back with a very long explanatory note', recordedBy: 'u1', recordedAt: new Date().toISOString(), voided: false, voidReason: null }] },
         customerStatement: { id: 'c1', name: 'Ama', phone: null, creditLimitMinor: 100000, balanceMinor: 45000, entries: [] },
       };
       if (action in answers) return json(route, answers[action]);
@@ -119,8 +126,8 @@ const layoutReport = () => {
 };
 
 const TABS = {
-  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Team', 'Sales', 'Reports'],
-  attendant: ['Sell', 'Customers', 'My sales', 'My day'],
+  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Expenses', 'Team', 'Sales', 'Reports'],
+  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'My sales', 'My day'],
 };
 
 for (const width of [360, 320]) {
