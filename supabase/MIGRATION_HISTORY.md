@@ -19,8 +19,11 @@ Eight of the migrations were applied through the Supabase connector, which recor
 | 20261110110905 `shared_order_lines` | `20261109020000_shared_order_lines.sql` |
 | 20261110134316 `shop_sales_hot_path_indexes` | `20261110120000_shop_sales_hot_path_indexes.sql` |
 | 20261110134347 `shop_sales_search` | `20261110130000_shop_sales_search.sql` |
+| 20261111021126 `shop_product_details` | `20261110140000_shop_product_details.sql` |
+| 20261111021150 `shop_daily_report` | `20261110150000_shop_daily_report.sql` |
 
-Not applied to production yet: `20261110140000_shop_product_details.sql` and `20261110150000_shop_daily_report.sql`.
+After applying the last two, the definitions of `shop_stage_g_product_action`, `shop_stage_h_daily_report`, `shop_record_sale`, `shop_refund_sale` and `tallybook_shop_ops` in production were compared (md5 of `pg_get_functiondef`) with the repository chain replayed in a scratch database: all five identical.
+
 
 ### Using the Supabase CLI against production
 
