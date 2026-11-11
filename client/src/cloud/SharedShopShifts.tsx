@@ -9,6 +9,9 @@ import {closeShopShift,listShopShifts,openShopShift,reviewShopShift,type ShopShi
 
 interface Props {companyId:string;userId:string;overview:ShopOverview;online:boolean}
 const explain=(cause:unknown)=>cause instanceof Error?cause.message:"Shift action failed.";
+const utc=(value:string)=>Number.isFinite(Date.parse(value))
+ ?new Date(value).toISOString().replace("T"," ").slice(0,19)+" UTC":"Time unavailable";
+
 export function SharedShopShifts({companyId,userId,overview,online}:Props){
  const [shifts,setShifts]=useState<ShopShift[]>([]);
  const [loading,setLoading]=useState(false);
@@ -104,7 +107,7 @@ export function SharedShopShifts({companyId,userId,overview,online}:Props){
    {current?<div className="tb-shift-active">
      <p className="tb-shift-eyebrow">YOUR ACTIVE SHIFT</p>
      <strong>{storeName(current.storeId)}</strong>
-     <p>Opened {new Date(current.openedAt).toLocaleString()} · Opening cash {formatCash(current.openingCashMinor)}</p>
+     <p>Opened {utc(current.openedAt)} · Opening cash {formatCash(current.openingCashMinor)}</p>
      <label className="shop-field">Cash counted at closing ({currency})
        <input inputMode="decimal" placeholder="0.00" value={closingCash} onChange={e=>setClosingCash(e.target.value)}/></label>
      <label className="shop-field">Handover note (optional; at least 4 characters)
@@ -126,8 +129,8 @@ export function SharedShopShifts({companyId,userId,overview,online}:Props){
   <div className="tb-shift-history"><h3>{isOwner?"Recent employee shifts":"My previous shifts"}</h3>
    {!shifts.length&&!loading&&<p className="shop-muted">No shift history recorded yet. Old sales still retain their existing cashier IDs.</p>}
    <ul>{shifts.map(s=><li key={s.shiftId}>
-    <div><strong>{nameOf(s.staffId,isOwner?s.staffEmail:undefined)}</strong><small>{storeName(s.storeId)} · Started {new Date(s.openedAt).toLocaleString()}</small>
-     <small>Opening cash: {formatCash(s.openingCashMinor)} · {s.closedAt?"Closed "+new Date(s.closedAt).toLocaleString():"Still open"}</small>
+    <div><strong>{nameOf(s.staffId,isOwner?s.staffEmail:undefined)}</strong><small>{storeName(s.storeId)} · Started {utc(s.openedAt)}</small>
+     <small>Opening cash: {formatCash(s.openingCashMinor)} · {s.closedAt?"Closed "+utc(s.closedAt):"Still open"}</small>
      {s.closedAt&&<small>Closing cash: {formatCash(s.closingCashMinor)} · Closed by {s.closedBy?nameOf(s.closedBy):"Unknown"}{s.forcedClose?" (owner override)":""}</small>}
      {s.reviewDecision&&<small>Manager review: {s.reviewDecision} · {s.reviewNote}</small>}
     </div>
