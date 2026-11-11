@@ -15,6 +15,7 @@ import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } fro
 import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
 import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
+import { formatCustomerStatementText } from "@/cloud/customerStatementText";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
@@ -36,7 +37,7 @@ import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, saveShopProductFull, tracksStock, type ProductInput,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, mergeArchive, getArchivedCustomerIds, setShopCustomerArchived, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -224,6 +225,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
       // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
       try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
+      // Archived customers are hidden from the list and the till. An older server has no archive.
+      try { next = mergeArchive(next, (await getArchivedCustomerIds(business.id)).customerIds); } catch { /* nobody is archived there */ }
       let access: ShopStockAccess | null = null;
       try { access = await getShopStockAccess(business.id); } catch { /* an older server has no stock access */ }
       if (request !== revision.current) return;
@@ -269,7 +272,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
-  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess };
+  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess, shopName: business.name };
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
@@ -304,7 +307,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   </>;
 }
 
-interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null }
+interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null; shopName?: string }
 
 function GetStartedCard({ overview, hasSale, goTo }: { overview: ShopOverview; hasSale: boolean | null; goTo: (tab: Tab) => void }) {
   const list = buildChecklist(overview, hasSale);
@@ -1070,15 +1073,20 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
 
 /** Customers who buy on credit. Attendants allowed to give credit can add a
  * customer and take repayments; only the owner sets how much someone may owe. */
-function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
+function CustomersPanel({ companyId, overview, refresh, online, shopName }: PanelProps) {
   const currency = overview.currency!;
   const isOwner = overview.role === "owner";
   const customers = overview.customers ?? [];
+  const archived = overview.archivedCustomers ?? [];
   const owed = customers.reduce((n, c) => n + c.balanceMinor, 0);
   const [form, setForm] = useState({ name: "", phone: "", limit: "" });
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const restore = async (customerId: string) => {
+    setBusy(true); setError("");
+    try { await setShopCustomerArchived(companyId, customerId, false); await refresh(); } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
   const add = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
@@ -1090,14 +1098,17 @@ function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
   return <div className="shop-grid shop-grid-two">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Customers</h2>{customers.length > 0 && <p className="shop-muted">Owed to you: <strong>{formatMinorAmount(owed, currency)}</strong></p>}</div>
-      {!customers.length && <p className="shop-muted">No customers yet.</p>}
+      {!customers.length && <p className="shop-muted">{archived.length ? "No active customers." : "No customers yet."}</p>}
       <ul className="shop-members">{customers.map(c => <li key={c.id}>
         <button type="button" className="shop-customer-row" aria-expanded={open === c.id} onClick={() => setOpen(o => o === c.id ? null : c.id)}>
           <span><strong>{c.name}</strong>{c.phone && <small>{c.phone}</small>}</span>
           <span className={c.balanceMinor ? "shop-owes" : "shop-muted"}>{c.balanceMinor ? `Owes ${formatMinorAmount(c.balanceMinor, currency)}` : "Owes nothing"}<small>Limit {formatMinorAmount(c.creditLimitMinor, currency)}</small></span>
         </button>
-        {open === c.id && <CustomerDetail companyId={companyId} customer={c} currency={currency} isOwner={isOwner} online={online} refresh={refresh} />}
+        {open === c.id && <CustomerDetail companyId={companyId} customer={c} currency={currency} isOwner={isOwner} online={online} refresh={refresh} shopName={shopName ?? ""} />}
       </li>)}</ul>
+      {isOwner && archived.length > 0 && <details><summary>Archived ({archived.length})</summary>
+        <ul className="shop-members">{archived.map(c => <li key={c.id}><div className="shop-member-head"><span><strong>{c.name}</strong>{c.phone && <small> {c.phone}</small>}</span>
+          <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void restore(c.id)}>Restore</button></div></li>)}</ul></details>}
     </section>
     <section className="shop-card">
       <h2>Add a customer</h2>
@@ -1114,13 +1125,17 @@ function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
   </div>;
 }
 
-function CustomerDetail({ companyId, customer, currency, isOwner, online, refresh }: {
-  companyId: string; customer: ShopCustomer; currency: string; isOwner: boolean; online: boolean; refresh: () => Promise<void>;
+function CustomerDetail({ companyId, customer, currency, isOwner, online, refresh, shopName }: {
+  companyId: string; customer: ShopCustomer; currency: string; isOwner: boolean; online: boolean; refresh: () => Promise<void>; shopName: string;
 }) {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [reference, setReference] = useState("");
   const [limit, setLimit] = useState((customer.creditLimitMinor / currencyMinorDivisor(currency)).toString());
+  const [details, setDetails] = useState({ name: customer.name, phone: customer.phone ?? "" });
+  const [shareNote, setShareNote] = useState("");
+  const [manualText, setManualText] = useState("");
+  const statementRoot = useRef<HTMLDivElement>(null);
   const [statement, setStatement] = useState<CustomerStatement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -1160,6 +1175,42 @@ function CustomerDetail({ companyId, customer, currency, isOwner, online, refres
       setDone("Limit saved."); await refresh();
     } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
   };
+  const detailsDirty = details.name.trim() !== customer.name || details.phone.trim() !== (customer.phone ?? "");
+  const saveDetails = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(""); setDone("");
+    try {
+      await saveShopCustomer(companyId, { customerId: customer.id, name: details.name, ...(details.phone.trim() ? { phone: details.phone.trim() } : {}) });
+      setDone("Details saved."); await refresh();
+    } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  const archive = async () => {
+    if (!(await confirmAction(`Archive ${customer.name}? They disappear from the customer list and the till. Their history stays, and you can restore them.`, { confirmLabel: "Archive" }))) return;
+    setBusy(true); setError(""); setDone("");
+    try { await setShopCustomerArchived(companyId, customer.id, true); await refresh(); } catch (cause) { setError(message(cause)); setBusy(false); }
+  };
+  const statementText = () => statement ? formatCustomerStatementText(shopName, statement, currency) : "";
+  const shareStatement = async () => {
+    setManualText("");
+    const result = await shareBusinessText({ title: `Statement for ${customer.name}`, text: statementText() });
+    if (result === "shared") setShareNote("Statement opened in your share options.");
+    else if (result === "copied") setShareNote("Statement text copied. Paste it into a message.");
+    else if (result === "manual") { setManualText(statementText()); setShareNote("Copy the statement text below."); }
+    else setShareNote("");
+  };
+  const whatsAppStatement = () => {
+    setManualText("");
+    const opened = openWhatsAppShare(statementText(), customer.phone, countryForCurrency(currency));
+    if (opened) setShareNote(customer.phone ? "Statement opened in WhatsApp. Press send there." : "Statement opened in WhatsApp. Choose the customer and press send.");
+    else { setManualText(statementText()); setShareNote("WhatsApp could not open. Copy the statement text below."); }
+  };
+  const printStatement = () => {
+    const node = statementRoot.current;
+    if (!node || typeof window.print !== "function") { setShareNote("Printing is not available in this browser. Use Share instead."); return; }
+    node.setAttribute("data-printing", "true");
+    const finished = () => { node.removeAttribute("data-printing"); window.removeEventListener("afterprint", finished); };
+    window.addEventListener("afterprint", finished);
+    try { window.print(); } catch { finished(); setShareNote("The browser could not open printing. Use Share instead."); }
+  };
   const kind = { credit_sale: "Bought on credit", repayment: "Paid", refund: "Refund taken off" } as const;
   return <div className="shop-customer-detail">
     {customer.balanceMinor > 0 && <form className="shop-edit" onSubmit={repay}>
@@ -1171,18 +1222,37 @@ function CustomerDetail({ companyId, customer, currency, isOwner, online, refres
       {method === "mobile" && <label className="shop-field">Mobile money reference<input value={reference} onChange={e => setReference(e.target.value)} autoComplete="off" maxLength={80} /></label>}
       <button className="primary-action" disabled={busy || !online}>{busy ? "Recording…" : "Record payment"}</button>
     </form>}
+    {isOwner && <form className="shop-edit" onSubmit={e => void saveDetails(e)}>
+      <h3>Details</h3>
+      <label className="shop-field">Name<input value={details.name} onChange={e => setDetails({ ...details, name: e.target.value })} maxLength={80} required /></label>
+      <label className="shop-field">Phone <small>(optional)</small><input type="tel" value={details.phone} onChange={e => setDetails({ ...details, phone: e.target.value })} maxLength={20} /></label>
+      <button className="secondary-action" disabled={busy || !online || !detailsDirty || !details.name.trim()}>Save details</button>
+    </form>}
     {isOwner && <div className="shop-inline-form">
       <label className="shop-field">Can owe up to ({currency})<input inputMode="decimal" value={limit} onChange={e => setLimit(e.target.value)} /></label>
       <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void saveLimit()}>Save limit</button>
     </div>}
     {done && <p role="status" className="shop-muted">{done}</p>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
-    {statement && statement.entries.length > 0 && <div className="shop-statement">
+    {isOwner && <div className="shop-actions">
+      <button type="button" className="secondary-action shop-danger" disabled={busy || !online || customer.balanceMinor !== 0}
+        title={customer.balanceMinor !== 0 ? "Record their payments first" : undefined} onClick={() => void archive()}>Archive customer</button>
+      {customer.balanceMinor !== 0 && <small className="shop-muted">Can be archived once they owe nothing.</small>}
+    </div>}
+    {statement && statement.entries.length > 0 && <div className="shop-statement" ref={statementRoot} aria-label={`Statement for ${customer.name}`}>
       <h3>History</h3>
       <ul>{statement.entries.map((e, i) => <li key={i}>
         <span>{kind[e.kind]}{e.receiptNumber ? ` · receipt #${e.receiptNumber}` : ""}{e.method ? ` · ${methodLabel(e.method).toLowerCase()}` : ""}<small>{new Date(e.recordedAt).toLocaleString()}</small></span>
         <span>{e.amountMinor > 0 ? "+" : "−"}{money(Math.abs(e.amountMinor))}<small>owes {money(e.balanceAfterMinor)}</small></span>
       </li>)}</ul>
+      <p className="shop-total"><span>Balance owed</span><strong>{money(statement.balanceMinor)}</strong></p>
+      <div className="shop-actions shop-statement-actions">
+        <button type="button" className="secondary-action" onClick={() => void shareStatement()}>Share statement</button>
+        <button type="button" className="secondary-action" onClick={whatsAppStatement}>Send on WhatsApp</button>
+        <button type="button" className="secondary-action" onClick={printStatement}>Print</button>
+      </div>
+      {shareNote && <p role="status" className="shop-muted shop-statement-actions">{shareNote}</p>}
+      {manualText && <textarea className="shop-statement-actions" readOnly rows={8} value={manualText} aria-label="Statement text to copy" onFocus={e => e.currentTarget.select()} />}
     </div>}
   </div>;
 }

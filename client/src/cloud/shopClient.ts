@@ -36,6 +36,8 @@ export interface ShopOverview {
   myPermissions?: ShopPermissions;
   memberPermissions?: Record<string, ShopPermissions>;
   customers?: ShopCustomer[];
+  /** Customers the owner has archived: kept out of `customers` (the till and the list). */
+  archivedCustomers?: ShopCustomer[];
 }
 export const NO_PERMISSIONS: ShopPermissions = { canDiscount: false, maxDiscountBps: 0, canCredit: false };
 export const permissionsOf = (overview: ShopOverview): ShopPermissions =>
@@ -191,6 +193,17 @@ export function mergeCatalog(overview: ShopOverview, catalog: ProductCatalogEntr
       lowStockThreshold: entry.lowStockThreshold, ...("costMinor" in entry ? { costMinor: entry.costMinor ?? null } : {}) };
   }) };
 }
+
+/** Moves archived customers out of the customer list so the till and the list never offer them. */
+export function mergeArchive(overview: ShopOverview, archivedIds: string[]): ShopOverview {
+  if (!archivedIds.length || !overview.customers) return { ...overview, archivedCustomers: [] };
+  const hidden = new Set(archivedIds);
+  return { ...overview, customers: overview.customers.filter(c => !hidden.has(c.id)), archivedCustomers: overview.customers.filter(c => hidden.has(c.id)) };
+}
+export const getArchivedCustomerIds = (companyId: string) =>
+  callShop<{ customerIds: string[] }>("archivedCustomers", { companyId }, "tallybook_shop_ops");
+export const setShopCustomerArchived = (companyId: string, customerId: string, archived: boolean) =>
+  callShop<{ customerId: string; archived: boolean }>(archived ? "archiveCustomer" : "unarchiveCustomer", { companyId, customerId }, "tallybook_shop_ops");
 
 /** The shared shop's daily / end-of-day report for a day range (and optionally one store). Read-only. */
 export async function getDailyReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<DailyReport> {
