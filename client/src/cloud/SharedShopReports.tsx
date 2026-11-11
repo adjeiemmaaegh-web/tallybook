@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { formatReportText, type DailyReport } from "./dailyReport";
-import { getDailyReport, ShopRejectedError, type ShopOverview } from "./shopClient";
+import { getDailyReport, getProfitReport, ShopRejectedError, type ShopOverview } from "./shopClient";
+import { formatMargin, formatProfitText, hasPartialCost, profitReportCsv, type ProfitReport } from "./profitReport";
 import { dayRange, type DatePreset } from "./salesFilters";
 
 const PERIODS: ReadonlyArray<{ id: Exclude<DatePreset, "all">; label: string }> = [
@@ -22,6 +23,10 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const request = useRef(0);
+  const profitRequest = useRef(0);
+  const [profit, setProfit] = useState<ProfitReport | null>(null);
+  // Profit is the owner's alone. A server without it just leaves this section out.
+  const [profitNote, setProfitNote] = useState("");
 
   useEffect(() => {
     if (!online) return;
@@ -39,6 +44,15 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
       .finally(() => { if (mine === request.current) setLoading(false); });
   }, [companyId, period, storeId, online]);
 
+  useEffect(() => {
+    if (!online || !isOwner) return;
+    const mine = ++profitRequest.current;
+    setProfit(null);
+    getProfitReport(companyId, { ...(dayRange(period) as { from: string; to: string }), ...(storeId ? { storeId } : {}) })
+      .then(result => { if (mine === profitRequest.current) setProfit(result); })
+      .catch(() => { if (mine === profitRequest.current) setProfit(null); });
+  }, [companyId, period, storeId, online, isOwner]);
+
   const m = (value: number) => formatMinorAmount(value, currency);
   const periodLabel = PERIODS.find(p => p.id === period)!.label;
   const cashierName = (id: string) => overview.members.find(x => x.userId === id)?.email ?? (id === userId ? "You" : "Staff member");
@@ -47,6 +61,21 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
   const share = async () => {
     const result = await shareBusinessText({ title: "Sales report", text: text() });
     setNote(result === "shared" ? "Opened in your share options." : result === "copied" ? "Report copied. Paste it into a message." : result === "manual" ? "Select the report below and copy it." : "");
+  };
+  const profitOptions = () => ({ shopName, storeName: stores.find(s => s.id === storeId)?.name ?? null, periodLabel, currency });
+  const shareProfit = async () => {
+    if (!profit) return;
+    const result = await shareBusinessText({ title: "Profit report", text: formatProfitText(profit, profitOptions()) });
+    setProfitNote(result === "shared" ? "Opened in your share options." : result === "copied" ? "Profit summary copied. Paste it into a message." : "");
+  };
+  const downloadProfit = () => {
+    if (!profit) return;
+    const url = URL.createObjectURL(new Blob(["\uFEFF", profitReportCsv(profit, profitOptions())], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url; anchor.download = `tallybook-profit-${period}.csv`;
+    document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setProfitNote("Spreadsheet downloaded.");
   };
   const whatsApp = () => setNote(openWhatsAppShare(text()) ? "Opened in WhatsApp. Choose who to send it to." : "WhatsApp could not open. Use Share instead.");
 
@@ -115,6 +144,23 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
         <ul className="shop-report-list" aria-label="By cashier">{report.byCashier.map(c => <li key={c.cashierId}><span>{cashierName(c.cashierId)} · {c.count} sale{c.count === 1 ? "" : "s"}</span><span>{m(c.grossMinor)}</span></li>)}</ul></>}
       {isOwner && report.customerCreditOutstandingMinor != null && report.customerCreditOutstandingMinor > 0 &&
         <p className="shop-total"><span>Customers still owe</span><strong>{m(report.customerCreditOutstandingMinor)}</strong></p>}
+
+      {isOwner && profit && <section aria-label="Profit">
+        <h3>Profit</h3>
+        <div className="shop-stats" aria-label="Profit summary">
+          <div><span>Gross profit</span><strong>{m(profit.grossProfitMinor)}</strong><small>margin {formatMargin(profit.marginBps)}</small></div>
+          <div><span>Cost of goods</span><strong>{m(profit.costOfGoodsMinor)}</strong><small>of {m(profit.netRevenueMinor)} net sales</small></div>
+          <div><span>Expenses</span><strong>{m(profit.expenses.totalMinor)}</strong><small>{profit.expenses.count} recorded</small></div>
+          <div className="shop-stat-key"><span>Net profit</span><strong>{m(profit.netProfitMinor)}</strong><small>after expenses</small></div>
+        </div>
+        {hasPartialCost(profit) && <p className="shop-muted" role="note">{m(profit.uncoveredRevenueMinor)} of sales ({profit.saleLines.total - profit.saleLines.withCost} item line{profit.saleLines.total - profit.saleLines.withCost === 1 ? "" : "s"}) have no cost recorded, so they are left out of the profit. Add what each product costs you under Stock; sales from then on are counted.</p>}
+        {profit.topByProfit.length > 0 && <ol className="shop-report-list" aria-label="Best earners">{profit.topByProfit.map(p => <li key={p.name}><span>{p.name} × {p.quantity}</span><span>{m(p.profitMinor)}</span></li>)}</ol>}
+        <div className="shop-actions">
+          <button type="button" className="secondary-action" onClick={() => void shareProfit()}>Share profit</button>
+          <button type="button" className="secondary-action" onClick={downloadProfit}>Download spreadsheet</button>
+        </div>
+        {profitNote && <p role="status" className="shop-muted">{profitNote}</p>}
+      </section>}
 
       <div className="shop-actions">
         <button type="button" className="secondary-action" onClick={() => void share()}>Share</button>

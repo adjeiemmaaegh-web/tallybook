@@ -4,6 +4,7 @@
  * server (session-bound, owner/assignment checked inside the transaction).
  * The browser never sends prices or totals it expects the server to trust.
  */
+import { parseProfitReport, type ProfitReport } from "./profitReport";
 import { getSupabaseClient } from "@/lib/supabase";
 import { filterSalesLocally, type LocalSalesQuery } from "./salesFilters";
 import { parseDailyReport, type DailyReport } from "./dailyReport";
@@ -209,6 +210,12 @@ export const setShopCustomerArchived = (companyId: string, customerId: string, a
 export async function getDailyReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<DailyReport> {
   const raw = await callShop<unknown>("dailyReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
   return parseDailyReport(raw);
+}
+
+/** Profit and margin for a day range (owner only). */
+export async function getProfitReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<ProfitReport> {
+  const raw = await callShop<unknown>("profitReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
+  return parseProfitReport(raw);
 }
 
 export const getShopReadiness = (companyId: string) =>

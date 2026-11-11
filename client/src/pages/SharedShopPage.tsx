@@ -24,6 +24,7 @@ import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
 import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
+import {ShopHelp} from "@/cloud/ShopHelp";
 import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
 import {getRefundRequests} from "@/cloud/refundRequests";
 import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
@@ -168,7 +169,7 @@ export default function SharedShopPage() {
     {business
       ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
-    <footer className="shop-foot"><ReportProblem /></footer>
+    <footer className="shop-foot"><ShopHelp role={business?.role === "owner" ? "owner" : business ? "attendant" : "all"} /><ReportProblem /></footer>
   </main>;
 }
 
