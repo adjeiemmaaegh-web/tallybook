@@ -36,6 +36,8 @@ import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cl
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import {SharedShopAttendantHome} from "@/cloud/SharedShopAttendantHome";
 import {SharedShopAccountMenu} from "@/cloud/SharedShopAccountMenu";
+import {SharedShopShifts} from "@/cloud/SharedShopShifts";
+import {SharedShopActivityAudit} from "@/cloud/SharedShopActivityAudit";
 import {shopStorePreferenceKey,authorizedStoreChoice} from "@/cloud/shopStorePreference";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
@@ -59,7 +61,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "shifts" | "audit" | "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -303,8 +305,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
-    : [["home", "Home"], ["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["shifts", "Staff shifts"], ["audit", "Activity audit"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    : [["home", "Home"], ["shifts", "My shift"], ["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
@@ -325,6 +327,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       </details>
     </section>}
 
+    {tab === "shifts" && <SharedShopShifts key={userId+":"+business.id} companyId={business.id} userId={userId} overview={overview} online={online} />}
+    {tab === "audit" && isOwner && <SharedShopActivityAudit companyId={business.id} overview={overview} online={online} />}
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "quotes" && <SharedShopQuotes companyId={business.id} overview={overview} online={online} shopName={business.name} userId={userId} onStartSale={start => { setQuoteStart(start); setTab("sell"); }} />}
     {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}

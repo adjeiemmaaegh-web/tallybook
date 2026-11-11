@@ -1,8 +1,8 @@
 /** Role-specific home, populated exclusively with the server-scoped attendant overview. */
-import { ArrowRight, ClipboardList, Package, ReceiptText, ShoppingCart, Store } from "lucide-react";
+import { ArrowRight, ClipboardList, Clock3, Package, ReceiptText, ShoppingCart, Store } from "lucide-react";
 import type { ShopOverview } from "./shopClient";
 
-type AttendantDestination = "sell" | "sales" | "reports";
+type AttendantDestination = "shifts" | "sell" | "sales" | "reports";
 export function SharedShopAttendantHome({shopName,overview,onNavigate}:{
  shopName:string;overview:ShopOverview;
  onNavigate:(destination:AttendantDestination)=>void;
@@ -26,6 +26,7 @@ export function SharedShopAttendantHome({shopName,overview,onNavigate}:{
    </div>
    <div className="tb-shop-home-section-head"><div><p className="tb-shop-home-eyebrow">QUICK ACTIONS</p><h3>What would you like to do?</h3></div></div>
    <div className="tb-shop-home-actions">
+     <button type="button" onClick={()=>onNavigate("shifts")}><Clock3 aria-hidden="true"/><span>My shift<small>Record opening and closing cash</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!canSell} onClick={()=>onNavigate("sell")}><ShoppingCart aria-hidden="true"/><span>Sell products<small>Open your assigned till</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" onClick={()=>onNavigate("sales")}><ReceiptText aria-hidden="true"/><span>My sales<small>Review your transactions</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" onClick={()=>onNavigate("reports")}><ClipboardList aria-hidden="true"/><span>My day<small>View your authorized daily report</small></span><ArrowRight aria-hidden="true"/></button>
