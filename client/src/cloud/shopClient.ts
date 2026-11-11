@@ -263,10 +263,9 @@ export async function recordShopSaleForCashier(companyId:string,sale:SaleRequest
     throw new ShopUnreachableError("Receipt identity did not match the original cashier. Check the server before retrying.");
   return receipt;
 }
-export const recordShopSale = (companyId: string, sale: SaleRequest, expectedUserId?:string) =>
-  expectedUserId
-    ? recordShopSaleForCashier(companyId,sale,expectedUserId)
-    : callShop<ShopReceipt>("recordSale", { companyId, ...sale });
+/** Recording a sale requires its intended cashier; never fall back to whoever happens to be logged in. */
+export const recordShopSale = (companyId:string,sale:SaleRequest,expectedUserId:string) =>
+  recordShopSaleForCashier(companyId,sale,expectedUserId);
 export const setupShopLedger = (companyId: string, currency: string) => callShop("setupLedger", { companyId, currency });
 export const saveShopStore = (companyId: string, storeId: string, name: string) => callShop("saveStore", { companyId, storeId, name });
 export const setShopStoreStatus = (companyId: string, storeId: string, status: "active" | "archived") =>
