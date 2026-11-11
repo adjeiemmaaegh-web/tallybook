@@ -244,17 +244,21 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     const request = ++revision.current;
     try {
       let next = await getShopOverview(business.id);
-      // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
-      // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
-      try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
-      // Archived customers are hidden from the list and the till. An older server has no archive.
-      try { next = mergeArchive(next, (await getArchivedCustomerIds(business.id)).customerIds); } catch { /* nobody is archived there */ }
-      let access: ShopStockAccess | null = null;
-      try { access = await getShopStockAccess(business.id); } catch { /* an older server has no stock access */ }
+      // The extras are independent of each other, so they are fetched together: one round trip of waiting instead of four
+      // (this runs after every sale and every change, often on a slow mobile connection). Each is optional: a server that
+      // has not been upgraded does not have it, and the screen then behaves as it did before that feature.
+      const [catalog, archived, access, refunds] = await Promise.allSettled([
+        getProductCatalog(business.id),                                         // barcode, category, goods/service, stock tracking, cost
+        getArchivedCustomerIds(business.id),                                    // archived customers are hidden from the list and the till
+        getShopStockAccess(business.id),                                        // may this person count stock and receive goods
+        next.role === "owner" ? getRefundRequests(business.id) : Promise.resolve(null),
+      ]);
+      if (catalog.status === "fulfilled") next = mergeCatalog(next, catalog.value);
+      if (archived.status === "fulfilled") next = mergeArchive(next, archived.value.customerIds);
       if (request !== revision.current) return;
       accessDenied.current = false;
-      setStockAccess(access);
-      if (next.role === "owner") { try { setPendingRefunds((await getRefundRequests(business.id)).requests.length); } catch { setPendingRefunds(0); } }
+      setStockAccess(access.status === "fulfilled" ? access.value : null);
+      if (next.role === "owner") setPendingRefunds(refunds.status === "fulfilled" && refunds.value ? refunds.value.requests.length : 0);
       setOverview(next); setError("");
       void writeCache(userId, cache => { cache.overviews[business.id] = next; });
     } catch (cause) {

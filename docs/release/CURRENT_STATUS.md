@@ -1,12 +1,12 @@
-# Current status (updated 2026-11-10)
+# Current status (updated 2026-11-11)
 
 This is the single page to read first. Everything else under `docs/release/` is a dated snapshot of an earlier stage and is kept as evidence only. In particular `blockers.json` and `traceability.json` are the October V19 registers: automated QA scripts read them, so they are not edited by hand, and their "NO-GO / INCOMPLETE" wording does not describe today's shared shop.
 
 ## What is deployed and verified
 
-- **Code:** `main` after pull request 55. `pnpm check` passes, `pnpm build` produces the PWA bundle, and `pnpm audit` reports one low advisory with no patched version (a transitive `deepmerge` under `vite-plugin-pwa`). Checked 2026-11-10 on Node 22.23.4 and pnpm 10.34.0. The CI runs listed in [RC_QA.md](RC_QA.md) remain the test evidence.
-- **Production database ("Tallybook" Supabase project):** the migrations through `20261109020000_shared_order_lines.sql` are applied, so the stock, purchasing, online-order and refund-policy functions exist. They were applied on 2026-11-10 and Supabase recorded them under new version numbers (`20261110…`) rather than the repository file names. Run `supabase migration repair` before using the CLI against this project. Only `20261106120000` and `20261106130000` have rollback scripts in `supabase/rollback`.
-- **Not exercised end to end:** the new stock-count, transfer, purchasing and online-order workflows have been tested in disposable PostgreSQL only. Two-account and real-device acceptance is still outstanding.
+- **Code:** `main` after pull request 55 is what is merged. Everything described below this section is on branch `feature/tier4-attendant-stock`, stacked on pull requests 57 to 60, which are **not merged yet**. The final QA audit of 2026-11-11 is recorded under "Final QA audit" at the end of this page.
+- **Production database ("Tallybook" Supabase project):** every migration through `20261111150000_shop_profit_report.sql` is applied (recorded under `20261110…` and `20261111…` version numbers, mapped in `supabase/MIGRATION_HISTORY.md`; run `supabase migration repair` before using the CLI against this project). Two migrations are **not** applied: `20261111160000_shop_quotations.sql` and `20261111170000_shop_accounts.sql`; the app copes (the Quotes and Accounts tabs show an error until they are). Every migration from `20261106120000` onward has a rollback script in `supabase/rollback`, tested as a chain.
+- **Not exercised end to end:** the shared-shop workflows have been tested in disposable PostgreSQL and in a browser with the server mocked. Two-account and real-device acceptance, and a real printer, are still outstanding.
 
 ## Open development work
 
@@ -61,3 +61,13 @@ Later: assistant over shared-shop data, quotations and loyalty in the shared sho
 ## Deliberately out of scope for now
 
 Public online storefront, paid plans and billing, tax at the shared till, and anything that needs the security audit first: CSP enforcement, hosted Auth settings, local ledger encryption, privacy and compliance documents.
+
+## Final QA audit (2026-11-11)
+
+Run on the tip of `feature/tier4-attendant-stock`:
+
+- **Passing:** type check; production build; 1,458 client tests; 651 native tests in `qa/` plus 419 server tests; browser suites for release acceptance, sign-in, offline checkout and the shared shop at phone width (owner and attendant, every tab); `pnpm audit` (one low advisory, below the CI threshold).
+- **Accessibility:** an automated WCAG 2.0 A and AA scan of every shared-shop tab at phone width found one issue, low-contrast grey text (4.1:1 to 4.4:1 against the 4.5:1 required) and out-of-stock rows faded to 2:1. Fixed by darkening the muted-text and success colours and styling unavailable items by colour instead of fading them. The scan now finds nothing. It was run once with a throwaway tool and is not part of CI.
+- **Fixed in the audit:** seven source-reading contract tests in `qa/` still looked for the device app's routes in `App.tsx` after they moved into `DeviceWorkspace.tsx` (the CI native step would have failed); the shop refresh asked the server for five things one after another after every action and now asks for the four optional ones together; a test of attendants never seeing costs that failed about one run in a thousand because a random id can contain "800" (it now inspects fields, not text); a timing gap in the accounts migration where a sale waiting for the ledger lock could be stamped before a count's cut-off yet commit after it, and so be missed by two counts in a row (a count now covers records up to 3 seconds before it was saved; not yet applied to production, so nothing live was affected).
+- **Known and accepted:** the database advisor reports RLS-without-policy on the shop tables (intended: they are reachable only through the `tallybook_shop*` functions), the signed-in-callable `SECURITY DEFINER` entry points (intended: each checks the caller itself), unindexed foreign keys on audit columns and a few unused indexes (informational, none matter at today's volume), and leaked-password protection being off in Auth (a setting for the security pass). Quotation validity uses the server's date, so it can differ from a shop's local date by a few hours outside Ghana time.
+- **Not covered:** a security review (parked by agreement), real devices and slow networks, iPhone Safari, and anything needing a printer.

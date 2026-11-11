@@ -11,7 +11,7 @@ test("regular Reports navigation uses business-facing financial wording", () => 
 });
 
 test("owner device and release QA routes stay behind explicit internal-tools opt-in", () => {
-  const app = source("../client/src/App.tsx");
+  const app = source("../client/src/App.tsx") + "\n" + source("../client/src/DeviceWorkspace.tsx");
   const internalTools = source("../client/src/lib/internalTools.ts");
   assert.ok(app.includes('{internalToolsEnabled ? <Route path="/device-uat"'));
   assert.ok(app.includes('{internalToolsEnabled ? <Route path="/release-operations"'));

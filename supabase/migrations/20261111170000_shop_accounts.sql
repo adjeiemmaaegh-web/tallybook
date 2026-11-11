@@ -13,7 +13,9 @@
 -- money wallet, the card settlement, the bank statement) and records it. The
 -- first count for an account sets its opening balance. Each later count is
 -- compared with the previous count plus everything recorded since, and the
--- difference (over or short) is kept with the count. Counts and transfers are
+-- difference (over or short) is kept with the count. A count covers the records
+-- up to 3 seconds before it was saved, so a sale being committed at that moment
+-- lands in the next count instead of being missed by both. Counts and transfers are
 -- append-only; a transfer is cancelled with a reason, never edited.
 --
 -- Rollback: supabase/rollback/20261111170000_shop_accounts_down.sql
@@ -107,6 +109,7 @@ create function private.shop_stage_p_accounts(
 returns jsonb language plpgsql security definer set search_path = '' as $fn$
 declare
   v_now timestamptz := clock_timestamp();
+  v_asof timestamptz;
   v_company uuid;
   v_role text;
   v_accounts constant text[] := array['cash', 'mobile', 'card', 'bank'];
@@ -227,6 +230,11 @@ begin
   end if;
 
   -- reconcileAccount: the owner counted what is really there; compare it with what the records say should be.
+  -- A sale or repayment is stamped when its function starts, before it may wait for the ledger lock, so a record
+  -- stamped just before now can still be committing. The count therefore covers the records up to 3 seconds
+  -- before it was saved: one rung up in that moment shows in the next count, never in neither.
+  v_now := clock_timestamp();
+  v_asof := v_now - interval '3 seconds';
   v_id := private.shop_uuid(p_input, 'reconciliationId');
   v_account := p_input->>'account';
   if v_account is null or v_account <> all (v_accounts) then raise exception 'Choose an account' using errcode = '22023'; end if;
@@ -241,15 +249,15 @@ begin
   end if;
   select * into v_prev from public.shop_reconciliations where business_id = v_company and account = v_account order by as_of desc, id desc limit 1;
   if found then
-    v_since := private.shop_account_components(v_company, v_account, v_prev.as_of + interval '1 microsecond', v_now + interval '1 microsecond');
+    v_since := private.shop_account_components(v_company, v_account, v_prev.as_of + interval '1 microsecond', v_asof + interval '1 microsecond');
     v_expected := v_prev.actual_minor + private.shop_account_net(v_since);
     v_diff := v_actual - v_expected;
     insert into public.shop_reconciliations (id, business_id, account, as_of, actual_minor, expected_minor, difference_minor, previous_id, note, request_sha256, recorded_by)
-      values (v_id, v_company, v_account, v_now, v_actual, v_expected::bigint, v_diff, v_prev.id, v_note, v_hash, p_actor);
+      values (v_id, v_company, v_account, v_asof, v_actual, v_expected::bigint, v_diff, v_prev.id, v_note, v_hash, p_actor);
     return jsonb_build_object('reconciliationId', v_id, 'expectedMinor', v_expected::text, 'differenceMinor', v_diff::text, 'replayed', false);
   end if;
   insert into public.shop_reconciliations (id, business_id, account, as_of, actual_minor, note, request_sha256, recorded_by)
-    values (v_id, v_company, v_account, v_now, v_actual, v_note, v_hash, p_actor);
+    values (v_id, v_company, v_account, v_asof, v_actual, v_note, v_hash, p_actor);
   return jsonb_build_object('reconciliationId', v_id, 'expectedMinor', null, 'differenceMinor', null, 'opening', true, 'replayed', false);
 end $fn$;
 revoke all on function private.shop_stage_p_accounts(text, uuid, uuid, jsonb) from public, anon, authenticated;

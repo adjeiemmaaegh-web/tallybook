@@ -126,6 +126,7 @@ test('the first count sets the opening balance; each later count is compared wit
     await scenario(t);
     const before = (await t.ownerOps('accountsOverview', t.range())).accounts.cash;
     assert.deepEqual([before.lastReconciliation, before.expectedNowMinor], [null, null]);
+    await t.admin('select pg_sleep(3.2)');                              // everything above is older than the 3-second cut-off, so it is in the opening count
     const first = await count(t, 'cash', 50000, {note: 'Opening drawer'});
     assert.deepEqual([first.opening, first.expectedMinor, first.differenceMinor], [true, null, null]);
     // after counting: a cash sale of 4500 and a cash expense of 500
@@ -133,6 +134,7 @@ test('the first count sets the opening balance; each later count is compared wit
     await spend(t, 500, 'cash');
     const mid = (await t.ownerOps('accountsOverview', t.range())).accounts.cash;
     assert.equal(mid.expectedNowMinor, '54000');                        // 50000 + 4500 - 500
+    await t.admin('select pg_sleep(3.2)');                              // a count covers records up to 3 seconds before it is saved
     const second = await count(t, 'cash', 53800);
     assert.deepEqual([second.expectedMinor, second.differenceMinor], ['54000', '-200']);        // 200 short
     const third = await count(t, 'cash', 53800);                        // nothing happened since
@@ -143,6 +145,19 @@ test('the first count sets the opening balance; each later count is compared wit
     // each account has its own history
     assert.equal((await count(t, 'bank', 7000)).opening, true);
     assert.equal((await t.ownerOps('listReconciliations', {})).reconciliations.length, 4);
+  } finally { await t.db.close(); }
+});
+
+test('a record made in the last seconds before a count is left for the next count, never lost between two', async () => {
+  const t = await setup();
+  try {
+    await count(t, 'cash', 1000);                                       // opening
+    await sell(t, t.north, [{productId: t.eggs, quantity: 1}], [{method: 'cash', amountMinor: 4500}]);
+    const early = await count(t, 'cash', 1000);                         // saved at once: the new sale is not yet part of the records it is checked against
+    assert.deepEqual([early.expectedMinor, early.differenceMinor], ['1000', '0']);
+    await t.admin('select pg_sleep(3.2)');
+    const later = await count(t, 'cash', 5500);                         // now it is: 1000 + 4500
+    assert.deepEqual([later.expectedMinor, later.differenceMinor], ['5500', '0']);
   } finally { await t.db.close(); }
 });
 

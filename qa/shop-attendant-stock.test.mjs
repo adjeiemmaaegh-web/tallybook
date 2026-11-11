@@ -147,7 +147,9 @@ test('a trusted attendant receives goods without ever seeing what they cost', as
     await t.ownerOps('setStockAccess', {userId: t.people.attendant.id, canManageStock: true});
     const open = await t.attendantOps('receivableOrders', {});
     const text = JSON.stringify(open);
-    assert.ok(!/cost|3000|800|totalMinor/i.test(text), text);
+    // Look at the fields, not the text: a random UUID can contain "800" by chance.
+    const fields = (v, out = []) => { if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { out.push([k, x]); fields(x, out); } return out; };
+    for (const [k, x] of fields(open)) assert.ok(!/cost|price|total|amount/i.test(k) && x !== 3000 && x !== 800, `${k}=${x} in ${text}`);
     assert.deepEqual(open.orders[0].lines.map(l => [l.name, l.orderedQuantity, l.receivedQuantity]), [['Eggs', 10, 0], ['Bread', 5, 0]]);
     assert.equal(open.orders[0].supplierName, 'Wholesale');
     const receiptId = randomUUID();

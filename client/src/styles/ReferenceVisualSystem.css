@@ -95,7 +95,7 @@ html,body{background:var(--ta-canvas);color:var(--ta-ink)}
 .purchases-boundary,.customer-debt-spotlight,.inventory-actions,.customer-actions{border-radius:15px}
 .purchases-grid,.sales-builder{gap:14px}
 .sale-product-search input,.customer-search input{border-color:#d9e9e1}
-.shop-page{--ta-blue:#09766b;--ta-blue-dark:#075e55;--ta-blue-soft:#e5f5ee;--ta-canvas:#f1f8f4;--ta-line:#dcece4;--ta-ink:#1b3932;--ta-muted:#607e73;max-width:1180px}
+.shop-page{--ta-blue:#09766b;--ta-blue-dark:#075e55;--ta-blue-soft:#e5f5ee;--ta-canvas:#f1f8f4;--ta-line:#dcece4;--ta-ink:#1b3932;--ta-muted:#557367;max-width:1180px}
 .shop-landing{max-width:1280px;padding:18px 16px 70px}
 .shop-card{border-radius:17px;border-color:#dcebe3;box-shadow:0 5px 18px #095b4610}
 .shop-head h1{font-family:Georgia,"Times New Roman",serif;color:#0c5146;font-weight:600}
