@@ -111,6 +111,31 @@ export function indexedDbBackend(): OutboxBackend {
   };
 }
 
+/** Discover the current user's account-scoped saved sale queues without opening another user's records.
+ * Include legacy queue keys, so a handover check can safely migrate those pending sales.
+ */
+export async function outboxCompanyIdsForUser(userId: string): Promise<string[]> {
+  if (!userId || userId.includes(":") || userId.includes("\u0000")) throw new Error("Invalid signed-in user for handover.");
+  const prefix = userId + ":";
+  const companies = new Set<string>();
+  const tx = (await openDb()).transaction(OUTBOX, "readonly");
+  const keys = await request(tx.objectStore(OUTBOX).getAllKeys(IDBKeyRange.bound(prefix, prefix + "￿")));
+  await done(tx);
+  for (const key of keys) {
+    if (typeof key !== "string" || !key.startsWith(prefix)) continue;
+    const delimiter = key.indexOf("\u0000", prefix.length);
+    if (delimiter > prefix.length) companies.add(key.slice(prefix.length, delimiter));
+  }
+  try {
+    const legacyPrefix = "tallybook.shop.outbox.v1:" + prefix;
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(legacyPrefix) && key.length > legacyPrefix.length) companies.add(key.slice(legacyPrefix.length));
+    }
+  } catch { /* Existing IDB records above are still examined if localStorage is blocked. */ }
+  return [...companies];
+}
+
 /** Sealed JSON values for non-critical caches (business list, shop overview). */
 const cacheAad = (name: string) => `tallybook.cache.v1|${name}`;
 
