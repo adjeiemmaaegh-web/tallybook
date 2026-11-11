@@ -93,6 +93,11 @@ async function mock(page, role, hits) {
         receivableOrders: { orders: [{ orderId: 'o1', storeId: 'st-a', reference: 'INV-2026-0042', supplierName: 'Wholesale Traders Limited of Kumasi', createdAt: new Date().toISOString(),
           lines: [{ lineNo: 1, productId: 'eggs', name: 'Extra long product name for layout testing 500g family pack', orderedQuantity: 120, receivedQuantity: 40 }] }] },
         archivedCustomers: { customerIds: [] },
+        accountsOverview: { from: new Date().toISOString(), to: new Date().toISOString(), accounts: Object.fromEntries(['cash', 'mobile', 'card', 'bank'].map(a => [a, { components: { sales: '129300000', repayments: '1000000', transfersIn: '0', refunds: '1350000', suppliers: '5000000', expenses: '450000', transfersOut: '30000000' }, inMinor: '130300000', outMinor: '36800000', netMinor: '93500000',
+          lastReconciliation: { reconciliationId: 'r1', asOf: new Date().toISOString(), actualMinor: '5380000000', differenceMinor: '-20000' }, expectedNowMinor: '5380020000' }])),
+          position: { customersOweMinor: '4500000', oweSuppliersMinor: '2300000000', stockAtCostMinor: '62400000000', stockLinesWithoutCost: 12 } },
+        listReconciliations: { reconciliations: [{ reconciliationId: 'r1', account: 'cash', asOf: new Date().toISOString(), actualMinor: '5380000000', expectedMinor: '5380020000', differenceMinor: '-20000', note: 'End of day count in the main drawer at the Madina branch' }] },
+        listAccountTransfers: { transfers: [{ transferId: 't1', from: 'cash', to: 'bank', amountMinor: '30000000', note: 'Banked the weekend takings at the Kumasi Central branch', recordedAt: new Date().toISOString(), voided: false, voidReason: null }] },
         listQuotations: { quotations: [{ quotationId: 'q1', quoteNo: 12, storeId: 'st-a', customerId: null, customerName: 'Mr Mensah of the Kumasi Central Market Traders Association', validUntil: '2099-01-01',
           note: 'Delivery to the shop is free for orders above this amount, otherwise charged separately', totalMinor: '129300000', status: 'open', createdBy: 'u-att', createdAt: new Date().toISOString(), saleId: null,
           lines: [{ productId: 'long', name: 'Extra long product name for layout testing 500g family pack', quantity: 120, unitPriceMinor: 1077500, lineTotalMinor: 129300000 }] }] },
@@ -136,7 +141,7 @@ const layoutReport = () => {
 };
 
 const TABS = {
-  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Quotes', 'Ask', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
+  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Quotes', 'Ask', 'Refund requests (1)', 'Expenses', 'Accounts', 'Team', 'Sales', 'Reports'],
   attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'Quotes', 'Ask', 'My sales', 'My day'],
 };
 

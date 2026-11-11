@@ -37,6 +37,11 @@ describe("profit report client", () => {
     expect(csv).toContain("no cost recorded");
     expect(csv.split("\r\n").length).toBeGreaterThan(10);
   });
+  it("a loss is a plain negative number in the spreadsheet, not text", () => {
+    const csv = profitReportCsv(parseProfitReport(raw({ grossProfitMinor: "-1500", netProfitMinor: "-2500", marginBps: -3333 })), opts);
+    expect(csv).toContain('"Gross profit (cost-known sales)","-15.00"');
+    expect(csv).toContain('"Net profit","-25.00"');
+  });
   it("a product name that looks like a formula cannot run in a spreadsheet", () => {
     const csv = profitReportCsv(parseProfitReport(raw({ topByProfit: [{ name: '=HYPERLINK("http://x")', quantity: 1, revenueMinor: "100", profitMinor: "50" }] })), opts);
     expect(csv).toContain(`"'=HYPERLINK(""http://x"")"`);

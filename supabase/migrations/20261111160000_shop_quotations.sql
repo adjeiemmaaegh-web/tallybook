@@ -173,7 +173,9 @@ begin
     end loop;
     insert into public.shop_quotations (id, business_id, quote_no, store_id, customer_id, customer_name, valid_until, note, total_minor, request_sha256, created_by)
       values (v_id, v_company, v_no, v_store, v_customer, v_name, current_date + v_days, v_note, v_total, v_hash, p_actor);
-    for v_line in select (l->>'productId')::uuid as product_id, (l->>'quantity')::integer as qty from jsonb_array_elements(v_lines) l order by 1 loop
+    -- Lines keep the order the person wrote them in (the sorted copy above is only for the retry check).
+    for v_line in select x.product_id, x.qty from (select (l->>'productId')::uuid as product_id, (l->>'quantity')::integer as qty from jsonb_array_elements(v_lines) l) x
+        order by (select min(o.ord) from jsonb_array_elements(p_input->'lines') with ordinality o(e, ord) where (o.e->>'productId')::uuid = x.product_id) loop
       v_n := v_n + 1;
       select pr.name, pr.unit_price_minor into v_prod from public.shop_products pr where pr.id = v_line.product_id;
       insert into public.shop_quotation_lines (quotation_id, line_no, business_id, product_id, product_name, quantity, unit_price_minor, line_total_minor)

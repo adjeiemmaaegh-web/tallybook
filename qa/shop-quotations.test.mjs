@@ -72,8 +72,8 @@ test('a quotation is priced by the server, numbered per business, and keeps what
     // a later price change does not rewrite the quotation
     await t.owner('saveProduct', {productId: t.eggs, name: 'Eggs', unitPriceMinor: 9999});
     const [first] = (await t.ownerOps('listQuotations', {})).quotations.filter(q => q.quoteNo === 1);
-    assert.deepEqual(first.lines.map(l => [l.name, l.quantity, l.unitPriceMinor, l.lineTotalMinor]), [['Bread', 3, 1200, 3600], ['Eggs', 2, 4500, 9000]]);
-    assert.equal(first.totalMinor, '12600');
+    assert.deepEqual(first.lines.map(l => [l.name, l.quantity, l.unitPriceMinor, l.lineTotalMinor]), [['Eggs', 2, 4500, 9000], ['Bread', 3, 1200, 3600]]);
+    assert.equal(first.totalMinor, '12600');                 // the lines are in the order they were written
     assert.equal((await quote(t, 'ownerOps', {customerName: 'Other'})).quoteNo, 3);
   } finally { await t.db.close(); }
 });

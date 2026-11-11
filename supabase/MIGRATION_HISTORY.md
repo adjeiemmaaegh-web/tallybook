@@ -61,4 +61,4 @@ See [rollback/README.md](rollback/README.md). Every migration from `202611061200
 
 Check after applying the tier 4 set: a hash of every shop function's definition in production was compared with the repository chain replayed in a scratch database. 29 of 32 are byte-identical; the other three (`shop_refund_policy_action`, `shop_stage_c_action`, `shop_stage_f_sales_search`, applied earlier) differ only in SQL comments, and are identical once comments and whitespace are removed.
 
-Not applied to production yet (tier 5): `20261111160000_shop_quotations.sql`.
+Not applied to production yet (tier 5, in this order): `20261111160000_shop_quotations.sql`, `20261111170000_shop_accounts.sql`.

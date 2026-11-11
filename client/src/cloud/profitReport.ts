@@ -3,7 +3,7 @@
  * the arithmetic; this reads its text amounts into safe numbers and writes the
  * spreadsheet export. Nothing here recalculates money.
  */
-import { formatMinorAmount } from "@/features/inventory/inventory";
+import { currencyMinorDivisor, formatMinorAmount } from "@/features/inventory/inventory";
 import { escapeCsvSpreadsheetFormula } from "@/features/inventory/catalogCsv";
 
 export interface ProfitReport {
@@ -54,8 +54,10 @@ export interface ProfitTextOptions { shopName: string; storeName: string | null;
 
 /** Profit & loss as a spreadsheet: every row restates a figure the server worked out. */
 export function profitReportCsv(r: ProfitReport, o: ProfitTextOptions): string {
-  const m = (v: number) => formatMinorAmount(v, o.currency).replace(/[^\d.,-]/g, "").trim();
-  const field = (v: string | number) => `"${escapeCsvSpreadsheetFormula(String(v)).replaceAll('"', '""')}"`;
+  // Plain numbers for a spreadsheet: no currency symbol and no thousands separators.
+  const m = (v: number) => (v / currencyMinorDivisor(o.currency)).toFixed(currencyMinorDivisor(o.currency) === 1 ? 0 : 2);
+  // A plain number (even a negative one) cannot run as a formula; any other text is neutralised.
+  const field = (v: string | number) => `"${(/^-?\d+(\.\d+)?$/.test(String(v)) ? String(v) : escapeCsvSpreadsheetFormula(String(v))).replaceAll('"', '""')}"`;
   const row = (...cells: Array<string | number>) => cells.map(field).join(",");
   const lines = [
     row("Profit and loss", o.shopName),
