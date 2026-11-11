@@ -24,7 +24,8 @@ export const countries = [
   { value: "Other", currency: "USD" },
 ] as const;
 
-export const currencies = ["GHS", "KES", "NGN", "RWF", "TZS", "UGX", "USD", "ZAR", "ZMW"] as const;
+export { currencies } from "./currencies";
+import { currencies } from "./currencies";
 
 export const businessTypes = [
   "Retail shop",

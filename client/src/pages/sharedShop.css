@@ -1,5 +1,8 @@
 /* Shared shop — uses the app's --ta-* tokens and .primary-action/.secondary-action. Mobile first: attendants sell on phones. */
-.shop-page { max-width: 1100px; margin: 0 auto; padding: 16px 16px 96px; color: var(--ta-ink); display: grid; gap: 16px; }
+.shop-page { max-width: 1100px; margin: 0 auto; padding: 16px 16px 96px; color: var(--ta-ink); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* Every one-column grid inside a card must be allowed to shrink, or a wide field stretches the whole card past the screen. */
+.shop-card, .shop-edit, .shop-field, .shop-product-list, .shop-list, .shop-members, .shop-sales, .shop-receipt, .shop-head, .shop-report-list { grid-template-columns: minmax(0, 1fr); }
+.shop-page > *, .shop-card, .shop-edit, .shop-field, .shop-sell > *, .shop-grid > *, .shop-product-list > *, .shop-sales > * { min-width: 0; }
 .shop-head { display: grid; gap: 10px; }
 .shop-head h1 { margin: 2px 0 0; font-family: var(--font-display); font-size: 1.9rem; line-height: 1.1; }
 .shop-back { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--ta-muted); font-weight: 700; font-size: .85rem; text-decoration: none; }
@@ -78,9 +81,11 @@
 .shop-actions svg, .shop-card-head svg, .shop-inline-form svg { width: 18px; height: 18px; }
 .shop-sales li { border: 1px solid var(--ta-line); border-radius: 12px; overflow: hidden; }
 .shop-sales li > button { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; border: 0; background: #fff; color: var(--ta-ink); text-align: left; font: inherit; font-weight: 700; }
+.shop-sales li > button > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.shop-sales li > button > strong { flex: none; white-space: nowrap; }
 .shop-sales li > button small { display: block; color: var(--ta-muted); font-weight: 500; font-size: .8rem; margin-top: 2px; }
 .shop-sales .shop-receipt { padding: 0 12px 12px; }
-.shop-sell, .shop-grid { display: grid; gap: 16px; }
+.shop-sell, .shop-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 @media (min-width: 760px) {
   .shop-page { padding: 32px 32px 60px; }
   .shop-head { grid-template-columns: auto 1fr auto; align-items: end; }
@@ -158,3 +163,32 @@ html:has(.shop-page), body:has(.shop-page) { background: var(--ta-canvas); }
 .shop-chip[aria-pressed="true"] { background: var(--ta-blue-soft); border-color: var(--ta-blue, currentColor); font-weight: 700; }
 
 .shop-foot { margin-top: 24px; padding: 12px 0; text-align: center; font-size: .88rem; }
+
+.shop-search { display: flex; gap: 8px; align-items: center; }
+.shop-search input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 12px; font: inherit; }
+
+.shop-import { margin: 12px 0; padding: 12px; border: 1px dashed var(--ta-line); border-radius: 12px; }
+.shop-import summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.shop-import-skipped, .shop-import-result ul { margin: 8px 0; padding-left: 18px; font-size: .88rem; display: grid; gap: 4px; }
+
+.shop-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 8px 0; }
+.shop-stats > div { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--ta-line); border-radius: 12px; }
+.shop-stats span, .shop-stats small { font-size: .78rem; color: var(--ta-muted); }
+.shop-stats strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.shop-stock-search { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--ta-line); border-radius: 12px; font: inherit; margin: 4px 0; box-sizing: border-box; }
+
+.shop-report h3 { margin: 16px 0 6px; font-size: .95rem; }
+.shop-report-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.shop-report-list li { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
+.shop-report-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+ol.shop-report-list { list-style: decimal inside; }
+.shop-stat-key { border-color: var(--ta-blue, currentColor) !important; background: var(--ta-blue-soft); }
+
+/* iOS zooms the page in when a field under 16px gets focus. Keep fields at 16px on phones and tablets. */
+@media (max-width: 899px) {
+  .shop-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .shop-page select, .shop-page textarea, .shop-dialog input, .shop-dialog textarea { font-size: 16px; }
+}
+
+/* The browser's file picker has a wide intrinsic size; keep it inside the card. */
+.shop-import input[type="file"] { max-width: 100%; min-width: 0; width: 100%; box-sizing: border-box; }

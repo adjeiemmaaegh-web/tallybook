@@ -5,6 +5,7 @@ import {useCallback,useEffect,useRef,useState} from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import {openStockCount} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
+import {tracksStock} from "./productTracking";
 import {getShopStockCounts,startShopStockCount,applyShopStockCount,cancelShopStockCount,type ShopStockCount} from "./shopPurchasing";
 interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
 export function SharedShopStockCountPanel({userId,companyId,overview,online,refresh}:Props){
@@ -50,7 +51,7 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
   void action(()=>applyShopStockCount(companyId,{countId:item.countId,countedQuantity}),"Physical stock count");
  };
  const stores=overview.stores.filter(s=>s.status==="active");
- const products=overview.products.filter(p=>p.active);
+ const products=overview.products.filter(p=>p.active&&tracksStock(p));
  return <section className="shop-card space-y-3" aria-label="Shared shop stock count review">
   <h2>Physical stock counts</h2>
   <p className="shop-muted">Start a count, physically check the product, then confirm the observed quantity. A sale or receipt posted after the count began prevents stale adjustment.</p>

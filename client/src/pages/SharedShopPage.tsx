@@ -8,6 +8,12 @@
 import "./sharedShop.css";
 import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
+import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
+import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
+import { SharedShopReports } from "@/cloud/SharedShopReports";
+import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } from "@/cloud/inventoryStats";
+import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
+import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
@@ -28,17 +34,17 @@ import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
-import { currencies } from "@/features/business/businessProfile";
+import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "customers";
+type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -61,6 +67,7 @@ async function writeCache(userId: string, change: (cache: ShopCache) => void) {
 }
 async function clearShopCaches() {
   await removeSealedPrefix(CACHE);
+  await removeSealedPrefix(PARKED_PREFIX);
   try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch { /* ignore */ }
 }
 const methodLabel = (m: string) => m === "mobile" ? "Mobile money" : m === "card" ? "Card" : m === "credit" ? "Credit" : m === "split" ? "Split payment" : "Cash";
@@ -209,7 +216,10 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
     try {
-      const next = await getShopOverview(business.id);
+      let next = await getShopOverview(business.id);
+      // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
+      // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
+      try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
       if (request !== revision.current) return;
       accessDenied.current = false;
       setOverview(next); setError("");
@@ -247,8 +257,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"]]
-    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"]];
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
   const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
   return <>
@@ -280,6 +290,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}
+    {tab === "reports" && <SharedShopReports key={overview.role} companyId={business.id} overview={overview} online={online} userId={userId} shopName={business.name} />}
   </>;
 }
 
@@ -418,6 +429,11 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<ShopReceipt | null>(null);
   const [queueError, setQueueError] = useState("");
+  const [parked, setParked] = useState<ParkedCart[]>([]);
+  const [parkNote, setParkNote] = useState("");
+  const [query, setQuery] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanNote, setScanNote] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
@@ -470,7 +486,79 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const resetForm = () => { setCart({}); setTendered(""); setReference(""); setDiscount(""); setDiscountReason(""); setDiscountOpen(false);
     setPaidNow(""); setPaidNowReference(""); setSplit({ cash: "", mobile: "", mobileReference: "", card: "" }); submissionKey.current = null; };
   const touch = () => { setReceipt(null); setError(""); submissionKey.current = null; };
-  const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(stockOf(id), (c[id] ?? 0) + delta)) })); };
+  // Services and untracked items have no stock to run out of; a line still stops at a sane size.
+  const UNTRACKED_LINE_MAX = 1000;
+  const maxFor = (id: string) => { const p = overview.products.find(item => item.id === id); return p && !tracksStock(p) ? UNTRACKED_LINE_MAX : stockOf(id); };
+  const available = (p: (typeof overview.products)[number]) => !tracksStock(p) || stockOf(p.id) > 0;
+  const change = (delta: number, id: string) => { touch(); setCart(c => ({ ...c, [id]: Math.max(0, Math.min(maxFor(id), (c[id] ?? 0) + delta)) })); };
+  const addProduct = (product: (typeof products)[number]): boolean => {
+    const inCart = cart[product.id] ?? 0;
+    if (!available(product)) { setScanNote(`${product.name} is out of stock in this store.`); return false; }
+    if (inCart >= maxFor(product.id)) { setScanNote(`No more ${product.name} available. ${inCart} already in the cart.`); return false; }
+    change(1, product.id);
+    setScanNote(`Added ${product.name} · ${inCart + 1} in the cart`);
+    setQuery("");
+    return true;
+  };
+  /**
+   * A barcode from the camera, a USB/Bluetooth scanner (which types the code and presses Enter) or the
+   * keyboard. A barcode match wins. Typed text that is not a barcode adds the one product it matches,
+   * and asks the person to choose when it matches several. Long digit-only codes are never matched by
+   * name, so a scan can never add a different product by accident.
+   */
+  const addByCode = (raw: string, fromCamera = false): boolean => {
+    const code = normalizeCode(raw);
+    if (!code) return false;
+    const byCode = findByBarcode(products, code);
+    if (byCode) return addProduct(byCode);
+    if (!fromCamera && !/^[0-9]{6,}$/.test(code)) {
+      const matches = filterProducts(products, code);
+      if (matches.length === 1) return addProduct(matches[0]!);
+      if (matches.length > 1) { setScanNote("Several products match. Tap the one you want."); return false; }
+    }
+    setScanNote(`No product has the barcode ${code}.${overview.role === "owner" ? " Check it, or add it under Stock." : " Ask the owner to add it."}`);
+    return false;
+  };
+  // Parked carts live on this device only, sealed, per person, business and store.
+  useEffect(() => {
+    let live = true;
+    setParked([]); setParkNote("");
+    if (!storeId) return;
+    void readSealedJson<unknown>(parkedKey(userId, companyId, storeId)).then(value => { if (live) setParked(sanitizeParked(value)); });
+    return () => { live = false; };
+  }, [userId, companyId, storeId]);
+  /** Saves, then reads back: the cart is only cleared from the screen once the device really has it. */
+  const saveParked = async (next: ParkedCart[]): Promise<boolean> => {
+    const name = parkedKey(userId, companyId, storeId);
+    await writeSealedJson(name, next);
+    const stored = sanitizeParked(await readSealedJson<unknown>(name));
+    const ok = stored.length === next.length && next.every(c => stored.some(s => s.id === c.id));
+    if (ok) setParked(next);
+    return ok;
+  };
+  const parkNow = async () => {
+    let next: ParkedCart[];
+    try { next = parkCart(parked, cart, customerId || null); } catch (cause) { setParkNote(message(cause)); return; }
+    if (!(await saveParked(next))) { setParkNote("This device could not keep the cart. It is still on the screen, so finish the sale or write it down."); return; }
+    resetForm(); setCustomerId(""); setReceipt(null); setError("");
+    setParkNote("Cart set aside. Resume it from Parked carts when you are ready.");
+  };
+  const parkedTotal = (p: ParkedCart) => p.lines.reduce((sum, l) => sum + l.quantity * (overview.products.find(x => x.id === l.productId)?.unitPriceMinor ?? 0), 0);
+  const resumeParked = async (p: ParkedCart) => {
+    if (lines.length && !(await confirmAction("Replace the cart on the screen with this parked cart? The cart on the screen will be cleared.", { confirmLabel: "Replace cart" }))) return;
+    const restored = restoreCart(p, overview.products.map(x => ({ id: x.id, name: x.name, active: x.active, unitPriceMinor: x.unitPriceMinor, tracked: tracksStock(x) })), stockOf);
+    if (!Object.keys(restored.cart).length) { setParkNote(`Nothing in this cart can be sold now: ${restored.unavailable.join(", ")}. It stays parked until you discard it.`); return; }
+    if (!(await saveParked(parked.filter(c => c.id !== p.id)))) { setParkNote("This device could not update its parked carts. Try again."); return; }
+    touch(); setReceipt(null); resetForm(); setCart(restored.cart);
+    setCustomerId(p.customerId && customers.some(c => c.id === p.customerId) ? p.customerId : "");
+    const notes = [restored.reduced.length ? `Lowered to the stock on hand: ${restored.reduced.join(", ")}.` : "", restored.unavailable.length ? `Not available now and left out: ${restored.unavailable.join(", ")}.` : ""].filter(Boolean);
+    setParkNote(notes.length ? `Cart resumed. ${notes.join(" ")}` : "Cart resumed.");
+  };
+  const discardParked = async (p: ParkedCart) => {
+    if (!(await confirmAction("Discard this parked cart? Nothing was sold or recorded, and this cannot be undone.", { danger: true, confirmLabel: "Discard" }))) return;
+    if (!(await saveParked(parked.filter(c => c.id !== p.id)))) setParkNote("This device could not update its parked carts. Try again.");
+  };
+  const shown = filterProducts(products, query);
   const modes: PayMode[] = ["cash", "mobile", "card", ...(perms.canCredit ? ["credit" as const] : []), "split"];
 
   if (!active.length) return <section className="shop-card shop-empty"><h2>No store yet</h2>
@@ -513,14 +601,23 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
       {!products.length && (overview.role === "owner"
         ? <p className="shop-muted">No products yet. <button type="button" className="shop-link" onClick={() => goTo?.("stock")}>Add your first product</button></p>
         : <p className="shop-muted">No products are available to sell yet. Ask the owner to add them.</p>)}
-      {products.length > 0 && products.every(p => stockOf(p.id) <= 0) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
+      {products.length > 0 && products.every(p => !available(p)) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
       {!online && products.length > 0 && <p className="shop-muted" role="status">Offline: this list is from the last time you were connected. Stock may have changed.</p>}
-      <ul className="shop-product-list">{[...products].sort((a, b) => Number(stockOf(b.id) > 0) - Number(stockOf(a.id) > 0)).map(p => { const left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={left ? "" : "is-out"}>
-        <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)} · {left ? `${left} in stock` : "Out of stock"}</span></div>
+      {products.length > 0 && <div className="shop-search">
+        <input type="search" value={query} aria-label="Search products or scan a barcode" placeholder="Search or scan a barcode" autoComplete="off" maxLength={64}
+          onChange={e => { setQuery(e.target.value); setScanNote(""); }}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (query.trim()) addByCode(query); } }} />
+        <button type="button" className="secondary-action" aria-pressed={scanning} onClick={() => { setScanNote(""); setScanning(s => !s); }}>{scanning ? "Close camera" : "Scan"}</button>
+      </div>}
+      {scanning && <CameraBarcodeScanner onClose={() => setScanning(false)} onScan={code => { setScanning(false); addByCode(code, true); }} />}
+      <p className="shop-muted" role="status" aria-live="polite">{scanNote}</p>
+      {query.trim() && !shown.length && <p className="shop-muted">No products match “{query.trim()}”. Press Enter if this is a barcode.</p>}
+      <ul className="shop-product-list">{[...shown].sort((a, b) => Number(available(b)) - Number(available(a))).map(p => { const tracked = tracksStock(p), left = stockOf(p.id), inCart = cart[p.id] ?? 0; return <li key={p.id} className={available(p) ? "" : "is-out"}>
+        <div><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.category ? ` · ${p.category}` : ""}{tracked ? ` · ${left ? `${left} in stock` : "Out of stock"}` : p.kind === "service" ? " · Service" : ""}</span></div>
         <div className="shop-stepper">
           <button type="button" className="secondary-action" aria-label={`Remove one ${p.name}`} disabled={!inCart} onClick={() => change(-1, p.id)}><Minus aria-hidden="true" /></button>
           <output aria-label={`${p.name} in cart`}>{inCart}</output>
-          <button type="button" className="secondary-action" aria-label={`Add one ${p.name}`} disabled={inCart >= left} onClick={() => change(1, p.id)}><Plus aria-hidden="true" /></button>
+          <button type="button" className="secondary-action" aria-label={`Add one ${p.name}`} disabled={inCart >= maxFor(p.id)} onClick={() => change(1, p.id)}><Plus aria-hidden="true" /></button>
         </div></li>; })}</ul>
     </section>
     {lines.length > 0 && !receipt && <a href="#shop-checkout" className="shop-cart-bar">
@@ -529,6 +626,17 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
     <section className="shop-card shop-checkout" id="shop-checkout">
       {receipt ? <Receipt receipt={receipt} onNext={() => setReceipt(null)} /> : <>
         <h2>Checkout</h2>
+        <div className="shop-park">
+          <button type="button" className="secondary-action" disabled={!lines.length || busy} onClick={() => void parkNow()}>Set this cart aside</button>
+          {parkNote && <p role="status" className="shop-muted">{parkNote}</p>}
+          {parked.length > 0 && <div aria-label="Parked carts" role="group">
+            <p className="shop-muted"><strong>Parked carts ({parked.length})</strong></p>
+            <ul className="shop-list">{parked.map(p => { const customerName = customers.find(c => c.id === p.customerId)?.name; return <li key={p.id}>
+              <span>{parkedItemCount(p)} item{parkedItemCount(p) === 1 ? "" : "s"} · {formatMinorAmount(parkedTotal(p), currency)}{customerName ? ` · ${customerName}` : ""} · {new Date(p.parkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+              <span className="shop-actions"><button type="button" className="secondary-action" disabled={busy} onClick={() => void resumeParked(p)}>Resume</button>
+                <button type="button" className="secondary-action" disabled={busy} onClick={() => void discardParked(p)}>Discard</button></span></li>; })}</ul>
+          </div>}
+        </div>
         {discountMinor > 0 && <p className="shop-total shop-subtotal"><span>Before discount</span><span>{formatMinorAmount(subtotal, currency)}</span></p>}
         <p className="shop-total"><span>Total</span><strong>{formatMinorAmount(Math.max(0, total), currency)}</strong></p>
         {perms.canDiscount && (discountOpen
@@ -657,40 +765,106 @@ export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: ()
   </div>;
 }
 
+interface ProductDraft {
+  productId: string; name: string; price: string; active: boolean;
+  barcode: string; category: string; kind: "good" | "service"; trackStock: boolean; threshold: string; cost: string;
+}
+const blankDraft = (): ProductDraft => ({ productId: crypto.randomUUID(), name: "", price: "", active: true, barcode: "", category: "", kind: "good", trackStock: true, threshold: "", cost: "" });
+const minorToText = (minor: number, currency: string) => (minor / currencyMinorDivisor(currency)).toFixed(currencyMinorDivisor(currency) === 1 ? 0 : 2);
+const draftFrom = (p: ShopOverview["products"][number], currency: string): ProductDraft => ({
+  productId: p.id, name: p.name, price: minorToText(p.unitPriceMinor, currency), active: p.active,
+  barcode: p.barcode ?? "", category: p.category ?? "", kind: p.kind ?? "good", trackStock: tracksStock(p),
+  threshold: p.lowStockThreshold == null ? "" : String(p.lowStockThreshold), cost: p.costMinor == null ? "" : minorToText(p.costMinor, currency),
+});
+/** What the owner typed, checked and turned into the server's shape. Throws a plain sentence when something is wrong. */
+function draftToInput(draft: ProductDraft, currency: string): ProductInput {
+  const service = draft.kind === "service";
+  const tracked = !service && draft.trackStock;
+  let threshold: number | null = null;
+  if (tracked && draft.threshold.trim()) {
+    if (!/^\d{1,7}$/.test(draft.threshold.trim())) throw new Error("The low-stock level must be a whole number.");
+    threshold = Number(draft.threshold.trim());
+  }
+  return {
+    productId: draft.productId, name: draft.name, unitPriceMinor: parseAmountToMinor(draft.price, currency), active: draft.active,
+    barcode: draft.barcode.trim() || null, category: draft.category.trim() || null, kind: draft.kind, trackStock: tracked,
+    lowStockThreshold: threshold, costMinor: draft.cost.trim() ? parseAmountToMinor(draft.cost, currency) : null,
+  };
+}
+
 function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   const currency = overview.currency!;
   const { active, storeId, choose } = useStoreChoice(overview);
-  const [edit, setEdit] = useState<{ productId: string; name: string; price: string; active: boolean } | null>(null);
+  const [edit, setEdit] = useState<ProductDraft | null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [stockQuery, setStockQuery] = useState("");
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
-  const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return;
-    void run(async () => { await saveShopProduct(companyId, { productId: edit.productId, name: edit.name, unitPriceMinor: parseAmountToMinor(edit.price, currency), active: edit.active }); setEdit(null); }); };
+  const stats = computeStockStats(overview.products, stockOf);
+  const listed = filterProducts(overview.products, stockQuery).filter(p => matchesFilter(p, stockOf(p.id), stockFilter));
+  const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return; setNotice("");
+    void run(async () => {
+      const input = draftToInput(edit, currency);
+      try { await saveShopProductFull(companyId, input); }
+      catch (cause) {
+        // A shop that has not been upgraded yet only understands name, price and availability.
+        if (!(cause instanceof ShopRejectedError) || !/Unknown shop operations action/.test(cause.message)) throw cause;
+        await saveShopProduct(companyId, { productId: input.productId, name: input.name, unitPriceMinor: input.unitPriceMinor, active: input.active });
+        setNotice("Saved the name, price and availability. Barcode, category, cost and stock settings need the shop to be updated first.");
+      }
+      setEdit(null); }); };
   const addStock = (productId: string, sign: 1 | -1) => { const n = Number(adds[productId]);
     if (!Number.isInteger(n) || n <= 0) { setError("Enter a whole number of units."); return; }
     void run(async () => { await adjustShopStock(companyId, { storeId, productId, delta: sign * n, operationId: crypto.randomUUID() }); setAdds(a => ({ ...a, [productId]: "" })); }); };
+  const isOwner = overview.role === "owner";
 
   return <div className="shop-grid">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2>
-        <button type="button" className="secondary-action" disabled={!online} onClick={() => setEdit({ productId: crypto.randomUUID(), name: "", price: "", active: true })}><Plus aria-hidden="true" />Add product</button></div>
+        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
       {edit && <form className="shop-edit" onSubmit={saveProduct}>
         <label className="shop-field">Name<input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} maxLength={120} required /></label>
         <label className="shop-field">Price ({currency})<input inputMode="decimal" value={edit.price} onChange={e => setEdit({ ...edit, price: e.target.value })} required /></label>
+        <label className="shop-field">Type
+          <select value={edit.kind} onChange={e => { const kind = e.target.value === "service" ? "service" : "good"; setEdit({ ...edit, kind, trackStock: kind === "good" ? edit.trackStock : false, threshold: kind === "good" ? edit.threshold : "" }); }}>
+            <option value="good">Goods (something you stock)</option><option value="service">Service (no stock)</option></select></label>
+        <label className="shop-field">Barcode (optional)<input value={edit.barcode} onChange={e => setEdit({ ...edit, barcode: e.target.value })} maxLength={64} autoComplete="off" inputMode="text" placeholder="Scan or type the number" /></label>
+        <label className="shop-field">Category (optional)<input value={edit.category} onChange={e => setEdit({ ...edit, category: e.target.value })} maxLength={60} placeholder="e.g. Drinks" /></label>
+        {edit.kind === "good" && <label className="shop-check"><input type="checkbox" checked={edit.trackStock} onChange={e => setEdit({ ...edit, trackStock: e.target.checked, threshold: e.target.checked ? edit.threshold : "" })} />Count stock for this product</label>}
+        {edit.kind === "good" && edit.trackStock && <label className="shop-field">Warn me when stock is at or below (optional)<input inputMode="numeric" value={edit.threshold} onChange={e => setEdit({ ...edit, threshold: e.target.value })} placeholder="e.g. 5" /></label>}
+        {isOwner && <label className="shop-field">What it costs you ({currency}, optional, only you can see this)<input inputMode="decimal" value={edit.cost} onChange={e => setEdit({ ...edit, cost: e.target.value })} /></label>}
         <label className="shop-check"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} />Available for sale</label>
         <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => setEdit(null)}>Cancel</button></div>
       </form>}
+      {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
-      <ul className="shop-product-list shop-stock-list">{overview.products.map(p => <li key={p.id}>
-        <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{active.length ? ` · ${stockOf(p.id)} in stock` : ""}</span></div>
+      <SharedShopCatalogImport companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />
+      {active.length > 0 && overview.products.length > 0 && <div className="shop-stats" aria-label="Stock summary">
+        <div><span>Stock value</span><strong>{stats.valueMinor === null ? "Too large to show" : formatMinorAmount(stats.valueMinor, currency)}</strong>{stats.withoutCost > 0 && <small>{stats.withoutCost} product{stats.withoutCost === 1 ? "" : "s"} with no cost left out</small>}</div>
+        <div><span>Products</span><strong>{stats.products}</strong><small>{stats.counted} counted</small></div>
+        <div><span>Units on hand</span><strong>{stats.units}</strong></div>
+        <div><span>Low stock</span><strong>{stats.low}</strong></div>
+        <div><span>Out of stock</span><strong>{stats.out}</strong></div>
+      </div>}
+      {overview.products.length > 0 && <>
+        <input type="search" className="shop-stock-search" value={stockQuery} onChange={e => setStockQuery(e.target.value)} aria-label="Search your products" placeholder="Search name, category or barcode" maxLength={64} autoComplete="off" />
+        <div className="shop-chips" role="group" aria-label="Show">
+          {STOCK_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={stockFilter === f.id} onClick={() => setStockFilter(f.id)}>{f.label}</button>)}</div>
+        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
+      </>}
+      <ul className="shop-product-list shop-stock-list">{listed.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
+        return <li key={p.id}>
+        <div className={p.active ? "" : "is-muted"}><strong>{p.name}</strong><span>{formatMinorAmount(p.unitPriceMinor, currency)}{p.active ? "" : " · hidden from sale"}{p.category ? ` · ${p.category}` : ""}{p.barcode ? ` · ${p.barcode}` : ""}{p.kind === "service" ? " · Service" : !tracked ? " · Stock not counted" : active.length ? ` · ${left} in stock` : ""}{low ? " · Low stock" : ""}</span></div>
         <div className="shop-stock-controls">
-          {active.length > 0 && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
+          {active.length > 0 && tracked && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, 1)}>Add</button>
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button></>}
-          <button type="button" className="secondary-action" disabled={!online} onClick={() => setEdit({ productId: p.id, name: p.name, price: (p.unitPriceMinor / currencyMinorDivisor(currency)).toFixed(currencyMinorDivisor(currency) === 1 ? 0 : 2), active: p.active })}>Edit</button>
-        </div></li>)}</ul>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
+        </div></li>; })}</ul>
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
   </div>;

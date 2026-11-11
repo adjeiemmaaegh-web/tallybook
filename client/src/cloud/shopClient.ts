@@ -6,10 +6,22 @@
  */
 import { getSupabaseClient } from "@/lib/supabase";
 import { filterSalesLocally, type LocalSalesQuery } from "./salesFilters";
+import { parseDailyReport, type DailyReport } from "./dailyReport";
 
 export type ShopRole = "owner" | "attendant";
 export interface ShopStore { id: string; name: string; status: "active" | "archived" }
-export interface ShopProduct { id: string; name: string; unitPriceMinor: number; active: boolean }
+export type ProductKind = "good" | "service";
+/**
+ * `barcode` onwards come from the product catalog and are absent on a server
+ * that has not been upgraded; absent means a normal, stock-tracked good.
+ * `costMinor` is sent to owners only and is never stored in the offline cache.
+ */
+export interface ShopProduct {
+  id: string; name: string; unitPriceMinor: number; active: boolean;
+  barcode?: string | null; category?: string | null; kind?: ProductKind;
+  trackStock?: boolean; lowStockThreshold?: number | null; costMinor?: number | null;
+}
+export { tracksStock } from "./productTracking";
 export interface ShopStock { storeId: string; productId: string; quantity: number }
 export interface ShopMember { userId: string; role: ShopRole; email: string | null; storeIds: string[] }
 export interface ShopInvite { invitationId: string; email: string | null; expiresAt: string }
@@ -152,6 +164,38 @@ export async function searchShopSales(companyId: string, query: SalesQuery, cash
     grossMinor: sales.reduce((n, sale) => n + sale.totalMinor, 0),
     refundedMinor: sales.reduce((n, sale) => n + (sale.refundedMinor ?? 0), 0),
   };
+}
+
+export interface ProductCatalogEntry {
+  productId: string; name: string; unitPriceMinor: number; active: boolean;
+  barcode: string | null; category: string | null; kind: ProductKind; trackStock: boolean;
+  lowStockThreshold: number | null; costMinor?: number | null;
+}
+export interface ProductInput {
+  productId: string; name: string; unitPriceMinor: number; active: boolean;
+  barcode: string | null; category: string | null; kind: ProductKind; trackStock: boolean;
+  lowStockThreshold: number | null; costMinor: number | null;
+}
+export const getProductCatalog = (companyId: string) =>
+  callShop<{ products: ProductCatalogEntry[] }>("productCatalog", { companyId }, "tallybook_shop_ops").then(r => r.products);
+export const saveShopProductFull = (companyId: string, product: ProductInput) =>
+  callShop<ProductCatalogEntry>("saveProductFull", { companyId, ...product }, "tallybook_shop_ops");
+
+/** Adds catalog details to the overview's products. Products the catalog does not mention are left as they are. */
+export function mergeCatalog(overview: ShopOverview, catalog: ProductCatalogEntry[]): ShopOverview {
+  const byId = new Map(catalog.map(entry => [entry.productId, entry]));
+  return { ...overview, products: overview.products.map(product => {
+    const entry = byId.get(product.id);
+    if (!entry) return product;
+    return { ...product, barcode: entry.barcode, category: entry.category, kind: entry.kind, trackStock: entry.trackStock,
+      lowStockThreshold: entry.lowStockThreshold, ...("costMinor" in entry ? { costMinor: entry.costMinor ?? null } : {}) };
+  }) };
+}
+
+/** The shared shop's daily / end-of-day report for a day range (and optionally one store). Read-only. */
+export async function getDailyReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<DailyReport> {
+  const raw = await callShop<unknown>("dailyReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
+  return parseDailyReport(raw);
 }
 
 export const getShopReadiness = (companyId: string) =>
