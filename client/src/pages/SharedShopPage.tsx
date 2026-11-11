@@ -24,6 +24,8 @@ import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
 import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
 import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
+import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
+import {getRefundRequests} from "@/cloud/refundRequests";
 import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
@@ -48,7 +50,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -225,6 +227,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [hasSale, setHasSale] = useState<boolean | null>(null);
   // Whether this person may count stock and receive goods (owners: also each attendant's setting). Not cached: it needs a connection anyway.
   const [stockAccess, setStockAccess] = useState<ShopStockAccess | null>(null);
+  // Owner: how many refund requests are waiting. A server without refund requests leaves it at zero.
+  const [pendingRefunds, setPendingRefunds] = useState(0);
   const refresh = useCallback(async () => {
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
@@ -240,6 +244,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       if (request !== revision.current) return;
       accessDenied.current = false;
       setStockAccess(access);
+      if (next.role === "owner") { try { setPendingRefunds((await getRefundRequests(business.id)).requests.length); } catch { setPendingRefunds(0); } }
       setOverview(next); setError("");
       void writeCache(userId, cache => { cache.overviews[business.id] = next; });
     } catch (cause) {
@@ -275,7 +280,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
     : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["sales", "My sales"], ["reports", "My day"]];
@@ -308,6 +313,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "orders" && isOwner && (online
       ? <SharedShopOrders userId={userId} companyId={business.id} overview={overview} />
       : <p role="status">Reconnect to manage online orders.</p>)}
+    {tab === "refund-requests" && isOwner && <OwnerRefundRequests companyId={business.id} overview={overview} online={online} refresh={refresh} onChanged={() => void refresh()} />}
     {tab === "expenses" && isOwner && <SharedShopExpenses companyId={business.id} overview={overview} online={online} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
@@ -1059,6 +1065,7 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const [requestTick, setRequestTick] = useState(0);
   const request = useRef(0);
   const isOwner = overview.role === "owner";
   const emailOf = (id: string) => overview.members.find(m => m.userId === id)?.email;
@@ -1089,7 +1096,9 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const replace = (next: ShopReceipt) => setSales(list => list.map(r => r.saleId === next.saleId ? next : r));
   const filtering = preset !== "all" || payment !== "all" || q.trim() !== "" || storeFilter !== "";
   const clear = () => { setPreset("all"); setPayment("all"); setText(""); setQ(""); setStoreFilter(""); };
-  return <section className="shop-card">
+  return <>
+  {!isOwner && <MyRefundRequests companyId={companyId} online={online} reloadKey={requestTick} />}
+  <section className="shop-card">
     <div className="shop-card-head"><h2>{isOwner ? "Sales" : "My sales"}</h2>
       {isOwner && overview.stores.length > 1 && <label className="shop-field shop-store-select">Store
         <select value={storeFilter} onChange={e => setStoreFilter(e.target.value)}><option value="">All stores</option>
@@ -1111,10 +1120,12 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
         <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
-        {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
+        {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}
+        {!isOwner && r.refundedMinor < r.totalMinor && <RequestRefundForm companyId={companyId} receipt={r} online={online} onSent={() => setRequestTick(n => n + 1)} />}</>}
     </li>)}</ul>
     {page?.hasMore && <button type="button" className="secondary-action" disabled={loadingMore || !online} onClick={() => void more()}>{loadingMore ? "Loading…" : "Show older sales"}</button>}
-  </section>;
+  </section>
+  </>;
 }
 
 /** Customers who buy on credit. Attendants allowed to give credit can add a

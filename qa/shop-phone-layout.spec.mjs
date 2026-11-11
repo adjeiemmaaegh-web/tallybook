@@ -93,6 +93,10 @@ async function mock(page, role, hits) {
         receivableOrders: { orders: [{ orderId: 'o1', storeId: 'st-a', reference: 'INV-2026-0042', supplierName: 'Wholesale Traders Limited of Kumasi', createdAt: new Date().toISOString(),
           lines: [{ lineNo: 1, productId: 'eggs', name: 'Extra long product name for layout testing 500g family pack', orderedQuantity: 120, receivedQuantity: 40 }] }] },
         archivedCustomers: { customerIds: [] },
+        listRefundRequests: { requests: [{ requestId: 'rr1', saleId: 's1', receiptNumber: 1042, totalMinor: '1293000', requestedBy: 'u-att', status: 'pending', reason: 'Customer says the eggs were cracked when opened at home',
+          lines: null, returnToStock: true, createdAt: new Date().toISOString(), decidedAt: null, decisionNote: null, items: [{ name: 'Extra long product name for layout testing 500g family pack', quantity: 120 }] }] },
+        myRefundRequests: { requests: [{ requestId: 'rr1', saleId: 's1', receiptNumber: 1042, status: 'declined', reason: 'Customer says the eggs were cracked', lines: null, returnToStock: true,
+          createdAt: new Date().toISOString(), decidedAt: new Date().toISOString(), decisionNote: 'Please ask them to bring the eggs back first', items: [{ name: 'Eggs', quantity: 2 }] }] },
         listJoinCodes: { codes: [{ codeId: 'k1', status: 'pending', createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86_400_000).toISOString(), usedBy: null, usedAt: null }] },
         listExpenses: { expenses: [{ expenseId: 'e1', storeId: 'st-a', category: 'transport', amountMinor: '12500000', method: 'mobile', expenseDate: '2026-11-10',
           note: 'Taxi to the wholesale market and back with a very long explanatory note', recordedBy: 'u1', recordedAt: new Date().toISOString(), voided: false, voidReason: null }] },
@@ -126,7 +130,7 @@ const layoutReport = () => {
 };
 
 const TABS = {
-  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Expenses', 'Team', 'Sales', 'Reports'],
+  owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Refund requests (1)', 'Expenses', 'Team', 'Sales', 'Reports'],
   attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'My sales', 'My day'],
 };
 
@@ -147,6 +151,7 @@ for (const width of [360, 320]) {
         await page.waitForTimeout(500);
         if (tab === 'Sell') { for (const name of ['Add one Crate of eggs', `Add one ${'Extra long product name for layout testing 500g family pack'}`]) await page.getByRole('button', { name }).click({ trial: false }).catch(() => {}); }
         if (tab === 'Sales') await page.locator('.shop-sales li button').first().click().catch(() => {});
+        if (tab === 'My sales') { await page.locator('.shop-sales li button').first().click().catch(() => {}); await page.getByRole('button', { name: 'Ask the owner for a refund' }).click().catch(() => {}); }
         if (tab === 'Stock') { await page.getByRole('button', { name: /Add product/ }).click().catch(() => {}); await page.getByText('Import products from a file').click().catch(() => {}); }
         await page.waitForTimeout(250);
         const r = await page.evaluate(layoutReport);

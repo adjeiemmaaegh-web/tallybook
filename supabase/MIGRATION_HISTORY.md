@@ -52,3 +52,5 @@ Until it is brought up to date it cannot be used to rehearse a production upgrad
 ## Rollbacks
 
 See [rollback/README.md](rollback/README.md). Every migration from `20261106120000` onward has a rollback script, and `qa/migration-rollbacks.test.mjs` rolls the whole chain back and forward again.
+
+Not applied to production yet (tier 4, in this order): `20261111100000_shop_attendant_stock.sql`, `20261111110000_shop_customer_archive.sql`, `20261111120000_shop_join_codes.sql`, `20261111130000_shop_expenses.sql`, `20261111140000_shop_refund_requests.sql`. Each has a rollback in `supabase/rollback`, and the whole chain is exercised by `qa/migration-rollbacks.test.mjs`.
