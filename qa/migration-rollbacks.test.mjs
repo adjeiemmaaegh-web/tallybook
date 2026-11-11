@@ -33,6 +33,7 @@ const CHAIN = [
   ['20261108100000', '20261108100000_shop_stage_c_read_models_down.sql'],
 ];
 const migrationFile = prefix => migrations.find(n => n.startsWith(prefix));
+const SHIFT_DOWN = "20261111180000_shop_staff_shifts_audit_down.sql";
 
 async function setup() {
   const db = new PGlite();
@@ -83,6 +84,9 @@ async function setup() {
 const unknown = (t, action) => assert.rejects(t.ops(action), /Unknown shop operations action/);
 
 test('every rollback file exists and is wrapped in a transaction', () => {
+  assert.ok(migrationFile('20261111180000'));
+  assert.match(read('supabase/rollback/' + SHIFT_DOWN), /^begin;/m);
+  assert.match(read('supabase/rollback/' + SHIFT_DOWN), /^commit;/m);
   for (const [prefix, file] of CHAIN) {
     const sql = read('supabase/rollback/' + file);
     assert.ok(migrationFile(prefix), `migration ${prefix} exists`);
@@ -107,6 +111,9 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
     assert.equal((await t.ops('dailyReport', {from: new Date(Date.now() - 3600_000).toISOString(), to: new Date(Date.now() + 3600_000).toISOString()})).sales.count, 1);
 
     assert.equal((await t.ops('reconcileAccount', {reconciliationId: randomUUID(), account: 'cash', actualMinor: 100})).opening, true);
+    await t.down(SHIFT_DOWN);                                   // staff shifts (destructive)
+    assert.equal(await t.table("shop_staff_shifts"), false);
+    assert.equal(await t.fn("public.tallybook_shop_shifts(text,jsonb)"), false);
     await t.down(CHAIN[0][1]);                                  // accounts
     assert.equal(await t.table('shop_reconciliations'), false);
     await unknown(t, 'listReconciliations');
@@ -201,6 +208,7 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
 test('with no such history, all eighteen rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
   const t = await setup();
   try {
+    await t.down(SHIFT_DOWN);
     for (const [, file] of CHAIN) await t.down(file);
     assert.equal(await t.fn('public.tallybook_shop_ops(text,jsonb)'), false);
     for (const table of ['shop_stock_counts', 'shop_transfers', 'shop_suppliers', 'shop_purchase_orders', 'shop_online_orders']) assert.equal(await t.table(table), false, table);
@@ -219,6 +227,7 @@ test('with no such history, all eighteen rollbacks run, the core shop still work
 
     // Apply the eighteen migrations again, oldest first.
     for (const [prefix] of [...CHAIN].reverse()) await t.up(prefix);
+    await t.up("20261111180000");
     assert.equal((await t.ops('readiness')).saleCount, 2);
     assert.deepEqual((await t.ops('listTransfers')).transfers, []);
     assert.deepEqual((await t.ops('supplierBalances')).suppliers, []);
@@ -235,6 +244,8 @@ test('with no such history, all eighteen rollbacks run, the core shop still work
     assert.deepEqual((await t.ops('listRefundRequests')).requests, []);
     assert.deepEqual((await t.ops('listQuotations')).quotations, []);
     assert.deepEqual((await t.ops('listReconciliations')).reconciliations, []);
+    assert.equal(await t.fn('public.tallybook_shop_shifts(text,jsonb)'), true);
+    assert.equal(await t.table('shop_staff_shifts'), true);
     assert.equal((await t.ops('profitReport', {from: new Date(Date.now() - 3600_000).toISOString(), to: new Date(Date.now() + 3600_000).toISOString()})).saleLines.total, 2);
   } finally { await t.db.close(); }
 });
