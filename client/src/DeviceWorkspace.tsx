@@ -56,6 +56,7 @@ function Router() {
         <Route path="/signin" component={GoogleSignInPage} />
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/account" component={isSupabaseAuthPreviewEnabled ? SupabaseSignInPage : GoogleSignInPage} />
+        <Route path="/settings" component={GoogleSignInPage} />
         <Route path="/cloud-account" component={CloudAccountPage} />
         <Route path="/business" component={BusinessSetup} />
         <Route path="/inventory" component={InventoryPage} />
@@ -96,5 +97,5 @@ export default function DeviceWorkspace({ location }: { location: string }) {
       </BusinessProfileProvider>
     </DatabaseProvider>
   </AuthGate>;
-  return <TooltipProvider>{requiresCloudOwner() && !['/signin','/account','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}</TooltipProvider>;
+  return <TooltipProvider>{requiresCloudOwner() && !['/signin','/account','/settings','/reset-password'].includes(location) ? <FriendsTestGate>{workspace}</FriendsTestGate> : workspace}</TooltipProvider>;
 }

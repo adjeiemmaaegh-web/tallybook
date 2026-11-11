@@ -6,11 +6,12 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness } from "./businessIdentity";
 import {listVerifiedCloudBusinesses} from "./cloudMembership";
 import type {VerifiedCloudBusiness} from "./cloudMembershipBoundary.mjs";
+import {cloudEntryDestination} from "./cloudEntryDestination";
 import {Run3MembershipPanel} from "./Run3MembershipPanel";
 import {QaDeviceEnrollmentPanel} from './QaDeviceEnrollmentPanel';
 
 /** Account identity only. Creating a cloud business does not claim local data. */
-export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}) {
+export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSettings=true}:{accountOnly?:boolean;autoOpen?:boolean;showSettings?:boolean}={}) {
   const [, navigate] = useLocation();
   const [userId, setUserId] = useState<string | null>(null);
   const [business, setBusiness] = useState<VerifiedCloudBusiness | null>(null);
@@ -68,6 +69,13 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
     void refresh();
     return () => { active = false; revision.current++; subscription.unsubscribe(); };
   }, [accountOnly, membershipRevision]);
+
+  // A unique server-verified company enters its appropriate home automatically.
+  // Unlinked users remain in onboarding; multiple memberships require explicit selection.
+  useEffect(() => {
+    if (!accountOnly || !autoOpen || !userId || !membershipChecked || accessible.length !== 1 || !business) return;
+    navigate(cloudEntryDestination(business.role));
+  }, [accountOnly, autoOpen, userId, membershipChecked, accessible, business, navigate]);
 
   async function saveProfileName(){
     const preferred=draftName.trim(), started=revision.current;
@@ -134,7 +142,8 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
 
   return <section className={accountOnly ? "tb-verified-panel space-y-3" : "rounded border p-4 space-y-3"} aria-label="Cloud business account">
     {!accountOnly && <h2 className="font-semibold">Cloud business account</h2>}
-    {accountOnly && business && <h1>Your business</h1>}
+    {accountOnly && autoOpen && membershipChecked && accessible.length === 1 && business && <p role="status" className="tb-opening-shop">Opening your {business.role === "owner" ? "owner dashboard" : "attendant home"}…</p>}
+    {accountOnly && business && showSettings && <h1>Your business</h1>}
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
       {accessible.length>1 ? <label className="block text-sm" htmlFor="cloud-select">Cloud company
         <select id="cloud-select" className="ml-2 rounded border p-1" value={business.id}
@@ -146,8 +155,8 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       <p className="text-sm">{business.role === "owner"
         ? "View your shop’s sales, stock and team."
         : "Record sales at your assigned store."}</p>
-      <Link href={business.role === "owner" ? "/shop?view=dashboard" : "/shop"} className="primary-action">
-        {business.role === "owner" ? "Open owner dashboard" : "Open POS"}
+      <Link href={cloudEntryDestination(business.role)} className="primary-action">
+        {business.role === "owner" ? "Open owner dashboard" : "Open attendant home"}
       </Link></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
@@ -165,7 +174,7 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
           <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
           <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
         </div>}
-        {choice==="employee"?<p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Then enter the one-time code they give you below.</p>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Enter the private invitation below, or use an eight-character shop join code.</p><Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
@@ -175,8 +184,8 @@ export function CloudBusinessPanel({accountOnly=false}:{accountOnly?:boolean}={}
       (choice==="employee" || (!accountOnly && import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"))
       ? <Run3MembershipPanel key={userId+":"+(business?.id ?? "")} userId={userId} companyId={business?.id ?? null}
          isOwner={business?.role === "owner"} onAccepted={()=>setMembershipRevision(value=>value+1)}/> : null}
-    {accountOnly&&userId&&profileName&&<p className="text-xl font-semibold">Hi, {profileName.split(/\s+/)[0]}</p>}
-    {accountOnly&&userId&&<details className="rounded border p-3"><summary>My profile</summary>
+    {accountOnly&&showSettings&&userId&&profileName&&<p className="text-xl font-semibold">Hi, {profileName.split(/\s+/)[0]}</p>}
+    {accountOnly&&showSettings&&userId&&<details className="rounded border p-3"><summary>My profile</summary>
       <form onSubmit={event=>{event.preventDefault();void saveProfileName();}}>
         <label htmlFor="preferred-name">What should we call you?</label>
         <input id="preferred-name" autoComplete="given-name" maxLength={80} value={draftName} onChange={event=>setDraftName(event.target.value)} className="block w-full rounded border p-2"/>

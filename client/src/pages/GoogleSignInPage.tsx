@@ -4,7 +4,7 @@ import { workspaceOwner, revisitOriginalLedger } from "@/auth/ownerWorkspace";
 import {useState} from 'react';
 import {CloudBusinessPanel} from '@/cloud/CloudBusinessPanel';
 import {Run18UpdateNotice} from '@/components/Run18UpdateNotice';
-import {Link} from 'wouter';
+import {Link,useLocation} from 'wouter';
 import {LogIn,LogOut,ShieldCheck,RefreshCw} from 'lucide-react';
 import {getSupabaseClient,isSupabaseConfigured} from '@/lib/supabase';
 import {useRun4CloudSession} from '@/auth/useRun4CloudSession';
@@ -87,11 +87,13 @@ export default function GoogleSignInPage(){
     }catch(e){setError(e instanceof Error?e.message:'Cloud sign-out failed.');}
     finally{setBusy(false);}
   }
+  const [location] = useLocation();
+  const settingsView = location === '/settings';
   const signedIn = state.status === 'signed-in';
   return <div className={signedIn ? "tb-verified-page" : "tb-account-page"}>
     {signedIn ? <header className="tb-verified-header">
       <Link className="tb-account-brand" href="/welcome"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
-      <Link href="/welcome">Back to welcome</Link>
+      <Link href={settingsView ? "/shop" : "/welcome"}>{settingsView ? "Back to shop" : "Back to welcome"}</Link>
     </header> :
     <aside className="tb-account-aside" aria-label="Welcome to Tallybook">
       <Link className="tb-account-brand" href="/"><span className="tb-account-brand-mark" aria-hidden="true">T</span><span><strong>Tallybook</strong><small>BY ALCHEMY</small></span></Link>
@@ -117,8 +119,8 @@ export default function GoogleSignInPage(){
        state.status==='checking'?<p role="status">Verifying session with Supabase…</p>:
        state.status==='offline'?<p role="status">Connect to the internet to verify your account before opening a shop.</p>:
        state.status==='signed-in'?<div className="space-y-3">
-        <CloudBusinessPanel key={state.userId} accountOnly/>
-        <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
+        <CloudBusinessPanel key={state.userId} accountOnly autoOpen={!settingsView} showSettings={settingsView}/>
+        {settingsView ? <details className="rounded border p-3"><summary className="cursor-pointer py-2 font-semibold">Account menu</summary>
       <p className="op-row-sub">Sales, stock, reports and local backups
         remain on this device. Signing out does not encrypt or erase
         records stored in this browser.</p>
@@ -132,7 +134,7 @@ export default function GoogleSignInPage(){
             onClick={() => revisitOriginalLedger(state.userId!)}>Return to original ledger options</button>}
           <Link href="/sync-status" className="underline">View local sync status</Link>
         </div>
-        </details></div>:
+        </details> : <button type="button" className="tb-onboarding-exit" disabled={busy} onClick={()=>void logOut()}>Sign out</button>}</div>:
        <div className="space-y-3">
          {state.status==='error'?<p role="alert">Cloud identity could not be verified.
            No local records were changed.</p>:null}
