@@ -34,6 +34,7 @@ import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/
 import {getRefundRequests} from "@/cloud/refundRequestData";
 import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
+import {SharedShopAttendantHome} from "@/cloud/SharedShopAttendantHome";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -56,7 +57,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -159,7 +160,7 @@ export default function SharedShopPage() {
   return <main className="shop-page">
     <Run18UpdateNotice />
     <header className="shop-head">
-      <Link href="/signin" className="shop-back"><ArrowLeft aria-hidden="true" />Account</Link>
+      <Link href="/settings" className="shop-back"><ArrowLeft aria-hidden="true" />Account & settings</Link>
       <div>
         <p className="shop-eyebrow">Shared shop{business ? ` · ${business.role === "owner" ? "Owner" : "Attendant"}` : ""}</p>
         <h1>{business?.name ?? "Your shop"}</h1>
@@ -190,16 +191,16 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
       if (/^v1\./i.test(code.trim())) {
         const receipt = await acceptCloudInvitation(code.trim());
         if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
-        window.location.reload();
+        window.location.assign("/shop?view=home");
         return;
       }
       const result = await joinWithShortCode(code);
       if (!result.joined) { setError(JOIN_CODE_REASON[result.reason ?? "invalid"]); return; }
       if (result.userId !== userId) throw new Error("This code was accepted by a different account.");
-      window.location.reload();
+      window.location.assign("/shop?view=home");
     } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
   };
-  return <section className="shop-card shop-empty">
+  return <section className="shop-card shop-empty tb-shop-setup">
     <h2>Join your employer's shop</h2>
     <p>Ask the owner for a join code (8 letters and numbers, like <strong>K7QM-2XPD</strong>), or to invite <strong>{email || "the email you signed in with"}</strong> and give you the longer invitation code. Either works once and expires after 24 hours.</p>
     <form onSubmit={accept} className="shop-inline-form">
@@ -228,7 +229,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     return () => { live = false; };
   }, [userId, business.id, online]);
   const [error, setError] = useState("");
-  const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && new URLSearchParams(window.location.search).get("view") === "dashboard" ? "dashboard" : "sell");
+  const initialView = new URLSearchParams(window.location.search).get("view");
+  const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && initialView === "dashboard" ? "dashboard" : business.role === "attendant" && initialView === "home" ? "home" : "sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
   // Whether this person may count stock and receive goods (owners: also each attendant's setting). Not cached: it needs a connection anyway.
@@ -295,7 +297,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
     ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
-    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
+    : [["home", "Home"], ["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
@@ -307,12 +309,9 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       {tabs.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       <button type="button" className="shop-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh"><RefreshCw aria-hidden="true" /></button>
     </nav>
+    {tab === "home" && !isOwner && <SharedShopAttendantHome shopName={business.name} overview={overview} onNavigate={setTab} />}
     {tab === "dashboard" && isOwner && <section className="shop-card">
-      <SharedShopOwnerDashboard companyId={business.id} overview={overview} online={online} />
-      <p>Records from {business.name}’s shared shop</p>
-      <p>{overview.stores.length} stores · {overview.products.length} products</p>
-      <button className="primary-action" type="button" onClick={() => setTab("sell")}>Open POS</button>
-      <button className="secondary-action" type="button" onClick={() => setTab("sales")}>Review sales</button>
+      <SharedShopOwnerDashboard companyId={business.id} businessName={business.name} overview={overview} online={online} onNavigate={setTab} />
       <details><summary>Tools on this device</summary>
         <p>Reports and Clementia use the ledger saved in this browser.</p>
         <Link href="/">Device ledger</Link> · <Link href="/assistant">Clementia</Link>
@@ -365,7 +364,7 @@ function SetupLedger({ companyId, onDone }: { companyId: string; onDone: () => P
   const [storeName, setStoreName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  return <section className="shop-card shop-empty">
+  return <section className="shop-card shop-empty tb-shop-setup">
     <p className="shop-eyebrow">Step {step} of 2</p>
     <h2>Set up your shared shop</h2>
     {step === 1
