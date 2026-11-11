@@ -495,7 +495,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
   // The quotation this cart came from, with the items it held, so it is only marked sold if the sale really is that quotation.
   const fromQuote = useRef<QuoteStart | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
-  const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
+  const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale, userId), [companyId,userId]);
 
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
