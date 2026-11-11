@@ -84,7 +84,8 @@ begin
     return jsonb_build_object('shifts',coalesce((
       select jsonb_agg(jsonb_build_object(
         'shiftId',s.id,'companyId',s.business_id,'storeId',s.store_id,
-        'staffId',s.staff_id,'openedAt',s.opened_at,'openingCashMinor',s.opening_cash_minor::text,
+        'staffId',s.staff_id,'staffEmail',(select u.email from auth.users u where u.id=s.staff_id),
+        'openedAt',s.opened_at,'openingCashMinor',s.opening_cash_minor::text,
         'openingNote',s.opening_note,'closedAt',s.closed_at,'closedBy',s.closed_by,
         'forcedClose',s.forced_close,'closingCashMinor',s.closing_cash_minor::text,
         'closingNote',s.closing_note,'reviewedAt',s.reviewed_at,'reviewedBy',s.reviewed_by,
@@ -170,6 +171,7 @@ begin
     select jsonb_build_object(
       'events',coalesce((select jsonb_agg(jsonb_build_object(
         'kind',p.kind,'eventKey',p.event_key,'actorId',p.actor_id,
+        'actorEmail',(select u.email from auth.users u where u.id=p.actor_id),
         'storeId',p.store_id,'productId',p.product_id,'delta',p.quantity_delta,
         'quantityAfter',p.quantity_after,'detail',p.detail,'sourceId',p.source_id,
         'amountMinor',p.amount_minor,'serverRecordedAt',p.occurred_at,
