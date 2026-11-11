@@ -37,7 +37,7 @@ import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, mergeArchive, getArchivedCustomerIds, setShopCustomerArchived, saveShopProductFull, tracksStock, type ProductInput,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, createJoinCode, listJoinCodes, revokeJoinCode, joinWithShortCode, showJoinCode, JOIN_CODE_REASON, type JoinCodeRow, mergeArchive, getArchivedCustomerIds, setShopCustomerArchived, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -178,17 +178,24 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   const accept = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const receipt = await acceptCloudInvitation(code.trim());
-      if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
+      if (/^v1\./i.test(code.trim())) {
+        const receipt = await acceptCloudInvitation(code.trim());
+        if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
+        window.location.reload();
+        return;
+      }
+      const result = await joinWithShortCode(code);
+      if (!result.joined) { setError(JOIN_CODE_REASON[result.reason ?? "invalid"]); return; }
+      if (result.userId !== userId) throw new Error("This code was accepted by a different account.");
       window.location.reload();
     } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
   };
   return <section className="shop-card shop-empty">
     <h2>Join your employer's shop</h2>
-    <p>Ask the owner to invite <strong>{email || "the email you signed in with"}</strong>. They'll give you a one-time code that works once, only for this account, and expires after 24 hours.</p>
+    <p>Ask the owner for a join code (8 letters and numbers, like <strong>K7QM-2XPD</strong>), or to invite <strong>{email || "the email you signed in with"}</strong> and give you the longer invitation code. Either works once and expires after 24 hours.</p>
     <form onSubmit={accept} className="shop-inline-form">
       <label className="shop-field">Invitation code
-        <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="v1.…" /></label>
+        <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="K7QM-2XPD" /></label>
       <button className="primary-action" disabled={busy || !online || !code.trim()}>{busy ? "Joining…" : "Join shop"}</button>
     </form>
     {error && <p role="alert" className="shop-alert">{error}</p>}
@@ -883,7 +890,7 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   </div>;
 }
 
-function TeamPanel({ companyId, overview, refresh, online, stockAccess }: PanelProps) {
+function TeamPanel({ companyId, overview, refresh, online, stockAccess, shopName }: PanelProps) {
   const [storeName, setStoreName] = useState("");
   const [email, setEmail] = useState("");
   const [issued, setIssued] = useState<{ code: string; email: string; invitationId: string } | null>(null);
@@ -937,8 +944,45 @@ function TeamPanel({ companyId, overview, refresh, online, stockAccess }: PanelP
         </fieldset></li>)}</ul>
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
+    <JoinCodeCard companyId={companyId} overview={overview} online={online} shopName={shopName} />
     <RefundPolicyCard companyId={companyId} online={online} />
   </div>;
+}
+
+/** Owner-only: a short code an employee types to join. Shown once; the server keeps only a hash. */
+function JoinCodeCard({ companyId, overview, online, shopName }: { companyId: string; overview: ShopOverview; online: boolean; shopName?: string }) {
+  const [codes, setCodes] = useState<JoinCodeRow[]>([]);
+  const [fresh, setFresh] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const load = useCallback(async () => {
+    if (!online) return;
+    try { setCodes((await listJoinCodes(companyId)).codes); } catch (cause) { setError(message(cause)); }
+  }, [companyId, online]);
+  useEffect(() => { void load(); }, [load]);
+  const run = async (task: () => Promise<void>) => { setBusy(true); setError(""); setNote(""); try { await task(); await load(); } catch (cause) { setError(message(cause)); } finally { setBusy(false); } };
+  const text = fresh ? `Join ${shopName || "our shop"} on Tallybook: sign in, choose "Join your employer's shop" and enter this code: ${showJoinCode(fresh.code)}. It works once and expires in 24 hours.` : "";
+  const open = codes.filter(c => c.status === "pending");
+  const emailOf = (id: string | null) => overview.members.find(m => m.userId === id)?.email ?? "a new attendant";
+  return <section className="shop-card" aria-labelledby="join-code-title">
+    <h2 id="join-code-title">Join code</h2>
+    <p className="shop-muted">For someone who already has a Tallybook account. Give them a code; they enter it once and become an attendant with no permissions until you set them. Codes work once and expire after 24 hours.</p>
+    <button type="button" className="primary-action" disabled={busy || !online} onClick={() => void run(async () => { const r = await createJoinCode(companyId); setFresh({ code: r.code, expiresAt: r.expiresAt }); })}>Make a join code</button>
+    {fresh && <div className="shop-invite" role="status">
+      <p>Give this to your employee. It is shown only now.</p>
+      <code aria-label="Join code">{showJoinCode(fresh.code)}</code>
+      <div className="shop-actions">
+        <button type="button" className="secondary-action" onClick={() => void navigator.clipboard?.writeText(text).then(() => setNote("Message copied."))}><Copy aria-hidden="true" />Copy message</button>
+        <button type="button" className="secondary-action" onClick={() => { if (!openWhatsAppShare(text)) setNote("WhatsApp could not open. Copy the message instead."); }}>Send on WhatsApp</button>
+      </div></div>}
+    {note && <p role="status" className="shop-muted">{note}</p>}
+    {open.length > 0 && <ul className="shop-list">{open.map(c => <li key={c.codeId}>
+      <span>Open code<small>expires {new Date(c.expiresAt).toLocaleString()}</small></span>
+      <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void run(async () => { await revokeJoinCode(companyId)(c.codeId); setFresh(null); })}>Cancel</button></li>)}</ul>}
+    {codes.some(c => c.status === "used") && <p className="shop-muted">Used: {codes.filter(c => c.status === "used").slice(0, 3).map(c => `${emailOf(c.usedBy)} on ${new Date(c.usedAt ?? c.createdAt).toLocaleDateString()}`).join("; ")}</p>}
+    {error && <p role="alert" className="shop-alert">{error}</p>}
+  </section>;
 }
 
 /** Owner-only: whether this business allows refunds, which kinds, and for how long. Enforced by the server. */

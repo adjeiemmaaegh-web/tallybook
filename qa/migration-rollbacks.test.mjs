@@ -13,6 +13,7 @@ const key = () => randomUUID().replaceAll('-', '');
 
 // Newest first. Each entry: [migration prefix, rollback file].
 const CHAIN = [
+  ['20261111120000', '20261111120000_shop_join_codes_down.sql'],
   ['20261111110000', '20261111110000_shop_customer_archive_down.sql'],
   ['20261111100000', '20261111100000_shop_attendant_stock_down.sql'],
   ['20261110150000', '20261110150000_shop_daily_report_down.sql'],
@@ -100,50 +101,56 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
     await t.ops('createOnlineOrder', {orderId: randomUUID(), storeId: t.store, lines: [{productId: t.product, quantity: 1}]});
     assert.equal((await t.ops('dailyReport', {from: new Date(Date.now() - 3600_000).toISOString(), to: new Date(Date.now() + 3600_000).toISOString()})).sales.count, 1);
 
+    await t.ops('createJoinCode', {});
+    await t.down(CHAIN[0][1]);                                  // join codes
+    assert.equal(await t.table('shop_join_codes'), false);
+    await unknown(t, 'listJoinCodes');
+    assert.deepEqual((await t.ops('archivedCustomers')).customerIds, []);
+
     await t.ops('archiveCustomer', {customerId: t.customer});
-    await t.down(CHAIN[0][1]);                                  // customer archive
+    await t.down(CHAIN[1][1]);                                  // customer archive
     assert.equal(await t.table('shop_customer_archive'), false);
     await unknown(t, 'archivedCustomers');
     assert.equal((await t.ops('stockAccess')).canManageStock, true);
 
-    await t.down(CHAIN[1][1]);                                  // attendant stock
+    await t.down(CHAIN[2][1]);                                  // attendant stock
     assert.equal(await t.fn('private.shop_stage_i_attendant_stock(text,uuid,uuid,jsonb)'), false);
     assert.equal(await t.column('shop_member_permissions', 'can_manage_stock'), false);
     await unknown(t, 'stockAccess');
     assert.equal((await t.ops('listStockCounts')).counts.length, 1);
 
-    await t.down(CHAIN[2][1]);                                  // daily report
+    await t.down(CHAIN[3][1]);                                  // daily report
     assert.equal(await t.fn('private.shop_stage_h_daily_report(uuid,uuid,jsonb)'), false);
     assert.equal((await t.ops('productCatalog')).products.length, 1);
 
-    await t.down(CHAIN[3][1]);                                  // product details
+    await t.down(CHAIN[4][1]);                                  // product details
     assert.equal(await t.column('shop_products', 'barcode'), false);
     assert.equal(await t.fn('private.shop_stage_g_product_action(text,uuid,uuid,jsonb)'), false);
     assert.equal((await t.ops('searchSales')).matchCount, 1);
 
-    await t.down(CHAIN[4][1]); await t.down(CHAIN[5][1]);       // search, indexes
+    await t.down(CHAIN[5][1]); await t.down(CHAIN[6][1]);       // search, indexes
     await unknown(t, 'searchSales');
     assert.equal(await t.present("exists (select 1 from pg_indexes where schemaname='public' and indexname='shop_sales_business_time')"), false);
 
-    await t.down(CHAIN[6][1]);                                  // order lines
+    await t.down(CHAIN[7][1]);                                  // order lines
     assert.equal(await t.fn('public.tallybook_shop_order_lines(text,jsonb)'), false);
 
-    await t.down(CHAIN[7][1]);                                  // purchase order list
+    await t.down(CHAIN[8][1]);                                  // purchase order list
     await unknown(t, 'listPurchaseOrders');
     assert.equal((await t.ops('listOnlineOrders')).orders.length, 1);
 
-    await t.down(CHAIN[8][1]);                                  // online orders (data deleted, as documented)
+    await t.down(CHAIN[9][1]);                                  // online orders (data deleted, as documented)
     assert.equal(await t.table('shop_online_orders'), false);
     await unknown(t, 'listOnlineOrders');
     assert.equal((await t.ops('supplierBalances')).suppliers.length, 1);
 
-    await t.down(CHAIN[9][1]);                                  // purchasing (data deleted, as documented)
+    await t.down(CHAIN[10][1]);                                  // purchasing (data deleted, as documented)
     assert.equal(await t.table('shop_suppliers'), false);
     await unknown(t, 'supplierBalances');
     assert.equal((await t.ops('listTransfers')).transfers.length, 1);
 
     // The stock-movement history now holds 'purchase', 'transfer_out' and so on: this step must refuse and change nothing.
-    await assert.rejects(t.down(CHAIN[10][1]), /Cannot roll back: the stock movement history contains/);
+    await assert.rejects(t.down(CHAIN[11][1]), /Cannot roll back: the stock movement history contains/);
     assert.equal(await t.table('shop_transfers'), true);
     assert.equal((await t.ops('listTransfers')).transfers.length, 1);
     assert.equal((await t.ops('readiness')).saleCount, 1);
@@ -152,7 +159,7 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
   } finally { await t.db.close(); }
 });
 
-test('with no such history, all twelve rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
+test('with no such history, all thirteen rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
   const t = await setup();
   try {
     for (const [, file] of CHAIN) await t.down(file);
@@ -171,7 +178,7 @@ test('with no such history, all twelve rollbacks run, the core shop still works,
     const sold = (await t.owner('listSales')).sales[0];
     await t.owner('refundSale', {saleId: sold.saleId, refundKey: key(), reason: 'Test', returnToStock: true}).catch(e => assert.match(e.message, /Refunds are turned off/));
 
-    // Apply the twelve migrations again, oldest first.
+    // Apply the thirteen migrations again, oldest first.
     for (const [prefix] of [...CHAIN].reverse()) await t.up(prefix);
     assert.equal((await t.ops('readiness')).saleCount, 2);
     assert.deepEqual((await t.ops('listTransfers')).transfers, []);
@@ -184,5 +191,6 @@ test('with no such history, all twelve rollbacks run, the core shop still works,
     assert.equal(await t.fn('public.tallybook_shop_order_lines(text,jsonb)'), true);
     assert.equal((await t.ops('stockAccess')).canManageStock, true);
     assert.deepEqual((await t.ops('archivedCustomers')).customerIds, []);
+    assert.deepEqual((await t.ops('listJoinCodes')).codes, []);
   } finally { await t.db.close(); }
 });

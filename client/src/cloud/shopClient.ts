@@ -269,3 +269,21 @@ export function newSubmissionKey() {
   crypto.getRandomValues(bytes);
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
+
+/** Short join codes: the owner makes one, an employee types it to join as an attendant. */
+export interface JoinCodeRow { codeId: string; status: "pending" | "used" | "revoked" | "expired"; createdAt: string; expiresAt: string; usedBy: string | null; usedAt: string | null }
+export const createJoinCode = (companyId: string) =>
+  callShop<{ codeId: string; code: string; expiresAt: string }>("createJoinCode", { companyId }, "tallybook_shop_ops");
+export const listJoinCodes = (companyId: string) =>
+  callShop<{ codes: JoinCodeRow[] }>("listJoinCodes", { companyId }, "tallybook_shop_ops");
+export const revokeJoinCode = (companyId: string) => (codeId: string) =>
+  callShop<{ codeId: string; revoked: boolean }>("revokeJoinCode", { companyId, codeId }, "tallybook_shop_ops");
+export const joinWithShortCode = (code: string) =>
+  callShop<{ joined: boolean; reason?: "invalid" | "locked" | "already-member"; companyId?: string; userId?: string }>("joinWithCode", { code }, "tallybook_shop_ops");
+/** "ABCD-EFGH" for reading aloud and typing; the server ignores the dash and the case. */
+export const showJoinCode = (code: string) => `${code.slice(0, 4)}-${code.slice(4)}`;
+export const JOIN_CODE_REASON = {
+  invalid: "That code isn't valid. It may have expired, been used already or been cancelled. Check it, or ask the owner for a new one.",
+  locked: "Too many wrong codes. Wait 15 minutes, then try again.",
+  "already-member": "You are already part of that shop.",
+} as const;
