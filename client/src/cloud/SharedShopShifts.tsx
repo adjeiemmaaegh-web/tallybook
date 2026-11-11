@@ -29,7 +29,7 @@ export function SharedShopShifts({companyId,userId,overview,online}:Props){
  const activeStores=overview.stores.filter(s=>s.status==="active");
  const currency=overview.currency??"GHS";
  const current=shifts.find(s=>s.staffId===userId&&!s.closedAt);
- const nameOf=(id:string)=>overview.members.find(m=>m.userId===id)?.email??(id===userId?"You":"Staff ID "+id);
+ const nameOf=(id:string,email?:string|null)=>email??overview.members.find(m=>m.userId===id)?.email??(id===userId?"You":"Staff ID "+id);
  const storeName=(id:string)=>overview.stores.find(s=>s.id===id)?.name??id;
  const formatCash=(minor:string|null)=>minor===null?"—":/^[0-9]{1,15}$/.test(minor)&&Number.isSafeInteger(Number(minor))
   ?formatMinorAmount(Number(minor),currency):minor+" minor units";
@@ -126,7 +126,7 @@ export function SharedShopShifts({companyId,userId,overview,online}:Props){
   <div className="tb-shift-history"><h3>{isOwner?"Recent employee shifts":"My previous shifts"}</h3>
    {!shifts.length&&!loading&&<p className="shop-muted">No shift history recorded yet. Old sales still retain their existing cashier IDs.</p>}
    <ul>{shifts.map(s=><li key={s.shiftId}>
-    <div><strong>{nameOf(s.staffId)}</strong><small>{storeName(s.storeId)} · Started {new Date(s.openedAt).toLocaleString()}</small>
+    <div><strong>{nameOf(s.staffId,isOwner?s.staffEmail:undefined)}</strong><small>{storeName(s.storeId)} · Started {new Date(s.openedAt).toLocaleString()}</small>
      <small>Opening cash: {formatCash(s.openingCashMinor)} · {s.closedAt?"Closed "+new Date(s.closedAt).toLocaleString():"Still open"}</small>
      {s.closedAt&&<small>Closing cash: {formatCash(s.closingCashMinor)} · Closed by {s.closedBy?nameOf(s.closedBy):"Unknown"}{s.forcedClose?" (owner override)":""}</small>}
      {s.reviewDecision&&<small>Manager review: {s.reviewDecision} · {s.reviewNote}</small>}
