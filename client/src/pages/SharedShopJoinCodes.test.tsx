@@ -77,15 +77,15 @@ describe("join code: employee side", () => {
   };
   it("a short code goes to the join-code action, not the email invitation", async () => {
     shop.join.mockResolvedValue({ joined: true, companyId: "biz", userId: "u1" });
-    const reload = vi.fn(); Object.defineProperty(window, "location", { value: { ...window.location, reload }, configurable: true });
+    const assign = vi.fn(); Object.defineProperty(window, "location", { value: { ...window.location, assign }, configurable: true });
     await enter("k7qm-2xpd");
     await waitFor(() => expect(shop.join).toHaveBeenCalledWith("k7qm-2xpd"));
     expect(shop.accept).not.toHaveBeenCalled();
-    await waitFor(() => expect(reload).toHaveBeenCalled());
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/shop?view=home"));
   });
   it("the long invitation code still goes through the email invitation path", async () => {
     shop.accept.mockResolvedValue({ companyId: "biz", userId: "u1" });
-    Object.defineProperty(window, "location", { value: { ...window.location, reload: vi.fn() }, configurable: true });
+    Object.defineProperty(window, "location", { value: { ...window.location, assign: vi.fn() }, configurable: true });
     await enter("v1." + "A".repeat(43));
     await waitFor(() => expect(shop.accept).toHaveBeenCalled());
     expect(shop.join).not.toHaveBeenCalled();

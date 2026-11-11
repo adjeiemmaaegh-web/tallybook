@@ -1,7 +1,7 @@
 import {defineConfig} from '@playwright/test';
 export default defineConfig({
   testDir:'.',
-  testMatch:['reference-integrated-ui.spec.mjs','browser-friends-recovery.spec.mjs'],
+  testMatch:['reference-integrated-ui.spec.mjs','browser-friends-recovery.spec.mjs','auth-a11y.spec.mjs'],
   timeout:120000,
   expect:{timeout:15000},
   workers:1,

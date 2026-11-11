@@ -246,3 +246,6 @@ ol.shop-report-list { list-style: decimal inside; }
 .tb-shop-setup>h2{font-size:clamp(1.6rem,5vw,2.15rem);letter-spacing:-.04em;color:#0c4639}
 .tb-shop-setup .primary-action{border-radius:14px;min-height:48px}
 @media(max-width:600px){.tb-shop-home{gap:15px}.tb-shop-home-hero{padding:23px 20px;border-radius:20px}.tb-shop-home-metric{padding:14px;border-radius:15px}.tb-shop-home-actions{grid-template-columns:1fr}.tb-shop-home-metric strong{font-size:1.22rem}.tb-shop-home-section-head h3{font-size:1.1rem}}
+
+/* Every shop button is at least 44px tall, wherever it sits (headers, cards, dashboards). */
+.shop-page :is(.primary-action, .secondary-action) { min-height: 44px; }

@@ -1,0 +1,99 @@
+/* Signed-out account screens. One teal header over a white sheet; large, calm controls.
+   Every text colour meets 4.5:1 on its surface; controls are at least 48px tall. */
+.tb-auth-page {
+  --au-teal: #0a766c; --au-teal-dark: #064e47; --au-ink: #0d3b34; --au-body: #4a645d; --au-line: #d3e2dc;
+  display: grid; place-items: center; min-height: 100dvh; padding: clamp(16px, 4vw, 40px);
+  background: radial-gradient(ellipse 70% 60% at 85% 0%, #d8f1e8 0, transparent 65%), radial-gradient(ellipse 60% 60% at 0% 100%, #e6f6f0 0, transparent 65%), linear-gradient(180deg, #f3faf7, #fff);
+  color: var(--au-ink); font-family: var(--font-sans);
+}
+.tb-auth-page *, .tb-auth-page *::before, .tb-auth-page *::after { box-sizing: border-box; }
+.tb-auth-col { display: grid; gap: 12px; width: 100%; max-width: 460px; }
+.tb-auth-shell { width: 100%; overflow: hidden; border: 1px solid #dcebe5; border-radius: 32px; background: #fff; box-shadow: 0 30px 80px rgba(7, 68, 60, .16); }
+
+/* Header */
+.tb-auth-hero {
+  position: relative; padding: 30px 30px 84px; color: #fff;
+  background: radial-gradient(ellipse 80% 90% at 100% 0%, #16a08c 0, transparent 60%), linear-gradient(140deg, #0b7f72, #064e47 85%);
+}
+.tb-auth-hero::before { content: ""; position: absolute; inset: auto -20% 20px -20%; height: 90px; border-radius: 50%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .09), transparent); transform: rotate(-6deg); pointer-events: none; }
+.tb-auth-brand { position: relative; display: inline-flex; align-items: center; gap: 14px; color: #fff; text-decoration: none; }
+.tb-auth-brand > span:last-child { display: grid; line-height: 1.05; }
+.tb-auth-brand strong { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; }
+.tb-auth-brand small { margin-top: 6px; color: #bff0dc; font-size: .75rem; font-weight: 700; letter-spacing: .24em; }
+.tb-auth-brand-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 17px; background: #e4fbf1; color: var(--au-teal); font-size: 1.9rem; font-weight: 800; box-shadow: 0 10px 22px rgba(0, 0, 0, .18); }
+.tb-auth-tagline { position: relative; margin: 28px 0 0; font-size: 1.375rem; font-weight: 700; line-height: 1.25; letter-spacing: -.02em; color: #fff; }
+.tb-auth-tagline em { display: block; font-style: normal; color: #bff0dc; }
+.tb-auth-wave { position: absolute; left: 0; bottom: -1px; width: 100%; height: 64px; fill: #fff; }
+
+/* Sheet */
+.tb-auth-body { padding: 4px 30px 30px; background: #fff; }
+.tb-auth-body h1 { margin: 0; color: var(--au-ink); font-size: 2.125rem; font-weight: 800; line-height: 1.12; letter-spacing: -.035em; }
+.tb-auth-subtitle { margin: 10px 0 0; color: var(--au-body); font-size: 1.0625rem; line-height: 1.5; }
+.tb-auth-body > :is(.tb-auth-google, .tb-auth-form, .tb-auth-divider, .tb-auth-status, .tb-auth-note) { margin-top: 24px; }
+
+.tb-auth-google {
+  display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 58px; padding: 0 20px;
+  border: 1px solid var(--au-line); border-radius: 18px; background: #fff; color: var(--au-ink); font: inherit; font-size: 1.0625rem; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(7, 68, 60, .06); cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.tb-auth-google:hover:not(:disabled) { transform: translateY(-1px); border-color: #9fd2c3; box-shadow: 0 10px 24px rgba(7, 68, 60, .1); }
+.tb-auth-google svg { flex: none; }
+.tb-auth-divider { display: flex; align-items: center; gap: 16px; color: #4f6a62; font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.tb-auth-divider::before, .tb-auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--au-line); }
+
+.tb-auth-form { display: grid; gap: 18px; }
+.tb-auth-field { display: grid; gap: 8px; }
+.tb-auth-field label { color: var(--au-ink); font-size: .9375rem; font-weight: 650; }
+.tb-auth-input { position: relative; }
+.tb-auth-input input {
+  width: 100%; min-height: 56px; padding: 0 16px; border: 1px solid var(--au-line); border-radius: 14px; background: #fff; color: var(--au-ink);
+  font: inherit; font-size: 1rem; transition: border-color .15s ease, box-shadow .15s ease;
+}
+.tb-auth-input input::placeholder { color: #6a867c; }
+.tb-auth-input input:hover { border-color: #b4cfc6; }
+.tb-auth-input input:focus-visible { outline: none; border-color: var(--au-teal); box-shadow: 0 0 0 4px rgba(10, 118, 108, .18); }
+.tb-auth-input.has-toggle input { padding-right: 58px; }
+.tb-auth-eye { position: absolute; right: 6px; top: 50%; display: grid; place-items: center; width: 46px; height: 46px; transform: translateY(-50%); border: 0; border-radius: 12px; background: transparent; color: #4a645d; cursor: pointer; }
+.tb-auth-eye:hover { background: #eef7f3; color: var(--au-teal-dark); }
+.tb-auth-eye:focus-visible { outline: 3px solid #2aa58f; outline-offset: 0; }
+.tb-auth-hint { margin: 0; color: var(--au-body); font-size: .875rem; line-height: 1.5; }
+
+.tb-auth-submit {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 60px; margin-top: 4px; border: 0; border-radius: 999px;
+  background: linear-gradient(180deg, #0b8173, var(--au-teal-dark)); color: #fff; font: inherit; font-size: 1.125rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 14px 28px rgba(6, 78, 71, .28), inset 0 1px 0 rgba(255, 255, 255, .18); transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.tb-auth-submit:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 18px 34px rgba(6, 78, 71, .32), inset 0 1px 0 rgba(255, 255, 255, .18); }
+.tb-auth-submit:active:not(:disabled) { transform: translateY(0) scale(.99); }
+.tb-auth-submit:focus-visible, .tb-auth-google:focus-visible { outline: 3px solid #2aa58f; outline-offset: 3px; }
+.tb-auth-submit:disabled, .tb-auth-google:disabled { opacity: .55; cursor: not-allowed; }
+
+.tb-auth-links { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
+.tb-auth-links > span[aria-hidden="true"] { width: 1px; height: 22px; background: var(--au-line); }
+.tb-auth-links > .tb-auth-hint { font-size: .9375rem; }
+.tb-auth-link { min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--au-teal-dark); font: inherit; font-size: .9375rem; font-weight: 650; white-space: nowrap; cursor: pointer; border-radius: 10px; text-decoration: none; }
+.tb-auth-link.is-strong { color: var(--au-teal); font-weight: 750; }
+.tb-auth-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.tb-auth-link:focus-visible { outline: 3px solid #2aa58f; outline-offset: 2px; }
+
+.tb-auth-status { padding: 14px 16px; border-radius: 14px; font-size: .9375rem; line-height: 1.55; }
+.tb-auth-status[role="alert"] { border: 1px solid #f0b9b3; background: #fdecea; color: #9b2c25; }
+.tb-auth-status[role="status"] { border: 1px solid #cfe7df; background: #eef8f4; color: #1f4a41; }
+.tb-auth-retry { margin-top: 12px; }
+
+.tb-auth-trust { display: grid; justify-items: center; gap: 10px; margin: 32px 0 0; color: var(--au-body); font-size: .9375rem; line-height: 1.5; text-align: center; }
+.tb-auth-trust svg { color: var(--au-teal); }
+.tb-auth-note { color: var(--au-body); font-size: .8125rem; line-height: 1.6; text-align: center; }
+.tb-auth-note a { color: var(--au-teal-dark); font-weight: 650; text-underline-offset: 3px; }
+
+/* Phone: the sheet fills the screen, as in a native app. */
+@media (max-width: 559px) {
+  .tb-auth-page { padding: 0; place-items: start stretch; background: #fff; }
+  .tb-auth-col { max-width: none; align-content: start; gap: 0; }
+  .tb-auth-shell { min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .tb-auth-hero { padding: 30px 26px 78px; }
+  .tb-auth-tagline { display: none; }
+  .tb-auth-body { padding: 4px 26px 32px; }
+  .tb-auth-body h1 { font-size: 2.25rem; }
+}
+@media (prefers-reduced-motion: reduce) { .tb-auth-google, .tb-auth-submit, .tb-auth-input input { transition: none; } .tb-auth-google:hover, .tb-auth-submit:hover { transform: none; } }
