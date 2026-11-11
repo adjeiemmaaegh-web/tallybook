@@ -142,7 +142,7 @@ const layoutReport = () => {
 
 const TABS = {
   owner: ['Dashboard', 'Sell', 'Stock', 'Purchasing', 'Stock counts', 'Online orders', 'Customers', 'Quotes', 'Ask', 'Refund requests (1)', 'Expenses', 'Accounts', 'Team', 'Sales', 'Reports'],
-  attendant: ['Sell', 'Customers', 'Stock counts', 'Receive goods', 'Quotes', 'Ask', 'My sales', 'My day'],
+  attendant: ['Home', 'Sell', 'Customers', 'Stock counts', 'Receive goods', 'Quotes', 'Ask', 'My sales', 'My day'],
 };
 
 for (const width of [360, 320]) {

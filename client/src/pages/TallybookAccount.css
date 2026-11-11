@@ -94,3 +94,23 @@
   .tb-account-form .flex.flex-wrap { flex-direction: column; }
   .tb-account-form .primary-action { width: 100%; justify-content: center; }
 }
+
+/* Premium first-run role selection and separate account settings. */
+.tb-verified-page{background:linear-gradient(145deg,#ecf8f4 0%,#f8fcfa 45%,#fff 100%)}
+.tb-verified-panel{width:min(100%,700px);margin-inline:auto}
+.tb-verified-panel .tb-role-intro h1{font-family:inherit;font-weight:850;letter-spacing:-.05em;color:#093e35}
+.tb-verified-panel .tb-role-grid{gap:14px}
+.tb-verified-panel .tb-role-option{transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;min-height:164px}
+.tb-verified-panel .tb-role-option:hover{transform:translateY(-2px);border-color:#0a8170;box-shadow:0 16px 36px #075e5020}
+.tb-verified-panel .tb-role-option:focus-visible{outline:3px solid #087c70;outline-offset:3px}
+.tb-onboarding-exit{display:block;margin:24px auto 0;padding:10px 16px;color:#486a60;text-decoration:underline;text-underline-offset:4px}
+.tb-join-guidance{display:grid;gap:14px}
+.tb-join-guidance .secondary-action{width:fit-content}
+.tb-opening-shop{font-weight:700;color:#086c5d}
+.tb-verified-page .tb-account-form-area{width:100%}
+@media(max-width:760px){
+ .tb-verified-page .tb-account-form-area{padding:24px 18px 44px}
+ .tb-verified-panel .tb-role-option{min-height:126px;border-radius:20px;padding:19px;display:grid;grid-template-columns:auto 1fr auto;align-items:center}
+ .tb-verified-panel .tb-role-option strong{font-size:1.1rem}
+ .tb-verified-panel .tb-role-option svg:last-child{margin-top:0}
+}
