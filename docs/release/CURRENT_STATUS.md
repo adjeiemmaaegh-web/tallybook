@@ -10,7 +10,7 @@ This is the single page to read first. Everything else under `docs/release/` is 
 
 ## Open development work
 
-Quick wins: viewport zoom, PWA icons and install metadata, in-app confirmation dialogs, supplier archive, this documentation pass, onboarding role choice, one-step transfer, WhatsApp share.
+Quick wins: done (zoom, PWA install, in-app confirmations, supplier archive, documentation pass, one-step transfer, WhatsApp send for receipts, balances and payment confirmations). The owner/employee choice at sign-up already existed; business type needs a server field and moves into the product-fields migration.
 
 Shared shop catching up with the device app: product fields (barcode, category, goods or service, stock tracking, cost), barcode scan at the till, receipt print and share, CSV product import, sales filters and search, park and resume cart, daily and end-of-day reports, inventory console, attendant stock counts and receiving, customer edit and archive, profit and margin, expenses, employee short-code join.
 
