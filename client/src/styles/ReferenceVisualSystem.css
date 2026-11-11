@@ -96,7 +96,6 @@ html,body{background:var(--ta-canvas);color:var(--ta-ink)}
 .purchases-grid,.sales-builder{gap:14px}
 .sale-product-search input,.customer-search input{border-color:#d9e9e1}
 .shop-page{--ta-blue:#09766b;--ta-blue-dark:#075e55;--ta-blue-soft:#e5f5ee;--ta-canvas:#f1f8f4;--ta-line:#dcece4;--ta-ink:#1b3932;--ta-muted:#557367;max-width:1180px}
-.shop-landing{max-width:1280px;padding:18px 16px 70px}
 .shop-card{border-radius:17px;border-color:#dcebe3;box-shadow:0 5px 18px #095b4610}
 .shop-head h1{font-family:Georgia,"Times New Roman",serif;color:#0c5146;font-weight:600}
 .shop-tabs{background:#e6f4ec}
@@ -120,20 +119,15 @@ html,body{background:var(--ta-canvas);color:var(--ta-ink)}
   .tb-reference-dashboard .premium-kpi{min-height:80px;padding:14px}
   .inventory-hero,.purchases-hero,.sales-hero,.reports-hero,.customers-hero{padding:22px 18px;border-radius:15px}
   .inventory-hero h1,.purchases-hero h1,.sales-hero h1,.reports-hero h1,.customers-hero h1{font-size:clamp(27px,8vw,38px)}
-  .shop-landing{padding:9px 9px 70px}
   .shop-page{gap:12px}
 }
 @media(prefers-reduced-motion:reduce){
   .tb-dashboard-shortcuts a,.premium-nav-item{transition:none}
 }
 
-/* Public welcome is explicitly outside FriendsTestGate and DatabaseProvider. */
-.tb-public-welcome{max-width:1380px;margin:0 auto;padding:clamp(8px,2.5vw,25px);min-height:100dvh}
-.tb-public-welcome .tb-welcome{max-width:1340px}
-@media(max-width:640px){.tb-public-welcome{padding:0;overflow-x:clip}.tb-public-welcome .tb-welcome{min-height:100dvh;border-radius:0;margin-inline:0;width:100%;max-width:100%}}
+/* Public welcome is explicitly outside FriendsTestGate and DatabaseProvider. Its layout lives in TallybookWelcome.css. */
 
 .tb-device-setup { max-width: 38rem; margin: clamp(1rem, 5vw, 3rem) auto; padding: clamp(1.5rem, 5vw, 3rem); background: var(--ta-card); border: 1px solid var(--ta-line); border-radius: 1rem; }
 .tb-device-setup h1 { color: var(--ta-ink); font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 750; line-height: 1.15; }
 .tb-device-setup p { margin: .75rem 0 1.5rem; color: var(--ta-muted); }
 .tb-verified-page .primary-action { background: var(--ta-blue); color: white; }
-.tb-welcome h1 { color: white; }
