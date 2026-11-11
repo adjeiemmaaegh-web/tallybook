@@ -14,6 +14,8 @@ export interface DailyReport {
   refunds: MethodTotals & { count: number; totalMinor: number; creditReducedMinor: number };
   repayments: MethodTotals & { count: number; totalMinor: number };
   supplierPayments: MethodTotals & { bank: number };
+  /** Money spent running the shop (owner only; zeros from a server that has no expenses yet). */
+  expenses: MethodTotals & { count: number; totalMinor: number; bank: number };
   topProducts: Array<{ name: string; quantity: number; revenueMinor: number }>;
   byCashier: Array<{ cashierId: string; count: number; grossMinor: number }>;
   cashTakenMinor: number; cashPaidOutMinor: number; cashExpectedMinor: number;
@@ -33,6 +35,13 @@ const rec = (value: unknown, label: string): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
+function parseExpenses(value: unknown): DailyReport["expenses"] {
+  if (value == null) return { count: 0, totalMinor: 0, cash: 0, mobile: 0, card: 0, bank: 0 };
+  const e = rec(value, "expenses");
+  return { count: minor(e.count, "expense count"), totalMinor: minor(e.totalMinor, "expenses"), cash: minor(e.cash, "expense cash"),
+    mobile: minor(e.mobile, "expense mobile"), card: minor(e.card, "expense card"), bank: minor(e.bank, "expense bank") };
+}
+
 export function parseDailyReport(raw: unknown): DailyReport {
   const r = rec(raw, "report");
   const sales = rec(r.sales, "sales"), by = rec(r.byMethod, "byMethod"), rf = rec(r.refunds, "refunds");
@@ -48,6 +57,7 @@ export function parseDailyReport(raw: unknown): DailyReport {
     repayments: { count: minor(rp.count, "repayment count"), totalMinor: minor(rp.totalMinor, "repayments"), cash: minor(rp.cash, "repayment cash"),
       mobile: minor(rp.mobile, "repayment mobile"), card: minor(rp.card, "repayment card") },
     supplierPayments: { cash: minor(sp.cash, "supplier cash"), mobile: minor(sp.mobile, "supplier mobile"), card: minor(sp.card, "supplier card"), bank: minor(sp.bank, "supplier bank") },
+    expenses: parseExpenses(r.expenses),
     topProducts: (Array.isArray(r.topProducts) ? r.topProducts : []).map(p => { const q = rec(p, "product"); return { name: String(q.name), quantity: minor(q.quantity, "quantity"), revenueMinor: minor(q.revenueMinor, "revenue") }; }),
     byCashier: (Array.isArray(r.byCashier) ? r.byCashier : []).map(c => { const q = rec(c, "cashier"); return { cashierId: String(q.cashierId), count: minor(q.count, "count"), grossMinor: minor(q.grossMinor, "gross") }; }),
     cashTakenMinor: minor(r.cashTakenMinor, "cash taken"), cashPaidOutMinor: minor(r.cashPaidOutMinor, "cash paid out"), cashExpectedMinor: minor(r.cashExpectedMinor, "cash expected"),
@@ -74,6 +84,7 @@ export function formatReportText(report: DailyReport, o: ReportTextOptions): str
     if (value > 0) lines.push(`  ${label}: ${m(value)}`);
   }
   if (report.repayments.count > 0) lines.push(`Customer repayments: ${m(report.repayments.totalMinor)}`);
+  if (report.expenses.count > 0) lines.push(`Expenses: ${report.expenses.count} · ${m(report.expenses.totalMinor)}`);
   lines.push("", `Cash expected in the till: ${m(report.cashExpectedMinor)}`,
     `  taken ${m(report.cashTakenMinor)}, paid out ${m(report.cashPaidOutMinor)}`);
   if (report.topProducts.length) {

@@ -201,6 +201,8 @@ test('rollback restores the previous behaviour and the migration re-applies clea
     await t.ownerOps('saveProductFull', cut);
     await t.sell('owner', [{productId: cut.productId, quantity: 1}], [{method: 'cash', amountMinor: 5000}]);
 
+    // Newest first: the profit report reads products.cost_minor, so it goes before the product fields do.
+    await t.adminExec(read('supabase/rollback/20261111150000_shop_profit_report_down.sql'));
     await t.adminExec(read('supabase/rollback/20261110140000_shop_product_details_down.sql'));
     await assert.rejects(t.ownerOps('productCatalog', {}), /Unknown shop operations action/);
     const cols = await t.admin("select column_name from information_schema.columns where table_schema='public' and table_name='shop_products'");

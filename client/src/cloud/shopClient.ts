@@ -4,6 +4,7 @@
  * server (session-bound, owner/assignment checked inside the transaction).
  * The browser never sends prices or totals it expects the server to trust.
  */
+import { parseProfitReport, type ProfitReport } from "./profitReport";
 import { getSupabaseClient } from "@/lib/supabase";
 import { filterSalesLocally, type LocalSalesQuery } from "./salesFilters";
 import { parseDailyReport, type DailyReport } from "./dailyReport";
@@ -36,6 +37,8 @@ export interface ShopOverview {
   myPermissions?: ShopPermissions;
   memberPermissions?: Record<string, ShopPermissions>;
   customers?: ShopCustomer[];
+  /** Customers the owner has archived: kept out of `customers` (the till and the list). */
+  archivedCustomers?: ShopCustomer[];
 }
 export const NO_PERMISSIONS: ShopPermissions = { canDiscount: false, maxDiscountBps: 0, canCredit: false };
 export const permissionsOf = (overview: ShopOverview): ShopPermissions =>
@@ -192,10 +195,27 @@ export function mergeCatalog(overview: ShopOverview, catalog: ProductCatalogEntr
   }) };
 }
 
+/** Moves archived customers out of the customer list so the till and the list never offer them. */
+export function mergeArchive(overview: ShopOverview, archivedIds: string[]): ShopOverview {
+  if (!archivedIds.length || !overview.customers) return { ...overview, archivedCustomers: [] };
+  const hidden = new Set(archivedIds);
+  return { ...overview, customers: overview.customers.filter(c => !hidden.has(c.id)), archivedCustomers: overview.customers.filter(c => hidden.has(c.id)) };
+}
+export const getArchivedCustomerIds = (companyId: string) =>
+  callShop<{ customerIds: string[] }>("archivedCustomers", { companyId }, "tallybook_shop_ops");
+export const setShopCustomerArchived = (companyId: string, customerId: string, archived: boolean) =>
+  callShop<{ customerId: string; archived: boolean }>(archived ? "archiveCustomer" : "unarchiveCustomer", { companyId, customerId }, "tallybook_shop_ops");
+
 /** The shared shop's daily / end-of-day report for a day range (and optionally one store). Read-only. */
 export async function getDailyReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<DailyReport> {
   const raw = await callShop<unknown>("dailyReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
   return parseDailyReport(raw);
+}
+
+/** Profit and margin for a day range (owner only). */
+export async function getProfitReport(companyId: string, query: { from: string; to: string; storeId?: string }): Promise<ProfitReport> {
+  const raw = await callShop<unknown>("profitReport", { companyId, from: query.from, to: query.to, ...(query.storeId ? { storeId: query.storeId } : {}) }, "tallybook_shop_ops");
+  return parseProfitReport(raw);
 }
 
 export const getShopReadiness = (companyId: string) =>
@@ -256,3 +276,21 @@ export function newSubmissionKey() {
   crypto.getRandomValues(bytes);
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
+
+/** Short join codes: the owner makes one, an employee types it to join as an attendant. */
+export interface JoinCodeRow { codeId: string; status: "pending" | "used" | "revoked" | "expired"; createdAt: string; expiresAt: string; usedBy: string | null; usedAt: string | null }
+export const createJoinCode = (companyId: string) =>
+  callShop<{ codeId: string; code: string; expiresAt: string }>("createJoinCode", { companyId }, "tallybook_shop_ops");
+export const listJoinCodes = (companyId: string) =>
+  callShop<{ codes: JoinCodeRow[] }>("listJoinCodes", { companyId }, "tallybook_shop_ops");
+export const revokeJoinCode = (companyId: string) => (codeId: string) =>
+  callShop<{ codeId: string; revoked: boolean }>("revokeJoinCode", { companyId, codeId }, "tallybook_shop_ops");
+export const joinWithShortCode = (code: string) =>
+  callShop<{ joined: boolean; reason?: "invalid" | "locked" | "already-member"; companyId?: string; userId?: string }>("joinWithCode", { code }, "tallybook_shop_ops");
+/** "ABCD-EFGH" for reading aloud and typing; the server ignores the dash and the case. */
+export const showJoinCode = (code: string) => `${code.slice(0, 4)}-${code.slice(4)}`;
+export const JOIN_CODE_REASON = {
+  invalid: "That code isn't valid. It may have expired, been used already or been cancelled. Check it, or ask the owner for a new one.",
+  locked: "Too many wrong codes. Wait 15 minutes, then try again.",
+  "already-member": "You are already part of that shop.",
+} as const;

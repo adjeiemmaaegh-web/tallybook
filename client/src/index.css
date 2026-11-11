@@ -681,7 +681,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: rgba(23, 107, 
 @media (min-width: 720px) { .backup-hero { padding: 42px 46px 38px 66px; } .backup-hero::before { left: 38px; } .backup-workspace { grid-template-columns: 1fr 1fr; } .backup-sheet { padding: 28px; } }
 
 /* Tallybook Africa prototype-faithful redesign: app-first cobalt operating surfaces for the five primary workspaces. */
-:root { --ta-blue: #08766c; --ta-blue-dark: #07524b; --ta-blue-soft: #e4f4ee; --ta-canvas: #f2f8f5; --ta-card: #ffffff; --ta-ink: #18352f; --ta-muted: #69738e; --ta-line: #dfe5f0; --ta-success: #188c63; --ta-warning: #f2994a; }
+:root { --ta-blue: #08766c; --ta-blue-dark: #07524b; --ta-blue-soft: #e4f4ee; --ta-canvas: #f2f8f5; --ta-card: #ffffff; --ta-ink: #18352f; --ta-muted: #69738e; --ta-line: #dfe5f0; --ta-success: #0f7a55; --ta-warning: #f2994a; }
 body { background: var(--ta-canvas); color: var(--ta-ink); font-family: var(--font-sans); }
 .app-frame { background: var(--ta-canvas); }
 .desktop-rail { background: var(--ta-card); border-right: 1px solid var(--ta-line); }

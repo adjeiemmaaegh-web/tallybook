@@ -6,7 +6,7 @@ const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), "utf8");
 
 test("existing Supabase Google sign-in remains the default outside the opt-in preview", () => {
-  const app = read("client/src/App.tsx");
+  const app = read("client/src/App.tsx") + "\n" + read("client/src/DeviceWorkspace.tsx");
   const legacy = read("client/src/pages/GoogleSignInPage.tsx");
   assert.match(app, /isSupabaseAuthPreviewEnabled \? SupabaseSignInPage : GoogleSignInPage/);
   assert.match(legacy, /auth\.signInWithOAuth/);
@@ -37,7 +37,7 @@ test("optional sign-in maintains session listener cleanup and safe redirect", ()
 });
 
 test("cloud authentication gate is staged without enabling bookkeeping sync", () => {
-  const app = read("client/src/App.tsx");
+  const app = read("client/src/App.tsx") + "\n" + read("client/src/DeviceWorkspace.tsx");
   assert.match(app, /<AuthGate\b/);
   assert.match(read("client/src/auth/AuthGate.tsx"), /location!==['"]\/cloud-account['"]/);
   assert.match(read("client/src/auth/AuthGate.tsx"), /useRun4CloudSession\(true,true\)/);

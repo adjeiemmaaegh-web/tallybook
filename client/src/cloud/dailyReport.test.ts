@@ -13,6 +13,24 @@ const raw = (over: Record<string, unknown> = {}) => ({
   cashTakenMinor: "14700", cashPaidOutMinor: "12500", cashExpectedMinor: "2200", customerCreditOutstandingMinor: "1500", ...over,
 });
 
+describe("parseDailyReport: expenses", () => {
+  const spent = { count: 3, totalMinor: "7200", cash: "2500", mobile: "4000", card: "0", bank: "700" };
+  it("reads the expenses block", () => {
+    expect(parseDailyReport(raw({ expenses: spent })).expenses).toEqual({ count: 3, totalMinor: 7200, cash: 2500, mobile: 4000, card: 0, bank: 700 });
+  });
+  it("an older server with no expenses block reads as none", () => {
+    expect(parseDailyReport(raw()).expenses).toEqual({ count: 0, totalMinor: 0, cash: 0, mobile: 0, card: 0, bank: 0 });
+  });
+  it("refuses an expense amount that cannot be shown exactly", () => {
+    expect(() => parseDailyReport(raw({ expenses: { ...spent, totalMinor: "9007199254740993" } }))).toThrow(/cannot be shown exactly/);
+  });
+  it("the shared text mentions expenses only when there are some", () => {
+    const opts = { shopName: "Shop", storeName: null, periodLabel: "Today", currency: "GHS" };
+    expect(formatReportText(parseDailyReport(raw({ expenses: spent })), opts)).toMatch(/Expenses: 3 · .*72\.00/);
+    expect(formatReportText(parseDailyReport(raw()), opts)).not.toMatch(/Expenses/);
+  });
+});
+
 describe("parseDailyReport", () => {
   it("reads text amounts into numbers and works out net sales", () => {
     const r = parseDailyReport(raw());

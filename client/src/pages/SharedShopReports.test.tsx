@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShopOverview } from "@/cloud/shopClient";
 
-const shop = vi.hoisted(() => ({ overview: vi.fn(), report: vi.fn(), role: { value: "owner" as "owner" | "attendant" } }));
+const shop = vi.hoisted(() => ({ overview: vi.fn(), report: vi.fn(), profit: vi.fn(), role: { value: "owner" as "owner" | "attendant" } }));
 vi.mock("@/lib/supabase", () => ({
   isSupabaseConfigured: true,
   getSupabaseClient: () => ({ auth: {
@@ -17,11 +17,13 @@ vi.mock("@/cloud/shopClient", async (orig) => ({
   getShopOverview: shop.overview,
   getProductCatalog: async () => [],
   getDailyReport: (_c: string, query: unknown) => shop.report(query),
+  getProfitReport: (_c: string, query: unknown) => shop.profit(query),
   getShopReadiness: async () => ({ companyId: "biz", saleCount: 3 }),
 }));
 
 import SharedShopPage from "./SharedShopPage";
 import { parseDailyReport } from "@/cloud/dailyReport";
+import { parseProfitReport } from "@/cloud/profitReport";
 import { ShopRejectedError } from "@/cloud/shopClient";
 
 const overview = (role: "owner" | "attendant"): ShopOverview => ({
@@ -57,6 +59,7 @@ beforeEach(() => {
   shop.role.value = "owner";
   shop.overview.mockReset().mockImplementation(async () => overview(shop.role.value));
   shop.report.mockReset().mockResolvedValue(ownerReport());
+  shop.profit.mockReset().mockRejectedValue(new Error("Unknown shop operations action"));
 });
 
 async function openReports(tabName = "Reports") {
@@ -147,5 +150,54 @@ describe("shared shop reports", () => {
     releaseOld(ownerReport());
     await new Promise(resolve => setTimeout(resolve, 20));
     expect(stat("Sales")).toHaveTextContent("GHS 57.00");
+  });
+});
+
+describe("shared shop profit section", () => {
+  const profitOf = (over: Record<string, unknown> = {}) => parseProfitReport({
+    from: "2026-11-10T00:00:00Z", to: "2026-11-11T00:00:00Z", storeId: null, netRevenueMinor: "14200", coveredRevenueMinor: "13000", uncoveredRevenueMinor: "1200",
+    costOfGoodsMinor: "9000", grossProfitMinor: "4000", marginBps: 3077, expenses: { count: 2, totalMinor: "1000" }, netProfitMinor: "3000",
+    saleLines: { total: 3, withCost: 2 }, topByProfit: [{ name: "Eggs", quantity: 3, revenueMinor: "13000", profitMinor: "4000" }], ...over });
+
+  it("the owner sees profit, margin, expenses, net profit and a warning about sales with no cost", async () => {
+    shop.profit.mockResolvedValue(profitOf());
+    await openReports();
+    const section = await screen.findByLabelText("Profit");
+    expect(within(section).getByText("Gross profit").closest("div")).toHaveTextContent("40.00");
+    expect(within(section).getByText("Gross profit").closest("div")).toHaveTextContent("margin 30.8%");
+    expect(within(section).getByText("Net profit").closest("div")).toHaveTextContent("30.00");
+    expect(within(section).getByRole("note")).toHaveTextContent(/12\.00 of sales .*no cost recorded/);
+    expect(within(section).getByLabelText("Best earners")).toHaveTextContent("Eggs × 3");
+    await waitFor(() => expect(shop.profit).toHaveBeenCalled());
+  });
+  it("no warning when every sale has a cost", async () => {
+    shop.profit.mockResolvedValue(profitOf({ uncoveredRevenueMinor: "0", saleLines: { total: 3, withCost: 3 } }));
+    await openReports();
+    const section = await screen.findByLabelText("Profit");
+    expect(within(section).queryByRole("note")).toBeNull();
+  });
+  it("downloads a spreadsheet of the profit and loss", async () => {
+    shop.profit.mockResolvedValue(profitOf());
+    const blobs: Blob[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = b => { blobs.push(b); return "blob:x"; };
+    (URL as unknown as { revokeObjectURL: () => void }).revokeObjectURL = () => {};
+    await openReports();
+    fireEvent.click(await screen.findByRole("button", { name: "Download spreadsheet" }));
+    expect(blobs).toHaveLength(1);
+    expect(await blobs[0].text()).toContain("Net profit");
+    expect(await screen.findByText("Spreadsheet downloaded.")).toBeInTheDocument();
+  });
+  it("an older server has no profit section, and the rest of the report is unaffected", async () => {
+    await openReports();
+    expect(await screen.findByText("Cash expected in the till")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Profit")).toBeNull();
+  });
+  it("an attendant never asks for profit or sees it", async () => {
+    shop.role.value = "attendant"; shop.report.mockResolvedValue(attendantReport());
+    await openReports("My day");
+    await screen.findByText("Cash expected in the till");
+    expect(shop.profit).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText("Profit")).toBeNull();
   });
 });

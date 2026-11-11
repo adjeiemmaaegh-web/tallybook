@@ -33,7 +33,7 @@ export const createShopPurchaseOrder=(companyId:string,input:{
 })=>callShop<{orderId:string;replayed:boolean}>("createPurchaseOrder",{companyId,...input},"tallybook_shop_ops");
 export const receiveShopPurchase=(companyId:string,input:{receiptId:string;orderId:string;
  lines:Array<{lineNo:number;quantity:number}>})=>callShop<{
- receiptId:string;orderId:string;totalMinor:string;replayed:boolean
+ receiptId:string;orderId:string;totalMinor?:string;replayed:boolean
 }>("receivePurchase",{companyId,...input},"tallybook_shop_ops");
 export const closeShopPurchase=(companyId:string,orderId:string,reason:string)=>callShop<{
  orderId:string;closed:boolean;replayed:boolean
@@ -54,3 +54,17 @@ export const applyShopStockCount=(companyId:string,input:{countId:string;counted
  callShop<{countId:string;status:string;replayed:boolean}>("applyStockCount",{companyId,...input},"tallybook_shop_ops");
 export const cancelShopStockCount=(companyId:string,countId:string)=>
  callShop<{countId:string;status:string;replayed:boolean}>("cancelStockCount",{companyId,countId},"tallybook_shop_ops");
+
+/** Whether this person may count stock and receive goods; owners also get each attendant's setting. */
+export interface ShopStockAccess {canManageStock:boolean;members?:Array<{userId:string;canManageStock:boolean}>}
+export const getShopStockAccess=(companyId:string)=>callShop<ShopStockAccess>(
+ "stockAccess",{companyId},"tallybook_shop_ops");
+export const setShopStockAccess=(companyId:string,userId:string,canManageStock:boolean)=>callShop<{userId:string;canManageStock:boolean}>(
+ "setStockAccess",{companyId,userId,canManageStock},"tallybook_shop_ops");
+/** Open purchase orders with what is still due. Deliberately carries no costs. */
+export interface ShopReceivableOrder {
+ orderId:string;storeId:string;reference:string|null;supplierName:string;createdAt:string;
+ lines:Array<{lineNo:number;productId:string;name:string;orderedQuantity:number;receivedQuantity:number}>;
+}
+export const getShopReceivableOrders=(companyId:string)=>callShop<{orders:ShopReceivableOrder[]}>(
+ "receivableOrders",{companyId},"tallybook_shop_ops");

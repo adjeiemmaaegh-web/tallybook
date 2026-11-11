@@ -15,12 +15,24 @@ import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } fro
 import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
 import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSearch";
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
+import { formatCustomerStatementText } from "@/cloud/customerStatementText";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
 import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
+import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
+import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
+import {ShopHelp} from "@/cloud/ShopHelp";
+import {SharedShopQuotes, type QuoteStart} from "@/cloud/SharedShopQuotes";
+import {convertShopQuotation} from "@/cloud/quotations";
+import {SharedShopAccounts} from "@/cloud/SharedShopAccounts";
+import {SharedShopAsk} from "@/cloud/SharedShopAsk";
+import type {PurchaseDraft} from "@/cloud/shopAssistant";
+import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
+import {getRefundRequests} from "@/cloud/refundRequestData";
+import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
@@ -34,7 +46,7 @@ import {
   adjustShopStock, assignShopStore, getShopReadiness, getShopOverview, inviteShopAttendant, newSubmissionKey, searchShopSales, type SalesPage,
   recordShopSale, refundShopSale, ShopRejectedError, ShopUnreachableError, saveShopProduct, saveShopStore, setShopStoreStatus, setupShopLedger,
   getCustomerStatement, permissionsOf, recordShopRepayment, saveShopCustomer, setShopMemberPermissions, NO_PERMISSIONS,
-  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, saveShopProductFull, tracksStock, type ProductInput,
+  getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, createJoinCode, listJoinCodes, revokeJoinCode, joinWithShortCode, showJoinCode, JOIN_CODE_REASON, type JoinCodeRow, mergeArchive, getArchivedCustomerIds, setShopCustomerArchived, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
@@ -44,7 +56,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -162,7 +174,7 @@ export default function SharedShopPage() {
     {business
       ? <ShopWorkspace key={userId + ":" + business.id} userId={userId} business={business} online={online} />
       : <JoinShop userId={userId} online={online} />}
-    <footer className="shop-foot"><ReportProblem /></footer>
+    <footer className="shop-foot"><ShopHelp role={business?.role === "owner" ? "owner" : business ? "attendant" : "all"} /><ReportProblem /></footer>
   </main>;
 }
 
@@ -175,17 +187,24 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   const accept = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const receipt = await acceptCloudInvitation(code.trim());
-      if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
+      if (/^v1\./i.test(code.trim())) {
+        const receipt = await acceptCloudInvitation(code.trim());
+        if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
+        window.location.reload();
+        return;
+      }
+      const result = await joinWithShortCode(code);
+      if (!result.joined) { setError(JOIN_CODE_REASON[result.reason ?? "invalid"]); return; }
+      if (result.userId !== userId) throw new Error("This code was accepted by a different account.");
       window.location.reload();
     } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
   };
   return <section className="shop-card shop-empty">
     <h2>Join your employer's shop</h2>
-    <p>Ask the owner to invite <strong>{email || "the email you signed in with"}</strong>. They'll give you a one-time code that works once, only for this account, and expires after 24 hours.</p>
+    <p>Ask the owner for a join code (8 letters and numbers, like <strong>K7QM-2XPD</strong>), or to invite <strong>{email || "the email you signed in with"}</strong> and give you the longer invitation code. Either works once and expires after 24 hours.</p>
     <form onSubmit={accept} className="shop-inline-form">
       <label className="shop-field">Invitation code
-        <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="v1.…" /></label>
+        <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="K7QM-2XPD" /></label>
       <button className="primary-action" disabled={busy || !online || !code.trim()}>{busy ? "Joining…" : "Join shop"}</button>
     </form>
     {error && <p role="alert" className="shop-alert">{error}</p>}
@@ -212,16 +231,34 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && new URLSearchParams(window.location.search).get("view") === "dashboard" ? "dashboard" : "sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
+  // Whether this person may count stock and receive goods (owners: also each attendant's setting). Not cached: it needs a connection anyway.
+  const [stockAccess, setStockAccess] = useState<ShopStockAccess | null>(null);
+  // Owner: how many refund requests are waiting. A server without refund requests leaves it at zero.
+  const [pendingRefunds, setPendingRefunds] = useState(0);
+  // A purchase order drafted by Ask, waiting for the owner on the Purchasing tab. Nothing is ordered until they post it.
+  const [purchaseDraft, setPurchaseDraft] = useState<PurchaseDraft | null>(null);
+  // A quotation the person chose to sell now. The till loads its items; nothing is sold until they take payment.
+  const [quoteStart, setQuoteStart] = useState<QuoteStart | null>(null);
   const refresh = useCallback(async () => {
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
     try {
       let next = await getShopOverview(business.id);
-      // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
-      // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
-      try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
+      // The extras are independent of each other, so they are fetched together: one round trip of waiting instead of four
+      // (this runs after every sale and every change, often on a slow mobile connection). Each is optional: a server that
+      // has not been upgraded does not have it, and the screen then behaves as it did before that feature.
+      const [catalog, archived, access, refunds] = await Promise.allSettled([
+        getProductCatalog(business.id),                                         // barcode, category, goods/service, stock tracking, cost
+        getArchivedCustomerIds(business.id),                                    // archived customers are hidden from the list and the till
+        getShopStockAccess(business.id),                                        // may this person count stock and receive goods
+        next.role === "owner" ? getRefundRequests(business.id) : Promise.resolve(null),
+      ]);
+      if (catalog.status === "fulfilled") next = mergeCatalog(next, catalog.value);
+      if (archived.status === "fulfilled") next = mergeArchive(next, archived.value.customerIds);
       if (request !== revision.current) return;
       accessDenied.current = false;
+      setStockAccess(access.status === "fulfilled" ? access.value : null);
+      if (next.role === "owner") setPendingRefunds(refunds.status === "fulfilled" && refunds.value ? refunds.value.requests.length : 0);
       setOverview(next); setError("");
       void writeCache(userId, cache => { cache.overviews[business.id] = next; });
     } catch (cause) {
@@ -257,10 +294,12 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
-    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"], ["reports", "My day"]];
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
+       ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
+       ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
-  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
+  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess, shopName: business.name, quoteStart, onQuoteStarted: () => setQuoteStart(null) };
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
@@ -281,12 +320,18 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </section>}
 
     {tab === "sell" && <SellPanel {...ctx} />}
+    {tab === "quotes" && <SharedShopQuotes companyId={business.id} overview={overview} online={online} shopName={business.name} userId={userId} onStartSale={start => { setQuoteStart(start); setTab("sell"); }} />}
     {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
-    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
-    {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} draft={purchaseDraft} onDraftUsed={() => setPurchaseDraft(null)} />}
+    {tab === "stock-counts" && (isOwner || stockAccess?.canManageStock) && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "receive" && !isOwner && stockAccess?.canManageStock && <SharedShopReceiveGoods userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "orders" && isOwner && (online
       ? <SharedShopOrders userId={userId} companyId={business.id} overview={overview} />
       : <p role="status">Reconnect to manage online orders.</p>)}
+    {tab === "ask" && <SharedShopAsk companyId={business.id} overview={overview} online={online} onDraft={isOwner ? draft => { setPurchaseDraft(draft); setTab("purchasing"); } : undefined} />}
+    {tab === "refund-requests" && isOwner && <OwnerRefundRequests companyId={business.id} overview={overview} online={online} refresh={refresh} onChanged={() => void refresh()} />}
+    {tab === "accounts" && isOwner && <SharedShopAccounts companyId={business.id} overview={overview} online={online} shopName={business.name} />}
+    {tab === "expenses" && isOwner && <SharedShopExpenses companyId={business.id} overview={overview} online={online} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}
@@ -294,7 +339,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   </>;
 }
 
-interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void }
+interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null; shopName?: string; quoteStart?: QuoteStart | null; onQuoteStarted?: () => void }
 
 function GetStartedCard({ overview, hasSale, goTo }: { overview: ShopOverview; hasSale: boolean | null; goTo: (tab: Tab) => void }) {
   const list = buildChecklist(overview, hasSale);
@@ -408,7 +453,7 @@ export function buildTenders(input: {
   return parts;
 }
 
-function SellPanel({ companyId, overview, refresh, online, userId, goTo }: PanelProps) {
+function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteStart, onQuoteStarted }: PanelProps) {
   const currency = overview.currency!;
   const perms = permissionsOf(overview);
   const customers = overview.customers ?? [];
@@ -431,17 +476,33 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
   const [queueError, setQueueError] = useState("");
   const [parked, setParked] = useState<ParkedCart[]>([]);
   const [parkNote, setParkNote] = useState("");
+  const [quoteNote, setQuoteNote] = useState("");
   const [query, setQuery] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanNote, setScanNote] = useState("");
   const [queued, setQueued] = useState<QueuedSale[]>([]);
   const submissionKey = useRef<string | null>(null);
+  // The quotation this cart came from, with the items it held, so it is only marked sold if the sale really is that quotation.
+  const fromQuote = useRef<QuoteStart | null>(null);
   const scope: OutboxScope = useMemo(() => ({ userId, companyId }), [userId, companyId]);
   const send = useCallback((sale: SaleRequest) => recordShopSale(companyId, sale), [companyId]);
 
   // The queue lives in async storage, so a read can finish after this panel is gone. Never set state then.
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  // "Start a sale from this" on a quotation: load its items into an empty cart at its store. Prices and stock are checked again at checkout.
+  useEffect(() => {
+    if (!quoteStart) return;
+    const usable = quoteStart.lines.filter(l => overview.products.some(p => p.id === l.productId && p.active));
+    if (quoteStart.storeId && active.some(s => s.id === quoteStart.storeId)) choose(quoteStart.storeId);
+    setCart(Object.fromEntries(usable.map(l => [l.productId, l.quantity])));
+    submissionKey.current = null; setReceipt(null); setError("");
+    fromQuote.current = usable.length === quoteStart.lines.length ? quoteStart : null;
+    setQuoteNote(usable.length === quoteStart.lines.length ? `Loaded from the quotation for ${quoteStart.customerName}. Check the items, then take payment.`
+      : `Loaded from the quotation for ${quoteStart.customerName}, but some items are no longer for sale and were left out.`);
+    onQuoteStarted?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteStart]);
   const reloadQueue = useCallback(async () => {
     try {
       const list = await readOutbox(scope);
@@ -586,7 +647,13 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
     setBusy(true);
     try {
       const result = await submitSale(scope, sale, summary, send);
-      if (result.state === "recorded") { setReceipt(result.receipt); resetForm(); void refresh(); }
+      if (result.state === "recorded") {
+        setReceipt(result.receipt); resetForm(); void refresh(); setQuoteNote("");
+        const quote = fromQuote.current; fromQuote.current = null;
+        const sold = new Map(result.receipt.lines.map(l => [l.productId, l.quantity]));
+        if (quote && quote.lines.length === sold.size && quote.lines.every(l => sold.get(l.productId) === l.quantity))
+          void convertShopQuotation(companyId, quote.quoteId, result.receipt.saleId).catch(() => { /* the sale stands; the quotation can be marked by hand */ });
+      }
       else if (result.state === "queued") { resetForm(); setError("No connection. The sale is saved on this phone and will be sent automatically."); }
       else if (result.state === "already-confirmed") { resetForm(); void refresh(); }
       else { submissionKey.current = null; setError(result.error); }
@@ -628,6 +695,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo }: Panel
         <h2>Checkout</h2>
         <div className="shop-park">
           <button type="button" className="secondary-action" disabled={!lines.length || busy} onClick={() => void parkNow()}>Set this cart aside</button>
+          {quoteNote && <p role="status" className="shop-muted">{quoteNote}</p>}
           {parkNote && <p role="status" className="shop-muted">{parkNote}</p>}
           {parked.length > 0 && <div aria-label="Parked carts" role="group">
             <p className="shop-muted"><strong>Parked carts ({parked.length})</strong></p>
@@ -870,7 +938,7 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   </div>;
 }
 
-function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
+function TeamPanel({ companyId, overview, refresh, online, stockAccess, shopName }: PanelProps) {
   const [storeName, setStoreName] = useState("");
   const [email, setEmail] = useState("");
   const [issued, setIssued] = useState<{ code: string; email: string; invitationId: string } | null>(null);
@@ -914,6 +982,9 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
             onClick={async () => { if (await confirmAction(`Remove ${m.email ?? "this attendant"} from the shop? They will lose access immediately.`, { danger: true, confirmLabel: "Remove" })) void run(() => revokeCloudAttendant(companyId, m.userId)); }}><Trash2 aria-hidden="true" /></button></div>
         <MemberPermissions key={JSON.stringify(overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS)} companyId={companyId} member={m}
           current={overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS} online={online} refresh={refresh} />
+        {stockAccess?.members && <label className="shop-check shop-stock-access"><input type="checkbox" disabled={busy || !online}
+          checked={stockAccess.members.find(x => x.userId === m.userId)?.canManageStock ?? false}
+          onChange={e => void run(() => setShopStockAccess(companyId, m.userId, e.target.checked))} />Can count stock and receive goods (never sees costs)</label>}
         <fieldset><legend>Can sell in</legend>
           {overview.stores.filter(s => s.status === "active").map(s => <label key={s.id} className="shop-check">
             <input type="checkbox" checked={m.storeIds.includes(s.id)} disabled={busy || !online}
@@ -921,8 +992,45 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
         </fieldset></li>)}</ul>
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
+    <JoinCodeCard companyId={companyId} overview={overview} online={online} shopName={shopName} />
     <RefundPolicyCard companyId={companyId} online={online} />
   </div>;
+}
+
+/** Owner-only: a short code an employee types to join. Shown once; the server keeps only a hash. */
+function JoinCodeCard({ companyId, overview, online, shopName }: { companyId: string; overview: ShopOverview; online: boolean; shopName?: string }) {
+  const [codes, setCodes] = useState<JoinCodeRow[]>([]);
+  const [fresh, setFresh] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const load = useCallback(async () => {
+    if (!online) return;
+    try { setCodes((await listJoinCodes(companyId)).codes); } catch (cause) { setError(message(cause)); }
+  }, [companyId, online]);
+  useEffect(() => { void load(); }, [load]);
+  const run = async (task: () => Promise<void>) => { setBusy(true); setError(""); setNote(""); try { await task(); await load(); } catch (cause) { setError(message(cause)); } finally { setBusy(false); } };
+  const text = fresh ? `Join ${shopName || "our shop"} on Tallybook: sign in, choose "Join your employer's shop" and enter this code: ${showJoinCode(fresh.code)}. It works once and expires in 24 hours.` : "";
+  const open = codes.filter(c => c.status === "pending");
+  const emailOf = (id: string | null) => overview.members.find(m => m.userId === id)?.email ?? "a new attendant";
+  return <section className="shop-card" aria-labelledby="join-code-title">
+    <h2 id="join-code-title">Join code</h2>
+    <p className="shop-muted">For someone who already has a Tallybook account. Give them a code; they enter it once and become an attendant with no permissions until you set them. Codes work once and expire after 24 hours.</p>
+    <button type="button" className="primary-action" disabled={busy || !online} onClick={() => void run(async () => { const r = await createJoinCode(companyId); setFresh({ code: r.code, expiresAt: r.expiresAt }); })}>Make a join code</button>
+    {fresh && <div className="shop-invite" role="status">
+      <p>Give this to your employee. It is shown only now.</p>
+      <code aria-label="Join code">{showJoinCode(fresh.code)}</code>
+      <div className="shop-actions">
+        <button type="button" className="secondary-action" onClick={() => void navigator.clipboard?.writeText(text).then(() => setNote("Message copied."))}><Copy aria-hidden="true" />Copy message</button>
+        <button type="button" className="secondary-action" onClick={() => { if (!openWhatsAppShare(text)) setNote("WhatsApp could not open. Copy the message instead."); }}>Send on WhatsApp</button>
+      </div></div>}
+    {note && <p role="status" className="shop-muted">{note}</p>}
+    {open.length > 0 && <ul className="shop-list">{open.map(c => <li key={c.codeId}>
+      <span>Open code<small>expires {new Date(c.expiresAt).toLocaleString()}</small></span>
+      <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void run(async () => { await revokeJoinCode(companyId)(c.codeId); setFresh(null); })}>Cancel</button></li>)}</ul>}
+    {codes.some(c => c.status === "used") && <p className="shop-muted">Used: {codes.filter(c => c.status === "used").slice(0, 3).map(c => `${emailOf(c.usedBy)} on ${new Date(c.usedAt ?? c.createdAt).toLocaleDateString()}`).join("; ")}</p>}
+    {error && <p role="alert" className="shop-alert">{error}</p>}
+  </section>;
 }
 
 /** Owner-only: whether this business allows refunds, which kinds, and for how long. Enforced by the server. */
@@ -997,6 +1105,7 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const [requestTick, setRequestTick] = useState(0);
   const request = useRef(0);
   const isOwner = overview.role === "owner";
   const emailOf = (id: string) => overview.members.find(m => m.userId === id)?.email;
@@ -1027,7 +1136,9 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const replace = (next: ShopReceipt) => setSales(list => list.map(r => r.saleId === next.saleId ? next : r));
   const filtering = preset !== "all" || payment !== "all" || q.trim() !== "" || storeFilter !== "";
   const clear = () => { setPreset("all"); setPayment("all"); setText(""); setQ(""); setStoreFilter(""); };
-  return <section className="shop-card">
+  return <>
+  {!isOwner && <MyRefundRequests companyId={companyId} online={online} reloadKey={requestTick} />}
+  <section className="shop-card">
     <div className="shop-card-head"><h2>{isOwner ? "Sales" : "My sales"}</h2>
       {isOwner && overview.stores.length > 1 && <label className="shop-field shop-store-select">Store
         <select value={storeFilter} onChange={e => setStoreFilter(e.target.value)}><option value="">All stores</option>
@@ -1049,23 +1160,30 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
         <span>#{r.receiptNumber} · {new Date(r.recordedAt).toLocaleString()}<small>{r.storeName}{isOwner && emailOf(r.cashierId) ? ` · ${emailOf(r.cashierId)}` : ""}{r.customer ? ` · ${r.customer.name}` : ""} · {methodLabel(r.payment.method)}</small></span>
         <strong>{r.refundedMinor ? <><s>{formatMinorAmount(r.totalMinor, r.currency)}</s> {formatMinorAmount(r.totalMinor - r.refundedMinor, r.currency)}</> : formatMinorAmount(r.totalMinor, r.currency)}</strong></button>
       {open === r.saleId && <><Receipt receipt={r} />
-        {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}</>}
+        {isOwner && r.refundedMinor < r.totalMinor && <RefundForm companyId={companyId} receipt={r} online={online} onDone={replace} />}
+        {!isOwner && r.refundedMinor < r.totalMinor && <RequestRefundForm companyId={companyId} receipt={r} online={online} onSent={() => setRequestTick(n => n + 1)} />}</>}
     </li>)}</ul>
     {page?.hasMore && <button type="button" className="secondary-action" disabled={loadingMore || !online} onClick={() => void more()}>{loadingMore ? "Loading…" : "Show older sales"}</button>}
-  </section>;
+  </section>
+  </>;
 }
 
 /** Customers who buy on credit. Attendants allowed to give credit can add a
  * customer and take repayments; only the owner sets how much someone may owe. */
-function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
+function CustomersPanel({ companyId, overview, refresh, online, shopName }: PanelProps) {
   const currency = overview.currency!;
   const isOwner = overview.role === "owner";
   const customers = overview.customers ?? [];
+  const archived = overview.archivedCustomers ?? [];
   const owed = customers.reduce((n, c) => n + c.balanceMinor, 0);
   const [form, setForm] = useState({ name: "", phone: "", limit: "" });
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const restore = async (customerId: string) => {
+    setBusy(true); setError("");
+    try { await setShopCustomerArchived(companyId, customerId, false); await refresh(); } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
   const add = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
@@ -1077,14 +1195,17 @@ function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
   return <div className="shop-grid shop-grid-two">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Customers</h2>{customers.length > 0 && <p className="shop-muted">Owed to you: <strong>{formatMinorAmount(owed, currency)}</strong></p>}</div>
-      {!customers.length && <p className="shop-muted">No customers yet.</p>}
+      {!customers.length && <p className="shop-muted">{archived.length ? "No active customers." : "No customers yet."}</p>}
       <ul className="shop-members">{customers.map(c => <li key={c.id}>
         <button type="button" className="shop-customer-row" aria-expanded={open === c.id} onClick={() => setOpen(o => o === c.id ? null : c.id)}>
           <span><strong>{c.name}</strong>{c.phone && <small>{c.phone}</small>}</span>
           <span className={c.balanceMinor ? "shop-owes" : "shop-muted"}>{c.balanceMinor ? `Owes ${formatMinorAmount(c.balanceMinor, currency)}` : "Owes nothing"}<small>Limit {formatMinorAmount(c.creditLimitMinor, currency)}</small></span>
         </button>
-        {open === c.id && <CustomerDetail companyId={companyId} customer={c} currency={currency} isOwner={isOwner} online={online} refresh={refresh} />}
+        {open === c.id && <CustomerDetail companyId={companyId} customer={c} currency={currency} isOwner={isOwner} online={online} refresh={refresh} shopName={shopName ?? ""} />}
       </li>)}</ul>
+      {isOwner && archived.length > 0 && <details><summary>Archived ({archived.length})</summary>
+        <ul className="shop-members">{archived.map(c => <li key={c.id}><div className="shop-member-head"><span><strong>{c.name}</strong>{c.phone && <small> {c.phone}</small>}</span>
+          <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void restore(c.id)}>Restore</button></div></li>)}</ul></details>}
     </section>
     <section className="shop-card">
       <h2>Add a customer</h2>
@@ -1101,13 +1222,17 @@ function CustomersPanel({ companyId, overview, refresh, online }: PanelProps) {
   </div>;
 }
 
-function CustomerDetail({ companyId, customer, currency, isOwner, online, refresh }: {
-  companyId: string; customer: ShopCustomer; currency: string; isOwner: boolean; online: boolean; refresh: () => Promise<void>;
+function CustomerDetail({ companyId, customer, currency, isOwner, online, refresh, shopName }: {
+  companyId: string; customer: ShopCustomer; currency: string; isOwner: boolean; online: boolean; refresh: () => Promise<void>; shopName: string;
 }) {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [reference, setReference] = useState("");
   const [limit, setLimit] = useState((customer.creditLimitMinor / currencyMinorDivisor(currency)).toString());
+  const [details, setDetails] = useState({ name: customer.name, phone: customer.phone ?? "" });
+  const [shareNote, setShareNote] = useState("");
+  const [manualText, setManualText] = useState("");
+  const statementRoot = useRef<HTMLDivElement>(null);
   const [statement, setStatement] = useState<CustomerStatement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -1147,6 +1272,42 @@ function CustomerDetail({ companyId, customer, currency, isOwner, online, refres
       setDone("Limit saved."); await refresh();
     } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
   };
+  const detailsDirty = details.name.trim() !== customer.name || details.phone.trim() !== (customer.phone ?? "");
+  const saveDetails = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(""); setDone("");
+    try {
+      await saveShopCustomer(companyId, { customerId: customer.id, name: details.name, ...(details.phone.trim() ? { phone: details.phone.trim() } : {}) });
+      setDone("Details saved."); await refresh();
+    } catch (cause) { setError(message(cause)); } finally { setBusy(false); }
+  };
+  const archive = async () => {
+    if (!(await confirmAction(`Archive ${customer.name}? They disappear from the customer list and the till. Their history stays, and you can restore them.`, { confirmLabel: "Archive" }))) return;
+    setBusy(true); setError(""); setDone("");
+    try { await setShopCustomerArchived(companyId, customer.id, true); await refresh(); } catch (cause) { setError(message(cause)); setBusy(false); }
+  };
+  const statementText = () => statement ? formatCustomerStatementText(shopName, statement, currency) : "";
+  const shareStatement = async () => {
+    setManualText("");
+    const result = await shareBusinessText({ title: `Statement for ${customer.name}`, text: statementText() });
+    if (result === "shared") setShareNote("Statement opened in your share options.");
+    else if (result === "copied") setShareNote("Statement text copied. Paste it into a message.");
+    else if (result === "manual") { setManualText(statementText()); setShareNote("Copy the statement text below."); }
+    else setShareNote("");
+  };
+  const whatsAppStatement = () => {
+    setManualText("");
+    const opened = openWhatsAppShare(statementText(), customer.phone, countryForCurrency(currency));
+    if (opened) setShareNote(customer.phone ? "Statement opened in WhatsApp. Press send there." : "Statement opened in WhatsApp. Choose the customer and press send.");
+    else { setManualText(statementText()); setShareNote("WhatsApp could not open. Copy the statement text below."); }
+  };
+  const printStatement = () => {
+    const node = statementRoot.current;
+    if (!node || typeof window.print !== "function") { setShareNote("Printing is not available in this browser. Use Share instead."); return; }
+    node.setAttribute("data-printing", "true");
+    const finished = () => { node.removeAttribute("data-printing"); window.removeEventListener("afterprint", finished); };
+    window.addEventListener("afterprint", finished);
+    try { window.print(); } catch { finished(); setShareNote("The browser could not open printing. Use Share instead."); }
+  };
   const kind = { credit_sale: "Bought on credit", repayment: "Paid", refund: "Refund taken off" } as const;
   return <div className="shop-customer-detail">
     {customer.balanceMinor > 0 && <form className="shop-edit" onSubmit={repay}>
@@ -1158,18 +1319,37 @@ function CustomerDetail({ companyId, customer, currency, isOwner, online, refres
       {method === "mobile" && <label className="shop-field">Mobile money reference<input value={reference} onChange={e => setReference(e.target.value)} autoComplete="off" maxLength={80} /></label>}
       <button className="primary-action" disabled={busy || !online}>{busy ? "Recording…" : "Record payment"}</button>
     </form>}
+    {isOwner && <form className="shop-edit" onSubmit={e => void saveDetails(e)}>
+      <h3>Details</h3>
+      <label className="shop-field">Name<input value={details.name} onChange={e => setDetails({ ...details, name: e.target.value })} maxLength={80} required /></label>
+      <label className="shop-field">Phone <small>(optional)</small><input type="tel" value={details.phone} onChange={e => setDetails({ ...details, phone: e.target.value })} maxLength={20} /></label>
+      <button className="secondary-action" disabled={busy || !online || !detailsDirty || !details.name.trim()}>Save details</button>
+    </form>}
     {isOwner && <div className="shop-inline-form">
       <label className="shop-field">Can owe up to ({currency})<input inputMode="decimal" value={limit} onChange={e => setLimit(e.target.value)} /></label>
       <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => void saveLimit()}>Save limit</button>
     </div>}
     {done && <p role="status" className="shop-muted">{done}</p>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
-    {statement && statement.entries.length > 0 && <div className="shop-statement">
+    {isOwner && <div className="shop-actions">
+      <button type="button" className="secondary-action shop-danger" disabled={busy || !online || customer.balanceMinor !== 0}
+        title={customer.balanceMinor !== 0 ? "Record their payments first" : undefined} onClick={() => void archive()}>Archive customer</button>
+      {customer.balanceMinor !== 0 && <small className="shop-muted">Can be archived once they owe nothing.</small>}
+    </div>}
+    {statement && statement.entries.length > 0 && <div className="shop-statement" ref={statementRoot} aria-label={`Statement for ${customer.name}`}>
       <h3>History</h3>
       <ul>{statement.entries.map((e, i) => <li key={i}>
         <span>{kind[e.kind]}{e.receiptNumber ? ` · receipt #${e.receiptNumber}` : ""}{e.method ? ` · ${methodLabel(e.method).toLowerCase()}` : ""}<small>{new Date(e.recordedAt).toLocaleString()}</small></span>
         <span>{e.amountMinor > 0 ? "+" : "−"}{money(Math.abs(e.amountMinor))}<small>owes {money(e.balanceAfterMinor)}</small></span>
       </li>)}</ul>
+      <p className="shop-total"><span>Balance owed</span><strong>{money(statement.balanceMinor)}</strong></p>
+      <div className="shop-actions shop-statement-actions">
+        <button type="button" className="secondary-action" onClick={() => void shareStatement()}>Share statement</button>
+        <button type="button" className="secondary-action" onClick={whatsAppStatement}>Send on WhatsApp</button>
+        <button type="button" className="secondary-action" onClick={printStatement}>Print</button>
+      </div>
+      {shareNote && <p role="status" className="shop-muted shop-statement-actions">{shareNote}</p>}
+      {manualText && <textarea className="shop-statement-actions" readOnly rows={8} value={manualText} aria-label="Statement text to copy" onFocus={e => e.currentTarget.select()} />}
     </div>}
   </div>;
 }

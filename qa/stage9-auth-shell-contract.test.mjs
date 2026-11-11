@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const app = readFileSync(new URL('../client/src/App.tsx',import.meta.url),'utf8');
+// The device app's routes and providers moved into DeviceWorkspace (loaded on demand); the contracts hold for the two together.
+const app = ['../client/src/App.tsx','../client/src/DeviceWorkspace.tsx'].map(f=>readFileSync(new URL(f,import.meta.url),'utf8')).join('\n');
 const shell = readFileSync(new URL('../client/src/components/AppShell.tsx',import.meta.url),'utf8');
 const auth = readFileSync(new URL('../client/src/auth/AuthGate.tsx',import.meta.url),'utf8');
 

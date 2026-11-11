@@ -21,6 +21,14 @@ Eight of the migrations were applied through the Supabase connector, which recor
 | 20261110134347 `shop_sales_search` | `20261110130000_shop_sales_search.sql` |
 | 20261111021126 `shop_product_details` | `20261110140000_shop_product_details.sql` |
 | 20261111021150 `shop_daily_report` | `20261110150000_shop_daily_report.sql` |
+| 20261111064900 `shop_attendant_stock` | `20261111100000_shop_attendant_stock.sql` |
+| 20261111065003 `shop_customer_archive` | `20261111110000_shop_customer_archive.sql` |
+| 20261111065040 `shop_join_codes` | `20261111120000_shop_join_codes.sql` |
+| 20261111065118 `shop_expenses` | `20261111130000_shop_expenses.sql` |
+| 20261111065155 `shop_refund_requests` | `20261111140000_shop_refund_requests.sql` |
+| 20261111070921 `shop_profit_report` | `20261111150000_shop_profit_report.sql` |
+| 20261111100842 `shop_quotations` | `20261111160000_shop_quotations.sql` |
+| 20261111100923 `shop_accounts` | `20261111170000_shop_accounts.sql` |
 
 After applying the last two, the definitions of `shop_stage_g_product_action`, `shop_stage_h_daily_report`, `shop_record_sale`, `shop_refund_sale` and `tallybook_shop_ops` in production were compared (md5 of `pg_get_functiondef`) with the repository chain replayed in a scratch database: all five identical.
 
@@ -52,3 +60,7 @@ Until it is brought up to date it cannot be used to rehearse a production upgrad
 ## Rollbacks
 
 See [rollback/README.md](rollback/README.md). Every migration from `20261106120000` onward has a rollback script, and `qa/migration-rollbacks.test.mjs` rolls the whole chain back and forward again.
+
+Check after applying the tier 4 set: a hash of every shop function's definition in production was compared with the repository chain replayed in a scratch database. 29 of 32 are byte-identical; the other three (`shop_refund_policy_action`, `shop_stage_c_action`, `shop_stage_f_sales_search`, applied earlier) differ only in SQL comments, and are identical once comments and whitespace are removed.
+
+Applied to production on 2026-11-11: `20261111160000_shop_quotations.sql` then `20261111170000_shop_accounts.sql`. The router, `shop_account_components`, `shop_account_net` and `shop_quotation_guard` are byte-identical to the repository chain; `shop_stage_o_quotations` and `shop_stage_p_accounts` are identical once SQL comments and whitespace are removed (the comments were left out when applying). Nothing is pending.
