@@ -43,7 +43,7 @@ test('backup UI encrypts every export, never offers a plaintext export toggle',(
  assert.ok(begin>=0&&end>begin);
  assert.match(code,/encryptBackupText\(stringifyBackup\(backup\),passphrase\)/);
  assert.match(code,/createRun8FileReceipt\(/);
- assert.doesNotMatch(code,/optional passphrase encryption|window\.confirm\(/);
+ assert.doesNotMatch(code,/optional passphrase encryption|window\.confirm\(|confirmAction\(/);
  assert.doesNotMatch(code,/recordBackupExportedAt\(/);
 });
 test('reselected-file verification precedes persisted backup readiness marker',()=>{
@@ -63,7 +63,9 @@ test('import path requires privacy acknowledgement for legacy plaintext backups'
  const code=ui.slice(begin,end);
  assert.match(code,/setPendingBackup\(null\);setSummary\(null\)/);
  assert.match(code,/classifyRun8BackupEnvelope/);
- assert.match(code,/window\.confirm\(/);
+ // The legacy plaintext warning must still need an explicit yes (in-app dialog, formerly window.confirm).
+ assert.match(code,/await confirmAction\(/);
+ assert.doesNotMatch(code,/window\.confirm\(/);
  assert.match(code,/parseBackup\(plain\)/);
 });
 test('restore remains exclusive with journal commit and assistant rollback',()=>{

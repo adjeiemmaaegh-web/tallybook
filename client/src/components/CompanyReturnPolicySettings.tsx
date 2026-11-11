@@ -1,4 +1,5 @@
 import {useEffect,useState,type FormEvent} from 'react';
+import { confirmAction } from "@/lib/confirmAction";
 import {toast} from 'sonner';
 import {useBusinessProfile} from '@/contexts/BusinessProfileContext';
 import {currentCompanyReturnPolicy} from '@/features/business/returnPolicy.mjs';
@@ -40,7 +41,7 @@ export function CompanyReturnPolicySettings(){
   }
   if(!reason.trim()){setError('Explain the reason for this policy change.');return;}
   const decision=enabled?'ENABLE the selected refund paths':'DISABLE all refunds';
-  if(!window.confirm(`Change the policy of ${profile.name} to ${decision}? Future refunds must follow the saved policy. Existing money and sale records will not be changed.`))return;
+  if(!(await confirmAction(`Change the policy of ${profile.name} to ${decision}? Future refunds must follow the saved policy. Existing money and sale records will not be changed.`)))return;
   setBusy(true);setError(null);
   try{
    const updated=await updateCompanyReturnPolicy(settings,reason);

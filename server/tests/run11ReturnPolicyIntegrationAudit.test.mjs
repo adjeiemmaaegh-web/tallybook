@@ -75,7 +75,9 @@ test('company settings expose no refunds and independent partial/full permission
  assert.match(ui,/No refunds or returns/);
  assert.match(ui,/Allow full-sale ledger reversals/);
  assert.match(ui,/Allow eligible restockable cash-only partial returns/);
- assert.match(ui,/window\.confirm\(/);
+ // A policy change must still need an explicit yes (in-app dialog, formerly window.confirm).
+ assert.match(ui,/await confirmAction\(/);
+ assert.doesNotMatch(ui,/window\.confirm\(/);
  assert.match(ui,/cannot override customers' legal rights/);
 });
 test('owner policy UI is connected to business settings, not just an unreachable module',()=>{

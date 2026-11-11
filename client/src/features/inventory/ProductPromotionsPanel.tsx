@@ -1,4 +1,5 @@
 import {useEffect,useState} from "react";
+import { confirmAction } from "@/lib/confirmAction";
 import type {InventorySnapshot} from "./inventory";
 import {setProductPromotion} from "./promotions";
 import {validatePromotionHistory} from "./promotionRules.mjs";
@@ -36,7 +37,7 @@ export function ProductPromotionsPanel({companyId,country,products,onSaved}:Prop
    setError("Promotion end date must not come before its start date.");return;
   }
   if(reason.trim().length<4){setError("Enter an explanation for the owner audit history.");return;}
-  if(!window.confirm(`Save ${enabled?percent+"% discount":"promotion disabled"} on ${product.name}? Every new sale will use the then-active rule, and existing sale prices will not be rewritten.`))return;
+  if(!(await confirmAction(`Save ${enabled?percent+"% discount":"promotion disabled"} on ${product.name}? Every new sale will use the then-active rule, and existing sale prices will not be rewritten.`)))return;
   setBusy(true);setError("");setSaved("");
   try{
    const revision=await setProductPromotion(product.id,{

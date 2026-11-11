@@ -14,6 +14,7 @@ import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/AppShell";
 import { BusinessProfileProvider } from "@/contexts/BusinessProfileContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ConfirmHost } from "@/components/ConfirmHost";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import AppNotFound from "@/pages/AppNotFound";
 const AssistantPage = lazy(() => import("@/pages/AssistantPage"));
@@ -112,6 +113,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <ConfirmHost />
           {location === '/cloud-account'
             // Retired preview: its server check was never deployed. The account page is the real one.
             ? <Redirect to="/account" replace />

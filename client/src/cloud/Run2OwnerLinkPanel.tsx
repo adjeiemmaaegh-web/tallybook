@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import { confirmAction } from "@/lib/confirmAction";
 import {getSupabaseClient} from '@/lib/supabase';
 import {db} from '@/db/TallybookDB';
 import {getActiveBusinessProfileId} from '@/features/business/activeCompany';
@@ -19,7 +20,7 @@ export function Run2OwnerLinkPanel({cloudCompanyId,userId}:{cloudCompanyId:strin
    const backup=await createBackup();
    const {data,error}=await client.auth.getSession();
    if(error||data.session?.user.id!==userId)throw Error('Owner session changed.');
-   if(!window.confirm('Confirm this approved company link? Local data stays on this device.'))return;
+   if(!(await confirmAction('Confirm this approved company link? Local data stays on this device.')))return;
    await requestRun2OwnerLink({companies:[{id:local.id,name:local.name}],
     localCompanyId:local.id,exactTypedCompanyName:name,verifiedAccountUserId:userId,
     cloudCompanyId,recoveryApprovalId:approval,backup,

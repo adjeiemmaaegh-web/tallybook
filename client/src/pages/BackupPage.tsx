@@ -1,5 +1,6 @@
 /** Tactile Ledger Stage 10: local backup files are owner-controlled, inspectable, and restored only after an explicit replacement confirmation. */
 import { ArchiveRestore, CheckCircle2, Download, FileCheck2, FileWarning, HardDriveDownload, SearchCheck, ShieldCheck, Upload } from "lucide-react";
+import { confirmAction } from "@/lib/confirmAction";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -136,8 +137,8 @@ export default function BackupPage() {
         if(companyAtStart!==getActiveBusinessProfileId())throw Error("Company changed while unlocking backup.");
         if(passphrase===null)return;
         plain=await decryptBackupText(text,passphrase);
-      }else if(!window.confirm(
-        "This is an older, unencrypted local backup. Its personal and financial records are readable by anyone with the file. Review it only on a trusted device. Continue?")){
+      }else if(!(await confirmAction(
+        "This is an older, unencrypted local backup. Its personal and financial records are readable by anyone with the file. Review it only on a trusted device. Continue?"))){
         return;
       }
       const backup=parseBackup(plain);
