@@ -5,6 +5,9 @@ import {formatMinorAmount} from "@/features/inventory/inventory";
 import type {ShopOverview} from "./shopClient";
 import {getShopAudit,type ShopAuditCursor,type ShopAuditEvent} from "./shopShiftClient";
 
+const utc=(value:string)=>Number.isFinite(Date.parse(value))
+ ?new Date(value).toISOString().replace("T"," ").slice(0,19)+" UTC":"Time unavailable";
+
 export function SharedShopActivityAudit({companyId,overview,online}:{
  companyId:string;overview:ShopOverview;online:boolean;
 }){
@@ -48,13 +51,13 @@ export function SharedShopActivityAudit({companyId,overview,online}:{
   {!busy&&!rows.length&&!error&&<p className="shop-muted">No activity found for this selection.</p>}
   <ol className="tb-shop-audit-events">{rows.map(e=><li key={e.eventKey}>
    <div className="tb-shop-audit-title"><strong>{e.kind.replaceAll("_"," ").toUpperCase()}</strong>
-    <span>{new Date(e.serverRecordedAt).toLocaleString()}</span></div>
+    <span>{utc(e.serverRecordedAt)}</span></div>
    <p>{e.detail}</p>
    <small><strong>Actor:</strong> {nameOf(e.actorId,e.actorEmail)} · <strong>Store:</strong> {storeName(e.storeId)}</small>
    {e.productId&&<small><strong>Product:</strong> {productName(e.productId)}</small>}
    {e.delta!==null&&<small><strong>Quantity change:</strong> {e.delta>0?"+":""}{e.delta} units · After: {e.quantityAfter??"unknown"}</small>}
    {e.amountMinor&&<small><strong>Recorded amount:</strong> {amount(e.amountMinor)}</small>}
-   {e.deviceReportedAt&&<small><strong>Device-claimed sale time:</strong> {new Date(e.deviceReportedAt).toLocaleString()} (not independently verified)</small>}
+   {e.deviceReportedAt&&<small><strong>Device-claimed sale time:</strong> {utc(e.deviceReportedAt)} (not independently verified)</small>}
    <small className="tb-shop-audit-source">Evidence ID: {e.sourceId} · Actor ID: {e.actorId}</small>
   </li>)}</ol>
   {hasMore&&next&&<button type="button" className="secondary-action" disabled={!online||busy} onClick={()=>void load(next)}>Load older activity</button>}
