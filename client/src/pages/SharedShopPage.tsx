@@ -21,6 +21,8 @@ import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
 import {SharedShopStockCountPanel} from "@/cloud/SharedShopStockCountPanel";
+import {SharedShopReceiveGoods} from "@/cloud/SharedShopReceiveGoods";
+import {getShopStockAccess, setShopStockAccess, type ShopStockAccess} from "@/cloud/shopPurchasing";
 import {SharedShopOwnerDashboard} from "@/cloud/SharedShopOwnerDashboard";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
 import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
@@ -44,7 +46,7 @@ import { currencies } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -212,6 +214,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && new URLSearchParams(window.location.search).get("view") === "dashboard" ? "dashboard" : "sell");
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
+  // Whether this person may count stock and receive goods (owners: also each attendant's setting). Not cached: it needs a connection anyway.
+  const [stockAccess, setStockAccess] = useState<ShopStockAccess | null>(null);
   const refresh = useCallback(async () => {
     if (!online || !navigator.onLine) return;
     const request = ++revision.current;
@@ -220,8 +224,11 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
       // Barcode, category, goods/service and stock tracking live in the product catalog. A server that
       // has not been upgraded does not have it; products then stay ordinary stock-tracked goods.
       try { next = mergeCatalog(next, await getProductCatalog(business.id)); } catch { /* keep the overview as it is */ }
+      let access: ShopStockAccess | null = null;
+      try { access = await getShopStockAccess(business.id); } catch { /* an older server has no stock access */ }
       if (request !== revision.current) return;
       accessDenied.current = false;
+      setStockAccess(access);
       setOverview(next); setError("");
       void writeCache(userId, cache => { cache.overviews[business.id] = next; });
     } catch (cause) {
@@ -258,9 +265,11 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
     ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["orders", "Online orders"], ["customers", "Customers"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
-    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []), ["sales", "My sales"], ["reports", "My day"]];
+    : [["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
+       ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
+       ["sales", "My sales"], ["reports", "My day"]];
   const tab = tabs.some(([id]) => id === selectedTab) ? selectedTab : "sell";
-  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab };
+  const ctx = { companyId: business.id, overview, refresh, online, userId, goTo: setTab, stockAccess };
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
@@ -283,7 +292,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "sell" && <SellPanel {...ctx} />}
     {tab === "stock" && isOwner && <><StockPanel {...ctx} /><SharedShopTransfers {...ctx} /></>}
     {tab === "purchasing" && isOwner && <SharedShopPurchasingPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
-    {tab === "stock-counts" && isOwner && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "stock-counts" && (isOwner || stockAccess?.canManageStock) && <SharedShopStockCountPanel userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
+    {tab === "receive" && !isOwner && stockAccess?.canManageStock && <SharedShopReceiveGoods userId={userId} companyId={business.id} overview={overview} online={online} refresh={refresh} />}
     {tab === "orders" && isOwner && (online
       ? <SharedShopOrders userId={userId} companyId={business.id} overview={overview} />
       : <p role="status">Reconnect to manage online orders.</p>)}
@@ -294,7 +304,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   </>;
 }
 
-interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void }
+interface PanelProps { companyId: string; overview: ShopOverview; refresh: () => Promise<void>; online: boolean; userId: string; goTo?: (tab: Tab) => void; stockAccess?: ShopStockAccess | null }
 
 function GetStartedCard({ overview, hasSale, goTo }: { overview: ShopOverview; hasSale: boolean | null; goTo: (tab: Tab) => void }) {
   const list = buildChecklist(overview, hasSale);
@@ -870,7 +880,7 @@ function StockPanel({ companyId, overview, refresh, online }: PanelProps) {
   </div>;
 }
 
-function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
+function TeamPanel({ companyId, overview, refresh, online, stockAccess }: PanelProps) {
   const [storeName, setStoreName] = useState("");
   const [email, setEmail] = useState("");
   const [issued, setIssued] = useState<{ code: string; email: string; invitationId: string } | null>(null);
@@ -914,6 +924,9 @@ function TeamPanel({ companyId, overview, refresh, online }: PanelProps) {
             onClick={async () => { if (await confirmAction(`Remove ${m.email ?? "this attendant"} from the shop? They will lose access immediately.`, { danger: true, confirmLabel: "Remove" })) void run(() => revokeCloudAttendant(companyId, m.userId)); }}><Trash2 aria-hidden="true" /></button></div>
         <MemberPermissions key={JSON.stringify(overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS)} companyId={companyId} member={m}
           current={overview.memberPermissions?.[m.userId] ?? NO_PERMISSIONS} online={online} refresh={refresh} />
+        {stockAccess?.members && <label className="shop-check shop-stock-access"><input type="checkbox" disabled={busy || !online}
+          checked={stockAccess.members.find(x => x.userId === m.userId)?.canManageStock ?? false}
+          onChange={e => void run(() => setShopStockAccess(companyId, m.userId, e.target.checked))} />Can count stock and receive goods (never sees costs)</label>}
         <fieldset><legend>Can sell in</legend>
           {overview.stores.filter(s => s.status === "active").map(s => <label key={s.id} className="shop-check">
             <input type="checkbox" checked={m.storeIds.includes(s.id)} disabled={busy || !online}
