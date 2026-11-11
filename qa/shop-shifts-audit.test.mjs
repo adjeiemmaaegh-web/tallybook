@@ -123,6 +123,13 @@ test('owner audit records cashier, server time, movement and stable pagination',
   const next=await shifts(t.owner,'auditEvents',{limit:2,...first.next});
   assert.ok(next.events.every(x=>x.eventKey!==first.events[0].eventKey));
   assert.equal((await shifts(t.owner,'auditEvents',{storeId:t.otherStore})).events.length,0);
+  // Removing a staff membership must not erase historic actor evidence or
+  // expose any data to that former employee.
+  await t.admin('delete from public.business_members where business_id=$1 and user_id=$2',[t.company,t.people.day.id]);
+  const stillThere=(await shifts(t.owner,'auditEvents')).events.find(x=>x.kind==='sale'&&x.sourceId===sale.saleId);
+  assert.equal(stillThere.actorId,t.people.day.id);
+  assert.equal(stillThere.actorEmail,'day@demo.tallybook.test');
+  await denied(shifts(t.day,'listShifts'),/access denied/i);
  }finally{await t.db.close();}
 });
 
