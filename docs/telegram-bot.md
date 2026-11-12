@@ -49,7 +49,12 @@ Per-shop flags in `public.bot_capabilities`:
 | `can_record` | **off** | record sales/refunds from Telegram *(scaffold only in v1)* |
 
 `/settings` (owner only) shows these as inline-keyboard toggles and can be
-reopened anytime; the owner can also toggle them from the web app.
+reopened anytime; the owner can also toggle them from the web app's **Team**
+tab, which has a Telegram bot card (make a link code, see linked chats, toggle
+capabilities, unlink) built on `client/src/cloud/telegramClient.ts`. Set
+`VITE_TALLYBOOK_TELEGRAM_BOT` (the bot username, no `@`) so that card can show a
+one-tap `t.me/<bot>?start=<code>` deep link; without it the card shows the code
+and `/start <code>` instructions instead.
 
 ## Data
 
@@ -84,5 +89,3 @@ Full step-by-step: `supabase/functions/tallybook-telegram/README.md`.
 - The scheduled daily-summary push and real-time alert fan-out (pg_cron / an
   outbound job). The flags exist and are honoured; the sender is not wired yet.
 - Attendant self-linking and multi-role chats (v1 links are owner-minted).
-- A web-app settings panel using `telegramClient.ts` (`createTelegramLinkCode`,
-  `getTelegramStatus`, `setTelegramCapability`, `unlinkTelegramChat`).

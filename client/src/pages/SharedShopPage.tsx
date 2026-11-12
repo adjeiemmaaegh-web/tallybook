@@ -54,6 +54,10 @@ import {
   getShopRefundPolicy, setShopRefundPolicy, type ShopRefundPolicy, getProductCatalog, mergeCatalog, createJoinCode, listJoinCodes, revokeJoinCode, joinWithShortCode, showJoinCode, JOIN_CODE_REASON, type JoinCodeRow, mergeArchive, getArchivedCustomerIds, setShopCustomerArchived, saveShopProductFull, tracksStock, type ProductInput,
   type CustomerStatement, type PaymentMethod, type SaleRequest, type ShopCustomer, type ShopOverview, type ShopPermissions, type ShopReceipt, type TenderInput,
 } from "@/cloud/shopClient";
+import {
+  createTelegramLinkCode, getTelegramStatus, setTelegramCapability, unlinkTelegramChat, telegramDeepLink,
+  type BotCapabilityKey, type TelegramStatus,
+} from "@/cloud/telegramClient";
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
@@ -1008,7 +1012,68 @@ function TeamPanel({ companyId, overview, refresh, online, stockAccess, shopName
     </section>
     <JoinCodeCard companyId={companyId} overview={overview} online={online} shopName={shopName} />
     <RefundPolicyCard companyId={companyId} online={online} />
+    <TelegramCard companyId={companyId} online={online} shopName={shopName} />
   </div>;
+}
+
+/** Owner-only: link a Telegram chat to this shop and choose what the bot may do.
+ *  The link code is minted single-use and shown once; recording writes are off
+ *  by default. All rules are enforced by the server. */
+const TELEGRAM_CAPS: ReadonlyArray<{ key: BotCapabilityKey; field: keyof TelegramStatus["capabilities"]; label: string; hint: string }> = [
+  { key: "daily_summary", field: "dailySummary", label: "Daily summary", hint: "A once-a-day sales summary (sending is coming in a later version)." },
+  { key: "realtime_alerts", field: "realtimeAlerts", label: "Real-time alerts", hint: "Alerts as things happen (sending is coming in a later version)." },
+  { key: "on_demand_queries", field: "onDemandQueries", label: "On-demand queries", hint: "Let a linked chat ask for figures, e.g. /today." },
+  { key: "can_record", field: "canRecord", label: "Record sales from Telegram", hint: "Off by default. Recording from Telegram is not available yet." },
+];
+const TELEGRAM_BOT = (import.meta.env.VITE_TALLYBOOK_TELEGRAM_BOT as string | undefined)?.trim();
+
+function TelegramCard({ companyId, online, shopName }: { companyId: string; online: boolean; shopName?: string }) {
+  const [status, setStatus] = useState<TelegramStatus | null>(null);
+  const [fresh, setFresh] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const load = useCallback(async () => {
+    if (!online) return;
+    try { setStatus(await getTelegramStatus(companyId)); } catch (cause) { setError(message(cause)); }
+  }, [companyId, online]);
+  useEffect(() => { void load(); }, [load]);
+  const run = async (task: () => Promise<void>) => { setBusy(true); setError(""); setNote(""); try { await task(); await load(); } catch (cause) { setError(message(cause)); } finally { setBusy(false); } };
+  const deepLink = fresh && TELEGRAM_BOT ? telegramDeepLink(TELEGRAM_BOT, fresh.code) : null;
+  const shareText = fresh
+    ? `Connect ${shopName || "our shop"} to Telegram: ${deepLink ?? `open our Tallybook bot and send /start ${fresh.code}`}. The code works once and expires in 15 minutes.`
+    : "";
+  return <section className="shop-card" aria-labelledby="telegram-title">
+    <h2 id="telegram-title">Telegram bot</h2>
+    <p className="shop-muted">Link a Telegram chat to this shop to get alerts and check your figures from Telegram. Make a link code and open it in Telegram; it works once and expires in 15 minutes. Recording sales from Telegram is off until you turn it on.</p>
+    {!status ? <p className="shop-muted" role="status">{online ? "Loading…" : "Connect to the internet to set up the Telegram bot."}</p> : <>
+      <button type="button" className="primary-action" disabled={busy || !online}
+        onClick={() => void run(async () => { const r = await createTelegramLinkCode(companyId); setFresh({ code: r.code, expiresAt: r.expiresAt }); })}>Make a link code</button>
+      {fresh && <div className="shop-invite" role="status">
+        <p>Open this in Telegram to link a chat. It is shown only now.</p>
+        {deepLink
+          ? <><a href={deepLink} target="_blank" rel="noopener noreferrer">Open in Telegram</a><code aria-label="Telegram link">{deepLink}</code></>
+          : <><code aria-label="Telegram link code">{fresh.code}</code><p className="shop-muted">Open your Tallybook bot in Telegram and send <strong>/start {fresh.code}</strong>.</p></>}
+        <div className="shop-actions">
+          <button type="button" className="secondary-action" onClick={() => void navigator.clipboard?.writeText(deepLink ?? shareText).then(() => setNote(deepLink ? "Link copied." : "Message copied."))}><Copy aria-hidden="true" />{deepLink ? "Copy link" : "Copy message"}</button>
+          <button type="button" className="secondary-action" onClick={() => { if (!openWhatsAppShare(shareText)) setNote("WhatsApp could not open. Copy the link instead."); }}>Send on WhatsApp</button>
+        </div></div>}
+      {note && <p role="status" className="shop-muted">{note}</p>}
+      <fieldset><legend>What the bot can do</legend>
+        {TELEGRAM_CAPS.map(cap => <label key={cap.key} className="shop-check">
+          <input type="checkbox" checked={status.capabilities[cap.field]} disabled={busy || !online}
+            onChange={e => void run(() => setTelegramCapability(companyId, cap.key, e.target.checked).then(() => {}))} />
+          <span>{cap.label}<small>{cap.hint}</small></span></label>)}
+      </fieldset>
+      {status.links.length > 0
+        ? <ul className="shop-list">{status.links.map(l => <li key={l.chatId}>
+            <span>{l.tgUsername ? `@${l.tgUsername}` : "Linked chat"}<small>{l.role} · linked {new Date(l.linkedAt).toLocaleDateString()}</small></span>
+            <button type="button" className="secondary-action" disabled={busy || !online}
+              onClick={async () => { if (await confirmAction("Unlink this Telegram chat? It will stop receiving anything for this shop.", { danger: true, confirmLabel: "Unlink" })) void run(() => unlinkTelegramChat(companyId, l.chatId).then(() => {})); }}>Unlink</button></li>)}</ul>
+        : <p className="shop-muted">No chats linked yet.</p>}
+      {error && <p role="alert" className="shop-alert">{error}</p>}
+    </>}
+  </section>;
 }
 
 /** Owner-only: a short code an employee types to join. Shown once; the server keeps only a hash. */
