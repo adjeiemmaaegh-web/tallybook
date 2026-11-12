@@ -20,6 +20,10 @@ test('valid legacy cash and split tender sales preserve both payload shapes',()=
  assert.equal(validShopSaleRequest({...base,paymentMethod:undefined,amountTenderedMinor:undefined,
   tenders:[{method:'cash',amountMinor:500,tenderedMinor:500},
     {method:'credit',amountMinor:400,customerId:'customer-a'}],discountMinor:0}),true);
+ // The newer main contract allows zero tenders for a server-priced fully
+ // discounted sale; the authoritative RPC decides whether the sum is valid.
+ assert.equal(validShopSaleRequest({...base,paymentMethod:undefined,
+  amountTenderedMinor:undefined,tenders:[],discountMinor:900}),true);
 });
 test('bad quantities, tender amounts, malformed submission key and unsupported payment fail',()=>{
  const wrong=[
