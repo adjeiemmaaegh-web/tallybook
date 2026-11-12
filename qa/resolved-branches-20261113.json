@@ -43,6 +43,12 @@
       "sha": "aafab7734e2af2096826b7f5a1958fb0ee6ab150",
       "pr": 10,
       "superseded": "In-place maximize/minimize, focus trap, inert background and route restore already implemented in newer main"
+    },
+    {
+      "branch": "maintenance/retire-resolved-branches-20261113",
+      "sha": "0e1e6e66d9cac2a13b07b833894c23da060b1063",
+      "pr": 76,
+      "merged": "582accc699bdf09eca7a340e4e05f808a3879767"
     }
   ]
 }
