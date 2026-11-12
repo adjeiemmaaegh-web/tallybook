@@ -1,0 +1,44 @@
+name: One-time verified merged branch cleanup
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verified-branch-cleanup.yml"
+      - "scripts/verified_branch_cleanup.py"
+      - "qa/branch-cleanup-manifest-20261113.json"
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm no branches can be changed on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/verified_branch_cleanup.py
+  prune-once:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[prune-ancestors-20261113]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete only unchanged, ancestor, unused branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          PRUNE_EXECUTE: "true"
+        run: python3 scripts/verified_branch_cleanup.py
