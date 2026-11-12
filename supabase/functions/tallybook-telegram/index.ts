@@ -30,6 +30,7 @@ import {
   settingsText,
   formatMoney,
   escapeHtml,
+  isPrivateChat,
 } from "./telegram.mjs";
 
 const MAX_BODY = 1 << 16; // 64 KiB: a Telegram update is far smaller.
@@ -240,6 +241,19 @@ async function handleMessage(
   const text: string =
     typeof message.text === "string" ? message.text.trim() : "";
   const from = (message.from ?? {}) as Record<string, unknown>;
+  // Owner actions are only honoured in a private chat with the bot. In a group
+  // an owner linked, another member could otherwise run /settings or /stop. Reply
+  // once to an explicit command and ignore ordinary group chatter.
+  if (!isPrivateChat(message?.chat)) {
+    if (text.startsWith("/")) {
+      await sendMessage(
+        token,
+        chatId,
+        "Please message the Tallybook bot in a private chat (tap its name, then Start) to use its commands."
+      );
+    }
+    return;
+  }
   if (!text.startsWith("/")) {
     await sendMessage(token, chatId, HELP);
     return;
@@ -272,6 +286,8 @@ async function handleCallback(
   const chatId = callback?.message?.chat?.id;
   const messageId = callback?.message?.message_id;
   const callbackId = callback?.id;
+  const actorTgUserId =
+    typeof callback?.from?.id === "number" ? callback.from.id : null;
   const dataStr: string =
     typeof callback?.data === "string" ? callback.data : "";
   const match =
@@ -282,11 +298,22 @@ async function handleCallback(
     if (callbackId) await answerCallbackQuery(token, callbackId);
     return;
   }
+  // Settings toggles are an owner action: only honour them in a private chat, so
+  // a group member can never flip a capability by tapping the inline buttons.
+  if (!isPrivateChat(callback?.message?.chat)) {
+    await answerCallbackQuery(
+      token,
+      callbackId,
+      "Open /settings in a private chat with the bot."
+    );
+    return;
+  }
   const [, key, target] = match;
   const { data, error } = await db.rpc("telegram_bot_set_capability", {
     p_chat_id: chatId,
     p_key: key,
     p_value: target === "1",
+    p_actor_tg_user_id: actorTgUserId,
   });
   if (error || !data?.linked) {
     await answerCallbackQuery(token, callbackId, "Could not update.");

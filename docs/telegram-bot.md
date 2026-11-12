@@ -35,7 +35,10 @@ The owner creates a code in the web app; the app builds
 `https://t.me/<bot>?start=<code>`. Opening it sends `/start <code>`; the bot
 verifies the code (single-use, 15-minute expiry, stored only as a SHA-256 hash,
 at most 5 open per shop) and binds `chat_id ↔ shop` with the owner's user and
-role. The flow mirrors the existing shop **join codes**.
+role. The flow mirrors the existing shop **join codes**. The membership role is
+mapped to the bot's two tiers — `owner` keeps full authority; any other non-null
+member role becomes `attendant` (own sales only, no settings) — so linking never
+fails on a role outside `telegram_links`' `('owner','attendant')` CHECK.
 
 ### Owner-chosen capabilities
 
@@ -49,9 +52,13 @@ Per-shop flags in `public.bot_capabilities`:
 | `can_record` | **off** | record sales/refunds from Telegram *(scaffold only in v1)* |
 
 `/settings` (owner only) shows these as inline-keyboard toggles and can be
-reopened anytime; the owner can also toggle them from the web app's **Team**
-tab, which has a Telegram bot card (make a link code, see linked chats, toggle
-capabilities, unlink) built on `client/src/cloud/telegramClient.ts`. Set
+reopened anytime. Owner actions — every command and every capability toggle —
+are honoured only in a **private chat** with the bot, and `telegram_bot_set_capability`
+additionally requires the acting Telegram user (`callback_query.from.id`) to be
+the one who linked the chat; so no other member of a chat an owner linked can run
+`/settings` or flip a capability. The owner can also toggle them from the web
+app's **Team** tab, which has a Telegram bot card (make a link code, see linked
+chats, toggle capabilities, unlink) built on `client/src/cloud/telegramClient.ts`. Set
 `VITE_TALLYBOOK_TELEGRAM_BOT` (the bot username, no `@`) so that card can show a
 one-tap `t.me/<bot>?start=<code>` deep link; without it the card shows the code
 and `/start <code>` instructions instead.

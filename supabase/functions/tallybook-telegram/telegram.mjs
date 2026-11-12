@@ -50,6 +50,15 @@ export function editMessageText(token, chatId, messageId, text, extra = {}) {
   });
 }
 
+/** True only for a 1:1 private chat with the bot. Owner actions — every command
+ *  and every settings toggle — are honoured only here: in a group an owner
+ *  linked, any other member could otherwise drive /settings or tap the inline
+ *  capability buttons. 'group', 'supergroup', 'channel' and anything unknown are
+ *  refused. Pure; shared by the webhook and its tests. */
+export function isPrivateChat(chat) {
+  return !!chat && typeof chat === "object" && chat.type === "private";
+}
+
 export function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")

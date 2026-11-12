@@ -6,7 +6,7 @@
 begin;
 
 drop function if exists public.telegram_bot_unlink(bigint);
-drop function if exists public.telegram_bot_set_capability(bigint, text, boolean);
+drop function if exists public.telegram_bot_set_capability(bigint, text, boolean, bigint);
 drop function if exists public.telegram_bot_today(bigint);
 drop function if exists public.telegram_bot_context(bigint);
 drop function if exists public.telegram_bot_begin_link(bigint, text, bigint, text);

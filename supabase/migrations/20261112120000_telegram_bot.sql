@@ -237,6 +237,7 @@ declare
   v_hash text;
   v_row public.telegram_link_codes;
   v_role text;
+  v_bot_role text;
   v_name text;
   v_username text;
 begin
@@ -256,12 +257,17 @@ begin
     update public.telegram_link_codes set status = 'revoked' where id = v_row.id;
     return jsonb_build_object('linked', false, 'reason', 'invalid');
   end if;
+  -- Map the membership role to the bot's two-tier model so the insert always
+  -- satisfies telegram_links' CHECK, whatever the shop role vocabulary grows to
+  -- be: only 'owner' keeps full authority; every other non-null role is treated
+  -- as an attendant (own sales only, no settings). Never widens privilege.
+  v_bot_role := case when v_role = 'owner' then 'owner' else 'attendant' end;
   v_username := nullif(left(regexp_replace(coalesce(p_tg_username, ''), '[^A-Za-z0-9_]', '', 'g'), 64), '');
   update public.telegram_link_codes
     set status = 'used', used_at = at_time, used_by_chat_id = p_chat_id
     where id = v_row.id;
   insert into public.telegram_links (chat_id, business_id, user_id, role, tg_user_id, tg_username, status, linked_at, unlinked_at)
-    values (p_chat_id, v_row.business_id, v_row.user_id, v_role, p_tg_user_id, v_username, 'active', at_time, null)
+    values (p_chat_id, v_row.business_id, v_row.user_id, v_bot_role, p_tg_user_id, v_username, 'active', at_time, null)
     on conflict (chat_id) do update
       set business_id = excluded.business_id, user_id = excluded.user_id, role = excluded.role,
           tg_user_id = excluded.tg_user_id, tg_username = excluded.tg_username,
@@ -270,7 +276,7 @@ begin
     on conflict (business_id) do nothing;
   select name into v_name from public.businesses where id = v_row.business_id;
   return jsonb_build_object('linked', true, 'businessId', v_row.business_id,
-    'businessName', v_name, 'role', v_role,
+    'businessName', v_name, 'role', v_bot_role,
     'capabilities', private.telegram_capabilities_json(v_row.business_id));
 end $fn$;
 revoke all on function public.telegram_bot_begin_link(bigint, text, bigint, text) from public, anon, authenticated;
@@ -328,14 +334,22 @@ end $fn$;
 revoke all on function public.telegram_bot_today(bigint) from public, anon, authenticated;
 grant execute on function public.telegram_bot_today(bigint) to service_role;
 
--- Toggle a capability from the bot's /settings. Owner chats only.
-create function public.telegram_bot_set_capability(p_chat_id bigint, p_key text, p_value boolean)
+-- Toggle a capability from the bot's /settings. Owner chats only, and only the
+-- Telegram user who linked the chat (the owner who redeemed the code) may do it:
+-- in a group chat an owner linked, any other member could otherwise tap the
+-- inline buttons. p_actor_tg_user_id is callback_query.from.id and must match the
+-- tg_user_id captured at link time. The webhook also restricts these toggles to
+-- private chats; this is the defence in depth behind it.
+create function public.telegram_bot_set_capability(
+  p_chat_id bigint, p_key text, p_value boolean, p_actor_tg_user_id bigint)
 returns jsonb language plpgsql security definer set search_path = '' as $fn$
 declare v_link public.telegram_links;
 begin
   v_link := private.telegram_bot_link(p_chat_id);
   if v_link.chat_id is null then return jsonb_build_object('linked', false); end if;
-  if v_link.role <> 'owner' then
+  if v_link.role <> 'owner'
+     or p_actor_tg_user_id is null
+     or v_link.tg_user_id is distinct from p_actor_tg_user_id then
     return jsonb_build_object('linked', true, 'allowed', false, 'reason', 'owner_only');
   end if;
   if p_key is null or p_key not in ('daily_summary', 'realtime_alerts', 'on_demand_queries', 'can_record')
@@ -350,8 +364,8 @@ begin
   return jsonb_build_object('linked', true, 'allowed', true,
     'capabilities', private.telegram_capabilities_json(v_link.business_id));
 end $fn$;
-revoke all on function public.telegram_bot_set_capability(bigint, text, boolean) from public, anon, authenticated;
-grant execute on function public.telegram_bot_set_capability(bigint, text, boolean) to service_role;
+revoke all on function public.telegram_bot_set_capability(bigint, text, boolean, bigint) from public, anon, authenticated;
+grant execute on function public.telegram_bot_set_capability(bigint, text, boolean, bigint) to service_role;
 
 -- Unbind a chat (the person typed /stop).
 create function public.telegram_bot_unlink(p_chat_id bigint)

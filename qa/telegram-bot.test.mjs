@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readFileSync, readdirSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
+import {isPrivateChat} from '../supabase/functions/tallybook-telegram/telegram.mjs';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 const migrations = readdirSync(new URL('../supabase/migrations/', import.meta.url)).filter(n => n.endsWith('.sql')).sort();
@@ -142,16 +143,17 @@ test('settings: owner toggles capabilities; recording stays off until opted in; 
   const t = await setup();
   try {
     const chat = chatId();
+    const ownerTg = 1;
     const {code} = await t.tg('createLinkCode');
-    await t.bot('telegram_bot_begin_link', [chat, code, 1, null]);
+    await t.bot('telegram_bot_begin_link', [chat, code, ownerTg, null]);
 
-    // Turn writes on from the bot (owner chat).
-    let r = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true]);
+    // Turn writes on from the bot (owner chat, acting as the linking owner).
+    let r = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true, ownerTg]);
     assert.equal(r.allowed, true);
     assert.equal(r.capabilities.canRecord, true);
 
     // Mute on-demand queries: /today then refuses.
-    await t.bot('telegram_bot_set_capability', [chat, 'on_demand_queries', false]);
+    await t.bot('telegram_bot_set_capability', [chat, 'on_demand_queries', false, ownerTg]);
     const today = await t.bot('telegram_bot_today', [chat]);
     assert.equal(today.allowed, false);
     assert.equal(today.reason, 'on_demand_queries_off');
@@ -166,8 +168,8 @@ test('settings: owner toggles capabilities; recording stays off until opted in; 
 
     // An attendant chat cannot change settings.
     const attChat = chatId();
-    await t.admin("insert into public.telegram_links(chat_id,business_id,user_id,role) values($1,$2,$3,'attendant')", [attChat, t.company, t.people.attendant.id]);
-    const denied = await t.bot('telegram_bot_set_capability', [attChat, 'can_record', true]);
+    await t.admin("insert into public.telegram_links(chat_id,business_id,user_id,role,tg_user_id) values($1,$2,$3,'attendant',777)", [attChat, t.company, t.people.attendant.id]);
+    const denied = await t.bot('telegram_bot_set_capability', [attChat, 'can_record', true, 777]);
     assert.equal(denied.allowed, false);
     assert.equal(denied.reason, 'owner_only');
     assert.equal((await t.tg('telegramStatus')).capabilities.canRecord, false, 'attendant change had no effect');
@@ -201,5 +203,90 @@ test('unlink stops the chat from reading', async () => {
     assert.equal((await t.bot('telegram_bot_unlink', [chat])).unlinked, true);
     assert.equal((await t.bot('telegram_bot_context', [chat])).linked, false);
     assert.equal((await t.bot('telegram_bot_today', [chat])).linked, false);
+  } finally { await t.db.close(); }
+});
+
+// FIX 1(b): a settings toggle must come from the Telegram user who linked the
+// chat, not merely from any member of a chat an owner linked.
+test('a settings toggle from a Telegram user who did not link the chat is refused', async () => {
+  const t = await setup();
+  try {
+    const chat = chatId();
+    const ownerTg = 4242;
+    const {code} = await t.tg('createLinkCode');
+    await t.bot('telegram_bot_begin_link', [chat, code, ownerTg, null]);
+
+    // A different Telegram user (e.g. another member of a shared chat) taps a toggle.
+    const intruder = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true, 9999]);
+    assert.equal(intruder.linked, true);
+    assert.equal(intruder.allowed, false);
+    assert.equal(intruder.reason, 'owner_only');
+
+    // A null actor id is refused too (defence in depth).
+    const nullActor = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true, null]);
+    assert.equal(nullActor.allowed, false);
+    assert.equal(nullActor.reason, 'owner_only');
+
+    // The capability never changed; only the linking owner can flip it.
+    assert.equal((await t.bot('telegram_bot_context', [chat])).capabilities.canRecord, false);
+    const owner = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true, ownerTg]);
+    assert.equal(owner.allowed, true);
+    assert.equal(owner.capabilities.canRecord, true);
+  } finally { await t.db.close(); }
+});
+
+// FIX 1(a): owner actions (commands and settings toggles) are only honoured in a
+// private chat with the bot. The webhook gates both message and callback_query on
+// this shared predicate before touching the database.
+test('commands and settings toggles are only honoured in a private chat', () => {
+  assert.equal(isPrivateChat({type: 'private'}), true);
+  for (const type of ['group', 'supergroup', 'channel']) {
+    assert.equal(isPrivateChat({type}), false, `${type} chat is refused`);
+  }
+  assert.equal(isPrivateChat(undefined), false);
+  assert.equal(isPrivateChat(null), false);
+  assert.equal(isPrivateChat({}), false);
+});
+
+// FIX 2: linking must not break when a member's role is not exactly
+// owner/attendant. Any non-owner role maps to the bot's attendant tier so the
+// telegram_links CHECK is always satisfied.
+test('a member whose role is neither owner nor attendant links as an attendant', async () => {
+  const t = await setup();
+  try {
+    // Simulate a shop role vocabulary broader than owner/attendant (future roles).
+    await t.admin('alter table public.business_members drop constraint business_members_role_check');
+    const manager = randomUUID();
+    await t.admin('insert into auth.users values($1,$2)', [manager, 'manager@demo.tallybook.test']);
+    await t.admin("insert into public.business_members(business_id,user_id,role) values($1,$2,'manager')", [t.company, manager]);
+
+    // Mint a link code owned by the manager (direct insert; the owner RPC only
+    // mints for owners). The bot redeems it exactly as for any /start <code>.
+    const code = key();
+    const hashRow = await t.admin("select encode(sha256(convert_to('tallybook-tg-v1:'||$1,'UTF8')),'hex') as h", [code]);
+    await t.admin(
+      "insert into public.telegram_link_codes(business_id,user_id,code_sha256,created_by,expires_at) values($1,$2,$3,$2, now()+interval '15 minutes')",
+      [t.company, manager, hashRow[0].h]);
+
+    const chat = chatId();
+    const managerTg = 909;
+    const linked = await t.bot('telegram_bot_begin_link', [chat, code, managerTg, 'mgr']);
+    assert.equal(linked.linked, true, 'a manager-role member still links successfully');
+    assert.equal(linked.role, 'attendant', 'mapped to the bot attendant tier');
+
+    // The stored row satisfies the telegram_links CHECK.
+    const stored = await t.admin('select role from public.telegram_links where chat_id=$1', [chat]);
+    assert.equal(stored[0].role, 'attendant');
+
+    // Treated as an attendant: own-sales scope (none yet), not the whole shop
+    // (the owner recorded one sale in setup).
+    const today = await t.bot('telegram_bot_today', [chat]);
+    assert.equal(today.role, 'attendant');
+    assert.equal(today.sales.count, 0, 'own-sales scope, not the whole shop');
+
+    // And cannot open settings, even acting as the linking Telegram user.
+    const denied = await t.bot('telegram_bot_set_capability', [chat, 'can_record', true, managerTg]);
+    assert.equal(denied.allowed, false);
+    assert.equal(denied.reason, 'owner_only');
   } finally { await t.db.close(); }
 });
