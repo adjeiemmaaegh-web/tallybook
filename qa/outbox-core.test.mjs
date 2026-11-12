@@ -296,3 +296,49 @@ test('legacy import permits the same saved sale to be verified without overwriti
   assert.equal(store.has('legacy'), false);
   assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
 });
+
+test('duplicate key with changed cart is never silently re-used or overwritten',async()=>{
+ const {outbox,backend}=await rig();
+ await outbox.submit(scope,sale('same-key'),'first',async()=>{throw new Unreachable('offline');});
+ const altered=sale('same-key',{lines:[{productId:'another-product',quantity:5}]});
+ let sends=0;
+ await assert.rejects(outbox.submit(scope,altered,'changed',async()=>{sends++;return receipt('same-key');}),/different details/);
+ assert.equal(sends,0);
+ assert.equal((await outbox.read(scope))[0].sale.lines[0].productId,'p-secret-eggs');
+ assert.equal((await backend.list(scopeKeyOf(scope))).length,1);
+});
+test('opt-in sale validator blocks new malformed sale before it is stored or sent',async()=>{
+ const {make,backend}=await rig();
+ const outbox=make({validateSale:s=>Number.isSafeInteger(s.amountTenderedMinor)&&s.amountTenderedMinor>=0});
+ let sends=0;
+ await assert.rejects(outbox.submit(scope,sale('bad',{amountTenderedMinor:-1}),'bad',async()=>{sends++;return receipt('bad');}),/invalid quantities/);
+ assert.equal(sends,0);
+ assert.equal((await backend.list(scopeKeyOf(scope))).length,0);
+});
+test('invalid previously saved sale is parked with evidence instead of being replayed',async()=>{
+ const {make,backend,sealer}=await rig();
+ const sk=scopeKeyOf(scope);
+ const old=sale('bad',{amountTenderedMinor:-100});
+ await backend.put(sk,'bad',await sealer.seal(JSON.stringify({
+   sale:old,summary:'old sale',queuedAt:'2026-11-12T00:00:00Z',status:'queued',attempts:0,ambiguous:false
+ }),`tallybook.outbox.v2|${sk}|bad`));
+ const outbox=make({validateSale:s=>Number.isSafeInteger(s.amountTenderedMinor)&&s.amountTenderedMinor>=0});
+ let sends=0,lookups=0;
+ const constrained=make({validateSale:s=>Number.isSafeInteger(s.amountTenderedMinor)&&s.amountTenderedMinor>=0,
+   lookupReceipt:async()=>{lookups++;return receipt('bad');}});
+ const [r]=await constrained.flush(scope,async()=>{sends++;return receipt('bad');});
+ assert.equal(r.state,'needs-review');
+ assert.equal(sends,0);assert.equal(lookups,0);
+ const [row]=await outbox.read(scope);
+ assert.equal(row.status,'needs-review');assert.equal(row.sale.amountTenderedMinor,-100);
+ assert.equal((await backend.list(sk)).length,1);
+});
+test('invalid legacy sale keeps plaintext recovery copy without sending',async()=>{
+ const {make,backend}=await rig();
+ const outbox=make({validateSale:s=>Number.isSafeInteger(s.amountTenderedMinor)&&s.amountTenderedMinor>=0});
+ const store=new Map([['legacy',JSON.stringify([{sale:sale('old',{amountTenderedMinor:-7}),status:'pending'}])]]);
+ const result=await outbox.migrateLegacy(scope,{getItem:k=>store.get(k)??null,removeItem:k=>void store.delete(k)},'legacy');
+ assert.deepEqual(result,{imported:0,kept:true});
+ assert.equal(store.has('legacy'),true);
+ assert.equal((await backend.list(scopeKeyOf(scope))).length,0);
+});

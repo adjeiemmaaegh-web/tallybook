@@ -13,6 +13,7 @@ import {
 } from "./outboxCore";
 import { indexedDbBackend, deviceSealer, secureStorageAvailable, SecureStorageUnavailableError } from "./secureStorage";
 import { ShopRejectedError, listShopSales, type SaleRequest, type ShopReceipt } from "./shopClient";
+import { validShopSaleRequest, validShopReceiptForSale } from "./shopSaleValidation";
 
 export type { OutboxScope } from "./outboxCore";
 export type QueuedSale = QueuedEntry<SaleRequest> & { id: string };
@@ -28,16 +29,10 @@ async function outboxFor(scope: OutboxScope) {
     sealer: await deviceSealer(),
     lock: bestAvailableLocks(),
     isRejected: error => error instanceof ShopRejectedError,
-    // A successful response is not enough to discard a saved sale: verify the
-    // exact cashier, company, store, key and essential receipt identity first.
-    validateReceipt: (sale, receipt) =>
-      receipt != null && receipt.companyId === scope.companyId &&
-      receipt.cashierId === scope.userId && receipt.storeId === sale.storeId &&
-      receipt.submissionKey === sale.submissionKey &&
-      typeof receipt.saleId === "string" && receipt.saleId.length > 0 &&
-      Number.isSafeInteger(receipt.receiptNumber) && receipt.receiptNumber > 0 &&
-      Number.isSafeInteger(receipt.totalMinor) && receipt.totalMinor >= 0 &&
-      Array.isArray(receipt.lines) && receipt.lines.length > 0,
+    validateSale: validShopSaleRequest,
+    // Require financial proof and line-quantity identity on both posted and
+    // reconciled receipts before deleting the encrypted pending record.
+    validateReceipt: (sale, receipt) => validShopReceiptForSale(receipt, scope, sale),
     // The server's own idempotency still protects us if this window misses an old sale.
     // Validation also runs for reconciliation receipts before any saved record is removed.
     lookupReceipt: async sale =>
