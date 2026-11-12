@@ -13,6 +13,12 @@
       "sha": "c1c2bee3466f7e3521f18bb938f6d1e4022666c6",
       "pr": 78,
       "merged": "b92803585d88a40de1fa275d29737dea01c56498"
+    },
+    {
+      "branch": "maintenance/retire-integrated-branches-20261113",
+      "sha": "4705f2de2465c41aabe1768317370f7be5943f68",
+      "pr": 79,
+      "merged": "93893e403057316560927f398fd5b2874472a24a"
     }
   ]
 }
