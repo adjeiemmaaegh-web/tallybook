@@ -1,0 +1,18 @@
+{
+  "repo": "adjeiemmaaegh-web/tallybook",
+  "baseline_main": "b92803585d88a40de1fa275d29737dea01c56498",
+  "entries": [
+    {
+      "branch": "security/run5-nested-tenant-boundary-20261113",
+      "sha": "7c21691a180ddc14a1dfb8ae2cc27194f5fbbd76",
+      "pr": 77,
+      "merged": "941e44ec3cc9f5f586c31d23b54ecdda95fe0f66"
+    },
+    {
+      "branch": "fix/shop-outbox-financial-validation-20261113",
+      "sha": "c1c2bee3466f7e3521f18bb938f6d1e4022666c6",
+      "pr": 78,
+      "merged": "b92803585d88a40de1fa275d29737dea01c56498"
+    }
+  ]
+}
