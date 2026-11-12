@@ -80,6 +80,7 @@ async function mock(page, role, hits) {
       const empty = { transfers: [], suppliers: [], orders: [], counts: [], sales: [] };
       const answers = {
         overview: overview(role), productCatalog: { products: catalog(role) }, readiness: { companyId: BIZ, saleCount: 24 },
+        telegramStatus: { companyId: BIZ, capabilities: { dailySummary: true, realtimeAlerts: true, onDemandQueries: true, canRecord: false }, links: [], openCodes: 0 },
         listSales: { sales: [1, 2, 3].map(receipt) },
         searchSales: { sales: [1, 2, 3, 4, 5].map(receipt), hasMore: true, next: { recordedAt: new Date().toISOString(), receiptNumber: 1 }, matchCount: 24, grossMinor: '1293000', refundedMinor: '13500' },
         dailyReport: report(role), refundPolicy: { companyId: BIZ, revision: 1, refundsEnabled: true, allowVoid: true, allowPartial: true, maxAgeDays: 30, effectiveAt: null, history: [] },
@@ -163,6 +164,11 @@ for (const width of [360, 320]) {
         if (tab === 'Sell') { for (const name of ['Add one Crate of eggs', `Add one ${'Extra long product name for layout testing 500g family pack'}`]) await page.getByRole('button', { name }).click({ trial: false }).catch(() => {}); }
         if (tab === 'Ask') { for (const q of ['What did I sell today?', 'What is low on stock?', 'Draft an order for what is low']) { await page.getByLabel('Your question').fill(q); await page.getByLabel('Your question').press('Enter'); await page.waitForTimeout(300); } }
         if (tab === 'Quotes') { await page.locator('.shop-customer-row').first().click().catch(() => {}); }
+        if (tab === 'Team') {
+          await expect(page.getByRole('heading', { name: 'Telegram bot' })).toBeVisible();
+          await expect(page.getByRole('checkbox', { name: /Daily summary/ })).toBeChecked();
+          await expect(page.getByRole('checkbox', { name: /Record sales from Telegram/ })).not.toBeChecked();
+        }
         if (tab === 'Sales') await page.locator('.shop-sales li button').first().click().catch(() => {});
         if (tab === 'My sales') { await page.locator('.shop-sales li button').first().click().catch(() => {}); await page.getByRole('button', { name: 'Ask the owner for a refund' }).click().catch(() => {}); }
         if (tab === 'Stock') { await page.getByRole('button', { name: /Add product/ }).click().catch(() => {}); await page.getByText('Import products from a file').click().catch(() => {}); }
