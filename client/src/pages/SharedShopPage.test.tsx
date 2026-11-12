@@ -40,13 +40,32 @@ const base: ShopOverview = {
   stock: [{ storeId: "st-a", productId: "eggs", quantity: 3 }],
   members: [], pendingInvites: [],
 };
-const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => ({
-  saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
-  submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor: 9000, recordedAt: new Date().toISOString(), replayed,
-  payment: { method: "cash", amountDueMinor: 9000, amountTenderedMinor: 10000, changeMinor: 1000, reference: null },
-  lines: [{ lineNo: 1, productId: "eggs", name: "Crate of eggs", quantity: 2, unitPriceMinor: 4500, lineTotalMinor: 9000, refundedQuantity: 0 }],
-  refundedMinor: 0, refunds: [],
-});
+// The fixture must describe the exact cart that was recorded. In particular,
+// a 3-crate credit sale must not receive a hard-coded 2-crate cash receipt.
+const receiptFor = (sale: SaleRequest, replayed = false): ShopReceipt => {
+  const units = sale.lines.reduce((n, line) => n + line.quantity, 0);
+  const grossMinor = units * 4500;
+  const discountMinor = "discountMinor" in sale ? (sale.discountMinor ?? 0) : 0;
+  const totalMinor = grossMinor - discountMinor;
+  const tenders = "tenders" in sale ? sale.tenders : [];
+  const receivedMinor = tenders.length
+    ? tenders.reduce((n, tender) => n + (tender.tenderedMinor ?? tender.amountMinor), 0)
+    : ("amountTenderedMinor" in sale ? sale.amountTenderedMinor : 0);
+  const method = tenders.length > 1 ? "split"
+    : (tenders[0]?.method ?? ("paymentMethod" in sale ? sale.paymentMethod : "cash"));
+  return {
+    saleId: "sale-1", companyId: "biz", storeId: sale.storeId, storeName: "Madina", cashierId: "att-1",
+    submissionKey: sale.submissionKey, receiptNumber: 7, currency: "GHS", totalMinor,
+    recordedAt: new Date().toISOString(), replayed,
+    payment: { method, amountDueMinor: totalMinor, amountTenderedMinor: receivedMinor,
+      changeMinor: Math.max(0, receivedMinor - totalMinor), reference: null },
+    lines: sale.lines.map((line, i) => ({ lineNo: i + 1, productId: line.productId,
+      name: line.productId === "eggs" ? "Crate of eggs" : line.productId,
+      quantity: line.quantity, unitPriceMinor: 4500, lineTotalMinor: line.quantity * 4500,
+      refundedQuantity: 0 })),
+    refundedMinor: 0, refunds: [],
+  };
+};
 
 beforeEach(() => {
   localStorage.clear();

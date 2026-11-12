@@ -155,7 +155,9 @@ test('loss of the synthetic device key preserves an unreadable pending sale thro
   await page.evaluate(async () => {
     const {submitSale} = await import('/src/cloud/shopOutbox.ts');
     await submitSale({userId:'fixture-owner',companyId:'fixture-company'},
-      {submissionKey:'fixture-sale',storeId:'fixture-store',lines:[],tenders:[]}, 'Synthetic sale', async () => {throw Error('offline');});
+      {submissionKey:'fixture-sale-00000001',storeId:'fixture-store',
+        lines:[{productId:'fixture-product',quantity:1}],
+        tenders:[{method:'cash',amountMinor:500,tenderedMinor:500}]}, 'Synthetic sale', async () => {throw Error('offline');});
     const db = await new Promise((resolve,reject) => {
       const open = indexedDB.open('tallybook-secure');
       open.onsuccess = () => resolve(open.result); open.onerror = () => reject(open.error);
@@ -171,7 +173,7 @@ test('loss of the synthetic device key preserves an unreadable pending sale thro
     const scope = {userId:'fixture-owner',companyId:'fixture-company'};
     let sends = 0;
     await flushOutbox(scope,async () => {sends++; throw Error('unexpected send');});
-    const dismissed = await dismissQueuedSale(scope,'fixture-sale');
+    const dismissed = await dismissQueuedSale(scope,'fixture-sale-00000001');
     const [row] = await readOutbox(scope);
     return {sends,dismissed,status:row?.status,unreadable:row?.unreadable};
   });

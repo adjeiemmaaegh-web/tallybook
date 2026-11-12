@@ -133,6 +133,8 @@ export interface OutboxDeps<S extends SaleLike, R> {
   lookupReceipt?: (sale: S) => Promise<R | null>;
   /** Reject an unrelated or malformed receipt before a queued sale can be deleted. */
   validateReceipt?: (sale: S, receipt: R) => boolean;
+  /** Reject malformed business requests before any durable write or replay. */
+  validateSale?: (sale: S) => boolean;
   now?: () => Date;
   maxAttempts?: number;
 }
@@ -158,6 +160,11 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
     try { return deps.validateReceipt ? deps.validateReceipt(sale, receipt) === true : true; }
     catch { return false; } // a broken validator must never discard a sale
   };
+  const saleIsValid = (sale: S): boolean => {
+    try { return deps.validateSale ? deps.validateSale(sale) === true : true; }
+    catch { return false; }
+  };
+  const invalidSaleMessage = "This saved sale has invalid financial details. Keep it for owner review; do not record it again.";
   const receiptMismatchMessage = "The server receipt did not match this saved sale. Keep it for owner review; do not record it again.";
 
   async function load(scopeKey: string, id: string): Promise<{ entry: QueuedEntry<S> } | { unreadable: true } | null> {
@@ -205,6 +212,12 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
       let entry = loaded.entry;
       if (entry.status === "rejected") return { state: "rejected" as const, error: entry.error ?? "Rejected" };
       if (entry.status === "needs-review") return { state: "needs-review" as const, error: entry.error ?? "Needs review" };
+      // Older saved entries and migrations must also pass validation before
+      // either receipt lookup or network replay. Do not destroy their evidence.
+      if (!saleIsValid(entry.sale)) {
+        await save(scopeKey, { ...entry, status: "needs-review", ambiguous: true, error: invalidSaleMessage });
+        return { state: "needs-review" as const, error: invalidSaleMessage };
+      }
       // We hold the per-sale lock, so a persisted "sending" belongs to a send that died.
       if (entry.status === "sending") entry = { ...entry, status: "queued", ambiguous: true };
 
@@ -256,12 +269,21 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
 
     /** Save first, then send. Never loses a sale the attendant pressed "Record" on. */
     async submit(scope: OutboxScope, sale: S, summary: string, send: (sale: S) => Promise<R>): Promise<SubmitResult<R>> {
+      // Refuse invalid new input before creating its encrypted entry or sending.
+      if (!saleIsValid(sale)) throw new Error("This sale contains invalid quantities or payment details. Correct it before recording.");
       const scopeKey = scopeKeyOf(scope);
       const id = sale.submissionKey;
       await lock(lockName(scopeKey, id), async () => {
-        if (!(await backend.get(scopeKey, id))) {
-          await save(scopeKey, { sale, summary, queuedAt: now().toISOString(), status: "queued", attempts: 0, ambiguous: false });
+        const existing = await load(scopeKey, id);
+        if (existing) {
+          // Do not treat a different cart as the original sale merely because
+          // another tab or old client reused the same idempotency key.
+          if ("unreadable" in existing ||
+              JSON.stringify(existing.entry.sale) !== JSON.stringify(sale))
+            throw new Error("This sale key is already saved with different details. Keep the original sale for owner review.");
+          return;
         }
+        await save(scopeKey, { sale, summary, queuedAt: now().toISOString(), status: "queued", attempts: 0, ambiguous: false });
       });
       return deliver(scope, id, send);
     },
@@ -307,7 +329,8 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
       const ids: string[] = [];
       for (const item of parsed as Array<{ sale?: S; summary?: string; queuedAt?: string; status?: string; error?: string }>) {
         const sale = item?.sale;
-        if (!sale || typeof sale.submissionKey !== "string" || (item.status !== "pending" && item.status !== "rejected")) return { imported: 0, kept: true };
+        if (!sale || typeof sale.submissionKey !== "string" || !saleIsValid(sale) ||
+            (item.status !== "pending" && item.status !== "rejected")) return { imported: 0, kept: true };
         ids.push(sale.submissionKey);
         await lock(lockName(scopeKey, sale.submissionKey), async () => {
           const existing = await load(scopeKey, sale.submissionKey);
