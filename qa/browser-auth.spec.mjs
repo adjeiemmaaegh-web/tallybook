@@ -131,7 +131,25 @@ test('a disconnected shared till preserves a scoped sale across browser restart 
       const page = await context.newPage();
       await page.exposeFunction('recordFixtureSale', payload => {
         posted.push(payload);
-        return {submissionKey:payload.submissionKey, receiptNumber:1};
+        // A real shop RPC returns a complete, cashier/store-scoped receipt.
+        // A partial mock must not bypass receipt identity checks in the outbox.
+        return {
+          saleId:'fixture-recorded-sale-001',
+          companyId:scope.companyId,
+          storeId:payload.storeId,
+          storeName:'Fixture Shop',
+          cashierId:scope.userId,
+          submissionKey:payload.submissionKey,
+          receiptNumber:1,
+          currency:'GHS',
+          totalMinor:900,
+          recordedAt:'2026-11-01T12:00:01Z',
+          replayed:false,
+          payment:{method:'cash',amountDueMinor:900,amountTenderedMinor:1000,changeMinor:100,reference:null},
+          lines:[{lineNo:1,productId:'rice',name:'Rice',quantity:2,unitPriceMinor:450,lineTotalMinor:900,refundedQuantity:0}],
+          refundedMinor:0,
+          refunds:[],
+        };
       });
       await page.goto(origin+'/outbox-fixture');
       await page.evaluate(async () => {window.outbox = await import('/src/cloud/shopOutbox.ts');});

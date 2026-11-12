@@ -28,14 +28,20 @@ async function outboxFor(scope: OutboxScope) {
     sealer: await deviceSealer(),
     lock: bestAvailableLocks(),
     isRejected: error => error instanceof ShopRejectedError,
+    // A successful response is not enough to discard a saved sale: verify the
+    // exact cashier, company, store, key and essential receipt identity first.
+    validateReceipt: (sale, receipt) =>
+      receipt != null && receipt.companyId === scope.companyId &&
+      receipt.cashierId === scope.userId && receipt.storeId === sale.storeId &&
+      receipt.submissionKey === sale.submissionKey &&
+      typeof receipt.saleId === "string" && receipt.saleId.length > 0 &&
+      Number.isSafeInteger(receipt.receiptNumber) && receipt.receiptNumber > 0 &&
+      Number.isSafeInteger(receipt.totalMinor) && receipt.totalMinor >= 0 &&
+      Array.isArray(receipt.lines) && receipt.lines.length > 0,
     // The server's own idempotency still protects us if this window misses an old sale.
-    lookupReceipt: async sale => {
-      const receipt=(await listShopSales(scope.companyId)).find(row=>row.submissionKey===sale.submissionKey)??null;
-      // Do not consume an A outbox entry because B posted a matching key.
-      if(receipt && (receipt.cashierId!==scope.userId || receipt.companyId!==scope.companyId))
-        throw new ShopRejectedError("A server receipt uses a different cashier or business. Preserve this original sale for review.");
-      return receipt;
-    },
+    // Validation also runs for reconciliation receipts before any saved record is removed.
+    lookupReceipt: async sale =>
+      (await listShopSales(scope.companyId)).find(row => row.submissionKey === sale.submissionKey) ?? null,
   });
   const key = legacyKey(scope);
   let migrated = migrations.get(key);

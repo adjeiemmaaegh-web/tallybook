@@ -232,3 +232,67 @@ test('legacy cleanup retains a sale appended during encrypted import', async () 
   assert.equal(removed, true);
   assert.deepEqual((await outbox.read(scope)).map(row => row.id).sort(), ['k1','k2']);
 });
+
+test('a successful but mismatched server receipt is parked for review, never deleted or re-sent', async () => {
+  const {outbox, backend} = await rig({validateReceipt: (sale, receipt) => receipt?.submissionKey === sale.submissionKey});
+  const result = await outbox.submit(scope, sale('expected'), 'sale', async () => receipt('wrong'));
+  assert.equal(result.state, 'needs-review');
+  const [row] = await outbox.read(scope);
+  assert.equal(row.sale.submissionKey, 'expected');
+  assert.equal(row.status, 'needs-review');
+  assert.equal(row.ambiguous, true);
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+  let sends = 0;
+  assert.deepEqual(await outbox.flush(scope, async () => { sends++; return receipt('expected'); }), []);
+  assert.equal(sends, 0);
+});
+
+test('a wrong receipt in ambiguous reconciliation is parked without sending or deleting the original', async () => {
+  const {make, backend} = await rig();
+  const outbox = make({
+    validateReceipt: (sale, receipt) => receipt?.submissionKey === sale.submissionKey,
+    lookupReceipt: async () => receipt('another-sale'),
+  });
+  await outbox.submit(scope, sale('expected'), 'sale', async () => { throw new Unreachable('response lost'); });
+  let sends = 0;
+  const [result] = await outbox.flush(scope, async () => { sends++; return receipt('expected'); });
+  assert.equal(result.state, 'needs-review');
+  assert.equal(sends, 0);
+  assert.equal((await outbox.read(scope))[0].status, 'needs-review');
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
+
+test('receipt validator exceptions fail closed, while matching receipts still clear the queue', async () => {
+  const {make, backend} = await rig();
+  const throws = make({validateReceipt: () => { throw new Error('bad response'); }});
+  assert.equal((await throws.submit(scope, sale('bad'), 'sale', async () => receipt('bad'))).state, 'needs-review');
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+  const good = make({validateReceipt: (sale, receipt) => receipt?.submissionKey === sale.submissionKey});
+  assert.equal((await good.submit(scope, sale('good'), 'sale', async () => receipt('good'))).state, 'recorded');
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
+
+test('legacy import preserves conflicting plaintext sale rather than silently discarding it', async () => {
+  const {outbox, backend} = await rig();
+  await outbox.submit(scope, sale('same-key', {lines:[{productId:'new-sale', quantity:1}]}), 'encrypted sale',
+    async () => { throw new Unreachable('offline'); });
+  const original = JSON.stringify([{sale:sale('same-key', {lines:[{productId:'other-legacy-sale', quantity:4}]}), status:'pending'}]);
+  const store = new Map([['legacy', original]]);
+  const legacy = {getItem:k=>store.get(k)??null,removeItem:k=>void store.delete(k)};
+  await assert.rejects(outbox.migrateLegacy(scope, legacy, 'legacy'), /conflicts/);
+  assert.equal(store.get('legacy'), original);
+  const [row] = await outbox.read(scope);
+  assert.equal(row.sale.lines[0].productId, 'new-sale');
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
+
+test('legacy import permits the same saved sale to be verified without overwriting the encrypted entry', async () => {
+  const {outbox, backend} = await rig();
+  const saved = sale('same-key');
+  await outbox.submit(scope, saved, 'encrypted sale', async () => { throw new Unreachable('offline'); });
+  const store = new Map([['legacy', JSON.stringify([{sale:saved,status:'pending'}])]]);
+  assert.deepEqual(await outbox.migrateLegacy(scope,
+    {getItem:k=>store.get(k)??null,removeItem:k=>void store.delete(k)}, 'legacy'), {imported:1,kept:false});
+  assert.equal(store.has('legacy'), false);
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
