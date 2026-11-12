@@ -131,6 +131,8 @@ export interface OutboxDeps<S extends SaleLike, R> {
    * when the server definitely has no such sale; reject if it cannot be asked.
    */
   lookupReceipt?: (sale: S) => Promise<R | null>;
+  /** Reject an unrelated or malformed receipt before a queued sale can be deleted. */
+  validateReceipt?: (sale: S, receipt: R) => boolean;
   now?: () => Date;
   maxAttempts?: number;
 }
@@ -152,6 +154,11 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
   const { backend, sealer, lock, isRejected, lookupReceipt } = deps;
   const now = deps.now ?? (() => new Date());
   const maxAttempts = deps.maxAttempts ?? MAX_UNCONFIRMED_ATTEMPTS;
+  const receiptMatches = (sale: S, receipt: R): boolean => {
+    try { return deps.validateReceipt ? deps.validateReceipt(sale, receipt) === true : true; }
+    catch { return false; } // a broken validator must never discard a sale
+  };
+  const receiptMismatchMessage = "The server receipt did not match this saved sale. Keep it for owner review; do not record it again.";
 
   async function load(scopeKey: string, id: string): Promise<{ entry: QueuedEntry<S> } | { unreadable: true } | null> {
     const record = await backend.get(scopeKey, id);
@@ -203,15 +210,27 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
 
       // The previous attempt may have reached the server. Ask before sending again.
       if (entry.ambiguous && lookupReceipt) {
-        try {
-          const found = await lookupReceipt(entry.sale);
-          if (found) { await backend.delete(scopeKey, id); return { state: "recorded" as const, receipt: found }; }
-        } catch { return { state: "queued" as const }; } // cannot ask the server: keep it, try later
+        let found: R | null;
+        try { found = await lookupReceipt(entry.sale); }
+        catch { return { state: "queued" as const }; } // cannot ask the server: keep it, try later
+        if (found) {
+          if (!receiptMatches(entry.sale, found)) {
+            await save(scopeKey, { ...entry, status: "needs-review", ambiguous: true, error: receiptMismatchMessage });
+            return { state: "needs-review" as const, error: receiptMismatchMessage };
+          }
+          await backend.delete(scopeKey, id);
+          return { state: "recorded" as const, receipt: found };
+        }
       }
 
       await save(scopeKey, { ...entry, status: "sending", attempts: entry.attempts + 1 });
       try {
         const receipt = await send(entry.sale);
+        if (!receiptMatches(entry.sale, receipt)) {
+          await save(scopeKey, { ...entry, status: "needs-review", attempts: entry.attempts + 1,
+            ambiguous: true, error: receiptMismatchMessage });
+          return { state: "needs-review" as const, error: receiptMismatchMessage };
+        }
         await backend.delete(scopeKey, id);
         return { state: "recorded" as const, receipt };
       } catch (error) {
