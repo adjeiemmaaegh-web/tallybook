@@ -310,7 +310,15 @@ export function createOutbox<S extends SaleLike, R>(deps: OutboxDeps<S, R>) {
         if (!sale || typeof sale.submissionKey !== "string" || (item.status !== "pending" && item.status !== "rejected")) return { imported: 0, kept: true };
         ids.push(sale.submissionKey);
         await lock(lockName(scopeKey, sale.submissionKey), async () => {
-          if (await backend.get(scopeKey, sale.submissionKey)) return;
+          const existing = await load(scopeKey, sale.submissionKey);
+          if (existing) {
+            // Do not silently discard a distinct legacy sale (or an unreadable
+            // encrypted sale) just because it has the same idempotency key.
+            // The original plaintext copy remains available for owner review.
+            if ("unreadable" in existing || JSON.stringify(existing.entry.sale) !== JSON.stringify(sale))
+              throw new Error("An older saved sale conflicts with an encrypted queue entry. Keep the legacy queue for review.");
+            return;
+          }
           await save(scopeKey, { sale, summary: item.summary ?? "", queuedAt: item.queuedAt ?? now().toISOString(),
             status: item.status === "rejected" ? "rejected" : "queued", attempts: 0, ambiguous: item.status !== "rejected", error: item.error });
         });

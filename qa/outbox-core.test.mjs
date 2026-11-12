@@ -271,3 +271,28 @@ test('receipt validator exceptions fail closed, while matching receipts still cl
   assert.equal((await good.submit(scope, sale('good'), 'sale', async () => receipt('good'))).state, 'recorded');
   assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
 });
+
+test('legacy import preserves conflicting plaintext sale rather than silently discarding it', async () => {
+  const {outbox, backend} = await rig();
+  await outbox.submit(scope, sale('same-key', {lines:[{productId:'new-sale', quantity:1}]}), 'encrypted sale',
+    async () => { throw new Unreachable('offline'); });
+  const original = JSON.stringify([{sale:sale('same-key', {lines:[{productId:'other-legacy-sale', quantity:4}]}), status:'pending'}]);
+  const store = new Map([['legacy', original]]);
+  const legacy = {getItem:k=>store.get(k)??null,removeItem:k=>void store.delete(k)};
+  await assert.rejects(outbox.migrateLegacy(scope, legacy, 'legacy'), /conflicts/);
+  assert.equal(store.get('legacy'), original);
+  const [row] = await outbox.read(scope);
+  assert.equal(row.sale.lines[0].productId, 'new-sale');
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
+
+test('legacy import permits the same saved sale to be verified without overwriting the encrypted entry', async () => {
+  const {outbox, backend} = await rig();
+  const saved = sale('same-key');
+  await outbox.submit(scope, saved, 'encrypted sale', async () => { throw new Unreachable('offline'); });
+  const store = new Map([['legacy', JSON.stringify([{sale:saved,status:'pending'}])]]);
+  assert.deepEqual(await outbox.migrateLegacy(scope,
+    {getItem:k=>store.get(k)??null,removeItem:k=>void store.delete(k)}, 'legacy'), {imported:1,kept:false});
+  assert.equal(store.has('legacy'), false);
+  assert.equal((await backend.list(scopeKeyOf(scope))).length, 1);
+});
