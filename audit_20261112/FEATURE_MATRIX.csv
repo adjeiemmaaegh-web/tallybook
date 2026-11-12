@@ -1,0 +1,39 @@
+Feature / control,Status,Verification type,Exact evidence and caveat
+Offline device business setup & PIN,Passed,Automated (native/client),"Staff, business, backup and PIN tests passed; not physical device"
+Verified cloud sign-in/password recovery,Partially Implemented,Simulated/client,Client/auth tests passed; real OAuth/email/phone negative cases untested
+Google OAuth redirect & Supabase Auth configuration,Blocked,External,Needs owner-owned project settings and real browser account
+Cloud business membership and company isolation,Passed,Native+simulated SQL,"Session, role, tenant authorization regressions passed"
+"Shared device sign-out, account switching, queued cashier binding",Passed,Client and native,PR #67 merged; physical two-user same device not executed
+Server-backed shared-shop shifts and employee activity,Partially Implemented,Source + native,Latest main contains shift/audit code; physical multi-shift signoff not tested
+"Local shop POS sales, line items and stock",Passed,Client+native,Transactional sale and inventory regressions passed
+Shared-shop multi-tender checkout and change,Passed,Native+client,Sale posting and tender conservation fixtures passed
+"Credit limits, repayments and receivables",Passed,Native+client,Existing financial integrity and credit tests passed
+Full/partial refunds and opt-in policy history,Passed,Native+client,Immutable reversal and policy negative cases passed
+Quotations and conversion to sales,Passed,Native+client,Quotation quote-to-sale links and rollback covered
+"Supplier purchasing, payments and purchase payables",Passed,Native+client,Payables/receipt/settlement tests passed
+"Tax snapshots, currency separation and costs",Passed,Native+client,Historical tax snapshots and per-currency audit covered
+Store inventory counts and stock transfers,Passed,Native+client,"Count baseline, staff roles and transfer conservation tested"
+Expenses and supplier attribution,Passed,Native+client,Financial conservation/expense category tests passed
+"Money accounts, counts and transfers",Passed,Native+client,Account reconciliation and mismatch cases in regression suite
+Reports and financial dashboards,Passed,Native+client,Read-only financial summaries and integrity tests passed; not field audited
+Local debt insight summary,Passed,Native,PR #69 exact BigInt regression passed
+Advanced repayment insight total,Passed,Native (new regression),Reproduced missing advisory; 13/13 targeted tests pass after local fix
+Scheduled unattended advisory automation,Partially Implemented,Historical branch only,Owner-completion branch contains unintegrated schedule; not on main
+Public catalogue/customer reservations,Partially Implemented,Historical branch only,Owner-completion branch contains unintegrated catalogue SQL and UI; no hosted schema test
+Store-attributed contribution reporting,Partially Implemented,Historical branch only,Unintegrated owner-completion reporting; no field acceptance
+Outbox offline queuing and idempotent replay,Passed,Client+native,"Encrypted queue, retry, replay and company scoping covered by tests"
+Web Locks/cross-tab race safety,Partially Implemented,Simulated/client,Fake IndexedDB and Web Locks tests pass; real browser concurrency blocked
+"Local backup, import/export and encrypted recovery",Partially Implemented,Client+native,Crypto/restore tests pass; physical restart/device-loss drill not done
+Full financial cloud replication and secure multi-device recovery,Partially Implemented,Source architecture,Several remote sync surfaces are intentionally guarded/disabled; no full real shop convergence test
+"PWA manifest, assets, service worker",Passed,HTTP smoke,Built preview routes manifest/SW HTTP 200; installation/offline after restart still untested
+PWA offline reload and cache verification,Blocked,Browser,Chromium download DNS EAI_AGAIN in local sandbox
+Mobile responsive layouts and touch controls,Blocked,Browser/physical,Browser engine unavailable locally; prior CI not substitute for this exact SHA
+Keyboard/WCAG screen reader behavior,Blocked,Browser/physical,No actual DOM/accessibility scan on audited SHA; device screen reader not tested
+Receipt printing and printer drivers,Not Tested,Hardware,No physical printer in environment
+Server HTTP route hardening and safe errors,Passed,Local HTTP+native,Local preview 200/404/405/503 routes plus server tests
+Enforcing content-security policy,Partially Implemented,Static config,CSP still Report-Only in Vercel and Node; not an enforcing header
+Production Supabase schema/backup/password settings,Partially Implemented,Read-only Supabase provider metadata,"29/29 migration names aligned, project healthy, 0 anon-callable tallybook_shop functions; backup restore/Auth settings not checked; leaked-password protection disabled"
+Dependencies (production advisories),Passed,pnpm audit,No known vulnerabilities at audit run time
+Static TypeScript and production packaging,Passed,tsc+Vite+esbuild,Build and semantic TypeScript pass
+Runtime performance on low-spec mobile,Not Tested,Hardware,Bundle has >500 kB minified chunks; no genuine low-memory profile
+"Deployment, rollback and production acceptance",Blocked,External,No Vercel release or migration authorized; existing production deployment intentionally preserved
