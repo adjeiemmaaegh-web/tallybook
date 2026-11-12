@@ -1,0 +1,5 @@
+Repository: adjeiemmaaegh-web/tallybook
+Original main: 7132c0a8a3e1df303def32fca0e13e006ecf30b4
+Local annotated tag: audit/local-checkpoint-20261112-7132c0a
+Local integration branch: audit/unified-local-20261112
+Protected original refs: no force-push, branch deletion, migration or production deployment.

@@ -1,0 +1,126 @@
+{
+  "source": "git:adjeiemmaaegh-web/tallybook@7132c0a8a3e1df303def32fca0e13e006ecf30b4",
+  "node": "v24.22.3",
+  "pnpm": "10.34.0",
+  "frozenInstall": {
+    "status": "Passed"
+  },
+  "baseline": {
+    "native": {
+      "passed": 1076,
+      "failed": 0,
+      "skipped": 0,
+      "exit": 0
+    },
+    "client": {
+      "passed": 1477,
+      "failed": 0,
+      "files": 195,
+      "exit": 0
+    },
+    "typecheck": "Passed",
+    "build": "Passed"
+  },
+  "afterFix": {
+    "targeted": {
+      "passed": 13,
+      "failed": 0
+    },
+    "native": {
+      "passed": 1077,
+      "failed": 0,
+      "skipped": 0,
+      "exit": 0
+    },
+    "client": {
+      "passed": 1477,
+      "failed": 0,
+      "files": 195,
+      "exit": 0
+    },
+    "typecheck": "Passed",
+    "build": "Passed"
+  },
+  "browser": {
+    "status": "Blocked",
+    "reason": "Chromium download EAI_AGAIN cdn.playwright.dev"
+  },
+  "localHttp": {
+    "welcome": 200,
+    "signin": 200,
+    "shop": 200,
+    "manifest": 200,
+    "sw": 200,
+    "missingAsset": 404,
+    "syncStatus": 503,
+    "post": 405
+  },
+  "security": {
+    "prodAdvisories": "No known vulnerabilities",
+    "supabaseMigrationSource": 29,
+    "supabaseMigrationHost": 29,
+    "anonCallableShopRPC": 0,
+    "authenticatedShopRPC": 4,
+    "rlsNoPolicyInfo": 49,
+    "authDefinerWarnings": 5,
+    "leakedPasswordProtectionWarnings": 1
+  },
+  "logHashes": {
+    "tb-audit-install.log": {
+      "sha256": "f17b3061e93cc70a05fcd04c9d8a6b0e325db04fc9b7ba0f51f612305ac1b4db",
+      "bytes": 4139
+    },
+    "tb-audit-native.log": {
+      "sha256": "df0955a2dbddb4db647caae5ac8771515ba8b049a2dd2b1dc9ba6b6c64c7180a",
+      "bytes": 90404
+    },
+    "tb-audit-client.log": {
+      "sha256": "4cbd1a77109ac3ff2009c7f8255eb999ab2622d70008ca52a5bf1e7d894ceda8",
+      "bytes": 113207
+    },
+    "tb-audit-type.log": {
+      "sha256": "3f474ef1518f9f304cae7cbbca44661e10d63096e6d2c97d9c4bbe8a58ed335a",
+      "bytes": 62
+    },
+    "tb-audit-build.log": {
+      "sha256": "8fdccccb983c40c50e29ab39f806f8ddcf3bcf3ca9c0bcd44395391114192e2e",
+      "bytes": 15114
+    },
+    "tb-audit-security.log": {
+      "sha256": "15950a68a7ed99c59779717acefdceb3f69cfd31bde67d2c954f2a3cea4d7955",
+      "bytes": 31
+    },
+    "tb-post-native.log": {
+      "sha256": "3f286fbec1e598fd1ce871238f4dbcf030e655b9e3508b418adfb4361c836564",
+      "bytes": 90541
+    },
+    "tb-post-client.log": {
+      "sha256": "de24b866466e0e1000ac7550208d5793502eabe825a4338cac6bc10eec226fc1",
+      "bytes": 111871
+    },
+    "tb-post-type.log": {
+      "sha256": "3f474ef1518f9f304cae7cbbca44661e10d63096e6d2c97d9c4bbe8a58ed335a",
+      "bytes": 62
+    },
+    "tb-post-build.log": {
+      "sha256": "a2efc9381bb9317a712796ab52f83c32eb8f5a4e53e94d5cc1e79c0c46192f04",
+      "bytes": 15115
+    },
+    "tb-advanced-red.log": {
+      "sha256": "f77d14a76e9809594100a848bad57c0390f3238c63b2425011aac8af0a47c4b9",
+      "bytes": 1558
+    },
+    "tb-advanced-green.log": {
+      "sha256": "b0bced041a343f2a7d38995f589883b86f7c57da5274386bc98f3e3f2ec143b4",
+      "bytes": 958
+    },
+    "tb-audit-browser-install.log": {
+      "sha256": "4b0075551dfba8f0befb5613f0fe646d7ebf9443d8a092c78fef4e64a236999e",
+      "bytes": 2389
+    },
+    "tb-audit-preview.log": {
+      "sha256": "d09911919a930681cc9aa14c754cc54cc74b2e39d8d1eb38f1fc9b3454f0633b",
+      "bytes": 280
+    }
+  }
+}

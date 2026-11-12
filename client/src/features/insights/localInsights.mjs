@@ -35,8 +35,10 @@ export function createAdvancedInsights(snapshot, options = {}) {
   }
   const debt = snapshot.debts.filter(d=>d && Number.isSafeInteger(d.outstandingMinor) && d.outstandingMinor>0);
   if (debt.length) {
-    const sum = debt.reduce((a,d)=>a+d.outstandingMinor,0);
-    if (Number.isSafeInteger(sum)) findings.push({id:'repayment',kind:'repayment',severity:'attention',title:'Outstanding balance review',evidence:`${debt.length} customer balances total ${sum} minor currency units. Due dates and payment promises are not available in this report.`,action:'Review customer ledgers before sending any reminder; ageing buckets cannot be verified here',href:'/customers'});
+    // Keep the review visible and exact when several individually safe
+    // customer balances exceed Number.MAX_SAFE_INTEGER in aggregate.
+    const sum = debt.reduce((a,d)=>a+BigInt(d.outstandingMinor),0n);
+    findings.push({id:'repayment',kind:'repayment',severity:'attention',title:'Outstanding balance review',evidence:`${debt.length} customer balances total ${sum} minor currency units. Due dates and payment promises are not available in this report.`,action:'Review customer ledgers before sending any reminder; ageing buckets cannot be verified here',href:'/customers'});
   }
   const batchRows = options.batchRows;
   if (Array.isArray(batchRows)) {
