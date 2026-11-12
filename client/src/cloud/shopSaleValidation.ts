@@ -27,7 +27,7 @@ export function validShopSaleRequest(input:unknown):input is SaleRequest{
     (typeof s.clientRecordedAt!=="string"||!Number.isFinite(Date.parse(s.clientRecordedAt))))
     return false;
   if(s.tenders!==undefined){
-    if(!Array.isArray(s.tenders)||s.tenders.length<1||s.tenders.length>5||
+    if(!Array.isArray(s.tenders)||s.tenders.length>5||
       s.paymentMethod!==undefined||s.amountTenderedMinor!==undefined||
       !s.tenders.every((item:unknown)=>{
         if(!record(item))return false;
