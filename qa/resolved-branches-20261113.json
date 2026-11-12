@@ -1,0 +1,48 @@
+{
+  "repo": "adjeiemmaaegh-web/tallybook",
+  "baseline_main": "dffed6e1ba812f73c7e52edfafb25dd0d3b3974f",
+  "entries": [
+    {
+      "branch": "feature/premium-beginner-home-clementia",
+      "sha": "f854304053a911550ebdd4b30bb5d6885abb515d",
+      "pr": 6,
+      "merged": "1d772d70163ce4b01d95f325321b64e651d17a81"
+    },
+    {
+      "branch": "qa/restart-selected-browser",
+      "sha": "155482ef68d6a0e120a278e745e3e4f316f60839",
+      "pr": 54,
+      "merged": "be44ae81d40ce3b2230c8826a6c13a39f9c0984e"
+    },
+    {
+      "branch": "fix/role-first-home-dashboard-20261111",
+      "sha": "106e0fac4cb8adc00ed7c36ba3082b8976eb2971",
+      "pr": 66,
+      "merged": "107ab4977366eda46c1c89e4987df97c519477b8"
+    },
+    {
+      "branch": "fix/shop-outbox-receipt-identity-20261113",
+      "sha": "666f439adf6b9e397322dbc6b90fcc0b57e5d278",
+      "pr": 75,
+      "merged": "dffed6e1ba812f73c7e52edfafb25dd0d3b3974f"
+    },
+    {
+      "branch": "security/auth-company-boundary-20261013",
+      "sha": "60c4c77ac1d8ca56fd6257e4c0f1913fee79bb2d",
+      "pr": 7,
+      "superseded": "Current main has newer server-bound, transactional ownership/recovery and cloud-policy controls"
+    },
+    {
+      "branch": "feat/auth-gate-2b1",
+      "sha": "a4b83363552c43de77124fa87d8a8c183a644605",
+      "pr": 3,
+      "superseded": "Obsolete global Supabase login gate would break current offline-first routing"
+    },
+    {
+      "branch": "fix/clementia-maximize-minimize-2026-10-14",
+      "sha": "aafab7734e2af2096826b7f5a1958fb0ee6ab150",
+      "pr": 10,
+      "superseded": "In-place maximize/minimize, focus trap, inert background and route restore already implemented in newer main"
+    }
+  ]
+}
