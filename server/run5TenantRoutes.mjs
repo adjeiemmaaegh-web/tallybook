@@ -3,6 +3,7 @@
  * Existing offline IndexedDB and separate legacy sync routes are untouched.
  */
 import {isDirectTls} from './syncAccessRoutes.mjs';
+import {assertRun5ScopedJson} from './run5TenantScope.mjs';
 const MAP=Object.freeze({
   companyRead:'company:read',
   membershipRead:'membership:read',
@@ -52,11 +53,25 @@ export function createRun5TenantRoute({authorizer,operations={},enabled=false,
          (!body.input||typeof body.input!=='object'||Array.isArray(body.input)))){
       res.status(400).json({error:'Invalid cloud data request'});return;
     }
+    // Reject explicit foreign tenant IDs anywhere in caller data before an
+    // auth/DB lookup. A trusted operation must recheck scope inside its SQL tx.
+    try{assertRun5ScopedJson(body.input??{},body.companyId);}
+    catch{res.status(400).json({error:'Invalid cloud data request'});return;}
     try{
       const result=await authorizer.authorize({
         accessToken:bearer.slice(7),companyId:body.companyId,
         action:MAP[kind]
-      },(tx,ctx)=>operations[kind]({tx,ctx,input:body.input??{}}));
+      },async(tx,ctx)=>{
+        // A faulty or misconfigured authorizer cannot change tenant/action
+        // silently while still causing this route to invoke an operation.
+        if(ctx?.companyId!==body.companyId||ctx?.action!==MAP[kind])
+          throw Error('Cloud tenant context mismatch');
+        const output=await operations[kind]({tx,ctx,input:body.input??{}});
+        // The private adapter may not return rows explicitly scoped to another
+        // business. Fail closed instead of leaking them in the HTTP response.
+        assertRun5ScopedJson(output,body.companyId);
+        return output;
+      });
       res.status(200).json(result);
     }catch{
       res.status(403).json({error:'Cloud data access denied'});
