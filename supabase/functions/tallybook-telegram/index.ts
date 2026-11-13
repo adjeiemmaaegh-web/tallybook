@@ -317,10 +317,51 @@ async function handleCallback(
   }
 }
 
+// Scheduled daily summary push. Invoked by pg_cron (via pg_net) hitting the
+// /cron path with the shared TELEGRAM_CRON_SECRET header — never by Telegram, so
+// it has its own auth. Claims the chats due for today's summary and sends each.
+async function handleCron(req: Request): Promise<Response> {
+  const secret = env("TELEGRAM_CRON_SECRET");
+  const presented = req.headers.get("X-Tallybook-Cron-Secret") ?? "";
+  if (!secret || !timingSafeEqual(presented, secret)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const token = env("TELEGRAM_BOT_TOKEN");
+  const db = serviceClient();
+  let sent = 0;
+  try {
+    const { data, error } = await db.rpc("telegram_bot_claim_daily_summaries", {
+      p_max: 500,
+    });
+    const summaries: Array<Record<string, any>> =
+      error || !data ? [] : (data.summaries ?? []);
+    for (const s of summaries) {
+      const chatId = Number(s.chatId);
+      if (!Number.isFinite(chatId)) continue;
+      const scope = s.role === "owner" ? "" : " (yours)";
+      const text =
+        `<b>${escapeHtml(s.businessName)} — daily summary</b>\n` +
+        `${escapeHtml(s.date)}\n` +
+        `Sales${scope}: <b>${Number(s.count)}</b>\n` +
+        `Total: <b>${escapeHtml(formatMoney(s.currency, s.grossMinor))}</b>`;
+      if (await sendMessage(token, chatId, text)) sent++;
+    }
+  } catch {
+    // Already-claimed chats won't retry today; report what went out.
+  }
+  return new Response(JSON.stringify({ sent }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("Not found", { status: 404 });
   if (!configured())
     return new Response("Service unavailable", { status: 503 });
+
+  // The scheduled push has its own secret and never carries a Telegram header.
+  if (new URL(req.url).pathname.endsWith("/cron")) return handleCron(req);
 
   // Reject anything that is not Telegram-with-our-secret BEFORE any work.
   const presented = req.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
