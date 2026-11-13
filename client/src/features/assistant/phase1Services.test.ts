@@ -93,6 +93,45 @@ describe("Phase 1 transaction simulation and reversal services", () => {
     expect(await kit.database.saleReversals.count()).toBe(0);
   });
 
+  it("assistant confirmation will not reverse a sale recorded after its preview", async () => {
+    const preview = await kit.assistant.send("reverse the last sale");
+    expect(preview.kind).toBe("preview");
+    const action = preview.actions?.find(a => a.type === "confirm_reversal");
+    expect(action).toBeDefined();
+    const originalSale = (await kit.database.sales.toArray())[0]!;
+    await kit.database.sales.add({
+      ...originalSale, id: "assistant-newer-after-preview",
+      submissionKey: "assistant-newer-sale-key", receiptNumber: "newer-review-receipt",
+      createdAt: "2099-12-31T12:00:00.000Z",
+    });
+    const stockBefore = await kit.database.products.toArray();
+    const outcome = await kit.assistant.act(action!);
+    expect(outcome.kind).not.toBe("success");
+    expect(outcome.text).toMatch(/latest sale changed|review.*again/i);
+    expect(await kit.database.saleReversals.count()).toBe(0);
+    expect(await kit.database.products.toArray()).toEqual(stockBefore);
+    // Confirming the same stale button again must remain single-use.
+    const replay = await kit.assistant.act(action!);
+    expect(replay.kind).not.toBe("success");
+    expect(await kit.database.saleReversals.count()).toBe(0);
+  });
+
+  it("assistant confirm of an unchanged reviewed sale still records just one reversal", async () => {
+    const preview = await kit.assistant.send("reverse the last sale");
+    expect(preview.kind).toBe("preview");
+    const action = preview.actions?.find(a => a.type === "confirm_reversal");
+    expect(action).toBeDefined();
+    const original = (await kit.database.sales.toArray())[0]!;
+    const success = await kit.assistant.act(action!);
+    expect(success.kind).toBe("success");
+    const recorded = await kit.database.saleReversals.toArray();
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0]!.originalSaleId).toBe(original.id);
+    const replay = await kit.assistant.act(action!);
+    expect(replay.kind).not.toBe("success");
+    expect(await kit.database.saleReversals.count()).toBe(1);
+  });
+
   it("simulates a purchase and repayment without writing records", async () => {
     const countsBefore = { purchases: await kit.database.purchases.count(), repayments: await kit.database.repayments.count() };
     const purchase = await simulatePurchase({ supplierText: "Kofi Traders", lines: [{ productText: "Eggs", quantity: 4, unitCost: "45" }] }, "GHS", kit.database);
