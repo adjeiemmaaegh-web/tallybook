@@ -166,3 +166,30 @@ it('local integrity reports a damaged partial refund FIFO restoration without re
   expect(result.issues.map(item=>item.code)).toContain('cash-partial-return-stock-integrity');
   expect(await database.inventoryCostEvents.get(recorded.lines[0].costEventId)).toEqual(before);
 });
+
+
+it('requires a physical receiving store for a pre-activation sale returned after store stock is enabled', async()=>{
+  const {database,product,original}=await fixture();
+  const {createStore}=await import('@/features/stores/storeDirectory');
+  const {activateStoreInventory,readStoreBalances}=await import('@/features/stores/storeStockLedger');
+  const {getCashReturnReview}=await import('./cashReturnReview');
+  const store=await createStore('Receiving',database);
+  await activateStoreInventory([{storeId:store.id,productId:product.id,quantity:1}],database);
+  const preview=await getCashReturnReview(original.sale.id,database);
+  expect(preview.storeMode).toBe(true);
+  expect(preview.receivingStores).toEqual([{id:store.id,name:'Receiving'}]);
+  expect(original.sale.storeId).toBeUndefined();
+  const requestData=request(original.sale.id,original.lines[0].id,'receive-physical-1');
+  await expect(recordConfirmedCashPartialReturn(requestData,database))
+    .rejects.toThrow(/receiving store/);
+  await expect(recordConfirmedCashPartialReturn({...requestData,returnStoreId:'foreign-store'},database))
+    .rejects.toThrow(/Receiving store must be active/);
+  expect(await database.cashPartialReturns.count()).toBe(0);
+  const recorded=await recordConfirmedCashPartialReturn({...requestData,returnStoreId:store.id},database);
+  expect(recorded.returnStoreId).toBe(store.id);
+  expect((await database.sales.get(original.sale.id))?.storeId).toBeUndefined();
+  expect(Object.fromEntries(await readStoreBalances(database,'primary',product.id))).toEqual({[store.id]:2});
+  expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
+  const backup=await createBackup(database);
+  expect(()=>parseBackup(JSON.stringify(backup))).not.toThrow();
+});

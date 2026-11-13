@@ -7,7 +7,7 @@ import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarri
  * unknown tax evidence and credit sales fail closed pending an agreed policy.
  */
 import { nanoid } from 'nanoid';
-import { postStoreStockDelta } from '@/features/stores/storeStockLedger';
+import { postStoreStockDelta, resolveReturnStore } from '@/features/stores/storeStockLedger';
 import { db, type TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
@@ -26,6 +26,8 @@ export interface CashPartialSaleReturn {
   policyEvidence?:ReturnPolicyEvidence;
   id: string;
   businessProfileId: string;
+  /** Explicit physical receiving location; original sale attribution is immutable. */
+  returnStoreId?: string;
   originalSaleId: string;
   originalReceiptNumber: string;
   currency: string;
@@ -44,6 +46,8 @@ export interface CashPartialSaleReturn {
 }
 
 export async function recordConfirmedCashPartialReturn(values: {
+  /** Physical receiving store when company store stock is active. */
+  returnStoreId?: string;
   originalSaleId: string;
   submissionKey: string;
   lines: Array<{ saleLineId: string; quantity: number }>;
@@ -59,6 +63,8 @@ export async function recordConfirmedCashPartialReturn(values: {
 }
 
 async function recordConfirmedCashPartialReturnWhileLocked(values: {
+  /** Physical receiving store when company store stock is active. */
+  returnStoreId?: string;
   originalSaleId: string;
   submissionKey: string;
   lines: Array<{ saleLineId: string; quantity: number }>;
@@ -93,6 +99,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     if (priorWithKey.length) throw new Error('This cash return operation was already recorded or belongs to another company; inspect saved evidence before handing out money.');
     const sale = await database.sales.get(values.originalSaleId);
     if (!sale || sale.businessProfileId !== company) throw new Error('The original sale is unavailable in this company.');
+    const receivingStoreId=await resolveReturnStore(database,company,sale.storeId,values.returnStoreId);
     const companyProfile=await database.businessProfiles.get(company);
     if(!companyProfile)throw new Error('Company return policy is unavailable.');
     const now=new Date().toISOString();
@@ -157,12 +164,14 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       const movement: InventoryMovement = {id:movementId,businessProfileId:company,productId:product.id,movementType:'reversal',
         quantityDelta:item.quantity,previousQuantity:product.stockQuantity,resultingQuantity:product.stockQuantity+item.quantity,
         note:`Partial cash refund of ${sale.receiptNumber}`,createdAt:now};
-      await postStoreStockDelta(database,company,product.id,sale.storeId,item.quantity,movement.id,"refund",now,product.stockQuantity,movement.resultingQuantity);
+      await postStoreStockDelta(database,company,product.id,receivingStoreId,item.quantity,movement.id,"refund",now,product.stockQuantity,movement.resultingQuantity);
       await database.inventoryMovements.add(movement);
       await database.products.put({...product,stockQuantity:movement.resultingQuantity,updatedAt:now});
       savedLines.push({saleLineId:originalLine.id,productId:product.id,quantity:item.quantity,movementId,costEventId:event.id});
     }
-    const recorded:CashPartialSaleReturn = {policyEvidence,id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
+    const recorded:CashPartialSaleReturn = {
+      ...(values.returnStoreId?{returnStoreId:receivingStoreId}:{}),
+      policyEvidence,id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
       originalReceiptNumber:sale.receiptNumber,currency:sale.currency!,submissionKey:values.submissionKey,createdAt:now,returnSequence:prior.length+1,
       refundMethod:'cash',disposition:'restockable',refundedMinor:plan.draftAmountMinor,
       returnedTaxableMinor:plan.draftTaxableMinor,returnedTaxMinor:plan.draftTaxMinor,
