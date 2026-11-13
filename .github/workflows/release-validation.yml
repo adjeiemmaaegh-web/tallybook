@@ -94,6 +94,11 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --config playwright.auth.config.mjs 2>&1 | tee artifacts/release-v19/auth-ci.log
+      - name: Mandatory account fresh-start browser acceptance
+        if: ${{ always() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.fresh-start.config.mjs 2>&1 | tee artifacts/release-v19/fresh-start-ci.log
       - name: Shared shop phone-width layout
         if: ${{ always() && steps.chromium.outcome == 'success' }}
         run: |
