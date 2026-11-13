@@ -308,6 +308,7 @@ export function financialCsv(summary:FinancialSummary):string {
       ['Full-history returned tax on confirmed cash partial refunds',summary.recordedTaxConservation.partialCashRefundTaxMinor],
       ['Full-history net recorded tax (not statutory liability)',summary.recordedTaxConservation.netRecordedTaxMinor],
       ['Historical refunds with unverified saved tax',summary.recordedTaxConservation.legacyRefundTaxUnverified],
+      ['Historical sales lacking original tax-policy configuration',summary.recordedTaxConservation.unknownTaxConfigurationSales],
       ['Full-history recorded tax evidence complete',summary.recordedTaxConservation.recordedTaxEvidenceComplete?'Yes':'No']
     ] as (string|number)[][]:[]),
     ...(summary.taxEvidence ? [

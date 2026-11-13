@@ -53,3 +53,13 @@ test('full history aggregates independent full and partial returns with correct 
  assert.deepEqual([a.grossRecordedTaxMinor,a.fullReversalTaxMinor,a.partialCashRefundTaxMinor,a.netRecordedTaxMinor],
   [300,100,50,150]);
 });
+
+test('tax amounts do not certify legacy missing original policy configuration',()=>{
+ const a=audit([sale()]);
+ assert.equal(a.grossRecordedTaxMinor,100);
+ assert.equal(a.unknownTaxConfigurationSales,1);
+ assert.equal(a.recordedTaxEvidenceComplete,false);
+ const configured=audit([{...sale(),taxConfigurationAtSale:{mode:'on'}}]);
+ assert.equal(configured.unknownTaxConfigurationSales,0);
+ assert.equal(configured.recordedTaxEvidenceComplete,true);
+});

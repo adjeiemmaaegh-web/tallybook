@@ -13,12 +13,15 @@ export function auditRun12RecordedTaxConservation(sales,reversals,returns,compan
   if(!Array.isArray(sales)||!Array.isArray(reversals)||!Array.isArray(returns)||!id(company))
     fail('full company-scoped sale, reversal and cash-return snapshots are required');
   const originals=new Map();
-  let gross=0n,known=0,unknown=0;
+  let gross=0n,known=0,unknown=0,unknownConfiguration=0;
   for(const sale of sales){
     if(!id(sale?.id)||originals.has(sale.id)||sale.businessProfileId!==company||
        !time(sale.createdAt)||!safe(sale.totalMinor))
       fail('duplicate, foreign or malformed original sale');
     originals.set(sale.id,sale);
+    // A saved amount can be arithmetically valid even if the older sale
+    // never captured the registered company's original tax policy.
+    if(sale.taxConfigurationAtSale===undefined)unknownConfiguration++;
     if(sale.tax===undefined){ unknown++;continue; }
     if(!sale.tax||!safe(sale.tax.taxMinor)||!safe(sale.tax.taxableMinor)||
        !safe(sale.tax.totalMinor)||sale.tax.totalMinor!==sale.totalMinor||
@@ -62,10 +65,11 @@ export function auditRun12RecordedTaxConservation(sales,reversals,returns,compan
   const net=gross-reversed-partial;
   if(net<0n)fail('recorded tax does not conserve');
   return Object.freeze({
-    recordedTaxSales:known,unknownTaxSales:unknown,legacyRefundTaxUnverified:unknownRefunds,
+    recordedTaxSales:known,unknownTaxSales:unknown,
+    unknownTaxConfigurationSales:unknownConfiguration,legacyRefundTaxUnverified:unknownRefunds,
     grossRecordedTaxMinor:total(gross),fullReversalTaxMinor:total(reversed),
     partialCashRefundTaxMinor:total(partial),netRecordedTaxMinor:total(net),
-    recordedTaxEvidenceComplete:unknown===0&&unknownRefunds===0,
+    recordedTaxEvidenceComplete:unknown===0&&unknownConfiguration===0&&unknownRefunds===0,
     statutoryTaxLiabilityVerified:false
   });
 }

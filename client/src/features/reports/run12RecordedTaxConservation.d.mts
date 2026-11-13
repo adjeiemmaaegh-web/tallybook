@@ -2,6 +2,7 @@
 export interface Run12RecordedTaxConservation {
  readonly recordedTaxSales:number;
  readonly unknownTaxSales:number;
+ readonly unknownTaxConfigurationSales:number;
  readonly legacyRefundTaxUnverified:number;
  readonly grossRecordedTaxMinor:number;
  readonly fullReversalTaxMinor:number;
