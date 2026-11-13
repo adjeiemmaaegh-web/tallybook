@@ -63,3 +63,14 @@ test('tax amounts do not certify legacy missing original policy configuration',(
  assert.equal(configured.unknownTaxConfigurationSales,0);
  assert.equal(configured.recordedTaxEvidenceComplete,true);
 });
+
+test('impossible historical posting dates reject instead of rolling into valid days',()=>{
+ assert.throws(()=>audit([{...sale(),createdAt:'2026-02-30T08:00:00.000Z'}]),/sale/);
+ assert.throws(()=>audit([sale()],[{...reversal,createdAt:'2026-02-30T09:00:00.000Z'}]),/reversal/);
+ assert.throws(()=>audit([sale()],[],[{...refund,createdAt:'2026-02-30T09:00:00.000Z'}]),/cash return/);
+});
+test('returned tax cannot exceed actually refunded cash even if historical tax was unverified',()=>{
+ assert.throws(()=>audit([{...sale(),tax:undefined}],[],[
+  {...refund,refundedMinor:20,returnedTaxMinor:21}
+ ]),/cash return/);
+});

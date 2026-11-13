@@ -3,9 +3,10 @@
  * return schema. No statutory tax computation, filing or bank/provider settlement.
  * Legacy tax configurations remain unknown rather than presumed exempt.
  */
+import {isValidFinancialPostingTimestamp} from './financialPeriodConservation.mjs';
 const safe = x => Number.isSafeInteger(x) && x >= 0;
 const fail = message => { throw Error('Run 12 recorded tax conservation: '+message); };
-const time = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
+const time = value => isValidFinancialPostingTimestamp(value);
 const id = x => typeof x === 'string' && x.trim().length>0 && x.trim()===x && x.length<=140;
 const total = x => { if(x>BigInt(Number.MAX_SAFE_INTEGER))fail('unsafe money total');return Number(x); };
 
@@ -50,7 +51,7 @@ export function auditRun12RecordedTaxConservation(sales,reversals,returns,compan
       keys.has(row.submissionKey)||row.businessProfileId!==company||
       !time(row.createdAt)||Date.parse(row.createdAt)<Date.parse(sale.createdAt)||
       fullIds.has(sale.id)||!safe(row.refundedMinor)||row.refundedMinor===0||
-      !safe(row.returnedTaxMinor))
+      !safe(row.returnedTaxMinor)||row.returnedTaxMinor>row.refundedMinor)
       fail('orphan, duplicate, foreign or invalid cash return');
     usedReturns.add(row.id);keys.add(row.submissionKey);
     const previous=partialBySale.get(sale.id)??{cash:0n,tax:0n};
