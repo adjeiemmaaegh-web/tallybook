@@ -14,7 +14,7 @@ vi.mock('../cloud/cloudMembership', () => ({ listVerifiedCloudBusinesses: mock.l
 vi.mock('./useRun4CloudSession', () => ({ useRun4CloudSession: () => ({ state: { status: mock.status, userId: mock.status === 'signed-in' ? 'owner-1' : null } }) }));
 vi.mock('@/db/TallybookDB', () => ({ db: { businessProfiles: { count: async () => mock.profiles.length, toArray: async () => mock.profiles } } }));
 vi.mock('@/lib/supabase', () => ({ isSupabaseConfigured: true, getSupabaseClient: () => ({ auth: { getSession: async () => ({ data: { session: mock.cachedUser ? { user: { id: mock.cachedUser } } : null } }), signOut: async () => ({}) } }) }));
-vi.mock('wouter', () => ({ Redirect: ({ to }: { to: string }) => <span>Redirected to {to}</span>, Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => <a href={href} className={className}>{children}</a> }));
+vi.mock('wouter', () => ({ useLocation: () => ['/', vi.fn()], Redirect: ({ to }: { to: string }) => <span>Redirected to {to}</span>, Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => <a href={href} className={className}>{children}</a> }));
 
 const OWNER = [{ role: 'owner', owner_id: 'owner-1' }];
 function visit() { render(<FriendsTestGate><span>Device ledger</span></FriendsTestGate>); }
@@ -72,7 +72,7 @@ it('lets the verified owner of this browser return offline', async () => {
 
 it('keeps an offline browser closed when it was never verified online, or the cached sign-in differs', async () => {
   mock.status = 'offline'; visit();
-  await screen.findByText('Connect once to open Tallybook');
+  await screen.findByText('Connect to verify your account');
   localStorage.setItem('friendsTestVerifiedAuthUserId', 'owner-1');
   localStorage.setItem('tallybook.entry.verifiedOwner.v1', 'owner-1');
   expect(await allowOfflineReturn(async () => 'intruder')).toBe(false);
