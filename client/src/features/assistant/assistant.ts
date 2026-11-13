@@ -102,6 +102,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
   let reversalRequest = "";
   let lastPlan: AssistantPlan | null = null;
   let pendingReversalToken: string | null = null;
+  let pendingReversalSaleId: string | null = null;
+  let pendingReversalCompanyId: string | null = null;
   /** Current application feature awaiting a short follow-up such as “add one”. */
   let appContext: AppCapability | null = null;
 
@@ -130,6 +132,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
     batchState = null;
     lastPlan = null;
     pendingReversalToken = null;
+    pendingReversalSaleId = null;
+    pendingReversalCompanyId = null;
     appContext = null;
     return true;
   }
@@ -487,7 +491,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
     const canConfirm = confirmable; confirmable = false;
     if (pending && canConfirm && CONFIRM.test(prepared)) return confirm(pending.token);
     if (batchState && canConfirm && CONFIRM.test(prepared)) return confirmBatch();
-    if (CANCEL.test(prepared)) { pendingReversalToken = null; return cancel(); }
+    if (CANCEL.test(prepared)) { pendingReversalToken = null; pendingReversalSaleId = null; pendingReversalCompanyId = null; return cancel(); }
     if (CONFIRM.test(prepared) && !(draft?.options?.length === 1)) return info(pending || batchState ? "Press the confirm button on the preview to proceed." : "There is nothing waiting for confirmation. Ask me a question or give me a command.");
 
     // Quotation operations always belong to the authoritative quotations UI.
@@ -574,7 +578,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
       catch (error) { return failure(error instanceof Error ? error.message : "I couldn't simulate that sale safely."); }
     }
     if (/^(?:undo|reverse|cancel)\s+(?:the\s+)?(?:last|most recent)\s+sale/i.test(canonicalText)) {
-      try { const reversal = await prepareLatestSaleReversal(options.currency, database); pendingReversalToken = `reverse-${nanoid(12)}`; reversalRequest = text; return { kind: "preview", text: reversal.text, details: reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} units would be restored` })), actions: [{ type: "confirm_reversal", label: "Confirm reversal", token: pendingReversalToken }, { type: "cancel", label: "Cancel" }] }; }
+      try { const reversal = await prepareLatestSaleReversal(options.currency, database); pendingReversalToken = `reverse-${nanoid(12)}`; pendingReversalSaleId = reversal.saleId; pendingReversalCompanyId = getActiveBusinessProfileId(); reversalRequest = text; return { kind: "preview", text: reversal.text, details: reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} units would be restored` })), actions: [{ type: "confirm_reversal", label: "Confirm reversal", token: pendingReversalToken }, { type: "cancel", label: "Cancel" }] }; }
       catch (error) { return failure(error instanceof Error ? error.message : "I couldn't prepare a reversal."); }
     }
 
@@ -691,9 +695,16 @@ export function createAssistant(options: AssistantOptions): Assistant {
     if (action.type === "run_plan") return runPlan(action.plan);
     if (action.type === "confirm_reversal") {
       if (!pendingReversalToken || action.token !== pendingReversalToken) return failure("This reversal preview is no longer current. Ask me to reverse the latest sale again.");
+      const reviewedSaleId = pendingReversalSaleId;
+      const reviewedCompanyId = pendingReversalCompanyId;
+      // One confirmation is single-use, including failed or stale confirmations.
       pendingReversalToken = null;
+      pendingReversalSaleId = null;
+      pendingReversalCompanyId = null;
+      if (!reviewedSaleId || !reviewedCompanyId || reviewedCompanyId !== getActiveBusinessProfileId())
+        return failure("Your company or reviewed sale changed since this preview. Ask me to review it again before reversing.");
       try {
-        const reversal = await executeLatestSaleReversal(options.currency, database, action.token);
+        const reversal = await executeLatestSaleReversal(options.currency, database, action.token, reviewedSaleId);
         const details = reversal.lines.map((line) => ({ label: line.productName, value: `${line.quantity} restored` }));
         const text = `Reversal recorded for ${reversal.originalReceiptNumber}. The original sale remains in the audit history, stock was restored, and derived totals will include the correction.`;
         await recordAudit(database, { businessProfileId: getActiveBusinessProfileId(), action: "sale_reversal", outcome: "saved", summary: text, request: reversalRequest, details, recordId: reversal.id }, context().now);
