@@ -25,6 +25,10 @@ test('actual device gate denies cached offline return in mandatory mode',()=>{
   assert.match(gate,/if\(mandatoryOnlineAccountMode\)\{setAccess\(\{userId:null,status:'offline'\}\);return;\}/);
   assert.match(gate,/mayOpenCachedOfflineLedger\(mandatoryOnlineAccountMode,true\)/);
   assert.match(gate,/if\(mandatoryOnlineAccountMode\)void retry\(\)/);
+  assert.match(gate,/useRun4CloudSession\(true,mandatoryOnlineAccountMode\)/);
+  const hook=readFileSync(new URL('../client/src/auth/useRun4CloudSession.ts',import.meta.url),'utf8');
+  assert.match(hook,/client\.rpc\('tallybook_active_session_proof'\)/);
+  assert.match(hook,/p\.expiresAtEpochMs!==expiresAtEpochMs/);
   const device=readFileSync(new URL('../client/src/auth/deviceEntry.ts',import.meta.url),'utf8');
   assert.match(device,/VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH\s*===\s*'true'/);
   const env=readFileSync(new URL('../.env.example',import.meta.url),'utf8');
