@@ -20,7 +20,8 @@ test('legacy standalone shared shop remains controlled by its existing boundarie
 test('actual /shop routing mounts strict guard before the shared shop',()=>{
   const app=readFileSync(new URL('../client/src/App.tsx',import.meta.url),'utf8');
   const gate=readFileSync(new URL('../client/src/auth/StrictSharedShopGate.tsx',import.meta.url),'utf8');
-  assert.match(app,/<StrictSharedShopGate><SharedShopPage\s*\/><\/StrictSharedShopGate>/);
+  assert.ok(app.includes('<StrictSharedShopGate><Suspense'));
+  assert.ok(app.includes('<SharedShopPage /></Suspense></StrictSharedShopGate>'));
   assert.match(gate,/VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH\s*===\s*'true'/);
   assert.match(gate,/useRun4CloudSession\(true,true\)/);
   assert.match(gate,/mayMountSharedShop\(true, online, state.status/);
