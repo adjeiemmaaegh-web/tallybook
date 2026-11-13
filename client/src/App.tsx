@@ -6,6 +6,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { Redirect, useLocation } from "wouter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ConfirmHost } from "@/components/ConfirmHost";
+import { StrictSharedShopGate } from "@/auth/StrictSharedShopGate";
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 // Everything the local ledger needs is loaded only on its routes, never for /shop or /welcome.
 const DeviceWorkspace = lazy(() => import("@/DeviceWorkspace"));
@@ -40,7 +41,7 @@ function App() {
             : location === '/shop'
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
-            ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>
+            ? <StrictSharedShopGate><Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense></StrictSharedShopGate>
             : <Suspense fallback={<main className="mx-auto max-w-3xl p-6" role="status" aria-live="polite"><h1 className="text-lg font-semibold">Opening this local workspace…</h1><p className="text-sm">Your saved records remain on this device. No data is uploaded.</p></main>}>
                 <DeviceWorkspace location={location} />
               </Suspense>}
