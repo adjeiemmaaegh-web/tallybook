@@ -1,0 +1,12 @@
+{
+  "repo": "adjeiemmaaegh-web/tallybook",
+  "baseline_main": "7fb9dd1f766fd45a988921c0507a377010b8b61b",
+  "entries": [
+    {
+      "branch": "finance/run12-recorded-tax-conservation-20261113",
+      "sha": "09cba549226ef85feccebd15aa7e63f1302b61a0",
+      "pr": 83,
+      "merged": "7fb9dd1f766fd45a988921c0507a377010b8b61b"
+    }
+  ]
+}
