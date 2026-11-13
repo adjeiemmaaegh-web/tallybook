@@ -219,9 +219,11 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
   } finally { await t.db.close(); }
 });
 
-test('with no such history, all eighteen rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
+test('with no such history, all managed rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
   const t = await setup();
   try {
+    await t.down(SESSION_PROOF_DOWN);
+    assert.equal(await t.fn('public.tallybook_active_session_proof()'), false);
     await t.down(TELEGRAM_DOWN);
     await t.down(SHIFT_DOWN);
     for (const [, file] of CHAIN) await t.down(file);
@@ -241,7 +243,7 @@ test('with no such history, all eighteen rollbacks run, the core shop still work
     const sold = (await t.owner('listSales')).sales[0];
     await t.owner('refundSale', {saleId: sold.saleId, refundKey: key(), reason: 'Test', returnToStock: true}).catch(e => assert.match(e.message, /Refunds are turned off/));
 
-    // Apply the eighteen migrations again, oldest first.
+    // Reapply the managed migrations again, oldest first.
     for (const [prefix] of [...CHAIN].reverse()) await t.up(prefix);
     await t.up("20261111180000");
     await t.up("20261112120000");
