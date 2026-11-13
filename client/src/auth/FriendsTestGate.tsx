@@ -80,7 +80,7 @@ async function signOutHere(){
  * Never attaches one account's local ledger to another account without the owner choosing it.
  */
 export function FriendsTestGate({children}:{children:ReactNode}){
-  const {state,retry}=useRun4CloudSession(true);
+  const {state,retry}=useRun4CloudSession(true,mandatoryOnlineAccountMode);
   const [location]=useLocation();
   // Revalidate a strict-mode account on each protected navigation.
   useEffect(()=>{if(mandatoryOnlineAccountMode)void retry();},[location,retry]);
