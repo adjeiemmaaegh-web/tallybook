@@ -3,10 +3,7 @@ import "./index.css";
 /** Tactile Ledger design reminder: the app registers only an offline shell; business records remain in IndexedDB. */
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
-import App from "./App";
 import { retirePriorBrowserData } from "./auth/freshStartReset.mjs";
-import {announceRun18UpdateReady} from "@/features/reliability/run18UpdatePolicy";
-import { initErrorReporting } from "@/lib/errorReporting";
 
 async function boot() {
   // A new release cannot mount prior IndexedDB, cached sessions or a service worker
@@ -16,6 +13,13 @@ async function boot() {
     epoch,
     mandatoryOnlineAuth: import.meta.env.VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH === "true",
   });
+  // Do not evaluate app modules (which may initialize IndexedDB or auth)
+  // until any configured retirement has completed successfully.
+  const [{ default: App }, { initErrorReporting }, { announceRun18UpdateReady }] = await Promise.all([
+    import("./App"),
+    import("@/lib/errorReporting"),
+    import("@/features/reliability/run18UpdatePolicy"),
+  ]);
   initErrorReporting();
 
   if ("serviceWorker" in navigator) {
