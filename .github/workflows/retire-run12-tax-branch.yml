@@ -1,0 +1,42 @@
+name: One-time Run 12 merged branch retirement
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/retire-run12-tax-branch.yml"
+      - "scripts/retire_run12_tax_branch.py"
+      - "qa/run12-tax-branch-retirement-20261113.json"
+  push:
+    branches: [main]
+permissions: {}
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact SHA, PR status and active dependencies without changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/retire_run12_tax_branch.py
+  retire-once:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[retire-run12-tax-20261113]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete only the verified Run 12 integrated ref on approved one-time merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          RETIRE_EXECUTE: "true"
+        run: python3 scripts/retire_run12_tax_branch.py
