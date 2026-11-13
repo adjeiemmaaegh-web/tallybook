@@ -166,3 +166,46 @@ it('local integrity reports a damaged partial refund FIFO restoration without re
   expect(result.issues.map(item=>item.code)).toContain('cash-partial-return-stock-integrity');
   expect(await database.inventoryCostEvents.get(recorded.lines[0].costEventId)).toEqual(before);
 });
+
+
+it('requires a physical receiving store for a pre-activation sale returned after store stock is enabled', async()=>{
+  const {database,product,original}=await fixture();
+  const {createStore}=await import('@/features/stores/storeDirectory');
+  const {readStoreBalances}=await import('@/features/stores/storeStockLedger');
+  const {STAGE9_RELEASE_SCOPE}=await import('@/features/stores/stage9ReleaseScope');
+  const {getCashReturnReview}=await import('./cashReturnReview.ts');
+  const store=await createStore('Receiving',database);
+  // Current release intentionally DISABLES new store-stock activation.
+  // Seed the exact journal shape of an earlier owner-confirmed activation
+  // to exercise return/recovery compatibility without flipping the feature.
+  expect(STAGE9_RELEASE_SCOPE.authoritativeStoreStock).toBe(false);
+  const owner=(await database.staffMembers.where('businessProfileId').equals('primary').first())!;
+  const activatedAt=new Date().toISOString();
+  await database.storeStockModes.put({
+    businessProfileId:'primary',activatedAt,activatedByStaffId:owner.id,
+    evidence:'owner-confirmed-opening-allocations',
+  });
+  await database.storeStockEntries.add({
+    id:'fixture-owner-confirmed-opening',businessProfileId:'primary',
+    storeId:store.id,productId:product.id,kind:'opening',quantityDelta:1,
+    sequence:1,sourceId:`opening:primary:${store.id}:${product.id}`,
+    submissionKey:`opening:${store.id}:${product.id}`,createdAt:activatedAt,
+  });
+  const preview=await getCashReturnReview(original.sale.id,database);
+  expect(preview.storeMode).toBe(true);
+  expect(preview.receivingStores).toEqual([{id:store.id,name:'Receiving'}]);
+  expect(original.sale.storeId).toBeUndefined();
+  const requestData=request(original.sale.id,original.lines[0].id,'receive-physical-1');
+  await expect(recordConfirmedCashPartialReturn(requestData,database))
+    .rejects.toThrow(/receiving store/);
+  await expect(recordConfirmedCashPartialReturn({...requestData,returnStoreId:'foreign-store'},database))
+    .rejects.toThrow(/Receiving store must be active/);
+  expect(await database.cashPartialReturns.count()).toBe(0);
+  const recorded=await recordConfirmedCashPartialReturn({...requestData,returnStoreId:store.id},database);
+  expect(recorded.returnStoreId).toBe(store.id);
+  expect((await database.sales.get(original.sale.id))?.storeId).toBeUndefined();
+  expect(Object.fromEntries(await readStoreBalances(database,'primary',product.id))).toEqual({[store.id]:2});
+  expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
+  const backup=await createBackup(database);
+  expect(()=>parseBackup(JSON.stringify(backup))).not.toThrow();
+});

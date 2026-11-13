@@ -5,6 +5,8 @@ import type { CashPartialSaleReturn } from './cashPartialReturnPosting';
 import type { SaleReversal } from '../assistant/reversals';
 import type { InventoryBatch } from '../inventory/stage2Inventory';
 export interface CashReturnReview {
+  storeMode?: boolean;
+  receivingStores?: Array<{id:string;name:string}>;
   sale: Sale;
   saleLines: SaleLine[];
   prior: Array<{ saleLineId: string; quantity: number }>;

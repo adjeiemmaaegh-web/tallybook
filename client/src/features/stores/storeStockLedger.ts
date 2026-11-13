@@ -25,6 +25,32 @@ export interface StoreStockMode {
 }
 export interface OpeningStoreQuantity {storeId: string; productId: string; quantity: number}
 export const MAX_STORE_UNITS = 9_999_999;
+/** A return restores goods to a verified physical store, never to an invented
+ * location on a historical sale. Call only within the caller's authenticated
+ * company-scoped IndexedDB transaction; the posting also validates staff
+ * assignments and preserves its original sale's immutable store attribution.
+ */
+export async function resolveReturnStore(
+  database:TallybookDB,company:string,originalStoreId:string|undefined,requestedStoreId?:string
+):Promise<string|undefined>{
+  if(company!==getActiveBusinessProfileId())throw new Error("Company changed during return-store review.");
+  if(requestedStoreId!==undefined&&
+    (typeof requestedStoreId!=="string"||requestedStoreId.trim()!==requestedStoreId||
+     !requestedStoreId||requestedStoreId.length>200))
+    throw new Error("Choose a valid receiving store.");
+  const mode=await database.storeStockModes.get(company);
+  if(!mode){
+    if(requestedStoreId!==undefined)throw new Error("Store inventory has not been activated.");
+    return originalStoreId;
+  }
+  const receivingStoreId=requestedStoreId??originalStoreId;
+  if(!receivingStoreId)throw new Error("Choose the receiving store for this historical sale; its original location is unknown.");
+  const receiving=await database.storeLocations.get(receivingStoreId);
+  if(!receiving||receiving.businessProfileId!==company||receiving.status!=="active")
+    throw new Error("Receiving store must be active in this company.");
+  if(company!==getActiveBusinessProfileId())throw new Error("Company changed during return-store review.");
+  return receivingStoreId;
+}
 const whole = (n:number) => Number.isSafeInteger(n) && n >= 0 && n <= MAX_STORE_UNITS;
 const requireCompany = (company:string) => {
   if (company !== getActiveBusinessProfileId()) throw new Error("Company changed during store stock posting.");
