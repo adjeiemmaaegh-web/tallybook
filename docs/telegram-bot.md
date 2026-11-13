@@ -46,7 +46,7 @@ Per-shop flags in `public.bot_capabilities`:
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
-| `daily_summary` | **on** | scheduled daily summary push *(honoured by RPCs; scheduler is v2)* |
+| `daily_summary` | **on** | scheduled once-a-day `/today` push (pg_cron → the function's `/cron` route) |
 | `realtime_alerts` | **on** | real-time alerts *(flag stored; fan-out is v2)* |
 | `on_demand_queries` | **on** | read-only queries like `/today` |
 | `can_record` | **off** | record sales/refunds from Telegram *(scaffold only in v1)* |
@@ -68,14 +68,28 @@ and `/start <code>` instructions instead.
 New tables, all with RLS + force-RLS and **no** anon/authenticated grants
 (browsers reach them only through the owner RPC):
 
-- `telegram_links` — `chat_id` (PK) ↔ `business_id`, `user_id`, `role`, status.
+- `telegram_links` — `chat_id` (PK) ↔ `business_id`, `user_id`, `role`, status,
+  and `last_daily_summary_date` (the "summary already sent today" marker).
 - `bot_capabilities` — one row per shop; the flags above.
 - `telegram_link_codes` — hashed one-time codes, short-lived and single-use.
 
-Migration: `supabase/migrations/20261112120000_telegram_bot.sql`
-(rollback: `supabase/rollback/20261112120000_telegram_bot_down.sql`).
-Tests: `qa/telegram-bot.test.mjs`, and the chain is covered by
-`qa/migration-rollbacks.test.mjs`.
+Migrations: `supabase/migrations/20261112120000_telegram_bot.sql` (tables +
+RPCs) and `20261113120000_telegram_daily_summary.sql` (the daily-summary claim
+function and marker), each with a matching rollback. Tests:
+`qa/telegram-bot.test.mjs`, `qa/telegram-daily-summary.test.mjs`, and the chain
+is covered by `qa/migration-rollbacks.test.mjs`.
+
+### Scheduled daily summary
+
+`daily_summary` is delivered by a scheduled job, not the webhook. Once a day
+pg_cron (with pg_net) POSTs the function's `/cron` route — authenticated by a
+separate `TELEGRAM_CRON_SECRET`, never a Telegram header. The route calls the
+service-role `public.telegram_bot_claim_daily_summaries(p_max)`, which atomically
+claims the chats whose shop has `daily_summary` on and that have not had today's
+summary (`for update … skip locked`, marking each sent first so a retry never
+double-sends), and returns each chat's role-scoped `/today` figures; the function
+then sends them. Scheduling snippet and the `TELEGRAM_CRON_SECRET` setup are in
+the function README (step 6).
 
 ## Setup & secrets
 
@@ -93,6 +107,7 @@ Full step-by-step: `supabase/functions/tallybook-telegram/README.md`.
 ## Deferred to v2
 
 - Full transactional writes behind `can_record` (v1 only gates a scaffold).
-- The scheduled daily-summary push and real-time alert fan-out (pg_cron / an
-  outbound job). The flags exist and are honoured; the sender is not wired yet.
+- Real-time alert fan-out (the `realtime_alerts` flag is stored and honoured, but
+  no outbound alert job is wired yet). The scheduled daily-summary push *is*
+  wired — see above.
 - Attendant self-linking and multi-role chats (v1 links are owner-minted).

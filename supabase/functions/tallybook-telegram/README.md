@@ -29,16 +29,19 @@ The function reads everything from the environment:
 | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | you | from @BotFather |
 | `TELEGRAM_WEBHOOK_SECRET` | you | a random string, 1–256 chars of `A-Z a-z 0-9 _ -` |
+| `TELEGRAM_CRON_SECRET` | you | a random string; authenticates the scheduled `/cron` call (only needed for the daily summary push) |
 | `SUPABASE_URL` | platform | provided to every function |
 | `SUPABASE_SERVICE_ROLE_KEY` | platform | provided to every function; server-only |
 
-Generate a webhook secret and set the two of your own:
+Generate the secrets and set the ones of your own:
 
 ```bash
 openssl rand -hex 32                       # use the output as TELEGRAM_WEBHOOK_SECRET
+openssl rand -hex 32                       # and a second one as TELEGRAM_CRON_SECRET
 supabase secrets set \
   TELEGRAM_BOT_TOKEN=<token-from-botfather> \
   TELEGRAM_WEBHOOK_SECRET=<the-random-secret> \
+  TELEGRAM_CRON_SECRET=<the-other-random-secret> \
   --project-ref <your-project-ref>
 ```
 
@@ -79,6 +82,37 @@ Check it with `getWebhookInfo`; to undo, `deleteWebhook`.
 3. The owner uses `/settings` to choose capabilities. Reads and alerts are on by
    default; **recording sales from Telegram is off by default**.
 
+## 6. Scheduled daily summary (optional)
+
+The function's `/cron` route sends each linked chat today's figures once a day,
+for shops whose `daily_summary` capability is on. It is **not** called by
+Telegram — it has its own `TELEGRAM_CRON_SECRET`. Schedule it with pg_cron +
+pg_net (both are Supabase extensions). Run this **once** in the SQL editor,
+filling in your own values:
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+-- 21:00 UTC = 21:00 in Ghana (GMT); pick a time near your end of day.
+select cron.schedule('tallybook-telegram-daily', '0 21 * * *', $$
+  select net.http_post(
+    url     := 'https://<your-project-ref>.functions.supabase.co/tallybook-telegram/cron',
+    headers := jsonb_build_object('X-Tallybook-Cron-Secret', '<the-cron-secret>')
+  );
+$$);
+```
+
+The claim is idempotent per day: it marks each chat sent before replying, with
+`for update … skip locked`, so a retried or overlapping run never double-sends
+(a chat missed by a failed send simply waits for the next day). The route does
+no ledger writes. For production, keep `<the-cron-secret>` in Supabase Vault and
+read it in the job rather than inlining it. To stop it:
+`select cron.unschedule('tallybook-telegram-daily');`.
+
+> If your project enforces an API key at the Functions gateway, also pass
+> `Authorization: Bearer <anon-key>` in the `headers` above.
+
 ## Commands
 
 - `/start <code>` — link this chat, or greet if already linked
@@ -92,6 +126,6 @@ Check it with `getWebhookInfo`; to undo, `deleteWebhook`.
 ## Not in v1 (see the PR description)
 
 - Full transactional writes behind `can_record`.
-- The scheduled daily summary push and real-time alert fan-out (the
-  `daily_summary` / `realtime_alerts` flags are stored and honoured by the RPCs,
-  but no scheduler/outbound job is wired yet).
+- Real-time alert fan-out (the `realtime_alerts` flag is stored and honoured by
+  the RPCs, but no outbound alert job is wired yet). The scheduled **daily
+  summary** push *is* wired — see step 6.

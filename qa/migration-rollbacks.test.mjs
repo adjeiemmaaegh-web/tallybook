@@ -34,7 +34,9 @@ const CHAIN = [
 ];
 const migrationFile = prefix => migrations.find(n => n.startsWith(prefix));
 const SHIFT_DOWN = "20261111180000_shop_staff_shifts_audit_down.sql";
-// Newest of all: its own entrypoint, so it unwinds first and re-applies last.
+// The Telegram bot and its daily-summary increment: own objects, so they unwind
+// first (summary before bot) and re-apply last.
+const TELEGRAM_SUMMARY_DOWN = "20261113120000_telegram_daily_summary_down.sql";
 const TELEGRAM_DOWN = "20261112120000_telegram_bot_down.sql";
 
 async function setup() {
@@ -92,6 +94,9 @@ test('every rollback file exists and is wrapped in a transaction', () => {
   assert.ok(migrationFile('20261112120000'));
   assert.match(read('supabase/rollback/' + TELEGRAM_DOWN), /^begin;/m);
   assert.match(read('supabase/rollback/' + TELEGRAM_DOWN), /^commit;/m);
+  assert.ok(migrationFile('20261113120000'));
+  assert.match(read('supabase/rollback/' + TELEGRAM_SUMMARY_DOWN), /^begin;/m);
+  assert.match(read('supabase/rollback/' + TELEGRAM_SUMMARY_DOWN), /^commit;/m);
   for (const [prefix, file] of CHAIN) {
     const sql = read('supabase/rollback/' + file);
     assert.ok(migrationFile(prefix), `migration ${prefix} exists`);
@@ -116,6 +121,9 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
     assert.equal((await t.ops('dailyReport', {from: new Date(Date.now() - 3600_000).toISOString(), to: new Date(Date.now() + 3600_000).toISOString()})).sales.count, 1);
 
     assert.equal((await t.ops('reconcileAccount', {reconciliationId: randomUUID(), account: 'cash', actualMinor: 100})).opening, true);
+    await t.down(TELEGRAM_SUMMARY_DOWN);                        // telegram daily summary (destructive)
+    assert.equal(await t.fn('public.telegram_bot_claim_daily_summaries(integer)'), false);
+    assert.equal(await t.column('telegram_links', 'last_daily_summary_date'), false);
     await t.down(TELEGRAM_DOWN);                                // telegram bot (destructive)
     assert.equal(await t.table('telegram_links'), false);
     assert.equal(await t.fn('public.tallybook_telegram_ops(text,jsonb)'), false);
@@ -216,11 +224,13 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
 test('with no such history, all eighteen rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
   const t = await setup();
   try {
+    await t.down(TELEGRAM_SUMMARY_DOWN);
     await t.down(TELEGRAM_DOWN);
     await t.down(SHIFT_DOWN);
     for (const [, file] of CHAIN) await t.down(file);
     assert.equal(await t.fn('public.tallybook_shop_ops(text,jsonb)'), false);
     assert.equal(await t.fn('public.tallybook_telegram_ops(text,jsonb)'), false);
+    assert.equal(await t.fn('public.telegram_bot_claim_daily_summaries(integer)'), false);
     for (const table of ['shop_stock_counts', 'shop_transfers', 'shop_suppliers', 'shop_purchase_orders', 'shop_online_orders']) assert.equal(await t.table(table), false, table);
     for (const column of ['barcode', 'kind', 'track_stock', 'cost_minor']) assert.equal(await t.column('shop_products', column), false, column);
 
@@ -239,8 +249,11 @@ test('with no such history, all eighteen rollbacks run, the core shop still work
     for (const [prefix] of [...CHAIN].reverse()) await t.up(prefix);
     await t.up("20261111180000");
     await t.up("20261112120000");
+    await t.up("20261113120000");
     assert.equal(await t.fn('public.tallybook_telegram_ops(text,jsonb)'), true);
     assert.equal(await t.table('telegram_links'), true);
+    assert.equal(await t.fn('public.telegram_bot_claim_daily_summaries(integer)'), true);
+    assert.equal(await t.column('telegram_links', 'last_daily_summary_date'), true);
     assert.equal((await t.ops('readiness')).saleCount, 2);
     assert.deepEqual((await t.ops('listTransfers')).transfers, []);
     assert.deepEqual((await t.ops('supplierBalances')).suppliers, []);
