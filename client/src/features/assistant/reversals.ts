@@ -65,12 +65,13 @@ export async function prepareLatestSaleReversal(currency: string, database: Tall
   return { saleId: sale.id, receiptNumber: sale.receiptNumber, totalMinor: sale.totalMinor, createdAt: sale.createdAt, lines: named, text: `I found sale ${sale.receiptNumber} recorded ${new Date(sale.createdAt).toLocaleString()}. Total: ${formatMinorAmount(sale.totalMinor, currency)}. I can prepare an audit-preserving accounting reversal. This action does not issue or verify a cash, card, or mobile money refund. The original sale remains in history, and nothing changes yet.` };
 }
 
-export async function executeLatestSaleReversal(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
-  // Acquire the cross-tab shared lock before opening the IndexedDB write transaction.
-  return withCrossTabDataLock("shared", () => executeLatestSaleReversalWhileLocked(currency, database, submissionKey));
+export async function executeLatestSaleReversal(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`, expectedSaleId?: string): Promise<SaleReversal> {
+  // The assistant binds its confirmation to the reviewed immutable sale ID.
+  // Existing non-assistant callers may omit this additional guard.
+  return withCrossTabDataLock("shared", () => executeLatestSaleReversalWhileLocked(currency, database, submissionKey, expectedSaleId));
 }
 
-async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey = `reversal-${nanoid(18)}`): Promise<SaleReversal> {
+async function executeLatestSaleReversalWhileLocked(currency: string, database: TallybookDB, submissionKey: string, expectedSaleId?: string): Promise<SaleReversal> {
   const activeId = getActiveBusinessProfileId();
   return database.transaction("rw", [database.appMeta, database.businessProfiles, database.saleReversals, database.centralOperationalEvents, database.cashPartialReturns, database.sales, database.saleLines, database.payments, database.receipts, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customerBenefits, database.staffAudits, database.staffMembers, database.staffShifts, database.repayments, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
@@ -79,11 +80,16 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
     if (staff?.role === 'cashier' && !shift) throw new Error('Open a shift before reversing a sale.');
     if (typeof submissionKey !== 'string' || !/^[A-Za-z0-9:_-]{8,100}$/.test(submissionKey))
       throw new Error('Invalid reversal submission key.');
+    if (expectedSaleId !== undefined && (typeof expectedSaleId !== 'string' || !expectedSaleId.trim() || expectedSaleId.length > 256))
+      throw new Error('Invalid previewed sale identity.');
     const reversalMatches = await database.saleReversals.where("[businessProfileId+submissionKey]").equals([activeId, submissionKey]).toArray();
     if (reversalMatches.length > 1) throw new Error("Reversal submission key has duplicate saved records.");
     const existingByKey = reversalMatches[0];
     if (existingByKey && existingByKey.businessProfileId !== activeId) throw new Error("Reversal key belongs to another company.");
     if (existingByKey) {
+      // A reused idempotency key must never authorize an unrelated reviewed sale.
+      if (expectedSaleId !== undefined && existingByKey.originalSaleId !== expectedSaleId)
+        throw new Error('The saved reversal belongs to a different reviewed sale.');
       const original = await database.sales.get(existingByKey.originalSaleId);
       if (original && original.currency !== currency)
         throw new Error('Saved reversal retry currency does not match its original sale.');
@@ -97,6 +103,8 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       return existingByKey;
     }
     const sale = await latestReversibleSale(database, activeId);
+    if (expectedSaleId !== undefined && sale?.id !== expectedSaleId)
+      throw new Error("The latest sale changed since your preview. Review the sale again before reversing it.");
     if (!sale) throw new Error("I couldn't find a completed sale that has not already been reversed.");
     if(sale.paymentMethod==="split")throw Error("Split-tender refund requires tender-by-tender reconciliation. No automatic refund or full reversal is authorized.");
     if(!/^[A-Z]{3}$/.test(currency)||sale.currency!==currency)
