@@ -7,6 +7,12 @@
       "sha": "09cba549226ef85feccebd15aa7e63f1302b61a0",
       "pr": 83,
       "merged": "7fb9dd1f766fd45a988921c0507a377010b8b61b"
+    },
+    {
+      "branch": "maintenance/retire-run12-tax-branch-20261113",
+      "sha": "48121969604989e5d39998c361d1c50958bf616f",
+      "pr": 84,
+      "merged": "4f2068b629cf9c145e0c623b8513df76cb00a2ec"
     }
   ]
 }
