@@ -51,3 +51,9 @@
 4. Enter maintenance mode, stop webhooks/queues and registrations, freeze exact targets and inventories, execute a reviewed transactionally safe reset of all intended public and auth data, validate zero residual business/user/session rows. Retain migration history and database configuration.
 5. Enable `VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH=true` and a unique `VITE_TALLYBOOK_FRESH_START_EPOCH` on the exact production build, stage/promote it, and verify fresh signup plus no accessible old records. Do not rely solely on client data clearing to revoke old tokens.
 6. Verify the same release from legacy PWA clients, multi-tab/blocking storage cases and current supported browsers. Disconnected devices are never assured remotely wiped.
+
+## Additional account authorization finding and source remedy
+
+The exposed authenticated `public.create_owned_business` wrapper invokes `private.create_owned_business`. The production version checks `auth.uid()` but not whether `auth.jwt().session_id` still appears in an active `auth.sessions` row. A revoked but otherwise unexpired signed JWT may therefore retain business-creation authority (subject to normal API/JWT verification). PR #86 adds `supabase/migrations/20261114120000_company_creation_active_session.sql` with a session/actor match, expiration check, and row lock, plus rollback and synthetic PGlite tests. This is **source-only**, not applied to production; verify hosted before release.
+
+The authenticated `private` function inventory showed 48 routines, 38 SECURITY DEFINER, no anonymous EXECUTE privileges and only one directly authenticated-executable private function: `create_owned_business`. Its public wrapper was reviewed. Other RPC actions still require complete action-specific authorization review before claiming exhaustive security acceptance.
