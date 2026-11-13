@@ -172,7 +172,7 @@ it('requires a physical receiving store for a pre-activation sale returned after
   const {database,product,original}=await fixture();
   const {createStore}=await import('@/features/stores/storeDirectory');
   const {activateStoreInventory,readStoreBalances}=await import('@/features/stores/storeStockLedger');
-  const {getCashReturnReview}=await import('./cashReturnReview');
+  const {getCashReturnReview}=await import('./cashReturnReview.ts');
   const store=await createStore('Receiving',database);
   await activateStoreInventory([{storeId:store.id,productId:product.id,quantity:1}],database);
   const preview=await getCashReturnReview(original.sale.id,database);
