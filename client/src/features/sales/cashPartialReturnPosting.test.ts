@@ -171,10 +171,26 @@ it('local integrity reports a damaged partial refund FIFO restoration without re
 it('requires a physical receiving store for a pre-activation sale returned after store stock is enabled', async()=>{
   const {database,product,original}=await fixture();
   const {createStore}=await import('@/features/stores/storeDirectory');
-  const {activateStoreInventory,readStoreBalances}=await import('@/features/stores/storeStockLedger');
+  const {readStoreBalances}=await import('@/features/stores/storeStockLedger');
+  const {STAGE9_RELEASE_SCOPE}=await import('@/features/stores/stage9ReleaseScope');
   const {getCashReturnReview}=await import('./cashReturnReview.ts');
   const store=await createStore('Receiving',database);
-  await activateStoreInventory([{storeId:store.id,productId:product.id,quantity:1}],database);
+  // Current release intentionally DISABLES new store-stock activation.
+  // Seed the exact journal shape of an earlier owner-confirmed activation
+  // to exercise return/recovery compatibility without flipping the feature.
+  expect(STAGE9_RELEASE_SCOPE.authoritativeStoreStock).toBe(false);
+  const owner=(await database.staffMembers.where('businessProfileId').equals('primary').first())!;
+  const activatedAt=new Date().toISOString();
+  await database.storeStockModes.put({
+    businessProfileId:'primary',activatedAt,activatedByStaffId:owner.id,
+    evidence:'owner-confirmed-opening-allocations',
+  });
+  await database.storeStockEntries.add({
+    id:'fixture-owner-confirmed-opening',businessProfileId:'primary',
+    storeId:store.id,productId:product.id,kind:'opening',quantityDelta:1,
+    sequence:1,sourceId:`opening:primary:${store.id}:${product.id}`,
+    submissionKey:`opening:${store.id}:${product.id}`,createdAt:activatedAt,
+  });
   const preview=await getCashReturnReview(original.sale.id,database);
   expect(preview.storeMode).toBe(true);
   expect(preview.receivingStores).toEqual([{id:store.id,name:'Receiving'}]);
