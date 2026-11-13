@@ -32,6 +32,18 @@ export function useRun4CloudSession(enabled=true,requireServerProof=false){
       serverProof:requireServerProof?async ({userId,accessToken,expiresAtEpochMs})=>{
         if(!navigator.onLine||window.location.protocol!=='https:')
           throw Error('Secure server session proof unavailable');
+        // Strict launches verify session revocation in the hosted database,
+        // not just the JWT signature or a cached browser session.
+        if(import.meta.env.VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH === 'true'){
+          const {data,error}=await client.rpc('tallybook_active_session_proof');
+          if(error||!data||typeof data!=='object'||Array.isArray(data))
+            throw Error('Active cloud session proof unavailable');
+          const p=data as Record<string,unknown>;
+          if(p.active!==true||p.userId!==userId||
+             p.expiresAtEpochMs!==expiresAtEpochMs)
+            throw Error('Cloud session was revoked or changed');
+          return {active:true,userId,expiresAtEpochMs};
+        }
         const res=await fetch('/api/run4/session/verify',{
           method:'POST',credentials:'omit',cache:'no-store',
           headers:{'Authorization':'Bearer '+accessToken},
