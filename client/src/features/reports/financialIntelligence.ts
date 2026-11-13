@@ -24,6 +24,7 @@ import type {Customer} from '@/features/customers/customers';
 import {auditCompanyReturnPolicyEvidence,type CompanyReturnPolicyEvidenceSummary} from '@/features/business/returnPolicyAudit.mjs';
 import {auditRun12SupplierFinance,type Run12SupplierFinancialAudit} from './run12SupplierFinanceAudit.mjs';
 import {auditRun12SaleTaxHistory,type Run12SaleTaxHistory} from './run12SaleTaxAudit.mjs';
+import {auditRun12RecordedTaxConservation,type Run12RecordedTaxConservation} from './run12RecordedTaxConservation.mjs';
 import { assertFinancialPostingDates, reconcileFinancialPeriodDisplay } from "./financialPeriodConservation.mjs";
 import { assertSingleCurrencyFinancialEvidence } from "./financialCurrencyEvidence.mjs";
 import { reconcileSupplierFinancialReport, type SupplierFinancialReconciliation } from "./supplierReporting.mjs";
@@ -48,6 +49,8 @@ export interface FinancialSummary {
   returnPolicyEvidence?:CompanyReturnPolicyEvidenceSummary;
   /** Original tax policy snapshots: off is explicit; legacy absence unknown. */
   taxEvidence?:Run12SaleTaxHistory;
+  /** Full-history recorded tax, signed reversals and confirmed cash returns; no statutory liability. */
+  recordedTaxConservation?:Run12RecordedTaxConservation;
   /** Original-currency supplier disbursements separate from operating expense. */
   supplierFinanceAudit?:Run12SupplierFinancialAudit;
   /** Full-history per-customer customer-credit conservation; not a period inflow. */
@@ -246,6 +249,10 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   // Saved tax-off evidence and the original registered single-rate terms,
   // not the active tax settings, govern original invoice verification.
   summary.taxEvidence=auditRun12SaleTaxHistory(scoped(sales));
+  // Reconcile the entire saved invoice-tax history independently from this
+  // period's net amount. Legacy unknown snapshots are never silently certified.
+  summary.recordedTaxConservation=auditRun12RecordedTaxConservation(
+    scoped(sales),scoped(reversals),scoped(cashReturns),company);
   // Supplier claims and manual outflows remain separate from operating
   // expenses and do not establish bank/provider settlement.
   summary.supplierFinanceAudit=auditRun12SupplierFinance({
@@ -295,6 +302,14 @@ export function financialCsv(summary:FinancialSummary):string {
     ['Tallybook management report',summary.range.label],['Metric','Minor units'],
     ['Net saved sales',summary.revenueMinor],['Recorded tax after reversals',summary.recordedTaxMinor],
     ['Sales excluding recorded tax',summary.salesExcludingRecordedTaxMinor],['Sales count',summary.saleCount],
+    ...(summary.recordedTaxConservation?[
+      ['Full-history recorded gross tax (minor units)',summary.recordedTaxConservation.grossRecordedTaxMinor],
+      ['Full-history tax removed on full accounting reversals',summary.recordedTaxConservation.fullReversalTaxMinor],
+      ['Full-history returned tax on confirmed cash partial refunds',summary.recordedTaxConservation.partialCashRefundTaxMinor],
+      ['Full-history net recorded tax (not statutory liability)',summary.recordedTaxConservation.netRecordedTaxMinor],
+      ['Historical refunds with unverified saved tax',summary.recordedTaxConservation.legacyRefundTaxUnverified],
+      ['Full-history recorded tax evidence complete',summary.recordedTaxConservation.recordedTaxEvidenceComplete?'Yes':'No']
+    ] as (string|number)[][]:[]),
     ...(summary.taxEvidence ? [
       ['Sales with saved registered tax policy',summary.taxEvidence.configuredChargedSales],
       ['Sales with explicit tax OFF at checkout',summary.taxEvidence.explicitNoTaxSales],
