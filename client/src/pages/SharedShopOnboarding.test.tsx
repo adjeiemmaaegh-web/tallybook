@@ -61,6 +61,24 @@ describe("owner first run", () => {
     await waitFor(() => expect(screen.queryByText(/Get started/)).toBeNull());
   });
 
+  it("confirms setup only after the server returns an active store", async () => {
+    shop.overview.mockReset().mockResolvedValueOnce(fresh({currency:null})).mockResolvedValue(fresh({
+      currency:"GHS",stores:[{id:"store-1",name:"Main shop",status:"active"}]
+    }));
+    shop.setup.mockReset().mockResolvedValue({});
+    shop.store.mockReset().mockResolvedValue({});
+    render(<SharedShopPage />);
+    expect(await screen.findByText("Step 1 of 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Next"}));
+    fireEvent.change(screen.getByLabelText("Store name"),{target:{value:"Main shop"}});
+    fireEvent.click(screen.getByRole("button",{name:"Open shop"}));
+    expect(await screen.findByRole("heading",{name:"Your store is ready"})).toBeInTheDocument();
+    expect(screen.getByText(/Add your first product and stock before recording a sale/)).toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Continue to dashboard"})).toBeEnabled();
+    expect(shop.setup).toHaveBeenCalledWith("biz","GHS");
+    expect(shop.store).toHaveBeenCalledTimes(1);
+  });
+
   it("sets up currency then store in two steps, and a retry reuses the same store id", async () => {
     shop.overview.mockResolvedValue(fresh({ currency: null }));
     shop.setup.mockResolvedValue({});
