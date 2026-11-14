@@ -6,6 +6,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import {openStockCount} from "./purchaseRetry";
 import type {ShopOverview} from "./shopClient";
 import {tracksStock} from "./productTracking";
+import {physicalCountPreview} from "./shopReconciliationView";
 import {getShopStockCounts,startShopStockCount,applyShopStockCount,cancelShopStockCount,type ShopStockCount} from "./shopPurchasing";
 interface Props {userId:string;companyId:string;overview:ShopOverview;online:boolean;refresh:()=>Promise<void>}
 export function SharedShopStockCountPanel({userId,companyId,overview,online,refresh}:Props){
@@ -14,17 +15,28 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
  const [filter,setFilter]=useState<"all"|"open"|"applied"|"cancelled">("all");
  const [storeId,setStoreId]=useState("");const [productId,setProductId]=useState("");
  const [counted,setCounted]=useState<Record<string,string>>({});
- const [loading,setLoading]=useState(false);const [busy,setBusy]=useState(false);
+ const [loading,setLoading]=useState(false);const [loaded,setLoaded]=useState(false);const [busy,setBusy]=useState(false);
+ const request=useRef(0);
  const [error,setError]=useState("");const [status,setStatus]=useState("");
  const startKey=useRef<{storeId:string;productId:string}|null>(null);
  const load=useCallback(async()=>{
-  if(!online)return;
-  setLoading(true);
-  try{const data=await getShopStockCounts(companyId);setCounts(data.counts);setError("");}
-  catch(e){setError(e instanceof Error?e.message:"Could not load stock counts.");}
-  finally{setLoading(false);}
+  const mine=++request.current;
+  setLoaded(false);setLoading(online);
+  if(!online){setCounts([]);return;}
+  try{
+    const data=await getShopStockCounts(companyId);
+    if(mine!==request.current)return;
+    setCounts(data.counts);setLoaded(true);setError("");
+  }catch(e){
+    if(mine!==request.current)return;
+    setCounts([]);setError(e instanceof Error?e.message:"Could not load stock counts.");
+  }finally{if(mine===request.current)setLoading(false);}
  },[companyId,online]);
- useEffect(()=>{setCounts([]);setStoreId("");setProductId("");startKey.current=null;if(online)void load();},[companyId,online,load]);
+ useEffect(()=>{
+  setCounts([]);setLoaded(false);setStoreId("");setProductId("");startKey.current=null;
+  if(online)void load();
+  return()=>{request.current++;};
+ },[companyId,online,load]);
  const action=async(work:()=>Promise<unknown>,label:string)=>{
   if(!online||busy)return;
   setBusy(true);setError("");setStatus("");
@@ -45,11 +57,14 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
   },"Stock count opened");
  };
  const apply=async(item:ShopStockCount)=>{
-  const text=counted[item.countId]?.trim();
-  if(!text||!/^(0|[1-9][0-9]*)$/.test(text)){setError("Enter a whole counted quantity of zero or more.");return;}
-  const countedQuantity=Number(text);
-  if(!Number.isSafeInteger(countedQuantity)||countedQuantity>2147483647){setError("Count exceeds supported stock limit.");return;}
-  if(!(await confirmAction("Confirm the physical shelf count? The server will refuse to apply it if stock changed since the count started.")))return;
+  const preview=physicalCountPreview(item.expectedQuantity,counted[item.countId]??"");
+  if(!preview){setError("Enter a whole counted quantity from 0 to 2,147,483,647.");return;}
+  const countedQuantity=preview.counted;
+  const movement=preview.direction==="matched"?"No adjustment is expected":
+    preview.direction==="short"?`Expected shortage of ${Math.abs(preview.variance)} units`:
+      `Expected surplus of ${preview.variance} units`;
+  if(!(await confirmAction(`Post physical count of ${countedQuantity} units for ${productName(item.productId)} at ${storeName(item.storeId)}? ${movement}. The server will reject this count if stock has changed since the snapshot.`,
+    {confirmLabel:"Post physical count"})))return;
   void action(()=>applyShopStockCount(companyId,{countId:item.countId,countedQuantity}),"Physical stock count");
  };
  const stores=overview.stores.filter(s=>s.status==="active");
@@ -72,12 +87,12 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
   <div className="tb-stocktake-intro"><p className="shop-eyebrow">INVENTORY CONTROL · PHYSICAL COUNT</p>
     <h2>Stock take</h2>
     <p>Count what is actually on your shelves, then post the difference to the verified stock ledger.</p>
-    <div className="tb-stocktake-metrics" aria-label="Count summary">
+    {loaded&&<div className="tb-stocktake-metrics" aria-label="Count summary">
      <div><span>Sessions</span><strong>{visibleCounts.length}</strong></div>
      <div><span>Open</span><strong>{opened}</strong></div>
      <div><span>Done</span><strong>{applied}</strong></div>
      <div><span>Cancelled</span><strong>{cancelled}</strong></div>
-    </div>
+    </div>}
   </div>
   <p className="shop-muted">Each count is for one product at one store. Stock is only adjusted after you confirm the observed quantity; if a sale or receipt changes stock in the meantime, the server rejects a stale adjustment.</p>
   {!online&&<p role="status">Counts require an authorized online connection. Offline edits are not queued.</p>}
@@ -92,7 +107,7 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
   </div>
   <div className="tb-stocktake-list-head">
    <h3>Physical stock counts</h3>
-   <p className="shop-muted">Newest first · {found.length} showing</p>
+   {loaded&&<p className="shop-muted">Newest first · {found.length} showing</p>}
    <label className="shop-field"><span className="sr-only">Search count records</span>
     <input type="search" value={query} onChange={event=>setQuery(event.target.value)} maxLength={80} placeholder="Search count #, store, product…" /></label>
    <div className="shop-chips" role="group" aria-label="Count status">
@@ -101,17 +116,25 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
    </div>
   </div>
   {loading&&<p role="status">Reading saved count history…</p>}
-  {!loading&&visibleCounts.length===0&&<div className="tb-stocktake-empty">
+  {!loading&&!loaded&&online&&<p role="status">Count history is unavailable. Retry after reconnecting; no zero-session conclusion can be drawn.</p>}
+  {loaded&&visibleCounts.length===0&&<div className="tb-stocktake-empty">
     <span aria-hidden="true">✓</span><strong>No active stock takes</strong>
     <p className="shop-muted">Choose a store and tracked product above to start an authorized count.</p>
   </div>}
-  {!loading&&visibleCounts.length>0&&found.length===0&&<p className="shop-muted">No counts match these filters. <button className="shop-link" type="button" onClick={()=>{setFilter("all");setQuery("");}}>Clear filters</button></p>}
+  {loaded&&visibleCounts.length>0&&found.length===0&&<p className="shop-muted">No counts match these filters. <button className="shop-link" type="button" onClick={()=>{setFilter("all");setQuery("");}}>Clear filters</button></p>}
   {openRows.map(row=><div key={row.countId} className="tb-stocktake-row">
    <div className="tb-stocktake-row-title"><strong>{productName(row.productId)}</strong><span className="tb-stocktake-state">Open</span></div>
    <p>{storeName(row.storeId)} · Expected {row.expectedQuantity} units · {new Date(row.createdAt).toLocaleString()}</p>
    <small>Count # {row.countId}</small>
-   <label className="shop-field">Physically counted units<input inputMode="numeric" value={counted[row.countId]??""} onChange={e=>setCounted(x=>({...x,[row.countId]:e.target.value}))}/></label>
-   <div className="shop-actions"><button type="button" className="primary-action" disabled={!online||busy} onClick={()=>apply(row)}>Apply physical count</button>
+   <label className="shop-field">Physically counted units<input inputMode="numeric" maxLength={10} value={counted[row.countId]??""} onChange={e=>setCounted(x=>({...x,[row.countId]:e.target.value}))}/></label>
+   {physicalCountPreview(row.expectedQuantity,counted[row.countId]??"")&&<p role="status" className="tb-stocktake-preview">
+     {(()=>{const p=physicalCountPreview(row.expectedQuantity,counted[row.countId]??"")!;
+       return p.direction==="matched"?"Count matches the snapshot. No variance expected.":
+         p.direction==="short"?`Short by ${Math.abs(p.variance)} units versus snapshot. Posting would reduce recorded stock.`:
+           `Over by ${p.variance} units versus snapshot. Posting would increase recorded stock.`;})()}
+     <small> Server rechecks the snapshot before writing.</small>
+   </p>}
+   <div className="shop-actions"><button type="button" className="primary-action" disabled={!online||busy||!physicalCountPreview(row.expectedQuantity,counted[row.countId]??"")} onClick={()=>apply(row)}>Apply physical count</button>
     <button type="button" className="secondary-action" disabled={!online||busy} onClick={async()=>{if(await confirmAction("Cancel this unposted count?",{danger:true}))void action(()=>cancelShopStockCount(companyId,row.countId),"Count cancelled");}}>Cancel</button></div>
   </div>)}
   {previousRows.map(row=><div key={row.countId} className="tb-stocktake-row tb-stocktake-row-complete">
