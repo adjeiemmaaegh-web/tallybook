@@ -213,6 +213,7 @@ describe("shared shop stock adjustment safety",()=>{
   try{
    await openTab("Stock");
    fireEvent.change(screen.getByLabelText("Units of Eggs"),{target:{value:"1"}});
+   fireEvent.change(screen.getByLabelText("Reason for Eggs stock change"),{target:{value:"Breakage at the counter"}});
    fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
    await waitFor(()=>expect(confirm).toHaveBeenCalled());
    expect(shop.adjust).not.toHaveBeenCalled();
@@ -224,6 +225,7 @@ describe("shared shop stock adjustment safety",()=>{
   try{
    await openTab("Stock");
    fireEvent.change(screen.getByLabelText("Units of Eggs"),{target:{value:"1"}});
+   fireEvent.change(screen.getByLabelText("Reason for Eggs stock change"),{target:{value:"Breakage at the counter"}});
    fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
    await waitFor(()=>expect(shop.adjust).toHaveBeenCalledTimes(1));
    await screen.findByText(/Stock adjustment not confirmed/);
@@ -233,5 +235,15 @@ describe("shared shop stock adjustment safety",()=>{
    await waitFor(()=>expect(shop.adjust).toHaveBeenCalledTimes(2));
    expect(shop.adjust.mock.calls[1][0]).toMatchObject({operationId:first.operationId,storeId:"st-a",productId:"eggs",delta:-1});
   }finally{confirm.mockRestore();}
+ });
+});
+
+describe("manual shrink audit reason",()=>{
+ it("refuses stock removal without a reason and posts nothing",async()=>{
+   await openTab("Stock");
+   fireEvent.change(screen.getByLabelText("Units of Eggs"),{target:{value:"1"}});
+   fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
+   expect(await screen.findByRole("alert")).toHaveTextContent("reason of at least 4 characters");
+   expect(shop.adjust).not.toHaveBeenCalled();
  });
 });

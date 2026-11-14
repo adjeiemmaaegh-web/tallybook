@@ -979,6 +979,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
   const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [edit, setEdit] = useState<ProductDraft | null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
+  const [adjustNotes, setAdjustNotes] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -1012,7 +1013,9 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
     if (sign === -1 && n > stockOf(productId)) {
       setError("The quantity to remove is more than the last loaded stock. Refresh first."); return;
     }
-    const payload = {storeId,productId,delta:sign*n};
+    const note=(adjustNotes[productId]??"").trim();
+    if(sign===-1 && note.length<4){setError("Enter a reason of at least 4 characters before removing stock.");return;}
+    const payload = {storeId,productId,delta:sign*n,note};
     const fingerprint = JSON.stringify(payload);
     if (pendingAdjustment.current && pendingAdjustment.current.fingerprint !== fingerprint) {
       setError("A previous stock adjustment may have been posted. Retry the SAME store, item, direction and quantity, then refresh before changing it."); return;
@@ -1027,6 +1030,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
           retry.confirm();
           pendingAdjustment.current=null;
           setAdds(a=>({...a,[productId]:""}));
+          setAdjustNotes(a=>({...a,[productId]:""}));
         }catch(cause){
           throw new Error("Stock adjustment not confirmed. Retry this exact adjustment with the same quantity; never re-enter it as a new amount until you reconcile the ledger. "+message(cause));
         }
@@ -1075,7 +1079,10 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         <div className="shop-stock-controls">
           {active.length > 0 && tracked && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, 1)}>Add</button>
-            <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button></>}
+            <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button>
+            <input className="tb-stock-adjust-note" aria-label={`Reason for ${p.name} stock change`} maxLength={200}
+              placeholder="Reason for manual stock adjustment (required to remove)"
+              value={adjustNotes[p.id]??""} onChange={e=>setAdjustNotes(a=>({...a,[p.id]:e.target.value}))}/></>}
           <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
         </div></li>; })}</ul>
       {pendingAdjustment.current && <p role="status" className="shop-muted">Unconfirmed stock change: retry the same store, product and quantity or check the server history before proceeding.</p>}
