@@ -46,6 +46,8 @@ const COMMAND_START = /^(?:i|we|correct|adjust|update|sell|record|add|create|rec
 export function normalizeSoleInterfaceRequest(raw: string): string {
   const input=sanitizeInput(raw);
   if(!input)return input;
+  // Do not turn polite requests to delete or reverse protected records into imperatives.
+  if(/^(?:can|could|would|will) you\s+(?:delete|remove|refund|reverse|restore|reset)\b/i.test(input))return input;
   const directBalance=naturalBalanceQuestion(input);
   if(directBalance)return directBalance;
   if((EXPLANATION.test(input) && !ADDRESSED_PREFACE.test(input)) || SELF_ACTION.test(input)) return input;
