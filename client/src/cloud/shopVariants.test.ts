@@ -38,4 +38,11 @@ it("fails closed on mismatching server receipt or malformed variant list",async(
  await expect(listShopVariants("biz")).rejects.toThrow(/unavailable/);
  vi.mocked(callShop).mockResolvedValueOnce({variants:[{productId:sku,variantFamily:"",variantSize:null,variantColor:null}]});
  await expect(listShopVariants("biz")).rejects.toThrow(/malformed/);
+ vi.mocked(callShop).mockResolvedValueOnce({variants:[
+  {productId:sku,variantFamily:"Cotton",variantSize:"M",variantColor:"Blue"},
+  {productId:sku,variantFamily:"Cotton",variantSize:"L",variantColor:"Blue"}]});
+ await expect(listShopVariants("biz")).rejects.toThrow(/malformed/);
+ vi.mocked(callShop).mockResolvedValueOnce({variants:[{
+  productId:sku,variantFamily:"Cotton",variantSize:"M",variantColor:"Red\nAlert"}]});
+ await expect(listShopVariants("biz")).rejects.toThrow(/malformed/);
 });

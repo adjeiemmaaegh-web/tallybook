@@ -23,15 +23,23 @@ export function normaliseVariantDraft(input:ShopVariantInput):ShopVariantInput{
 }
 export async function listShopVariants(companyId:string):Promise<ShopVariant[]>{
  const data=await callShop<{variants:ShopVariant[]}>("list",{companyId},"tallybook_shop_variants");
- if(!Array.isArray(data.variants))throw Error("Variant list is unavailable.");
+ if(!Array.isArray(data.variants)||data.variants.length>5000)
+   throw Error("Variant list is unavailable or exceeds its safe limit.");
  const seen=new Set<string>();
  for(const v of data.variants){
-  if(!v||typeof v!=="object"||!UUID.test(v.productId)||
-   typeof v.variantFamily!=="string"||!v.variantFamily.trim()||
-   (v.variantSize!==null&&typeof v.variantSize!=="string")||
-   (v.variantColor!==null&&typeof v.variantColor!=="string")||
-   (!v.variantSize&&!v.variantColor)||seen.has(v.productId))
+  if(!v||typeof v!=="object"||typeof v.variantFamily!=="string"||
+     (v.variantSize!==null&&typeof v.variantSize!=="string")||
+     (v.variantColor!==null&&typeof v.variantColor!=="string"))
     throw Error("Variant list is malformed. Do not change grouped stock.");
+  try {
+    const validated=normaliseVariantDraft({...v,variantFamily:v.variantFamily});
+    if(!validated.variantFamily||validated.variantFamily!==v.variantFamily||
+       validated.variantSize!==v.variantSize||validated.variantColor!==v.variantColor||
+       seen.has(v.productId))
+      throw Error("invalid");
+  } catch {
+    throw Error("Variant list is malformed. Do not change grouped stock.");
+  }
   seen.add(v.productId);
  }
  return data.variants;
