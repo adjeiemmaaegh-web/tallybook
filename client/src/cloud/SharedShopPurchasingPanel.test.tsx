@@ -29,7 +29,7 @@ it("blocks supplier or stock writes while offline",()=>{
 });
 it("refuses an overstated supplier settlement before any server write",async()=>{
  render(<SharedShopPurchasingPanel {...props} online={true}/>);
- await screen.findByText("Goods Co");
+ await screen.findAllByRole("option",{name:"Goods Co"});
  expect(screen.getByText(/No payment is sent from this app/)).toBeInTheDocument();
  const selects=screen.getAllByLabelText("Supplier");
  fireEvent.change(selects[selects.length-1],{target:{value:"supp-a"}});

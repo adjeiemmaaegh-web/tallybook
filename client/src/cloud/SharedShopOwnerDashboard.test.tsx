@@ -26,7 +26,7 @@ it("uses only authorized server summaries and opens the existing POS route",asyn
  expect(callShop).toHaveBeenCalledWith("salesSummary",{companyId:"biz-a",days:1},"tallybook_shop_ops");
  expect(callShop).toHaveBeenCalledWith("salesSummary",{companyId:"biz-a",days:7},"tallybook_shop_ops");
  expect(screen.getByText("Not verified")).toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:/Open POS/}));
+ fireEvent.click(screen.getByRole("button",{name:"Open POS",exact:true}));
  expect(navigate).toHaveBeenCalledWith("sell");
 });
 
