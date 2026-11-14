@@ -49,6 +49,24 @@ describe("Clementia natural-language wrappers do not change business intent",()=
   ])("never converts a genuine question or future statement into an imperative: %s", raw=>{
     expect(normalize(raw)).toBe(raw);
   });
+  it.each([
+    ["Can you tell me how much Adwoa owes?","How much does Adwoa owe?"],
+    ["Please tell me how much Kwame owes.","How much does Kwame owe?"],
+    ["Clementia, tell me how much Adwoa owes.","How much does Adwoa owe?"],
+    ["I need you to tell me how much Adwoa owes.","How much does Adwoa owe?"],
+    ["For my shop, tell me how much Adwoa owes.","How much does Adwoa owe?"],
+  ])("treats a named balance question as read-only, not help or a write: %s",(raw,expected)=>{
+    expect(normalize(raw)).toBe(expected);
+  });
+  it.each([
+    "Tell me how much I owe Kofi Traders",
+    "Tell me how much we owe our suppliers",
+    "How do I change Adwoa's balance?",
+    "Can you delete Adwoa's debt?",
+    "Will Kwame pay tomorrow?",
+  ])("does not rewrite directional, financial-edit or future requests: %s",raw=>{
+    expect(normalize(raw)).toBe(raw);
+  });
   it("preserves the full entity and amount, not a generic alias",()=>{
     expect(normalize("Could you add product Aloe Soap, selling price 12.50?")).toBe("add product Aloe Soap, selling price 12.50");
   });
