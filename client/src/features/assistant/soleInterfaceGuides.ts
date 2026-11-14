@@ -35,6 +35,41 @@ const FAQ_GUIDES:readonly Guide[]=[
     summary:"Clementia can prepare a customer record in chat. It asks for missing details and shows a preview.",
     steps:["Say “Add customer Ama Serwaa”.","Supply a phone number if requested.","Read the preview and choose Confirm only when the information is correct."],
     inChat:"Add customer Ama Serwaa"},
+  {id:"supplier-create",match:/\b(?:add|create|register|save)\b.{0,35}\b(?:supplier|vendor|wholesaler)\b/i,
+    title:"Adding a supplier",route:ROUTES.purchases,
+    summary:"Clementia can prepare a supplier record in chat, then requests confirmation.",
+    steps:["Say “Add supplier Accra Wholesalers”.","Provide contact information if needed.","Check the supplier identity and confirm the preview."],
+    inChat:"Add supplier Accra Wholesalers"},
+  {id:"category-create",match:/\b(?:add|create|register|save)\b.{0,35}\bcategor(?:y|ies)\b/i,
+    title:"Adding a category",route:ROUTES.stock,
+    summary:"Clementia can prepare product categories in chat.",
+    steps:["Say “Add category Drinks”.","Check the proposed category name.","Confirm the preview to save it."],
+    inChat:"Add category Drinks"},
+  {id:"stock-receipt",match:/\b(?:receive|record|enter)\b.{0,35}\b(?:stock|delivery|inventory receipt)\b/i,
+    title:"Receiving stock",route:ROUTES.purchases,
+    summary:"Clementia can prepare a stock receipt from a supplier and ask for cost details.",
+    steps:["Say “I received 10 eggs from Kofi Traders at 40 each”.","Answer any quantity, supplier or cost questions.","Confirm the proposed purchase and stock movement."],
+    inChat:"Record a purchase"},
+  {id:"stock-count",match:/\b(?:count|recount|stocktake|stock count)\b.{0,30}\b(?:stock|items?|products?|inventory|eggs|rice)\b/i,
+    title:"Correcting a physical stock count",route:ROUTES.stock,
+    summary:"Clementia can prepare a physical stock correction and asks for explicit approval.",
+    steps:["Count the goods physically.","Say “I counted 25 eggs but we have 37”.","Verify and confirm the resulting stock adjustment."],
+    inChat:"I counted 25 eggs but we have 37"},
+  {id:"repayment",match:/\b(?:record|enter|log|take|receive)\b.{0,35}\b(?:customer payment|repayment|payment from customer)\b/i,
+    title:"Recording a customer repayment",route:ROUTES.customers,
+    summary:"Clementia can prepare repayment entries after checking the customer's current balance.",
+    steps:["Say “Adwoa paid 100 cedis cash”.","Verify the customer, amount and payment method.","Confirm the repayment entry."],
+    inChat:"Adwoa paid 100 cedis cash"},
+  {id:"quotation",match:/\b(?:prepare|draft|make|create)\b.{0,35}\b(?:quote|quotation|estimate)\b/i,
+    title:"Preparing a quotation",route:ROUTES.quotations,
+    summary:"Clementia can prepare quotations from local records without issuing a financial sale.",
+    steps:["Say “Prepare a quotation for Adwoa for 2 eggs”.","Review the customer and proposed lines.","Confirm the quotation draft; this is not a paid sale."],
+    inChat:"Prepare a quotation for Adwoa for 2 eggs"},
+  {id:"low-stock",match:/\b(?:find|see|show|check|review)\b.{0,30}\b(?:low stock|running low)\b/i,
+    title:"Finding low stock",route:ROUTES.stock,
+    summary:"Clementia can answer this question from local inventory thresholds.",
+    steps:["Say “What is running low?”","Review the products at or below their configured thresholds.","Decide whether to record a stock receipt or purchase."],
+    inChat:"What is running low?"},
   {id:"product-create",match:/\b(?:add|create|register|save)\b.{0,35}\b(?:new\s+)?(?:stock\s+item|product|item)\b/i,
     title:"Adding a product",route:ROUTES.stock,
     summary:"Clementia can prepare a product entry, using the local inventory service and an explicit confirmation preview.",
@@ -107,17 +142,23 @@ const BOUNDARIES: readonly Guide[]=[
   {id:"expense-direct",match:/\b(?:record|log|enter|save|create)\b.{0,50}\b(?:expense|rent|spending)\b/i,title:"Expenses",route:ROUTES.expenses,summary:"Clementia currently does not save expenses in chat.",steps:["Open Expenses.","Enter a category, amount, date and description as required.","Confirm the recorded expense on that page."]},
 ];
 const ASK_HOW = /^(?:how (?:do|can|should|would|to)\b|what (?:steps|is the easiest way)\b|where can i\b|which screen\b|is there a way\b|please explain\b|explain (?:the process|how)\b|teach me\b|show me how\b|can you (?:show|tell|explain|walk)\b|could you (?:show|guide|explain|walk)\b|i (?:do not|don't) know how\b|as a beginner\b|tell me how\b|help me learn\b)/i;
-const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set (?:the )?(?:tax|vat)|charge|collect|record (?:expense|rent))\b/i;
+const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set (?:a |an |the )?(?:tax|vat)|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
 
-function guideResponse(guide:Guide,askedHow:boolean):AssistantReply {
+function guideResponse(guide:Guide,askedHow:boolean,prepared:string):AssistantReply {
   const canDo=Boolean(guide.inChat);
+  const route=guide.id==="edit-record"
+    ? /\b(?:customer|phone|client)\b/i.test(prepared)?ROUTES.customers
+      : /\b(?:product|stock|price|inventory)\b/i.test(prepared)?ROUTES.stock
+      : /\b(?:sale|receipt)\b/i.test(prepared)?ROUTES.sales
+      : ROUTES.business
+    : guide.route;
   return {
     kind:askedHow?"answer":"unsupported",
     text:canDo
       ? `${guide.title}: ${guide.summary}`
       : `${guide.title}: ${guide.summary} I cannot complete this operation entirely from this chat today.`,
     details:guide.steps.map((value,index)=>({label:`Step ${index+1}`,value})),
-    link:{label:`Open ${guide.title}`,href:guide.route},
+    link:{label:`Open ${guide.title}`,href:route},
     actions:guide.inChat?[{type:"say",label:"Try with Clementia",text:guide.inChat}]:undefined,
   };
 }
@@ -128,10 +169,10 @@ export function soleInterfaceGuide(raw:string):AssistantReply|null {
   if(!prepared)return null;
   const askedHow=ASK_HOW.test(prepared);
   if(askedHow){
-    const guide=FAQ_GUIDES.find(item=>item.match.test(prepared))??BOUNDARIES.find(item=>item.match.test(prepared));
-    return guide?guideResponse(guide,true):null;
+    const guide=BOUNDARIES.find(item=>item.match.test(prepared))??FAQ_GUIDES.find(item=>item.match.test(prepared));
+    return guide?guideResponse(guide,true,prepared):null;
   }
   if(!DIRECT_BOUNDARY.test(prepared))return null;
   const matched=BOUNDARIES.find(item=>item.match.test(prepared));
-  return matched?guideResponse(matched,false):null;
+  return matched?guideResponse(matched,false,prepared):null;
 }
