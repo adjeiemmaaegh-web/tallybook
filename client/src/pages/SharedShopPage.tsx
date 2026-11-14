@@ -247,11 +247,24 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && initialView === "dashboard" ? "dashboard" : business.role === "attendant" && initialView === "home" ? "home" : "sell");
   const [navOpen, setNavOpen] = useState(false);
   const [navSearch, setNavSearch] = useState("");
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  const menuDialog = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!navOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setNavOpen(false); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setNavOpen(false); return; }
+      if (event.key !== "Tab") return;
+      const controls = [...(menuDialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? [])]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) return;
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    const closeOnDesktop = () => { if (window.innerWidth >= 760) setNavOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", closeOnDesktop);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("resize", closeOnDesktop); menuTrigger.current?.focus(); };
   }, [navOpen]);
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
@@ -328,7 +341,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
     <div className="tb-shop-mobile-nav-bar">
-      <button type="button" className="tb-shop-menu-open" aria-controls="tb-shop-mobile-drawer" aria-expanded={navOpen}
+      <button type="button" ref={menuTrigger} className="tb-shop-menu-open" aria-controls="tb-shop-mobile-drawer" aria-expanded={navOpen}
         onClick={() => setNavOpen(true)}><Menu aria-hidden="true" /> Menu</button>
       <strong className="tb-shop-current-section">{tabs.find(([id]) => id === tab)?.[1] ?? "Shop"}</strong>
       <button type="button" className="tb-shop-mobile-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh shop"><RefreshCw aria-hidden="true" /></button>
@@ -339,7 +352,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     </nav>
     {navOpen && <div className="tb-shop-menu-layer">
       <button type="button" className="tb-shop-menu-scrim" onClick={() => setNavOpen(false)} aria-label="Close shop navigation" />
-      <nav id="tb-shop-mobile-drawer" className="tb-shop-menu-drawer" aria-label="Mobile shop sections" aria-modal="true" role="dialog">
+      <nav id="tb-shop-mobile-drawer" ref={menuDialog} className="tb-shop-menu-drawer" aria-label="Mobile shop sections" aria-modal="true" role="dialog">
         <div className="tb-shop-menu-head">
           <span className="tb-shop-menu-monogram" aria-hidden="true">T</span>
           <span><strong>Tallybook</strong><small>Your shop workspace</small></span>

@@ -57,22 +57,23 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
  const allProducts=overview.products;
  const storeName=(id:string)=>overview.stores.find(store=>store.id===id)?.name??"Previous store";
  const productName=(id:string)=>allProducts.find(product=>product.id===id)?.name??"Previous product";
- const found=counts.filter(row=>{
+ const visibleCounts=overview.role==="owner"?counts:counts.filter(row=>row.status==="open");
+ const found=visibleCounts.filter(row=>{
   if(filter!=="all"&&row.status!==filter)return false;
   const search=query.trim().toLocaleLowerCase();
   return !search||[row.countId,row.storeId,row.productId,storeName(row.storeId),productName(row.productId)].some(value=>value.toLocaleLowerCase().includes(search));
  });
  const openRows=found.filter(row=>row.status==="open");
  const previousRows=found.filter(row=>row.status==="applied"||row.status==="cancelled");
- const opened=counts.filter(row=>row.status==="open").length;
- const applied=counts.filter(row=>row.status==="applied").length;
- const cancelled=counts.filter(row=>row.status==="cancelled").length;
+ const opened=visibleCounts.filter(row=>row.status==="open").length;
+ const applied=visibleCounts.filter(row=>row.status==="applied").length;
+ const cancelled=visibleCounts.filter(row=>row.status==="cancelled").length;
  return <section className="shop-card space-y-3 tb-stocktake-page" aria-label="Shared shop stock count review">
   <div className="tb-stocktake-intro"><p className="shop-eyebrow">INVENTORY CONTROL · PHYSICAL COUNT</p>
     <h2>Stock take</h2>
     <p>Count what is actually on your shelves, then post the difference to the verified stock ledger.</p>
     <div className="tb-stocktake-metrics" aria-label="Count summary">
-     <div><span>Sessions</span><strong>{counts.length}</strong></div>
+     <div><span>Sessions</span><strong>{visibleCounts.length}</strong></div>
      <div><span>Open</span><strong>{opened}</strong></div>
      <div><span>Done</span><strong>{applied}</strong></div>
      <div><span>Cancelled</span><strong>{cancelled}</strong></div>
@@ -100,11 +101,11 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
    </div>
   </div>
   {loading&&<p role="status">Reading saved count history…</p>}
-  {!loading&&counts.length===0&&<div className="tb-stocktake-empty">
-    <span aria-hidden="true">✓</span><strong>No stock takes yet</strong>
+  {!loading&&visibleCounts.length===0&&<div className="tb-stocktake-empty">
+    <span aria-hidden="true">✓</span><strong>No active stock takes</strong>
     <p className="shop-muted">Choose a store and tracked product above to start an authorized count.</p>
   </div>}
-  {!loading&&counts.length>0&&found.length===0&&<p className="shop-muted">No counts match these filters. <button className="shop-link" type="button" onClick={()=>{setFilter("all");setQuery("");}}>Clear filters</button></p>}
+  {!loading&&visibleCounts.length>0&&found.length===0&&<p className="shop-muted">No counts match these filters. <button className="shop-link" type="button" onClick={()=>{setFilter("all");setQuery("");}}>Clear filters</button></p>}
   {openRows.map(row=><div key={row.countId} className="tb-stocktake-row">
    <div className="tb-stocktake-row-title"><strong>{productName(row.productId)}</strong><span className="tb-stocktake-state">Open</span></div>
    <p>{storeName(row.storeId)} · Expected {row.expectedQuantity} units · {new Date(row.createdAt).toLocaleString()}</p>
@@ -119,6 +120,6 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
     <p>Expected {row.expectedQuantity} · {row.status==="applied"?`Counted ${row.countedQuantity??"—"} · Variance ${row.countedQuantity===null?"—":row.countedQuantity-row.expectedQuantity}`:"No adjustment posted"}</p>
     <small>Count # {row.countId}</small>
   </div>)}
-  <p className="shop-muted">History shows at most 100 records returned by the server. Counts do not identify who caused a discrepancy.</p>
+  <p className="shop-muted">History shows at most 100 records returned by the server. Counts do not identify who caused a discrepancy. Historical counts are limited to business owners.</p>
  </section>;
 }
