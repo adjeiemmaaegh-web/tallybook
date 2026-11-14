@@ -164,11 +164,15 @@ function CompanyShell({ children }: AppShellProps) {
     return <main role="status">{status === "error" ? "Cannot open the local ledger." : "Checking local staff access"}</main>;
   if (standalone && staffGate !== "open") {
     const emptyDevice = !profile && companies.length === 0;
-    if ((location === "/business" && emptyDevice && !window.location.search) ||
+    // The first-company assistant is an onboarding form only; it cannot read
+    // business records until a profile exists and the ordinary staff gate opens.
+    // Never grant this exception when an existing company is locked.
+    if (((location === "/business" || location === "/assistant") && emptyDevice && !window.location.search) ||
         (location === "/staff" && profile))
       return <main id="main-content">{children}</main>;
     return <main className="mx-auto mt-12 max-w-md space-y-4 p-6">
       <h1>{emptyDevice ? "Set up this device" : "Tallybook is locked"}</h1>
+      {emptyDevice && <Link href="/assistant">Set up with Clementia</Link>}
       <Link href={emptyDevice ? "/business" : "/staff"}>{emptyDevice ? "Set up business" : "Go to staff unlock"}</Link>
     </main>;
   }
