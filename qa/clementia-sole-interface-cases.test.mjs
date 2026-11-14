@@ -7,7 +7,7 @@ test("Clementia sole-interface catalog has 100 distinct goals and twenty unique 
   assert.equal(new Set(CLEMENTIA_CASES.map(g=>g.title)).size,100);
   assert.deepEqual(
     Object.fromEntries(["NAV","FAQ","READ","ACTION","BOUNDARY"].map(f=>[f,CLEMENTIA_CASES.filter(g=>g.family===f).length])),
-    {NAV:12,FAQ:12,READ:26,ACTION:25,BOUNDARY:25});
+    {NAV:12,FAQ:12,READ:26,ACTION:26,BOUNDARY:24});
   const all=clementiaMatrix();
   assert.equal(all.length,2000);
   assert.equal(new Set(all.map(x=>x.id+":"+x.variant)).size,2000);
