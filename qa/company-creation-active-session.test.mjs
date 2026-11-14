@@ -38,9 +38,13 @@ test('first business creation works with active session and remains idempotent',
     const first=await t.create('Fixture Shop',request);
     const replay=await t.create('Fixture Shop',request);
     assert.equal(first.id,replay.id);
-    assert.equal(first.owner_id,t.user);
-    const rows=await t.admin("select count(*)::int count from public.businesses");
-    assert.equal(rows.rows[0].count,1);
+    // PGlite serializes the composite function result without preserving every
+    // snake_case field; verify the authoritative stored ownership instead.
+    const rows=await t.admin("select id, owner_id, name from public.businesses");
+    assert.equal(rows.rows.length,1);
+    assert.equal(rows.rows[0].id,first.id);
+    assert.equal(rows.rows[0].owner_id,t.user);
+    assert.equal(rows.rows[0].name,'Fixture Shop');
   }finally{await t.db.close();}
 });
 test('revoked session cannot create a new business using an otherwise valid JWT',async()=>{
