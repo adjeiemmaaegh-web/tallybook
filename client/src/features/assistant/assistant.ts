@@ -324,7 +324,11 @@ export function createAssistant(options: AssistantOptions): Assistant {
       case "CREATE_CUSTOMER": case "CREATE_SUPPLIER": case "CREATE_CATEGORY": case "CREATE_PRODUCT": case "ADJUST_INVENTORY":
         return start(parsed.intent, e, parsed.confidence);
       case "UNSUPPORTED_ACTION": {
-        if (parsed.unsupportedTopic === "expense") return unsupported("I don't record expenses yet. You can do that on the Expenses page.", { link: { label: "Open Expenses", href: "/expenses" } });
+        if (parsed.unsupportedTopic === "expense") {
+          if (/\b(?:delete|remove|edit|erase|reverse|refund)\b/i.test(parsed.raw))
+            return unsupported("I cannot modify or delete a saved expense from chat. Use the protected Expenses workflow.", { link: { label: "Open Expenses", href: "/expenses" } });
+          return question("I can record expenses in chat with a category, amount and date. Shall we start?", [say("Record an expense"), {type:"navigate",label:"Open Expenses",href:"/expenses"}]);
+        }
         return unsupported("I can't edit, delete, refund or clear records — that keeps your ledger safe. Please make that change on the app page where the record lives.");
       }
       default: return notUnderstood();
