@@ -22,11 +22,11 @@ export function BusinessTypeEditor({companyId}:{companyId:string}){
   },[companyId]);
   const save=async(event:FormEvent)=>{
     event.preventDefault();
-    if(busy||!loaded||!type||type===saved)return;
+    if(busy||!loaded||(type||null)===saved)return;
     const request=revision.current;setBusy(true);setError("");
     try{
-      await saveBusinessType(companyId,type);
-      if(request===revision.current)setSaved(type);
+      await saveBusinessType(companyId,type||null);
+      if(request===revision.current)setSaved(type||null);
     }catch(cause){
       if(request===revision.current)setError(cause instanceof Error?cause.message:"Could not update business type.");
     }finally{if(request===revision.current)setBusy(false);}
@@ -42,10 +42,10 @@ export function BusinessTypeEditor({companyId}:{companyId:string}){
         <option value="">Not specified</option>
         {BUSINESS_TYPES.map(item=><option value={item.id} key={item.id}>{item.label}</option>)}
       </select>
-      <button type="submit" className="secondary-action" disabled={busy||!type||type===saved}>
+      <button type="submit" className="secondary-action" disabled={busy||(type||null)===saved}>
         {busy?"Saving…":"Save business type"}
       </button>
-      {saved&&<p role="status">Verified saved type: {BUSINESS_TYPES.find(x=>x.id===saved)?.label}.</p>}
+      <p role="status">{saved?`Verified saved type: ${BUSINESS_TYPES.find(x=>x.id===saved)?.label}.`:"Business type is not specified."}</p>
     </form>}
     {error&&<p role="alert">{error}</p>}
   </section>;

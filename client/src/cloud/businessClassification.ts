@@ -28,8 +28,8 @@ export async function readBusinessType(companyId:string):Promise<BusinessType|nu
     throw Error("The server returned an unsupported business classification.");
   return parseBusinessType(result.data.business_type);
 }
-export async function saveBusinessType(companyId:string,type:BusinessType):Promise<void>{
-  if(!uuid.test(companyId)||!parseBusinessType(type))throw Error("Choose a supported business type.");
+export async function saveBusinessType(companyId:string,type:BusinessType|null):Promise<void>{
+  if(!uuid.test(companyId)||(type!==null&&!parseBusinessType(type)))throw Error("Choose a supported business type.");
   const client=getSupabaseClient();
   const first=await client.auth.getUser();
   const userId=first.data?.user?.id;

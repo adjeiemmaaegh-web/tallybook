@@ -12,7 +12,7 @@ beforeEach(()=>{
 });
 it("displays verified stored type and saves a new type only after server confirmation",async()=>{
  render(<BusinessTypeEditor companyId="11111111-1111-4111-8111-111111111111"/>);
- expect(await screen.findByRole("status")).toHaveTextContent("Verified saved type: Retail shop.");
+ expect(await screen.findByText("Verified saved type: Retail shop.")).toBeInTheDocument();
  fireEvent.change(screen.getByLabelText("Business category"),{target:{value:"manufacturing"}});
  expect(screen.queryByText(/Verified saved type: Manufacturing/)).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Save business type"}));
@@ -33,4 +33,13 @@ it("never presents missing schema as an empty company setting",async()=>{
  render(<BusinessTypeEditor companyId="11111111-1111-4111-8111-111111111111"/>);
  expect(await screen.findByRole("alert")).toHaveTextContent("Business classification is unavailable");
  expect(screen.queryByRole("button",{name:"Save business type"})).toBeNull();
+});
+
+it("lets the owner clear an optional category with server confirmation",async()=>{
+ render(<BusinessTypeEditor companyId="11111111-1111-4111-8111-111111111111"/>);
+ await screen.findByText("Verified saved type: Retail shop.");
+ fireEvent.change(screen.getByLabelText("Business category"),{target:{value:""}});
+ fireEvent.click(screen.getByRole("button",{name:"Save business type"}));
+ await waitFor(()=>expect(backend.save).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111",null));
+ expect(await screen.findByText("Business type is not specified.")).toBeInTheDocument();
 });

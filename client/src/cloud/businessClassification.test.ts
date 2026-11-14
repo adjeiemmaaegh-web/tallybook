@@ -51,3 +51,9 @@ it("rejects malformed IDs and unsupported types without a write",async()=>{
  await expect(saveBusinessType(company,"administrator" as never)).rejects.toThrow();
  expect(fake.update).not.toHaveBeenCalled();
 });
+
+it("clears only the owner-controlled classification field",async()=>{
+ fake.updated.mockResolvedValue({data:{id:company,owner_id:"owner",business_type:null},error:null});
+ await saveBusinessType(company,null);
+ expect(fake.update).toHaveBeenCalledWith({business_type:null});
+});
