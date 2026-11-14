@@ -17,7 +17,7 @@ export async function listVerifiedCloudBusinesses(): Promise<readonly VerifiedCl
     },
     readBusinesses:async()=>{
       const {data,error}=await client.from('businesses')
-        .select('id,name,owner_id,created_at,updated_at')
+        .select('id,name,owner_id,business_type,created_at,updated_at')
         .order('created_at').limit(101);
       if(error||!Array.isArray(data))throw Error('Cloud business lookup failed.');
       return data;
