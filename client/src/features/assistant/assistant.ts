@@ -608,6 +608,11 @@ export function createAssistant(options: AssistantOptions): Assistant {
     if (planned) { lastPlan = planned.plan; return planned.reply; }
     if (lines.length >= 2) return info("I can record several sales, stock receipts or payments in one message, one per line, each complete (for example \u201cSell 2 eggs to Kwame, cash\u201d). I couldn't read this as separate requests, so nothing was recorded. Please send them one at a time, or rewrite the lines.");
 
+    // Refuse to record a planned transaction even when there is insufficient
+    // information for the sale parser to form an ordinary write candidate.
+    if (/^(?:record|log|enter|save)\\s+(?:my|a|an|our|the)?\\s*(?:planned|future|scheduled)\\s+(?:sale|payment|stock\\s+delivery)\\b/i.test(prepared))
+      return info("That transaction is planned, not completed. I haven't saved anything. Tell me after it really happens.");
+
     const parsed = parseCommand(canonicalText, { now: options.now?.() });
     if (parsed.entities.plannedAction) return info("That sounds like something planned, not done yet, so I haven't recorded anything. Tell me again once the sale, delivery or payment has actually happened.");
     const contextFallback = parsed.intent === "UNKNOWN" ? parsedFromContextFirst(contextFirst, canonicalText) : null;
