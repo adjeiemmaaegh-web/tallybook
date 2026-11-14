@@ -563,7 +563,7 @@ export const CLEMENTIA_CASES = [
   },
   {
     "id": "C076",
-    "family": "BOUNDARY",
+    "family": "ACTION",
     "title": "Record shop rent expense",
     "canonical": "Record expense rent 150 cedis",
     "action": "record a rent expense of 150 cedis"
