@@ -37,6 +37,13 @@ jobs:
           pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides soleInterfaceBusinessQueries expenseAssistant universalAssistant ClementiaBusinessOnboarding ClementiaOwnerEnrollment ClementiaOnboardingEntry AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
       - name: Semantic TypeScript check
         run: pnpm check
+      - name: Full client unit and integration regression
+        run: |
+          mkdir -p artifacts/release-v19
+          set -o pipefail
+          pnpm test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-full-client-ci.log
+      - name: Build client and server bundles without deployment
+        run: pnpm build
       - name: Execute real assistant / synthetic IndexedDB matrix
         run: |
           mkdir -p artifacts/release-v19
