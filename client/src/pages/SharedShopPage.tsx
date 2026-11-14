@@ -64,7 +64,7 @@ import {
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
-import { currencies } from "@/features/business/currencies";
+import { currencies, currencyLabels } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
@@ -464,23 +464,23 @@ function SetupLedger({ companyId, onDone }: { companyId: string; onDone: () => P
     <h2>Set up your shared shop</h2>
     {step === 1
       ? <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setStep(2); }}>
-          <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. It can't change after the first sale.</p>
+          <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. A ledger currency cannot be changed after setup; start a new business for a different currency.</p>
           <label className="shop-field">Currency
-            <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c}>{c}</option>)}</select></label>
+            <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c} value={c}>{c} · {currencyLabels[c]}</option>)}</select></label>
           <button className="primary-action">Next</button>
         </form>
-      : <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setBusy(true); setError("");
+      : <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); if(!storeName.trim()){setError("Enter a store name before opening your business.");return;} setBusy(true); setError("");
           // Both calls are safe to repeat: the ledger is set up once, and the store id is fixed per attempt.
           void setupShopLedger(companyId, currency)
-            .then(() => storeName.trim() ? saveShopStore(companyId, storeId.current, storeName.trim()) : undefined)
+            .then(() => saveShopStore(companyId, storeId.current, storeName.trim()))
             .then(onDone).catch(c => setError(message(c))).finally(() => setBusy(false)); }}>
           <p>Name the place you sell from. You can add more stores later under Team.</p>
           <label className="shop-field">Store name
-            <input value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={80} placeholder="e.g. Main shop" /></label>
+            <input value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={80} minLength={2} required placeholder="e.g. Main shop" /></label>
           <p className="shop-muted">Currency: <strong>{currency}</strong> <button type="button" className="shop-link" onClick={() => setStep(1)} disabled={busy}>Change</button></p>
           <div className="shop-actions">
             <button type="button" className="secondary-action" onClick={() => setStep(1)} disabled={busy}>Back</button>
-            <button className="primary-action" disabled={busy}>{busy ? "Saving…" : "Open shop"}</button></div>
+            <button className="primary-action" disabled={busy||!storeName.trim()}>{busy ? "Saving…" : "Open shop"}</button></div>
         </form>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
   </section>;
