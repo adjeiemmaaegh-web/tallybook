@@ -73,6 +73,9 @@ it('shows invitation instructions without a creation form for employee setup',as
   fireEvent.click(await screen.findByRole('button',{name:'I work for someone else'}));
   expect(screen.getByText(/Ask your employer to invite/)).toBeTruthy();
   expect(screen.getByLabelText('Invitation code')).toBeTruthy();
+  expect(screen.getByLabelText('Your Tallybook account ID')).toHaveValue('owner');
+  expect(screen.getByRole('button',{name:'Copy my account ID'})).toBeInTheDocument();
+  expect(screen.getByText(/Email alone cannot grant shop access/)).toBeInTheDocument();
   expect(screen.queryByLabelText('Business name')).toBeNull();
   expect(mock.create).not.toHaveBeenCalled();
 });
