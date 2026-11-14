@@ -29,7 +29,7 @@ const PILLARS:{icon:ReactNode;eyebrow:string;title:string;text:string;points:str
  {icon:<ShoppingBag size={23}/>,eyebrow:"01 / SELL",
   title:"Sales & receipts",
   text:"Record a sale, account for how it was paid, and produce a receipt. Tallybook records payment methods; it never moves money.",
-  points:["Search or scan products","Cash, mobile money and card records","Receipts, returns and sales history"]},
+  points:["Search or scan products","Cash, mobile money and card records","Receipts, sales history and policy-controlled refunds"]},
  {icon:<Package size={23}/>,eyebrow:"02 / CONTROL",
   title:"Stock & purchasing",
   text:"Track stock movements and supplier obligations with records tied to actual shops, products and purchases.",
