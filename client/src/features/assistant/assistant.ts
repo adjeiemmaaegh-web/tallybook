@@ -33,6 +33,7 @@ import { executeLatestSaleReversal, prepareLatestSaleReversal } from "./reversal
 import { listStoredAliases, recordAssistantHistory, saveStoredWorkflow } from "./assistantLocalStore";
 import { applyCustomAliases } from "./aliases";
 import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
+import { soleInterfaceGuide } from "./soleInterfaceGuides";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -500,6 +501,14 @@ export function createAssistant(options: AssistantOptions): Assistant {
     // Answer only when no financial draft or confirmation is pending.
     if (!draft && !pending && !batchState && isQuotationRequest(canonicalText)) {
       return respondToQuotationRequest(canonicalText, database, options.currency);
+    }
+
+    // First-time help questions and unsupported operations deserve concrete,
+    // truthful instructions rather than a misleading generic parser fallback.
+    // Never run guidance over an open draft or financial confirmation.
+    if (!draft && !pending && !batchState) {
+      const guide=soleInterfaceGuide(canonicalText);
+      if (guide) return guide;
     }
 
     // Run 17 analytic questions never execute an AI-generated financial plan.
