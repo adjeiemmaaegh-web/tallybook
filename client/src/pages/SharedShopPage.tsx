@@ -982,22 +982,34 @@ function draftToInput(draft: ProductDraft, currency: string): ProductInput {
   };
 }
 
+/** New options are independent, hidden SKUs; stock is never copied. */
+function newOptionDraftFrom(source:ShopOverview["products"][number],currency:string):ProductDraft {
+  const original=draftFrom(source,currency);
+  return {...original,productId:crypto.randomUUID(),name:source.name.slice(0,100).trim()+" — new option",
+    barcode:"",active:false};
+}
 function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps) {
   const currency = overview.currency!;
   const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [edit, setEdit] = useState<ProductDraft | null>(null);
+  const [copiedFrom,setCopiedFrom]=useState<string|null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
   const [adjustNotes, setAdjustNotes] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [categoryFilter,setCategoryFilter]=useState("all");
   const [stockQuery, setStockQuery] = useState("");
   const pendingAdjustment = useRef<{fingerprint:string}|null>(null);
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
   const stats = computeStockStats(overview.products, stockOf);
-  const listed = filterProducts(overview.products, stockQuery).filter(p => matchesFilter(p, stockOf(p.id), stockFilter));
+  const categories=[...new Set(overview.products.map(p=>p.category?.trim()).filter((x):x is string=>!!x))]
+    .sort((a,b)=>a.localeCompare(b));
+  const listed = filterProducts(overview.products, stockQuery).filter(p =>
+    matchesFilter(p, stockOf(p.id), stockFilter)&&
+      (categoryFilter==="all"||p.category?.trim()===categoryFilter));
   const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return; setNotice("");
     void run(async () => {
       const input = draftToInput(edit, currency);
@@ -1008,7 +1020,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         await saveShopProduct(companyId, { productId: input.productId, name: input.name, unitPriceMinor: input.unitPriceMinor, active: input.active });
         setNotice("Saved the name, price and availability. Barcode, category, cost and stock settings need the shop to be updated first.");
       }
-      setEdit(null); }); };
+      setEdit(null);setCopiedFrom(null); }); };
   /** A dropped response must not become two stock adjustments on retry. The id is
    * retained in sessionStorage for the same exact payload until the server confirms it.
    */
@@ -1050,8 +1062,9 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
   return <div className="shop-grid">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2>
-        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
+        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice("");setCopiedFrom(null); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
       {edit && <form className="shop-edit" onSubmit={saveProduct}>
+        {copiedFrom&&<p role="status" className="tb-option-notice">New option based on {copiedFrom}. It is a <strong>separate product</strong> with its own price, barcode and stock. No existing stock is copied. The option starts hidden from sale until you review and enable it.</p>}
         <label className="shop-field">Name<input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} maxLength={120} required /></label>
         <label className="shop-field">Price ({currency})<input inputMode="decimal" value={edit.price} onChange={e => setEdit({ ...edit, price: e.target.value })} required /></label>
         <label className="shop-field">Type
@@ -1063,7 +1076,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         {edit.kind === "good" && edit.trackStock && <label className="shop-field">Warn me when stock is at or below (optional)<input inputMode="numeric" value={edit.threshold} onChange={e => setEdit({ ...edit, threshold: e.target.value })} placeholder="e.g. 5" /></label>}
         {isOwner && <label className="shop-field">What it costs you ({currency}, optional, only you can see this)<input inputMode="decimal" value={edit.cost} onChange={e => setEdit({ ...edit, cost: e.target.value })} /></label>}
         <label className="shop-check"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} />Available for sale</label>
-        <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => setEdit(null)}>Cancel</button></div>
+        <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => {setEdit(null);setCopiedFrom(null);}}>Cancel</button></div>
       </form>}
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
@@ -1076,10 +1089,16 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         <div><span>Out of stock</span><strong>{stats.out}</strong></div>
       </div>}
       {overview.products.length > 0 && <>
+        {categories.length>0&&<label className="shop-field tb-product-category-choice">Filter category
+          <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}>
+            <option value="all">All categories</option>
+            {categories.map(category=><option value={category} key={category}>{category}</option>)}
+          </select>
+        </label>}
         <input type="search" className="shop-stock-search" value={stockQuery} onChange={e => setStockQuery(e.target.value)} aria-label="Search your products" placeholder="Search name, category or barcode" maxLength={64} autoComplete="off" />
         <div className="shop-chips" role="group" aria-label="Show">
           {STOCK_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={stockFilter === f.id} onClick={() => setStockFilter(f.id)}>{f.label}</button>)}</div>
-        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
+        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all");setCategoryFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
       </>}
       <ul className="shop-product-list shop-stock-list">{listed.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
         return <li key={p.id}>
@@ -1091,7 +1110,10 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
             <input className="tb-stock-adjust-note" aria-label={`Reason for ${p.name} stock change`} maxLength={200}
               placeholder="Reason for manual stock adjustment (required to remove)"
               value={adjustNotes[p.id]??""} onChange={e=>setAdjustNotes(a=>({...a,[p.id]:e.target.value}))}/></>}
-          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice("");setCopiedFrom(null); setEdit(draftFrom(p, currency)); }}>Edit</button>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => {
+            setNotice("");setCopiedFrom(p.name);setEdit(newOptionDraftFrom(p,currency));
+          }}>Create option</button>
         </div></li>; })}</ul>
       {pendingAdjustment.current && <p role="status" className="shop-muted">Unconfirmed stock change: retry the same store, product and quantity or check the server history before proceeding.</p>}
       {error && <p role="alert" className="shop-alert">{error}</p>}
