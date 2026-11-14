@@ -23,7 +23,7 @@ const planActions = (steps: AssistantStep[]): AssistantAction[] => [
 ];
 
 export function planForText(raw: string): PlanResult | null {
-  const text = raw.toLowerCase().replace(/[?!.,]/g, " ").replace(/\s+/g, " ").trim();
+  const text = raw.toLowerCase().replace(/[?!.,-]/g, " ").replace(/\s+/g, " ").trim();
   const domainCount = ["sales", "stock", "inventory", "debt", "owe", "reorder"].filter((word) => text.includes(word)).length;
   const isOverview = /\b(?:check|review|summari[sz]e|show)\b/.test(text) && (domainCount >= 2 || text.includes("business overview"));
   const isMorning = /\b(?:morning check|morning summary|start of day)\b/.test(text);
