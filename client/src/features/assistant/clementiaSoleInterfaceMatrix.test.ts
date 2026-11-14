@@ -109,7 +109,7 @@ afterAll(async()=>{
   });
   const after=await savedCounts();
   const manifest={scenario:"New user insists on Clementia only",
-    limitation:"Actual assistant engine tested with seeded company; unconfigured-user UI is separately blocked by existing onboarding gate",
+    limitation:"Assistant engine tested with a seeded company; separate UI tests cover empty-device conversational onboarding. This matrix does not test cloud sign-in or real accounts.",
     createdAt:new Date().toISOString(),goals:CLEMENTIA_CASES.length,utterances:rows.length,
     distribution:counts,sourceBaseline:process.env.GITHUB_SHA??"CI not supplied",
     noAutomaticFinancialChanges:JSON.stringify(after)===JSON.stringify(before),
@@ -123,7 +123,7 @@ afterAll(async()=>{
   const report=[
     "# Clementia sole-interface 100 × 20 actual-response report",
     "","This is the real assistant engine with SYNTHETIC stored sample records.",
-    "A first-time user with no business profile cannot currently mount this chat; that UI gate is tested separately.",
+    "First-business conversational onboarding is tested separately on a standalone empty device. This matrix starts with a seeded business and does not verify mandatory-cloud sign-in.",
     "","Total goals: "+CLEMENTIA_CASES.length,"Total utterances tested: "+rows.length,
     "No automatic financial mutations: "+manifest.noAutomaticFinancialChanges,
     "","## Goal outcomes",
@@ -150,6 +150,16 @@ afterAll(async()=>{
   expect(manifest.noAutomaticFinancialChanges).toBe(true);
   expect(rows.filter(r=>r.exception)).toEqual([]);
   expect(rows.filter(r=>r.disposition==="unexpected-unconfirmed-success")).toEqual([]);
+  // Quality floors are intentionally below the last measured baseline
+  // (NAV 235, FAQ 202, READ 397, ACTION 283, BOUNDARY 468).
+  // A return to non-recognition cannot pass solely because no exception fired.
+  // These are reply-classification floors, NOT verified end-to-end completion.
+  expect(counts.NAV?.["guided-to-correct-screen"]??0).toBeGreaterThanOrEqual(230);
+  expect(counts.FAQ?.["explained-feature-with-link"]??0).toBeGreaterThanOrEqual(190);
+  expect(counts.READ?.["answered-read-query"]??0).toBeGreaterThanOrEqual(380);
+  expect(counts.ACTION?.["awaiting-explicit-confirmation"]??0).toBeGreaterThanOrEqual(260);
+  expect(counts.BOUNDARY?.["explicitly-unsupported"]??0).toBeGreaterThanOrEqual(450);
+
 },120000);
 
 describe("Clementia real-engine sole-interface acceptance: 100 goals × 20 phrasings",()=>{
