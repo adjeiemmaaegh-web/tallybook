@@ -102,8 +102,9 @@ const FAQ_GUIDES:readonly Guide[]=[
     inChat:"Record a purchase"},
   {id:"expense",match:/\b(?:expense|expenses|rent|business spending|money spent)\b/i,
     title:"Recording an expense",route:ROUTES.expenses,
-    summary:"Direct expense recording in Clementia is not implemented. A link to Expenses is not the same as completing this task.",
-    steps:["Open Expenses.","Enter the real expense details using the expense form.","Review the saved expense there."]},
+    summary:"Clementia can record local business expenses through the native expense service, after you confirm a preview. No expense is saved just by asking.",
+    steps:["Say “Record an expense”.","Tell Clementia the category, amount and expense date; a note is optional.","Review the preview and press Confirm expense."],
+    inChat:"Record an expense"},
   {id:"health",match:/\b(?:business health|how (?:is|well) (?:my|the) business|attention points|business doing)\b/i,
     title:"Business health",route:ROUTES.health,
     summary:"Clementia can provide local evidence-based warnings. A low-warning result does not prove the books are complete.",
@@ -139,7 +140,7 @@ const BOUNDARIES: readonly Guide[]=[
   {id:"edit-record",match:/\b(?:change|edit|delete|remove|update)\b.{0,50}\b(?:customer|sale|product|price|phone|stock|record)\b/i,title:"Editing existing records",route:ROUTES.business,summary:"Clementia does not directly edit or delete established financial, customer or stock records.",steps:["Open the page that owns the record.","Check permissions and existing dependencies.","Use the protected correction or archive workflow instead of silent mutation."]},
   {id:"refund",match:/\b(?:refund|return)\b.{0,35}\b(?:sale|customer|item|money|order)\b/i,title:"Refunds and returns",route:ROUTES.sales,summary:"Clementia cannot process an arbitrary refund. The business's enabled refund policy governs all returns.",steps:["Open the original sale.","Check your company-specific return policy.","Use the authorized refund flow and verify the linked financial adjustments."]},
   {id:"discount",match:/\b(?:apply|add|give|set|offer|change)\b.{0,30}\bdiscount\b/i,title:"Discounts",route:ROUTES.sales,summary:"Clementia cannot override stored sale prices or apply manual discounts in chat.",steps:["Open Sales.","Enter a discount only if your company's policy and staff role permit it.","Review the final amount before recording the sale."]},
-  {id:"expense-direct",match:/\b(?:record|log|enter|save|create)\b.{0,50}\b(?:expense|rent|spending)\b/i,title:"Expenses",route:ROUTES.expenses,summary:"Clementia currently does not save expenses in chat.",steps:["Open Expenses.","Enter a category, amount, date and description as required.","Confirm the recorded expense on that page."]},
+
 ];
 const ASK_HOW = /^(?:how (?:do|can|should|would|to)\b|what (?:steps|is the easiest way)\b|where can i\b|which screen\b|is there a way\b|please explain\b|explain (?:the process|how)\b|teach me\b|show me how\b|can you (?:show|tell|explain|walk)\b|could you (?:show|guide|explain|walk)\b|i (?:do not|don't) know how\b|as a beginner\b|tell me how\b|help me learn\b)/i;
 const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
