@@ -4,3 +4,8 @@
 .tb-role-option small { font-size:.875rem; margin-top:.25rem; }
 .tb-role-option[aria-pressed=true] { box-shadow:inset 0 0 0 2px currentColor; }
 .tb-role-option:focus-visible { outline:3px solid currentColor; outline-offset:3px; }
+
+.tb-private-invite-code{display:block;overflow-wrap:anywhere;line-height:1.55;padding:12px 14px;
+  border:1px solid #c8e4da;border-radius:12px;background:#f1fbf7;color:#134e43;font-size:.82rem}
+.tb-join-guidance{padding:16px;border:1px solid #cfe8e0;border-radius:18px;background:linear-gradient(125deg,#f7fdfa,#ecf8f3)}
+.tb-join-guidance p{line-height:1.65;color:#315b50}

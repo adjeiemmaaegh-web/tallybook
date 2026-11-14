@@ -25,6 +25,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
   const [membershipChecked,setMembershipChecked]=useState(false);
   const [membershipRevision,setMembershipRevision]=useState(0);
+  const [accountIdCopied,setAccountIdCopied]=useState(false);
   const revision = useRef(0);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -32,7 +33,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     let active = true;
     const client = getSupabaseClient();
     const refresh = async () => {
-      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);
+      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);setAccountIdCopied(false);
       setUserId(null); setBusiness(null); setAccessible([]); setError(null); setBusy(true);
       try {
         const { data: { user }, error: authError } = await client.auth.getUser();
@@ -90,6 +91,13 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       if(started===revision.current)setProfileName(preferred);
     }catch(cause){if(started===revision.current)setError(cause instanceof Error?cause.message:"Could not update profile.");}
     finally{inFlight.current=false;if(started===revision.current)setBusy(false);}
+  }
+  async function copyMyEmployeeId(){
+    if(!userId || !navigator.clipboard?.writeText){setError("Copy is unavailable. Select your account ID and share it privately.");return;}
+    try{
+      await navigator.clipboard.writeText(userId);
+      setAccountIdCopied(true);setError(null);
+    }catch{setError("Copy is unavailable. Select your account ID and share it privately.");}
   }
   function selectSetup(next: 'owner' | 'employee' | null) {
     setChoice(next);
@@ -174,7 +182,18 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
           <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
           <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
         </div>}
-        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Enter the private invitation below, or use an eight-character shop join code.</p><Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        {choice==="employee"?<div className="tb-join-guidance space-y-3">
+          <p>Ask your employer to create an invitation for your authenticated Tallybook account. Share the account ID below privately. Email alone cannot grant shop access.</p>
+          <label className="block text-sm font-semibold" htmlFor="tb-employee-account-id">Your Tallybook account ID</label>
+          <input id="tb-employee-account-id" className="block w-full rounded border p-2 font-mono text-sm"
+            readOnly value={userId} onFocus={event=>event.currentTarget.select()} aria-describedby="tb-employee-id-help"/>
+          <small id="tb-employee-id-help" className="block text-sm">This is not an Emirates ID, national ID or password. Never share your private invitation with anyone except the intended employee.</small>
+          <button type="button" className="secondary-action" onClick={()=>void copyMyEmployeeId()}>
+            {accountIdCopied?"Account ID copied":"Copy my account ID"}
+          </button>
+          <p>Enter the private invitation below when your employer sends it, or use an eight-character shop join code.</p>
+          <Link href="/shop" className="secondary-action">Use an eight-character join code</Link>
+        </div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
