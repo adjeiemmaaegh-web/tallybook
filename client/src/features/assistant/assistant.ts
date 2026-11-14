@@ -551,6 +551,18 @@ export function createAssistant(options: AssistantOptions): Assistant {
       );
     }
 
+    // An explicit day-review command is a read-only request for actual saved
+    // figures, not a request to locate the End-of-day screen. Never treat this
+    // as a staff shift close or a permission-changing operation.
+    if (!draft && !pending && !batchState &&
+      /^(?:end[- ]of[- ]day (?:summary|review)|morning (?:check|summary)|business overview)$/i.test(canonicalText)) {
+      const reportPlan = planForText(canonicalText);
+      if (reportPlan) {
+        lastPlan = reportPlan.plan;
+        return runPlan(reportPlan.plan);
+      }
+    }
+
     // Application-level follow-ups are resolved before business parsing, but only while no financial draft is open.
     if (!draft && !pending && !batchState && appContext) {
       const followAction = appContext.actions.find((action) => action.prompt && /^(?:add|create|record|open|show|check|find|view|one|it|that|low stock|more)\b/.test(prepared) && (action.id === "add-supplier" || action.id === "add-customer" || action.id === "add-product" || action.id === "record-purchase" || action.id === "record-expense" || action.id === "record" || action.id === "low-stock" || action.id === "show" || action.id === "balance"));
