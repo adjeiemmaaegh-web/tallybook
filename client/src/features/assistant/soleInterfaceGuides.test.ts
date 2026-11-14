@@ -27,7 +27,6 @@ describe("Clementia explains features without pretending that a link completes w
     expect(reply?.text).not.toMatch(/couldn't identify/i);
   });
   it.each([
-    ["Record a rent expense of 150 cedis","/expenses"],
     ["Add staff member Joyce","/staff"],
     ["Close today's cashier shift","/staff"],
     ["Transfer 5 eggs from Store A to Store B","/stores"],
@@ -54,6 +53,7 @@ describe("Clementia explains features without pretending that a link completes w
     expect(reply?.text).toMatch(/cannot|can't|not implemented|does not/i);
   });
   it.each([
+    "Record a rent expense of 150 cedis",
     "How much does Adwoa owe?",
     "Show today's sales",
     "Sell 2 eggs to Kwame on credit",
