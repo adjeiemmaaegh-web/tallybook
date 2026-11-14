@@ -14,11 +14,25 @@ for (const viewport of [
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    await page.goto('/shop', { waitUntil: 'domcontentloaded' });
+    const networkFailures = [];
+    page.on('requestfailed', request => networkFailures.push(request.method() + ' ' + request.url() + ': ' + (request.failure()?.errorText ?? 'unknown')));
+    const response = await page.goto('/shop', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'The public entry HTML request must succeed').toBe(true);
 
     const heading = page.getByRole('heading', { name: /Your business\.\s*Beautifully in hand/i });
     const signIn = page.getByRole('link', { name: 'Create your account', exact: true });
-    await expect(heading).toBeVisible();
+    try {
+      await expect(heading).toBeVisible();
+    } catch (cause) {
+      // Diagnostics only: do not retry or silently pass a blank public entry.
+      console.log('PUBLIC_ENTRY_FAILURE', JSON.stringify({
+        browser: testInfo.project.name, viewport: viewport.label, url: page.url(),
+        htmlStatus: response?.status(), body: (await page.locator('body').innerText().catch(() => 'body inaccessible')).slice(0, 900),
+        clientErrors: errors, networkFailures: networkFailures.slice(0, 12)
+      }));
+      await page.screenshot({path: testInfo.outputPath('entry-failure.png'), fullPage: true}).catch(() => {});
+      throw cause;
+    }
     await expect(signIn).toBeVisible();
     await expect(signIn).toHaveAttribute('href', '/signin');
     await expect(page.getByText('Offline-first local records', { exact: false })).toBeVisible();
