@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SharedShopExpenses } from "./SharedShopExpenses";
 import { callShop, type ShopOverview } from "./shopClient";
 
-vi.mock("./shopClient", () => ({ callShop: vi.fn() }));
+vi.mock("./shopClient", async orig => ({ ...(await orig<object>()), callShop: vi.fn() }));
 const overview = { companyId: "shop", role: "owner", currency: "GHS", stores: [{ id: "north", name: "North", status: "active" }],
   products: [], stock: [], members: [], pendingInvites: [] } as unknown as ShopOverview;
 const row = (over = {}) => ({ expenseId: "e1", storeId: null, category: "transport", amountMinor: "2500", method: "cash", expenseDate: "2026-11-10",
@@ -74,4 +74,40 @@ describe("shared shop expenses", () => {
     expect(callShop).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Record expense" })).toBeDisabled();
   });
+});
+
+it("shows the difference between an empty ledger and a failed read",async()=>{
+ vi.mocked(callShop).mockReset().mockRejectedValueOnce(new Error("Server offline"));
+ render(<SharedShopExpenses companyId="shop" overview={overview} online/>);
+ expect(await screen.findByRole("alert")).toHaveTextContent("Server offline");
+ expect(screen.queryByLabelText("Loaded expense summary")).toBeNull();
+ expect(screen.queryByText("No expenses recorded yet.")).toBeNull();
+});
+it("filters cancelled expenses without changing the full active total",async()=>{
+ rows=[row(),row({expenseId:"e2",voided:true,voidReason:"Mistake",note:"Cancelled entry"})];
+ render(<SharedShopExpenses companyId="shop" overview={overview} online/>);
+ const summary=await screen.findByLabelText("Loaded expense summary");
+ expect(summary).toHaveTextContent("Recorded1");
+ expect(summary).toHaveTextContent("Cancelled1");
+ expect(summary).toHaveTextContent("GHS 25.00");
+ const filter=screen.getByRole("group",{name:"Expense status"});
+ fireEvent.click(filter.querySelectorAll("button")[2]!);
+ expect(screen.getByText("1 of 2 loaded expense records shown. Totals reflect loaded records only.")).toBeInTheDocument();
+ expect(screen.getByText(/Cancelled entry/)).toBeInTheDocument();
+ expect(screen.queryByText(/Taxi/)).toBeNull();
+});
+it("blocks changed expense details after an ambiguous server outcome",async()=>{
+ vi.mocked(callShop).mockReset().mockImplementation(async action=>{
+  if(action==="listExpenses")return {expenses:[]};
+  throw new Error("Connection lost");
+ });
+ render(<SharedShopExpenses companyId="shop" overview={overview} online/>);
+ const amount=await screen.findByLabelText(/Amount/);
+ fireEvent.change(amount,{target:{value:"10"}});
+ fireEvent.click(screen.getByRole("button",{name:"Record expense"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("Connection lost");
+ fireEvent.change(amount,{target:{value:"12"}});
+ fireEvent.click(screen.getByRole("button",{name:"Record expense"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("earlier expense may have been recorded");
+ expect(calls()).toHaveLength(1);
 });
