@@ -54,6 +54,11 @@ test('owner explicitly configures tax and prepared quotation reaches a saved off
   });
   await page.reload();
   await unlockFixtureOwner(page);
+  // Reload may route a locked owner to the unlock entry before the fixture grants
+  // access. Re-enter the target settings route explicitly; never treat unlock as
+  // proof that the router has already returned there.
+  await page.goto('/business',{waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('heading',{name:'Your business record'})).toBeVisible();
   await expect(page.getByRole('checkbox',{name:'Apply tax to future sales'})).not.toBeChecked();
   await page.getByRole('checkbox',{name:'Apply tax to future sales'}).check();
   await page.getByRole('combobox',{name:'Tax registration status'}).selectOption('registered');
