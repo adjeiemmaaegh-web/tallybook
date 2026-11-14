@@ -151,14 +151,14 @@ afterAll(async()=>{
   expect(rows.filter(r=>r.exception)).toEqual([]);
   expect(rows.filter(r=>r.disposition==="unexpected-unconfirmed-success")).toEqual([]);
   // Quality floors are intentionally below the last measured baseline
-  // (NAV 235, FAQ 202, READ 397, ACTION 283, BOUNDARY 468).
+  // (NAV 235, FAQ 202, READ 397, ACTION 283, BOUNDARY 468); expense C076 now moves from BOUNDARY to ACTION.
   // A return to non-recognition cannot pass solely because no exception fired.
   // These are reply-classification floors, NOT verified end-to-end completion.
   expect(counts.NAV?.["guided-to-correct-screen"]??0).toBeGreaterThanOrEqual(230);
   expect(counts.FAQ?.["explained-feature-with-link"]??0).toBeGreaterThanOrEqual(190);
   expect(counts.READ?.["answered-read-query"]??0).toBeGreaterThanOrEqual(380);
   expect(counts.ACTION?.["awaiting-explicit-confirmation"]??0).toBeGreaterThanOrEqual(260);
-  expect(counts.BOUNDARY?.["explicitly-unsupported"]??0).toBeGreaterThanOrEqual(450);
+  expect(counts.BOUNDARY?.["explicitly-unsupported"]??0).toBeGreaterThanOrEqual(425);
 
 },120000);
 
