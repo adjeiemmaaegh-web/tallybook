@@ -32,6 +32,7 @@ import { simulateSale } from "./dryRun";
 import { executeLatestSaleReversal, prepareLatestSaleReversal } from "./reversals";
 import { listStoredAliases, recordAssistantHistory, saveStoredWorkflow } from "./assistantLocalStore";
 import { applyCustomAliases } from "./aliases";
+import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -479,7 +480,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
     const text = sanitizeInput(rawText);
     if (!text) return info("Type a question or a command, for example “How much does Adwoa owe?”.");
     const storedAliases = await listStoredAliases(getActiveBusinessProfileId());
-    const canonicalText = applyCustomAliases(text, storedAliases);
+    // Preserve pending drafts verbatim: only first-turn commands get wrapper normalization.
+    const canonicalText = applyCustomAliases(!draft && !pending && !batchState && !quotationDraft.hasDraft() ? normalizeSoleInterfaceRequest(text) : text, storedAliases);
     const prepared = prepareText(canonicalText);
     const contextFirst = resolveContextFirst(canonicalText);
     if (quotationDraft.hasDraft()) {
