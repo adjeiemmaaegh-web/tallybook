@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness } from "./businessIdentity";
+import {BUSINESS_TYPES,saveBusinessType,type BusinessType} from "./businessClassification";
+import {BusinessTypeEditor} from "./BusinessTypeEditor";
 import {listVerifiedCloudBusinesses} from "./cloudMembership";
 import type {VerifiedCloudBusiness} from "./cloudMembershipBoundary.mjs";
 import {cloudEntryDestination} from "./cloudEntryDestination";
@@ -20,6 +22,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   const [profileName,setProfileName]=useState("");
   const [email,setEmail]=useState("");
   const [name, setName] = useState("");
+  const [businessType,setBusinessType]=useState<BusinessType|"">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
@@ -129,7 +132,14 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       if (started === revision.current) {
         setBusiness(created);
         setAccessible([...verified]);
-        // Approved default: a new business opens in the cloud shop, where first-run setup continues.
+        if(businessType){
+          try{await saveBusinessType(created.id,businessType);}
+          catch(cause){
+            setError("Your business was created and ownership verified, but its type could not be saved. Use the Business type settings below to retry. "+(cause instanceof Error?cause.message:""));
+            return;
+          }
+        }
+        // Business creation never imports private device records.
         navigate("/shop?view=dashboard");
       }
     } catch (cause) {
@@ -157,7 +167,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
         : "Record sales at your assigned store."}</p>
       <Link href={cloudEntryDestination(business.role)} className="primary-action">
         {business.role === "owner" ? "Open owner dashboard" : "Open attendant home"}
-      </Link></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
+      </Link>{business.role==="owner"&&showSettings&&<BusinessTypeEditor key={business.id} companyId={business.id}/>}</div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
           <span>You’re signed in. Create your shop or join your employer’s shop.</span>
@@ -178,6 +188,11 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
+      <label className="block" htmlFor="cloud-business-type">What kind of business? (optional)</label>
+      <select id="cloud-business-type" value={businessType} onChange={event=>setBusinessType(event.target.value as BusinessType|"")} className="w-full rounded border p-2">
+        <option value="">Choose later</option>{BUSINESS_TYPES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+      <p className="tb-business-type-hint">This helps describe your business. Your chosen type does not lock features or change sales/refund permissions.</p>
       <button className="primary-action" type="submit" disabled={!name.trim()}>Create business</button>
     </form>:null}</div>}
     {isSupabaseConfigured && userId &&
