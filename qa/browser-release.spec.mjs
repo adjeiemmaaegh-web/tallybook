@@ -52,12 +52,13 @@ test('owner explicitly configures tax and prepared quotation reaches a saved off
     const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
     await saveBusinessProfile({name:'Browser QA',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
   });
-  await page.reload();
+  // Verified local staff unlock is intentionally memory-only. A subsequent
+  // page.goto() or reload would lock it again: never weaken that security rule
+  // to accommodate a test fixture.
+  await page.goto('/staff',{waitUntil:'domcontentloaded'});
   await unlockFixtureOwner(page);
-  // Reload may route a locked owner to the unlock entry before the fixture grants
-  // access. Re-enter the target settings route explicitly; never treat unlock as
-  // proof that the router has already returned there.
-  await page.goto('/business',{waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('button',{name:'Lock this session'})).toBeVisible();
+  await page.getByRole('link',{name:'Business details'}).click();
   await expect(page.getByRole('heading',{name:'Your business record'})).toBeVisible();
   await expect(page.getByRole('checkbox',{name:'Apply tax to future sales'})).not.toBeChecked();
   await page.getByRole('checkbox',{name:'Apply tax to future sales'}).check();
