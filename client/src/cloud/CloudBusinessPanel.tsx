@@ -23,6 +23,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   const [email,setEmail]=useState("");
   const [name, setName] = useState("");
   const [businessType,setBusinessType]=useState<BusinessType|"">("");
+  const [typeSaveFailed,setTypeSaveFailed]=useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
@@ -35,7 +36,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     let active = true;
     const client = getSupabaseClient();
     const refresh = async () => {
-      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);
+      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);setTypeSaveFailed(false);
       setUserId(null); setBusiness(null); setAccessible([]); setError(null); setBusy(true);
       try {
         const { data: { user }, error: authError } = await client.auth.getUser();
@@ -76,9 +77,9 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   // A unique server-verified company enters its appropriate home automatically.
   // Unlinked users remain in onboarding; multiple memberships require explicit selection.
   useEffect(() => {
-    if (!accountOnly || !autoOpen || !userId || !membershipChecked || accessible.length !== 1 || !business) return;
+    if (!accountOnly || !autoOpen || typeSaveFailed || !userId || !membershipChecked || accessible.length !== 1 || !business) return;
     navigate(cloudEntryDestination(business.role));
-  }, [accountOnly, autoOpen, userId, membershipChecked, accessible, business, navigate]);
+  }, [accountOnly, autoOpen, typeSaveFailed, userId, membershipChecked, accessible, business, navigate]);
 
   async function saveProfileName(){
     const preferred=draftName.trim(), started=revision.current;
@@ -129,21 +130,26 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       if (!created || created.role !== "owner" ||
           created.owner_id !== userId || result.owner_id !== userId)
         throw new Error("Cloud business ownership could not be verified.");
-      if (started === revision.current) {
-        setBusiness(created);
-        setAccessible([...verified]);
-        if(businessType){
-          try{await saveBusinessType(created.id,businessType);}
-          catch(cause){
-            if(started===revision.current)setError("Your business was created and ownership verified, but its type could not be saved. Use the Business type settings below to retry. "+(cause instanceof Error?cause.message:""));
-            return;
+      if(started!==revision.current)return;
+      // The category save finishes before the shop auto-opens, so a lost
+      // response is not disguised by successful business creation.
+      if(businessType){
+        try{await saveBusinessType(created.id,businessType);}
+        catch(cause){
+          if(started===revision.current){
+            setTypeSaveFailed(true);
+            setBusiness(created);setAccessible([...verified]);
+            setError("Your business was created and ownership verified, but its type could not be saved. Open Settings to retry. "+(cause instanceof Error?cause.message:""));
           }
+          return;
         }
-        // Never navigate from a stale, authenticated account after an async save.
-        if(started!==revision.current)return;
-        // Business creation never imports private device records.
-        navigate("/shop?view=dashboard");
       }
+      if(started!==revision.current)return;
+      setTypeSaveFailed(false);
+      setBusiness(created);
+      setAccessible([...verified]);
+      // Business creation never imports private device records.
+      navigate("/shop?view=dashboard");
     } catch (cause) {
       if (started === revision.current) setError(cause instanceof Error ? cause.message : "Could not create the cloud business.");
     } finally {
@@ -169,7 +175,8 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
         : "Record sales at your assigned store."}</p>
       <Link href={cloudEntryDestination(business.role)} className="primary-action">
         {business.role === "owner" ? "Open owner dashboard" : "Open attendant home"}
-      </Link>{business.role==="owner"&&showSettings&&<BusinessTypeEditor key={business.id} companyId={business.id}/>}</div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
+      </Link>{business.role==="owner"&&showSettings&&<BusinessTypeEditor key={business.id} companyId={business.id}/>}
+      {typeSaveFailed&&<Link href="/settings" className="secondary-action">Open settings to finish business type</Link>}</div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
           <span>You’re signed in. Create your shop or join your employer’s shop.</span>

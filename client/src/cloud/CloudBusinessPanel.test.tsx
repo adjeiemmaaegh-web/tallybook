@@ -166,3 +166,19 @@ it("shows a real account ID for targeted invitations without treating email as a
  expect(screen.getByText(/email address or employee number alone does not grant shop access/)).toBeInTheDocument();
  expect(mock.create).not.toHaveBeenCalled();
 });
+
+it("prevents automatic shop redirect when type persistence fails after verified creation",async()=>{
+ mock.create.mockImplementation(async()=>{
+   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"owner"});
+   return {id:"cloud",owner_id:"owner",name:"Shop"};
+ });
+ classification.save.mockRejectedValueOnce(new Error("Migration not yet applied"));
+ render(<CloudBusinessPanel accountOnly autoOpen showSettings={false}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
+ fireEvent.change(screen.getByLabelText("Business name"),{target:{value:"My shop"}});
+ fireEvent.change(screen.getByLabelText("What kind of business? (optional)"),{target:{value:"retail"}});
+ fireEvent.click(screen.getByRole("button",{name:"Create business"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("Open Settings to retry");
+ expect(screen.getByRole("link",{name:"Open settings to finish business type"})).toHaveAttribute("href","/settings");
+ expect(mock.create).toHaveBeenCalledTimes(1);
+});
