@@ -34,6 +34,7 @@ import { listStoredAliases, recordAssistantHistory, saveStoredWorkflow } from ".
 import { applyCustomAliases } from "./aliases";
 import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
 import { soleInterfaceGuide } from "./soleInterfaceGuides";
+import { createExpenseAssistantSession, isExpenseRecordingRequest } from "./expenseAssistant";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -118,6 +119,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
   const serial = <T,>(work: () => Promise<T>): Promise<T> => { const run = queue.then(work, work); queue = run.catch(() => undefined); return run; };
   const memory = createConversationMemory(() => options.now?.() ?? new Date());
   const quotationDraft = createQuotationDraftSession(database, options.currency, () => options.now?.() ?? new Date());
+  const expenseSession = createExpenseAssistantSession(database, options.currency, () => options.now?.() ?? new Date());
   // Conversation state is scoped to the active company, not merely to this assistant instance.
   // The app can switch business profiles while the assistant component remains mounted.
   let conversationCompanyId = getActiveBusinessProfileId();
@@ -127,6 +129,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
     conversationCompanyId = currentCompanyId;
     memory.forget();
     quotationDraft.clear();
+    expenseSession.clear();
     draft = null;
     parked = null;
     pending = null;
@@ -485,6 +488,10 @@ export function createAssistant(options: AssistantOptions): Assistant {
     const canonicalText = applyCustomAliases(!draft && !pending && !batchState && !quotationDraft.hasDraft() ? normalizeSoleInterfaceRequest(text) : text, storedAliases);
     const prepared = prepareText(canonicalText);
     const contextFirst = resolveContextFirst(canonicalText);
+    if (expenseSession.hasDraft()) {
+      if (CONFIRM.test(prepared)) return info("Use the Confirm expense button on the preview. A typed yes cannot post an expense.");
+      return (await expenseSession.handle(text)) ?? failure("The expense conversation expired. Nothing was recorded.");
+    }
     if (quotationDraft.hasDraft()) {
       if (CANCEL.test(prepared)) { quotationDraft.clear(); return info('Quotation preparation cancelled. No records were changed.'); }
       if (CONFIRM.test(prepared)) return quotationDraft.token() ? quotationDraft.confirm(quotationDraft.token()!) : info('The quotation needs a customer and at least one product.');
@@ -501,6 +508,13 @@ export function createAssistant(options: AssistantOptions): Assistant {
     // Answer only when no financial draft or confirmation is pending.
     if (!draft && !pending && !batchState && isQuotationRequest(canonicalText)) {
       return respondToQuotationRequest(canonicalText, database, options.currency);
+    }
+
+    // A supported expense entry takes precedence over old unsupported-action
+    // guidance. All actual writes still require a separate confirmed action.
+    if (!draft && !pending && !batchState && isExpenseRecordingRequest(canonicalText)) {
+      const expense = await expenseSession.handle(canonicalText);
+      if (expense) return expense;
     }
 
     // First-time help questions and unsupported operations deserve concrete,
@@ -733,6 +747,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
         return failure(message);
       }
     }
+    if (action.type === "confirm" && expenseSession.token() === action.token) { const result = await expenseSession.confirm(action.token); if(result.kind==="success")notifyRecordsChanged(); return result; }
+    if (action.type === "cancel" && expenseSession.hasDraft()) return (await expenseSession.handle("cancel")) ?? info("Expense recording cancelled.");
     if (action.type === "confirm" && quotationDraft.token() === action.token) return quotationDraft.confirm(action.token);
     if (action.type === "cancel" && quotationDraft.hasDraft()) { quotationDraft.clear(); return info("Quotation preparation cancelled; nothing was saved."); }
     if (action.type === "confirm") return batchState?.confirmToken === action.token ? confirmBatch() : confirm(action.token);
@@ -749,7 +765,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
       }
       return withContext; }),
     act: (action) => serial(async () => resetOnBusinessChange() ? failure("You switched business. The earlier assistant action was cleared; nothing was recorded. Please start again in this business.") : actNow(action)),
-    clearContext: () => { quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; },
-    pendingToken: () => { resetOnBusinessChange(); return quotationDraft.token() ?? pending?.token ?? batchState?.confirmToken ?? null; },
+    clearContext: () => { expenseSession.clear(); quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; },
+    pendingToken: () => { resetOnBusinessChange(); return expenseSession.token() ?? quotationDraft.token() ?? pending?.token ?? batchState?.confirmToken ?? null; },
   };
 }
