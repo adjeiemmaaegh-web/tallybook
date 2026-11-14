@@ -395,7 +395,7 @@ function scorePayment(text: string, raw: string): Candidate | null {
 function scoreSupplierPurchases(text: string, raw: string): Candidate | null {
   if (/\d/.test(text) && !/\b\d{4}-\d{2}-\d{2}\b/.test(text)) return null;
   if (/\b(?:customers?|clients?|buyers?|people)\b/.test(text) || /\bwho\s+(?:bought|purchased|ordered|shopped|spent)\b/.test(text)) return null;
-  const purchaseWord = /\b(?:receive[d]?|bought|purchased?|purchases|purchase\s+history|deliver(?:ed|ies|y)|supplied|supplies|supply|restock(?:ed)?|bring|brought)\b/.test(text);
+  const purchaseWord = /\b(?:receive[d]?|buy|bought|purchased?|purchases|purchase\s+history|deliver(?:ed|ies|y)|supplied|supplies|supply|restock(?:ed)?|bring|brought)\b/.test(text);
   if (!purchaseWord || !isQuestionForm(raw, text)) return null;
   if (SUPPLIER_DIRECTION.test(text)) return null;
   const supplier = extractSupplier(text);
@@ -465,6 +465,9 @@ function scoreActivity(text: string, now: Date): Candidate | null {
 }
 
 function scoreInsights(text: string): Candidate | null {
+  if (/\\bcompare\\b[^?]{0,70}\\bthis month(?:'s)?\\b[^?]{0,70}\\blast month(?:'s)?\\b|\\bcompare\\b[^?]{0,70}\\blast month(?:'s)?\\b[^?]{0,70}\\bthis month(?:'s)?\\b/.test(text)) {
+    return { intent: "INSIGHTS_QUERY", confidence: 0.995, entities: {}, qualifier: "sales-comparison" };
+  }
   if (/\b(?:sales?|revenue|takings?)\b[^?]*(?:up|down|increase|decrease|compared|comparison)\b|\b(?:are|how are)\s+(?:sales?|our sales?)\b[^?]*\b(?:up|down|compared)\b/.test(text)) {
     return { intent: "INSIGHTS_QUERY", confidence: 0.995, entities: {}, qualifier: "sales-comparison" };
   }
