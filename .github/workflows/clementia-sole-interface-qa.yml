@@ -2,6 +2,9 @@ name: Clementia sole-interface 100x20 QA
 
 # Synthetic-only tests. No production credentials, backend writes, payments, or deployments.
 on:
+  push:
+    branches:
+      - security/mandatory-online-account-boundary-20261113
   pull_request:
   workflow_dispatch:
 permissions:
