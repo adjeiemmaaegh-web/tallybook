@@ -39,3 +39,25 @@ it("refuses an overstated supplier settlement before any server write",async()=>
  await waitFor(()=>expect(screen.getByRole("alert")).toHaveTextContent(/Supplier payment must be positive and not exceed recorded outstanding/));
  expect(mocked.settle).not.toHaveBeenCalled();
 });
+
+it("shows authorized payable totals and filters suppliers/orders without posting stock",async()=>{
+ mocked.orders.mockResolvedValue({orders:[
+  {orderId:"po-a",supplierId:"supp-a",storeId:"store-a",reference:"INV-1",closed:false,orderedLines:2,receivedMinor:"2000",createdAt:"2026-11-14"},
+  {orderId:"po-b",supplierId:"supp-a",storeId:"store-a",reference:"INV-2",closed:true,orderedLines:1,receivedMinor:"500",createdAt:"2026-11-14"}
+ ]});
+ render(<SharedShopPurchasingPanel {...props} online={true}/>);
+ const summary=await screen.findByLabelText("Purchasing summary");
+ expect(summary).toHaveTextContent("Suppliers owing1");
+ expect(summary).toHaveTextContent("Recorded payablesGHS 10.00");
+ expect(screen.getByText("2 of 2 purchase orders shown")).toBeInTheDocument();
+ const filter=screen.getByRole("group",{name:"Purchase order status"});
+ fireEvent.click(filter.querySelectorAll("button")[1]!);
+ expect(screen.getByText("1 of 2 purchase orders shown")).toBeInTheDocument();
+ const chooser=screen.getByLabelText("Purchase order");
+ expect(chooser).toHaveTextContent("INV-1");
+ expect(chooser).not.toHaveTextContent("INV-2");
+ fireEvent.change(screen.getByLabelText("Search suppliers"),{target:{value:"unlisted"}});
+ expect(screen.getByText(/No suppliers match/)).toBeInTheDocument();
+ expect(screen.queryByText("No suppliers in this shop.")).toBeNull();
+ expect(mocked.settle).not.toHaveBeenCalled();
+});

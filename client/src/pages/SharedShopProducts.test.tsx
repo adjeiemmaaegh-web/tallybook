@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProductCatalogEntry, ShopOverview } from "@/cloud/shopClient";
 
-const shop = vi.hoisted(() => ({ overview: vi.fn(), catalog: vi.fn(), saveFull: vi.fn(), saveLegacy: vi.fn() }));
+const shop = vi.hoisted(() => ({ overview: vi.fn(), catalog: vi.fn(), saveFull: vi.fn(), saveLegacy: vi.fn(), adjust: vi.fn() }));
 vi.mock("@/lib/supabase", () => ({
   isSupabaseConfigured: true,
   getSupabaseClient: () => ({ auth: {
@@ -18,6 +18,7 @@ vi.mock("@/cloud/shopClient", async (orig) => ({
   getProductCatalog: shop.catalog,
   saveShopProductFull: (_c: string, input: unknown) => shop.saveFull(input),
   saveShopProduct: (_c: string, input: unknown) => shop.saveLegacy(input),
+  adjustShopStock: (_c: string, input: unknown) => shop.adjust(input),
   getShopReadiness: async () => ({ companyId: "biz", saleCount: 3 }),
 }));
 
@@ -44,7 +45,8 @@ const catalog: ProductCatalogEntry[] = [
 ];
 
 beforeEach(() => {
-  localStorage.clear();
+  localStorage.clear(); sessionStorage.clear();
+  shop.adjust.mockReset().mockResolvedValue({});
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
   shop.overview.mockReset().mockResolvedValue(overview);
   shop.catalog.mockReset().mockResolvedValue(catalog);
@@ -203,4 +205,33 @@ describe("shared shop products: stock console", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all products" }));
     expect(names()).toHaveLength(3);
   });
+});
+
+describe("shared shop stock adjustment safety",()=>{
+ it("requires confirmation before removing stock",async()=>{
+  const confirm=vi.spyOn(window,"confirm").mockReturnValue(false);
+  try{
+   await openTab("Stock");
+   fireEvent.change(screen.getByLabelText("Units of Eggs"),{target:{value:"1"}});
+   fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
+   await waitFor(()=>expect(confirm).toHaveBeenCalled());
+   expect(shop.adjust).not.toHaveBeenCalled();
+  }finally{confirm.mockRestore();}
+ });
+ it("retries a dropped stock response with the same operation ID, never a fresh one",async()=>{
+  const confirm=vi.spyOn(window,"confirm").mockReturnValue(true);
+  shop.adjust.mockReset().mockRejectedValueOnce(new ShopUnreachableError("Network dropped")).mockResolvedValueOnce({});
+  try{
+   await openTab("Stock");
+   fireEvent.change(screen.getByLabelText("Units of Eggs"),{target:{value:"1"}});
+   fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
+   await waitFor(()=>expect(shop.adjust).toHaveBeenCalledTimes(1));
+   await screen.findByText(/Stock adjustment not confirmed/);
+   const first=shop.adjust.mock.calls[0][0] as {operationId:string};
+   expect(first.operationId).toMatch(/^[0-9a-f-]{36}$/i);
+   fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Remove"}));
+   await waitFor(()=>expect(shop.adjust).toHaveBeenCalledTimes(2));
+   expect(shop.adjust.mock.calls[1][0]).toMatchObject({operationId:first.operationId,storeId:"st-a",productId:"eggs",delta:-1});
+  }finally{confirm.mockRestore();}
+ });
 });
