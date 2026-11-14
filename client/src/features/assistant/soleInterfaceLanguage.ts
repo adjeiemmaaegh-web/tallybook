@@ -54,7 +54,8 @@ export function normalizeSoleInterfaceRequest(raw: string): string {
   for(let n=0;n<4;n++){
     let next=current;
     for(const pattern of MESSAGE_PREFIXES)next=next.replace(pattern,"");
-    if(!COMMUNICATIVE_QUESTION.test(next))next=next.replace(POLITE_COMMAND,"");
+    if(!COMMUNICATIVE_QUESTION.test(next) || /^i (?:need|want|would like) you to\s+tell me how much\b/i.test(next))
+      next=next.replace(POLITE_COMMAND,"");
     next=next.trim();
     if(next===current || !next)break;
     current=next;
