@@ -61,3 +61,12 @@ it("shows authorized payable totals and filters suppliers/orders without posting
  expect(screen.queryByText("No suppliers in this shop.")).toBeNull();
  expect(mocked.settle).not.toHaveBeenCalled();
 });
+
+it("does not misreport zero payables when the authorized supplier read failed",async()=>{
+ mocked.balances.mockRejectedValueOnce(new Error("Server balances unavailable"));
+ render(<SharedShopPurchasingPanel {...props} online={true}/>);
+ expect(await screen.findByRole("alert")).toHaveTextContent("Server balances unavailable");
+ expect(screen.queryByLabelText("Purchasing summary")).toBeNull();
+ expect(screen.queryByText("No suppliers in this shop.")).toBeNull();
+ expect(mocked.settle).not.toHaveBeenCalled();
+});

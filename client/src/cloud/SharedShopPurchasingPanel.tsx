@@ -40,6 +40,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
  const [details,setDetails]=useState<ShopPurchaseDetail|null>(null);
  const [selectedOrder,setSelectedOrder]=useState("");
  const [loading,setLoading]=useState(false);
+ const [loaded,setLoaded]=useState(false);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
@@ -57,17 +58,17 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
  const operation=useRef<Pending|null>(null);
  const mounted=useRef(true);
  const load=useCallback(async()=>{
-   if(!online)return;
-   setLoading(true);
+   if(!online){setLoaded(false);return;}
+   setLoading(true);setLoaded(false);
    try {
      const [balances,listed]=await Promise.all([getShopSupplierBalances(companyId),listShopPurchaseOrders(companyId)]);
      if(!mounted.current)return;
-     setSuppliers(balances.suppliers);setOrders(listed.orders);setError("");
-   }catch(e){if(mounted.current)setError(e instanceof Error?e.message:"Purchasing records unavailable.");}
+     setSuppliers(balances.suppliers);setOrders(listed.orders);setLoaded(true);setError("");
+   }catch(e){if(mounted.current){setSuppliers([]);setOrders([]);setLoaded(false);setError(e instanceof Error?e.message:"Purchasing records unavailable.");}}
    finally{if(mounted.current)setLoading(false);}
  },[companyId,online]);
  useEffect(()=>{
-  mounted.current=true;operation.current=null;setSuppliers([]);setOrders([]);setDetails(null);
+  mounted.current=true;operation.current=null;setSuppliers([]);setOrders([]);setLoaded(false);setDetails(null);
   setSelectedOrder("");setSupplierId("");setStoreId("");setLines([newLine()]);
   if(online)void load();
   return()=>{mounted.current=false;};
@@ -165,12 +166,12 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
  return <div className="shop-grid" aria-label="Shared Shop purchasing and goods receiving">
   <section className="shop-card space-y-3">
    <h2>Purchasing & suppliers</h2>
-   <div className="tb-ops-metrics" aria-label="Purchasing summary">
+   {loaded&&<div className="tb-ops-metrics" aria-label="Purchasing summary">
     <div><span>Suppliers</span><strong>{supplierSummary.suppliers}</strong></div>
     <div><span>Suppliers owing</span><strong>{supplierSummary.owing}</strong></div>
     <div><span>Open orders</span><strong>{orders.filter(o=>!o.closed).length}</strong></div>
     <div><span>Recorded payables</span><strong>{supplierSummary.outstandingMinor===null?"Unavailable":displayMinor(supplierSummary.outstandingMinor,currency)}</strong></div>
-   </div>
+   </div>}
    <p className="shop-muted">Owner-only server ledger. Purchases change stock only when goods are received; supplier payments are manual confirmations of outside payments.</p>
    {!online&&<p role="alert" className="shop-alert">Shared Shop purchasing is unavailable offline. No order, stock movement or payment is queued from this screen.</p>}
    {error&&<p role="alert" className="shop-alert">{error}</p>}
@@ -184,7 +185,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
    <h3>Supplier balances</h3>
    <label className="shop-field">Search suppliers<input type="search" value={supplierQuery} maxLength={100}
      placeholder="Supplier name or ID" onChange={e=>setSupplierQuery(e.target.value)}/></label>
-   <p className="shop-muted">{filteredSuppliers.length} of {suppliers.length} suppliers shown</p>
+   {loaded&&<p className="shop-muted">{filteredSuppliers.length} of {suppliers.length} suppliers shown</p>}
    <div className="space-y-2">{suppliers.length>0 && filteredSuppliers.length===0 && <p>No suppliers match. <button type="button" className="shop-link" onClick={()=>setSupplierQuery("")}>Clear search</button></p>}
    {filteredSuppliers.length?filteredSuppliers.map(s=><div key={s.supplierId} className="rounded border p-3 text-sm">
     <strong>{s.name}{s.archived?" (archived)":""}</strong>
@@ -196,7 +197,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
        void safeAction("Archive supplier",{supplierId:s.supplierId},()=>archiveShopSupplier(companyId,s.supplierId));}}>Archive supplier</button>
      {BigInt(s.outstandingMinor)>0n&&<p className="shop-muted">Record the supplier payment first. A supplier you still owe can't be archived.</p>}
     </>}
-   </div>):suppliers.length===0?<p>No suppliers in this shop.</p>:null}</div>
+   </div>):loaded&&suppliers.length===0?<p>No suppliers in this shop.</p>:null}</div>
   </section>
   <section className="shop-card space-y-3">
    <h2>Create purchase order</h2>
@@ -221,7 +222,7 @@ export function SharedShopPurchasingPanel({userId,companyId,overview,online,refr
        <button type="button" className="shop-chip" aria-pressed={orderFilter===value}
          key={value} onClick={()=>{setOrderFilter(value);setSelectedOrder("");}}>{label}</button>)}
    </div>
-   <p className="shop-muted">{visibleOrders.length} of {orders.length} purchase orders shown</p>
+   {loaded&&<p className="shop-muted">{visibleOrders.length} of {orders.length} purchase orders shown</p>}
    <label className="shop-field">Purchase order<select value={selectedOrder} onChange={e=>setSelectedOrder(e.target.value)} disabled={!online||busy}><option value="">Choose saved order</option>{visibleOrders.map(o=><option key={o.orderId} value={o.orderId}>{suppliers.find(s=>s.supplierId===o.supplierId)?.name??"Supplier"} · {o.reference??o.orderId.slice(0,8)}{o.closed?" (closed)":""}</option>)}</select></label>
    {details&&<div className="space-y-3">
     <p>Received value so far: {displayMinor(details.receivedMinor,currency)}. {details.closed?"Order closed.":"Partial receipts allowed."}</p>
