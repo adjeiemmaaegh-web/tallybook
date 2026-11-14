@@ -142,11 +142,11 @@ it("requires explicit category selection before creating a business",async()=>{
  expect(submit).toBeEnabled();
 });
 it("does not call the business ready until type is confirmed via the owner's RLS membership",async()=>{
- let categorySaved=false;
- mock.lookup.mockImplementation(async()=>({
+ let businessCreated=false,categorySaved=false;
+ mock.lookup.mockImplementation(async()=>businessCreated?({
    id:"cloud",owner_id:"owner",name:"Shop",role:"owner",business_type:categorySaved?"Clothing or fashion":null
- }));
- mock.create.mockResolvedValue({id:"cloud",owner_id:"owner",name:"Shop"});
+ }):null);
+ mock.create.mockImplementation(async()=>{businessCreated=true;return {id:"cloud",owner_id:"owner",name:"Shop"};});
  mock.category.mockImplementation(async()=>{categorySaved=true;});
  render(<CloudBusinessPanel/>);
  fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
