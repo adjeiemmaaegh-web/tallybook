@@ -7,6 +7,9 @@ on:
       - security/mandatory-online-account-boundary-20261113
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: clementia-qa-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -34,7 +37,7 @@ jobs:
         run: |
           mkdir -p artifacts/release-v19
           set -o pipefail
-          pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides soleInterfaceBusinessQueries expenseAssistant soleInterfaceDailyReview universalAssistant ClementiaBusinessOnboarding ClementiaOwnerEnrollment ClementiaOnboardingEntry AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
+          pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides soleInterfaceBusinessQueries expenseAssistant soleInterfaceDailyReview clearContextSafety universalAssistant ClementiaBusinessOnboarding ClementiaOwnerEnrollment ClementiaOnboardingEntry AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
       - name: Semantic TypeScript check
         run: pnpm check
       - name: Full client unit and integration regression
