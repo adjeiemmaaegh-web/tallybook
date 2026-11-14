@@ -142,7 +142,7 @@ const BOUNDARIES: readonly Guide[]=[
   {id:"expense-direct",match:/\b(?:record|log|enter|save|create)\b.{0,50}\b(?:expense|rent|spending)\b/i,title:"Expenses",route:ROUTES.expenses,summary:"Clementia currently does not save expenses in chat.",steps:["Open Expenses.","Enter a category, amount, date and description as required.","Confirm the recorded expense on that page."]},
 ];
 const ASK_HOW = /^(?:how (?:do|can|should|would|to)\b|what (?:steps|is the easiest way)\b|where can i\b|which screen\b|is there a way\b|please explain\b|explain (?:the process|how)\b|teach me\b|show me how\b|can you (?:show|tell|explain|walk)\b|could you (?:show|guide|explain|walk)\b|i (?:do not|don't) know how\b|as a beginner\b|tell me how\b|help me learn\b)/i;
-const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set (?:a |an |the )?(?:tax|vat)|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
+const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
 
 function guideResponse(guide:Guide,askedHow:boolean,prepared:string):AssistantReply {
   const canDo=Boolean(guide.inChat);
