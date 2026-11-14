@@ -135,10 +135,12 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
         if(businessType){
           try{await saveBusinessType(created.id,businessType);}
           catch(cause){
-            setError("Your business was created and ownership verified, but its type could not be saved. Use the Business type settings below to retry. "+(cause instanceof Error?cause.message:""));
+            if(started===revision.current)setError("Your business was created and ownership verified, but its type could not be saved. Use the Business type settings below to retry. "+(cause instanceof Error?cause.message:""));
             return;
           }
         }
+        // Never navigate from a stale, authenticated account after an async save.
+        if(started!==revision.current)return;
         // Business creation never imports private device records.
         navigate("/shop?view=dashboard");
       }

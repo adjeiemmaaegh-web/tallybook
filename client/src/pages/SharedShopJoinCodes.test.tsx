@@ -98,3 +98,32 @@ describe("join code: employee side", () => {
     });
   }
 });
+
+describe("safe employee joining UX",()=>{
+ it("blocks personal IDs and malformed codes before contacting any membership API",async()=>{
+   shop.businesses.mockResolvedValue([]);
+   render(<SharedShopPage/>);
+   const input=await screen.findByLabelText("Invitation code");
+   fireEvent.change(input,{target:{value:"employee@example.com"}});
+   const submit=screen.getByRole("button",{name:"Join shop"});
+   expect(submit).toBeDisabled();
+   expect(screen.getByText(/Enter all eight characters/)).toBeInTheDocument();
+   expect(shop.join).not.toHaveBeenCalled();
+   expect(shop.accept).not.toHaveBeenCalled();
+ });
+ it("explains owner-issued access without claiming an employee identifier authenticates",async()=>{
+   shop.businesses.mockResolvedValue([]);
+   render(<SharedShopPage/>);
+   expect(await screen.findByText(/employee ID, phone number or name alone cannot grant access/)).toBeInTheDocument();
+ });
+ it("handles refused browser clipboard access without leaking the private code",async()=>{
+   const rejected=vi.fn().mockRejectedValue(new Error("Clipboard denied"));
+   Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:rejected}});
+   render(<SharedShopPage/>);
+   fireEvent.click(await screen.findByRole("button",{name:"Team"}));
+   fireEvent.click(await screen.findByRole("button",{name:"Make a join code"}));
+   fireEvent.click(await screen.findByRole("button",{name:"Copy message"}));
+   expect(await screen.findByText(/Copy unavailable/)).toBeInTheDocument();
+   expect(rejected).toHaveBeenCalledTimes(1);
+ });
+});
