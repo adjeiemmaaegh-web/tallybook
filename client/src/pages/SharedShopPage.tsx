@@ -868,7 +868,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
         <button type="button" onClick={() => { if (online) void flush(); else void reloadQueue(); }}>Retry pending sales</button>
       </div>}
       {queued.length > 0 && <div className="shop-queue">
-        <h3>Pending and unresolved sales</h3>
+        <h3>Waiting to send</h3><p className="shop-muted">Rejected or unreadable sales also remain here until an authorized person reconciles and removes them.</p>
         <ul>{queued.map(q => <li key={q.id} className={q.status === "rejected" || q.status === "needs-review" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
           {q.status === "queued" || q.status === "sending"
