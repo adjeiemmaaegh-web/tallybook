@@ -62,6 +62,11 @@ jobs:
         run: |
           set -o pipefail
           node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs 2>&1 | tee artifacts/release-v19/native-ci.log
+      - name: Full repository QA inventory
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          node scripts/full-repository-qa-inventory.mjs 2>&1 | tee artifacts/release-v19/repository-inventory-ci.log
       - name: Client/IndexedDB unit and integration
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
@@ -114,6 +119,11 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --config playwright.offline.config.mjs 2>&1 | tee artifacts/release-v19/offline-ci.log
+      - name: Built production shell performance sample
+        if: ${{ always() && steps.chromium.outcome == 'success' && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --config playwright.performance.config.mjs 2>&1 | tee artifacts/release-v19/performance-ci.log
       - name: Dependency vulnerability advisory check
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
@@ -127,6 +137,7 @@ jobs:
           path: |
             artifacts/release-v19/*-ci.log
             artifacts/release-v19/stage21-preflight.log
+            artifacts/release-v19/full-repository-qa-inventory.json
             artifacts/release-v19/*-results/**
           if-no-files-found: warn
           retention-days: 14
