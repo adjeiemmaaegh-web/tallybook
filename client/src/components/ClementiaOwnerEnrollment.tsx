@@ -37,10 +37,10 @@ export default function ClementiaOwnerEnrollment(){
     try{
       // Fail closed: a company restored without its staff records must NOT be
       // re-initialized with an attacker-chosen owner credential.
-      const [stored,members]=await db.transaction("r",[db.businessProfiles,db.staffMembers],async()=>[
-        await db.businessProfiles.get(activeCompanyId),
-        await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count(),
-      ]);
+      const {stored,members}=await db.transaction("r",[db.businessProfiles,db.staffMembers],async()=>({
+        stored:await db.businessProfiles.get(activeCompanyId),
+        members:await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count(),
+      }));
       if(!stored||stored.id!==profile.id||stored.staffGovernanceEnabled||members!==0)
         throw Error("Owner enrollment is unavailable. Use the existing staff unlock or restore a verified backup.");
       const created=await createStaff(name.trim(),"owner",protectedPin,db);
