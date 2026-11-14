@@ -89,6 +89,9 @@ export function createExpenseAssistantSession(database: TallybookDB, currency: s
     if(!draft && !isExpenseRecordingRequest(text))return null;
     if(draft && CANCEL.test(text)){clear();return info("Expense recording cancelled. Nothing was saved.");}
     if(draft?.token)return info("Use Confirm or Cancel on the expense preview. Nothing has been saved.");
+    // A fresh full expense request replaces, rather than silently merges with,
+    // any unfinished prior entry. Never reuse its amount, category or date.
+    if(draft && isExpenseRecordingRequest(text))clear();
     const active=getActiveBusinessProfileId();
     if(!draft)draft={companyId:active,request:text,submissionKey:nanoid(18)};
     if(draft.companyId!==active){clear();return failure("The business changed. Expense preparation was cancelled.");}
