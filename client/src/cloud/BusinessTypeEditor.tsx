@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,type FormEvent} from "react";
 import {BUSINESS_TYPES,readBusinessType,saveBusinessType,type BusinessType} from "./businessClassification";
 
 /** Verified owner-only presentation; RLS + business_type-only UPDATE grant enforce access. */
@@ -20,7 +20,7 @@ export function BusinessTypeEditor({companyId}:{companyId:string}){
     });
     return()=>{revision.current++;};
   },[companyId]);
-  const save=async(event:React.FormEvent)=>{
+  const save=async(event:FormEvent)=>{
     event.preventDefault();
     if(busy||!loaded||!type||type===saved)return;
     const request=revision.current;setBusy(true);setError("");
