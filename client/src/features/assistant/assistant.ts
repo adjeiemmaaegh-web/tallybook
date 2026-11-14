@@ -610,7 +610,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
 
     // Refuse to record a planned transaction even when there is insufficient
     // information for the sale parser to form an ordinary write candidate.
-    if (/^(?:record|log|enter|save)\\s+(?:my|a|an|our|the)?\\s*(?:planned|future|scheduled)\\s+(?:sale|payment|stock\\s+delivery)\\b/i.test(prepared))
+    if (/^(?:record|log|enter|save)\s+(?:my|a|an|our|the)?\s*(?:planned|future|scheduled)\s+(?:sale|payment|stock\s+delivery)\b/i.test(prepared))
       return info("That transaction is planned, not completed. I haven't saved anything. Tell me after it really happens.");
 
     const parsed = parseCommand(canonicalText, { now: options.now?.() });
