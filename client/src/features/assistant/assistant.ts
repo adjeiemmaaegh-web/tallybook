@@ -32,6 +32,8 @@ import { simulateSale } from "./dryRun";
 import { executeLatestSaleReversal, prepareLatestSaleReversal } from "./reversals";
 import { listStoredAliases, recordAssistantHistory, saveStoredWorkflow } from "./assistantLocalStore";
 import { applyCustomAliases } from "./aliases";
+import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
+import { soleInterfaceGuide } from "./soleInterfaceGuides";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -479,7 +481,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
     const text = sanitizeInput(rawText);
     if (!text) return info("Type a question or a command, for example “How much does Adwoa owe?”.");
     const storedAliases = await listStoredAliases(getActiveBusinessProfileId());
-    const canonicalText = applyCustomAliases(text, storedAliases);
+    // Preserve pending drafts verbatim: only first-turn commands get wrapper normalization.
+    const canonicalText = applyCustomAliases(!draft && !pending && !batchState && !quotationDraft.hasDraft() ? normalizeSoleInterfaceRequest(text) : text, storedAliases);
     const prepared = prepareText(canonicalText);
     const contextFirst = resolveContextFirst(canonicalText);
     if (quotationDraft.hasDraft()) {
@@ -498,6 +501,14 @@ export function createAssistant(options: AssistantOptions): Assistant {
     // Answer only when no financial draft or confirmation is pending.
     if (!draft && !pending && !batchState && isQuotationRequest(canonicalText)) {
       return respondToQuotationRequest(canonicalText, database, options.currency);
+    }
+
+    // First-time help questions and unsupported operations deserve concrete,
+    // truthful instructions rather than a misleading generic parser fallback.
+    // Never run guidance over an open draft or financial confirmation.
+    if (!draft && !pending && !batchState) {
+      const guide=soleInterfaceGuide(canonicalText);
+      if (guide) return guide;
     }
 
     // Run 17 analytic questions never execute an AI-generated financial plan.
@@ -596,6 +607,11 @@ export function createAssistant(options: AssistantOptions): Assistant {
     const planned = planForText(canonicalText);
     if (planned) { lastPlan = planned.plan; return planned.reply; }
     if (lines.length >= 2) return info("I can record several sales, stock receipts or payments in one message, one per line, each complete (for example \u201cSell 2 eggs to Kwame, cash\u201d). I couldn't read this as separate requests, so nothing was recorded. Please send them one at a time, or rewrite the lines.");
+
+    // Refuse to record a planned transaction even when there is insufficient
+    // information for the sale parser to form an ordinary write candidate.
+    if (/^(?:record|log|enter|save)\s+(?:my|a|an|our|the)?\s*(?:planned|future|scheduled)\s+(?:sale|payment|stock\s+delivery)\b/i.test(prepared))
+      return info("That transaction is planned, not completed. I haven't saved anything. Tell me after it really happens.");
 
     const parsed = parseCommand(canonicalText, { now: options.now?.() });
     if (parsed.entities.plannedAction) return info("That sounds like something planned, not done yet, so I haven't recorded anything. Tell me again once the sale, delivery or payment has actually happened.");

@@ -36,6 +36,8 @@ const migrationFile = prefix => migrations.find(n => n.startsWith(prefix));
 const SHIFT_DOWN = "20261111180000_shop_staff_shifts_audit_down.sql";
 // Newest of all: its own entrypoint, so it unwinds first and re-applies last.
 const TELEGRAM_DOWN = "20261112120000_telegram_bot_down.sql";
+const SESSION_PROOF_DOWN = "20261113201509_tallybook_active_session_proof_down.sql";
+const SESSION_CREATION_DOWN = "20261114120000_company_creation_active_session_down.sql";
 
 async function setup() {
   const db = new PGlite();
@@ -89,6 +91,12 @@ test('every rollback file exists and is wrapped in a transaction', () => {
   assert.ok(migrationFile('20261111180000'));
   assert.match(read('supabase/rollback/' + SHIFT_DOWN), /^begin;/m);
   assert.match(read('supabase/rollback/' + SHIFT_DOWN), /^commit;/m);
+  assert.ok(migrationFile('20261114120000'));
+  assert.match(read('supabase/rollback/' + SESSION_CREATION_DOWN), /^begin;/m);
+  assert.match(read('supabase/rollback/' + SESSION_CREATION_DOWN), /^commit;/m);
+  assert.ok(migrationFile('20261113201509'));
+  assert.match(read('supabase/rollback/' + SESSION_PROOF_DOWN), /^begin;/m);
+  assert.match(read('supabase/rollback/' + SESSION_PROOF_DOWN), /^commit;/m);
   assert.ok(migrationFile('20261112120000'));
   assert.match(read('supabase/rollback/' + TELEGRAM_DOWN), /^begin;/m);
   assert.match(read('supabase/rollback/' + TELEGRAM_DOWN), /^commit;/m);
@@ -116,6 +124,9 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
     assert.equal((await t.ops('dailyReport', {from: new Date(Date.now() - 3600_000).toISOString(), to: new Date(Date.now() + 3600_000).toISOString()})).sales.count, 1);
 
     assert.equal((await t.ops('reconcileAccount', {reconciliationId: randomUUID(), account: 'cash', actualMinor: 100})).opening, true);
+    await t.down(SESSION_CREATION_DOWN);                       // active Auth session guard for business creation
+    await t.down(SESSION_PROOF_DOWN);                           // active session proof (no stored records)
+    assert.equal(await t.fn('public.tallybook_active_session_proof()'), false);
     await t.down(TELEGRAM_DOWN);                                // telegram bot (destructive)
     assert.equal(await t.table('telegram_links'), false);
     assert.equal(await t.fn('public.tallybook_telegram_ops(text,jsonb)'), false);
@@ -213,9 +224,12 @@ test('with stock counts, transfers and purchases on record, the chain unwinds un
   } finally { await t.db.close(); }
 });
 
-test('with no such history, all eighteen rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
+test('with no such history, all managed rollbacks run, the core shop still works, and the migrations apply again cleanly', async () => {
   const t = await setup();
   try {
+    await t.down(SESSION_CREATION_DOWN);                       // active Auth session guard for business creation
+    await t.down(SESSION_PROOF_DOWN);
+    assert.equal(await t.fn('public.tallybook_active_session_proof()'), false);
     await t.down(TELEGRAM_DOWN);
     await t.down(SHIFT_DOWN);
     for (const [, file] of CHAIN) await t.down(file);
@@ -235,10 +249,13 @@ test('with no such history, all eighteen rollbacks run, the core shop still work
     const sold = (await t.owner('listSales')).sales[0];
     await t.owner('refundSale', {saleId: sold.saleId, refundKey: key(), reason: 'Test', returnToStock: true}).catch(e => assert.match(e.message, /Refunds are turned off/));
 
-    // Apply the eighteen migrations again, oldest first.
+    // Reapply the managed migrations again, oldest first.
     for (const [prefix] of [...CHAIN].reverse()) await t.up(prefix);
     await t.up("20261111180000");
     await t.up("20261112120000");
+    await t.up("20261113201509");
+    await t.up("20261114120000");
+    assert.equal(await t.fn('public.tallybook_active_session_proof()'), true);
     assert.equal(await t.fn('public.tallybook_telegram_ops(text,jsonb)'), true);
     assert.equal(await t.table('telegram_links'), true);
     assert.equal((await t.ops('readiness')).saleCount, 2);

@@ -3,15 +3,18 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { canClaimWithPin, verifyDeviceOwner } from './verifyDeviceOwner';
 import { db } from '@/db/TallybookDB';
 import { useRun4CloudSession } from './useRun4CloudSession';
-import { Redirect, Link } from 'wouter';
+import { Redirect, Link, useLocation } from 'wouter';
 import { listVerifiedCloudBusinesses } from '@/cloud/cloudMembership';
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
+import { mayOpenCachedOfflineLedger } from './mandatoryOnlineAccountPolicy.mjs';
 import { Store, LogOut, ShieldCheck, WifiOff } from 'lucide-react';
 
 const BINDING_KEY = workspaceKey('friendsTestVerifiedAuthUserId');
 /** Set after an online check proves this account owns a cloud business; lets that owner return offline. */
 const VERIFIED_OWNER_KEY = workspaceKey('tallybook.entry.verifiedOwner.v1');
 export const friendsTestMode = import.meta.env.VITE_TALLYBOOK_FRIENDS_TEST_MODE === 'true';
+/** Production-only policy: an offline cached owner is not an active online account. */
+export const mandatoryOnlineAccountMode = import.meta.env.VITE_TALLYBOOK_MANDATORY_ONLINE_AUTH === 'true';
 
 export function decideFriendsWorkspaceBinding(boundUserId:string|undefined,
   hasExistingCompany:boolean,userId:string):'allow'|'bind'|'deny'{
@@ -77,7 +80,10 @@ async function signOutHere(){
  * Never attaches one account's local ledger to another account without the owner choosing it.
  */
 export function FriendsTestGate({children}:{children:ReactNode}){
-  const {state}=useRun4CloudSession(true);
+  const {state,retry}=useRun4CloudSession(true,mandatoryOnlineAccountMode);
+  const [location]=useLocation();
+  // Revalidate a strict-mode account on each protected navigation.
+  useEffect(()=>{if(mandatoryOnlineAccountMode)void retry();},[location,retry]);
   const [access,setAccess]=useState<Access|null>(null);
   const [pin,setPin]=useState('');
   const [claimError,setClaimError]=useState('');
@@ -91,6 +97,8 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   useEffect(()=>{
     let active=true;
     if(state.status==='offline'){
+      // Strict cloud launches must never unlock a cached offline ledger.
+      if(mandatoryOnlineAccountMode){setAccess({userId:null,status:'offline'});return;}
       setAccess({userId:null,status:'checking'});
       void (async () => {
         const cached = isSupabaseConfigured
@@ -141,10 +149,14 @@ export function FriendsTestGate({children}:{children:ReactNode}){
   if(state.status==='checking'||state.status==='disabled'||(access?.status==='checking'))
     return <main className="tb-entry" role="status"><p className="tb-entry-wait">Opening your Tallybook…</p></main>;
   if(state.status==='signed-out')return <Redirect to='/welcome' replace/>;
-  if(state.status==='offline'&&access?.userId===null&&access.status==='allow')return <>{children}</>;
-  if(state.status==='offline')return <EntryCard icon={<WifiOff/>} title="Connect once to open Tallybook">
-    <p>The first time you open this device's ledger, Tallybook checks your account online. After that it opens offline on this device.</p>
-  </EntryCard>;
+  if(state.status==='offline'&&access?.userId===null&&access.status==='allow'&&
+      mayOpenCachedOfflineLedger(mandatoryOnlineAccountMode,true))return <>{children}</>;
+  if(state.status==='offline'||(mandatoryOnlineAccountMode&&typeof navigator!=='undefined'&&!navigator.onLine))
+    return <EntryCard icon={<WifiOff/>} title="Connect to verify your account">
+      <p>{mandatoryOnlineAccountMode
+        ? 'This workspace requires an active, verified online account. Reconnect and sign in before opening business records.'
+        : 'The first time you open this device ledger, Tallybook checks your account online. Previously verified owners can then return offline on this device.'}</p>
+    </EntryCard>;
   if(state.status==='error')return <EntryCard icon={<ShieldCheck/>} title="We couldn't check your account">
     <p>Check your connection, then try again. Nothing on this device was changed.</p>
     <div className="tb-entry-actions">

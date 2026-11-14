@@ -1,0 +1,49 @@
+name: Clementia sole-interface 100x20 QA
+
+# Synthetic-only tests. No production credentials, backend writes, payments, or deployments.
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  clementia:
+    name: 100 goals x 20 phrasings - actual assistant replies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Validate 100 goals and 2,000 distinct utterances
+        run: node --test qa/clementia-sole-interface-cases.test.mjs
+      - name: Verify natural language, safe onboarding and FAQ guidance
+        run: |
+          mkdir -p artifacts/release-v19
+          set -o pipefail
+          pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides soleInterfaceBusinessQueries ClementiaBusinessOnboarding ClementiaOwnerEnrollment ClementiaOnboardingEntry AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
+      - name: Semantic TypeScript check
+        run: pnpm check
+      - name: Execute real assistant / synthetic IndexedDB matrix
+        run: |
+          mkdir -p artifacts/release-v19
+          set -o pipefail
+          pnpm exec vitest run clementiaSoleInterfaceMatrix --maxWorkers=1 --testTimeout=120000 --hookTimeout=120000 2>&1 | tee artifacts/release-v19/clementia-2000-ci.log
+      - name: Preserve full response/goal matrix even on failed tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clementia-sole-interface-2000-${{ github.run_id }}
+          path: artifacts/release-v19/clementia-*
+          if-no-files-found: warn
+          retention-days: 30

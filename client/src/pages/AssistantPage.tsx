@@ -8,6 +8,7 @@ import { useDatabase } from "@/contexts/DatabaseContext";
 import { createAssistant, deleteStoredAlias, deleteStoredWorkflow, listAssistantHistory, listPersistentWorkflows, listStoredAliases, saveStoredAlias, type Assistant, type AssistantAction, type AssistantReply } from "@/features/assistant";
 import { VOICE_LANGUAGES, defaultVoiceLanguage, rememberVoiceLanguage, useVoiceInput } from "@/features/assistant/voiceInput";
 import { requestClementiaPanelRestore } from "@/lib/clementiaWindow";
+import { ClementiaBusinessOnboarding } from "@/components/ClementiaBusinessOnboarding";
 
 interface Turn { id: number; from: "user" | "assistant"; reply?: AssistantReply; text?: string }
 
@@ -71,7 +72,7 @@ export default function AssistantPage() {
 }
 
 function CompanyScopedAssistant() {
-  const { profile, activeCompanyId } = useBusinessProfile();
+  const { profile, activeCompanyId, companies } = useBusinessProfile();
   const { status: databaseStatus } = useDatabase();
   const [location, setLocation] = useLocation();
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -155,6 +156,8 @@ function CompanyScopedAssistant() {
 
   const handleAction = (action: AssistantAction) => { if (action.type === "navigate") { setLocation(action.href); return; } void runAction(action.type === "say" ? action.text : null, (assistant) => assistant.act(action)); };
   const minimizeStandalone = () => { requestClementiaPanelRestore(); setLocation("/"); };
+
+  if (!profile && companies.length === 0) return <ClementiaBusinessOnboarding />;
 
   if (!profile) {
     return (
