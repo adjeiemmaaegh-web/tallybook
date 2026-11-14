@@ -465,7 +465,7 @@ function scoreActivity(text: string, now: Date): Candidate | null {
 }
 
 function scoreInsights(text: string): Candidate | null {
-  if (/\\bcompare\\b[^?]{0,70}\\bthis month(?:'s)?\\b[^?]{0,70}\\blast month(?:'s)?\\b|\\bcompare\\b[^?]{0,70}\\blast month(?:'s)?\\b[^?]{0,70}\\bthis month(?:'s)?\\b/.test(text)) {
+  if (/\bcompare\b[^?]{0,70}\bthis month(?:'s)?\b[^?]{0,70}\blast month(?:'s)?\b|\bcompare\b[^?]{0,70}\blast month(?:'s)?\b[^?]{0,70}\bthis month(?:'s)?\b/.test(text)) {
     return { intent: "INSIGHTS_QUERY", confidence: 0.995, entities: {}, qualifier: "sales-comparison" };
   }
   if (/\b(?:sales?|revenue|takings?)\b[^?]*(?:up|down|increase|decrease|compared|comparison)\b|\b(?:are|how are)\s+(?:sales?|our sales?)\b[^?]*\b(?:up|down|compared)\b/.test(text)) {
