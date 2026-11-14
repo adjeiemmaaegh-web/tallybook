@@ -25,12 +25,17 @@ const planActions = (steps: AssistantStep[]): AssistantAction[] => [
 export function planForText(raw: string): PlanResult | null {
   const text = raw.toLowerCase().replace(/[?!.,-]/g, " ").replace(/\s+/g, " ").trim();
   const domainCount = ["sales", "stock", "inventory", "debt", "owe", "reorder"].filter((word) => text.includes(word)).length;
-  const isOverview = /\b(?:check|review|summari[sz]e|show)\b/.test(text) && (domainCount >= 2 || text.includes("business overview"));
+  const isOverview = text === "business overview" || (/\b(?:check|review|summari[sz]e|show)\b/.test(text) && (domainCount >= 2 || text.includes("business overview")));
   const isMorning = /\b(?:morning check|morning summary|start of day)\b/.test(text);
   const isEndOfDay = /\b(?:end of day|close of day|daily close)\b/.test(text);
   if (!isOverview && !isMorning && !isEndOfDay) return null;
 
   const steps: AssistantStep[] = [];
+  if (isOverview && !domainCount) {
+    steps.push({ type: "read_sales", label: "Review today's sales" });
+    steps.push({ type: "read_inventory", label: "Review low stock" });
+    steps.push({ type: "read_debt", label: "Review customer debtors" });
+  }
   if (isMorning || isEndOfDay || text.includes("sales")) steps.push({ type: "read_sales", label: isEndOfDay ? "Review today's sales and collections" : "Review recent sales" });
   if (isMorning || isEndOfDay || text.includes("stock") || text.includes("inventory") || text.includes("reorder")) steps.push({ type: "read_inventory", label: "Review current stock" });
   if (isMorning || text.includes("debt") || text.includes("owe")) steps.push({ type: "read_debt", label: "Review outstanding customer balances" });
