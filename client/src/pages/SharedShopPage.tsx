@@ -11,6 +11,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
 import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
+import {SharedShopVariants} from "@/cloud/SharedShopVariants";
 import { SharedShopReports } from "@/cloud/SharedShopReports";
 import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } from "@/cloud/inventoryStats";
 import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
@@ -1060,6 +1061,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
       <SharedShopCatalogImport companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />
+      {isOwner && <SharedShopVariants companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />}
       {active.length > 0 && overview.products.length > 0 && <div className="shop-stats" aria-label="Stock summary">
         <div><span>Stock value</span><strong>{stats.valueMinor === null ? "Too large to show" : formatMinorAmount(stats.valueMinor, currency)}</strong>{stats.withoutCost > 0 && <small>{stats.withoutCost} product{stats.withoutCost === 1 ? "" : "s"} with no cost left out</small>}</div>
         <div><span>Products</span><strong>{stats.products}</strong><small>{stats.counted} counted</small></div>
