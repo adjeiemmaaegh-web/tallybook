@@ -1,15 +1,21 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CloudBusinessPanel } from "./CloudBusinessPanel";
+const classification = vi.hoisted(() => ({ read:vi.fn(), save:vi.fn() }));
 const mock = vi.hoisted(() => ({ getUser: vi.fn(), lookup: vi.fn(), create: vi.fn(), unsubscribe: vi.fn(), callback: null as null | (() => void) }));
 vi.mock("@/lib/supabase", () => ({ isSupabaseConfigured: true, getSupabaseClient: () => ({ auth: { getUser: mock.getUser, onAuthStateChange: (callback: () => void) => { mock.callback = callback; return { data: { subscription: { unsubscribe: mock.unsubscribe } } }; } } }) }));
 vi.mock("./businessIdentity", () => ({ createBusiness: mock.create }));
+vi.mock("./businessClassification",async original=>({
+ ...(await original<object>()),readBusinessType:classification.read,saveBusinessType:classification.save
+}));
 vi.mock("./cloudMembership", () => ({ listVerifiedCloudBusinesses: async () => { const result = await mock.lookup(); return result ? [result] : []; } }));
 beforeEach(() => {
   cleanup(); vi.clearAllMocks(); localStorage.clear();
   Object.defineProperty(navigator, "locks", { configurable: true, value: { request: async (_name: string, callback: () => unknown) => callback() } });
   mock.getUser.mockResolvedValue({ data: { user: { id: "owner" } }, error: null });
   mock.lookup.mockResolvedValue(null);
+  classification.read.mockResolvedValue(null);
+  classification.save.mockResolvedValue(undefined);
 });
 it("does not contact business tables for a signed-out visitor", async () => {
   mock.getUser.mockResolvedValue({ data: { user: null }, error: null });
@@ -121,4 +127,58 @@ it('gives a verified owner one dashboard entry', async () => {
   render(<CloudBusinessPanel accountOnly />);
   expect(await screen.findByRole('link',{name:'Open owner dashboard'})).toHaveAttribute('href','/shop?view=dashboard');
   expect(screen.queryByRole('link',{name:'Open POS'})).toBeNull();
+});
+
+it("saves a chosen business category only after fresh owner membership verifies creation",async()=>{
+ mock.create.mockImplementation(async()=>{
+   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"owner"});
+   return {id:"cloud",owner_id:"owner",name:"Shop"};
+ });
+ render(<CloudBusinessPanel/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
+ fireEvent.change(screen.getByLabelText("Business name"),{target:{value:"My shop"}});
+ fireEvent.change(screen.getByLabelText("What kind of business? (optional)"),{target:{value:"wholesale"}});
+ fireEvent.click(screen.getByRole("button",{name:"Create business"}));
+ await waitFor(()=>expect(classification.save).toHaveBeenCalledWith("cloud","wholesale"));
+ expect(mock.create).toHaveBeenCalledTimes(1);
+});
+it("keeps owner access and allows recovery when category save fails after creation",async()=>{
+ mock.create.mockImplementation(async()=>{
+   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"owner"});
+   return {id:"cloud",owner_id:"owner",name:"Shop"};
+ });
+ classification.save.mockRejectedValueOnce(new Error("Column not deployed"));
+ render(<CloudBusinessPanel/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
+ fireEvent.change(screen.getByLabelText("Business name"),{target:{value:"My shop"}});
+ fireEvent.change(screen.getByLabelText("What kind of business? (optional)"),{target:{value:"retail"}});
+ fireEvent.click(screen.getByRole("button",{name:"Create business"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("business was created");
+ expect(screen.getByLabelText("Business type settings")).toBeInTheDocument();
+ expect(mock.create).toHaveBeenCalledTimes(1);
+});
+
+it("shows a real account ID for targeted invitations without treating email as authorization",async()=>{
+ mock.getUser.mockResolvedValue({data:{user:{id:"owner",email:"owner@example.test"}},error:null});
+ render(<CloudBusinessPanel accountOnly/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I work for someone else"}));
+ expect(screen.getByText(/Your verified account ID/)).toHaveTextContent("owner");
+ expect(screen.getByText(/email address or employee number alone does not grant shop access/)).toBeInTheDocument();
+ expect(mock.create).not.toHaveBeenCalled();
+});
+
+it("prevents automatic shop redirect when type persistence fails after verified creation",async()=>{
+ mock.create.mockImplementation(async()=>{
+   mock.lookup.mockResolvedValue({id:"cloud",name:"Shop",owner_id:"owner",role:"owner"});
+   return {id:"cloud",owner_id:"owner",name:"Shop"};
+ });
+ classification.save.mockRejectedValueOnce(new Error("Migration not yet applied"));
+ render(<CloudBusinessPanel accountOnly autoOpen showSettings={false}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I own a business"}));
+ fireEvent.change(screen.getByLabelText("Business name"),{target:{value:"My shop"}});
+ fireEvent.change(screen.getByLabelText("What kind of business? (optional)"),{target:{value:"retail"}});
+ fireEvent.click(screen.getByRole("button",{name:"Create business"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("Open Settings to retry");
+ expect(screen.getByRole("link",{name:"Open settings to finish business type"})).toHaveAttribute("href","/settings");
+ expect(mock.create).toHaveBeenCalledTimes(1);
 });

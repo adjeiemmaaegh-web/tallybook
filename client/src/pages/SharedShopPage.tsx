@@ -30,6 +30,7 @@ import {SharedShopQuotes, type QuoteStart} from "@/cloud/SharedShopQuotes";
 import {convertShopQuotation} from "@/cloud/quotations";
 import {purchaseRetry} from "@/cloud/purchaseRetry";
 import {exportLoadedSalesCsv} from "@/cloud/shopOperationalReports";
+import {joinCodeKind} from "@/cloud/joinCodePresentation";
 import {SharedShopAccounts} from "@/cloud/SharedShopAccounts";
 import {SharedShopAsk} from "@/cloud/SharedShopAsk";
 import type {PurchaseDraft} from "@/cloud/shopAssistant";
@@ -202,9 +203,13 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   const [error, setError] = useState("");
   useEffect(() => { let live = true; void getSupabaseClient().auth.getUser().then(r => { if (live) setEmail(r.data.user?.email ?? ""); }); return () => { live = false; }; }, []);
   const accept = async (event: FormEvent) => {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    const kind=joinCodeKind(code);
+    if(!kind){setError("Enter a valid eight-character shop code or the complete private invitation sent by the owner.");return;}
+    if(!online){setError("Connect to the internet to join a shop.");return;}
+    setBusy(true); setError("");
     try {
-      if (/^v1\./i.test(code.trim())) {
+      if(kind==="targeted") {
         const receipt = await acceptCloudInvitation(code.trim());
         if (receipt.userId !== userId) throw new Error("This code was accepted by a different account.");
         window.location.assign("/shop?view=home");
@@ -218,11 +223,14 @@ function JoinShop({ userId, online }: { userId: string; online: boolean }) {
   };
   return <section className="shop-card shop-empty tb-shop-setup">
     <h2>Join your employer's shop</h2>
-    <p>Ask the owner for a join code (8 letters and numbers, like <strong>K7QM-2XPD</strong>), or to invite <strong>{email || "the email you signed in with"}</strong> and give you the longer invitation code. Either works once and expires after 24 hours.</p>
+    <p>Ask your employer for a private eight-character code (like <strong>K7QM-2XPD</strong>), or a targeted invitation for <strong>{email || "your signed-in account"}</strong>. Invitations are single-use and expire after 24 hours.</p>
+    <p className="shop-muted">An employee ID, phone number or name alone cannot grant access. Only the owner-issued code and server-verified membership can add you.</p>
     <form onSubmit={accept} className="shop-inline-form">
       <label className="shop-field">Invitation code
-        <input value={code} onChange={e => setCode(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="K7QM-2XPD" /></label>
-      <button className="primary-action" disabled={busy || !online || !code.trim()}>{busy ? "Joining…" : "Join shop"}</button>
+        <input value={code} onChange={e => setCode(e.target.value.slice(0,140))} maxLength={140}
+          autoComplete="one-time-code" autoCapitalize="characters" spellCheck={false} placeholder="K7QM-2XPD" /></label>
+      {code.trim()&&<p role="status" className="shop-muted">{joinCodeKind(code)?"Code format looks complete. The server will verify it.":"Enter all eight characters or paste the full private invitation."}</p>}
+      <button className="primary-action" disabled={busy || !online || !joinCodeKind(code)}>{busy ? "Joining…" : "Join shop"}</button>
     </form>
     {error && <p role="alert" className="shop-alert">{error}</p>}
     <p className="shop-muted">Own a business instead? <Link href="/signin">Create it from your account page</Link>.</p>
@@ -974,22 +982,34 @@ function draftToInput(draft: ProductDraft, currency: string): ProductInput {
   };
 }
 
+/** New options are independent, hidden SKUs; stock is never copied. */
+function newOptionDraftFrom(source:ShopOverview["products"][number],currency:string):ProductDraft {
+  const original=draftFrom(source,currency);
+  return {...original,productId:crypto.randomUUID(),name:source.name.slice(0,100).trim()+" — new option",
+    barcode:"",active:false};
+}
 function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps) {
   const currency = overview.currency!;
   const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [edit, setEdit] = useState<ProductDraft | null>(null);
+  const [copiedFrom,setCopiedFrom]=useState<string|null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
   const [adjustNotes, setAdjustNotes] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [categoryFilter,setCategoryFilter]=useState("all");
   const [stockQuery, setStockQuery] = useState("");
   const pendingAdjustment = useRef<{fingerprint:string}|null>(null);
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
   const stats = computeStockStats(overview.products, stockOf);
-  const listed = filterProducts(overview.products, stockQuery).filter(p => matchesFilter(p, stockOf(p.id), stockFilter));
+  const categories=[...new Set(overview.products.map(p=>p.category?.trim()).filter((x):x is string=>!!x))]
+    .sort((a,b)=>a.localeCompare(b));
+  const listed = filterProducts(overview.products, stockQuery).filter(p =>
+    matchesFilter(p, stockOf(p.id), stockFilter)&&
+      (categoryFilter==="all"||p.category?.trim()===categoryFilter));
   const saveProduct = (event: FormEvent) => { event.preventDefault(); if (!edit) return; setNotice("");
     void run(async () => {
       const input = draftToInput(edit, currency);
@@ -1000,7 +1020,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         await saveShopProduct(companyId, { productId: input.productId, name: input.name, unitPriceMinor: input.unitPriceMinor, active: input.active });
         setNotice("Saved the name, price and availability. Barcode, category, cost and stock settings need the shop to be updated first.");
       }
-      setEdit(null); }); };
+      setEdit(null);setCopiedFrom(null); }); };
   /** A dropped response must not become two stock adjustments on retry. The id is
    * retained in sessionStorage for the same exact payload until the server confirms it.
    */
@@ -1042,8 +1062,9 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
   return <div className="shop-grid">
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2>
-        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
+        <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice("");setCopiedFrom(null); setEdit(blankDraft()); }}><Plus aria-hidden="true" />Add product</button></div>
       {edit && <form className="shop-edit" onSubmit={saveProduct}>
+        {copiedFrom&&<p role="status" className="tb-option-notice">New option based on {copiedFrom}. It is a <strong>separate product</strong> with its own price, barcode and stock. No existing stock is copied. The option starts hidden from sale until you review and enable it.</p>}
         <label className="shop-field">Name<input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} maxLength={120} required /></label>
         <label className="shop-field">Price ({currency})<input inputMode="decimal" value={edit.price} onChange={e => setEdit({ ...edit, price: e.target.value })} required /></label>
         <label className="shop-field">Type
@@ -1055,7 +1076,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         {edit.kind === "good" && edit.trackStock && <label className="shop-field">Warn me when stock is at or below (optional)<input inputMode="numeric" value={edit.threshold} onChange={e => setEdit({ ...edit, threshold: e.target.value })} placeholder="e.g. 5" /></label>}
         {isOwner && <label className="shop-field">What it costs you ({currency}, optional, only you can see this)<input inputMode="decimal" value={edit.cost} onChange={e => setEdit({ ...edit, cost: e.target.value })} /></label>}
         <label className="shop-check"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} />Available for sale</label>
-        <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => setEdit(null)}>Cancel</button></div>
+        <div className="shop-actions"><button className="primary-action" disabled={busy}>Save product</button><button type="button" className="secondary-action" onClick={() => {setEdit(null);setCopiedFrom(null);}}>Cancel</button></div>
       </form>}
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
@@ -1068,10 +1089,16 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         <div><span>Out of stock</span><strong>{stats.out}</strong></div>
       </div>}
       {overview.products.length > 0 && <>
+        {categories.length>0&&<label className="shop-field tb-product-category-choice">Filter category
+          <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}>
+            <option value="all">All categories</option>
+            {categories.map(category=><option value={category} key={category}>{category}</option>)}
+          </select>
+        </label>}
         <input type="search" className="shop-stock-search" value={stockQuery} onChange={e => setStockQuery(e.target.value)} aria-label="Search your products" placeholder="Search name, category or barcode" maxLength={64} autoComplete="off" />
         <div className="shop-chips" role="group" aria-label="Show">
           {STOCK_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={stockFilter === f.id} onClick={() => setStockFilter(f.id)}>{f.label}</button>)}</div>
-        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
+        {!listed.length && <p className="shop-muted">No products match. <button type="button" className="shop-link" onClick={() => { setStockFilter("all");setCategoryFilter("all"); setStockQuery(""); }}>Show all products</button></p>}
       </>}
       <ul className="shop-product-list shop-stock-list">{listed.map(p => { const tracked = tracksStock(p), left = stockOf(p.id), low = tracked && p.lowStockThreshold != null && left <= p.lowStockThreshold;
         return <li key={p.id}>
@@ -1083,7 +1110,10 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
             <input className="tb-stock-adjust-note" aria-label={`Reason for ${p.name} stock change`} maxLength={200}
               placeholder="Reason for manual stock adjustment (required to remove)"
               value={adjustNotes[p.id]??""} onChange={e=>setAdjustNotes(a=>({...a,[p.id]:e.target.value}))}/></>}
-          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice("");setCopiedFrom(null); setEdit(draftFrom(p, currency)); }}>Edit</button>
+          <button type="button" className="secondary-action" disabled={!online} onClick={() => {
+            setNotice("");setCopiedFrom(p.name);setEdit(newOptionDraftFrom(p,currency));
+          }}>Create option</button>
         </div></li>; })}</ul>
       {pendingAdjustment.current && <p role="status" className="shop-muted">Unconfirmed stock change: retry the same store, product and quantity or check the server history before proceeding.</p>}
       {error && <p role="alert" className="shop-alert">{error}</p>}
@@ -1229,13 +1259,19 @@ function JoinCodeCard({ companyId, overview, online, shopName }: { companyId: st
   const emailOf = (id: string | null) => overview.members.find(m => m.userId === id)?.email ?? "a new attendant";
   return <section className="shop-card" aria-labelledby="join-code-title">
     <h2 id="join-code-title">Join code</h2>
-    <p className="shop-muted">For someone who already has a Tallybook account. Give them a code; they enter it once and become an attendant with no permissions until you set them. Codes work once and expire after 24 hours.</p>
+    <p className="shop-muted">For someone who already has a Tallybook account. Give the code privately to the intended employee; the server permits only one redemption and gives the new attendant no special permissions until you assign them.</p>
+    <p className="shop-muted">Never use an employee's public ID as a password or grant access from a name alone. Revoke unused codes when staffing changes.</p>
     <button type="button" className="primary-action" disabled={busy || !online} onClick={() => void run(async () => { const r = await createJoinCode(companyId); setFresh({ code: r.code, expiresAt: r.expiresAt }); })}>Make a join code</button>
     {fresh && <div className="shop-invite" role="status">
-      <p>Give this to your employee. It is shown only now.</p>
+      <p>Give this only to the intended employee. This code is shown once and expires {new Date(fresh.expiresAt).toLocaleString()}.</p>
       <code aria-label="Join code">{showJoinCode(fresh.code)}</code>
       <div className="shop-actions">
-        <button type="button" className="secondary-action" onClick={() => void navigator.clipboard?.writeText(text).then(() => setNote("Message copied."))}><Copy aria-hidden="true" />Copy message</button>
+        <button type="button" className="secondary-action" onClick={()=>void (async()=>{
+            try{
+              if(!navigator.clipboard?.writeText)throw Error("Clipboard unavailable");
+              await navigator.clipboard.writeText(text);setNote("Private invitation message copied.");
+            }catch{setNote("Copy unavailable. Select the code above and share it privately.");}
+          })()}><Copy aria-hidden="true" />Copy message</button>
         <button type="button" className="secondary-action" onClick={() => { if (!openWhatsAppShare(text)) setNote("WhatsApp could not open. Copy the message instead."); }}>Send on WhatsApp</button>
       </div></div>}
     {note && <p role="status" className="shop-muted">{note}</p>}

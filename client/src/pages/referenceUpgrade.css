@@ -129,3 +129,10 @@
   .tb-stocktake-page .tb-stocktake-row .shop-actions button{min-height:44px}
   .tb-ops-history-head .shop-chips{flex-wrap:wrap}
 }
+
+/* Catalog options remain independent SKUs; clear owner expectations and category navigation. */
+.tb-option-notice{padding:13px 16px;border:1px solid #bde1d5;background:#eefaef;border-radius:14px;color:#164b41;line-height:1.5;font-size:.85rem}
+.tb-product-category-choice{max-width:360px;margin-bottom:12px}
+.tb-product-category-choice select{min-height:44px;border-radius:11px}
+.shop-stock-controls button{min-height:42px}
+@media(max-width:580px){.tb-product-category-choice{max-width:none}.shop-stock-controls .secondary-action{min-height:44px}}

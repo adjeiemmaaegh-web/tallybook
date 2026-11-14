@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness } from "./businessIdentity";
+import {BUSINESS_TYPES,saveBusinessType,type BusinessType} from "./businessClassification";
+import {BusinessTypeEditor} from "./BusinessTypeEditor";
 import {listVerifiedCloudBusinesses} from "./cloudMembership";
 import type {VerifiedCloudBusiness} from "./cloudMembershipBoundary.mjs";
 import {cloudEntryDestination} from "./cloudEntryDestination";
@@ -20,6 +22,8 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   const [profileName,setProfileName]=useState("");
   const [email,setEmail]=useState("");
   const [name, setName] = useState("");
+  const [businessType,setBusinessType]=useState<BusinessType|"">("");
+  const [typeSaveFailed,setTypeSaveFailed]=useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
@@ -32,7 +36,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     let active = true;
     const client = getSupabaseClient();
     const refresh = async () => {
-      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);
+      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);setTypeSaveFailed(false);
       setUserId(null); setBusiness(null); setAccessible([]); setError(null); setBusy(true);
       try {
         const { data: { user }, error: authError } = await client.auth.getUser();
@@ -73,9 +77,9 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   // A unique server-verified company enters its appropriate home automatically.
   // Unlinked users remain in onboarding; multiple memberships require explicit selection.
   useEffect(() => {
-    if (!accountOnly || !autoOpen || !userId || !membershipChecked || accessible.length !== 1 || !business) return;
+    if (!accountOnly || !autoOpen || typeSaveFailed || !userId || !membershipChecked || accessible.length !== 1 || !business) return;
     navigate(cloudEntryDestination(business.role));
-  }, [accountOnly, autoOpen, userId, membershipChecked, accessible, business, navigate]);
+  }, [accountOnly, autoOpen, typeSaveFailed, userId, membershipChecked, accessible, business, navigate]);
 
   async function saveProfileName(){
     const preferred=draftName.trim(), started=revision.current;
@@ -126,12 +130,26 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       if (!created || created.role !== "owner" ||
           created.owner_id !== userId || result.owner_id !== userId)
         throw new Error("Cloud business ownership could not be verified.");
-      if (started === revision.current) {
-        setBusiness(created);
-        setAccessible([...verified]);
-        // Approved default: a new business opens in the cloud shop, where first-run setup continues.
-        navigate("/shop?view=dashboard");
+      if(started!==revision.current)return;
+      // The category save finishes before the shop auto-opens, so a lost
+      // response is not disguised by successful business creation.
+      if(businessType){
+        try{await saveBusinessType(created.id,businessType);}
+        catch(cause){
+          if(started===revision.current){
+            setTypeSaveFailed(true);
+            setBusiness(created);setAccessible([...verified]);
+            setError("Your business was created and ownership verified, but its type could not be saved. Open Settings to retry. "+(cause instanceof Error?cause.message:""));
+          }
+          return;
+        }
       }
+      if(started!==revision.current)return;
+      setTypeSaveFailed(false);
+      setBusiness(created);
+      setAccessible([...verified]);
+      // Business creation never imports private device records.
+      navigate("/shop?view=dashboard");
     } catch (cause) {
       if (started === revision.current) setError(cause instanceof Error ? cause.message : "Could not create the cloud business.");
     } finally {
@@ -157,7 +175,8 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
         : "Record sales at your assigned store."}</p>
       <Link href={cloudEntryDestination(business.role)} className="primary-action">
         {business.role === "owner" ? "Open owner dashboard" : "Open attendant home"}
-      </Link></div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
+      </Link>{business.role==="owner"&&showSettings&&<BusinessTypeEditor key={business.id} companyId={business.id}/>}
+      {typeSaveFailed&&<Link href="/settings" className="secondary-action">Open settings to finish business type</Link>}</div> : !membershipChecked ? <p>Business membership could not be checked. Reload to retry.</p> : <div className="space-y-3">{(!accountOnly || !choice) && <>{accountOnly ? <div className="tb-role-intro">
           <p>Tallybook · by Alchemy</p>
           <h1>What will your role be?</h1>
           <span>You’re signed in. Create your shop or join your employer’s shop.</span>
@@ -174,10 +193,18 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
           <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
           <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
         </div>}
-        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Enter the private invitation below, or use an eight-character shop join code.</p><Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite your verified Tallybook account using its account ID, or ask for a private eight-character shop code. Enter a targeted invitation below, or use the short-code link.</p>
+          <p className="text-sm">Signed in as {email||"your current account"}. An email address or employee number alone does not grant shop access.</p>
+          <p className="text-sm">Your verified account ID (share privately only if the owner needs it to target an invitation): <code className="break-all">{userId}</code></p>
+          <Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
+      <label className="block" htmlFor="cloud-business-type">What kind of business? (optional)</label>
+      <select id="cloud-business-type" value={businessType} onChange={event=>setBusinessType(event.target.value as BusinessType|"")} className="w-full rounded border p-2">
+        <option value="">Choose later</option>{BUSINESS_TYPES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+      <p className="tb-business-type-hint">This helps describe your business. Your chosen type does not lock features or change sales/refund permissions.</p>
       <button className="primary-action" type="submit" disabled={!name.trim()}>Create business</button>
     </form>:null}</div>}
     {isSupabaseConfigured && userId &&
@@ -193,6 +220,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       </form>
       <p>Shop role: {business?.role??(membershipChecked ? "No shared shop linked yet" : "Checking membership")}</p>
       <p className="break-all">Signed in as: {email || userId}</p>
+      <p className="break-all">Verified account ID (used only for a targeted invitation): <code>{userId}</code></p>
     </details>}
     {error && <p role="alert">{error}</p>}
     {!accountOnly&&isSupabaseConfigured&&userId&&business&&

@@ -247,3 +247,37 @@ describe("manual shrink audit reason",()=>{
    expect(shop.adjust).not.toHaveBeenCalled();
  });
 });
+
+describe("category and independent product options",()=>{
+ it("creates a separately priced and stocked, initially hidden SKU without cloning barcode or inventory",async()=>{
+   await openTab("Stock");
+   await screen.findByText("Eggs");
+   fireEvent.click(within(row("Eggs")).getByRole("button",{name:"Create option"}));
+   expect(screen.getByText(/No existing stock is copied/)).toBeInTheDocument();
+   expect(screen.getByLabelText("Name")).toHaveValue("Eggs — new option");
+   expect(screen.getByLabelText(/^Price/)).toHaveValue("45.00");
+   expect(screen.getByLabelText(/^Barcode/)).toHaveValue("");
+   expect(screen.getByLabelText(/^Category/)).toHaveValue("Dairy");
+   expect(screen.getByLabelText("Available for sale")).not.toBeChecked();
+   fireEvent.change(screen.getByLabelText("Name"),{target:{value:"Eggs — 12 pack"}});
+   fireEvent.click(screen.getByRole("button",{name:"Save product"}));
+   await waitFor(()=>expect(shop.saveFull).toHaveBeenCalledTimes(1));
+   const payload=shop.saveFull.mock.calls[0][0];
+   expect(payload).toMatchObject({name:"Eggs — 12 pack",active:false,barcode:null,category:"Dairy",unitPriceMinor:4500});
+   expect(payload.productId).not.toBe("eggs");
+   expect(shop.adjust).not.toHaveBeenCalled();
+ });
+ it("filters server catalogue by actual category and restores all without mutating products",async()=>{
+   await openTab("Stock");
+   await screen.findByText("Eggs");
+   fireEvent.change(screen.getByLabelText("Filter category"),{target:{value:"Salon"}});
+   const visible=screen.getByText("Haircut",{selector:"strong"}).closest("li");
+   expect(visible).toBeInTheDocument();
+   expect(screen.queryByText("Eggs",{selector:"strong"})).toBeNull();
+   fireEvent.change(screen.getByLabelText("Search your products"),{target:{value:"zzzzz"}});
+   fireEvent.click(screen.getByRole("button",{name:"Show all products"}));
+   expect(screen.getByLabelText("Filter category")).toHaveValue("all");
+   expect(screen.getByText("Eggs",{selector:"strong"})).toBeInTheDocument();
+   expect(shop.saveFull).not.toHaveBeenCalled();
+ });
+});
