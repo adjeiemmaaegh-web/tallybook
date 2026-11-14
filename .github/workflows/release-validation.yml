@@ -138,6 +138,7 @@ jobs:
             artifacts/release-v19/*-ci.log
             artifacts/release-v19/stage21-preflight.log
             artifacts/release-v19/full-repository-qa-inventory.json
+            artifacts/release-v19/clementia-*
             artifacts/release-v19/*-results/**
           if-no-files-found: warn
           retention-days: 14
