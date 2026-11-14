@@ -186,7 +186,10 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
           <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
           <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
         </div>}
-        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Enter the private invitation below, or use an eight-character shop join code.</p><Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite your verified Tallybook account using its account ID, or ask for a private eight-character shop code. Enter a targeted invitation below, or use the short-code link.</p>
+          <p className="text-sm">Signed in as {email||"your current account"}. An email address or employee number alone does not grant shop access.</p>
+          <p className="text-sm">Your verified account ID (share privately only if the owner needs it to target an invitation): <code className="break-all">{userId}</code></p>
+          <Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
@@ -210,6 +213,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       </form>
       <p>Shop role: {business?.role??(membershipChecked ? "No shared shop linked yet" : "Checking membership")}</p>
       <p className="break-all">Signed in as: {email || userId}</p>
+      <p className="break-all">Verified account ID (used only for a targeted invitation): <code>{userId}</code></p>
     </details>}
     {error && <p role="alert">{error}</p>}
     {!accountOnly&&isSupabaseConfigured&&userId&&business&&

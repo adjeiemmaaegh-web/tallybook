@@ -157,3 +157,12 @@ it("keeps owner access and allows recovery when category save fails after creati
  expect(screen.getByLabelText("Business type settings")).toBeInTheDocument();
  expect(mock.create).toHaveBeenCalledTimes(1);
 });
+
+it("shows a real account ID for targeted invitations without treating email as authorization",async()=>{
+ mock.getUser.mockResolvedValue({data:{user:{id:"owner",email:"owner@example.test"}},error:null});
+ render(<CloudBusinessPanel accountOnly/>);
+ fireEvent.click(await screen.findByRole("button",{name:"I work for someone else"}));
+ expect(screen.getByText(/Your verified account ID/)).toHaveTextContent("owner");
+ expect(screen.getByText(/email address or employee number alone does not grant shop access/)).toBeInTheDocument();
+ expect(mock.create).not.toHaveBeenCalled();
+});
