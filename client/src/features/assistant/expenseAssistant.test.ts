@@ -82,6 +82,16 @@ describe("Clementia permissioned conversational expenses",()=>{
     expect(await kit.database.expenses.count()).toBe(0);
   });
 
+  it("restarts a new expense without leaking an unfinished earlier amount or category",async()=>{
+    const first=await kit.assistant.send("Record expense rent 150 cedis");
+    expect(first.kind).toBe("question");
+    const second=await kit.assistant.send("Record expense transport 25 cedis today");
+    expect(second.preview?.kind).toBe("expense");
+    expect(row(second,"Category")).toBe("Transport");
+    expect(row(second,"Amount")).toBe("GHS 25");
+    expect(await kit.database.expenses.count()).toBe(0);
+  });
+
   it("asks rather than guessing when an amount or date was not provided",async()=>{
     const first=await kit.assistant.send("Record expense rent");
     expect(first.kind).toBe("question");
