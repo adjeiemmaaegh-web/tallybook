@@ -4,7 +4,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import { formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 import { EXPENSE_CATEGORIES, EXPENSE_LABELS, listShopExpenses, recordShopExpense, voidShopExpense,
   type ExpenseCategory, type ExpenseMethod, type ShopExpense } from "./shopExpenses";
-import type { ShopOverview } from "./shopClient";
+import {ShopRejectedError,type ShopOverview} from "./shopClient";
 import {summarizeExpenses,formatExactExpenseMinor} from "./shopReconciliationView";
 
 const METHODS: Array<[ExpenseMethod, string]> = [["cash", "Cash"], ["mobile", "Mobile money"], ["card", "Card"], ["bank", "Bank"]];
@@ -49,12 +49,18 @@ export function SharedShopExpenses({ companyId, overview, online }: Props) {
     if (amountMinor <= 0) { setError("Enter an amount above zero."); return; }
     const input = { category: form.category, amountMinor, method: form.method, expenseDate: form.date, ...(form.storeId ? { storeId: form.storeId } : {}), ...(form.note.trim() ? { note: form.note.trim() } : {}) };
     const body = JSON.stringify(input);
-    if (pending.current?.body !== body) pending.current = { id: crypto.randomUUID(), body };
+    if(pending.current && pending.current.body!==body){
+      setError("An earlier expense may have been recorded. Retry the exact same details or reconcile the server ledger before entering a different expense.");return;
+    }
+    pending.current??={id:crypto.randomUUID(),body};
     setBusy(true);
     try {
       await recordShopExpense(companyId, { ...input, expenseId: pending.current.id });
       pending.current = null; setForm(blank()); setNotice("Expense recorded."); await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not record the expense."); } finally { setBusy(false); }
+    } catch (cause) {
+      if(cause instanceof ShopRejectedError)pending.current=null;
+      setError(cause instanceof Error ? cause.message : "Could not record the expense.");
+    } finally { setBusy(false); }
   };
   const [voiding, setVoiding] = useState<{ id: string; reason: string } | null>(null);
   const cancel = async (row: ShopExpense, reasonText: string) => {
