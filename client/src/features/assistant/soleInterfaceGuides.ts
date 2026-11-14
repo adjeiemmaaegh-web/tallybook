@@ -171,7 +171,7 @@ export function soleInterfaceGuide(raw:string):AssistantReply|null {
   // In particular, "where can I find suplier" must reach the existing
   // capability matcher (including its supported spelling corrections).
   // Keep "where can I add supplier?" in explanatory guidance instead.
-  const isLocationRequest=/^(?:where (?:can|do) i (?:find|see|view|open|access|locate)|where is|how do i get to|can you (?:open|take me to|navigate to)|please (?:open|take me to)|open|go to|take me to|bring up)\\b/i.test(prepared);
+  const isLocationRequest=/^(?:where (?:can|do) i (?:find|see|view|open|access|locate)|where is|how do i get to|can you (?:open|take me to|navigate to)|please (?:open|take me to)|open|go to|take me to|bring up)\b/i.test(prepared);
   if(isLocationRequest)return null;
   const askedHow=ASK_HOW.test(prepared);
   if(askedHow){
