@@ -247,6 +247,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && initialView === "dashboard" ? "dashboard" : business.role === "attendant" && initialView === "home" ? "home" : "sell");
   const [navOpen, setNavOpen] = useState(false);
   const [navSearch, setNavSearch] = useState("");
+  useEffect(() => { if (!navOpen) setNavSearch(""); }, [navOpen]);
   const [setupConfirmed, setSetupConfirmed] = useState(false);
   const menuTrigger = useRef<HTMLButtonElement>(null);
   const menuDialog = useRef<HTMLElement>(null);
