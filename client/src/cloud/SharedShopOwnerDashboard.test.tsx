@@ -41,3 +41,15 @@ it("does not display foreign-company totals or fabricate live amounts when offli
  expect(await screen.findByText(/Offline: live shared sales/)).toBeInTheDocument();
  expect(container.querySelector(".tb-shop-home-metric-featured strong")?.textContent).toBe("Unavailable");
 });
+
+it("navigates the owner directly to real sales, purchasing, and physical count workflows",async()=>{
+ vi.mocked(callShop).mockImplementation(async (_action,input)=>result("biz-a",Number(input.days)));
+ vi.mocked(getShopSupplierBalances).mockResolvedValue({suppliers:[]} as never);
+ const navigate=vi.fn();
+ render(<SharedShopOwnerDashboard companyId="biz-a" businessName="North shop" overview={overview} online={true} onNavigate={navigate}/>);
+ await screen.findByText("North shop");
+ for(const [label,tab] of [["Sales history","sales"],["Purchasing","purchasing"],["Physical stock counts","stock-counts"]] as const){
+  fireEvent.click(screen.getByRole("button",{name:new RegExp("^"+label)}));
+  expect(navigate).toHaveBeenLastCalledWith(tab);
+ }
+});
