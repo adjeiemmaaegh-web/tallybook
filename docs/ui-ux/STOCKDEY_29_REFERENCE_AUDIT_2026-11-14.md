@@ -26,7 +26,7 @@ Reference photos contain both Stockdey screens and existing Tallybook screens. R
 | 17 | POS | **Exists** | SellPanel handles cart, barcode search, payments, stock enforcement and offline outbox. |
 | 18 | Owner dashboard | **Exists** | SharedShopOwnerDashboard shows server-scoped sales, stock, supplier/customer balances. |
 | 19 | Mobile sidebar navigation | **Enhanced** | New mobile drawer exposes only authorized tabs, with search and dismissal. |
-| 20 | Setup complete screen | **Partial** | SetupLedger opens verified shop after setup; separate celebration screen absent. |
+| 20 | Setup complete screen | **Enhanced** | Post-setup confirmation appears after server refresh; explicitly distinguishes active store from currency-only configuration, and routes to dashboard, products or team. |
 | 21 | Store and currency repeat | **Exists** | Same functionality as photo 2; no duplicate implementation. |
 | 22 | Business identity repeat | **Partial** | Same business-type gap as photo 3. |
 | 23 | Employee ID repeat | **Partial** | Same safe join-code substitute as photo 4. |
@@ -38,13 +38,13 @@ Reference photos contain both Stockdey screens and existing Tallybook screens. R
 | 29 | Marketing hero | **Exists** | TallybookWelcome has responsive hero, trust claims and working CTA routes. |
 
 ## Counts
-{"Exists":16,"Partial":11,"Enhanced":2}. The snapshot has many existing business capabilities. New design improvements: a mobile section drawer and a stocktake dashboard over genuine server counts. No server-side flow, inventory posting, payment route, schema or staff authorization path is changed.
+{"Exists":16,"Partial":10,"Enhanced":3}. The snapshot has many existing business capabilities. New design improvements: a mobile section drawer, a stocktake dashboard over genuine server counts, and server-grounded post-setup confirmation. No server-side flow, inventory posting, payment route, schema or staff authorization path is changed.
 
 ## UI increment in this branch
 - Mobile drawer for shared shop: explicit Menu button, role-filtered sections, search, active page indicator, close/scrim/Escape, refresh.
 - Original desktop tab navigation remains for existing workflows and tests.
 - More refined mobile cards, fields and navigation consistent with Tallybook's identity; keyboard focus and reduced-motion styling.
-- Stock-take history with count summary, search, status filters and real recorded expected/counted/variance fields; server still enforces stale-stock rejection.\n- No fake Apple sign-in, payment provider, app-store badges, cross-store synchronization guarantees, or fictitious AI/finance metrics.
+- Stock-take history with count summary, search, status filters and real recorded expected/counted/variance fields; server still enforces stale-stock rejection.\n- Post-setup confirmation only calls a store ready after the verified overview contains an active store; no invented store or sales data.\n- No fake Apple sign-in, payment provider, app-store badges, cross-store synchronization guarantees, or fictitious AI/finance metrics.
 
 ## Open acceptance gates
 - TypeScript build and entire test suite, PR CI, mobile Chrome/Edge behavior, drawer keyboard/touch QA and verified cloud navigation.

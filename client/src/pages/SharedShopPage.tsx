@@ -41,7 +41,7 @@ import {SharedShopShifts} from "@/cloud/SharedShopShifts";
 import {SharedShopActivityAudit} from "@/cloud/SharedShopActivityAudit";
 import {shopStorePreferenceKey,authorizedStoreChoice} from "@/cloud/shopStorePreference";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
-import { ArrowLeft, Check, CloudOff, Copy, Menu, Minus, Plus, ReceiptText, RefreshCw, Search, Store, Trash2, Undo2, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, CloudOff, Copy, Menu, Minus, Plus, ReceiptText, RefreshCw, Search, Store, Trash2, Undo2, UserPlus, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -247,6 +247,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && initialView === "dashboard" ? "dashboard" : business.role === "attendant" && initialView === "home" ? "home" : "sell");
   const [navOpen, setNavOpen] = useState(false);
   const [navSearch, setNavSearch] = useState("");
+  const [setupConfirmed, setSetupConfirmed] = useState(false);
   const menuTrigger = useRef<HTMLButtonElement>(null);
   const menuDialog = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -325,8 +326,26 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   if (!overview) return error ? <p role="alert" className="shop-alert">{error} <button type="button" disabled={!online} onClick={() => void refresh()}>Try again</button></p> : <p role="status">Loading shop…</p>;
   const isOwner = overview.role === "owner";
+  if (setupConfirmed && isOwner && overview.currency) {
+    const readyStore = overview.stores.find(store => store.status === "active");
+    return <section className="shop-card tb-shop-setup-done" aria-label="Store setup confirmation">
+      <span className="tb-shop-setup-done-icon" aria-hidden="true"><CheckCircle2 /></span>
+      <p className="shop-eyebrow">{readyStore ? "STORE CREATED" : "CURRENCY CONFIRMED"}</p>
+      <h2>{readyStore ? "Your store is ready" : "One more step for your store"}</h2>
+      <p>{readyStore
+        ? `${readyStore.name} is set up in Tallybook with ${overview.currency} as its currency. Add your first product and stock before recording a sale.`
+        : `Your ${overview.currency} currency is saved. Add an active store before you can track stock or sell.`}</p>
+      <div className="tb-shop-setup-done-actions">
+        <button type="button" className="primary-action" onClick={() => { setSetupConfirmed(false); setTab(readyStore ? "dashboard" : "team"); }}>
+          {readyStore ? "Continue to dashboard" : "Add a store"}
+        </button>
+        {readyStore && <button type="button" className="secondary-action" onClick={() => { setSetupConfirmed(false); setTab("stock"); }}>Add a product</button>}
+      </div>
+      <p className="shop-muted">The next step checklist tracks your real products, stock and first sale; no sample sales are created.</p>
+    </section>;
+  }
   if (!overview.currency) return isOwner
-    ? <SetupLedger companyId={business.id} onDone={refresh} />
+    ? <SetupLedger companyId={business.id} onDone={async () => { await refresh(); setSetupConfirmed(true); }} />
     : <section className="shop-card shop-empty"><h2>Not open yet</h2><p>The owner hasn't finished setting up this shop. Check back soon.</p></section>;
 
   const canCredit = permissionsOf(overview).canCredit;
