@@ -20,6 +20,14 @@ describe("Clementia natural-language wrappers do not change business intent",()=
     ["I am relying only on Clementia. Open Stock page.","Open Stock page."],
     ["What I need is this: Sell 2 eggs to Kwame on credit.","Sell 2 eggs to Kwame on credit."],
     ["For my business today, show low stock.","show low stock."],
+    ["Quick request: I counted 25 eggs but we have 37","I counted 25 eggs but we have 37"],
+    ["Help me: I received 10 eggs from Kofi Traders at 40 each","I received 10 eggs from Kofi Traders at 40 each"],
+    ["What I need is this: I will sell eggs tomorrow","I will sell eggs tomorrow"],
+    ["I only want to chat. How can I add a customer?","How can I add a customer?"],
+    ["I am new: How can I add a customer?","How can I add a customer?"],
+    ["Can you correct the egg stock to 25 from 37 counted?","I counted 25 egg but we have 37"],
+    ["Please adjust Rice stock to 17 from 20 counted.","I counted 17 Rice but we have 20"],
+
   ])("normalizes %s", (raw,expected)=>{
     expect(normalize(raw)).toBe(expected);
   });
@@ -34,6 +42,10 @@ describe("Clementia natural-language wrappers do not change business intent",()=
     "Can you walk me through how to refund a sale?",
     "Could you explain how to restore a backup?",
     "Do you know how to collect real MoMo?",
+    "Can I correct the egg stock to 25 from 37 counted?",
+    "Change Eggs stock to 25 without counting",
+    "I will change the stock tomorrow",
+
   ])("never converts a genuine question or future statement into an imperative: %s", raw=>{
     expect(normalize(raw)).toBe(raw);
   });
