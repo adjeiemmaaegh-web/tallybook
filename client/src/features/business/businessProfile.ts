@@ -27,18 +27,7 @@ export const countries = [
 export { currencies } from "./currencies";
 import { currencies } from "./currencies";
 
-export const businessTypes = [
-  "Retail shop",
-  "Clothing or fashion",
-  "Salon or barber",
-  "Food or restaurant",
-  "Mechanic or repair",
-  "Professional service",
-  "Market trader",
-  "Wholesale",
-  "Home-based business",
-  "Other",
-] as const;
+export {businessTypes} from "./businessTypes";
 
 const optionalText = (maximum: number, label: string) =>
   z.string().trim().max(maximum, `${label} must be ${maximum} characters or fewer.`).optional().or(z.literal(""));

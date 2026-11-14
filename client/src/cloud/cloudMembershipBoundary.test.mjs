@@ -78,3 +78,18 @@ test('supports two distinct businesses owned by the same verified account',async
  }));
  assert.equal(actual.length,2);
 });
+
+test('preserves nullable cloud category without treating it as permission',async()=>{
+ const actual=await readVerifiedCloudBusinesses(fixture({readBusinesses:async()=>[{
+  ...business(companyA),business_type:'Retail shop'
+ }]}));
+ assert.equal(actual[0].business_type,'Retail shop');
+ assert.equal(actual[0].role,'owner');
+ assert.equal(Object.isFrozen(actual[0]),true);
+ const old=await readVerifiedCloudBusinesses(fixture());
+ assert.equal(old[0].business_type,null);
+});
+test('rejects injected, malformed or unsupported business classification from RLS response',async()=>{
+ await rejects(fixture({readBusinesses:async()=>[{...business(companyA),business_type:{role:'owner'}}]}));
+ await rejects(fixture({readBusinesses:async()=>[{...business(companyA),business_type:'Other; DROP TABLE businesses'}]}));
+});
