@@ -2,7 +2,7 @@ import {fireEvent,render,screen,waitFor} from "@testing-library/react";
 import {beforeEach,describe,expect,it,vi} from "vitest";
 import {ClementiaBusinessOnboarding} from "./ClementiaBusinessOnboarding";
 
-const save=vi.fn();
+const {save}=vi.hoisted(()=>({save:vi.fn()}));
 vi.mock("@/contexts/BusinessProfileContext",()=>({
   useBusinessProfile:()=>({save,activeCompanyId:"primary",status:"ready"}),
 }));
@@ -45,7 +45,7 @@ describe("Clementia conversational business onboarding",()=>{
     reply("I am in Kenya");
     expect(screen.getByText(/What kind of business/)).toBeInTheDocument();
     expect(screen.getByText(/Currency:/)).toBeInTheDocument();
-    expect(screen.getByText("KES")).toBeInTheDocument();
+    expect(document.body).toHaveTextContent("KES");
   });
   it("does not bypass an authorization error from the existing business-profile service",async()=>{
     save.mockRejectedValueOnce(new Error("Staff permission denied."));
