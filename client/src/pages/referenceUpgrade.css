@@ -1,0 +1,53 @@
+/* 29-reference UI alignment: independent visual layer; no changes to money, stock, roles or storage. */
+.shop-page{--tb-ref-ink:#15352f;--tb-ref-teal:#08766b;--tb-ref-pale:#eff8f5;--tb-ref-border:#d9e9e3;max-width:1200px}
+.shop-head{position:relative;padding:clamp(16px,3vw,26px);background:linear-gradient(122deg,#fff 0%,#fbfdfc 70%,#eff8f4 100%);border:1px solid var(--tb-ref-border);border-radius:22px;box-shadow:0 12px 34px rgba(13,72,59,.055)}
+.shop-head h1{color:var(--tb-ref-ink);letter-spacing:-.04em}
+.shop-head .shop-eyebrow{color:var(--tb-ref-teal);letter-spacing:.12em}
+.shop-card{border-color:var(--tb-ref-border);border-radius:20px;box-shadow:0 10px 32px rgba(13,72,59,.055)}
+.shop-card h2{color:var(--tb-ref-ink);letter-spacing:-.025em}
+.shop-card :is(input,select,textarea){accent-color:var(--tb-ref-teal)}
+.shop-card :is(input,select,textarea):focus-visible,.tb-shop-menu-drawer :is(input,button):focus-visible,.tb-shop-mobile-nav-bar button:focus-visible{outline:3px solid #16a58c;outline-offset:2px}
+.shop-card .shop-stats>div{border-radius:16px}
+.shop-tabs.tb-shop-desktop-tabs{background:#eaf5f1;border:1px solid var(--tb-ref-border);border-radius:17px;padding:7px;scrollbar-width:thin}
+.shop-tabs.tb-shop-desktop-tabs button{border-radius:12px;transition:background .16s ease,color .16s ease}
+.shop-tabs.tb-shop-desktop-tabs button[aria-pressed=true]{background:var(--tb-ref-teal);color:white;box-shadow:0 5px 16px rgba(8,118,107,.22)}
+.shop-card :is(.primary-action, .secondary-action){border-radius:13px}
+.tb-shop-mobile-nav-bar{display:none;align-items:center;gap:9px;min-width:0;padding:9px;background:#fff;border:1px solid var(--tb-ref-border);border-radius:16px;box-shadow:0 5px 20px rgba(13,72,59,.05)}
+.tb-shop-mobile-nav-bar button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:1px solid #cbe5db;border-radius:12px;background:var(--tb-ref-pale);color:#09594f;font-size:.87rem;font-weight:800;padding:0 12px}
+.tb-shop-mobile-nav-bar svg{width:19px;height:19px;flex:none}
+.tb-shop-current-section{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;color:var(--tb-ref-ink);font-size:.96rem}
+.tb-shop-mobile-nav-bar .tb-shop-mobile-refresh{width:44px;padding:0;background:white}
+.tb-shop-mobile-refresh:disabled{opacity:.5}
+.tb-shop-menu-layer{position:fixed;inset:0;z-index:3000;display:flex;isolation:isolate}
+.tb-shop-menu-scrim{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(4,30,27,.56);backdrop-filter:blur(3px);cursor:pointer}
+.tb-shop-menu-drawer{position:relative;z-index:1;display:flex;flex-direction:column;width:min(87vw,370px);max-height:100dvh;overflow:hidden;background:#fbfefc;border-radius:0 24px 24px 0;box-shadow:18px 0 55px rgba(0,30,27,.2);animation:tb-drawer-enter .2s ease-out}
+@keyframes tb-drawer-enter{from{transform:translateX(-16px);opacity:.65}to{transform:translateX(0);opacity:1}}
+.tb-shop-menu-head{display:flex;gap:11px;align-items:center;padding:20px 18px 15px;border-bottom:1px solid #e6eee9}
+.tb-shop-menu-monogram{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;color:#fff;font:900 1.25rem Georgia,serif;background:linear-gradient(145deg,#168d7b,#075246)}
+.tb-shop-menu-head>span:nth-child(2){flex:1;display:grid;gap:2px}
+.tb-shop-menu-head strong{color:#15382f;font-size:1.08rem}
+.tb-shop-menu-head small{color:#657e73;font-size:.72rem}
+.tb-shop-menu-head button{width:42px;height:42px;display:grid;place-items:center;background:white;border:1px solid #dcebe4;border-radius:12px;color:#163f36;cursor:pointer}
+.tb-shop-menu-head button svg{width:20px;height:20px}
+.tb-shop-menu-search{display:flex;align-items:center;gap:9px;margin:15px 18px;padding:0 13px;background:#f0f7f4;border:1px solid #dbe9e2;border-radius:13px;color:#4b7769}
+.tb-shop-menu-search svg{width:18px;height:18px;flex:none}
+.tb-shop-menu-search input{width:100%;height:44px;border:0;background:transparent;min-width:0;color:#15372f;font:inherit;font-size:.88rem;outline:none}
+.tb-shop-menu-scroll{overflow-y:auto;overscroll-behavior:contain;flex:1;padding:3px 14px 14px}
+.tb-shop-menu-group{display:grid;gap:3px;margin:4px 0 17px}
+.tb-shop-menu-group h2{padding:10px 12px 4px;color:#627f72;letter-spacing:.13em;text-transform:uppercase;font-size:.68rem;font-weight:850}
+.tb-shop-menu-group button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;text-align:left;border:1px solid transparent;border-radius:12px;background:transparent;color:#254b40;padding:10px 13px;font-size:.92rem;font-weight:650;cursor:pointer}
+.tb-shop-menu-group button:hover{background:#edf8f3}
+.tb-shop-menu-group button[aria-current=page]{background:linear-gradient(90deg,#ddf5e9,#eaf6f3);color:#075d51;border-color:#d2eadf;font-weight:850}
+.tb-shop-menu-group button span{font-size:1.25rem;color:#79a497}
+.tb-shop-menu-footer{margin:0;padding:13px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #e6eee9;color:#627b70;font-size:.75rem}
+.tb-shop-menu-no-results{padding:16px;color:#5c766a}
+@media(max-width:759px){
+  .shop-page{padding:12px 12px 90px;gap:13px}
+  .shop-head{padding:16px 16px 18px;border-radius:18px}
+  .shop-head h1{font-size:clamp(1.35rem,6vw,1.8rem);padding-right:52px}
+  .shop-card{border-radius:17px;padding:16px}
+  .shop-tabs.tb-shop-desktop-tabs{display:none}
+  .tb-shop-mobile-nav-bar{display:flex;position:sticky;top:8px;z-index:20}
+}
+@media(min-width:760px){.tb-shop-menu-layer{display:none}.tb-shop-mobile-nav-bar{display:none}}
+@media(prefers-reduced-motion:reduce){.tb-shop-menu-drawer{animation:none}.shop-tabs.tb-shop-desktop-tabs button{transition:none}}

@@ -6,6 +6,7 @@
  * connection never loses or duplicates a sale.
  */
 import "./sharedShop.css";
+import "./referenceUpgrade.css";
 import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
@@ -40,7 +41,7 @@ import {SharedShopShifts} from "@/cloud/SharedShopShifts";
 import {SharedShopActivityAudit} from "@/cloud/SharedShopActivityAudit";
 import {shopStorePreferenceKey,authorizedStoreChoice} from "@/cloud/shopStorePreference";
 import { TallybookWelcome } from "@/components/TallybookWelcome";
-import { ArrowLeft, Check, CloudOff, Copy, Minus, Plus, ReceiptText, RefreshCw, Store, Trash2, Undo2, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, CloudOff, Copy, Menu, Minus, Plus, ReceiptText, RefreshCw, Search, Store, Trash2, Undo2, UserPlus, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -244,6 +245,14 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   const [error, setError] = useState("");
   const initialView = new URLSearchParams(window.location.search).get("view");
   const [selectedTab, setTab] = useState<Tab>(business.role === "owner" && initialView === "dashboard" ? "dashboard" : business.role === "attendant" && initialView === "home" ? "home" : "sell");
+  const [navOpen, setNavOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState("");
+  useEffect(() => {
+    if (!navOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setNavOpen(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [navOpen]);
   // null = not known yet (offline or still loading). The checklist never claims a sale it has not seen.
   const [hasSale, setHasSale] = useState<boolean | null>(null);
   // Whether this person may count stock and receive goods (owners: also each attendant's setting). Not cached: it needs a connection anyway.
@@ -318,10 +327,46 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
   return <>
     {error && <p role="alert" className="shop-alert">{error} <button type="button" className="secondary-action" onClick={() => void refresh()} disabled={!online}>Try again</button></p>}
     {isOwner && (tab === "sell" || tab === "stock") && <GetStartedCard overview={overview} hasSale={hasSale} goTo={setTab} />}
-    <nav className="shop-tabs" aria-label="Shop sections">
+    <div className="tb-shop-mobile-nav-bar">
+      <button type="button" className="tb-shop-menu-open" aria-controls="tb-shop-mobile-drawer" aria-expanded={navOpen}
+        onClick={() => setNavOpen(true)}><Menu aria-hidden="true" /> Menu</button>
+      <strong className="tb-shop-current-section">{tabs.find(([id]) => id === tab)?.[1] ?? "Shop"}</strong>
+      <button type="button" className="tb-shop-mobile-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh shop"><RefreshCw aria-hidden="true" /></button>
+    </div>
+    <nav className="shop-tabs tb-shop-desktop-tabs" aria-label="Shop sections">
       {tabs.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       <button type="button" className="shop-refresh" onClick={() => void refresh()} disabled={!online} aria-label="Refresh"><RefreshCw aria-hidden="true" /></button>
     </nav>
+    {navOpen && <div className="tb-shop-menu-layer">
+      <button type="button" className="tb-shop-menu-scrim" onClick={() => setNavOpen(false)} aria-label="Close shop navigation" />
+      <nav id="tb-shop-mobile-drawer" className="tb-shop-menu-drawer" aria-label="Mobile shop sections" aria-modal="true" role="dialog">
+        <div className="tb-shop-menu-head">
+          <span className="tb-shop-menu-monogram" aria-hidden="true">T</span>
+          <span><strong>Tallybook</strong><small>Your shop workspace</small></span>
+          <button type="button" aria-label="Close menu" onClick={() => setNavOpen(false)}><X aria-hidden="true" /></button>
+        </div>
+        <label className="tb-shop-menu-search"><Search aria-hidden="true" />
+          <span className="sr-only">Find a shop section</span>
+          <input type="search" autoFocus value={navSearch} maxLength={80} onChange={event => setNavSearch(event.target.value)} placeholder="Find a page…" />
+        </label>
+        <div className="tb-shop-menu-scroll">
+          {[
+            { title: "Overview", ids: ["dashboard", "home", "sell", "sales"] },
+            { title: "Operations", ids: ["stock", "stock-counts", "purchasing", "receive", "orders", "quotes", "customers", "expenses"] },
+            { title: "Management", ids: ["team", "shifts", "audit", "refund-requests", "accounts", "reports", "ask"] },
+          ].map(group => {
+            const matches = tabs.filter(([id, label]) => group.ids.includes(id) && label.toLowerCase().includes(navSearch.trim().toLowerCase()));
+            return matches.length ? <section className="tb-shop-menu-group" key={group.title}>
+              <h2>{group.title}</h2>
+              {matches.map(([id, label]) => <button key={id} type="button" aria-current={tab === id ? "page" : undefined}
+                onClick={() => { setTab(id); setNavOpen(false); setNavSearch(""); }}>{label}<span aria-hidden="true">›</span></button>)}
+            </section> : null;
+          })}
+          {!tabs.some(([, label]) => label.toLowerCase().includes(navSearch.trim().toLowerCase())) && <p className="tb-shop-menu-no-results">No matching pages. Try another name.</p>}
+        </div>
+        <p className="tb-shop-menu-footer">Only pages allowed for your shop role appear here.</p>
+      </nav>
+    </div>}
     {tab === "home" && !isOwner && <SharedShopAttendantHome shopName={business.name} overview={overview} onNavigate={setTab} />}
     {tab === "dashboard" && isOwner && <section className="shop-card">
       <SharedShopOwnerDashboard companyId={business.id} businessName={business.name} overview={overview} online={online} onNavigate={setTab} />
