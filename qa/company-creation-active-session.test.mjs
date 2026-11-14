@@ -23,7 +23,7 @@ async function setup(){
   const claim=async(changes={})=>
     db.query("select set_config('test.claims',$1,false)",[JSON.stringify({sub:user,session_id:sid,...changes})]);
   const create=async(name='Example Shop',request=randomUUID())=>
-    (await db.query('select public.create_owned_business($1,$2) as result',[name,request])).rows[0].result;
+    (await db.query('select to_jsonb(public.create_owned_business($1,$2)) as result',[name,request])).rows[0].result;
   const admin=async(query,params=[])=>{
     await db.exec('reset role');
     try{return await db.query(query,params);}finally{await db.exec('set role authenticated');}
@@ -38,8 +38,10 @@ test('first business creation works with active session and remains idempotent',
     const first=await t.create('Fixture Shop',request);
     const replay=await t.create('Fixture Shop',request);
     assert.equal(first.id,replay.id);
-    // PGlite serializes the composite function result without preserving every
-    // snake_case field; verify the authoritative stored ownership instead.
+    // Normalize the composite SQL result into JSON explicitly, and check
+    // stored ownership independently so a false undefined===undefined cannot pass.
+    assert.match(first.id,/^[0-9a-f-]{36}$/i);
+    assert.equal(first.owner_id,t.user);
     const rows=await t.admin("select id, owner_id, name from public.businesses");
     assert.equal(rows.rows.length,1);
     assert.equal(rows.rows[0].id,first.id);
