@@ -62,11 +62,12 @@ describe("owner first run", () => {
   });
 
   it("confirms setup only after the server returns an active store", async () => {
-    shop.overview.mockReset().mockResolvedValueOnce(fresh({currency:null})).mockResolvedValue(fresh({
+    let storeConfirmed=false;
+    shop.overview.mockReset().mockImplementation(async()=>storeConfirmed ? fresh({
       currency:"GHS",stores:[{id:"store-1",name:"Main shop",status:"active"}]
-    }));
+    }) : fresh({currency:null}));
     shop.setup.mockReset().mockResolvedValue({});
-    shop.store.mockReset().mockResolvedValue({});
+    shop.store.mockReset().mockImplementation(async()=>{storeConfirmed=true;return {};});
     render(<SharedShopPage />);
     expect(await screen.findByText("Step 1 of 2")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button",{name:"Next"}));
