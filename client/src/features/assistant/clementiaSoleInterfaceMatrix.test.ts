@@ -39,16 +39,24 @@ const savedCounts=async()=>({
 let before: Awaited<ReturnType<typeof savedCounts>>;
 
 const csv=(value:unknown)=>'"'+String(value??"").replaceAll('"','""').replace(/\r?\n/g,' ')+'"';
-function disposition(reply: {kind:string;text:string;link?:{href:string};actions?:Array<{type:string}>}, targetRoute:string){
+function disposition(reply: {kind:string;text:string;link?:{href:string};actions?:Array<{type:string}>}, targetRoute:string, family:string){
+  // Classify the primary response, not just the presence of a supplementary link.
+  // Earlier categorization incorrectly called balance/sales answers mere navigation.
   if(reply.kind==="success")return "unexpected-unconfirmed-success";
   if(reply.kind==="preview")return "awaiting-explicit-confirmation";
   if(reply.text.includes("couldn't identify a supported TallyBook action"))return "not-recognized";
   if(reply.kind==="unsupported")return "explicitly-unsupported";
   if(reply.kind==="error")return "data-or-validation-error";
   if(reply.kind==="question")return "asks-for-details-or-selection";
-  if(reply.link?.href===targetRoute&&targetRoute)return "guided-to-correct-screen";
+  if(family==="NAV"){
+    if(reply.link?.href===targetRoute&&targetRoute)return "guided-to-correct-screen";
+    if(reply.link?.href||reply.actions?.some(a=>a.type==="navigate"))return "guided-to-other-screen";
+  }
+  if(reply.kind==="answer"&&family==="READ")return "answered-read-query";
+  if(reply.kind==="answer"&&family==="FAQ")return reply.link?.href?"explained-feature-with-link":"generic-help-answer";
+  if(reply.kind==="answer"&&family==="ACTION")return reply.link?.href?"guided-to-app-screen":"read-only-action-result";
+  if(reply.kind==="answer"&&family==="BOUNDARY")return reply.link?.href?"guided-to-app-screen":"informational-response";
   if(reply.link?.href||reply.actions?.some(a=>a.type==="navigate"))return "guided-to-app-screen";
-  if(reply.kind==="answer")return "answered-with-local-records-or-explanation";
   return "informational-response";
 }
 beforeAll(async()=>{
@@ -93,10 +101,10 @@ afterAll(async()=>{
       .map(key=>[key,match.filter(row=>row.disposition===key).length]));
     return {id:goal.id,title:goal.title,family:goal.family,
       recognized:match.filter(r=>r.disposition!=="not-recognized"&&!r.exception).length,
-      navigations:match.filter(r=>r.disposition==="guided-to-correct-screen"||r.disposition==="guided-to-app-screen").length,
+      navigations:match.filter(r=>r.disposition==="guided-to-correct-screen"||r.disposition==="guided-to-app-screen"||r.disposition==="explained-feature-with-link").length,
       previews:match.filter(r=>r.disposition==="awaiting-explicit-confirmation").length,
       questions:match.filter(r=>r.disposition==="asks-for-details-or-selection").length,
-      directAnswers:match.filter(r=>r.disposition==="answered-with-local-records-or-explanation").length,
+      directAnswers:match.filter(r=>r.disposition==="answered-read-query"||r.disposition==="read-only-action-result").length,
       failures:match.filter(r=>r.exception).length,summary};
   });
   const after=await savedCounts();
@@ -155,7 +163,7 @@ describe("Clementia real-engine sole-interface acceptance: 100 goals × 20 phras
       const assistant=createAssistant({currency:"GHS",database});
       try{
         const reply=await assistant.send(prompt);
-        const mode=disposition(reply,goal.route??"");
+        const mode=disposition(reply,goal.route??"",goal.family);
         rows.push({id:goal.id,family:goal.family,goal:goal.title,
           variant:i+1,prompt,replyKind:reply.kind,disposition:mode,
           assistantIntent:reply.intent??"",replyText:reply.text.slice(0,500),
