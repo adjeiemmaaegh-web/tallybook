@@ -22,6 +22,20 @@ const MESSAGE_PREFIXES = [
   /^(?:clementia|tallybook assistant)[,!:;\s]+/i,
 ];
 
+/**
+ * A request for a named customer's outstanding balance is a read-only query,
+ * not an instruction to edit a debt or a question about how to use the app.
+ * Preserve the customer mention exactly; the real service validates it.
+ */
+const BALANCE_QUERY=/^(?:(?:can|could|would|will) you\s+|please\s+)?(?:tell|show)\s+me\s+how\s+much\s+([\p{L}][\p{L}'\- ]{0,48}?)\s+owes?[.!?]?$/iu;
+function naturalBalanceQuestion(text:string):string|null {
+  const match=BALANCE_QUERY.exec(text.trim());
+  if(!match)return null;
+  const customer=match[1].trim();
+  if(customer.split(/\s+/).length>4 || /^(?:i|we|you|they|us|him|her|my|our)$/i.test(customer))return null;
+  return `How much does ${customer} owe?`;
+}
+
 const COMMAND_START = /^(?:i|we|correct|adjust|update|sell|record|add|create|receive|recount|count|open|show|view|check|find|list|compare|simulate|undo|reverse|cancel|transfer|change|delete|apply|refund|reset|restore|export|send|email|publish|fulfill|set|sign|close|collect|charge|how|what|where|which|who|when|why|is|do|are|can|could)\b/i;
 
 /**
@@ -31,7 +45,10 @@ const COMMAND_START = /^(?:i|we|correct|adjust|update|sell|record|add|create|rec
  */
 export function normalizeSoleInterfaceRequest(raw: string): string {
   const input=sanitizeInput(raw);
-  if(!input || (EXPLANATION.test(input) && !ADDRESSED_PREFACE.test(input)) || SELF_ACTION.test(input)) return input;
+  if(!input)return input;
+  const directBalance=naturalBalanceQuestion(input);
+  if(directBalance)return directBalance;
+  if((EXPLANATION.test(input) && !ADDRESSED_PREFACE.test(input)) || SELF_ACTION.test(input)) return input;
   let current=input;
   let removed=false;
   for(let n=0;n<4;n++){
@@ -43,6 +60,8 @@ export function normalizeSoleInterfaceRequest(raw: string): string {
     current=next;
     removed=true;
   }
+  const wrappedBalance=naturalBalanceQuestion(current);
+  if(wrappedBalance)return wrappedBalance;
   if(!removed || !COMMAND_START.test(current)) return input;
   if(SELF_ACTION.test(current))return input;
   // A real explanation request wrapped in a preface remains a question.
