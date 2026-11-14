@@ -1,5 +1,5 @@
 /** Tactile Ledger design reminder: a running ledger strip shows the saved business identity wherever owners work, with generous thumb targets. */
-import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
+import { lazy, Suspense, useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import { requiresCloudOwner } from "@/auth/deviceEntry";
 import { db } from "@/db/TallybookDB";
 import { currentStaffId, STAFF_SESSION_CHANGED } from "@/features/staff/staff";
@@ -15,6 +15,7 @@ import { appRoutes } from "@/lib/routes";
 import { markReportsExplored } from "@/features/business/setupProgress";
 import "./PremiumShell.css";
 import { ClementiaLauncher } from "./ClementiaLauncher";
+const ClementiaOwnerEnrollment = lazy(() => import("./ClementiaOwnerEnrollment"));
 
 interface AppShellProps { children: ReactNode; }
 
@@ -39,7 +40,7 @@ function CompanyShell({ children }: AppShellProps) {
   const menuCloseRef = useRef<HTMLButtonElement>(null);
   const menuDrawerRef = useRef<HTMLElement>(null);
   const mainRef=useRef<HTMLElement>(null);
-  const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open" | "cashier">("loading");
+  const [staffGate, setStaffGate] = useState<"loading" | "locked" | "open" | "cashier" | "setup">("loading");
   useEffect(() => {
     let mounted = true;
     let requestId = 0;
@@ -50,7 +51,13 @@ function CompanyShell({ children }: AppShellProps) {
       const current=currentStaffId(activeCompanyId);
       void db.transaction("r",[db.staffMembers,db.businessProfiles],async()=>{
         const total=await db.staffMembers.where("businessProfileId").equals(activeCompanyId).count();
-        if(!total)return !standalone && !(await db.businessProfiles.get(activeCompanyId))?.staffGovernanceEnabled;
+        if(!total){
+          const stored=await db.businessProfiles.get(activeCompanyId);
+          if(stored?.staffGovernanceEnabled)return false;
+          // Only an ungoverned company with zero staff can set its FIRST
+          // owner; never reopen enrollment for a protected/restored company.
+          return standalone ? (stored ? "setup" as const : false) : true;
+        }
         if(!current)return false;
         const member=await db.staffMembers.get(current);
         if (!member || member.businessProfileId !== activeCompanyId || member.disabledAt) return false;
@@ -58,7 +65,7 @@ function CompanyShell({ children }: AppShellProps) {
       }).then(open=>{
         if (!mounted || request !== requestId) return;
         if (current !== currentStaffId(activeCompanyId)) { refresh(true); return; }
-        setStaffGate(open === "cashier" ? "cashier" : open ? "open" : "locked");
+        setStaffGate(open === "cashier" ? "cashier" : open === "setup" ? "setup" : open ? "open" : "locked");
       })
       .catch(() => { if (mounted && request === requestId) setStaffGate("locked"); });
     };
@@ -75,7 +82,7 @@ function CompanyShell({ children }: AppShellProps) {
     window.addEventListener('focus',onFocus);
      document.addEventListener('visibilitychange',onFocus);
     return () => { mounted = false; window.clearInterval(timer); window.removeEventListener(STAFF_SESSION_CHANGED,onSession); window.removeEventListener('focus',onFocus); document.removeEventListener('visibilitychange',onFocus); };
-  }, [activeCompanyId, location, standalone]);
+  }, [activeCompanyId, location, standalone, profile?.id, profile?.updatedAt, profile?.staffGovernanceEnabled]);
   const pageName = useMemo(() => appRoutes.find((route) => route.href === location)?.label ?? "Tallybook", [location]);
   const primaryRoutes = appRoutes.filter((route) => route.primary);
   useEffect(() => {
@@ -170,6 +177,8 @@ function CompanyShell({ children }: AppShellProps) {
     if (((location === "/business" || location === "/assistant") && emptyDevice && !window.location.search) ||
         (location === "/staff" && profile))
       return <main id="main-content">{children}</main>;
+    if (location === "/assistant" && profile && staffGate === "setup" && !profile.staffGovernanceEnabled)
+      return <main id="main-content"><Suspense fallback={<p role="status">Opening secure owner setup…</p>}><ClementiaOwnerEnrollment /></Suspense></main>;
     return <main className="mx-auto mt-12 max-w-md space-y-4 p-6">
       <h1>{emptyDevice ? "Set up this device" : "Tallybook is locked"}</h1>
       {emptyDevice && <Link href="/assistant">Set up with Clementia</Link>}
