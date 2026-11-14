@@ -16,7 +16,7 @@ describe("Clementia natural-language wrappers do not change business intent",()=
     ["Now please add category Drinks.","add category Drinks."],
     ["When you can, add category Drinks.","add category Drinks."],
     ["Quick request: Show today's sales.","Show today's sales."],
-    ["Please answer clearly: How much does Adwoa owe?","How much does Adwoa owe"],
+    ["Please answer clearly: How much does Adwoa owe?","How much does Adwoa owe?"],
     ["I am relying only on Clementia. Open Stock page.","Open Stock page."],
     ["What I need is this: Sell 2 eggs to Kwame on credit.","Sell 2 eggs to Kwame on credit."],
     ["For my business today, show low stock.","show low stock."],
