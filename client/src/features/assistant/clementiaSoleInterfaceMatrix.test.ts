@@ -80,7 +80,7 @@ beforeAll(async()=>{
 },120000);
 
 afterAll(async()=>{
-  const outputDir=resolve(process.cwd(),"../artifacts/release-v19");
+  const outputDir=resolve(import.meta.dirname,"../../../../artifacts/release-v19");
   mkdirSync(outputDir,{recursive:true});
   const counts:Record<string,Record<string,number>>={};
   for(const row of rows){
