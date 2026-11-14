@@ -143,7 +143,7 @@ export type AssistantAction =
 
 export interface TransactionPreviewView {
   token: string;
-  kind: "sale" | "stock_receipt" | "customer_payment" | "batch" | "create_record" | "stock_count";
+  kind: "sale" | "stock_receipt" | "customer_payment" | "batch" | "create_record" | "stock_count" | "expense";
   title: string;
   rows: ReplyDetail[];
   notes: string[];
