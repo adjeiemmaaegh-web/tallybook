@@ -57,7 +57,7 @@ export function SharedShopQuotes({ companyId, overview, online, shopName, userId
     const parsed = chosen.map(l => ({ productId: l.productId, quantity: Number(l.quantity) }));
     if (parsed.some(l => !/^[1-9][0-9]*$/.test(lines.find(item=>item.productId===l.productId)?.quantity??"") ||
         !Number.isSafeInteger(l.quantity) || l.quantity < 1 || l.quantity > 100000)) {
-      setError("Quantities must be whole units from 1 to 100,000."); return;
+      setError("Quantities must be whole numbers above zero (1 to 100,000)."); return;
     }
     if (!/^[1-9][0-9]*$/.test(form.validDays) || !Number.isSafeInteger(Number(form.validDays)) ||
         Number(form.validDays) > 90) {setError("Quotation validity must be between 1 and 90 whole days.");return;}

@@ -32,7 +32,7 @@ it("shows server-authorized quote statuses and filters recent records",async()=>
  expect(summary).toHaveTextContent("Open or accepted2");
  const filter=screen.getByRole("group",{name:"Quotation status"});
  fireEvent.click(filter.querySelectorAll("button")[2]!);
- expect(screen.getByText("1 of 3 recent quotations shown")).toBeInTheDocument();
+ expect(screen.getByText(/1 of 3 recent quotations shown/)).toBeInTheDocument();
  expect(screen.getByText(/#3 · Kofi/)).toBeInTheDocument();
  expect(screen.queryByText(/#2 · Esi/)).toBeNull();
  fireEvent.click(filter.querySelectorAll("button")[0]!);
