@@ -18,7 +18,7 @@ const MESSAGE_PREFIXES = [
   /^(?:as a (?:new|first[- ]time) user|as a beginner),?\s*(?:please\s+)?/i,
   /^(?:without (?:browsing|opening|using) (?:screens|menus)|i do not want to (?:open|tap|use|browse) menus|i am relying only on clementia)[.!,;:\s]+/i,
   /^(?:for my (?:business|shop)(?: today)?|quick request|what i need is this|tell me this|help me|please answer clearly|when you can|now please)[,:\s]+/i,
-  /^(?:i am new|i only want to chat)[.!:,\\s]+/i,
+  /^(?:i am new|i only want to chat)[.!:,\s]+/i,
   /^(?:clementia|tallybook assistant)[,!:;\s]+/i,
 ];
 
@@ -50,7 +50,7 @@ export function normalizeSoleInterfaceRequest(raw: string): string {
   // Only physical counts with BOTH an observed and previous quantity can
   // be rewritten to the already-supported audited recount command. Ordinary
   // "change stock" requests remain unsupported.
-  const counted=/^(?:correct|adjust|update)\\s+(?:the\\s+)?([A-Za-z][A-Za-z\\s-]{0,35}?)\\s+(?:stock|inventory|count)\\s+to\\s+(\\d{1,7})\\s+from\\s+(\\d{1,7})\\s+(?:physically\\s+)?counted[.!?]?$/i.exec(current);
+  const counted=/^(?:correct|adjust|update)\s+(?:the\s+)?([A-Za-z][A-Za-z\s-]{0,35}?)\s+(?:stock|inventory|count)\s+to\s+(\d{1,7})\s+from\s+(\d{1,7})\s+(?:physically\s+)?counted[.!?]?$/i.exec(current);
   if(counted)return `I counted ${counted[2]} ${counted[1].trim()} but we have ${counted[3]}`;
   // A polite question directed at Clementia may contain a concrete request.
   // Remove only its question-mark terminator; never do this for a question
