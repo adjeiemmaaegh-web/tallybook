@@ -777,7 +777,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
       }
       return withContext; }),
     act: (action) => serial(async () => resetOnBusinessChange() ? failure("You switched business. The earlier assistant action was cleared; nothing was recorded. Please start again in this business.") : actNow(action)),
-    clearContext: () => { expenseSession.clear(); quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; },
+    clearContext: () => { expenseSession.clear(); quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; pending = null; batchState = null; confirmable = false; lastPlan = null; pendingReversalToken = null; pendingReversalSaleId = null; pendingReversalCompanyId = null; },
     pendingToken: () => { resetOnBusinessChange(); return expenseSession.token() ?? quotationDraft.token() ?? pending?.token ?? batchState?.confirmToken ?? null; },
   };
 }
