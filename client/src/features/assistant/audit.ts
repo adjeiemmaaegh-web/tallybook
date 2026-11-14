@@ -19,7 +19,7 @@ import type { TallybookDB } from "@/db/TallybookDB";
 import type { ReplyDetail } from "./types";
 import { selectAssistantAuditPruneIds } from "./assistantDataSafety.mjs";
 
-export const AUDIT_ACTIONS = ["sale", "stock_receipt", "customer_payment", "create_customer", "create_supplier", "create_category", "create_product", "stock_count", "sale_reversal"] as const;
+export const AUDIT_ACTIONS = ["sale", "stock_receipt", "customer_payment", "create_customer", "create_supplier", "create_category", "create_product", "stock_count", "sale_reversal", "expense"] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 export interface AssistantAuditEntry {
@@ -47,7 +47,7 @@ const MAX_REQUEST_LENGTH = 300;
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   sale: "Sale", stock_receipt: "Stock received", customer_payment: "Customer payment", create_customer: "Customer added",
-  create_supplier: "Supplier added", create_category: "Category added", create_product: "Product added", stock_count: "Stock count", sale_reversal: "Sale reversed",
+  create_supplier: "Supplier added", create_category: "Category added", create_product: "Product added", stock_count: "Stock count", sale_reversal: "Sale reversed", expense: "Expense recorded",
 };
 
 let sequence = 0;
