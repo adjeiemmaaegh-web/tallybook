@@ -91,7 +91,7 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
    <button type="button" className="primary-action" disabled={busy||!online||!storeId||!productId} onClick={begin}>+ Start stock take</button>
   </div>
   <div className="tb-stocktake-list-head">
-   <h3>Count history</h3>
+   <h3>Physical stock counts</h3>
    <p className="shop-muted">Newest first · {found.length} showing</p>
    <label className="shop-field"><span className="sr-only">Search count records</span>
     <input type="search" value={query} onChange={event=>setQuery(event.target.value)} maxLength={80} placeholder="Search count #, store, product…" /></label>
