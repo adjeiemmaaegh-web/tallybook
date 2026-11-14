@@ -17,7 +17,7 @@ Reference photos contain both Stockdey screens and existing Tallybook screens. R
 | 8 | Tallybook login | **Exists** | GoogleSignInPage handles Google/email, signup, recovery. |
 | 9 | Legacy workspace sidebar | **Exists** | Local AppShell has workspace/navigation; cloud uses separate role-scoped tabs. |
 | 10 | Inter-store transfers | **Exists** | SharedShopTransfers requests, dispatches, receives and cancels, owner-controlled. |
-| 11 | Stock-take session dashboard | **Partial** | SharedShopStockCountPanel counts products and records differences; not batch session dashboard. |
+| 11 | Stock-take session dashboard | **Enhanced** | Functional summary, status filters, search and per-product count history built on existing server records; multi-item batch sessions remain unsupported. |
 | 12 | Supplier purchasing/payables | **Exists** | SharedShopPurchasingPanel manages suppliers, orders, receipts and recorded payments. |
 | 13 | Online orders | **Exists** | SharedShopOrders supports order entry and fulfilment workflows; public commerce scope requires separate verification. |
 | 14 | Products catalogue | **Partial** | StockPanel handles goods/services, barcode, cost and CSV import; variant matrix not verified. |
@@ -38,13 +38,13 @@ Reference photos contain both Stockdey screens and existing Tallybook screens. R
 | 29 | Marketing hero | **Exists** | TallybookWelcome has responsive hero, trust claims and working CTA routes. |
 
 ## Counts
-{"Exists":16,"Partial":12,"Enhanced":1}. The snapshot has many existing business capabilities. The major newly implemented design improvement is a mobile drawer; no server-side flow, inventory posting, payment route, schema or staff authorization path is changed.
+{"Exists":16,"Partial":11,"Enhanced":2}. The snapshot has many existing business capabilities. New design improvements: a mobile section drawer and a stocktake dashboard over genuine server counts. No server-side flow, inventory posting, payment route, schema or staff authorization path is changed.
 
 ## UI increment in this branch
 - Mobile drawer for shared shop: explicit Menu button, role-filtered sections, search, active page indicator, close/scrim/Escape, refresh.
 - Original desktop tab navigation remains for existing workflows and tests.
 - More refined mobile cards, fields and navigation consistent with Tallybook's identity; keyboard focus and reduced-motion styling.
-- No fake Apple sign-in, payment provider, app-store badges, cross-store synchronization guarantees, or fictitious AI/finance metrics.
+- Stock-take history with count summary, search, status filters and real recorded expected/counted/variance fields; server still enforces stale-stock rejection.\n- No fake Apple sign-in, payment provider, app-store badges, cross-store synchronization guarantees, or fictitious AI/finance metrics.
 
 ## Open acceptance gates
 - TypeScript build and entire test suite, PR CI, mobile Chrome/Edge behavior, drawer keyboard/touch QA and verified cloud navigation.
