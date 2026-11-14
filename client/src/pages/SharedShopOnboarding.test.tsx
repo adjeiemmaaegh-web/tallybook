@@ -80,6 +80,24 @@ describe("owner first run", () => {
     expect(shop.store).toHaveBeenCalledTimes(1);
   });
 
+  it("supports EUR without changing an existing ledger and requires a store name",async()=>{
+    shop.overview.mockResolvedValue(fresh({currency:null}));
+    shop.setup.mockResolvedValue({});
+    shop.store.mockResolvedValue({});
+    render(<SharedShopPage/>);
+    const selector=await screen.findByLabelText("Currency");
+    expect(screen.getByRole("option",{name:"EUR · Euro"})).toBeInTheDocument();
+    fireEvent.change(selector,{target:{value:"EUR"}});
+    fireEvent.click(screen.getByRole("button",{name:"Next"}));
+    const submit=screen.getByRole("button",{name:"Open shop"});
+    expect(submit).toBeDisabled();
+    expect(shop.setup).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Store name"),{target:{value:"New euro store"}});
+    fireEvent.click(submit);
+    await waitFor(()=>expect(shop.setup).toHaveBeenCalledWith("biz","EUR"));
+    expect(shop.store).toHaveBeenCalledTimes(1);
+  });
+
   it("sets up currency then store in two steps, and a retry reuses the same store id", async () => {
     shop.overview.mockResolvedValue(fresh({ currency: null }));
     shop.setup.mockResolvedValue({});

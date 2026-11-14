@@ -301,3 +301,6 @@ ol.shop-report-list { list-style: decimal inside; }
 .tb-shop-audit-events small{font-size:.76rem;color:#526c61;overflow-wrap:anywhere}
 .tb-shop-audit-events .tb-shop-audit-source{font-size:.7rem;color:#789083}
 @media(min-width:680px){.tb-shift-history ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* The reason occupies its own row; quantity + actions never overflow narrow devices. */
+.shop-stock-controls .tb-stock-adjust-note{grid-column:1/-1;width:100%;min-width:0;font-size:16px}

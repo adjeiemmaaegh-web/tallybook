@@ -3,6 +3,7 @@ import { confirmAction } from "@/lib/confirmAction";
 import {callShop, type ShopOverview} from "./shopClient";
 import {tracksStock} from "./productTracking";
 import {purchaseRetry} from "./purchaseRetry";
+import {summarizeTransfers, type TransferStatus} from "./shopOperationalReports";
 
 type Transfer = {
   transferId: string;
@@ -25,6 +26,8 @@ export function SharedShopTransfers(props: Props & {online: boolean}) {
 
 function TransferLedger({companyId, userId, overview, refresh}: Props) {
   const [rows, setRows] = useState<Transfer[]>([]);
+  const [historyStatus, setHistoryStatus] = useState<TransferStatus | "all">("all");
+  const [historyQuery, setHistoryQuery] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [product, setProduct] = useState("");
@@ -103,11 +106,25 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
     }, "Transfer completed. Stock moved from source to destination.");
   };
   const storeName = (id: string) => overview.stores.find(store => store.id === id)?.name ?? id;
+  const productName = (id: string) => overview.products.find(item => item.id === id)?.name ?? id;
+  const transferSummary = summarizeTransfers(rows);
+  const search = historyQuery.trim().toLocaleLowerCase();
+  const visible = loaded ? rows.filter(row =>
+    (historyStatus === "all" || row.status === historyStatus) &&
+    (!search || [row.transferId, storeName(row.fromStoreId), storeName(row.toStoreId), productName(row.productId)]
+      .some(value => value.toLocaleLowerCase().includes(search)))) : [];
 
   return <div className="space-y-3">
     <h2>Inter-store transfers</h2>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
+    {loaded && <div className="tb-ops-metrics" aria-label="Transfer summary">
+      <div><span>Transfers</span><strong>{transferSummary.total}</strong></div>
+      <div><span>Requested</span><strong>{transferSummary.requested}</strong></div>
+      <div><span>In transit</span><strong>{transferSummary.inTransit}</strong></div>
+      <div><span>Received</span><strong>{transferSummary.received}</strong></div>
+      <div><span>Units received</span><strong>{transferSummary.unitsReceived}</strong></div>
+    </div>}
     {stores.length < 2 ? <p>Add two active stores to request a transfer.</p> :
       <form onSubmit={request}><fieldset disabled={busy || !loaded} className="space-y-2">
         <label className="shop-field">From store<select value={from} required onChange={event => {
@@ -118,13 +135,28 @@ function TransferLedger({companyId, userId, overview, refresh}: Props) {
             <option key={store.id} value={store.id}>{store.name}</option>)}</select></label>
         <label className="shop-field">Transfer item<select value={product} required onChange={event => setProduct(event.target.value)}>
           <option value="">Choose item</option>{products.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        {from && product && <p className="shop-muted" role="note">Last loaded source quantity: {overview.stock.find(s=>s.storeId===from && s.productId===product)?.quantity ?? "not available"}. The server checks live stock again when dispatching.</p>}
         <label className="shop-field">Units to transfer<input value={quantity} inputMode="numeric" required onChange={event => setQuantity(event.target.value)} /></label>
         <button className="primary-action">Request transfer</button>
       </fieldset></form>}
-    <button type="button" className="secondary-action" disabled={busy} onClick={() => void reload()}>Refresh transfer history</button>
+    <div className="tb-ops-history-head">
+      <h3>Transfer history</h3>
+      <label className="shop-field">Search transfers<input type="search" maxLength={80}
+        placeholder="Transfer ID, product or store" value={historyQuery}
+        onChange={event => setHistoryQuery(event.target.value)} /></label>
+      <div className="shop-chips" role="group" aria-label="Transfer status filter">
+        {([["all","All"],["requested","Requested"],["in_transit","In transit"],["received","Received"],["cancelled","Cancelled"]] as const)
+          .map(([value,label])=><button key={value} type="button" className="shop-chip"
+            aria-pressed={historyStatus===value} onClick={()=>setHistoryStatus(value)}>{label}</button>)}
+      </div>
+      <p className="shop-muted">{loaded ? visible.length+" of "+rows.length+" transfer records shown" : "Transfer records are unavailable until verified by the server."}</p>
+      <button type="button" className="secondary-action" disabled={busy} onClick={() => void reload()}>Refresh transfer history</button>
+    </div>
     {loaded && !rows.length && <p>No transfers recorded.</p>}
-    {rows.map(row => <article className="rounded border p-3" key={row.transferId}>
-      <strong>{overview.products.find(item => item.id === row.productId)?.name ?? row.productId} · {row.quantity} units</strong>
+    {loaded && rows.length>0 && visible.length===0 && <p role="status">No transfers match these filters. <button type="button" className="shop-link" onClick={()=>{setHistoryQuery("");setHistoryStatus("all");}}>Show all</button></p>}
+    {visible.map(row => <article className="rounded border p-3 tb-ops-transfer-row" key={row.transferId}>
+      <strong>{productName(row.productId)} · {row.quantity} units</strong>
+      <small className="shop-muted">Transfer ID {row.transferId}</small>
       <p>{storeName(row.fromStoreId)} → {storeName(row.toStoreId)} · {row.status.replace("_", " ")}</p>
       <fieldset disabled={busy || !loaded} className="shop-actions">
         {row.status === "requested" && <>

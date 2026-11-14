@@ -15,6 +15,8 @@ const errorText = (error: unknown) => error instanceof Error ? error.message : "
 
 export function SharedShopOrders({userId, companyId, overview}: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [statusFilter,setStatusFilter]=useState<"all"|Order["status"]>("all");
+  const [orderQuery,setOrderQuery]=useState("");
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState("");
   const [storeId, setStore] = useState("");
@@ -57,8 +59,20 @@ export function SharedShopOrders({userId, companyId, overview}: Props) {
     });
   };
   const order = orders.find(o => o.orderId === selected);
+  const search=orderQuery.trim().toLocaleLowerCase();
+  const visibleOrders=orders.filter(row=>(statusFilter==="all"||row.status===statusFilter)&&
+    (!search||[row.orderId,row.customerReference??"",overview.stores.find(s=>s.id===row.storeId)?.name??""]
+      .some(value=>value.toLocaleLowerCase().includes(search))));
   return <section className="shop-card space-y-3">
     <h2>Online orders</h2>
+    <p className="shop-muted">Record and track orders received outside Tallybook. A customer-facing web checkout is not connected by this screen.</p>
+    {ready&&<div className="tb-ops-metrics" aria-label="Online order summary">
+      <div><span>All orders</span><strong>{orders.length}</strong></div>
+      <div><span>New</span><strong>{orders.filter(row=>row.status==="new").length}</strong></div>
+      <div><span>Accepted</span><strong>{orders.filter(row=>row.status==="accepted").length}</strong></div>
+      <div><span>Sold</span><strong>{orders.filter(row=>row.status==="sold").length}</strong></div>
+      <div><span>Closed</span><strong>{orders.filter(row=>row.status==="closed").length}</strong></div>
+    </div>}
     <form onSubmit={create}><fieldset className="space-y-2" disabled={!ready || busy}>
       <legend>Record an order received outside Tallybook</legend>
       <label className="shop-field">Fulfilment store<select value={storeId} required onChange={e => setStore(e.target.value)}>
@@ -78,8 +92,20 @@ export function SharedShopOrders({userId, companyId, overview}: Props) {
     {error && <p role="alert">{error}</p>}
     <button type="button" disabled={busy} onClick={() => void reload()}>Refresh orders</button>
     {ready && !orders.length && <p>No online orders recorded.</p>}
+    <div className="tb-ops-history-head">
+      <h3>Order history</h3>
+      <label className="shop-field">Search orders<input type="search" value={orderQuery} maxLength={100}
+        placeholder="Order ID, customer or store" onChange={e=>{setOrderQuery(e.target.value);setSelected("");}} /></label>
+      <div className="shop-chips" role="group" aria-label="Order status">
+        {([["all","All"],["new","New"],["accepted","Accepted"],["sold","Sold"],["closed","Closed"]] as const).map(([value,label])=>
+          <button type="button" className="shop-chip" key={value} aria-pressed={statusFilter===value}
+            onClick={()=>{setStatusFilter(value);setSelected("");}}>{label}</button>)}
+      </div>
+      <p className="shop-muted">{visibleOrders.length} of {orders.length} orders shown</p>
+    </div>
+    {ready&&orders.length>0&&visibleOrders.length===0&&<p role="status">No orders match these filters. <button type="button" className="shop-link" onClick={()=>{setOrderQuery("");setStatusFilter("all");}}>Show all</button></p>}
     <label className="shop-field">Review order<select value={selected} disabled={busy} onChange={e => setSelected(e.target.value)}>
-      <option value="">Choose order</option>{orders.map(o => <option key={o.orderId} value={o.orderId}>
+      <option value="">Choose order</option>{visibleOrders.map(o => <option key={o.orderId} value={o.orderId}>
         {o.customerReference || o.orderId.slice(0,8)} · {formatMinorAmount(Number(o.quotedTotalMinor),currency)} · {o.status}
       </option>)}</select></label>
     {order && ready && <OrderReview key={order.orderId + order.status} companyId={companyId} order={order} currency={currency}

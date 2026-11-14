@@ -87,3 +87,30 @@
 .tb-shop-setup-done>p:not(.shop-eyebrow){max-width:52ch;color:#4d7063;line-height:1.7}
 .tb-shop-setup-done-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:11px;margin-top:7px}
 .tb-shop-setup-done .primary-action,.tb-shop-setup-done .secondary-action{min-height:48px;border-radius:14px}
+
+/* Operational upgrade: original entries are real server data; no decorative KPI placeholders. */
+.tb-ops-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:10px;margin:12px 0 18px}
+.tb-ops-metrics>div{display:grid;align-content:center;gap:5px;min-height:78px;padding:13px 15px;background:linear-gradient(150deg,#effaf5,#f9fdfa);border:1px solid #cfe8db;border-radius:15px}
+.tb-ops-metrics span{color:#426d60;letter-spacing:.07em;text-transform:uppercase;font-size:.67rem;font-weight:850}
+.tb-ops-metrics strong{color:#0a5e51;font-weight:900;font-size:clamp(1.18rem,2.3vw,1.5rem);overflow-wrap:anywhere}
+.tb-ops-history-head{display:grid;gap:10px;padding:15px;border:1px solid #d7eae1;border-radius:17px;background:#f9fcfa}
+.tb-ops-history-head h3{font-size:1.15rem;color:#143a31;margin:0}
+.tb-ops-history-head .shop-field{margin:0}
+.tb-ops-history-head .secondary-action{justify-self:start}
+.tb-ops-transfer-row{display:grid;gap:9px;border-color:#d8e8e0;border-radius:15px;background:linear-gradient(140deg,#fff,#fbfefd);box-shadow:0 7px 19px #074e4010}
+.tb-ops-transfer-row strong{color:#123c32}
+.tb-ops-transfer-row small{display:block;font-size:.72rem;overflow-wrap:anywhere}
+.tb-ops-transfer-row p{margin:0}
+.tb-ops-recovery{display:flex;align-items:center;flex-wrap:wrap;gap:14px;justify-content:space-between;border:1px solid #efc1ad;border-left:5px solid #c76f45;border-radius:16px;background:linear-gradient(105deg,#fff8f1,#fffefa);padding:17px 19px;box-shadow:0 9px 25px #965b1f0d}
+.tb-ops-recovery strong{font-size:.98rem;color:#703e20}
+.tb-ops-recovery p{margin:5px 0 0;max-width:65ch;line-height:1.5;font-size:.81rem;color:#77533e}
+.tb-ops-recovery .secondary-action{min-height:44px;flex:none}
+.tb-ops-export{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #d3e9de;border-radius:14px;background:#f4faf6;padding:12px 15px;margin:12px 0}
+.tb-ops-export .shop-muted{margin:0;max-width:56ch;overflow-wrap:anywhere}
+.tb-ops-export .secondary-action{min-height:44px}
+@media(max-width:520px){
+  .tb-ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tb-ops-metrics>div{min-height:72px;padding:12px}
+  .tb-ops-recovery .secondary-action{width:100%}
+  .tb-ops-export .secondary-action{width:100%}
+}

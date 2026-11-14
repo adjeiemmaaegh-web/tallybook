@@ -12,7 +12,7 @@ interface SalesSummary {
  salesCount:number;grossMinor:string;refundMinor:string;netSalesMinor:string;
  customerCreditOutstandingMinor:string|null;
 }
-type OwnerDestination = "sell" | "stock" | "team" | "reports" | "shifts" | "audit";
+type OwnerDestination = "sell" | "stock" | "team" | "reports" | "shifts" | "audit" | "sales" | "purchasing" | "stock-counts";
 const amount=(value:string|undefined|null,currency:string)=>{
  if(value===undefined||value===null||!/^-?[0-9]+$/.test(value))return "Unavailable";
  const minor=BigInt(value);
@@ -74,6 +74,9 @@ export function SharedShopOwnerDashboard({companyId,businessName,overview,online
    <div className="tb-shop-home-actions">
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("sell")}><ShoppingCart aria-hidden="true"/><span>New sale<small>Open POS</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("stock")}><Package aria-hidden="true"/><span>Manage stock<small>Products and quantities</small></span><ArrowRight aria-hidden="true"/></button>
+     <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("sales")}><BarChart3 aria-hidden="true"/><span>Sales history<small>Receipts and refunds</small></span><ArrowRight aria-hidden="true"/></button>
+     <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("purchasing")}><ClipboardList aria-hidden="true"/><span>Purchasing<small>Orders and supplier balances</small></span><ArrowRight aria-hidden="true"/></button>
+     <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("stock-counts")}><Package aria-hidden="true"/><span>Physical stock counts<small>Reconcile actual quantities</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("reports")}><BarChart3 aria-hidden="true"/><span>Reports<small>Review business performance</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("shifts")}><Clock3 aria-hidden="true"/><span>Staff shifts<small>Opening, closing and review</small></span><ArrowRight aria-hidden="true"/></button>
      <button type="button" disabled={!onNavigate} onClick={()=>onNavigate?.("audit")}><History aria-hidden="true"/><span>Activity audit<small>Who changed stock or recorded sales</small></span><ArrowRight aria-hidden="true"/></button>

@@ -54,3 +54,32 @@ it("accepts a recorded order but does not invent a paid receipt or move stock",a
  expect(screen.getByRole("button",{name:"Link receipt"})).toBeDisabled();
  expect(vi.mocked(callShop).mock.calls.some(([action])=>action==="recordSale"||action==="adjustStock")).toBe(false);
 });
+
+it("filters true externally received orders by state and reference without posting sales",async()=>{
+ vi.clearAllMocks();
+ const data=[
+ {orderId:"new-1",storeId:"north",customerReference:"Mobile customer A",status:"new",quotedTotalMinor:"1500",saleId:null},
+ {orderId:"ok-2",storeId:"north",customerReference:"Counter enquiry B",status:"accepted",quotedTotalMinor:"1500",saleId:null},
+ {orderId:"done-3",storeId:"north",customerReference:"Counter enquiry C",status:"closed",quotedTotalMinor:"1500",saleId:null}
+ ];
+ vi.mocked(callShop).mockImplementation(async action=>{
+  if(action==="listOnlineOrders")return {orders:data};
+  throw new Error("No write should occur");
+ });
+ const overview:ShopOverview={role:"owner",companyId:"demo",currency:"GHS",members:[],pendingInvites:[],
+ stock:[],stores:[{id:"north",name:"North",status:"active"}],
+ products:[{id:"rice",name:"Rice",active:true,unitPriceMinor:750}]};
+ render(<SharedShopOrders companyId="demo" userId="owner" overview={overview}/>);
+ expect(await screen.findByText("3 of 3 orders shown")).toBeInTheDocument();
+ expect(screen.getByText(/customer-facing web checkout is not connected/)).toBeInTheDocument();
+ const status=screen.getByRole("group",{name:"Order status"});
+ fireEvent.click(status.querySelectorAll("button")[2]!);
+ expect(screen.getByText("1 of 3 orders shown")).toBeInTheDocument();
+ expect(screen.getByLabelText("Review order")).toHaveTextContent("Counter enquiry B");
+ expect(screen.getByLabelText("Review order")).not.toHaveTextContent("Mobile customer A");
+ fireEvent.click(status.querySelectorAll("button")[0]!);
+ fireEvent.change(screen.getByLabelText("Search orders"),{target:{value:"done-3"}});
+ expect(screen.getByLabelText("Review order")).toHaveTextContent("Counter enquiry C");
+ expect(screen.getByText("1 of 3 orders shown")).toBeInTheDocument();
+ expect(vi.mocked(callShop).mock.calls.every(([action])=>action==="listOnlineOrders")).toBe(true);
+});

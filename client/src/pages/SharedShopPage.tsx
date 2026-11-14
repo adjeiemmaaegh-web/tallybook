@@ -28,6 +28,8 @@ import {SharedShopExpenses} from "@/cloud/SharedShopExpenses";
 import {ShopHelp} from "@/cloud/ShopHelp";
 import {SharedShopQuotes, type QuoteStart} from "@/cloud/SharedShopQuotes";
 import {convertShopQuotation} from "@/cloud/quotations";
+import {purchaseRetry} from "@/cloud/purchaseRetry";
+import {exportLoadedSalesCsv} from "@/cloud/shopOperationalReports";
 import {SharedShopAccounts} from "@/cloud/SharedShopAccounts";
 import {SharedShopAsk} from "@/cloud/SharedShopAsk";
 import type {PurchaseDraft} from "@/cloud/shopAssistant";
@@ -62,7 +64,7 @@ import {
 import { dismissQueuedSale, flushOutbox, readOutbox, submitSale, type OutboxScope, type QueuedSale } from "@/cloud/shopOutbox";
 import { readSealedJson, removeSealedJson, removeSealedPrefix, writeSealedJson } from "@/cloud/secureStorage";
 import { buildChecklist } from "@/cloud/shopOnboarding";
-import { currencies } from "@/features/business/currencies";
+import { currencies, currencyLabels } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
@@ -462,23 +464,23 @@ function SetupLedger({ companyId, onDone }: { companyId: string; onDone: () => P
     <h2>Set up your shared shop</h2>
     {step === 1
       ? <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setStep(2); }}>
-          <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. It can't change after the first sale.</p>
+          <p>Your attendants will sell from this shop on their own phones. Choose the currency you sell in. A ledger currency cannot be changed after setup; start a new business for a different currency.</p>
           <label className="shop-field">Currency
-            <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c}>{c}</option>)}</select></label>
+            <select value={currency} onChange={e => setCurrency(e.target.value)}>{currencies.map(c => <option key={c} value={c}>{c} · {currencyLabels[c]}</option>)}</select></label>
           <button className="primary-action">Next</button>
         </form>
-      : <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); setBusy(true); setError("");
+      : <form className="shop-inline-form" onSubmit={e => { e.preventDefault(); if(!storeName.trim()){setError("Enter a store name before opening your business.");return;} setBusy(true); setError("");
           // Both calls are safe to repeat: the ledger is set up once, and the store id is fixed per attempt.
           void setupShopLedger(companyId, currency)
-            .then(() => storeName.trim() ? saveShopStore(companyId, storeId.current, storeName.trim()) : undefined)
+            .then(() => saveShopStore(companyId, storeId.current, storeName.trim()))
             .then(onDone).catch(c => setError(message(c))).finally(() => setBusy(false)); }}>
           <p>Name the place you sell from. You can add more stores later under Team.</p>
           <label className="shop-field">Store name
-            <input value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={80} placeholder="e.g. Main shop" /></label>
+            <input value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={80} minLength={2} required placeholder="e.g. Main shop" /></label>
           <p className="shop-muted">Currency: <strong>{currency}</strong> <button type="button" className="shop-link" onClick={() => setStep(1)} disabled={busy}>Change</button></p>
           <div className="shop-actions">
             <button type="button" className="secondary-action" onClick={() => setStep(1)} disabled={busy}>Back</button>
-            <button className="primary-action" disabled={busy}>{busy ? "Saving…" : "Open shop"}</button></div>
+            <button className="primary-action" disabled={busy||!storeName.trim()}>{busy ? "Saving…" : "Open shop"}</button></div>
         </form>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
   </section>;
@@ -757,8 +759,24 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
     finally { setBusy(false); reloadQueue(); }
   };
 
+  const removePending = async (sale: QueuedSale) => {
+    const warning = sale.unreadable
+      ? "This pending sale is unreadable on this device and may not be recoverable. Deleting it permanently loses its local record. Reconcile the receipt with the owner first. Continue?"
+      : "Remove this rejected sale from the device? Check the server receipt and tell the owner first. This does not reverse any posted sale.";
+    if (!(await confirmAction(warning,{danger:true,confirmLabel:"Remove pending record"}))) return;
+    try { await dismissQueuedSale(scope,sale.id,{force:!!sale.unreadable}); await reloadQueue(); }
+    catch (cause) { setQueueError("Could not remove the record. "+message(cause)); }
+  };
+  const pendingCount=queued.filter(s=>s.status==="queued"||s.status==="sending").length;
+  const reviewCount=queued.filter(s=>s.status==="rejected"||s.status==="needs-review").length;
   const splitSum = (["cash", "mobile", "card"] as const).reduce((n, k) => { try { return n + (split[k].trim() ? parseAmountToMinor(split[k], currency) : 0); } catch { return n; } }, 0);
   return <div className="shop-sell">
+    {queued.length>0&&<section className="tb-ops-recovery" aria-label="Pending sale recovery">
+      <div><strong>{pendingCount} sale{pendingCount===1?"":"s"} awaiting confirmation</strong>
+       <p>{reviewCount>0 ? reviewCount+" require owner review. " : ""}Do not enter the same sale again; its original submission key is retained on this device.</p></div>
+      <button type="button" className="secondary-action" disabled={!online||flushing.current}
+        onClick={()=>void flush()}>{online?"Reconcile pending sales":"Offline — retry when connected"}</button>
+    </section>}
     <section className="shop-card">
       <div className="shop-card-head"><h2>Products</h2><StorePicker stores={active} storeId={storeId} choose={id => { choose(id); setCart({}); }} /></div>
       {!products.length && (overview.role === "owner"
@@ -850,7 +868,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
         <button type="button" onClick={() => { if (online) void flush(); else void reloadQueue(); }}>Retry pending sales</button>
       </div>}
       {queued.length > 0 && <div className="shop-queue">
-        <h3>Waiting to send</h3>
+        <h3>Waiting to send</h3><p className="shop-muted">Rejected or unreadable sales also remain here until an authorized person reconciles and removes them.</p>
         <ul>{queued.map(q => <li key={q.id} className={q.status === "rejected" || q.status === "needs-review" ? "is-rejected" : ""}>
           <span>{q.summary}</span>
           {q.status === "queued" || q.status === "sending"
@@ -858,7 +876,7 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
             : <>
               <small>{q.status === "needs-review" ? `Needs review: ${q.error}` : `Not recorded: ${q.error}`}</small>
               <button type="button" className="secondary-action"
-                onClick={() => { void dismissQueuedSale(scope, q.id, { force: !!q.unreadable }).then(reloadQueue); }}>{q.unreadable ? "Remove unreadable sale" : "Dismiss"}</button></>}
+                onClick={() => void removePending(q)}>{q.unreadable ? "Discard unreadable sale" : "Remove rejected record"}</button></>}
         </li>)}</ul>
       </div>}
     </section>
@@ -961,11 +979,13 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
   const { active, storeId, choose } = useStoreChoice(overview, userId);
   const [edit, setEdit] = useState<ProductDraft | null>(null);
   const [adds, setAdds] = useState<Record<string, string>>({});
+  const [adjustNotes, setAdjustNotes] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [stockQuery, setStockQuery] = useState("");
+  const pendingAdjustment = useRef<{fingerprint:string}|null>(null);
   const run = async (task: () => Promise<unknown>) => { setBusy(true); setError(""); try { await task(); await refresh(); } catch (c) { setError(message(c)); } finally { setBusy(false); } };
   const stockOf = (productId: string) => overview.stock.find(s => s.storeId === storeId && s.productId === productId)?.quantity ?? 0;
   const stats = computeStockStats(overview.products, stockOf);
@@ -981,9 +1001,42 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         setNotice("Saved the name, price and availability. Barcode, category, cost and stock settings need the shop to be updated first.");
       }
       setEdit(null); }); };
-  const addStock = (productId: string, sign: 1 | -1) => { const n = Number(adds[productId]);
-    if (!Number.isInteger(n) || n <= 0) { setError("Enter a whole number of units."); return; }
-    void run(async () => { await adjustShopStock(companyId, { storeId, productId, delta: sign * n, operationId: crypto.randomUUID() }); setAdds(a => ({ ...a, [productId]: "" })); }); };
+  /** A dropped response must not become two stock adjustments on retry. The id is
+   * retained in sessionStorage for the same exact payload until the server confirms it.
+   */
+  const addStock = (productId: string, sign: 1 | -1) => {
+    const raw = (adds[productId] ?? "").trim();
+    const n = Number(raw);
+    if (!/^[1-9][0-9]*$/.test(raw) || !Number.isSafeInteger(n) || n > 100000) {
+      setError("Enter 1 to 100,000 whole units. Scientific notation and decimals are not accepted."); return;
+    }
+    if (sign === -1 && n > stockOf(productId)) {
+      setError("The quantity to remove is more than the last loaded stock. Refresh first."); return;
+    }
+    const note=(adjustNotes[productId]??"").trim();
+    if(sign===-1 && note.length<4){setError("Enter a reason of at least 4 characters before removing stock.");return;}
+    const payload = {storeId,productId,delta:sign*n,note};
+    const fingerprint = JSON.stringify(payload);
+    if (pendingAdjustment.current && pendingAdjustment.current.fingerprint !== fingerprint) {
+      setError("A previous stock adjustment may have been posted. Retry the SAME store, item, direction and quantity, then refresh before changing it."); return;
+    }
+    void (async()=>{
+      if (sign === -1 && !(await confirmAction("Remove "+n+" units from this store's recorded stock? Use Stock counts for a physical discrepancy.",{danger:true,confirmLabel:"Confirm removal"})))return;
+      pendingAdjustment.current = {fingerprint};
+      await run(async()=>{
+        try {
+          const retry=await purchaseRetry(userId,companyId,"manual-stock-adjustment",payload,sessionStorage);
+          await adjustShopStock(companyId,{...payload,operationId:retry.id});
+          retry.confirm();
+          pendingAdjustment.current=null;
+          setAdds(a=>({...a,[productId]:""}));
+          setAdjustNotes(a=>({...a,[productId]:""}));
+        }catch(cause){
+          throw new Error("Stock adjustment not confirmed. Retry this exact adjustment with the same quantity; never re-enter it as a new amount until you reconcile the ledger. "+message(cause));
+        }
+      });
+    })();
+  };
   const isOwner = overview.role === "owner";
 
   return <div className="shop-grid">
@@ -1026,9 +1079,13 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
         <div className="shop-stock-controls">
           {active.length > 0 && tracked && <><input aria-label={`Units of ${p.name}`} inputMode="numeric" value={adds[p.id] ?? ""} onChange={e => setAdds(a => ({ ...a, [p.id]: e.target.value }))} placeholder="Qty" />
             <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, 1)}>Add</button>
-            <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button></>}
+            <button type="button" className="secondary-action" disabled={busy || !online} onClick={() => addStock(p.id, -1)}>Remove</button>
+            <input className="tb-stock-adjust-note" aria-label={`Reason for ${p.name} stock change`} maxLength={200}
+              placeholder="Reason for manual stock adjustment (required to remove)"
+              value={adjustNotes[p.id]??""} onChange={e=>setAdjustNotes(a=>({...a,[p.id]:e.target.value}))}/></>}
           <button type="button" className="secondary-action" disabled={!online} onClick={() => { setNotice(""); setEdit(draftFrom(p, currency)); }}>Edit</button>
         </div></li>; })}</ul>
+      {pendingAdjustment.current && <p role="status" className="shop-muted">Unconfirmed stock change: retry the same store, product and quantity or check the server history before proceeding.</p>}
       {error && <p role="alert" className="shop-alert">{error}</p>}
     </section>
   </div>;
@@ -1262,6 +1319,8 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const [exportNote, setExportNote] = useState("");
+  const [queryPending, setQueryPending] = useState(false);
   const [requestTick, setRequestTick] = useState(0);
   const request = useRef(0);
   const isOwner = overview.role === "owner";
@@ -1272,10 +1331,11 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   useEffect(() => {
     if (!online) return;
     const mine = ++request.current;
-    setError("");
+    setError(""); setExportNote(""); setPage(null); setSales([]); setQueryPending(true);
     void searchShopSales(companyId, queryNow(), emailOf)
       .then(result => { if (mine === request.current) { setPage(result); setSales(result.sales); setOpen(null); } })
-      .catch(c => { if (mine === request.current) setError(message(c)); });
+      .catch(c => { if (mine === request.current) setError(message(c)); })
+      .finally(() => { if (mine === request.current) setQueryPending(false); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, storeFilter, preset, payment, q, online]);
   const more = async () => {
@@ -1293,6 +1353,23 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
   const replace = (next: ShopReceipt) => setSales(list => list.map(r => r.saleId === next.saleId ? next : r));
   const filtering = preset !== "all" || payment !== "all" || q.trim() !== "" || storeFilter !== "";
   const clear = () => { setPreset("all"); setPayment("all"); setText(""); setQ(""); setStoreFilter(""); };
+  /** Only the currently loaded pages are exported. No claim of a complete ledger. */
+  const exportVisible = () => {
+    if (!isOwner || !page || queryPending || !sales.length) return;
+    let url="";
+    try {
+      const data=exportLoadedSalesCsv(sales);
+      url=URL.createObjectURL(new Blob(["\uFEFF",data],{type:"text/csv;charset=utf-8"}));
+      const link=document.createElement("a");
+      link.href=url;
+      link.download="tallybook-loaded-sales-"+new Date().toISOString().slice(0,10)+".csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setExportNote("Prepared "+sales.length+" loaded receipt(s). This file excludes earlier pages not yet loaded and may contain customer data; store it securely.");
+    }catch(cause){setExportNote("Could not download the loaded sales: "+message(cause));}
+    finally { if(url) window.setTimeout(()=>URL.revokeObjectURL(url),1000); }
+  };
   return <>
   {!isOwner && <MyRefundRequests companyId={companyId} online={online} reloadKey={requestTick} />}
   <section className="shop-card">
@@ -1309,7 +1386,14 @@ function SalesPanel({ companyId, overview, online }: PanelProps) {
       {PAYMENT_FILTERS.map(f => <button key={f.id} type="button" className="shop-chip" aria-pressed={payment === f.id} onClick={() => setPayment(f.id)}>{f.label}</button>)}</div>
     {!online && <p className="shop-muted">Connect to see sales.</p>}
     {error && <p role="alert" className="shop-alert">{error}</p>}
+    {queryPending && <p className="shop-muted" role="status">Loading authorized sales…</p>}
     {page?.limited && <p className="shop-muted" role="note">Showing your latest sales only. Older sales appear here once the shop is updated.</p>}
+    {isOwner&&page&&<div className="tb-ops-export">
+      <p className="shop-muted">{sales.length} currently loaded of {page.matchCount} matching receipt(s). Download includes only loaded records, not the entire ledger.</p>
+      <button type="button" className="secondary-action" disabled={queryPending||!sales.length}
+        onClick={exportVisible}>Download loaded sales CSV</button>
+      {exportNote&&<p role="status" className="shop-muted">{exportNote}</p>}
+    </div>}
     {page && !sales.length && <p className="shop-muted">{filtering ? "No sales match these filters." : "No sales yet."} {filtering && <button type="button" className="shop-link" onClick={clear}>Clear filters</button>}</p>}
     {page && page.matchCount > 0 && <p className="shop-total"><span>{page.matchCount} sale{page.matchCount === 1 ? "" : "s"}{filtering ? " found" : ""}, after refunds</span><strong>{formatMinorAmount(page.grossMinor - page.refundedMinor, overview.currency!)}</strong></p>}
     <ul className="shop-sales">{sales.map(r => <li key={r.saleId}>
