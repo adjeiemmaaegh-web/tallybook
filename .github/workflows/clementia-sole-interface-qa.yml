@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p artifacts/release-v19
           set -o pipefail
-          pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides ClementiaBusinessOnboarding AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
+          pnpm exec vitest run soleInterfaceLanguage soleInterfaceGuides soleInterfaceBusinessQueries ClementiaBusinessOnboarding AssistantPage.test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 2>&1 | tee artifacts/release-v19/clementia-focused-ci.log
       - name: Semantic TypeScript check
         run: pnpm check
       - name: Execute real assistant / synthetic IndexedDB matrix
