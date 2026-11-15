@@ -22,7 +22,7 @@ it("rejects duplicate, negative, oversized and fractional guest quantities befor
 });
 it("never accepts malformed phone or hidden control characters",()=>{
  const valid={shareToken:a,submissionKey:b,customerName:" Visitor ",contactPhone:"+233 240 001 234",
-  customerNote:"Hi",lines:[{productId:c,quantity:3}]};
+  customerNote:"Hi",consent:true,lines:[{productId:c,quantity:3}]};
  expect(normalizeGuestInput(valid).customerName).toBe("Visitor");
  expect(()=>normalizeGuestInput({...valid,contactPhone:"123"})).toThrow();
  expect(()=>normalizeGuestInput({...valid,customerName:"V\nictim"})).toThrow();
