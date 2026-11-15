@@ -57,13 +57,19 @@ describe("AssistantPage", () => {
     expect(await screen.findByText("Sale recorded: 2 × Eggs for GHS 120.00.")).toBeInTheDocument();
   });
 
-  it("shows a business setup gate instead of the chat when no business profile exists", async () => {
+  it("offers chat-only business setup when the user has no local company", async () => {
     vi.resetModules();
-    vi.doMock("@/contexts/BusinessProfileContext", () => ({ useBusinessProfile: () => ({ profile: null, activeCompanyId: "primary" }) }));
+    vi.doMock("@/contexts/BusinessProfileContext", () => ({
+      useBusinessProfile: () => ({
+        profile: null, companies: [], activeCompanyId: "primary", status: "ready",
+        save: vi.fn(),
+      }),
+    }));
     vi.doMock("@/contexts/DatabaseContext", () => ({ useDatabase: () => ({ status: "ready" }) }));
-    const { default: GatedAssistantPage } = await import("@/pages/AssistantPage");
-    render(<GatedAssistantPage />);
-    expect(screen.getByRole("link", { name: "Set up business" })).toHaveAttribute("href", "/business");
+    const { default: FreshAssistantPage } = await import("@/pages/AssistantPage");
+    render(<FreshAssistantPage />);
+    expect(screen.getByRole("heading", { name: "Set up your business with Clementia" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Reply to Clementia setup" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Message TallyBook's assistant")).not.toBeInTheDocument();
   });
 });

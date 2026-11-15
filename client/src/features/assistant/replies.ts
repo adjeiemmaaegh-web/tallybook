@@ -26,14 +26,15 @@ export const helpReply = (): AssistantReply => info(
       { label: "Record", value: "“Sell 3 crates of eggs to Adwoa, paid cash” · “I received 10 crates of eggs from Kofi Traders” · “Adwoa paid 100 cedis”" },
       { label: "Add", value: "“Add customer Ama Mensah” · “Add product Palm oil, price 12” · “Add supplier Kofi Traders” · “Add category Drinks”" },
       { label: "Count stock", value: "“I counted 25 eggs but we have 37” corrects TallyBook's stock to your count, with a preview first." },
-      { label: "Not here", value: "Editing or deleting records, refunds, discounts. Use the app pages for those." },
+      { label: "Expenses", value: "Say “Record an expense” to enter a category, amount, date, and optional note, then confirm the preview." },
+      { label: "Not here", value: "Editing or deleting established records, refunds, discounts. Use the authorized app pages for those." },
     ],
     actions: EXAMPLE_ACTIONS,
   },
 );
 
 export const notUnderstood = (): AssistantReply => unsupported(
-  "I couldn't identify a supported TallyBook action from that. I can answer questions about balances, stock and sales, add customers, products, suppliers and categories, correct stock after a count, and prepare sales, stock receipts and customer payments.",
+  "I couldn't identify a supported TallyBook action from that. I can answer questions about balances, stock and sales, add customers, products, suppliers and categories, record expenses, correct stock after a count, and prepare sales, stock receipts and customer payments.",
   { actions: EXAMPLE_ACTIONS.slice(0, 3) },
 );
 

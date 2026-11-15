@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
-import AssistantPage from "@/pages/AssistantPage";
+const AssistantPage = lazy(() => import("@/pages/AssistantPage"));
 import { consumeClementiaPanelRestore } from "@/lib/clementiaWindow";
 import "./ClementiaLauncher.css";
 
@@ -104,7 +104,7 @@ export function ClementiaLauncher({ hidden }: { hidden: boolean }) {
         <button ref={resizeRef} type="button" aria-label={maximized ? "Minimize Clementia" : "Maximize Clementia"} aria-pressed={maximized} onClick={() => setMaximized(!maximized)}>{maximized ? <Minimize2 size={18}/> : <Maximize2 size={18}/>}</button>
         <button ref={closeRef} type="button" aria-label="Close Clementia" onClick={close}><X size={20}/></button>
       </header>
-      <div className="clementia-panel-body"><AssistantPage /></div>
+      <div className="clementia-panel-body"><Suspense fallback={<p role="status">Opening Clementia…</p>}><AssistantPage /></Suspense></div>
     </section>}
   </>;
 }

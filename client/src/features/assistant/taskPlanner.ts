@@ -3,6 +3,8 @@ import type { AssistantAction, AssistantReply, ReplyDetail } from "./types";
 export type AssistantStep =
   | { type: "read_sales"; label: string }
   | { type: "read_inventory"; label: string }
+  | { type: "read_expenses"; label: string }
+  | { type: "read_shift"; label: string }
   | { type: "read_debt"; label: string }
   | { type: "calculate_reorder"; label: string };
 
@@ -23,17 +25,25 @@ const planActions = (steps: AssistantStep[]): AssistantAction[] => [
 ];
 
 export function planForText(raw: string): PlanResult | null {
-  const text = raw.toLowerCase().replace(/[?!.,]/g, " ").replace(/\s+/g, " ").trim();
-  const domainCount = ["sales", "stock", "inventory", "debt", "owe", "reorder"].filter((word) => text.includes(word)).length;
-  const isOverview = /\b(?:check|review|summari[sz]e|show)\b/.test(text) && (domainCount >= 2 || text.includes("business overview"));
+  const text = raw.toLowerCase().replace(/[?!.,-]/g, " ").replace(/\s+/g, " ").trim();
+  const domainCount = ["sales", "stock", "inventory", "debt", "owe", "reorder", "expenses", "spending"].filter((word) => text.includes(word)).length;
+  const isOverview = text === "business overview" || (/\b(?:check|review|summari[sz]e|show)\b/.test(text) && (domainCount >= 2 || text.includes("business overview")));
   const isMorning = /\b(?:morning check|morning summary|start of day)\b/.test(text);
   const isEndOfDay = /\b(?:end of day|close of day|daily close)\b/.test(text);
   if (!isOverview && !isMorning && !isEndOfDay) return null;
 
   const steps: AssistantStep[] = [];
+  if (isOverview && !domainCount) {
+    steps.push({ type: "read_sales", label: "Review today's sales" });
+    steps.push({ type: "read_inventory", label: "Review low stock" });
+    steps.push({ type: "read_debt", label: "Review customer debtors" });
+    steps.push({ type: "read_expenses", label: "Review saved business expenses" });
+  }
   if (isMorning || isEndOfDay || text.includes("sales")) steps.push({ type: "read_sales", label: isEndOfDay ? "Review today's sales and collections" : "Review recent sales" });
   if (isMorning || isEndOfDay || text.includes("stock") || text.includes("inventory") || text.includes("reorder")) steps.push({ type: "read_inventory", label: "Review current stock" });
   if (isMorning || text.includes("debt") || text.includes("owe")) steps.push({ type: "read_debt", label: "Review outstanding customer balances" });
+  if (isEndOfDay || text.includes("expenses") || text.includes("spending")) steps.push({ type: "read_expenses", label: "Review today's saved expenses" });
+  if (isEndOfDay) steps.push({ type: "read_shift", label: "Check the current staff shift and tracked drawer cash" });
   if (text.includes("reorder") || text.includes("morning")) steps.push({ type: "calculate_reorder", label: "Calculate reorder suggestions from recent sales" });
   const unique = steps.filter((step, index) => steps.findIndex((candidate) => candidate.type === step.type) === index);
   const goal = isMorning ? "Morning business check" : isEndOfDay ? "End-of-day business summary" : "Business overview";

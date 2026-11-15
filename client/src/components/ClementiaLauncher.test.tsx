@@ -6,10 +6,10 @@ vi.mock("@/pages/AssistantPage", () => ({ default: () => <textarea aria-label="A
 import { ClementiaLauncher } from "./ClementiaLauncher";
 
 describe("Clementia window controls", () => {
-  it("keeps an unsent draft while maximizing and minimizing the same assistant", () => {
+  it("loads the assistant on demand, then preserves an unsent draft across size changes", async () => {
     render(<ClementiaLauncher hidden={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Let Clementia assist you" }));
-    const draft = screen.getByRole("textbox", { name: "Assistant draft" });
+    const draft = await screen.findByRole("textbox", { name: "Assistant draft" });
     fireEvent.change(draft, { target: { value: "Unsaved shop question" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Maximize Clementia" }));
