@@ -30,6 +30,13 @@ test('CSP is strict: no inline or eval scripts, no framing, no plugins, limited 
   assert.ok(!Object.values(d).flat().includes('*'));
 });
 
+test('the CSP is enforced, not report-only, on Vercel and the Node server', () => {
+  assert.ok(headers['Content-Security-Policy'], 'vercel.json must send an enforcing Content-Security-Policy');
+  assert.equal(headers['Content-Security-Policy-Report-Only'], undefined);
+  assert.ok(serverSource.includes('res.setHeader("Content-Security-Policy",'));
+  assert.ok(!serverSource.includes('Content-Security-Policy-Report-Only'));
+});
+
 test('the Node server sends the same CSP as Vercel', () => {
   const csp = headers['Content-Security-Policy-Report-Only'] ?? headers['Content-Security-Policy'];
   assert.ok(serverSource.includes(JSON.stringify(csp)), 'server/index.ts must carry the identical policy string');

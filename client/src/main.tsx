@@ -1,3 +1,4 @@
+import "./lib/zodConfig";
 import "./styles/Fonts.css";
 import "./index.css";
 /** Tactile Ledger design reminder: the app registers only an offline shell; business records remain in IndexedDB. */
