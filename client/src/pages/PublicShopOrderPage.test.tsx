@@ -43,7 +43,7 @@ it("a real guest request has contact consent, server quote, and original submiss
  fireEvent.click(screen.getByRole("button",{name:"Send order request"}));
  await waitFor(()=>expect(submitGuestOrder).toHaveBeenCalledWith({
   shareToken:token,submissionKey:receiptId,customerName:"Guest Example",
-  contactPhone:"+233 240 001 234",customerNote:"",
+  contactPhone:"+233 240 001 234",customerNote:"",consent:true,
   lines:[{productId:product,quantity:2}]
  }));
  expect(await screen.findByText(/Request received for review/)).toBeInTheDocument();
