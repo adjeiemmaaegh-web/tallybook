@@ -129,6 +129,12 @@ describe("Clementia native staff-shift operations", () => {
     expect(parentheses.kind).toBe("question");
     expect(parentheses.preview).toBeUndefined();
     await kit.assistant.send("cancel");
+    for (const malformed of ["Start shift with minus 50 cedis", "Start shift with 5k cedis", "Start shift with 50 percent cash", "Start shift with £50"]) {
+      const reply = await kit.assistant.send(malformed);
+      expect(reply.kind).toBe("question");
+      expect(reply.preview).toBeUndefined();
+      await kit.assistant.send("cancel");
+    }
     const leadingDecimal = await kit.assistant.send("Start shift with .50 cedis");
     expect(leadingDecimal.kind).toBe("question");
     expect(leadingDecimal.text).toMatch(/leading zero/i);
