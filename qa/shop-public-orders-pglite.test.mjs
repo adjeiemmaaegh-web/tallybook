@@ -88,9 +88,11 @@ test('guest: public link opt-in, private API denied, server prices and no paymen
   await assert.rejects(t.guest('submit',{...form,submissionKey:randomUUID(),lines:[
    {productId:t.rice,quantity:2},{productId:t.rice,quantity:1}
   ]}),/Duplicate product/i);
-  await assert.rejects(t.guest('submit',{...form,submissionKey:randomUUID(),lines:[
-   {productId:t.rice,quantity:2},{productId:t.sugar,quantity:1,unitPriceMinor:1}
-  ]}),/not|/i).catch(()=>{});
+  // Even if a client adds a fake price field, the quoted amount comes from shop_products.
+  const forged=await t.guest('submit',{...form,submissionKey:randomUUID(),lines:[
+   {productId:t.rice,quantity:2,unitPriceMinor:1},{productId:t.sugar,quantity:1}
+  ]});
+  assert.equal(forged.quotedTotalMinor,'4000');
   const after=await t.admin('SELECT quantity FROM public.shop_store_stock WHERE business_id=$1 AND store_id=$2 AND product_id=$3',[t.company,t.store,t.rice]);
   assert.equal(after[0].quantity,status[0].quantity);
   assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_sales WHERE business_id=$1',[t.company]))[0].n,0);
@@ -99,7 +101,7 @@ test('guest: public link opt-in, private API denied, server prices and no paymen
   await t.ownerAdmin('revokeShare',{shareId:share.shareId});
   await assert.rejects(t.guest('catalog',{shareToken:share.shareToken}),/unavailable/i);
   const listed=await t.ownerAdmin('list');
-  assert.equal(listed.requests.length,1);
+  assert.equal(listed.requests.length,2);
   assert.equal(listed.requests[0].contactPhone,'+233 240 001 234');
  }finally{await t.db.close();}
 });
