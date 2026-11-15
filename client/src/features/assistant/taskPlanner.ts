@@ -4,6 +4,7 @@ export type AssistantStep =
   | { type: "read_sales"; label: string }
   | { type: "read_inventory"; label: string }
   | { type: "read_expenses"; label: string }
+  | { type: "read_shift"; label: string }
   | { type: "read_debt"; label: string }
   | { type: "calculate_reorder"; label: string };
 
@@ -42,6 +43,7 @@ export function planForText(raw: string): PlanResult | null {
   if (isMorning || isEndOfDay || text.includes("stock") || text.includes("inventory") || text.includes("reorder")) steps.push({ type: "read_inventory", label: "Review current stock" });
   if (isMorning || text.includes("debt") || text.includes("owe")) steps.push({ type: "read_debt", label: "Review outstanding customer balances" });
   if (isEndOfDay || text.includes("expenses") || text.includes("spending")) steps.push({ type: "read_expenses", label: "Review today's saved expenses" });
+  if (isEndOfDay) steps.push({ type: "read_shift", label: "Check the current staff shift and tracked drawer cash" });
   if (text.includes("reorder") || text.includes("morning")) steps.push({ type: "calculate_reorder", label: "Calculate reorder suggestions from recent sales" });
   const unique = steps.filter((step, index) => steps.findIndex((candidate) => candidate.type === step.type) === index);
   const goal = isMorning ? "Morning business check" : isEndOfDay ? "End-of-day business summary" : "Business overview";

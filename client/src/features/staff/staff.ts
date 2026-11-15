@@ -35,6 +35,8 @@ export function allowed(role:StaffRole, action:StaffPermission) {
   return Array.isArray(policy[role])&&policy[role].includes(action);
 }
 export function staffCan(member:StaffMember, action:StaffPermission) { return allowed(member.role,action) && (!member.permissions || member.permissions.includes(action)); }
+/** Changes on lock, unlock or credential rotation; assistant previews must be tied to one unlock epoch. */
+export function currentStaffSessionGeneration(company=getActiveBusinessProfileId()):number { return sessionGenerations.get(company)??0; }
 export function currentStaffId(company=getActiveBusinessProfileId()) { const id=verifiedSessions.get(company);if (!id) return null; if (Date.now() >= (sessionExpiration.get(company) ?? 0)) { lockStaff(company); return null; } return id; }
 export function lockStaff(company=getActiveBusinessProfileId()) {
   verifiedSessions.delete(company); sessionExpiration.delete(company);

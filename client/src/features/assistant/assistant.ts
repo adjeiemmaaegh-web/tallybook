@@ -36,6 +36,7 @@ import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
 import { soleInterfaceGuide } from "./soleInterfaceGuides";
 import { createExpenseAssistantSession, isExpenseRecordingRequest } from "./expenseAssistant";
 import { expenseReviewReply } from "./expenseReview";
+import { createShiftAssistantSession, isShiftOpenRequest, shiftCashStatusReply } from "./shiftAssistant";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -121,6 +122,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
   const memory = createConversationMemory(() => options.now?.() ?? new Date());
   const quotationDraft = createQuotationDraftSession(database, options.currency, () => options.now?.() ?? new Date());
   const expenseSession = createExpenseAssistantSession(database, options.currency, () => options.now?.() ?? new Date());
+  const shiftSession = createShiftAssistantSession(database, options.currency, () => options.now?.() ?? new Date());
   // Conversation state is scoped to the active company, not merely to this assistant instance.
   // The app can switch business profiles while the assistant component remains mounted.
   let conversationCompanyId = getActiveBusinessProfileId();
@@ -131,6 +133,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
     memory.forget();
     quotationDraft.clear();
     expenseSession.clear();
+    shiftSession.clear();
     draft = null;
     parked = null;
     pending = null;
@@ -497,6 +500,10 @@ export function createAssistant(options: AssistantOptions): Assistant {
       if (CONFIRM.test(prepared)) return info("Use the Confirm expense button on the preview. A typed yes cannot post an expense.");
       return (await expenseSession.handle(text)) ?? failure("The expense conversation expired. Nothing was recorded.");
     }
+    if (shiftSession.hasDraft()) {
+      if (CONFIRM.test(prepared)) return info("Use the Confirm shift button on the preview. Typed confirmation cannot open a shift.");
+      return (await shiftSession.handle(text)) ?? failure("The shift preparation expired. Nothing was opened.");
+    }
     if (quotationDraft.hasDraft()) {
       if (CANCEL.test(prepared)) { quotationDraft.clear(); return info('Quotation preparation cancelled. No records were changed.'); }
       if (CONFIRM.test(prepared)) return quotationDraft.token() ? quotationDraft.confirm(quotationDraft.token()!) : info('The quotation needs a customer and at least one product.');
@@ -527,6 +534,17 @@ export function createAssistant(options: AssistantOptions): Assistant {
     if (!draft && !pending && !batchState) {
       const review = await expenseReviewReply(canonicalText, { database, currency: options.currency, now: options.now?.() ?? new Date() });
       if (review) return review;
+    }
+
+    // Operational staff data is read only through permissioned native shift
+    // services; an open-shift request is a separate single-use preview.
+    if (!draft && !pending && !batchState && !quotationDraft.hasDraft()) {
+      if (isShiftOpenRequest(canonicalText)) {
+        const shift = await shiftSession.handle(canonicalText);
+        if (shift) return shift;
+      }
+      const status = await shiftCashStatusReply(canonicalText, database, options.currency);
+      if (status) return status;
     }
 
     // First-time help questions and unsupported operations deserve concrete,
@@ -671,11 +689,13 @@ export function createAssistant(options: AssistantOptions): Assistant {
   }
 
   async function runPlan(plan: AssistantPlan): Promise<AssistantReply> {
-    const commands = plan.steps.map((step) => step.type === "read_sales" ? "Show today's sales" : step.type === "read_inventory" ? "What is running low?" : step.type === "read_debt" ? "Which customers owe us the most?" : step.type === "read_expenses" ? "Show expenses today" : "What should I reorder?");
+    const commands = plan.steps.map((step) => step.type === "read_sales" ? "Show today's sales" : step.type === "read_inventory" ? "What is running low?" : step.type === "read_debt" ? "Which customers owe us the most?" : step.type === "read_expenses" ? "Show expenses today" : step.type === "read_shift" ? "Show my shift cash" : "What should I reorder?");
     const replies = await Promise.all(commands.map(async (command, index) =>
       plan.steps[index].type === "read_expenses"
         ? (await expenseReviewReply(command, { database, currency: options.currency, now: options.now?.() ?? new Date() }))!
-        : handle(parseCommand(command, { now: options.now?.() }))));
+        : plan.steps[index].type === "read_shift"
+          ? (await shiftCashStatusReply(command, database, options.currency))!
+          : handle(parseCommand(command, { now: options.now?.() }))));
     const details = replies.flatMap((reply, index) => [{ label: commands[index], value: reply.text }]);
     return { kind: "answer", text: `${plan.goal} complete. All figures came from your local saved records.`, details, plan, actions: [say("Show detailed sales", "Show today's sales"), say("Check reorder suggestions", "What should I reorder?")] };
   }
@@ -775,6 +795,8 @@ export function createAssistant(options: AssistantOptions): Assistant {
       }
     }
     if (action.type === "confirm" && expenseSession.token() === action.token) { const result = await expenseSession.confirm(action.token); if(result.kind==="success")notifyRecordsChanged(); return result; }
+    if (action.type === "confirm" && shiftSession.token() === action.token) { const result = await shiftSession.confirm(action.token); if(result.kind==="success")notifyRecordsChanged(); return result; }
+    if (action.type === "cancel" && shiftSession.hasDraft()) return (await shiftSession.handle("cancel")) ?? info("Shift preparation cancelled.");
     if (action.type === "cancel" && expenseSession.hasDraft()) return (await expenseSession.handle("cancel")) ?? info("Expense recording cancelled.");
     if (action.type === "confirm" && quotationDraft.token() === action.token) return quotationDraft.confirm(action.token);
     if (action.type === "cancel" && quotationDraft.hasDraft()) { quotationDraft.clear(); return info("Quotation preparation cancelled; nothing was saved."); }
@@ -792,7 +814,7 @@ export function createAssistant(options: AssistantOptions): Assistant {
       }
       return withContext; }),
     act: (action) => serial(async () => resetOnBusinessChange() ? failure("You switched business. The earlier assistant action was cleared; nothing was recorded. Please start again in this business.") : actNow(action)),
-    clearContext: () => { expenseSession.clear(); quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; pending = null; batchState = null; confirmable = false; lastPlan = null; pendingReversalToken = null; pendingReversalSaleId = null; pendingReversalCompanyId = null; },
-    pendingToken: () => { resetOnBusinessChange(); return expenseSession.token() ?? quotationDraft.token() ?? pending?.token ?? batchState?.confirmToken ?? null; },
+    clearContext: () => { expenseSession.clear(); shiftSession.clear(); quotationDraft.clear(); memory.forget(); appContext = null; draft = null; parked = null; pending = null; batchState = null; confirmable = false; lastPlan = null; pendingReversalToken = null; pendingReversalSaleId = null; pendingReversalCompanyId = null; },
+    pendingToken: () => { resetOnBusinessChange(); return expenseSession.token() ?? shiftSession.token() ?? quotationDraft.token() ?? pending?.token ?? batchState?.confirmToken ?? null; },
   };
 }
