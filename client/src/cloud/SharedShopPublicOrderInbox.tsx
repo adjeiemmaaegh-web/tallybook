@@ -2,6 +2,7 @@
  * An anonymous request never becomes a sale or moves stock here.
  */
 import {useCallback,useEffect,useRef,useState} from "react";
+import "./SharedShopPublicOrderInbox.css";
 import {confirmAction} from "@/lib/confirmAction";
 import type {ShopOverview} from "./shopClient";
 import {
