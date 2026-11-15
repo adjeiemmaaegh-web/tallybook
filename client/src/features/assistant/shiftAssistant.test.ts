@@ -111,6 +111,10 @@ describe("Clementia native staff-shift operations", () => {
     expect(negative.text).toMatch(/negative/i);
     expect(negative.preview).toBeUndefined();
     await kit.assistant.send("cancel");
+    const unicodeMinus = await kit.assistant.send("Start shift with −50 cedis");
+    expect(unicodeMinus.kind).toBe("question");
+    expect(unicodeMinus.preview).toBeUndefined();
+    await kit.assistant.send("cancel");
     const parentheses = await kit.assistant.send("Start shift with (50) cedis");
     expect(parentheses.kind).toBe("question");
     expect(parentheses.preview).toBeUndefined();
