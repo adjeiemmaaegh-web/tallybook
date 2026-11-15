@@ -21,7 +21,7 @@ const STATUS = [
 ];
 const CANCEL = /^(?:cancel|stop|discard|never ?mind|forget it|no|not now)$/i;
 const DEFERRED = /\b(?:tomorrow|yesterday|next|later|future|planned?|scheduled?|when|after)\b|\bat\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)\b|\bon\s+\d{4}-\d{2}-\d{2}\b/i;
-const CURRENCIES = /\b(?:GHS|USD|NGN|KES|AED|EUR|GBP|RWF|TZS|UGX|cedis?|naira|dollars?)\b|₵|\$/ig;
+const CURRENCIES = /\b(?:GHS|USD|NGN|KES|AED|EUR|GBP|RWF|TZS|UGX|cedis?|naira|dollars?|pounds?|euros?)\b|[₵$£€₦₹¥₱₨₽₩₪]/ig;
 
 export const isShiftOpenRequest = (text: string): boolean => OPEN.test(sanitizeInput(text));
 export const isShiftCashStatusRequest = (text: string): boolean =>
@@ -30,8 +30,10 @@ export const isShiftCashStatusRequest = (text: string): boolean =>
 function currencyMismatch(text: string, currency: string): boolean {
   const mentioned = Array.from(text.matchAll(CURRENCIES), (match) => {
     const value = match[0].toUpperCase();
-    return /^(?:CEDI|CEDIS|₵)$/.test(value) ? "GHS" : value === "NAIRA" ? "NGN"
-      : /^(?:DOLLAR|DOLLARS|\$)$/.test(value) ? "USD" : value;
+    return /^(?:CEDI|CEDIS|₵)$/.test(value) ? "GHS" : /^(?:NAIRA|₦)$/.test(value) ? "NGN"
+      : /^(?:DOLLAR|DOLLARS|\$)$/.test(value) ? "USD"
+      : /^(?:POUND|POUNDS|£)$/.test(value) ? "GBP"
+      : /^(?:EURO|EUROS|€)$/.test(value) ? "EUR" : value;
   });
   return mentioned.some((code) => code !== currency);
 }
@@ -40,6 +42,11 @@ function openingFloat(text: string, currency: string, followUp: boolean): { amou
   const rest = followUp ? text : text.replace(OPEN, "").trim();
   const hasAmountContext = followUp || /\b(?:with|float|cash|drawer|amount)\b/i.test(rest);
   if (!hasAmountContext) return {};
+  // Words and shorthand such as "minus 50", "5k" or "50 percent" must
+  // not be silently reduced to a different positive money amount.
+  if (/\b(?:minus|negative|subtract|less|thousand|million|billion|hundred|grand|percent|percentage)\b/i.test(rest) ||
+      /\d\s*[kmb%](?![a-z])/i.test(rest))
+    return { error: "Use an explicit nonnegative numeric cash amount, without shorthand, negative words or percentages." };
   // Never discard a minus sign or accounting parentheses and reinterpret
   // a negative cash declaration as positive.
   if (/[-\u2212\u2013\u2014]/.test(rest) || /[()]/.test(rest))
