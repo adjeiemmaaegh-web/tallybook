@@ -1,6 +1,7 @@
 # Migration history: repository vs the hosted projects
 
-**New source-only development migration:** `20261111180000_shop_staff_shifts_audit.sql` adds cloud shift openings, closings, manager review and the owner activity audit RPC. It is committed for isolated PostgreSQL testing but is **not** authorized/applied to production. Its rollback removes stored shift/event history. Do not run against a live store without separate release and migration approval.
+**Status on 2026-11-15:** production has every repository migration applied. The shift-audit note that used to sit here is out of date: `shop_staff_shifts_audit` is live. All function bodies in `public` and `private` were compared with the repository chain (whitespace and comment lines ignored) and match.
+
 
 
 Checked on 2026-11-10 against the two Supabase projects.
@@ -32,6 +33,15 @@ Eight of the migrations were applied through the Supabase connector, which recor
 | 20261111070921 `shop_profit_report` | `20261111150000_shop_profit_report.sql` |
 | 20261111100842 `shop_quotations` | `20261111160000_shop_quotations.sql` |
 | 20261111100923 `shop_accounts` | `20261111170000_shop_accounts.sql` |
+| 20261111202349 `shop_staff_shifts_audit` | `20261111180000_shop_staff_shifts_audit.sql` |
+| 20261112120000 `telegram_bot` | same version and name |
+| 20261115183938 `tallybook_active_session_proof` | `20261113201509_tallybook_active_session_proof.sql` |
+| 20261115183943 `company_creation_active_session` | `20261114120000_company_creation_active_session.sql` |
+| 20261114232617 `phase_b_cloud_business_type` | `20261115012500_cloud_business_type.sql` |
+| 20261115054858 `shop_product_variants_20261115` | `20261115033500_shop_product_variants.sql` |
+| 20261115054910 `shop_stocktake_batch_sessions_20261115` | `20261115070000_shop_stocktake_batch_sessions.sql` |
+| 20261115054925 `shop_public_order_requests_20261115` | `20261115090000_shop_public_order_requests.sql` |
+| 20261115190133 `telegram_daily_summary` | `20261116090000_telegram_daily_summary.sql` |
 
 After applying the last two, the definitions of `shop_stage_g_product_action`, `shop_stage_h_daily_report`, `shop_record_sale`, `shop_refund_sale` and `tallybook_shop_ops` in production were compared (md5 of `pg_get_functiondef`) with the repository chain replayed in a scratch database: all five identical.
 
