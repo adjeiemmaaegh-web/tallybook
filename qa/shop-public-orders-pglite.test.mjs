@@ -56,7 +56,7 @@ async function setup(){
 }
 const request=(t,token,key=randomUUID())=>({
  shareToken:token,submissionKey:key,customerName:'Guest Example',
- contactPhone:'+233 240 001 234',customerNote:'Please call before confirming.',
+ contactPhone:'+233 240 001 234',customerNote:'Please call before confirming.',consent:true,
  lines:[{productId:t.rice,quantity:2},{productId:t.sugar,quantity:1}]
 });
 
