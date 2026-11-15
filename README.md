@@ -35,6 +35,7 @@ The build creates the PWA in `dist/public` and the Node server bundle in `dist/i
 
 ## Review material
 
+- [Production status, 15 November 2026 (read first)](docs/release/PRODUCTION_STATUS_2026-11-15.md)
 - [Architecture, migration compatibility and operating boundaries](docs/release/RC_INTEGRATION.md)
 - [Branch and PR reconciliation](docs/release/RC_RECONCILIATION.md)
 - [Verification evidence and remaining gates](docs/release/RC_QA.md)
