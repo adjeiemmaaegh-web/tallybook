@@ -129,3 +129,22 @@
   .tb-stocktake-page .tb-stocktake-row .shop-actions button{min-height:44px}
   .tb-ops-history-head .shop-chips{flex-wrap:wrap}
 }
+
+/* Photo Stage 11: optional multi-SKU stocktake */
+.tb-batch-panel{border:1px solid #c9e5d9;border-radius:18px;padding:15px;
+ background:linear-gradient(140deg,#effaf4,#fff);margin:16px 0}
+.tb-batch-content{display:grid;gap:15px;margin-top:13px}
+.tb-batch-create,.tb-batch-history,.tb-batch-pending{display:grid;gap:12px;
+ padding:14px;border:1px solid #d8e8df;border-radius:14px;background:#fff}
+.tb-batch-pick{max-height:235px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;
+ padding:10px;border:1px solid #d4e3da;border-radius:10px}
+.tb-batch-pick label{display:flex;gap:10px;align-items:center;min-height:40px;font-size:.88rem}
+.tb-batch-pick input{min-width:18px;min-height:18px}
+.tb-batch-session{border:1px solid #cddfd4;border-radius:12px;padding:13px;display:grid;gap:10px}
+.tb-batch-session h4{margin:0;font-size:1rem;color:#174b3c}
+.tb-batch-line{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,210px);
+ align-items:center;gap:12px;border-top:1px solid #e6f1e8;padding-top:9px}
+.tb-batch-line .shop-field{margin:0}
+@media(max-width:650px){.tb-batch-pick{grid-template-columns:1fr}
+ .tb-batch-line{grid-template-columns:1fr;gap:5px}
+ .tb-batch-panel button{min-height:44px}}
