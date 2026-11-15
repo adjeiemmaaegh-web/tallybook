@@ -122,6 +122,9 @@ BEGIN
    'paymentCollected',false,'stockReserved',false);
  END IF;
 
+ IF p_input->'consent' IS DISTINCT FROM 'true'::jsonb THEN
+  RAISE EXCEPTION 'Guest contact consent required' USING ERRCODE='22023';
+ END IF;
  v_key:=private.shop_uuid(p_input,'submissionKey');
  IF jsonb_typeof(p_input->'customerName') IS DISTINCT FROM 'string'
    OR jsonb_typeof(p_input->'contactPhone') IS DISTINCT FROM 'string'
