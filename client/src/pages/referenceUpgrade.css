@@ -154,3 +154,15 @@
 .tb-variant-list .shop-actions{width:100%;justify-content:flex-start}
 .tb-variant-form .shop-actions{flex-wrap:wrap}
 .tb-variant-form .primary-action{width:100%}}
+
+/* Stage 14: customer-facing POS family picker */
+.tb-pos-variants{border:1px solid #c7e3d5;border-radius:13px;background:#f5fbf7;margin:12px 0;padding:12px}
+.tb-pos-variants-body{display:grid;gap:10px;margin-top:11px}
+.tb-pos-variant-groups{display:flex;flex-wrap:wrap;gap:8px}
+.tb-pos-variant-skus{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.tb-pos-variant-skus li{padding:11px;border:1px solid #dce9e0;border-radius:10px;background:white;
+ display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tb-pos-variant-skus li span{display:grid;gap:4px}
+.tb-pos-variant-skus small{color:#527466;font-size:.78rem}
+@media(max-width:600px){.tb-pos-variant-skus li{align-items:stretch;flex-direction:column}
+ .tb-pos-variant-skus button{min-height:44px}}
