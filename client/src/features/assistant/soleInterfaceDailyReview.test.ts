@@ -6,7 +6,7 @@ describe("Clementia direct read-only daily checks",()=>{
   const kit=useAssistantDb();
   it("recognizes hyphenated end-of-day summary as a saved-record plan",()=>{
     const plan=planForText("End-of-day summary");
-    expect(plan?.plan.steps.map(step=>step.type)).toEqual(["read_sales","read_inventory"]);
+    expect(plan?.plan.steps.map(step=>step.type)).toEqual(["read_sales","read_inventory","read_expenses"]);
     expect(plan?.plan.requiresConfirmation).toBe(false);
   });
   it("answers end-of-day summary inside chat without closing a shift or making financial entries",async()=>{
@@ -20,6 +20,7 @@ describe("Clementia direct read-only daily checks",()=>{
     expect(reply.text).toMatch(/end-of-day/i);
     expect(reply.details?.some(item=>item.label==="Show today's sales")).toBe(true);
     expect(reply.details?.some(item=>item.label==="What is running low?")).toBe(true);
+    expect(reply.details?.some(item=>item.label==="Show expenses today")).toBe(true);
     expect(await kit.database.sales.count()).toBe(before.sales);
     expect(await kit.database.expenses.count()).toBe(before.expenses);
     expect(await kit.database.staffShifts.toArray()).toEqual(before.shifts);
@@ -30,7 +31,7 @@ describe("Clementia direct read-only daily checks",()=>{
     expect(morning.details?.length).toBeGreaterThanOrEqual(3);
     const overview=await kit.assistant.send("Business overview");
     expect(overview.kind).toBe("answer");
-    expect(overview.details?.length).toBe(3);
+    expect(overview.details?.length).toBe(4);
     expect(await kit.database.expenses.count()).toBe(0);
   });
 });

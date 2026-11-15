@@ -35,6 +35,7 @@ import { applyCustomAliases } from "./aliases";
 import { normalizeSoleInterfaceRequest } from "./soleInterfaceLanguage";
 import { soleInterfaceGuide } from "./soleInterfaceGuides";
 import { createExpenseAssistantSession, isExpenseRecordingRequest } from "./expenseAssistant";
+import { expenseReviewReply } from "./expenseReview";
 import { listAssistantTools, registerAssistantTool } from "./toolRegistry";
 import { applicationReply, parseApplicationRequest, type AppCapability } from "./appKnowledge";
 import { resolveContextFirst, type ContextFirstResolution } from "./tinyNluV2/contextFirstResolver";
@@ -521,6 +522,13 @@ export function createAssistant(options: AssistantOptions): Assistant {
       if (expense) return expense;
     }
 
+    // Saved expense totals are read through the protected reports service.
+    // This route cannot post an expense and cannot run during an open preview.
+    if (!draft && !pending && !batchState) {
+      const review = await expenseReviewReply(canonicalText, { database, currency: options.currency, now: options.now?.() ?? new Date() });
+      if (review) return review;
+    }
+
     // First-time help questions and unsupported operations deserve concrete,
     // truthful instructions rather than a misleading generic parser fallback.
     // Never run guidance over an open draft or financial confirmation.
@@ -663,8 +671,11 @@ export function createAssistant(options: AssistantOptions): Assistant {
   }
 
   async function runPlan(plan: AssistantPlan): Promise<AssistantReply> {
-    const commands = plan.steps.map((step) => step.type === "read_sales" ? "Show today's sales" : step.type === "read_inventory" ? "What is running low?" : step.type === "read_debt" ? "Which customers owe us the most?" : "What should I reorder?");
-    const replies = await Promise.all(commands.map((command) => handle(parseCommand(command, { now: options.now?.() }))));
+    const commands = plan.steps.map((step) => step.type === "read_sales" ? "Show today's sales" : step.type === "read_inventory" ? "What is running low?" : step.type === "read_debt" ? "Which customers owe us the most?" : step.type === "read_expenses" ? "Show expenses today" : "What should I reorder?");
+    const replies = await Promise.all(commands.map(async (command, index) =>
+      plan.steps[index].type === "read_expenses"
+        ? (await expenseReviewReply(command, { database, currency: options.currency, now: options.now?.() ?? new Date() }))!
+        : handle(parseCommand(command, { now: options.now?.() }))));
     const details = replies.flatMap((reply, index) => [{ label: commands[index], value: reply.text }]);
     return { kind: "answer", text: `${plan.goal} complete. All figures came from your local saved records.`, details, plan, actions: [say("Show detailed sales", "Show today's sales"), say("Check reorder suggestions", "What should I reorder?")] };
   }
