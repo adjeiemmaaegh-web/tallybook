@@ -24,7 +24,15 @@ Security advisor findings at review: 56 informational RLS-without-policy finding
 ## Automated evidence (not field acceptance)
 The pinned GitHub Release validation job completed every step successfully, including native/server regressions, client/IndexedDB tests, TypeScript, build, Chromium functionality, auth negative cases, fresh-start, 320/360px phone layout, accessibility, built-app offline acceptance, performance sampling and dependency audit. The repository includes crash/recovery fixtures, backup restoration tests and receipt layout tests.
 
-**Evidence boundary:** Automated/headless tests do **not** establish physical Android/iOS offline reliability, real employee logins, printer output, live mobile-money/card settlements, a successful hosted backup restore, or operating hours in a genuine shop. A Vercel READY deployment does not establish an independent HTTP/browser smoke check: external network access from this execution environment could not resolve the production hostname.
+**Evidence boundary:** Automated/headless tests do **not** establish physical Android/iOS offline reliability, real employee logins, printer output, live mobile-money/card settlements, a successful hosted backup restore, or operating hours in a genuine shop.
+
+## Independent unauthenticated production smoke (browser, read-only)
+- Opened https://tallybook-eight.vercel.app/; the live rendered public `/welcome` screen, title **Tallybook — Business Ledger**, hero “Your business. Beautifully in hand.” and sign-in/get-started links were present.
+- `GET /welcome`: **HTTP 200**, with enforced `Content-Security-Policy`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`.
+- `/signin`: “Welcome back”, email/password fields and Google sign-in action rendered; no visible error. At a tested 390 px root viewport, no horizontal overflow was detected.
+- Signed-out `/shop`: rendered the public welcome experience, **not** private shop data. The URL remained `/shop`; treat sign-in navigation clarity as a UX consideration, not a confirmed breach.
+- `/order` without a bearer token: displayed “This order link is invalid or missing.” No submission occurred.
+- This browser was **not authenticated**, used **no credentials**, did **not** access shop data, submit forms, post payments, print or test offline reconnect. Its result is a live public-route smoke test, not a two-phone acceptance.
 
 ## Release-risk register
 1. **Blocker — physical owner/attendant signoff:** separate phones, account switching, cashier attribution, refund requests, quotations, accounts, controlled offline/reconnect scenarios. No actual physical test performed.
