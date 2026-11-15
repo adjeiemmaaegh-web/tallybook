@@ -24,13 +24,13 @@ export function validBatchId(value:unknown):value is string {
 export function normalizeBatchProducts(input:readonly string[]):string[] {
   if(!Array.isArray(input)||input.length<2||input.length>50)throw Error("Select 2–50 tracked products.");
   if(input.some(value=>!validBatchId(value)))throw Error("Invalid product identifier.");
-  const sorted=[...input].sort();
+  const sorted=input.map(value=>value.toLowerCase()).sort();
   if(new Set(sorted).size!==sorted.length)throw Error("A product was selected twice.");
   return sorted;
 }
 export function normalizeBatchCounts(input:readonly BatchInputLine[]):BatchInputLine[] {
   if(!Array.isArray(input)||input.length<2||input.length>50)throw Error("Count every product in the batch.");
-  const sorted=[...input].sort((a,b)=>a.productId.localeCompare(b.productId));
+  const sorted=input.map(row=>({...row,productId:typeof row?.productId==="string"?row.productId.toLowerCase():row?.productId})).sort((a,b)=>String(a?.productId).localeCompare(String(b?.productId)));
   const seen=new Set<string>();
   for(const row of sorted){
     if(!row||!validBatchId(row.productId)||!Number.isInteger(row.countedQuantity)||
