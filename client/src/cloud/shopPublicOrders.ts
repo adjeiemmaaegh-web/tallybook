@@ -13,7 +13,7 @@ export interface GuestCatalog {
 export interface GuestLine {productId:string;quantity:number}
 export interface GuestOrderInput {
  shareToken:string;submissionKey:string;customerName:string;contactPhone:string;
- customerNote:string;lines:GuestLine[];
+ customerNote:string;consent:true;lines:GuestLine[];
 }
 export interface GuestReceipt {
  requestId:string;status:"new"|"converted"|"declined";
@@ -50,6 +50,7 @@ export function normalizeGuestLines(lines:readonly GuestLine[]):GuestLine[]{
  });
 }
 export function normalizeGuestInput(draft:GuestOrderInput):GuestOrderInput {
+ if(draft.consent!==true)throw Error("Confirm contact-sharing consent before submitting.");
  if(!isPublicUuid(draft.shareToken)||!isPublicUuid(draft.submissionKey))
    throw Error("The order link or submission ID is invalid.");
  const customerName=draft.customerName.trim();
