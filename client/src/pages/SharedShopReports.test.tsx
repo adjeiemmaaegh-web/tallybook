@@ -22,6 +22,7 @@ vi.mock("@/cloud/shopClient", async (orig) => ({
 }));
 
 import SharedShopPage from "./SharedShopPage";
+import {SharedShopReports} from "@/cloud/SharedShopReports";
 import { parseDailyReport } from "@/cloud/dailyReport";
 import { parseProfitReport } from "@/cloud/profitReport";
 import { ShopRejectedError } from "@/cloud/shopClient";
@@ -200,4 +201,23 @@ describe("shared shop profit section", () => {
     expect(shop.profit).not.toHaveBeenCalled();
     expect(screen.queryByLabelText("Profit")).toBeNull();
   });
+});
+
+describe("financial report scope safety",()=>{
+ it("hides yesterday's totals immediately when changing period and going offline",async()=>{
+  shop.report.mockReset().mockResolvedValueOnce(ownerReport());
+  let finish!: (value:ReturnType<typeof ownerReport>)=>void;
+  shop.report.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
+  shop.profit.mockReset().mockRejectedValue(new Error("profit unavailable"));
+  const props={companyId:"biz",overview:overview("owner"),userId:"u1",shopName:"Kwaku Provisions"};
+  const view=render(<SharedShopReports {...props} online={true}/>);
+  expect(await screen.findByText("Cash expected in the till")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Yesterday"}));
+  expect(screen.queryByText("Cash expected in the till")).toBeNull();
+  view.rerender(<SharedShopReports {...props} online={false}/>);
+  await waitFor(()=>expect(screen.getByText("Connect to the internet to see reports.")).toBeInTheDocument());
+  finish(ownerReport());
+  await new Promise(resolve=>setTimeout(resolve,25));
+  expect(screen.queryByText("Cash expected in the till")).toBeNull();
+ });
 });

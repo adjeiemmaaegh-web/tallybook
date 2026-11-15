@@ -94,3 +94,29 @@ it("leaves the transfer in transit and offers Confirm receipt if the second step
     expect(screen.getByText(/in transit/)).toBeInTheDocument();
   } finally { confirm.mockRestore(); }
 });
+
+it("summarizes only received units and filters actual server transfer history",async()=>{
+ vi.mocked(callShop).mockReset().mockImplementation(async action=>{
+  if(action==="listTransfers")return {transfers:[
+   {transferId:"t1",fromStoreId:"a",toStoreId:"b",productId:"eggs",quantity:10,status:"requested"},
+   {transferId:"t2",fromStoreId:"b",toStoreId:"a",productId:"eggs",quantity:7,status:"in_transit"},
+   {transferId:"t3",fromStoreId:"a",toStoreId:"b",productId:"eggs",quantity:3,status:"received"},
+   {transferId:"t4",fromStoreId:"b",toStoreId:"a",productId:"eggs",quantity:12,status:"cancelled"}
+  ]};
+  throw new Error("Unexpected write");
+ });
+ render(<SharedShopTransfers userId="owner" companyId="shop" overview={overview} online refresh={async()=>{}}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Inter-store transfers"}));
+ const metrics=await screen.findByLabelText("Transfer summary");
+ expect(metrics).toHaveTextContent("Units received3");
+ expect(screen.getByText("4 of 4 transfer records shown")).toBeInTheDocument();
+ const filters=screen.getByRole("group",{name:"Transfer status filter"});
+ fireEvent.click(filters.querySelector('button:nth-child(3)')!);
+ expect(screen.getByText("1 of 4 transfer records shown")).toBeInTheDocument();
+ expect(screen.getByText("Transfer ID t2")).toBeInTheDocument();
+ fireEvent.click(filters.querySelectorAll("button")[0]!);
+ fireEvent.change(screen.getByLabelText("Search transfers"),{target:{value:"t4"}});
+ expect(screen.getByText("Transfer ID t4")).toBeInTheDocument();
+ expect(screen.queryByText("Transfer ID t2")).toBeNull();
+ expect(vi.mocked(callShop).mock.calls.some(([action])=>action!=="listTransfers")).toBe(false);
+});

@@ -27,7 +27,7 @@ beforeEach(()=>{
   signOut:mock.signOut,retry:mock.retry
  }));
 });
-afterEach(()=>cleanup());
+afterEach(()=>{cleanup();vi.unstubAllEnvs();});
 it('shows the verified cloud identity without claiming local data encryption',()=>{
  render(<GoogleSignInPage/>);
  expect(screen.getByText(/Cloud session verified/)).toBeTruthy();
@@ -106,4 +106,31 @@ it('pressing Enter in the form submits it; an empty form explains what is missin
  fireEvent.change(screen.getByLabelText('Password'),{target:{value:'test-passphrase'}});
  fireEvent.submit(submit.closest('form') as HTMLFormElement);
  await waitFor(()=>expect(mock.emailSignIn).toHaveBeenCalledTimes(1));
+});
+
+it('does not display Apple OAuth without explicit environment approval',()=>{
+ mock.state.status='signed-out';
+ vi.stubEnv('VITE_APPLE_OAUTH_ENABLED','false');
+ render(<GoogleSignInPage/>);
+ expect(screen.queryByRole('button',{name:'Continue with Apple'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Continue with Google'})).toBeTruthy();
+});
+it('launches Apple OAuth only when enabled, without granting shop membership',async()=>{
+ mock.state.status='signed-out';
+ vi.stubEnv('VITE_APPLE_OAUTH_ENABLED','true');
+ render(<GoogleSignInPage/>);
+ fireEvent.click(screen.getByRole('button',{name:'Continue with Apple'}));
+ await waitFor(()=>expect(mock.oauth).toHaveBeenCalledWith({
+  provider:'apple',options:{redirectTo:window.location.origin+'/signin'}
+ }));
+ expect(screen.getByText(/private-relay address is not a staff credential/)).toBeTruthy();
+});
+it('shows a safe fallback on an unprovisioned Apple provider instead of inventing a session',async()=>{
+ mock.state.status='signed-out';
+ vi.stubEnv('VITE_APPLE_OAUTH_ENABLED','true');
+ mock.oauth.mockResolvedValueOnce({error:new Error('Provider disabled')});
+ render(<GoogleSignInPage/>);
+ fireEvent.click(screen.getByRole('button',{name:'Continue with Apple'}));
+ await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('Apple sign-in is unavailable'));
+ expect(screen.getByRole('button',{name:'Sign in'})).toBeEnabled();
 });

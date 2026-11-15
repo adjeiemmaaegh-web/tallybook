@@ -13,6 +13,7 @@ permissions:
 
 concurrency:
   group: tallybook-ci-${{ github.workflow }}-${{ github.ref }}
+  # Superseded PR commits should not burn an entire browser-QA run. Never cancel a main release gate.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

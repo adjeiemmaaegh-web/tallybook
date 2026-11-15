@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { createBusiness } from "./businessIdentity";
+import {saveCloudBusinessType} from "./cloudBusinessType";
+import {businessTypes,isBusinessType} from "@/features/business/businessTypes";
 import {listVerifiedCloudBusinesses} from "./cloudMembership";
 import type {VerifiedCloudBusiness} from "./cloudMembershipBoundary.mjs";
 import {cloudEntryDestination} from "./cloudEntryDestination";
@@ -20,11 +22,15 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
   const [profileName,setProfileName]=useState("");
   const [email,setEmail]=useState("");
   const [name, setName] = useState("");
+  const [newBusinessType,setNewBusinessType]=useState("");
+  const [selectedBusinessType,setSelectedBusinessType]=useState("");
+  const [categoryMessage,setCategoryMessage]=useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice,setChoice]=useState<'owner'|'employee'|null>(null);
   const [membershipChecked,setMembershipChecked]=useState(false);
   const [membershipRevision,setMembershipRevision]=useState(0);
+  const [accountIdCopied,setAccountIdCopied]=useState(false);
   const revision = useRef(0);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -32,7 +38,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     let active = true;
     const client = getSupabaseClient();
     const refresh = async () => {
-      const started = ++revision.current; setChoice(null); setName(""); setMembershipChecked(false);
+      const started = ++revision.current; setChoice(null); setName(""); setNewBusinessType("");setSelectedBusinessType("");setCategoryMessage("");setMembershipChecked(false);setAccountIdCopied(false);
       setUserId(null); setBusiness(null); setAccessible([]); setError(null); setBusy(true);
       try {
         const { data: { user }, error: authError } = await client.auth.getUser();
@@ -46,7 +52,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
         const list = await listVerifiedCloudBusinesses();
         if (active && started === revision.current) {
           setAccessible([...list]); setMembershipChecked(true);
-          setBusiness(list[0] ?? null);
+          setBusiness(list[0] ?? null);setSelectedBusinessType(list[0]?.business_type??"");
           if (accountOnly && list.length === 0) {
             try {
               const step = sessionStorage.getItem('tallybook.setup.step:' + user.id);
@@ -91,6 +97,36 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     }catch(cause){if(started===revision.current)setError(cause instanceof Error?cause.message:"Could not update profile.");}
     finally{inFlight.current=false;if(started===revision.current)setBusy(false);}
   }
+  async function copyMyEmployeeId(){
+    if(!userId || !navigator.clipboard?.writeText){setError("Copy is unavailable. Select your account ID and share it privately.");return;}
+    try{
+      await navigator.clipboard.writeText(userId);
+      setAccountIdCopied(true);setError(null);
+    }catch{setError("Copy is unavailable. Select your account ID and share it privately.");}
+  }
+  /** Reads the canonical membership projection again after the owner-only RPC.
+   * Never treat the RPC's reply, local state or a staff assertion as verification.
+   */
+  async function updateBusinessType(){
+    const category=selectedBusinessType;
+    const current=business;
+    if(!current||current.role!=="owner"||!userId||!isBusinessType(category)||inFlight.current)return;
+    inFlight.current=true;const started=revision.current;setBusy(true);setError(null);setCategoryMessage("");
+    try{
+      const before=await getSupabaseClient().auth.getUser();
+      if(before.error||before.data.user?.id!==userId||started!==revision.current)
+        throw Error("Account changed. Sign in again.");
+      await saveCloudBusinessType(current.id,category);
+      const latest=await listVerifiedCloudBusinesses();
+      const confirmed=latest.find(x=>x.id===current.id);
+      if(started!==revision.current || confirmed?.role!=="owner" ||
+         confirmed?.owner_id!==userId || confirmed.business_type!==category)
+        throw Error("Business category was not confirmed by your account. Refresh and try again.");
+      setAccessible([...latest]);setBusiness(confirmed);
+      setSelectedBusinessType(category);setCategoryMessage("Business type saved and verified.");
+    }catch(cause){if(started===revision.current)setError(cause instanceof Error?cause.message:"Could not save the business type.");}
+    finally{inFlight.current=false;if(started===revision.current)setBusy(false);}
+  }
   function selectSetup(next: 'owner' | 'employee' | null) {
     setChoice(next);
     if (accountOnly && userId) {
@@ -102,7 +138,7 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     }
   }
   const create = async () => {
-    if (!membershipChecked || choice !== "owner" || !userId || inFlight.current || !name.trim()) return;
+    if (!membershipChecked || choice !== "owner" || !userId || inFlight.current || !name.trim() || !isBusinessType(newBusinessType)) return;
     inFlight.current = true;
     const started = revision.current;
     setBusy(true); setError(null);
@@ -126,9 +162,18 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
       if (!created || created.role !== "owner" ||
           created.owner_id !== userId || result.owner_id !== userId)
         throw new Error("Cloud business ownership could not be verified.");
+      // Owner-scoped metadata is a distinct idempotent operation. If it fails,
+      // the same creation request ID can be retried; no duplicate company is created.
+      await saveCloudBusinessType(created.id,newBusinessType);
+      const reread=await listVerifiedCloudBusinesses();
+      const confirmed=reread.find(entry=>entry.id===created.id);
+      if(started!==revision.current||!confirmed||confirmed.role!=="owner"||
+         confirmed.owner_id!==userId||confirmed.business_type!==newBusinessType)
+        throw Error("Business type was not confirmed. Retry setup without changing the business name.");
       if (started === revision.current) {
-        setBusiness(created);
-        setAccessible([...verified]);
+        setBusiness(confirmed);
+        setSelectedBusinessType(newBusinessType);
+        setAccessible([...reread]);
         // Approved default: a new business opens in the cloud shop, where first-run setup continues.
         navigate("/shop?view=dashboard");
       }
@@ -147,11 +192,28 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
     {!isSupabaseConfigured ? <p>Cloud account access has not been configured.</p> : busy ? <p role="status">Checking your cloud business…</p> : !userId ? <Link href="/account" className="underline">Sign in to prepare your cloud business</Link> : business ? <div role="status">
       {accessible.length>1 ? <label className="block text-sm" htmlFor="cloud-select">Cloud company
         <select id="cloud-select" className="ml-2 rounded border p-1" value={business.id}
-          onChange={event=>setBusiness(accessible.find(entry=>entry.id===event.target.value)??null)}>
+          onChange={event=>{const selected=accessible.find(entry=>entry.id===event.target.value)??null;setBusiness(selected);setSelectedBusinessType(selected?.business_type??"");setCategoryMessage("");}}>
           {accessible.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select>
       </label> : null}
       <p className="tb-business-name">{business.name}</p>
+      <p className="text-sm">Business type: <strong>{business.business_type??"Not set"}</strong></p>
+      {business.role==="owner" && showSettings && <form className="tb-cloud-category-editor"
+        onSubmit={event=>{event.preventDefault();void updateBusinessType();}}>
+        <label htmlFor="tb-edit-business-type" className="block font-semibold">Business category</label>
+        <p className="text-sm">Choose the main type of business you run. This will not change taxes, refunds, stock balances, or staff permissions.</p>
+        <select id="tb-edit-business-type" value={selectedBusinessType}
+          onChange={event=>{setSelectedBusinessType(event.target.value);setCategoryMessage("");}}
+          className="w-full rounded border p-2" required>
+          <option value="">Choose business type</option>
+          {businessTypes.map(type=><option key={type} value={type}>{type}</option>)}
+        </select>
+        <button type="submit" className="secondary-action"
+          disabled={busy||!isBusinessType(selectedBusinessType)||selectedBusinessType===business.business_type}>
+          Save business type
+        </button>
+        {categoryMessage&&<p role="status">{categoryMessage}</p>}
+      </form>}
       <p className="text-sm">{business.role === "owner"
         ? "View your shop’s sales, stock and team."
         : "Record sales at your assigned store."}</p>
@@ -174,11 +236,29 @@ export function CloudBusinessPanel({accountOnly=false,autoOpen=false,showSetting
           <button type="button" className="secondary-action" onClick={()=>{selectSetup(null);setError(null);}}>Back to role selection</button>
           <h1>{choice==="owner" ? "Create your business" : "Join your employer’s shop"}</h1>
         </div>}
-        {choice==="employee"?<div className="tb-join-guidance"><p>Ask your employer to invite <strong>{email || "the email you signed in with"}</strong>. Enter the private invitation below, or use an eight-character shop join code.</p><Link href="/shop" className="secondary-action">Use an eight-character join code</Link></div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
+        {choice==="employee"?<div className="tb-join-guidance space-y-3">
+          <p>Ask your employer to create an invitation for your authenticated Tallybook account. Share the account ID below privately. Email alone cannot grant shop access.</p>
+          <label className="block text-sm font-semibold" htmlFor="tb-employee-account-id">Your Tallybook account ID</label>
+          <input id="tb-employee-account-id" className="block w-full rounded border p-2 font-mono text-sm"
+            readOnly value={userId} onFocus={event=>event.currentTarget.select()} aria-describedby="tb-employee-id-help"/>
+          <small id="tb-employee-id-help" className="block text-sm">This is not an Emirates ID, national ID or password. Never share your private invitation with anyone except the intended employee.</small>
+          <button type="button" className="secondary-action" onClick={()=>void copyMyEmployeeId()}>
+            {accountIdCopied?"Account ID copied":"Copy my account ID"}
+          </button>
+          <p>Enter the private invitation below when your employer sends it, or use an eight-character shop join code.</p>
+          <Link href="/shop" className="secondary-action">Use an eight-character join code</Link>
+        </div>:choice==="owner"?<form className="space-y-2" onSubmit={event => { event.preventDefault(); void create(); }}>
       <p className="text-sm">Creating a business does not upload sales, stock or customer records from this device.</p>
       <label className="block" htmlFor="cloud-business-name">Business name</label>
       <input className="w-full rounded border p-2" id="cloud-business-name" value={name} onChange={event => setName(event.target.value)} required maxLength={80} />
-      <button className="primary-action" type="submit" disabled={!name.trim()}>Create business</button>
+      <label className="block" htmlFor="cloud-business-type">What type of business is this?</label>
+      <select id="cloud-business-type" className="w-full rounded border p-2"
+        value={newBusinessType} onChange={event=>setNewBusinessType(event.target.value)} required>
+        <option value="">Choose business type</option>
+        {businessTypes.map(type=><option value={type} key={type}>{type}</option>)}
+      </select>
+      <p className="text-sm">This is descriptive only. Every business can configure its own policies and operations.</p>
+      <button className="primary-action" type="submit" disabled={!name.trim()||!isBusinessType(newBusinessType)}>Create business</button>
     </form>:null}</div>}
     {isSupabaseConfigured && userId &&
       (choice==="employee" || (!accountOnly && import.meta.env.VITE_TALLYBOOK_RUN3_MEMBERSHIP_PREVIEW === "true"))

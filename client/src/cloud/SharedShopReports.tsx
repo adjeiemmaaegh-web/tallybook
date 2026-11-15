@@ -29,9 +29,9 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
   const [profitNote, setProfitNote] = useState("");
 
   useEffect(() => {
-    if (!online) return;
     const mine = ++request.current;
-    setError(""); setLoading(true); setNote("");
+    setReport(null);setError("");setLoading(online);setNote("");
+    if (!online)return;
     getDailyReport(companyId, { ...(dayRange(period) as { from: string; to: string }), ...(storeId ? { storeId } : {}) })
       .then(result => { if (mine === request.current) setReport(result); })
       .catch(cause => {
@@ -45,9 +45,9 @@ export function SharedShopReports({ companyId, overview, online, userId, shopNam
   }, [companyId, period, storeId, online]);
 
   useEffect(() => {
-    if (!online || !isOwner) return;
     const mine = ++profitRequest.current;
-    setProfit(null);
+    setProfit(null);setProfitNote("");
+    if (!online || !isOwner)return;
     getProfitReport(companyId, { ...(dayRange(period) as { from: string; to: string }), ...(storeId ? { storeId } : {}) })
       .then(result => { if (mine === profitRequest.current) setProfit(result); })
       .catch(() => { if (mine === profitRequest.current) setProfit(null); });

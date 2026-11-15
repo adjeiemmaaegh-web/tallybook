@@ -21,7 +21,9 @@ for (const viewport of [
     await expect(heading).toBeVisible();
     await expect(signIn).toBeVisible();
     await expect(signIn).toHaveAttribute('href', '/signin');
-    await expect(page.getByText('Offline-first local records', { exact: false })).toBeVisible();
+    // Shared-shop mode requires an account and cloud confirmation; only the separate device ledger is offline-first.
+    await expect(page.getByText('Pending shared-shop sale recovery', { exact: false })).toBeVisible();
+    await expect(page.getByText('Account creation and cloud access require an internet connection.', { exact: false })).toBeVisible();
     await expect(page.getByText('Owner-controlled access', { exact: false })).toBeVisible();
     await expect(page.getByText('Team shop option', { exact: false })).toBeVisible();
 

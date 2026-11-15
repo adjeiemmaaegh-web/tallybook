@@ -155,11 +155,27 @@ for (const width of [360, 320]) {
       await page.goto('/shop');
       const reqs = []; page.on('request', r => { if (r.url().startsWith(SB)) reqs.push(r.method() + ' ' + new URL(r.url()).pathname); });
       page.on('pageerror', e => reqs.push('PAGEERROR ' + e.message.slice(0, 160)));
-      try { await expect(page.getByRole('button', { name: 'Sell', exact: true })).toBeVisible({ timeout: 30000 }); }
+      // The mobile interface uses a drawer. The old desktop Sell tab is intentionally hidden.
+      const menu = page.getByRole('button', { name: 'Menu', exact: true });
+      const drawer = page.getByRole('dialog', { name: 'Mobile shop sections' });
+      try { await expect(menu).toBeVisible({ timeout: 30000 }); }
       catch (e) { console.log('DEBUG body:', (await page.locator('body').innerText()).slice(0, 400)); console.log('DEBUG requests:', reqs.slice(0, 20).join(' | ')); throw e; }
+      await menu.click();
+      await expect(drawer.getByRole('button', { name: 'Sell', exact: true })).toBeVisible();
+      if (role === 'attendant') await expect(drawer.getByRole('button', { name: 'Purchasing' })).toHaveCount(0);
+      // Search filters actual permitted sections and Escape restores keyboard focus.
+      await drawer.getByPlaceholder('Find a page…').fill('sales');
+      await expect(drawer.getByRole('button', { name: role === 'owner' ? 'Sales' : 'My sales', exact: true })).toBeVisible();
+      await expect(drawer.getByRole('button', { name: 'Sell', exact: true })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(drawer).toHaveCount(0);
+      await expect(menu).toBeFocused();
       if (SHOTS) mkdirSync(SHOTS, { recursive: true });
       for (const tab of TABS[role]) {
-        await page.getByRole('button', { name: tab, exact: true }).click();
+        await menu.click();
+        await expect(drawer.getByRole('button', { name: tab, exact: true })).toBeVisible();
+        await drawer.getByRole('button', { name: tab, exact: true }).click();
+        await expect(drawer).toHaveCount(0);
         await page.waitForTimeout(500);
         if (tab === 'Sell') { for (const name of ['Add one Crate of eggs', `Add one ${'Extra long product name for layout testing 500g family pack'}`]) await page.getByRole('button', { name }).click({ trial: false }).catch(() => {}); }
         if (tab === 'Ask') { for (const q of ['What did I sell today?', 'What is low on stock?', 'Draft an order for what is low']) { await page.getByLabel('Your question').fill(q); await page.getByLabel('Your question').press('Enter'); await page.waitForTimeout(300); } }
