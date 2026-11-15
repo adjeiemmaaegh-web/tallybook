@@ -93,6 +93,11 @@ test('guest: public link opt-in, private API denied, server prices and no paymen
    {productId:t.rice,quantity:2,unitPriceMinor:1},{productId:t.sugar,quantity:1}
   ]});
   assert.equal(forged.quotedTotalMinor,'4000');
+  // A lost acknowledgement must be replayable even after catalog repricing.
+  await t.admin('UPDATE public.shop_products SET unit_price_minor=3000 WHERE business_id=$1 AND id=$2',[t.company,t.rice]);
+  const afterReprice=await t.guest('submit',form);
+  assert.equal(afterReprice.replayed,true);
+  assert.equal(afterReprice.quotedTotalMinor,'4000');
   const after=await t.admin('SELECT quantity FROM public.shop_store_stock WHERE business_id=$1 AND store_id=$2 AND product_id=$3',[t.company,t.store,t.rice]);
   assert.equal(after[0].quantity,status[0].quantity);
   assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_sales WHERE business_id=$1',[t.company]))[0].n,0);
