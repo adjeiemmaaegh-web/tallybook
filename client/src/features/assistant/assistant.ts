@@ -795,7 +795,14 @@ export function createAssistant(options: AssistantOptions): Assistant {
       }
     }
     if (action.type === "confirm" && expenseSession.token() === action.token) { const result = await expenseSession.confirm(action.token); if(result.kind==="success")notifyRecordsChanged(); return result; }
-    if (action.type === "confirm" && shiftSession.token() === action.token) { const result = await shiftSession.confirm(action.token); if(result.kind==="success")notifyRecordsChanged(); return result; }
+    // Shift tokens have their own namespace. Route even expired shift tokens
+    // back to the shift session so replay/clear/cancel cannot fall through
+    // to a generic sale confirmation handler and appear merely informational.
+    if (action.type === "confirm" && action.token.startsWith("shift-")) {
+      const result = await shiftSession.confirm(action.token);
+      if (result.kind === "success") notifyRecordsChanged();
+      return result;
+    }
     if (action.type === "cancel" && shiftSession.hasDraft()) return (await shiftSession.handle("cancel")) ?? info("Shift preparation cancelled.");
     if (action.type === "cancel" && expenseSession.hasDraft()) return (await expenseSession.handle("cancel")) ?? info("Expense recording cancelled.");
     if (action.type === "confirm" && quotationDraft.token() === action.token) return quotationDraft.confirm(action.token);
