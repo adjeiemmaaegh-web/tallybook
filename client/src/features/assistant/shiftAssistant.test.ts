@@ -106,6 +106,15 @@ describe("Clementia native staff-shift operations", () => {
     const precise = await kit.assistant.send("Start shift with 12.345 cedis");
     expect(precise.kind).toBe("question");
     await kit.assistant.send("cancel");
+    const negative = await kit.assistant.send("Start shift with -50 cedis");
+    expect(negative.kind).toBe("question");
+    expect(negative.text).toMatch(/negative/i);
+    expect(negative.preview).toBeUndefined();
+    await kit.assistant.send("cancel");
+    const parentheses = await kit.assistant.send("Start shift with (50) cedis");
+    expect(parentheses.kind).toBe("question");
+    expect(parentheses.preview).toBeUndefined();
+    await kit.assistant.send("cancel");
     expect(await kit.database.staffShifts.count()).toBe(before);
   });
 

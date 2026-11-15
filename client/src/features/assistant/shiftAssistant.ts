@@ -39,6 +39,10 @@ function openingFloat(text: string, currency: string, followUp: boolean): { amou
   const rest = followUp ? text : text.replace(OPEN, "").trim();
   const hasAmountContext = followUp || /\b(?:with|float|cash|drawer|amount)\b/i.test(rest);
   if (!hasAmountContext) return {};
+  // Never discard a minus sign or accounting parentheses and reinterpret
+  // a negative cash declaration as positive.
+  if (/-\s*\d|\(\s*\d+(?:[.,]\d+)?\s*\)/.test(rest))
+    return { error: "Opening cash float cannot be negative. Enter 0 or a positive amount." };
   const numbers = Array.from(rest.matchAll(/\b\d+(?:[.,]\d+)*\b/g), (match) => match[0]);
   if (numbers.length !== 1) {
     return numbers.length ? { error: "Please give one opening cash amount only." } : {};
