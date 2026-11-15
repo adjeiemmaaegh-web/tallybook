@@ -56,8 +56,11 @@ describe("Clementia native staff-shift operations", () => {
     expect((await kit.assistant.act(button)).kind).toBe("success");
     expect(await kit.database.staffShifts.count()).toBe(before + 1);
     expect((await currentShift())?.openingFloatMinor).toBe(5000);
-    expect((await kit.assistant.act(button)).kind).toBe("error");
+    const replay = await kit.assistant.act(button);
+    expect(replay.kind).toBe("error");
+    expect(replay.text).toMatch(/preview|current|shift/i);
     expect(await kit.database.staffShifts.count()).toBe(before + 1);
+    expect((await kit.assistant.act({type:"confirm",label:"Forged shift",token:"shift-forged-token"})).kind).toBe("error");
     expect((await kit.database.assistantAudit.toArray()).some(item => item.action === "shift_open" && item.outcome === "saved")).toBe(true);
   });
 
