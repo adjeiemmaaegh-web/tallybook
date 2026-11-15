@@ -95,7 +95,7 @@ export class ShopUnreachableError extends Error {}
 // PostgREST error codes that mean "the database decided", never "network".
 const DECIDED = /^(22|23|42|P0)/;
 
-export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" | "tallybook_shop_order_lines" | "tallybook_shop_shifts" | "tallybook_telegram_ops" = "tallybook_shop"): Promise<T> {
+export async function callShop<T>(action: string, input: Record<string, unknown>, rpc: "tallybook_shop" | "tallybook_shop_ops" | "tallybook_shop_order_lines" | "tallybook_shop_shifts" | "tallybook_telegram_ops" | "tallybook_guest_order" | "tallybook_public_order_admin" | "tallybook_shop_variants" | "tallybook_shop_stocktake_batches" = "tallybook_shop"): Promise<T> {
   const client = getSupabaseClient();
   let response: Awaited<ReturnType<typeof client.rpc>>;
   try {
@@ -106,7 +106,7 @@ export async function callShop<T>(action: string, input: Record<string, unknown>
   const { data, error } = response;
   if (error) {
     const code = (error as { code?: string }).code ?? "";
-    if (DECIDED.test(code)) throw new ShopRejectedError(friendlyMessage(error.message));
+    if (DECIDED.test(code) || code === "53300") throw new ShopRejectedError(friendlyMessage(error.message));
     if (code === "PGRST202") throw new ShopRejectedError("The shared shop isn't available on this server yet.");
     throw new ShopUnreachableError("Can't reach Tallybook right now. Check your connection.");
   }

@@ -4,6 +4,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import {openStockCount} from "./purchaseRetry";
+import {SharedShopBatchCountPanel} from "./SharedShopBatchCountPanel";
 import type {ShopOverview} from "./shopClient";
 import {tracksStock} from "./productTracking";
 import {physicalCountPreview} from "./shopReconciliationView";
@@ -97,6 +98,7 @@ export function SharedShopStockCountPanel({userId,companyId,overview,online,refr
   <p className="shop-muted">Each count is for one product at one store. Stock is only adjusted after you confirm the observed quantity; if a sale or receipt changes stock in the meantime, the server rejects a stale adjustment.</p>
   {!online&&<p role="status">Counts require an authorized online connection. Offline edits are not queued.</p>}
   {error&&<p role="alert" className="shop-alert">{error}</p>}{status&&<p role="status">{status}</p>}
+  {overview.role==="owner"&&<SharedShopBatchCountPanel userId={userId} companyId={companyId} overview={overview} online={online} refresh={refresh}/>}
   <div className="tb-stocktake-new">
    <h3>Start a physical count</h3>
    <div className="shop-grid">

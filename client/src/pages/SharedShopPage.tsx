@@ -11,6 +11,8 @@ import { confirmAction } from "@/lib/confirmAction";
 import { ReportProblem } from "@/components/ReportProblem";
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner";
 import { SharedShopCatalogImport } from "@/cloud/SharedShopCatalogImport";
+import {SharedShopVariants} from "@/cloud/SharedShopVariants";
+import {SharedShopVariantQuickPicker} from "@/cloud/SharedShopVariantQuickPicker";
 import { SharedShopReports } from "@/cloud/SharedShopReports";
 import { STOCK_FILTERS, computeStockStats, matchesFilter, type StockFilter } from "@/cloud/inventoryStats";
 import { PARKED_PREFIX, parkCart, parkedItemCount, parkedKey, restoreCart, sanitizeParked, type ParkedCart } from "@/cloud/parkedCarts";
@@ -782,6 +784,8 @@ function SellPanel({ companyId, overview, refresh, online, userId, goTo, quoteSt
       {!products.length && (overview.role === "owner"
         ? <p className="shop-muted">No products yet. <button type="button" className="shop-link" onClick={() => goTo?.("stock")}>Add your first product</button></p>
         : <p className="shop-muted">No products are available to sell yet. Ask the owner to add them.</p>)}
+      {products.length>0&&<SharedShopVariantQuickPicker companyId={companyId} overview={overview}
+        online={online} storeId={storeId} available={available} onAdd={addProduct}/>}
       {products.length > 0 && products.every(p => !available(p)) && <p className="shop-muted" role="status">Everything is out of stock in this store{overview.role === "owner" ? ". Add stock under Stock to start selling." : ". Tell the owner."}</p>}
       {!online && products.length > 0 && <p className="shop-muted" role="status">Offline: this list is from the last time you were connected. Stock may have changed.</p>}
       {products.length > 0 && <div className="shop-search">
@@ -1060,6 +1064,7 @@ function StockPanel({ companyId, overview, refresh, online, userId }: PanelProps
       {notice && <p role="status" className="shop-muted">{notice}</p>}
       {!active.length ? <p className="shop-muted">Add a store under Team to track stock.</p> : <StorePicker stores={active} storeId={storeId} choose={choose} />}
       <SharedShopCatalogImport companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />
+      {isOwner && <SharedShopVariants companyId={companyId} overview={overview} refresh={refresh} online={online} storeId={storeId} />}
       {active.length > 0 && overview.products.length > 0 && <div className="shop-stats" aria-label="Stock summary">
         <div><span>Stock value</span><strong>{stats.valueMinor === null ? "Too large to show" : formatMinorAmount(stats.valueMinor, currency)}</strong>{stats.withoutCost > 0 && <small>{stats.withoutCost} product{stats.withoutCost === 1 ? "" : "s"} with no cost left out</small>}</div>
         <div><span>Products</span><strong>{stats.products}</strong><small>{stats.counted} counted</small></div>

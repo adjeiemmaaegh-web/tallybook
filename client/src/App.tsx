@@ -7,6 +7,7 @@ import { Redirect, useLocation } from "wouter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ConfirmHost } from "@/components/ConfirmHost";
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
+const PublicShopOrderPage = lazy(() => import("@/pages/PublicShopOrderPage"));
 // Everything the local ledger needs is loaded only on its routes, never for /shop or /welcome.
 const DeviceWorkspace = lazy(() => import("@/DeviceWorkspace"));
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -41,6 +42,9 @@ function App() {
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
             ? <Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense>
+            : location === '/order'
+            // Anonymous share-token requests only. Never load the private local ledger.
+            ? <Suspense fallback={<main role="status">Opening the shop's order page…</main>}><PublicShopOrderPage /></Suspense>
             : <Suspense fallback={<main className="mx-auto max-w-3xl p-6" role="status" aria-live="polite"><h1 className="text-lg font-semibold">Opening this local workspace…</h1><p className="text-sm">Your saved records remain on this device. No data is uploaded.</p></main>}>
                 <DeviceWorkspace location={location} />
               </Suspense>}
