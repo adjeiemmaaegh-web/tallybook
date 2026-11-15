@@ -146,12 +146,8 @@ BEGIN
   v_qty:=private.shop_int(v_line,'quantity',1,100);
   IF v_product=ANY(v_seen) THEN RAISE EXCEPTION 'Duplicate product' USING ERRCODE='23505'; END IF;
   v_seen:=array_append(v_seen,v_product);
-  -- Never trust browser-supplied price or availability.
-  SELECT name,unit_price_minor INTO v_name_item,v_price FROM public.shop_products
-   WHERE business_id=v_share.business_id AND id=v_product AND active=true;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Product no longer available' USING ERRCODE='23514'; END IF;
-  v_total:=v_total+v_qty::numeric*v_price::numeric;
-  IF v_total>100000000000000 THEN RAISE EXCEPTION 'Order total exceeds allowed limit' USING ERRCODE='22003'; END IF;
+  -- Canonical payload fingerprint is built BEFORE a price/stock lookup.
+  -- Exact retries must work even if the product changes after submission.
   v_validated:=v_validated||jsonb_build_array(jsonb_build_object(
     'productId',v_product,'quantity',v_qty));
  END LOOP;
@@ -167,6 +163,18 @@ BEGIN
    'quotedTotalMinor',v_existing.quoted_total_minor::text,
    'replayed',true,'paymentCollected',false,'accepted',false);
  END IF;
+ -- New submissions get fresh, tenant-scoped authoritative prices. This
+ -- is intentionally after exact-replay lookup, so price drift cannot break
+ -- reconciliation of a request the server already committed.
+ FOR v_line IN SELECT value FROM jsonb_array_elements(v_validated) LOOP
+  v_product:=(v_line->>'productId')::uuid;
+  v_qty:=(v_line->>'quantity')::bigint;
+  SELECT unit_price_minor INTO v_price FROM public.shop_products
+   WHERE business_id=v_share.business_id AND id=v_product AND active=true;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Product no longer available' USING ERRCODE='23514'; END IF;
+  v_total:=v_total+v_qty::numeric*v_price::numeric;
+  IF v_total>100000000000000 THEN RAISE EXCEPTION 'Order total exceeds allowed limit' USING ERRCODE='22003'; END IF;
+ END LOOP;
  -- Bounded anonymous traffic per public share. This limits spam but is not a CAPTCHA.
  IF (SELECT count(*) FROM public.shop_public_order_requests
      WHERE share_id=v_share.id AND created_at>v_now-interval '1 minute')>=8
