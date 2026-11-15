@@ -90,7 +90,7 @@ export async function getGuestCatalog(shareToken:string):Promise<GuestCatalog> {
 }
 export async function submitGuestOrder(draft:GuestOrderInput):Promise<GuestReceipt>{
  const input=normalizeGuestInput(draft);
- const r=await callShop<GuestReceipt>("submit",input,"tallybook_guest_order");
+ const r=await callShop<GuestReceipt>("submit",{...input},"tallybook_guest_order");
  if(!r||!isPublicUuid(r.requestId)||!MONEY.test(r.quotedTotalMinor)||
     !["new","converted","declined"].includes(r.status)||
     typeof r.replayed!=="boolean"||r.accepted!==false||
