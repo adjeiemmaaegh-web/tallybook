@@ -13,7 +13,7 @@ import "./TallybookWelcome.css";
 type WelcomeVariant = "device" | "shop";
 
 const NAV = [
-  ["#features", "Features"], ["#how", "How it works"], ["#ways", "Two ways to run"], ["#roles", "Owner and team"], ["#faq", "Questions"],
+  ["#features", "Features"], ["#pillars", "Three pillars"], ["#how", "How it works"], ["#ways", "How to run"], ["#roles", "Owner and team"], ["#faq", "Questions"],
 ] as const;
 
 const FEATURES: { icon: ReactNode; title: string; text: string }[] = [
@@ -25,6 +25,21 @@ const FEATURES: { icon: ReactNode; title: string; text: string }[] = [
   { icon: <Landmark size={22} />, title: "Accounts that reconcile", text: "Follow cash, mobile money, card and bank, then count what is really there and see over or short." },
 ];
 
+const PILLARS:{icon:ReactNode;eyebrow:string;title:string;text:string;points:string[]}[]=[
+ {icon:<ShoppingBag size={23}/>,eyebrow:"01 / SELL",
+  title:"Sales & receipts",
+  text:"Record a sale, account for how it was paid, and produce a receipt. Tallybook records payment methods; it never moves money.",
+  points:["Search or scan products","Cash, mobile money and card records","Receipts, sales history and policy-controlled refunds"]},
+ {icon:<Package size={23}/>,eyebrow:"02 / CONTROL",
+  title:"Stock & purchasing",
+  text:"Track stock movements and supplier obligations with records tied to actual shops, products and purchases.",
+  points:["Low-stock visibility and physical counts","Purchase orders and partial receipts","Transfers between stores"]},
+ {icon:<BarChart3 size={23}/>,eyebrow:"03 / UNDERSTAND",
+  title:"Owners & their teams",
+  text:"Give each person only the shop access they need and review recorded business activity through owner-only reporting.",
+  points:["Owner-issued employee invitations","Sales and expense reports","Supplier and customer balances"]},
+];
+
 const STEPS: { title: string; text: string }[] = [
   { title: "Set up your shop", text: "Name it, choose your currency and add your products. Stores, a team and opening stock can come later." },
   { title: "Sell and record", text: "Every sale writes a receipt and updates stock together, so the shelf and the books agree." },
@@ -34,7 +49,7 @@ const STEPS: { title: string; text: string }[] = [
 const FAQ: { q: string; a: string }[] = [
   { q: "Does it work without internet?", a: "The device ledger does. Once your verified owner account has opened it, sales, stock and customers work with no connection and stay in your browser. The shared shop is cloud-based and works best online; the app explains how it behaves when the signal drops." },
   { q: "Where is my data kept?", a: "A device ledger lives in the browser on that device and is never uploaded automatically. A shared shop lives in the shop's private database and is reached only through the app's permission checks. Keep an encrypted backup file of your device ledger." },
-  { q: "How do my employees join?", a: "Invite them by email, or give them an 8-character join code from the Team tab. A code works once and expires after 24 hours. New employees start with no permissions until you grant them." },
+  { q: "How do my employees join?", a: "The owner can make a private eight-character join code from Team, or target a one-time invitation to the employee\'s verified Tallybook account ID. A code works once and expires after 24 hours. An email address or employee number alone cannot grant access. New employees start with no special permissions." },
   { q: "Does Tallybook take payments?", a: "No. Cash, mobile money and card are recorded as how the customer paid. Tallybook never moves money or talks to a payment provider." },
   { q: "Can I get my records out?", a: "Yes. Back up your device ledger to an encrypted file, export products and reports to CSV, and share customer statements and receipts." },
   { q: "Do I need to install anything?", a: "No. It runs in your phone or computer's browser, and you can add it to your home screen so it opens like an app." },
@@ -104,7 +119,7 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
               </Link>
             </div>
             <ul className="tbl-assurances" aria-label="Tallybook capabilities">
-              <li><CloudOff size={17} aria-hidden="true" /> Offline-first local records</li>
+              <li><CloudOff size={17} aria-hidden="true" /> {shop ? "Pending shared-shop sale recovery" : "Offline-first private ledger"}</li>
               <li><ShieldCheck size={17} aria-hidden="true" /> Owner-controlled access</li>
               <li><UsersRound size={17} aria-hidden="true" /> Team shop option</li>
             </ul>
@@ -135,8 +150,8 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
                 <div className="tbl-screen-action"><CheckCircle2 size={18} /><span><strong>Make every day count</strong><small>Sell. Track. Understand.</small></span></div>
               </div>
             </div>
-            <div className="tbl-float tbl-float-top"><span className="tbl-float-icon"><CheckCircle2 size={18} /></span><span><strong>Saved on this device</strong><small>Every sale, instantly</small></span></div>
-            <div className="tbl-float tbl-float-bottom"><span className="tbl-float-icon"><WifiOff size={18} /></span><span><strong>Works without signal</strong><small>Sync never blocks the till</small></span></div>
+            <div className="tbl-float tbl-float-top"><span className="tbl-float-icon"><CheckCircle2 size={18} /></span><span><strong>{shop ? "Sales awaiting confirmation" : "Saved on this device"}</strong><small>{shop ? "Reconcile after reconnecting" : "Private offline records"}</small></span></div>
+            <div className="tbl-float tbl-float-bottom"><span className="tbl-float-icon"><WifiOff size={18} /></span><span><strong>{shop ? "Shared shop uses the cloud" : "Works without signal"}</strong><small>{shop ? "Server confirms stock and sales" : "After the first verified opening"}</small></span></div>
           </div>
         </div>
       </section>
@@ -161,6 +176,29 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
               <p>{f.text}</p>
             </li>)}
           </ul>
+        </div>
+      </section>
+
+      <section className="tbl-section tbl-pillars" id="pillars" aria-labelledby="tbl-pillars-title">
+        <div className="tbl-wrap">
+          <div className="tbl-heading tbl-heading-center">
+            <p className="tbl-eyebrow">The three essentials</p>
+            <h2 id="tbl-pillars-title">A sharper way to run every working day.</h2>
+            <p className="tbl-sub">Built for the work a shop actually does—not imaginary figures, payment promises or complicated setups.</p>
+          </div>
+          <div className="tbl-pillar-grid">
+            {PILLARS.map(pillar=><article className="tbl-pillar" key={pillar.eyebrow}>
+              <span className="tbl-pillar-index">{pillar.eyebrow}</span>
+              <div className="tbl-pillar-icon" aria-hidden="true">{pillar.icon}</div>
+              <h3>{pillar.title}</h3>
+              <p>{pillar.text}</p>
+              <ul>{pillar.points.map(item=><Check key={item}>{item}</Check>)}</ul>
+            </article>)}
+          </div>
+          <p className="tbl-pillar-note">Local device ledgers and shared shops are separate workspaces. Device records are not automatically uploaded or merged into a cloud shop.</p>
+          <div className="tbl-pillars-action">
+            <Link href="/signin" className="tbl-btn tbl-btn-primary">Explore your shop account <ArrowRight size={17} aria-hidden="true" /></Link>
+          </div>
         </div>
       </section>
 

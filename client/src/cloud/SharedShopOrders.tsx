@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState, type FormEvent} from "react";
 import { confirmAction } from "@/lib/confirmAction";
 import {callShop, listShopSales, type ShopOverview, type ShopReceipt} from "./shopClient";
 import {purchaseRetry} from "./purchaseRetry";
+import {SharedShopPublicOrderInbox} from "./SharedShopPublicOrderInbox";
 import {formatMinorAmount} from "@/features/inventory/inventory";
 
 type Props = {userId: string; companyId: string; overview: ShopOverview};
@@ -65,6 +66,7 @@ export function SharedShopOrders({userId, companyId, overview}: Props) {
       .some(value=>value.toLocaleLowerCase().includes(search))));
   return <section className="shop-card space-y-3">
     <h2>Online orders</h2>
+    <SharedShopPublicOrderInbox key={companyId} companyId={companyId} overview={overview} onConverted={reload}/>
     <p className="shop-muted">Record and track orders received outside Tallybook. A customer-facing web checkout is not connected by this screen.</p>
     {ready&&<div className="tb-ops-metrics" aria-label="Online order summary">
       <div><span>All orders</span><strong>{orders.length}</strong></div>
