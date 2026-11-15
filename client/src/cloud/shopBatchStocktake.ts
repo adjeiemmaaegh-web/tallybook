@@ -73,13 +73,13 @@ export async function listBatchStocktakes(companyId:string):Promise<BatchStockta
 }
 export function startBatchStocktake(companyId:string,input:{batchId:string;storeId:string;productIds:string[]}):Promise<BatchReceipt> {
   if(!validBatchId(input.batchId)||!validBatchId(input.storeId))throw Error("Invalid batch or store.");
-  return callShop("start",{companyId,...input,productIds:normalizeBatchProducts(input.productIds)},"tallybook_shop_stocktake_batches");
+  return callShop<BatchReceipt>("start",{companyId,...input,productIds:normalizeBatchProducts(input.productIds)},"tallybook_shop_stocktake_batches");
 }
 export function applyBatchStocktake(companyId:string,input:{batchId:string;lines:BatchInputLine[]}):Promise<BatchReceipt> {
   if(!validBatchId(input.batchId))throw Error("Invalid batch.");
-  return callShop("apply",{companyId,batchId:input.batchId,lines:normalizeBatchCounts(input.lines)},"tallybook_shop_stocktake_batches");
+  return callShop<BatchReceipt>("apply",{companyId,batchId:input.batchId,lines:normalizeBatchCounts(input.lines)},"tallybook_shop_stocktake_batches");
 }
 export function cancelBatchStocktake(companyId:string,batchId:string):Promise<BatchReceipt> {
   if(!validBatchId(batchId))throw Error("Invalid batch.");
-  return callShop("cancel",{companyId,batchId},"tallybook_shop_stocktake_batches");
+  return callShop<BatchReceipt>("cancel",{companyId,batchId},"tallybook_shop_stocktake_batches");
 }
