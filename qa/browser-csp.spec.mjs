@@ -15,7 +15,7 @@ test('the built app runs under the enforced production CSP without violations', 
   await page.addInitScript(() => {
     window.__cspViolations = [];
     document.addEventListener('securitypolicyviolation', event => {
-      window.__cspViolations.push(`${event.violatedDirective} blocked ${event.blockedURI || '(inline)'} at ${event.sourceFile || ''}:${event.lineNumber || 0}`);
+      window.__cspViolations.push(`${event.violatedDirective} blocked ${event.blockedURI || '(inline)'} at ${event.sourceFile || ''}:${event.lineNumber || 0}:${event.columnNumber || 0}`);
     });
   });
 
@@ -33,5 +33,14 @@ test('the built app runs under the enforced production CSP without violations', 
   }
   // Service worker registration and its precache must also be allowed.
   await expect.poll(() => page.evaluate(async () => Boolean(await navigator.serviceWorker.getRegistration())), { timeout: 30000 }).toBe(true);
-  expect(violations, violations.join('\n')).toEqual([]);
+  // Show the code around each violation so a failure names the offending library.
+  const context = [];
+  for (const where of new Set(violations.map(v => v.match(/at (http\S+):(\d+):(\d+)$/)).filter(Boolean).map(m => `${m[1]}|${m[2]}|${m[3]}`))) {
+    const [file, line, column] = where.split('|');
+    const text = await page.evaluate(async url => (await fetch(url)).text(), file);
+    const row = text.split('\n')[Number(line) - 1] ?? '';
+    const at = Math.max(0, Number(column) - 1);
+    context.push(`${file}:${line}:${column}\n  …${row.slice(Math.max(0, at - 240), at + 160)}…`);
+  }
+  expect(violations, [...violations, ...context].join('\n')).toEqual([]);
 });
