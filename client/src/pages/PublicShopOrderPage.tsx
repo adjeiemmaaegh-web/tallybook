@@ -67,7 +67,7 @@ export default function PublicShopOrderPage(){
   setBusy(true);setError("");setNotice("");
   try{
    const result=await submitGuestOrder({shareToken:token,submissionKey:id,
-     customerName,contactPhone,customerNote,lines});
+     customerName,contactPhone,customerNote,consent:true,lines});
    if(!isPublicUuid(result.requestId))throw Error("Unverified request receipt.");
    sessionStorage.removeItem(key);
    setReceipt(result);setUnconfirmed(false);
