@@ -48,7 +48,7 @@ async function setup() {
     create function auth.jwt() returns jsonb language sql as $$select current_setting('test.claims')::jsonb$$;`);
   // This historical D1-D3 rollback drill is scoped to the legacy chain.
   // Later owner-opt-in guest and batch migrations have independent guarded rollback tests.
-  for (const name of migrations.slice(1).filter(n=>!/^202611150(70000|90000)_/.test(n)))
+  for (const name of migrations.slice(1).filter(n=>!/^202611150(33500|70000|90000)_/.test(n)))
     await db.exec(read('supabase/migrations/' + name));
   const owner = {id: randomUUID(), session: randomUUID()};
   await db.query('insert into auth.users values($1,$2)', [owner.id, 'owner@demo.tallybook.test']);
