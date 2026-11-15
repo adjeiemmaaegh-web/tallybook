@@ -1,5 +1,5 @@
 import {fireEvent,render,screen,waitFor} from "@testing-library/react";
-import {beforeEach,expect,it,vi} from "vitest";
+import {afterEach,beforeEach,expect,it,vi} from "vitest";
 import {SharedShopBatchCountPanel} from "./SharedShopBatchCountPanel";
 import type {ShopOverview} from "./shopClient";
 const rpc=vi.hoisted(()=>({list:vi.fn(),start:vi.fn(),apply:vi.fn(),cancel:vi.fn()}));
@@ -35,6 +35,7 @@ beforeEach(()=>{
  rpc.start.mockImplementation(async (_company,input)=>({batchId:input.batchId,status:"open",replayed:false}));
  vi.stubGlobal("crypto",{randomUUID:()=>batchId});
 });
+afterEach(()=>vi.unstubAllGlobals());
 it("does not load or mutate when the optional batch workspace is closed",()=>{
  render(<SharedShopBatchCountPanel {...props}/>);
  expect(screen.getByRole("button",{name:/Open multi-product stocktake/})).toHaveAttribute("aria-expanded","false");
