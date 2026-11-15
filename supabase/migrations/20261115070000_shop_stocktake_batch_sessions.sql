@@ -184,7 +184,7 @@ BEGIN
   FOR v_line IN SELECT product_id,counted_quantity FROM public.shop_stocktake_batch_lines
      WHERE business_id=v_company AND batch_id=v_batch LOOP
    SELECT value INTO v_input FROM jsonb_array_elements(v_items)
-     WHERE value->>'productId'=v_line.product_id::text;
+     WHERE (value->>'productId')::uuid=v_line.product_id;
    v_qty:=private.shop_int(v_input,'countedQuantity',0,2147483647);
    IF v_qty<>v_line.counted_quantity THEN
     RAISE EXCEPTION 'Batch already posted with different counts' USING ERRCODE='23505';
@@ -198,7 +198,7 @@ BEGIN
  FOR v_line IN SELECT product_id,expected_quantity FROM public.shop_stocktake_batch_lines
    WHERE business_id=v_company AND batch_id=v_batch ORDER BY product_id LOOP
   SELECT value INTO v_input FROM jsonb_array_elements(v_items)
-    WHERE value->>'productId'=v_line.product_id::text;
+    WHERE (value->>'productId')::uuid=v_line.product_id;
   v_qty:=private.shop_int(v_input,'countedQuantity',0,2147483647);
   INSERT INTO public.shop_store_stock(business_id,store_id,product_id,quantity)
     VALUES(v_company,v_old_store,v_line.product_id,0) ON CONFLICT DO NOTHING;
