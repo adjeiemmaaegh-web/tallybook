@@ -87,6 +87,22 @@ export default function GoogleSignInPage(){
     }catch(e){setError(e instanceof Error?e.message:'Cloud sign-in could not start.');}
     finally{setBusy(false);}
   }
+  // Apple requires independently provisioned Supabase and Apple Developer OAuth credentials.
+  // Keep it absent unless an operator explicitly enables the verified provider.
+  const appleEnabled=import.meta.env.VITE_APPLE_OAUTH_ENABLED==='true';
+  async function signInWithApple(){
+    if(busy||!isSupabaseConfigured||!appleEnabled)return;
+    if(!navigator.onLine){setError('Connect to the internet to sign in with Apple.');return;}
+    setBusy(true);setError(null);setMessage(null);
+    try{
+      const {error:failure}=await getSupabaseClient().auth.signInWithOAuth({
+        provider:'apple',options:{redirectTo:window.location.origin+'/signin'}
+      });
+      if(failure)throw failure;
+    }catch{
+      setError('Apple sign-in is unavailable. Confirm the Apple identity provider is enabled for this Tallybook environment, or use Google or email.');
+    }finally{setBusy(false);}
+  }
   async function logOut(){
     if(busy)return;setBusy(true);setError(null);
     try{
@@ -146,6 +162,12 @@ export default function GoogleSignInPage(){
       <button className="tb-auth-google" type="button" disabled={busy} onClick={()=>void signIn()}>
         <GoogleMark/>{busy?'Opening Google…':'Continue with Google'}
       </button>
+      {appleEnabled&&<>
+        <button className="tb-auth-google" type="button" disabled={busy} onClick={()=>void signInWithApple()}>
+          {busy?'Opening Apple…':'Continue with Apple'}
+        </button>
+        <p className="tb-auth-hint">An Apple private-relay address is not a staff credential. Shop access still requires a verified owner-issued invitation.</p>
+      </>}
       <p className="tb-auth-divider">Or continue with email</p>
 
       <form className="tb-auth-form" noValidate onSubmit={event=>{event.preventDefault();void emailAction(mode);}}>
