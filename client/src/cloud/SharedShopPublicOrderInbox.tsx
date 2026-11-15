@@ -17,7 +17,7 @@ const money=(value:string,currency:string):string=>{
  if(n>BigInt(Number.MAX_SAFE_INTEGER))return n.toString()+" minor units";
  try{
   const nf=new Intl.NumberFormat(undefined,{style:"currency",currency});
-  return nf.format(Number(n)/10**nf.resolvedOptions().maximumFractionDigits);
+  return nf.format(Number(n)/10**(nf.resolvedOptions().maximumFractionDigits??2));
  }catch{return n.toString()+" minor units";}
 };
 export function SharedShopPublicOrderInbox({companyId,overview,onConverted}:Props){
