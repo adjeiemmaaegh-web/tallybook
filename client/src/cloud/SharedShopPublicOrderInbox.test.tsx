@@ -40,7 +40,7 @@ it("explicitly issues a share for selected store without creating a checkout pay
  fireEvent.change(screen.getByLabelText("Store"),{target:{value:store}});
  fireEvent.click(screen.getByRole("button",{name:"Create public order link"}));
  await waitFor(()=>expect(api.create).toHaveBeenCalledWith("company",store));
- expect(screen.getByLabelText("New public order link")).toHaveValue(expect.stringContaining("/order#"+token));
+ expect((screen.getByLabelText("New public order link") as HTMLInputElement).value).toContain("/order#"+token);
  expect(screen.getByText(/No payments or stock reservations will be made|not checkout payments/i)).toBeInTheDocument();
 });
 it("verified owner sees real request and converts through existing-order callback",async()=>{
