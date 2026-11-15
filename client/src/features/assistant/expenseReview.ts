@@ -15,7 +15,7 @@ interface ExpenseReviewContext { database: TallybookDB; currency: string; now: D
 type Period = { label: string; start?: string; end?: string };
 
 const REQUESTS = [
-  /^(?:please\s+)?(?:show|list|review|summari[sz]e|check|display)\s+(?:(?:me|my|our|the|business|shop|all|today's|yesterday's)\s+)*(?:expenses?|spending|expenditure)\b/i,
+  /^(?:please\s+)?(?:show|list|review|summari[sz]e|check|display)\s+(?:(?:me|my|our|the|business|shop|all|today's|yesterday's)\s+)*(?:(?:transport|rent|utilities|supplies|repairs|other)\s+)?(?:expenses?|spending|expenditure)\b/i,
   /^(?:please\s+)?how much (?:did|have) (?:we|i|our shop|my shop|the business) (?:spend|spent)\b/i,
   /^(?:please\s+)?what (?:did|have) (?:we|i|our shop|my shop|the business) (?:spend|spent)\b/i,
   /^(?:please\s+)?what(?:'s| is| was) (?:(?:our|my|the|business|shop)\s+)*(?:expenses?|spending|expenditure)(?:\s+(?:total|summary|breakdown))?\b/i,
