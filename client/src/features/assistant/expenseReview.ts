@@ -41,8 +41,19 @@ function requestedPeriod(text: string, now: Date, country?: string): Period | As
     { name: "lastMonth", match: /\blast month\b/i.test(text) },
     { name: "all", match: /\ball time\b|\ball saved\b/i.test(text) },
   ].filter((item) => item.match);
-  if (mentions.length > 1) return question("Which expense period do you want? Choose today, yesterday, last 7 days, this month, last month, or all saved expenses.", []);
-  if (/\b(?:next|tomorrow)\b|\b(?:this|last|next|past)\s+(?:week|year|quarter|[0-9]+\s+days)\b/i.test(text) && mentions[0]?.name !== "last7") {
+  const explicitDays = Array.from(text.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g), (match) => match[0]);
+  if (mentions.length > 1 || explicitDays.length > 1 || (mentions.length > 0 && explicitDays.length > 0))
+    return question("Choose one expense date or period: today, yesterday, YYYY-MM-DD, last 7 days, this month, last month, or all saved expenses.", []);
+  if (explicitDays.length === 1) {
+    if (!validDay(explicitDays[0])) return question("That is not a valid calendar date. Use YYYY-MM-DD.", []);
+    return { label: "On " + explicitDays[0], start: explicitDays[0], end: explicitDays[0] };
+  }
+  // Never silently substitute all-time totals for unhandled dates/ranges.
+  if (/\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|20\d{2}|recent(?:ly)?|morning|afternoon|evening|ago)\b/i.test(text) ||
+      /\b(?:this|last|next|past|previous)\s+(?:week|year|quarter|[0-9]+\s+(?:days?|weeks?|months?|years?))\b/i.test(text) && mentions[0]?.name !== "last7") {
+    return question("I cannot safely interpret that expense period. Use today, yesterday, YYYY-MM-DD, last 7 days, this month, last month, or all saved expenses.", []);
+  }
+  if (/\b(?:next|tomorrow)\b/i.test(text)) {
     return question("I can review expenses for today, yesterday, last 7 days, this month, last month, or all saved expenses. Which period?", []);
   }
   const selected = mentions[0]?.name ?? "all";

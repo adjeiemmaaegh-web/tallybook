@@ -30,6 +30,9 @@ describe("Clementia read-only spending questions", () => {
     const today = await assistant.send("How much did we spend today?");
     expect(today.kind).toBe("answer");
     expect(today.text).toContain(formatMinorAmount(1250, "GHS"));
+    const dated = await assistant.send("Show expenses on 2026-03-15");
+    expect(dated.text).toContain(formatMinorAmount(1250, "GHS"));
+    expect(dated.details?.find((item) => item.label === "Verified expense entries")?.value).toBe("1");
     expect(today.details?.find((item) => item.label === "Verified expense entries")?.value).toBe("1");
     const week = await assistant.send("Show expenses last 7 days");
     expect(week.text).toContain(formatMinorAmount(11250, "GHS"));
@@ -81,6 +84,10 @@ describe("Clementia read-only spending questions", () => {
     const assistant = kit.assistantAt(now);
     expect((await assistant.send("Show expenses today and yesterday")).kind).toBe("question");
     expect((await assistant.send("Show expenses last week")).kind).toBe("question");
+    expect((await assistant.send("Show expenses for March")).kind).toBe("question");
+    expect((await assistant.send("Show expenses on 2026-02-31")).kind).toBe("question");
+    expect((await assistant.send("Show expenses for 2026")).kind).toBe("question");
+    expect((await assistant.send("Show expenses today and 2026-03-15")).kind).toBe("question");
     expect(await kit.database.expenses.count()).toBe(0);
   });
 });
