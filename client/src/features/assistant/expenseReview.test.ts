@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createExpense } from "@/features/expenses/expenses";
+import { formatMinorAmount } from "@/features/inventory/inventory";
 import { lockStaff } from "@/features/staff/staff";
 import { useAssistantDb } from "./testKit";
 import { isExpenseReviewRequest } from "./expenseReview";
@@ -28,15 +29,15 @@ describe("Clementia read-only spending questions", () => {
     const before = await kit.database.expenses.toArray();
     const today = await assistant.send("How much did we spend today?");
     expect(today.kind).toBe("answer");
-    expect(today.text).toContain("GHS 12.50");
+    expect(today.text).toContain(formatMinorAmount(1250, "GHS"));
     expect(today.details?.find((item) => item.label === "Verified expense entries")?.value).toBe("1");
     const week = await assistant.send("Show expenses last 7 days");
-    expect(week.text).toContain("GHS 112.50");
+    expect(week.text).toContain(formatMinorAmount(11250, "GHS"));
     const marchTransport = await assistant.send("Show transport expenses this month");
-    expect(marchTransport.text).toContain("GHS 15.75");
+    expect(marchTransport.text).toContain(formatMinorAmount(1575, "GHS"));
     expect(marchTransport.details?.find((item) => item.label === "Verified expense entries")?.value).toBe("2");
     const february = await assistant.send("Expense summary last month");
-    expect(february.text).toContain("GHS 21.00");
+    expect(february.text).toContain(formatMinorAmount(2100, "GHS"));
     expect(await kit.database.expenses.toArray()).toEqual(before);
   });
 
@@ -58,7 +59,7 @@ describe("Clementia read-only spending questions", () => {
     const assistant = kit.assistantAt(now);
     const reply = await assistant.send("Show expenses today");
     expect(reply.kind).toBe("answer");
-    expect(reply.text).toContain("GHS 10.00");
+    expect(reply.text).toContain(formatMinorAmount(1000, "GHS"));
     expect(reply.moreText).toMatch(/3 saved entries.*excluded/i);
     expect(reply.text).not.toContain("999");
     expect(reply.details?.find((item) => item.label === "Verified expense entries")?.value).toBe("1");
