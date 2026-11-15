@@ -96,6 +96,13 @@ describe("Clementia native staff-shift operations", () => {
     expect((await kit.assistant.send("Open my shift with 10 cedis")).kind).toBe("error");
     await closeSeedShift();
     const before = await kit.database.staffShifts.count();
+    const future = await kit.assistant.send("Open shift tomorrow with float 50 cedis");
+    expect(future.kind).toBe("info");
+    expect(future.preview).toBeUndefined();
+    const timed = await kit.assistant.send("Start shift with 50 cedis at 9am");
+    expect(timed.kind).toBe("info");
+    expect(timed.preview).toBeUndefined();
+    expect(await kit.database.staffShifts.count()).toBe(before);
     const otherCurrency = await kit.assistant.send("Open shift with 15 USD");
     expect(otherCurrency.kind).toBe("question");
     expect(otherCurrency.preview).toBeUndefined();

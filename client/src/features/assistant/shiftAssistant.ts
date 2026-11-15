@@ -20,6 +20,7 @@ const STATUS = [
   /^(?:(?:my|current|open)\s+)?shift (?:status|cash|summary|balance|float)\s*[?.!]?$/i,
 ];
 const CANCEL = /^(?:cancel|stop|discard|never ?mind|forget it|no|not now)$/i;
+const DEFERRED = /\b(?:tomorrow|yesterday|next|later|future|planned?|scheduled?|when|after)\b|\bat\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)\b|\bon\s+\d{4}-\d{2}-\d{2}\b/i;
 const CURRENCIES = /\b(?:GHS|USD|NGN|KES|AED|EUR|GBP|RWF|TZS|UGX|cedis?|naira|dollars?)\b|₵|\$/ig;
 
 export const isShiftOpenRequest = (text: string): boolean => OPEN.test(sanitizeInput(text));
@@ -111,6 +112,10 @@ export function createShiftAssistantSession(database: TallybookDB, currency: str
     const text = sanitizeInput(raw);
     if (!draft && !isShiftOpenRequest(text)) return null;
     if (draft && CANCEL.test(text)) { clear(); return info("Opening the shift was cancelled. Nothing was changed."); }
+    if (!draft?.token && DEFERRED.test(text)) {
+      clear();
+      return info("I can only open a shift that is starting now. Nothing was opened. Start a fresh shift when you are ready; past or scheduled shifts cannot be created from chat.");
+    }
     if (draft?.token) return info("Use the Confirm shift button or Cancel. Typed confirmation cannot open a shift.");
     if (draft && isShiftOpenRequest(text)) clear();
     const companyId = getActiveBusinessProfileId();
