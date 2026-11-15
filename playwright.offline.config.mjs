@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  testDir: './qa', testMatch: 'browser-offline.spec.mjs', workers: 1,
+  testDir: './qa', testMatch: ['browser-offline.spec.mjs', 'browser-csp.spec.mjs'], workers: 1,
   timeout: 120000, expect: { timeout: 20000 },
   reporter: [['list'], ['html', { outputFolder: 'artifacts/release-v19/offline-report', open: 'never' }]],
   outputDir: 'artifacts/release-v19/offline-results',

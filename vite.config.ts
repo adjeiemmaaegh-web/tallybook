@@ -1,8 +1,17 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { defineConfig } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
+
+// The production Content-Security-Policy (vercel.json) is also served by `vite preview`,
+// so built-app browser tests exercise the enforced policy. `upgrade-insecure-requests`
+// is dropped only here because the preview server is plain http on 127.0.0.1.
+const productionCsp: string =
+  JSON.parse(readFileSync(path.resolve(import.meta.dirname, "vercel.json"), "utf8"))
+    .headers[0].headers.find((h: { key: string }) => h.key === "Content-Security-Policy")?.value ?? "";
+const previewCsp = productionCsp.replace(/;\s*upgrade-insecure-requests/, "");
 
 export default defineConfig({
   plugins: [
@@ -61,6 +70,9 @@ export default defineConfig({
     maxWorkers: 2,
     testTimeout: 15000,
     hookTimeout: 15000,
+  },
+  preview: {
+    headers: previewCsp ? { "Content-Security-Policy": previewCsp } : {},
   },
   server: {
     port: 3000,
