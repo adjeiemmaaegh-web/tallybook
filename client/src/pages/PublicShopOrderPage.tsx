@@ -49,7 +49,9 @@ export default function PublicShopOrderPage(){
   const p=catalog?.products.find(x=>x.productId===l.productId);
   return sum+BigInt(l.quantity)*BigInt(p?.unitPriceMinor??0);
  },0n);
- const validForm=catalog&&lines.length>0&&lines.length<=30&&
+ const allQuantitiesValid=Object.values(selected).every(value=>
+   value===""||value==="0"||(/^[1-9][0-9]*$/.test(value)&&Number(value)<=100));
+ const validForm=catalog&&allQuantitiesValid&&lines.length>0&&lines.length<=30&&
    customerName.trim().length>=2&&customerName.trim().length<=80&&
    /^[+0-9][0-9 ()+-]{5,59}$/.test(contactPhone.trim())&&
    customerNote.trim().length<=240&&consent;
