@@ -10,7 +10,7 @@ function formatMinor(value:bigint|number|string,currency:string):string {
  if(minor>BigInt(Number.MAX_SAFE_INTEGER))return minor.toString()+" minor units";
  try{
   const nf=new Intl.NumberFormat(undefined,{style:"currency",currency});
-  const decimals=nf.resolvedOptions().maximumFractionDigits;
+  const decimals=nf.resolvedOptions().maximumFractionDigits??2;
   return nf.format(Number(minor)/10**decimals);
  }catch{return minor.toString()+" minor units ("+currency+")";}
 }
