@@ -41,8 +41,12 @@ function openingFloat(text: string, currency: string, followUp: boolean): { amou
   if (!hasAmountContext) return {};
   // Never discard a minus sign or accounting parentheses and reinterpret
   // a negative cash declaration as positive.
-  if (/[-\u2212\u2013\u2014]\s*\d|\(\s*\d+(?:[.,]\d+)?\s*\)/.test(rest))
-    return { error: "Opening cash float cannot be negative. Enter 0 or a positive amount." };
+  if (/[-\u2212\u2013\u2014]/.test(rest) || /[()]/.test(rest))
+    return { error: "Opening cash float cannot be negative or ambiguous. Enter 0 or a positive amount." };
+  // A leading decimal point would otherwise make the number matcher read
+  // '.50' as '50'. Demand '0.50' rather than changing the declared amount.
+  if (/(^|[^\d])[.,]\d/.test(rest))
+    return { error: "Write fractional opening floats with a leading zero, such as 0.50." };
   const numbers = Array.from(rest.matchAll(/\b\d+(?:[.,]\d+)*\b/g), (match) => match[0]);
   if (numbers.length !== 1) {
     return numbers.length ? { error: "Please give one opening cash amount only." } : {};
