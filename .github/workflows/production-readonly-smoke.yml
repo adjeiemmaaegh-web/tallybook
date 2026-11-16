@@ -1,0 +1,51 @@
+name: Production public-site read-only smoke
+
+# This workflow cannot authenticate, modify shop data, deploy or change cloud settings.
+on:
+  pull_request:
+    paths:
+      - scripts/production-readonly-smoke.mjs
+      - qa/production-readonly-smoke.test.mjs
+      - .github/workflows/production-readonly-smoke.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tallybook-public-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Public smoke negative and safety tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node --test qa/production-readonly-smoke.test.mjs
+
+  production:
+    name: Live public HTTPS and PWA file verification
+    needs: contract
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Check unauthenticated public resources only
+        env:
+          TALLYBOOK_SMOKE_BASE_URL: https://tallybook-eight.vercel.app
+        run: node scripts/production-readonly-smoke.mjs
