@@ -738,17 +738,36 @@
       "requirement": "Reconcile local/shared stock across purchases, sales, refunds, transfers, counts and adjustments.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no unsupported negative stock, double movement or inconsistent store quantity.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect stock authority against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-02",
@@ -758,17 +777,36 @@
       "requirement": "Verify request, dispatch, partial/full receipt, cancellation and cross-store reconciliation.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "exact in-transit and destination quantities, actor attribution and safe retries.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect store transfers against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-03",
@@ -798,17 +836,36 @@
       "requirement": "Test partial receipts, over-receipt rejection, duplicate supplier transactions, unit costs, inventory movements and payables.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "purchase quantities, costs and liabilities reconcile.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect purchasing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-05",
@@ -838,17 +895,36 @@
       "requirement": "Reconcile legacy unassigned-store stock, missing origins and existing batches without inventing historical ownership.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "evidence or explicit unknown attribution for every historical difference.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect historical inventory against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-07",
@@ -858,17 +934,36 @@
       "requirement": "Verify owner/supervisor/cashier/delegated count and receiving rights at the server mutation boundary.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "unauthorized role/store/company changes rejected.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect store authorization against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-08",
@@ -878,17 +973,36 @@
       "requirement": "Stress simultaneous checkout, receipt, refund, count and transfer on the same item.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "serializable stock, no oversell and deterministic conflict rollback.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/pages/StoresPage.tsx",
+        "client/src/features/stores/storeOperations.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect stock concurrency against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
+      ],
+      "changes": [
+        "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
+        "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+      ],
+      "tests": [
+        {
+          "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+      ],
+      "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
     {
       "id": "ST23-09",
