@@ -18,6 +18,8 @@ export interface SaleReversal {
   policyEvidence?:ReturnPolicyEvidence;
   id: string;
   businessProfileId: string;
+  /** Optional historical physical receiving location; never infer it on restore. */
+  returnStoreId?: string;
   originalSaleId: string;
   originalReceiptNumber: string;
   customerId?: string;

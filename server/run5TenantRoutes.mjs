@@ -2,6 +2,7 @@
  * and an isolated test runtime are independently reviewed and wired.
  * Existing offline IndexedDB and separate legacy sync routes are untouched.
  */
+import {createApiRateLimit} from './apiRateLimit.mjs';
 import {isDirectTls} from './syncAccessRoutes.mjs';
 import {assertRun5ScopedJson} from './run5TenantScope.mjs';
 const MAP=Object.freeze({
@@ -82,6 +83,7 @@ export function mountRun5TenantRoutes(app,jsonParser,options={}){
   if(typeof app?.post!=='function'||typeof jsonParser!=='function')
     throw Error('Run 5 route host invalid');
   app.post('/api/run5/cloud/:operation',
+    createApiRateLimit({limit:20}),
     jsonParser({limit:'4kb',type:'application/json'}),
     createRun5TenantRoute(options));
 }

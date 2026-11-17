@@ -1,3 +1,4 @@
+import { currencies, currencyMinorDivisor } from '../business/currencies.ts';
 import type { createWatchdogDayEnvelope } from './watchdogDayEnvelope.ts';
 
 type DayEnvelope = ReturnType<typeof createWatchdogDayEnvelope>;
@@ -34,11 +35,14 @@ export function serializeWatchdogCanonicalCsv(day:DayEnvelope):{
     if(!supported.has(event.event_type)) throw new Error(`Unmapped Watchdog event type ${event.event_type}.`);
     const monetary = event.event_type==='sale'||event.event_type==='refund'||event.event_type==='discount';
     if(monetary && (!Number.isSafeInteger(event.amount_minor) || (event.amount_minor??0)<=0 ||
-                    !event.currency || !/^[A-Z]{3}$/.test(event.currency)))
+                    !event.currency || !currencies.some(currency => currency === event.currency)))
       throw new Error(`Watchdog ${event.event_type} lacks a valid amount and currency.`);
     if(!monetary && event.amount_minor!==null)
       throw new Error(`Watchdog ${event.event_type} amount has no agreed canonical meaning.`);
-    const amount = monetary ? `${Math.floor(event.amount_minor!/100)}.${String(event.amount_minor!%100).padStart(2,'0')}` : '';
+    const divisor = monetary ? currencyMinorDivisor(event.currency!) : 100;
+    // CSV amount is in major units; do not divide whole-unit ledgers by 100.
+    const amount = !monetary ? '' : divisor === 1 ? `${event.amount_minor!}.00`
+      : `${Math.floor(event.amount_minor!/100)}.${String(event.amount_minor!%100).padStart(2,'0')}`;
     if(monetary && event.amount_minor!>100_000_000_000_000)
       throw new Error('Watchdog amount exceeds importer bounds.');
     const values=[event.event_id,event.event_type,event.occurred_at_utc,event.shop_id,

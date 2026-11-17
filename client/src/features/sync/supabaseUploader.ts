@@ -1,6 +1,8 @@
 import type { TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
-import { requirePermission } from '@/features/staff/staff';
+import { currentStaffId, currentStaffSessionGeneration, requirePermission } from '@/features/staff/staff';
+import {withCoordinatedRetailWrite} from '@/features/backup/coordinatedRetailWrite';
+import {assertRun7RetailWriteReady} from '@/features/backup/run7RetailWriteBarrier.mjs';
 import { listPendingSyncEvents, type SyncOutboxEvent } from './syncFoundation';
 import { assertUploadPayload, verifyCentralReceipt } from './supabaseUploader.mjs';
 
@@ -15,34 +17,53 @@ export interface CentralUploadAdapter {
  /** Calls a trusted ingestion endpoint; transport itself is NOT supplied by this module. */
  send(upload:PreparedUpload):Promise<ServerOperationReceipt>;
 }
+const QUEUE_IDENTITY_KEYS=['id','businessProfileId','deviceId','operationId','entityType','entityId','payloadDigest','createdAt'] as const;
 /** Manual, controlled upload of one existing outbox operation. Not a live auto-sync integration. */
 export async function uploadOnePendingOperation(database:TallybookDB, company:string, adapter:CentralUploadAdapter) {
+ const actor=currentStaffId(company),generation=currentStaffSessionGeneration(company);
+ const scope=()=>{
+  if(!actor||getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor||currentStaffSessionGeneration(company)!==generation)
+   throw new Error('Company or staff session changed during upload.');
+ };
+ scope();
  if(getActiveBusinessProfileId()!==company) throw new Error('Company changed before sync.');
  await requirePermission('staff',database,company);
  if((await database.syncConsents.get(company))?.enabled!==true) throw new Error('Synchronization is disabled.');
  const pending=await listPendingSyncEvents(database,company);
- const event=pending[0];if(!event)return {uploaded:false};
+ if(!pending.length)return {uploaded:false};
+ const event=Object.freeze(structuredClone(pending[0]));
  const prepared=await adapter.prepare(event);
- if(prepared.event.id!==event.id || prepared.event.operationId!==event.operationId ||
-    prepared.event.businessProfileId!==company || prepared.event.deviceId!==event.deviceId)
+ if(prepared.event.status!=='pending'||!QUEUE_IDENTITY_KEYS.every(key=>prepared.event[key]===event[key]))
    throw new Error('Prepared upload differs from queued operation.');
  assertUploadPayload(event,prepared.sha256);
- if(getActiveBusinessProfileId()!==company) throw new Error('Company changed during sync.');
+ await database.transaction('r',[database.appMeta,database.staffMembers,database.syncConsents,database.syncDevices],async()=>{
+  await assertRun7RetailWriteReady(database.appMeta);
+  const staff=await requirePermission('staff',database,company);
+  if(staff?.id!==actor||(await database.syncConsents.get(company))?.enabled!==true)
+   throw new Error('Upload authorization or consent changed before transmission.');
+  const device=await database.syncDevices.get(event.deviceId);
+  if(!device||device.businessProfileId!==company||device.status!=='active')
+   throw new Error('Upload device revoked before transmission.');
+  scope();
+ });
  const receipt=await adapter.send(prepared);
  const acknowledgedAt=verifyCentralReceipt(event,receipt);
- await database.transaction('rw',[database.syncOutbox,database.syncConsents,database.syncDevices,database.staffMembers],async()=>{
-  await requirePermission('staff',database,company);
+ await withCoordinatedRetailWrite(()=>database.transaction('rw',[database.appMeta,database.businessProfiles,database.syncOutbox,database.syncConsents,database.syncDevices,database.staffMembers],async()=>{
+  await assertRun7RetailWriteReady(database.appMeta);
+  const staff=await requirePermission('staff',database,company);
+  if(staff?.id!==actor)throw new Error('Upload actor changed before acknowledgment.');
   if(getActiveBusinessProfileId()!==company || (await database.syncConsents.get(company))?.enabled!==true)
     throw new Error('Company changed or synchronization disabled before acknowledgment.');
   const device=await database.syncDevices.get(event.deviceId);
   if(!device || device.businessProfileId!==company || device.status!=='active')
     throw new Error('Device revoked; central receipt must be reconciled manually.');
   const current=await database.syncOutbox.get(event.id);
-  if(!current || current.operationId!==event.operationId || current.payloadDigest!==event.payloadDigest)
+  if(!current || !QUEUE_IDENTITY_KEYS.every(key=>current[key]===event[key]))
     throw new Error('Local outbox operation changed after upload.');
+  scope();
   if(current.status==='acknowledged') return;
   if(current.status!=='pending')throw new Error('Unknown sync state.');
   await database.syncOutbox.update(event.id,{status:'acknowledged',acknowledgedAt});
- });
+ }));
  return {uploaded:true,operationId:event.operationId,acknowledgedAt};
 }

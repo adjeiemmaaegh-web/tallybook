@@ -4,6 +4,13 @@ import { planForText } from "./taskPlanner";
 
 describe("Clementia direct read-only daily checks",()=>{
   const kit=useAssistantDb();
+  it.each(["Schedule a daily stock review","How do I schedule a weekly debt review?","Pause my scheduled local reviews"])("guides %s to explicit owner approval without changing a schedule or financial records",async(prompt)=>{
+    const before={profiles:await kit.database.businessProfiles.toArray(),sales:await kit.database.sales.toArray(),shifts:await kit.database.staffShifts.toArray()};
+    const reply=await kit.assistant.send(prompt);
+    expect(reply.link?.href).toBe("/insights");expect(reply.text).toMatch(/unlocked owner/);expect(reply.text).toMatch(/never send messages or change money/);
+    expect(reply.actions?.some(action=>action.type==="confirm")).not.toBe(true);
+    expect({profiles:await kit.database.businessProfiles.toArray(),sales:await kit.database.sales.toArray(),shifts:await kit.database.staffShifts.toArray()}).toEqual(before);
+  });
   it("recognizes hyphenated end-of-day summary as a saved-record plan",()=>{
     const plan=planForText("End-of-day summary");
     expect(plan?.plan.steps.map(step=>step.type)).toEqual(["read_sales","read_inventory","read_expenses","read_shift"]);

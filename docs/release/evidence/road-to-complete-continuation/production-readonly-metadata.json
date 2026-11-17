@@ -1,0 +1,193 @@
+{
+  "checkedAt": "2026-11-17",
+  "projectId": "qfyydfxwvifdvffdfgeu",
+  "status": "ACTIVE_HEALTHY",
+  "postgresVersion": "17.11.0.003",
+  "hostedMigrationCount": 37,
+  "hostedMigrations": [
+    {
+      "version": "20261013123347",
+      "name": "business_identity"
+    },
+    {
+      "version": "20261013123702",
+      "name": "restrict_rls_helper"
+    },
+    {
+      "version": "20261014113009",
+      "name": "company_binding_recovery_server_only"
+    },
+    {
+      "version": "20261014115304",
+      "name": "company_recovery_reviewer_audit"
+    },
+    {
+      "version": "20261105022238",
+      "name": "stakeholder_session_bound_membership"
+    },
+    {
+      "version": "20261105070036",
+      "name": "shared_shop_ledger"
+    },
+    {
+      "version": "20261105110003",
+      "name": "shared_shop_refunds_and_opening_import"
+    },
+    {
+      "version": "20261105120712",
+      "name": "shared_shop_full_till"
+    },
+    {
+      "version": "20261110110434",
+      "name": "shop_refund_policy"
+    },
+    {
+      "version": "20261110110609",
+      "name": "invite_24h"
+    },
+    {
+      "version": "20261110110626",
+      "name": "shop_stage_c_read_models"
+    },
+    {
+      "version": "20261110110705",
+      "name": "shop_stage_d_stock_workflows"
+    },
+    {
+      "version": "20261110110806",
+      "name": "shop_stage_d_purchase_payables"
+    },
+    {
+      "version": "20261110110840",
+      "name": "shop_stage_d_online_orders"
+    },
+    {
+      "version": "20261110110901",
+      "name": "shop_purchase_order_read_model"
+    },
+    {
+      "version": "20261110110905",
+      "name": "shared_order_lines"
+    },
+    {
+      "version": "20261110134316",
+      "name": "shop_sales_hot_path_indexes"
+    },
+    {
+      "version": "20261110134347",
+      "name": "shop_sales_search"
+    },
+    {
+      "version": "20261111021126",
+      "name": "shop_product_details"
+    },
+    {
+      "version": "20261111021150",
+      "name": "shop_daily_report"
+    },
+    {
+      "version": "20261111064900",
+      "name": "shop_attendant_stock"
+    },
+    {
+      "version": "20261111065003",
+      "name": "shop_customer_archive"
+    },
+    {
+      "version": "20261111065040",
+      "name": "shop_join_codes"
+    },
+    {
+      "version": "20261111065118",
+      "name": "shop_expenses"
+    },
+    {
+      "version": "20261111065155",
+      "name": "shop_refund_requests"
+    },
+    {
+      "version": "20261111070921",
+      "name": "shop_profit_report"
+    },
+    {
+      "version": "20261111100842",
+      "name": "shop_quotations"
+    },
+    {
+      "version": "20261111100923",
+      "name": "shop_accounts"
+    },
+    {
+      "version": "20261111202349",
+      "name": "shop_staff_shifts_audit"
+    },
+    {
+      "version": "20261112120000",
+      "name": "telegram_bot"
+    },
+    {
+      "version": "20261114232617",
+      "name": "phase_b_cloud_business_type"
+    },
+    {
+      "version": "20261115054858",
+      "name": "shop_product_variants_20261115"
+    },
+    {
+      "version": "20261115054910",
+      "name": "shop_stocktake_batch_sessions_20261115"
+    },
+    {
+      "version": "20261115054925",
+      "name": "shop_public_order_requests_20261115"
+    },
+    {
+      "version": "20261115183938",
+      "name": "tallybook_active_session_proof"
+    },
+    {
+      "version": "20261115183943",
+      "name": "company_creation_active_session"
+    },
+    {
+      "version": "20261115190133",
+      "name": "telegram_daily_summary"
+    }
+  ],
+  "securityAdvisors": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 56,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "name": "anon_security_definer_function_executable",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 11,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    }
+  ],
+  "metadataOnly": {
+    "shopTables": 47,
+    "shopTablesWithoutRls": 0,
+    "anonymousDirectTableGrants": 0,
+    "authenticatedDirectTableGrants": 0,
+    "classificationCallsActiveProof": false,
+    "classificationChecksSessionTable": false,
+    "canonicalActiveProofExists": true
+  },
+  "boundary": "Read-only project, migration, advisor and catalog metadata. No merchant rows, authentication users, secrets or financial values queried. No production changes. The new classification authorization fix remains unapplied."
+}

@@ -22,14 +22,14 @@ test('HTTPS starts and serves an actual TLS request', async (t) => {
   const dir = mkdtempSync(path.join(tmpdir(),'tallybook-https-'));
   t.after(() => rmSync(dir,{recursive:true,force:true}));
   const keyFile = path.join(dir,'key.pem'), certFile = path.join(dir,'cert.pem');
-  try {execFileSync('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',keyFile,'-out',certFile,'-days','1','-subj','/CN=localhost'],{stdio:'ignore'});} catch {t.skip('openssl unavailable');return;}
+  execFileSync('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',keyFile,'-out',certFile,'-days','1','-subj','/CN=localhost','-addext','subjectAltName=IP:127.0.0.1,DNS:localhost'],{stdio:'ignore'});
   chmodSync(keyFile,0o600); chmodSync(certFile,0o600);
   const {server,scheme} = selectServerTransport({mode:'https',certFile,keyFile,production:true,accessEnabled:true},handler);
   assert.equal(scheme,'https');
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(()=>server.close());
   const response = await new Promise((resolve,reject)=>{
-    https.get({hostname:'127.0.0.1',port:server.address().port,path:'/',rejectUnauthorized:false},res=>{
+    https.get({hostname:'127.0.0.1',port:server.address().port,path:'/',ca:readFileSync(certFile)},res=>{
       let data='';res.on('data',c=>data+=c);res.on('end',()=>resolve({status:res.statusCode,data}));
     }).on('error',reject);
   });

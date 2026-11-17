@@ -1,0 +1,10 @@
+✔ every legacy candidate has an explicit disposition, surviving source and current authority (2.24314ms)
+✔ production modules cannot silently import retired standalone candidate authorities (206.011167ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 873.292937

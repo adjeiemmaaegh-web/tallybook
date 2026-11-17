@@ -4,7 +4,7 @@ name: Security code audit
 # Produces GitHub code-scanning findings; never deploys or touches customer data.
 on:
   push:
-    branches: [main]
+    branches: [main, codex/road-to-complete-security-triage]
   pull_request:
   workflow_dispatch:
 
@@ -29,3 +29,88 @@ jobs:
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: /language:javascript-typescript
+          output: artifacts/release-v19/codeql-results
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Reject high, critical or unclassified security findings
+        run: node scripts/check-codeql-sarif.mjs artifacts/release-v19/codeql-results
+      - name: Retain CodeQL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-codeql-${{ github.run_id }}
+          path: artifacts/release-v19/codeql-results/**
+          retention-days: 14
+
+  security-regressions:
+    name: Descriptor and verified TLS regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: corepack enable && corepack prepare pnpm@10.34.0 --activate
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm test --maxWorkers=1 src/features/business/run11ReturnPolicyIntegration.test.ts src/features/inventory/catalogCsv.test.ts src/features/sync/syncFoundation.integration.test.ts src/features/sync/reconciliation.integration.test.ts
+      - run: pnpm check
+      - run: node --check scripts/stage21-run-developer-qa.mjs && node --test qa/secret-findings-triage.test.mjs qa/bounded-evidence-file.test.mjs server/tests/syncHttps.test.mjs server/tests/apiRateLimit.test.mjs
+
+  secrets:
+    name: Redacted full-history secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Fetch and verify pinned scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release-v19/security-tools
+          curl --fail --silent --show-error --location --max-time 60 https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o artifacts/release-v19/security-tools/gitleaks.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  artifacts/release-v19/security-tools/gitleaks.tar.gz' | sha256sum --check -
+          tar -xzf artifacts/release-v19/security-tools/gitleaks.tar.gz -C artifacts/release-v19/security-tools gitleaks
+          artifacts/release-v19/security-tools/gitleaks version
+      - name: Scan history; verify known nonsecrets and reject every unclassified finding
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          report=$(mktemp)
+          scanner_log=$(mktemp)
+          trap 'rm -f "$report" "$scanner_log"' EXIT
+          printf '[extend]\nuseDefault = true\n' > artifacts/release-v19/security-tools/default.toml
+          touch artifacts/release-v19/security-tools/empty-ignore
+          git rev-list --all --count > artifacts/release-v19/scanned-commit-count.txt
+          git for-each-ref --format='%(refname)' refs/remotes > artifacts/release-v19/scanned-refs.txt
+          set +e
+          artifacts/release-v19/security-tools/gitleaks git . --config artifacts/release-v19/security-tools/default.toml --gitleaks-ignore-path artifacts/release-v19/security-tools/empty-ignore --log-opts='--all --full-history' --ignore-gitleaks-allow --max-archive-depth=1 --max-target-megabytes=20 --timeout=180 --report-format=json --report-path="$report" --no-banner --no-color > "$scanner_log" 2>&1
+          scan_status=$?
+          set -e
+          if [ "$scan_status" -gt 1 ]; then
+            echo 'Secret scanner failed; raw diagnostic output withheld.'
+            exit "$scan_status"
+          fi
+          node scripts/triage-secret-findings.mjs "$report" artifacts/release-v19/gitleaks-redacted.json
+      - name: Retain redacted scan evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-secret-scan-${{ github.run_id }}
+          path: |
+            artifacts/release-v19/gitleaks-redacted.json
+            artifacts/release-v19/scanned-commit-count.txt
+            artifacts/release-v19/scanned-refs.txt
+          retention-days: 14

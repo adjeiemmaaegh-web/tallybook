@@ -1,0 +1,13 @@
+{
+  "decision": "NO-GO",
+  "taskCount": 119,
+  "errors": [],
+  "totals": {
+    "unreviewed": 106,
+    "verified": 0,
+    "implemented-pending-acceptance": 0,
+    "partial": 11,
+    "missing": 0,
+    "owner-external-blocked": 2
+  }
+}

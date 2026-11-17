@@ -281,7 +281,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if(input.commerceOrderId){
       if(!linkedOrder||linkedOrder.businessProfileId!==activeId||linkedOrder.saleId||
         linkedOrder.status!=="reserved"||linkedOrder.storeId!==input.storeId||
-        !linkedOrder.reservationExpiresAt||Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
+        !linkedOrder.reservationExpiresAt||!Number.isFinite(Date.parse(linkedOrder.reservationExpiresAt))||
+        Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
         throw new Error("Commerce reservation is invalid, expired, already sold, or assigned to another store.");
       const savedLineMap=new Map(linkedOrder.lines.map(line=>[line.productId,line.quantity]));
       if(savedLineMap.size!==requestedLines.length ||
@@ -465,6 +466,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       const batches = (await database.inventoryBatches.where("productId").equals(product.id).toArray())
         .filter(batch => batch.businessProfileId === activeId);
       if (!batches.length) continue;
+      if (storeMode) throw new Error("Store-specific batch provenance must be reconciled before selling tracked stock.");
       const tracked = batches.reduce((sum, batch) => sum + batch.quantity, 0);
       if (tracked !== product.stockQuantity) throw new Error(`Batch quantities for ${product.name} do not reconcile with stock. Reconcile before selling.`);
       const sorted = batches.sort((a, b) => (a.expiryDate ?? "9999-12-31").localeCompare(b.expiryDate ?? "9999-12-31") || a.createdAt.localeCompare(b.createdAt));

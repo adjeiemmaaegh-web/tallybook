@@ -6,6 +6,13 @@ import type { ShopReceipt } from "./shopClient";
  * sent on WhatsApp. It only restates what the server recorded; nothing here
  * recalculates money.
  */
+export function shopReceiptProviderStatus(receipt:ShopReceipt):string|undefined {
+  const tenders=receipt.tenders??[];
+  const external=tenders.length?tenders.some(t=>t.method==='mobile'||t.method==='card')
+    :receipt.payment.method==='mobile'||receipt.payment.method==='card';
+  return external?'Manually recorded tender; bank or payment-provider settlement is not verified.':undefined;
+}
+
 export function formatShopReceiptText(receipt: ShopReceipt, locale?: string): string {
   const money = (minor: number) => formatMinorAmount(minor, receipt.currency);
   const when = new Date(receipt.recordedAt);
@@ -31,6 +38,8 @@ export function formatShopReceiptText(receipt: ShopReceipt, locale?: string): st
     const label = p.method === "mobile" ? "Mobile money" : p.method === "card" ? "Card" : p.method === "credit" ? "On credit" : "Cash";
     lines.push(`${label}: ${money(p.amountDueMinor)}${p.method === "mobile" && p.reference ? ` (ref ${p.reference})` : ""}`);
   }
+  const providerStatus=shopReceiptProviderStatus(receipt);
+  if(providerStatus)lines.push(providerStatus);
   if (receipt.payment.changeMinor > 0) lines.push(`Change: ${money(receipt.payment.changeMinor)}`);
   if (receipt.customer) lines.push(`Customer: ${receipt.customer.name} — now owes ${money(receipt.customer.balanceMinor)}`);
 

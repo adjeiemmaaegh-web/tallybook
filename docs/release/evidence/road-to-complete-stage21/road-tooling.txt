@@ -1,0 +1,14 @@
+✔ ancestry, cherry-picked patch and genuinely unique work stay distinct (101.701253ms)
+✔ preserves all 119 requirements with stable ordered IDs and original audit statuses (1.787513ms)
+✔ rejects deleted and unparseable requirements instead of silently losing scope (0.603305ms)
+✔ rejects missing, duplicate, altered and invented task records (0.666889ms)
+✔ passing subset cannot certify an unverified or blocked task (1.36172ms)
+✔ checked roadmap and owner-blocked status require corresponding evidence (3.7125ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185.933339

@@ -51,6 +51,7 @@ jobs:
             pnpm --version
             git status --short
             node scripts/stage21-baseline-audit.mjs --sha "${GITHUB_SHA}"
+            node scripts/road-to-complete-register.mjs
           } 2>&1 | tee artifacts/release-v19/stage21-preflight.log
       - name: Install frozen dependencies
         id: install
@@ -130,6 +131,24 @@ jobs:
         run: |
           set -o pipefail
           pnpm audit --audit-level moderate 2>&1 | tee artifacts/release-v19/dependencies-ci.log
+      - name: Freeze and repeat-build the development checkpoint
+        if: ${{ success() && steps.build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          node scripts/freeze-development-checkpoint.mjs --sha "${GITHUB_SHA}" --out artifacts/release-v19/checkpoint-first
+          pnpm build > artifacts/release-v19/rebuild-ci.log 2>&1
+          node scripts/freeze-development-checkpoint.mjs --sha "${GITHUB_SHA}" --out artifacts/release-v19/checkpoint-rebuilt
+          cmp artifacts/release-v19/checkpoint-first/manifest.json artifacts/release-v19/checkpoint-rebuilt/manifest.json
+          node scripts/freeze-development-checkpoint.mjs --verify artifacts/release-v19/checkpoint-rebuilt
+      - name: Retain frozen development package (NO-GO)
+        if: ${{ success() && steps.build.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-development-checkpoint-${{ github.sha }}
+          path: artifacts/release-v19/checkpoint-rebuilt/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Preserve development evidence even after failed tests
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,4 @@
+
+> business-app@1.0.0 check /workspace/scratch/f8a637cc20b7/tallybook-stage27
+> tsc --noEmit
+

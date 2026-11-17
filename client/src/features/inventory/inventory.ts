@@ -1,3 +1,5 @@
+import { currencyMinorDivisor } from "../business/currencies.ts";
+export { currencyMinorDivisor } from "../business/currencies.ts";
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
@@ -117,10 +119,6 @@ export type ProductFormValues = z.infer<typeof productFormSchema>;
 export type StockAdjustmentValues = z.infer<typeof stockAdjustmentSchema>;
 
 export function normalizeName(value: string) { return value.trim().replace(/\s+/g, " ").toLocaleLowerCase(); }
-
-export function currencyMinorDivisor(currency: string) {
-  return ["RWF", "TZS", "UGX"].includes(currency) ? 1 : 100;
-}
 
 export function normalizeMoneyInput(value: string) {
   const compact = value.trim().replace(/\s+/g, "");
