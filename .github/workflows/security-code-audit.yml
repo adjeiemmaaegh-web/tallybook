@@ -81,29 +81,27 @@ jobs:
           echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  artifacts/release-v19/security-tools/gitleaks.tar.gz' | sha256sum --check -
           tar -xzf artifacts/release-v19/security-tools/gitleaks.tar.gz -C artifacts/release-v19/security-tools gitleaks
           artifacts/release-v19/security-tools/gitleaks version
-      - name: Scan fetched history without exposing matched secrets
+      - name: Scan history and classify sanitized metadata without waiving findings
         shell: bash
         run: |
           set -euo pipefail
-          printf '[extend]\nuseDefault = true\n' > artifacts/release-v19/security-tools/default.toml
+          umask 077
+          report=$(mktemp)
+          scanner_log=$(mktemp)
+          trap 'rm -f "$report" "$scanner_log"' EXIT
+          printf '[extend]\\nuseDefault = true\\n' > artifacts/release-v19/security-tools/default.toml
           touch artifacts/release-v19/security-tools/empty-ignore
           git rev-list --all --count > artifacts/release-v19/scanned-commit-count.txt
           git for-each-ref --format='%(refname)' refs/remotes > artifacts/release-v19/scanned-refs.txt
-          artifacts/release-v19/security-tools/gitleaks git . --config artifacts/release-v19/security-tools/default.toml --gitleaks-ignore-path artifacts/release-v19/security-tools/empty-ignore --log-opts='--all --full-history' --redact=100 --ignore-gitleaks-allow --max-archive-depth=1 --max-target-megabytes=20 --timeout=180 --report-format=json --report-path=artifacts/release-v19/gitleaks-raw-redacted.json --no-banner --no-color
-      - name: Minimize retained secret-scan metadata
-        if: always()
-        shell: bash
-        run: |
-          node --input-type=module <<'NODE'
-          import {readFileSync,writeFileSync} from 'node:fs';
-          const input=JSON.parse(readFileSync('artifacts/release-v19/gitleaks-raw-redacted.json','utf8'));
-          if(!Array.isArray(input))throw Error('Scanner did not produce a valid result');
-          const findings=input.map(row=>({ruleId:row.RuleID,file:row.File,line:row.StartLine,commit:row.Commit,fingerprint:row.Fingerprint}));
-          writeFileSync('artifacts/release-v19/gitleaks-redacted.json',JSON.stringify({findings},null,2)+'\n');
-          const groups=new Map();
-          for(const row of findings){const key=JSON.stringify([row.ruleId,row.file]);const group=groups.get(key)??{ruleId:row.ruleId,file:row.file,count:0,lines:[],sampleCommits:[]};group.count++;if(!group.lines.includes(row.line)&&group.lines.length<12)group.lines.push(row.line);if(!group.sampleCommits.includes(row.commit)&&group.sampleCommits.length<3)group.sampleCommits.push(row.commit);groups.set(key,group);}
-          console.log(JSON.stringify({findings:findings.length,redacted:true,rawMatchesRetained:false,groups:[...groups.values()]},null,2));
-          NODE
+          set +e
+          artifacts/release-v19/security-tools/gitleaks git . --config artifacts/release-v19/security-tools/default.toml --gitleaks-ignore-path artifacts/release-v19/security-tools/empty-ignore --log-opts='--all --full-history' --ignore-gitleaks-allow --max-archive-depth=1 --max-target-megabytes=20 --timeout=180 --report-format=json --report-path="$report" --no-banner --no-color > "$scanner_log" 2>&1
+          scan_status=$?
+          set -e
+          if [ "$scan_status" -gt 1 ]; then
+            echo 'Secret scanner failed; raw diagnostic output withheld.'
+            exit "$scan_status"
+          fi
+          node scripts/triage-secret-findings.mjs "$report" artifacts/release-v19/gitleaks-redacted.json
       - name: Retain redacted scan evidence
         if: always()
         uses: actions/upload-artifact@v4
