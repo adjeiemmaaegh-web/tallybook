@@ -1294,17 +1294,43 @@
       "requirement": "Independently audit every reachable SECURITY DEFINER operation, including 11 authenticated-executable warnings and intentionally anonymous guest-order endpoint.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "per-action session, role, owner, store, tenant and input negative tests.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
-        "client/src/features/staff/staff.ts"
+        "supabase/migrations/20261117052213_business_type_active_session.sql",
+        "qa/cloud-business-type-session.test.mjs",
+        "qa/rpc-catalog-negative.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect postgresql rpc security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical tallybook_active_session_proof (including locked auth.sessions row), owner membership and invoker wrapper."
+      ],
+      "changes": [
+        "Reproduced revoked/forged-session classification mutation in isolated PostgreSQL before fix.",
+        "New additive migration enforces canonical active proof at the private write boundary, preserving existing data and API.",
+        "Audited 17 public privileged signatures, 68 invalid catalog calls plus 8 invoker-delegate calls, and zero side effects across 59 business tables.",
+        "Forward-only rollback refuses to restore the authorization bypass."
+      ],
+      "tests": [
+        {
+          "command": "node --test qa/cloud-business-type-session.test.mjs qa/rpc-catalog-negative.test.mjs qa/cloud-business-type-policy.test.mjs qa/company-creation-active-session.test.mjs qa/migration-rollbacks.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage25-session-after.txt"
+        },
+        {
+          "command": "node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/final-native.txt"
+        }
+      ],
+      "blockers": [
+        "The production function metadata lacks the active proof/session check; the fix is source-only and requires separately approved rollout.",
+        "This catalog-level probe supplements but does not replace every action/role/tenant negative test."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage25-session-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage25-session-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json"
+      ],
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-02",
@@ -1314,7 +1340,7 @@
       "requirement": "Test real Supabase signup, confirmation, login, recovery, expiration, revocation and membership with independent owner/attendant accounts.",
       "initialAuditStatus": "Unverified end-to-end",
       "completionCriterion": "successful authorized flows and server-enforced negative cases.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1322,9 +1348,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Real owner/attendant Auth/signup/recovery/expired/revoked flows need isolated real accounts and field evidence; current checks simulate claims in disposable PostgreSQL."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect real authentication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Retain the acceptance/owner gate and continue safe source engineering."
     },
     {
       "id": "ST25-03",
@@ -1334,7 +1362,7 @@
       "requirement": "Decide whether strict accounts apply to a new online-only release or existing standalone offline product.",
       "initialAuditStatus": "Blocked by owner decision",
       "completionCriterion": "explicit policy and fail-closed mode without silently destroying offline use.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1342,9 +1370,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Owner policy decision on strict online accounts vs standalone remains open; no online-only requirement imposed."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect mandatory online account policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Retain the acceptance/owner gate and continue safe source engineering."
     },
     {
       "id": "ST25-04",
@@ -1354,7 +1384,7 @@
       "requirement": "Verify every write-service permission, role change, company/store switch and session-revocation race.",
       "initialAuditStatus": "Implemented but not comprehensively verified",
       "completionCriterion": "no UI-only or stale-role mutation bypass.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1362,9 +1392,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect staff permission boundaries against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-05",
@@ -1374,7 +1406,7 @@
       "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1382,9 +1414,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect shared-shop shifts — issue #68 against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-06",
@@ -1394,7 +1428,7 @@
       "requirement": "Verify activity chronology, server/device timestamps, historical identities, stock differences and investigation review.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "permission-filtered evidence without accusations or fabricated time.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1402,9 +1436,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect owner employee audit against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-07",
@@ -1414,7 +1450,7 @@
       "requirement": "Test PIN changes, lockouts, revocation, supervisor approval, WebAuthn and per-company unlock.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "stale credentials and cross-company unlock rejected.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1422,9 +1458,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect local staff authentication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-08",
@@ -1434,7 +1472,7 @@
       "requirement": "Verify invitations, join codes, expiry, cancellation, repeated attempts, removal, ownership recovery and configured OAuth.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "correct least-privilege membership.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1442,9 +1480,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect business & employee onboarding against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
       "id": "ST25-09",
@@ -1454,7 +1494,7 @@
       "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
       "initialAuditStatus": "Real-device unverified",
       "completionCriterion": "original cashier, queue scope and receipt preserved.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
         "client/src/features/staff/staff.ts"
@@ -1462,9 +1502,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Actual shared-phone and simultaneous-tab handover remains owner/device acceptance; headless tests are not physical evidence."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect shared-device handover against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Retain the acceptance/owner gate and continue safe source engineering."
     },
     {
       "id": "ST26-01",
@@ -2859,5 +2901,5 @@
     "browser": "blocked: invalid Chromium download",
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
   },
-  "activeEngineeringStage": 25
+  "activeEngineeringStage": 26
 }

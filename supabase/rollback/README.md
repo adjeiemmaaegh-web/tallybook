@@ -1,5 +1,8 @@
 # Rolling migrations back
 
+**17 November development branch:** `20261117052213_business_type_active_session.sql` is a new, isolated-test-verified authorization repair and is **not applied to production**. It preserves the public invoker API while checking the canonical active-session proof before owner classification writes. The rollback script intentionally refuses to restore the revoked-session bypass; use a reviewed forward corrective migration. Hosted migration history was read-only checked at 37 entries; the development source now has 38. All earlier dated hosted status below remains historical.
+
+
 Each migration from `20261106120000` onward has a matching `*_down.sql` here.
 
 **Order matters: run rollbacks newest first.** Each one restores the state its migration found, so they only fit together in reverse order:
