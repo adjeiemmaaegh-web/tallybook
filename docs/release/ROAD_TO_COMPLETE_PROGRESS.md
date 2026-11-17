@@ -1,35 +1,160 @@
-# Road to Complete — live engineering progress
+# Road to Complete — current engineering progress
 
-17 November 2026. **NO-GO. Engineering increments through Stage 28; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
+17 November 2026. **NO-GO. Source increments cover Stages 21–32, but no entire stage is certified complete.** All 119 governing requirements remain intact. Only ST21-06 is verified and checked.
 
-Source baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development source: `334f2beaa5c2c52b3864e7069a0d4de115746b1d`, tree `7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58`, in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). Each published stage tree equals its local reviewed tree; [commit mapping](evidence/road-to-complete-continuation/commit-map.json). No main merge or deployment.
+Main baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development is reviewable in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). No main merge, production deployment, hosted SQL write, authentication-policy change or real payment was performed.
 
-The [task register](ROAD_TO_COMPLETE_PROGRESS.json) records exact requirements, priority, original audit status, implementation, tests, evidence and remaining work for all 119 IDs. Current dispositions:
+The [JSON register](ROAD_TO_COMPLETE_PROGRESS.json) is the detailed task-level record, including priority, original audit status, reused source, changes, tests, blockers and next actions. Its dispositions are initial source findings, not completion statistics.
 
 | Disposition | Tasks |
 | --- | ---: |
 | Fully verified criterion | 1 |
 | Implemented pending formal acceptance | 0 |
-| Partial | 50 |
-| Confirmed missing engineering | 4 |
-| Owner/external blocked | 9 |
-| Not yet behaviorally reconciled | 55 |
+| Partial | 93 |
+| Missing engineering | 4 |
+| Owner/external blocked | 21 |
+| Unreviewed | 0 |
+| Total | 119 |
 
-Unreviewed does not mean absent. Partial does not mean completed. Whole active-ledger encryption and durable real-provider settlement/refund architecture are missing engineering, not merely hardware/provider acceptance gates. The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still require current behavioral dispositions.
+The [143 historical acceptance IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still need full current behavioral closure. General customer/credit/wallet/mixed-tender partial refunds, active-ledger encryption, durable real-provider settlement and complete financial replication are among open engineering requirements. Optional-scope decisions and real-device/provider/owner acceptance remain explicit, not silently removed.
 
-Working changes preserve the two operating models: canonical standalone IndexedDB services and server-authorized shared-shop PostgreSQL. Selected divergent work adds device-local stock allocation and atomic transfers; it does not enable distributed inventory. Financial export correctness, independent ledger conservation, reservation evidence, recovery coordination, active SQL sessions and exact sync acknowledgements now have additional regression coverage. See the [stage delivery evidence](ROAD_TO_COMPLETE_CONTINUATION.md).
+## Evidence
 
-Latest Stage 27 complete native/server run: **1,177 passed, zero failed/skipped**. Six focused client files/44 tests pass. Strict TypeScript and production build pass on Node 24.19.0/pnpm 10.34.0. The frozen Stage 26 source passed **232 client files/1,849 tests** and all six hosted workflows (release, Edge/WebKit, UI, integrated references, security and Clementia); prior source results remain separately labelled. Local browser acquisition failed; actual hardware, provider, real Auth and field acceptance are not inferred from mocks.
+- [Canonical repairs and nine-task reconciliation](ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md).
+- [Security fixes and development checkpoint](ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md).
+- [Pre-outage stage delivery evidence and commit mapping](ROAD_TO_COMPLETE_CONTINUATION.md).
+- [Workspace interruption, source reconstruction and limitations](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md).
 
-Fresh read-only hosted metadata confirms 37 applied migrations and 47 RLS-protected shop tables with no direct anon/authenticated table grants. The new development migrations (38th and 39th source migrations) close business-classification session-proof and equal-total guest repricing bypasses in isolated PostgreSQL tests; **it has not been applied to production**. The owner-controlled leaked-password protection warning remains open.
+Observed complete release validation at `10355725d814dd04422debe717c2903435ab4a0a`: 1,193 native and 1,896 client tests, strict types, production build, 30 Chromium checks and dependency audit passed. Later security triage removed all 12 High CodeQL findings and source-verified 632 historical noncredential matches; every unknown match remains a failing gate. Security source `b35ebe555e226f9f4b2cffc1a37c5f30d14a23ac` passed all three security jobs.
 
-Next engineering: Stage 28 recorded-versus-provider payment evidence and provider readiness; unresolved earlier criteria remain open. Earlier partial requirements remain open, including broader finance invariants, partial transfers, store batch provenance, full ledger encryption and full financial replication. Subsequent provider adapters, automation, UX, security and frozen release acceptance are not declared complete.
+The latest source additionally repairs owner-policy, EOF import and local sync/quarantine boundaries and prepares a repeat-build web/schema development artifact with exact source hashes and an explicit NO-GO manifest. These latest changes require fresh integrated CI; prior results are not relabelled. Same-environment repeated builds do not establish independent-machine, physical-device or final release acceptance.
 
-No production data/configuration/auth policy was changed, no real payment was initiated, and no protected history or branch was deleted. Production migration, deployment, physical acceptance and owner signoff remain separately gated.
+Hosted metadata remains read-only: 37 migrations, 47 RLS-protected shop tables, zero direct anon/authenticated table grants. Development migrations 38/39 are unapplied. Leaked-password protection remains disabled and owner-gated.
 
+## All 119 dispositions
 
-Recovery checkpoint: the execution workspace became unavailable after additional local work. Stage29 scheduling source is being reconstructed through GitHub; its fresh CI remains pending. Prior local results are explicitly separate from recovered-source acceptance. See [recovery evidence](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md). No complete-stage or production-readiness claim.
+Each ID retains its original order in the [governing checklist](../../road-to-complete.md). Detailed evidence and remaining work are in the corresponding JSON row.
 
-Stage30 chart/currency/accessibility source has been recovered. Tests and optional-scope limitations remain separately labelled in the recovery checkpoint; new hosted verification is pending.
+| ID | Priority | Requirement | Current disposition |
+| --- | --- | --- | --- |
+| ST21-01 | CRITICAL | Release Baseline | partial |
+| ST21-02 | HIGH | Requirements Traceability | partial |
+| ST21-03 | HIGH | Repository Architecture | partial |
+| ST21-04 | HIGH | GitHub Branches | partial |
+| ST21-05 | HIGH | Unmerged Engineering | partial |
+| ST21-06 | HIGH | Candidate Modules | verified |
+| ST21-07 | HIGH | PR #85 — Fresh-Start Release | owner-external-blocked |
+| ST21-08 | HIGH | Field Acceptance Documentation | partial |
+| ST21-09 | MEDIUM | Historical UI Branches | partial |
+| ST21-10 | MEDIUM | GitHub Issues & Milestones | partial |
+| ST21-11 | HIGH | Repository Governance | owner-external-blocked |
+| ST21-12 | MEDIUM | Dead Code & Test Placeholders | partial |
+| ST21-13 | HIGH | Independent Build Reproduction | partial |
+| ST22-01 | CRITICAL | Sales Ledger | partial |
+| ST22-02 | CRITICAL | Refunds & Reversals | partial |
+| ST22-03 | CRITICAL | Customer Receivables | partial |
+| ST22-04 | HIGH | Company Refund Policies | partial |
+| ST22-05 | HIGH | Supplier Accounting | partial |
+| ST22-06 | HIGH | FIFO, COGS & Historical Costing | partial |
+| ST22-07 | HIGH | Cash, Shifts & Accounts | partial |
+| ST22-08 | HIGH | Currency & Tax | partial |
+| ST22-09 | HIGH | Transactional Safety | partial |
+| ST22-10 | MEDIUM | Financial Reports & Exports | partial |
+| ST23-01 | CRITICAL | Stock Authority | partial |
+| ST23-02 | HIGH | Store Transfers | partial |
+| ST23-03 | HIGH | Batch Stocktaking | partial |
+| ST23-04 | HIGH | Purchasing | partial |
+| ST23-05 | HIGH | Product Catalogue | partial |
+| ST23-06 | HIGH | Historical Inventory | partial |
+| ST23-07 | HIGH | Store Authorization | partial |
+| ST23-08 | HIGH | Stock Concurrency | partial |
+| ST23-09 | MEDIUM | Inventory Scale | partial |
+| ST24-01 | CRITICAL | IndexedDB Migrations | partial |
+| ST24-02 | CRITICAL | Cross-Database Atomicity | partial |
+| ST24-03 | CRITICAL | Local Backup & Restore | partial |
+| ST24-04 | CRITICAL | Hosted Database Recovery | owner-external-blocked |
+| ST24-05 | HIGH | Device-Ledger Encryption | missing |
+| ST24-06 | HIGH | Encryption-Key Recovery | partial |
+| ST24-07 | HIGH | Multi-Tab & Storage Failure | partial |
+| ST24-08 | HIGH | Import & Backup Validation | partial |
+| ST24-09 | HIGH | Destructive Reset & Clear | owner-external-blocked |
+| ST25-01 | CRITICAL | PostgreSQL RPC Security | partial |
+| ST25-02 | CRITICAL | Real Authentication | owner-external-blocked |
+| ST25-03 | HIGH | Mandatory Online Account Policy | owner-external-blocked |
+| ST25-04 | HIGH | Staff Permission Boundaries | partial |
+| ST25-05 | HIGH | Shared-Shop Shifts — Issue #68 | partial |
+| ST25-06 | HIGH | Owner Employee Audit | partial |
+| ST25-07 | HIGH | Local Staff Authentication | partial |
+| ST25-08 | HIGH | Business & Employee Onboarding | partial |
+| ST25-09 | MEDIUM | Shared-Device Handover | owner-external-blocked |
+| ST26-01 | CRITICAL | Financial Replication | partial |
+| ST26-02 | CRITICAL | Device Enrollment & Trust | partial |
+| ST26-03 | CRITICAL | Offline Replay | partial |
+| ST26-04 | HIGH | Conflict Resolution | partial |
+| ST26-05 | HIGH | Central Management Reports | partial |
+| ST26-06 | HIGH | Offline Multi-Employee Operation | partial |
+| ST26-07 | HIGH | Alchemy Watchdog Contract | partial |
+| ST26-08 | HIGH | Watchdog Provenance | partial |
+| ST27-01 | CRITICAL | Complete Customer Ordering | partial |
+| ST27-02 | HIGH | Guest Order Security | partial |
+| ST27-03 | HIGH | Pricing & Quotations | partial |
+| ST27-04 | HIGH | Stock Reservations | partial |
+| ST27-05 | HIGH | Fulfillment | partial |
+| ST27-06 | HIGH | Commerce Refund Policy | partial |
+| ST27-07 | HIGH | Customer Privacy | partial |
+| ST27-08 | MEDIUM | Commerce Scope & Marketing | partial |
+| ST28-01 | CRITICAL | Provider Selection | owner-external-blocked |
+| ST28-02 | CRITICAL | Real Payment Adapter | missing |
+| ST28-03 | CRITICAL | Settlement Integrity | missing |
+| ST28-04 | HIGH | Refunds & Chargebacks | missing |
+| ST28-05 | HIGH | Payment Failure Testing | partial |
+| ST28-06 | HIGH | Manual Payment Separation | partial |
+| ST28-07 | MEDIUM | Provider Compliance | owner-external-blocked |
+| ST29-01 | HIGH | Clementia Task Coverage | partial |
+| ST29-02 | HIGH | Financial Intelligence | partial |
+| ST29-03 | HIGH | Permissioned Automation | partial |
+| ST29-04 | HIGH | Demand & Risk Insights | partial |
+| ST29-05 | HIGH | Telegram Integration | owner-external-blocked |
+| ST29-06 | HIGH | Assistant Write Safety | partial |
+| ST29-07 | MEDIUM | Language & Speech | partial |
+| ST29-08 | MEDIUM | Analytics Sharing | partial |
+| ST29-09 | MEDIUM | Assistant Isolation | partial |
+| ST30-01 | HIGH | All UI Entrypoints | partial |
+| ST30-02 | HIGH | Onboarding UX | partial |
+| ST30-03 | HIGH | Receipts & Scanning | partial |
+| ST30-04 | HIGH | PWA Lifecycle | partial |
+| ST30-05 | HIGH | Accessibility | partial |
+| ST30-06 | HIGH | Low-Spec Performance | partial |
+| ST30-07 | MEDIUM | Currencies & Business Types | partial |
+| ST30-08 | MEDIUM | Premium UI Proposal | partial |
+| ST30-09 | MEDIUM | Product Images | owner-external-blocked |
+| ST30-10 | MEDIUM | Loyalty | owner-external-blocked |
+| ST30-11 | MEDIUM | Bluetooth Printing | owner-external-blocked |
+| ST30-12 | MEDIUM | App-Store Packaging | owner-external-blocked |
+| ST30-13 | MEDIUM | Apple Sign-In | owner-external-blocked |
+| ST30-14 | MEDIUM | Marketing, Help & Packaging | partial |
+| ST31-01 | CRITICAL | Supabase Password Security | owner-external-blocked |
+| ST31-02 | HIGH | Content Security Policy | partial |
+| ST31-03 | HIGH | Independent Security Testing | partial |
+| ST31-04 | HIGH | Security Tool Findings | partial |
+| ST31-05 | HIGH | Data Privacy | partial |
+| ST31-06 | HIGH | Environment Configuration | partial |
+| ST31-07 | HIGH | Operational Monitoring | partial |
+| ST31-08 | HIGH | Backup Operations | partial |
+| ST31-09 | HIGH | Legacy Client Security | partial |
+| ST31-10 | MEDIUM | Licensing & Distribution | partial |
+| ST32-01 | CRITICAL | Frozen Release Candidate | partial |
+| ST32-02 | CRITICAL | Complete Regression | partial |
+| ST32-03 | CRITICAL | Two-Account Field Acceptance | owner-external-blocked |
+| ST32-04 | CRITICAL | Disaster-Recovery Acceptance | owner-external-blocked |
+| ST32-05 | CRITICAL | Final Financial & Security Certification | partial |
+| ST32-06 | HIGH | Cross-Browser Matrix | owner-external-blocked |
+| ST32-07 | HIGH | Real Hardware Acceptance | owner-external-blocked |
+| ST32-08 | HIGH | Production-Scale Performance | partial |
+| ST32-09 | HIGH | Reference & Requirement Signoff | partial |
+| ST32-10 | HIGH | GitHub Integration Closure | partial |
+| ST32-11 | HIGH | Final Distribution Package | partial |
+| ST32-12 | HIGH | Owner UAT & Handoff | owner-external-blocked |
+| ST32-13 | HIGH | Final GO/NO-GO | partial |
 
-Stage31 security/reliability source has been reconstructed, with streaming caps, original-unlock checks, nonzero startup failure, and fresh CodeQL-severity/redacted-secret-scan gates. The complete recovered tree and added gates require hosted verification. The interrupted local full regression/secret scan has no observed result.
+No source test, artifact hash or CI success grants owner acceptance or production authorization.

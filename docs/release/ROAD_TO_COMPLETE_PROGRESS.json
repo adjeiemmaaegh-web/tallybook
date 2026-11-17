@@ -471,18 +471,33 @@
       "requirement": "Verify full and partial returns across cash, credit, wallet and mixed tender histories, including refund disbursement, original-sale linkage, duplicate prevention, inventory restoration and cost conservation.",
       "initialAuditStatus": "Partially implemented/verified",
       "completionCriterion": "authorized refunds post exactly once with complete reversal evidence.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sales/sales.ts",
-        "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/sales/cashPartialReturnPosting.test.ts",
+        "client/src/features/assistant/reversals.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect refunds & reversals against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused canonical full reversal and atomic cash-only partial-return posting with original receipt, FIFO restoration, policy evidence, duplicate refusal and multi-ledger regression coverage."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Cash-only partial returns explicitly reject customer-linked, credit, wallet, loyalty, mixed-tender, batch-owned and classified Ghana-tax cases; those required dispositions are not a complete general refund workflow."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Cash-only partial returns explicitly reject customer-linked, credit, wallet, loyalty, mixed-tender, batch-owned and classified Ghana-tax cases; those required dispositions are not a complete general refund workflow."
     },
     {
       "id": "ST22-03",
@@ -525,18 +540,34 @@
       "requirement": "Verify per-company opt-in/opt-out refund model, sale-time policy snapshots, current restrictions and staff approvals.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "differing company policies produce correct results without rewriting history.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sales/sales.ts",
-        "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/business/returnPolicy.mjs",
+        "client/src/features/business/returnPolicySettings.ts",
+        "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+        "qa/shared-shop-refund-policy.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect company refund policies against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused default-deny append-only company policies and original-sale/current policy intersection. Reproduced then repaired mutable approval terms and commits after owner lock; added original-unlock-generation checks."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "New guards and full policy cross-model acceptance require final integrated CI and field authorization evidence."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "New guards and full policy cross-model acceptance require final integrated CI and field authorization evidence."
     },
     {
       "id": "ST22-05",
@@ -645,18 +676,34 @@
       "requirement": "Test monetary limits, decimal rounding, tax snapshots, unsupported currencies, legacy currency evidence and jurisdiction-specific configuration.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "deterministic arithmetic and rejection of unsupported financial assumptions.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sales/sales.ts",
-        "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/sales/tax.ts",
+        "client/src/features/sales/tax.test.ts",
+        "client/src/features/sales/ghanaVat.mjs",
+        "client/src/features/reports/run12RecordedTaxConservation.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect currency & tax against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused integer/BigInt half-up single-rate calculations, classified opt-in tax, immutable snapshots, stale-review denial, transaction rollback and backup/report reconciliation tests. Preserved currency-specific divisors."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Jurisdiction/registration certification, historical unsupported-currency provenance and complete corresponding partial-refund behavior remain open; code is not tax-invoice certification."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Jurisdiction/registration certification, historical unsupported-currency provenance and complete corresponding partial-refund behavior remain open; code is not tax-invoice certification."
     },
     {
       "id": "ST22-09",
@@ -819,17 +866,35 @@
       "requirement": "Complete acceptance for batch stocktake, including stale quantities, simultaneous counts, review, adjustment history and failed submissions.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "counts and applied movements remain consistent under concurrency.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/cloud/shopBatchStocktake.ts",
+        "client/src/cloud/shopBatchStocktake.test.ts",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "supabase/migrations/20261115070000_shop_stocktake_batch_sessions.sql",
+        "client/src/features/inventory/advancedInventory.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect batch stocktaking against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused bounded 2–50-product shared-shop batches with canonical sorted counts, atomic PostgreSQL apply, stale count rejection, owner-only access and populated rollback guard; local recount rejects stale quantities and unsupported batch/store ownership."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Independent simultaneous count/employee field acceptance and historical adjustment review are not fully demonstrated; local and cloud stocktaking remain distinct."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Independent simultaneous count/employee field acceptance and historical adjustment review are not fully demonstrated; local and cloud stocktaking remain distinct."
     },
     {
       "id": "ST23-04",
@@ -878,17 +943,36 @@
       "requirement": "Validate product variants, SKUs, barcodes, units, wholesale pricing, service items, expiry and active/inactive transitions.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "every supported product type works across purchase, checkout, stock and reports.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "client/src/features/inventory/catalogCsv.ts",
+        "client/src/features/inventory/catalogCsv.test.ts",
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/inventory/stage2Inventory.test.ts",
+        "client/src/cloud/shopVariants.ts",
+        "qa/shop-variants-policy.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect product catalogue against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused variant RPCs, identifier validation, whole-unit pack conversion, wholesale thresholds and explicit service-item handling. Fixed the catalogue EOF loophole that accepted 10,001 rows without a final newline."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "End-to-end supported product/variant/unit/expiry/archive behavior across both operating models still needs complete acceptance; existence of isolated conversion tests is insufficient."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "End-to-end supported product/variant/unit/expiry/archive behavior across both operating models still needs complete acceptance; existence of isolated conversion tests is insufficient."
     },
     {
       "id": "ST23-06",
@@ -1015,17 +1099,33 @@
       "requirement": "Verify search, stocktake, purchasing and transfers with thousands of products and long histories.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "approved performance/memory thresholds without missing or duplicated results.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/inventory/inventory.ts",
-        "client/src/features/purchases/purchases.ts"
+        "scripts/stage12-performance-check.mjs",
+        "qa/performance-browser.spec.mjs",
+        "client/src/features/inventory/catalogCsv.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect inventory scale against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused measured navigation-shell browser performance and bounded catalogue parser. New 10,000-row preview checks validate the existing import boundary and prevent a trailing-newline bypass."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Shell timing and parser boundaries do not measure thousand-product purchasing/transfer/history workloads on low-resource physical hardware. Approved workload thresholds and scale evidence remain missing."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Shell timing and parser boundaries do not measure thousand-product purchasing/transfer/history workloads on low-resource physical hardware. Approved workload thresholds and scale evidence remain missing."
     },
     {
       "id": "ST24-01",
@@ -1633,17 +1733,33 @@
       "requirement": "Complete permissioned resolution for conflicting finance, inventory and ownership histories rather than auto-merging untrusted records.",
       "initialAuditStatus": "Incomplete",
       "completionCriterion": "explicit audited owner resolution/quarantine.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/sync/reconciliation.ts",
+        "client/src/features/sync/reconciliation.test.ts",
+        "client/src/features/sync/reconciliation.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect conflict resolution against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused metadata mismatch/operation-collision/unknown-event quarantine without remote ledger writes. Added coordinated recovery barriers, immutable claims, original-unlock checks and transaction interruption tests."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Permissioned audited owner resolution of actual finance, inventory and ownership conflicts is not implemented by metadata quarantine; that integration remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Permissioned audited owner resolution of actual finance, inventory and ownership conflicts is not implemented by metadata quarantine; that integration remains open."
     },
     {
       "id": "ST26-05",
@@ -1653,17 +1769,34 @@
       "requirement": "Validate multi-store sales, stock, receivables and staff reports from trusted central records.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "reconciled totals and properly scoped access.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/cloud/shopOperationalReports.ts",
+        "client/src/cloud/shopOperationalReports.test.ts",
+        "supabase/migrations/20261110150000_shop_daily_report.sql",
+        "supabase/migrations/20261111150000_shop_profit_report.sql"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect central management reports against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused authorized shared-shop reports, BigInt supplier totals and scoped exports with explicit loaded-page limits. Local store contribution reporting retains original store and unknown historical attribution."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Shared-shop cloud records and local device ledgers are not a completed combined trusted financial replication/reporting system. Central cross-product financial reconciliation remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Shared-shop cloud records and local device ledgers are not a completed combined trusted financial replication/reporting system. Central cross-product financial reconciliation remains open."
     },
     {
       "id": "ST26-06",
@@ -1673,17 +1806,34 @@
       "requirement": "Exercise separate devices submitting offline sales to one shop under revoked staff, stock contention and lost responses.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "correct accepted/rejected state and original attribution.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/sync/syncFoundation.ts",
+        "client/src/features/sync/syncFoundation.integration.test.ts",
+        "client/src/features/sync/outboxAcknowledgements.ts",
+        "client/src/cloud/shopSaleValidation.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect offline multi-employee operation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Reused durable local metadata queue, device trust, server-owned shared-shop posting and immutable matching receipts. Added input capture, same-owner unlock invalidation and rollback after final consent/queue write interruption."
+      ],
+      "changes": [
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Actual separate offline devices contending for one shop's stock under revoked staff and lost responses still require approved complete replication plus genuine device integration; metadata staging is not that feature."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+      ],
+      "nextAction": "Actual separate offline devices contending for one shop's stock under revoked staff and lost responses still require approved complete replication plus genuine device integration; metadata staging is not that feature."
     },
     {
       "id": "ST26-07",
@@ -4164,5 +4314,11 @@
       "Full-history Gitleaks scan",
       "Startup-guard post-fix test"
     ]
+  },
+  "reconciliationCheckpoint": {
+    "date": "2026-11-17",
+    "all119HaveSourceBackedDisposition": true,
+    "fullyCompletedTasks": 1,
+    "doesNotMean119Completed": true
   }
 }
