@@ -190,4 +190,25 @@ describe('Run 11 company return policy database and posting protection',()=>{
   // This keeps historical money visible; it does NOT grant entitlement to
   // issue another refund without the current and original policy snapshots.
  });
+
+ it('policy approval captures the original terms before asynchronous database work',async()=>{
+  const {db}=await fixture();
+  const approved={...allowBoth};
+  const pending=updateCompanyReturnPolicy(approved,'Owner approved a 30-day return window',db);
+  approved.maxAgeDays=365;
+  const result=await pending;
+  expect(result.maxAgeDays).toBe(30);
+  expect((await db.businessProfiles.get('primary'))?.returnPolicyHistory?.[0].maxAgeDays).toBe(30);
+ });
+ it('a staff lock during the audit write rolls back policy history and audit together',async()=>{
+  const {db}=await fixture(),profile=await db.businessProfiles.get('primary');
+  const before=await db.staffAudits.toArray(),add=db.staffAudits.add.bind(db.staffAudits);
+  vi.spyOn(db.staffAudits,'add').mockImplementationOnce(async row=>{
+   const id=await add(row);lockStaff('primary');return id;
+  });
+  await expect(updateCompanyReturnPolicy(allowBoth,'Interrupted owner approval',db))
+   .rejects.toThrow(/session changed/);
+  expect(await db.businessProfiles.get('primary')).toEqual(profile);
+  expect(await db.staffAudits.toArray()).toEqual(before);
+ });
 });
