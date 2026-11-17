@@ -54,7 +54,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: node --check scripts/stage21-run-developer-qa.mjs && node --test qa/bounded-evidence-file.test.mjs server/tests/syncHttps.test.mjs
+      - run: corepack enable && corepack prepare pnpm@10.34.0 --activate
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: node --check scripts/stage21-run-developer-qa.mjs && node --test qa/bounded-evidence-file.test.mjs server/tests/syncHttps.test.mjs server/tests/apiRateLimit.test.mjs
 
   secrets:
     name: Redacted full-history secret scan
@@ -112,21 +114,3 @@ jobs:
             artifacts/release-v19/scanned-commit-count.txt
             artifacts/release-v19/scanned-refs.txt
           retention-days: 14
-
-  dependency-lock-preparation:
-    name: Prepare reviewed rate-limiter lockfile delta
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-      - run: corepack enable && corepack prepare pnpm@10.34.0 --activate
-      - run: pnpm add express-rate-limit@8.7.4 --save-exact --lockfile-only --ignore-scripts
-      - name: Emit dependency-only review delta
-        run: git diff -- package.json pnpm-lock.yaml
