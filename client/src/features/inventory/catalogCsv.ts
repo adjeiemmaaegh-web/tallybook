@@ -33,6 +33,8 @@ export function parseCsvRecords(input: string): string[][] {
   }
   if (quoted) throw new Error("Unterminated quoted CSV field.");
   if (field !== "" || record.length || afterQuote) { record.push(field); records.push(record); }
+  // The EOF record must obey the same cap as newline-terminated records.
+  if (records.length > maxRows + 1) throw new Error("CSV import exceeds the 10,000 product limit.");
   return records;
 }
 

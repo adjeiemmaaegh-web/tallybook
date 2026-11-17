@@ -1,0 +1,188 @@
+{
+  "baseline": "5b2dfdc3b650a8b5fd014473b18d8d1ad8e4a539",
+  "decision": "Retire production integration of these legacy candidates; preserve source and historical tests. Underlying missing engineering is NOT deferred or completed.",
+  "modules": [
+    {
+      "candidate": "candidate_modules/batch1/financialReconciliation.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/reports/saleTenderReconciliation.mjs",
+      "remainingRequirement": "ST22-01",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch1/customerCreditLedger.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/credit/credit.ts",
+      "remainingRequirement": "ST22-03",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch1/partialRefundEngine.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sales/cashPartialReturn.mjs",
+      "remainingRequirement": "ST22-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch1/refundSettlement.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sales/cashPartialReturnPosting.ts",
+      "remainingRequirement": "ST22-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch1/supplierPayableSettlement.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/purchases/supplierPayables.ts",
+      "remainingRequirement": "ST22-05",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch1/walletReconciliation.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/customers/walletTransfers.ts",
+      "remainingRequirement": "ST22-03",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch2/inventoryReconciliation.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/inventory/costLedger.ts",
+      "remainingRequirement": "ST23-01",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch2/multiStoreStockControl.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/stores/storeStockLedger.ts",
+      "remainingRequirement": "ST23-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch2/companyIsolationGuard.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/business/companyScope.mjs",
+      "remainingRequirement": "ST25-04",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch2/staffAuthorizationAudit.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/staff/staff.ts",
+      "remainingRequirement": "ST25-04",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/databaseMigrationValidator.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/db/TallybookDB.ts",
+      "remainingRequirement": "ST24-01",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/backupRestoreValidator.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/backup/backup.ts",
+      "remainingRequirement": "ST24-03",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/crashRecoveryManager.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/backup/restoreRecovery.ts",
+      "remainingRequirement": "ST24-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/offlineSyncReconciliation.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sync/syncFoundation.ts",
+      "remainingRequirement": "ST26-03",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/financialReportsIntegration.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/reports/financialIntelligence.ts",
+      "remainingRequirement": "ST22-10",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch3/businessWorkflowIntegration.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sales/sales.ts",
+      "remainingRequirement": "ST32-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch4/staffTransactionAndDrawerEvents.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/drawer/noSaleEvent.ts",
+      "remainingRequirement": "ST25-05",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch4/watchdogCsvExport.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/integrations/watchdogCsvExport.ts",
+      "remainingRequirement": "ST26-07",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch4/crossShopAttendantReports.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/stores/run13StoreTransactionActivity.ts",
+      "remainingRequirement": "ST26-05",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch4/centralRetailSync.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sync/supabaseUploader.ts",
+      "remainingRequirement": "ST26-01",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/integrationRegression.test.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "qa/backend-stage-b-e.test.mjs",
+      "remainingRequirement": "ST32-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/financialIntegrity.test.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/sales/sales.test.ts",
+      "remainingRequirement": "ST22-09",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/securityIsolation.test.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/stores/storeAuthorization.test.ts",
+      "remainingRequirement": "ST25-04",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/backupRecovery.test.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "client/src/features/backup/restoreRecovery.test.ts",
+      "remainingRequirement": "ST24-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/crossBrowserAcceptance.spec.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": ".github/workflows/device-engines.yml",
+      "remainingRequirement": "ST32-06",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    },
+    {
+      "candidate": "candidate_modules/batch5/endToEndBusinessFlows.spec.ts",
+      "productionIntegrationDisposition": "retired-from-production-integration; preserve archival source and standalone contracts",
+      "authoritativeBoundary": "qa/browser-release.spec.mjs",
+      "remainingRequirement": "ST32-02",
+      "reason": "Read-only planner, illustrative checker or standalone scaffold; cannot replace the transactional/authorized application service. Existing authority is preserved; its full roadmap acceptance remains separate."
+    }
+  ]
+}

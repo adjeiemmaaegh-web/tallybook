@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({page}) => {
   page.on('pageerror', error => console.error(error.message));
-  await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
+  await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
 });
 
 test('a signed-out account page stays outside the ledger', async ({page}) => {

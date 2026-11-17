@@ -4,7 +4,7 @@
 import type { TallybookDB } from "@/db/TallybookDB";
 import { requirePermission } from "@/features/staff/staff";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
-import {currentStaffId} from "@/features/staff/staff";
+import {currentStaffId,currentStaffSessionGeneration} from "@/features/staff/staff";
 import {withCoordinatedRetailWrite} from "@/features/backup/coordinatedRetailWrite";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 
@@ -44,16 +44,16 @@ export function validateOutboxEvent(event: SyncOutboxEvent): void {
   if (event.status === "acknowledged" && !Number.isFinite(Date.parse(event.acknowledgedAt ?? ""))) throw new Error("Acknowledged event needs an acknowledgement timestamp.");
 }
 
-function activeScope(company:string,actor:string|null) {
- if(company!==getActiveBusinessProfileId()||!actor||actor!==currentStaffId(company))
+function activeScope(company:string,actor:string|null,generation:number) {
+ if(company!==getActiveBusinessProfileId()||!actor||actor!==currentStaffId(company)||currentStaffSessionGeneration(company)!==generation)
    throw Error("Company or unlocked staff session changed during local sync.");
 }
 /** Consent is scoped per company. Disabling leaves existing queued records untouched. */
 export async function setSyncConsent(database: TallybookDB, businessProfileId: string, enabled: boolean): Promise<SyncConsent> {
   requireId(businessProfileId, "business ID");
   if (typeof enabled !== "boolean") throw new Error("Invalid consent flag.");
-  const actor=currentStaffId(businessProfileId);
-  activeScope(businessProfileId,actor);
+  const actor=currentStaffId(businessProfileId),generation=currentStaffSessionGeneration(businessProfileId);
+  activeScope(businessProfileId,actor,generation);
   return withCoordinatedRetailWrite(()=>database.transaction("rw", [
     database.appMeta,database.businessProfiles,database.syncConsents,database.staffMembers
   ],async()=>{
@@ -62,17 +62,19 @@ export async function setSyncConsent(database: TallybookDB, businessProfileId: s
     if(staff?.id!==actor||staff.role!=="owner")throw Error("Only the unlocked owner may change company sync consent.");
     if(!(await database.businessProfiles.get(businessProfileId)))throw Error("Business not found.");
     const consent={businessProfileId,enabled,updatedAt:new Date().toISOString()};
-    activeScope(businessProfileId,actor);
+    activeScope(businessProfileId,actor,generation);
     await database.syncConsents.put(consent);
+    activeScope(businessProfileId,actor,generation);
     return consent;
   }));
 }
 
 export async function enqueueSyncEvent(database: TallybookDB, event: SyncOutboxEvent): Promise<void> {
+  event=structuredClone(event);
   validateOutboxEvent(event);
   if (event.status !== "pending" || event.acknowledgedAt) throw new Error("New events must be pending.");
-  const actor=currentStaffId(event.businessProfileId);
-  activeScope(event.businessProfileId,actor);
+  const actor=currentStaffId(event.businessProfileId),generation=currentStaffSessionGeneration(event.businessProfileId);
+  activeScope(event.businessProfileId,actor,generation);
   await withCoordinatedRetailWrite(()=>database.transaction("rw", [
     database.appMeta,database.businessProfiles,database.syncConsents,database.syncDevices,
     database.syncOutbox,database.staffMembers
@@ -87,19 +89,21 @@ export async function enqueueSyncEvent(database: TallybookDB, event: SyncOutboxE
     const previous = await database.syncOutbox.get(event.id);
     if (previous) {
       if (JSON.stringify(previous) !== JSON.stringify(event)) throw new Error("Event ID already used with different details.");
+      activeScope(event.businessProfileId,actor,generation);
       return;
     }
     const matching = await database.syncOutbox.where("[businessProfileId+operationId]").equals([event.businessProfileId, event.operationId]).first();
     if (matching) throw new Error("Operation already queued with a different event ID.");
-    activeScope(event.businessProfileId,actor);
+    activeScope(event.businessProfileId,actor,generation);
     await database.syncOutbox.add(event);
+    activeScope(event.businessProfileId,actor,generation);
   }));
 }
 
 export async function listPendingSyncEvents(database: TallybookDB, businessProfileId: string): Promise<SyncOutboxEvent[]> {
   requireId(businessProfileId, "business ID");
-  const actor=currentStaffId(businessProfileId);
-  activeScope(businessProfileId,actor);
+  const actor=currentStaffId(businessProfileId),generation=currentStaffSessionGeneration(businessProfileId);
+  activeScope(businessProfileId,actor,generation);
   return database.transaction("r",[
     database.appMeta,database.businessProfiles,database.syncConsents,
     database.staffMembers,database.syncOutbox
@@ -114,7 +118,7 @@ export async function listPendingSyncEvents(database: TallybookDB, businessProfi
       validateOutboxEvent(item);
       if(item.businessProfileId!==businessProfileId)throw Error("Foreign company outbox evidence.");
     }
-    activeScope(businessProfileId,actor);
+    activeScope(businessProfileId,actor,generation);
     return pending;
   });
 }

@@ -67,23 +67,26 @@ function one(id,cmd,args,timeout=900000){
  // Stream output directly to a private file: large native/browser suites
  // must not buffer tens of megabytes into Node RAM on low-spec Windows.
  const out=resolve(folder,id+".log");
- writeFileSync(out,[
+ const fd=openSync(out,"wx",0o600);
+ writeFileSync(fd,[
   "STAGE21 DEVELOPER VERIFICATION",id,
   "sha: "+head,"node: "+process.version,"package manager: "+manager,
   "command: "+cmd+" "+args.join(" "),"-- combined stdout and stderr --",""
  ].join("\n"),{encoding:"utf8",mode:0o600});
- const fd=openSync(out,"a",0o600);
  let result;
  try{
    result=spawnSync(cmd,args,{cwd:root,stdio:["ignore",fd,fd],timeout,
      shell:process.platform==="win32"&&/\.(?:cmd|bat)$/i.test(cmd)});
- }finally{closeSync(fd);}
- appendFileSync(out,[
+ }
+ finally {
+ appendFileSync(fd,[
   "","-- process result --",
-  "exit status: "+String(result.status),
-  "signal: "+String(result.signal??"none"),
-  "error: "+String(result.error?.message??"none"),""
+  "exit status: "+String(result?.status),
+  "signal: "+String(result?.signal??"none"),
+  "error: "+String(result?.error?.message??"none"),""
  ].join("\n"),{encoding:"utf8"});
+ closeSync(fd);
+ }
  const success=result.status===0&&!result.error;
  results.push({id,success,exitCode:result.status,error:result.error?.message??null,
    timeout:result.error?.code==="ETIMEDOUT"});

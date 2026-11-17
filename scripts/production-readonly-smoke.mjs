@@ -1,3 +1,4 @@
+import {readBoundedResponseBytes} from '../client/src/lib/boundedResponse.mjs';
 /** Unauthenticated public-site check. GET only: never reads tenant data or changes any setting. */
 import { pathToFileURL } from 'node:url';
 
@@ -21,7 +22,7 @@ export async function smoke({ baseURL='https://tallybook-eight.vercel.app', allo
     if(!types[type].test(mime)) throw Error('Wrong MIME at '+path);
     const length=Number(r.headers.get('content-length')||0);
     if(length>max) throw Error('Oversize at '+path);
-    const bytes=new Uint8Array(await r.arrayBuffer());
+    const bytes=await readBoundedResponseBytes(r,max,'public resource');
     if(!bytes.length || bytes.length>max) throw Error('Invalid size at '+path);
     checked.push(path);
     return {r,body:new TextDecoder().decode(bytes),bytes};

@@ -1,0 +1,13 @@
+✔ canonical Watchdog POS export preserves exact supported amounts and discloses exclusions (3.205285ms)
+✔ canonical export rejects unknown kinds, conflicting scope, and unsafe receipt text (1.213044ms)
+✔ cash refund is exact and an accounting void has no invented payout (0.720731ms)
+✔ Watchdog monetary exports preserve every supported ledger currency without rescaling whole units (3.76017ms)
+✔ unknown currency cannot silently inherit a monetary scale (0.37279ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.96096

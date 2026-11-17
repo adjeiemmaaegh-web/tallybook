@@ -1,7 +1,7 @@
 import {nanoid} from 'nanoid';
 import {db,type TallybookDB} from '@/db/TallybookDB';
 import {getActiveBusinessProfileId} from '@/features/business/activeCompany';
-import {requirePermission} from '@/features/staff/staff';
+import {requirePermission,currentStaffId,currentStaffSessionGeneration} from '@/features/staff/staff';
 import {withCoordinatedRetailWrite} from '@/features/backup/coordinatedRetailWrite';
 import {assertRun7RetailWriteReady} from '@/features/backup/run7RetailWriteBarrier.mjs';
 import {appendCompanyReturnPolicy,currentCompanyReturnPolicy,
@@ -14,10 +14,16 @@ import {appendCompanyReturnPolicy,currentCompanyReturnPolicy,
  */
 export async function updateCompanyReturnPolicy(settings:ReturnPolicySettings,
  reason:string,database:TallybookDB=db):Promise<ReturnPolicySnapshot>{
- const company=getActiveBusinessProfileId();
+ const company=getActiveBusinessProfileId(),staff=currentStaffId(company),generation=currentStaffSessionGeneration(company);
+ const approved={...settings};
+ const checkApproval=()=>{
+  if(getActiveBusinessProfileId()!==company||currentStaffId(company)!==staff||currentStaffSessionGeneration(company)!==generation)
+   throw new Error('Company or owner session changed during refund policy approval.');
+ };
  return withCoordinatedRetailWrite(()=>database.transaction('rw',[
   database.appMeta,database.businessProfiles,database.staffMembers,database.staffAudits
  ],async()=>{
+  checkApproval();
   await assertRun7RetailWriteReady(database.appMeta);
   const actor=await requirePermission('staff',database,company);
   if(actor&&actor.role!=='owner')
@@ -28,10 +34,11 @@ export async function updateCompanyReturnPolicy(settings:ReturnPolicySettings,
   if(!profile)throw new Error('Set up the company before changing its return policy.');
   const now=new Date().toISOString();
   const history=appendCompanyReturnPolicy(profile.returnPolicyHistory,
-   settings,now,reason,actor?.id) as ReturnPolicyRevision[];
+   approved,now,reason,actor?.id) as ReturnPolicyRevision[];
   const next=history.at(-1)!;
   if(getActiveBusinessProfileId()!==company)
    throw new Error('Company changed during return policy authorization.');
+  checkApproval();
   await database.businessProfiles.put({...profile,
    returnPolicyHistory:history,updatedAt:now});
   if(actor){
@@ -45,6 +52,7 @@ export async function updateCompanyReturnPolicy(settings:ReturnPolicySettings,
   }
   if(getActiveBusinessProfileId()!==company)
    throw new Error('Company changed before the new refund policy was committed.');
+  checkApproval();
   return currentCompanyReturnPolicy(history);
  }));
 }

@@ -12,3 +12,8 @@ export const currencyLabels:Record<(typeof currencies)[number],string>={
  TZS:"Tanzanian shilling",UGX:"Ugandan shilling",USD:"US dollar",EUR:"Euro",
  ZAR:"South African rand",ZMW:"Zambian kwacha"
 };
+
+/** Persisted ledger convention. TZS intentionally retains its existing whole-unit policy. */
+export function currencyMinorDivisor(currency: string) {
+  return ["RWF", "TZS", "UGX"].includes(currency) ? 1 : 100;
+}

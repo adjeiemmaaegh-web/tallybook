@@ -13,6 +13,7 @@ import { recoverSavedCheckout } from "@/features/sales/recoverSavedCheckout";
 import { createStaff, unlockStaff, openShift, lockStaff, currentStaffId } from "@/features/staff/staff";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import {validateCentralSaleEvent} from '@/features/sync/centralSaleEvent';
+import {createDraftOrder} from '@/features/commerce/commerce';
 
 const databaseNames = new Set<string>();
 const openDatabases: Dexie[] = [];
@@ -388,5 +389,57 @@ describe("atomic sales", () => {
 
     expect(await upgraded.payments.get("legacy-mobile-payment")).toMatchObject({ method: "mobile", amountMinor: 1200 });
     expect(await upgraded.mobileMoneyProviders.count()).toBe(0);
+  });
+});
+
+describe('restored commerce reservations at the real checkout boundary', () => {
+  async function reservedFixture() {
+    const database=makeDatabase(); await initializeDatabase(database);
+    const product=await createProductFixture(database,'Reserved rice','3');
+    const draft=await createDraftOrder('Reservation test customer',[{productId:product.id,quantity:1}],database);
+    const now=new Date().toISOString(), expiresAt=new Date(Date.now()+60_000).toISOString();
+    // Historical compatible record, not enabling new reservation authoring.
+    const order={...draft,status:'reserved' as const,reservationKey:'reserve-original',reservationExpiresAt:expiresAt};
+    const hold={id:'historical-hold',businessProfileId:getActiveBusinessProfileId(),orderId:order.id,
+      productId:product.id,quantity:1,unitPriceMinor:1000,submissionKey:'reserve-original',
+      status:'active' as const,reason:'owner-confirmed' as const,createdAt:now,updatedAt:now,expiresAt};
+    await database.commerceOrders.put(order); await database.commerceHolds.put(hold);
+    const input={commerceOrderId:order.id,lines:[{productId:product.id,quantity:1}],discount:'0',
+      paymentMethod:'cash' as const,amountPaid:'10',currency:'GHS',submissionKey:'reserved-checkout'};
+    return {database,product,order,hold,input};
+  }
+  it('rejects corrupted hold evidence with zero financial, stock or audit effects',async()=>{
+    const {database,order,hold,input}=await reservedFixture();
+    const tables=[database.sales,database.saleLines,database.payments,database.receipts,database.products,
+      database.inventoryMovements,database.inventoryCostEvents,database.staffAudits,database.centralSaleEvents,
+      database.commerceDeliveryEvents];
+    const before=await Promise.all(tables.map(table=>table.toArray()));
+    for(const corruption of [{expiresAt:'not-a-date'},{createdAt:'not-a-date'},
+      {reason:'order-cancelled' as const},{unitPriceMinor:-1},{unitPriceMinor:999},
+      {expiresAt:new Date(Date.now()+120_000).toISOString()}]) {
+      const damaged={...hold,...corruption};
+      await database.commerceHolds.put(damaged);
+      await expect(completeSale(input,database)).rejects.toThrow(/Invalid commerce reservation evidence|exact current active stock reservation/);
+      expect(await Promise.all(tables.map(table=>table.toArray()))).toEqual(before);
+      expect(await database.commerceOrders.get(order.id)).toEqual(order);
+      expect(await database.commerceHolds.get(hold.id)).toEqual(damaged);
+    }
+    await database.commerceHolds.put(hold);
+    await database.commerceOrders.put({...order,reservationExpiresAt:'not-a-date'});
+    await expect(completeSale(input,database)).rejects.toThrow(/reservation is invalid/);
+    expect(await Promise.all(tables.map(table=>table.toArray()))).toEqual(before);
+  });
+  it('consumes valid evidence and returns the same saved sale after a lost response',async()=>{
+    const {database,product,order,hold,input}=await reservedFixture();
+    const first=await completeSale(input,database);
+    const repeated=await completeSale(input,database);
+    expect(repeated.sale.id).toBe(first.sale.id);
+    expect(await database.sales.count()).toBe(1);
+    expect(await database.receipts.count()).toBe(1);
+    expect(await database.payments.count()).toBe(1);
+    expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
+    expect(await database.commerceHolds.get(hold.id)).toMatchObject({status:'consumed',reason:'pos-consumed'});
+    expect((await database.commerceOrders.get(order.id))?.saleId).toBe(first.sale.id);
+    expect(await database.commerceDeliveryEvents.count()).toBe(1);
   });
 });

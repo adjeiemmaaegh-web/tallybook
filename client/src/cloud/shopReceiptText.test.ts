@@ -47,3 +47,13 @@ describe("countryForCurrency", () => {
     expect(countryForCurrency("EUR")).toBeNull();
   });
 });
+
+
+it('shared-shop single and split electronic receipts retain explicit unverified settlement evidence',()=>{
+ for(const method of ['mobile','card'] as const){
+  const receipt=sampleReceipt({tenders:undefined,payment:{method,amountDueMinor:4500,amountTenderedMinor:4500,changeMinor:0,reference:'MANUAL-FIXTURE'}});
+  const before=JSON.stringify(receipt);expect(formatShopReceiptText(receipt)).toContain('bank or payment-provider settlement is not verified.');expect(JSON.stringify(receipt)).toBe(before);
+ }
+ expect(formatShopReceiptText(sampleReceipt())).toContain('bank or payment-provider settlement is not verified.');
+ expect(formatShopReceiptText(sampleReceipt({tenders:[],payment:{method:'cash',amountDueMinor:4500,amountTenderedMinor:4500,changeMinor:0,reference:null}}))).not.toContain('payment-provider');
+});

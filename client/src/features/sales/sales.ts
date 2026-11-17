@@ -14,7 +14,7 @@ import {consumeRun16OrderForSale} from "@/features/commerce/run16Orders";
 import { mergeCheckoutQuantities } from "./checkoutQuantities";
 import { calculateCheckoutLines } from "./checkoutMoney.mjs";
 import { checkedMinorSum, checkedCreditExposure, reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWriteCurrency } from "./creditLedger.mjs";
-import { requirePermission, consumeCheckoutDiscountApproval } from "@/features/staff/staff";
+import { currentStaffId,currentStaffSessionGeneration,requirePermission, consumeCheckoutDiscountApproval } from "@/features/staff/staff";
 import { requireSaleAttendant } from "./requireStaff.ts";
 import { assertUnusedMobileReference, normalizeMobileReference } from "./requireStaff.mjs";
 import { z } from "zod";
@@ -202,17 +202,26 @@ export async function completeSale(values: CompleteSaleInput, database: Tallyboo
   // Quotation conversion already holds a shared Web Lock around its outer
   // IndexedDB transaction. Never await navigator.locks inside that transaction:
   // doing so would cause Dexie to lose its active transaction context.
-  return Dexie.currentTransaction ? completeSaleWhileLocked(values, database) : withCrossTabDataLock("shared", () => completeSaleWhileLocked(values, database));
+  const companyId=getActiveBusinessProfileId(),staffId=currentStaffId(companyId),generation=currentStaffSessionGeneration(companyId);
+  const approved=completeSaleSchema.parse(values);
+  const approval={companyId,assert(){
+    assertCompanyScope(companyId,getActiveBusinessProfileId());
+    if(currentStaffId(companyId)!==staffId||currentStaffSessionGeneration(companyId)!==generation)
+      throw Error("Company or checkout staff session changed. Unlock and review the sale again.");
+  }};
+  const run=()=>completeSaleWhileLocked(approved,database,approval);
+  return Dexie.currentTransaction ? run() : withCrossTabDataLock("shared",()=>run());
 }
 
-async function completeSaleWhileLocked(values: CompleteSaleInput, database: TallybookDB = db) {
+async function completeSaleWhileLocked(values: CompleteSaleInput, database: TallybookDB, approval:{companyId:string;assert:()=>void}) {
+  approval.assert();
   const input = completeSaleSchema.parse(values);
   if(input.paymentMethod!=="split"&&input.splitTenders)throw Error("Split tenders are allowed only for a split checkout.");
   if(input.paymentMethod==="split"&&!input.splitTenders)throw Error("Split payment details are required.");
   const cardReference=normalizeCardReference(input.paymentMethod,input.cardReference);
   const splitRequest=input.splitTenders?.map(t=>({method:t.method,amountMinor:parseAmount(t.amount,input.currency),providerId:t.providerId,reference:t.reference}));
   const mergedLines = mergeCheckoutQuantities(input.lines);
-  const activeId = getActiveBusinessProfileId();
+  const activeId = approval.companyId;
 
   return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents, database.centralSaleEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
@@ -255,6 +264,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
         throw new Error("This checkout was already submitted with different details. Start a new sale to record changes.");
       }
       if (!existingReceipt) throw new Error("The saved sale has no receipt. Open sale history for recovery before trying again.");
+      approval.assert();
       return { sale: existingSale, lines: existingLines, payment: existingPayment, payments: existingPayments, receipt: existingReceipt };
     }
     const storeMode=await database.storeStockModes.get(activeId);
@@ -281,7 +291,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if(input.commerceOrderId){
       if(!linkedOrder||linkedOrder.businessProfileId!==activeId||linkedOrder.saleId||
         linkedOrder.status!=="reserved"||linkedOrder.storeId!==input.storeId||
-        !linkedOrder.reservationExpiresAt||Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
+        !linkedOrder.reservationExpiresAt||!Number.isFinite(Date.parse(linkedOrder.reservationExpiresAt))||
+        Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
         throw new Error("Commerce reservation is invalid, expired, already sold, or assigned to another store.");
       const savedLineMap=new Map(linkedOrder.lines.map(line=>[line.productId,line.quantity]));
       if(savedLineMap.size!==requestedLines.length ||
@@ -465,6 +476,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
       const batches = (await database.inventoryBatches.where("productId").equals(product.id).toArray())
         .filter(batch => batch.businessProfileId === activeId);
       if (!batches.length) continue;
+      if (storeMode) throw new Error("Store-specific batch provenance must be reconciled before selling tracked stock.");
       const tracked = batches.reduce((sum, batch) => sum + batch.quantity, 0);
       if (tracked !== product.stockQuantity) throw new Error(`Batch quantities for ${product.name} do not reconcile with stock. Reconcile before selling.`);
       const sorted = batches.sort((a, b) => (a.expiryDate ?? "9999-12-31").localeCompare(b.expiryDate ?? "9999-12-31") || a.createdAt.localeCompare(b.createdAt));
@@ -518,6 +530,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     const postingEvidence=await captureSalePostingEvidence(database,sale,saleLines,movements,updatedBatches,activity);
     await database.centralSaleEvents.add(makeCentralSaleEvent(sale,saleLines,payment,receipt,postingEvidence,payments));
     assertCompanyScope(activeId, getActiveBusinessProfileId());
+    approval.assert();
     return { sale, lines: saleLines, payment, payments, receipt };
   });
 }

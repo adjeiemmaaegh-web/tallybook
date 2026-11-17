@@ -1,0 +1,34 @@
+
+ RUN  v4.1.12 /workspace/scratch/f8a637cc20b7/tallybook/client
+
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > uses an exclusive next-day boundary for custom dates 2ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects impossible custom dates and backwards windows 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > keeps credit sales separate from received cash and calculates current debt 2ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > separates expense timing from creation time 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects over-repayment instead of disguising negative receivables as zero 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects negative and unsafe monetary inputs 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > exports a labeled CSV without formula injection 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects orphaned payments, including those outside the selected period 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects payment linked to the wrong customer 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 3 management reporting > rejects repeated reversals or an incorrect reversal total 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > prepaid wallet settlement accounting > does not count wallet spend as new money collected 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 2/3 prepaid ledger integration integrity > counts deposits and refunds once as external cash, never wallet spend 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 2/3 prepaid ledger integration integrity > rejects unknown movement kinds and negative, fractional or unsafe amounts 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 2/3 prepaid ledger integration integrity > rejects duplicate transfer and submission identities, even outside the report window 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > Stage 2/3 prepaid ledger integration integrity > rejects damaged history even when reporting a different period 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 supplier history and cash separation > exposes saved supplier liabilities as-of and period payments separately from expenses and cash 8ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 supplier history and cash separation > leaves unknown legacy purchase liabilities unknown instead of assuming zero 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 supplier history and cash separation > requires both purchase and payable snapshots to avoid a falsely empty ledger 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 full-history prepaid liability reconciliation > reports verified prepaid liability as-of, separately from the period deposit inflow 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 full-history prepaid liability reconciliation > refuses a missing wallet benefit rather than certify a deposit as an outstanding liability 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 daily report conservation and historical date evidence > reconciles multiple days and expense categories against headline period totals 1ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 daily report conservation and historical date evidence > rejects a malformed earlier sale timestamp even if it is not in the requested period 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 daily report conservation and historical date evidence > rejects a rolled-over historical sale posting date outside the requested period 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 daily report conservation and historical date evidence > rejects a valid expense date with an impossible stored creation timestamp 0ms
+ ✓ src/features/reports/financialIntelligence.test.ts > FIN-002 daily report conservation and historical date evidence > rejects an impossible historical expense calendar day instead of silently omitting it 0ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  03:37:55
+   Duration  1.50s (transform 416ms, setup 154ms, import 611ms, tests 24ms, environment 467ms)
+

@@ -1,3 +1,4 @@
+import {AdvisoryScheduleRunner} from "@/features/insights/AdvisoryScheduleRunner";
 /** Tactile Ledger design reminder: a running ledger strip shows the saved business identity wherever owners work, with generous thumb targets. */
 import { lazy, Suspense, useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import { requiresCloudOwner } from "@/auth/deviceEntry";
@@ -28,7 +29,7 @@ function NavigationLink({ route }: { route: (typeof appRoutes)[number] }) {
 
 export function AppShell({ children }: AppShellProps) {
   const { activeCompanyId } = useBusinessProfile();
-  return <CompanyShell key={activeCompanyId}>{children}</CompanyShell>;
+  return <CompanyShell key={activeCompanyId}><AdvisoryScheduleRunner companyId={activeCompanyId}/>{children}</CompanyShell>;
 }
 
 function CompanyShell({ children }: AppShellProps) {
