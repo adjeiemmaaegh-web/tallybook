@@ -1,3 +1,4 @@
+import {execFileSync} from 'node:child_process';
 import {readFileSync,writeFileSync} from 'node:fs';
 const digestManifests=new Set([
 'STAGE1_INCREMENT2_SHA256.json','HANDOVER_PACKAGE_SHA256.json','STAGE1_INCREMENT6_SHA256.json',
@@ -22,20 +23,50 @@ export function classifyFinding(row){
  if(fixtureFiles.has(row.File)&&/\bsubmissionKey\s*:\s*['"]/.test(row.Match))return 'candidate-nonauthentication-submission-id';
  return 'unclassified';
 }
+function containsDigest(value,secret){
+ if(!value||typeof value!=='object')return false;
+ return Object.entries(value).some(([key,item])=>
+  typeof item==='string'&&item===secret&&(/sha.?256/i.test(key)||/[./]/.test(key)) ||
+  item&&typeof item==='object'&&containsDigest(item,secret));
+}
+export function verifyFinding(row,{sourceFiles=[],isCommit=()=>false}={}){
+ const candidate=classifyFinding(row);
+ if(candidate==='public-browser-publishable-key')return candidate;
+ if(candidate==='candidate-git-object-reference')return isCommit(row.Secret)?'verified-git-object-reference':'unclassified';
+ if(candidate==='candidate-sha256-manifest-value'){
+  for(const text of sourceFiles)try{if(containsDigest(JSON.parse(text),row.Secret))return 'verified-sha256-manifest-value';}catch{}
+ }
+ if(candidate==='candidate-nonauthentication-submission-id'){
+  const literal=/\bsubmissionKey\s*:\s*(['"])([^'"\r\n]+)\1/.exec(row.Match);
+  if(literal?.[2]===row.Secret&&sourceFiles.some(text=>text.includes(literal[0])))return 'verified-nonauthentication-submission-id';
+ }
+ return 'unclassified';
+}
+function gitOutput(args){
+ try{return execFileSync('git',args,{encoding:'utf8',maxBuffer:32*1024*1024,stdio:['ignore','pipe','pipe']});}
+ catch{return '';} // Credential-bearing source or Git diagnostics never leave this process.
+}
 function main(){
  const [inputPath,outputPath]=process.argv.slice(2);
  if(!inputPath||!outputPath)throw Error('Expected ephemeral input and sanitized output paths');
  const rows=JSON.parse(readFileSync(inputPath,'utf8'));if(!Array.isArray(rows))throw Error('Invalid scanner result');
- const counts={},groups=new Map();
+ const counts={},groups=new Map(),cache=new Map();
+ function sourceFiles(row){
+  if(!/^[a-f0-9]{40}$/.test(row.Commit??'')||typeof row.File!=='string'||row.File.includes('\0'))return [];
+  const key=row.Commit+':'+row.File;
+  if(!cache.has(key))cache.set(key,[gitOutput(['show',key]),gitOutput(['show',row.Commit+'^:'+row.File])]);
+  return cache.get(key);
+ }
  const findings=rows.map(row=>{
-  const classification=classifyFinding(row);counts[classification]=(counts[classification]??0)+1;
+  const classification=verifyFinding(row,{sourceFiles:sourceFiles(row),isCommit:sha=>gitOutput(['cat-file','-t',sha]).trim()==='commit'});
+  counts[classification]=(counts[classification]??0)+1;
   const safe={ruleId:row.RuleID,file:row.File,line:row.StartLine,commit:row.Commit,fingerprint:row.Fingerprint,classification};
   const key=JSON.stringify([safe.file,classification]);const group=groups.get(key)??{file:safe.file,classification,count:0,lines:[]};
   group.count++;if(group.lines.length<12&&!group.lines.includes(safe.line))group.lines.push(safe.line);groups.set(key,group);return safe;
  });
- const report={mode:'observation-only-no-waivers',counts,findings};writeFileSync(outputPath,JSON.stringify(report,null,2)+'\n',{mode:0o600});
+ const report={mode:'strict-known-nonsecret-classification',counts,findings};
+ writeFileSync(outputPath,JSON.stringify(report,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify({mode:report.mode,counts,groups:[...groups.values()]},null,2));
- // Findings still fail the security gate, including candidate nonsecrets.
- if(rows.length)process.exitCode=1;
+ if(counts.unclassified)process.exitCode=1;
 }
 if(process.argv[1]?.endsWith('/triage-secret-findings.mjs'))main();

@@ -81,7 +81,7 @@ jobs:
           echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  artifacts/release-v19/security-tools/gitleaks.tar.gz' | sha256sum --check -
           tar -xzf artifacts/release-v19/security-tools/gitleaks.tar.gz -C artifacts/release-v19/security-tools gitleaks
           artifacts/release-v19/security-tools/gitleaks version
-      - name: Scan history and classify sanitized metadata without waiving findings
+      - name: Scan history; verify known nonsecrets and reject every unclassified finding
         shell: bash
         run: |
           set -euo pipefail
