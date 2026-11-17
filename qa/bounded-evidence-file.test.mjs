@@ -14,10 +14,11 @@ test('evidence reads the opened regular file and rejects invalid size and UTF-8'
  await assert.rejects(readBoundedEvidence(path,{maxBytes:20}),/encoded data|encoding/i);
  await mkdir(join(dir,'folder'));await assert.rejects(readBoundedEvidence(join(dir,'folder'),{maxBytes:20}));
  await assert.rejects(readBoundedEvidence(path,{maxBytes:NaN}),/Invalid/);
-});
-test('available no-follow enforcement refuses evidence symlinks',async t=>{
- if(process.platform==='win32'){assert.equal(typeof readBoundedEvidence,'function');return;}
- const dir=await mkdtemp(join(tmpdir(),'tallybook-evidence-link-'));t.after(()=>rm(dir,{recursive:true,force:true}));
- const target=join(dir,'target');const link=join(dir,'link');await writeFile(target,'ok');await symlink(target,link);
- await assert.rejects(readBoundedEvidence(link,{maxBytes:20}),/ELOOP/);
+ // Windows final-link enforcement is an explicit platform acceptance gap.
+ // Keep its real size/encoding assertions above; exercise O_NOFOLLOW only on
+ // the platforms where this reader actually provides that additional guard.
+ if(process.platform!=='win32'){
+  const target=join(dir,'target'),link=join(dir,'link');await writeFile(target,'ok');await symlink(target,link);
+  await assert.rejects(readBoundedEvidence(link,{maxBytes:20}),/ELOOP/);
+ }
 });
