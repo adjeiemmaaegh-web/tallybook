@@ -1343,12 +1343,15 @@
       "completionCriterion": "Audited opted-in rules with approvals, safe scheduling and notification verification.",
       "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
       "files": [
-        "client/src/features/insights/localInsights.mjs"
+        "client/src/features/insights/localInsights.mjs",
+        "client/src/features/insights/advisorySchedule.ts"
       ],
       "missingReferencedPaths": [],
-      "currentDisposition": "unreviewed",
-      "acceptanceEvidence": [],
-      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+      "currentDisposition": "partial",
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Persistent owner-approved local reviews are implemented; recovered source CI, real notifications and complete historical acceptance remain open."
     },
     {
       "family": "acceptance",

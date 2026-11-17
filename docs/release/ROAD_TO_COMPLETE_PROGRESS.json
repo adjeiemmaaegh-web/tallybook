@@ -206,7 +206,7 @@
       "id": "ST21-07",
       "stage": 21,
       "priority": "HIGH",
-      "name": "PR #85 \u2014 Fresh-Start Release",
+      "name": "PR #85 — Fresh-Start Release",
       "requirement": "Resolve the open draft documenting mandatory sign-in and an irreversible production reset. Separate already integrated authentication safeguards from still-unapproved data-deletion and release decisions.",
       "initialAuditStatus": "Blocked",
       "completionCriterion": "owner-approved disposition and no destructive change through a documentation-only merge.",
@@ -310,7 +310,7 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
       ],
-      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23\u201326, #68 to Stage 25; close only with full evidence."
+      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
     },
     {
       "id": "ST21-11",
@@ -1405,7 +1405,7 @@
       "id": "ST25-05",
       "stage": 25,
       "priority": "HIGH",
-      "name": "Shared-Shop Shifts \u2014 Issue #68",
+      "name": "Shared-Shop Shifts — Issue #68",
       "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
@@ -1494,7 +1494,7 @@
       "stage": 25,
       "priority": "MEDIUM",
       "name": "Shared-Device Handover",
-      "requirement": "Test account A offline sale \u2192 account B login \u2192 A returns and reconciles, including simultaneous tabs.",
+      "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
       "initialAuditStatus": "Real-device unverified",
       "completionCriterion": "original cashier, queue scope and receipt preserved.",
       "status": "owner-external-blocked",
@@ -2352,20 +2352,40 @@
       "stage": 29,
       "priority": "HIGH",
       "name": "Clementia Task Coverage",
-      "requirement": "Investigate unsupported/missed responses in 100-goal \u00d7 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
+      "requirement": "Investigate unsupported/missed responses in 100-goal × 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "agreed recognition/safety thresholds and repeatable tests.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect clementia task coverage against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-02",
@@ -2375,17 +2395,37 @@
       "requirement": "Independently check assistant revenue, profit, cost, debt, customer, stock and supplier answers against authorized source records.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no invented numbers or cross-company disclosure.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect financial intelligence against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-03",
@@ -2395,17 +2435,37 @@
       "requirement": "Reconcile S11-05 for persisted, approved schedules and review actions with current manual/disabled automation.",
       "initialAuditStatus": "Missing/partial",
       "completionCriterion": "durable audited implementation or formal scope deferral.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect permissioned automation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-04",
@@ -2415,17 +2475,37 @@
       "requirement": "Validate reorders, expiry alerts, ageing, exceptions and owner review notes against historical records.",
       "initialAuditStatus": "Implemented but incompletely verified",
       "completionCriterion": "correct calculations and traceable uncertainty.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect demand & risk insights against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-05",
@@ -2435,17 +2515,36 @@
       "requirement": "Complete separately approved activation/testing of Telegram daily summary, pairing, secrets, schedule, revocation and failure recovery.",
       "initialAuditStatus": "Implemented but disabled/unverified",
       "completionCriterion": "authorized delivery without cross-business data leakage.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect telegram integration against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Real Telegram credentials, approved delivery/pairing and revocation acceptance are unavailable; local/PostgreSQL tests do not prove delivery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-06",
@@ -2455,17 +2554,37 @@
       "requirement": "Verify all suggested transactions, reviews and corrections require proper permissions and explicit service-boundary confirmation.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no automatic or duplicate financial writes.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect assistant write safety against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-07",
@@ -2475,17 +2594,37 @@
       "requirement": "Check supported English/Pidgin expressions, ambiguity and browser speech on supported/offline devices.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "documented actual coverage.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect language & speech against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-08",
@@ -2495,17 +2634,37 @@
       "requirement": "Test exports, charts, assistant excerpts and shared summaries for privacy leaks and CSV formula injection.",
       "initialAuditStatus": "Unverified comprehensively",
       "completionCriterion": "scoped, accurately labelled outputs.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect analytics sharing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST29-09",
@@ -2515,17 +2674,37 @@
       "requirement": "Test saved conversations, multi-company switching and restored context for stale-user exposure.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no cross-user/company data reuse.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/assistant/assistant.ts",
-        "supabase/functions/tallybook-telegram"
+        "supabase/functions/tallybook-telegram",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/assistant/soleInterfaceGuides.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect assistant isolation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Selected owner-completion scheduler integrated with current canonical insights, staff unlock epochs, recovery lock and portable backup."
+      ],
+      "changes": [
+        "Owner-approved local daily/weekly advisory review, one catch-up, pause/cancel and atomic due-slot/audit; restore pauses approval.",
+        "Original-unlock binding, captured input/time, permissioned background reads, stale-response/private-result clearing and non-writing Clementia guidance."
+      ],
+      "tests": [
+        {
+          "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
+          "result": "pass",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source requires fresh hosted CI; prior observed local results are not an exact-tree certificate after reconstruction.",
+        "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
     {
       "id": "ST30-01",
@@ -3269,7 +3448,7 @@
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "activeEngineeringStage": 28,
+  "activeEngineeringStage": 29,
   "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
@@ -3334,5 +3513,15 @@
     "publishedCommit": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
     "tree": "7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58",
     "pullRequest": 105
+  },
+  "recovery": {
+    "state": "local-workspace-unavailable",
+    "publishedBaseline": "b7f5b1537bc9172529305ec7241325ac2c5f1ea8",
+    "newSourceVerification": "pending hosted CI",
+    "unobservedRuns": [
+      "Latest full Stage31 regression",
+      "Full-history Gitleaks scan",
+      "Startup-guard post-fix test"
+    ]
   }
 }

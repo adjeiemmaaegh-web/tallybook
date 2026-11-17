@@ -26,3 +26,6 @@ Fresh read-only hosted metadata confirms 37 applied migrations and 47 RLS-protec
 Next engineering: Stage 28 recorded-versus-provider payment evidence and provider readiness; unresolved earlier criteria remain open. Earlier partial requirements remain open, including broader finance invariants, partial transfers, store batch provenance, full ledger encryption and full financial replication. Subsequent provider adapters, automation, UX, security and frozen release acceptance are not declared complete.
 
 No production data/configuration/auth policy was changed, no real payment was initiated, and no protected history or branch was deleted. Production migration, deployment, physical acceptance and owner signoff remain separately gated.
+
+
+Recovery checkpoint: the execution workspace became unavailable after additional local work. Stage29 scheduling source is being reconstructed through GitHub; its fresh CI remains pending. Prior local results are explicitly separate from recovered-source acceptance. See [recovery evidence](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md). No complete-stage or production-readiness claim.
