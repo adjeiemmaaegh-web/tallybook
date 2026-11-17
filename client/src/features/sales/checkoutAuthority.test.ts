@@ -15,7 +15,7 @@ afterEach(async()=>{vi.restoreAllMocks();for(const f of fixtures.splice(0))await
 for(const method of ['cash','credit','wallet'] as const){
  it(method+' checkout rolls back all money, stock, debt, wallet, receipt and audit records when staff lock at the last event write',async()=>{
   const {db,product}=await setup();
-  const customer=method==='cash'?undefined:await createCustomer({name:'Approval customer',phone:'',email:'',address:'',notes:'',status:'active'},db);
+  const customer=method==='cash'?undefined:await createCustomer({name:'Approval customer',phone:'+233000000002',email:'',address:'',notes:'',status:'active'},db);
   if(method==='wallet')await recordWalletTransfer({customerId:customer!.id,kind:'deposit',amountMinor:500,method:'cash',reference:'fixture',submissionKey:'approval-wallet-opening'},db);
   const snapshot=async()=>Promise.all(db.tables.map(async table=>({name:table.name,rows:await table.toArray()})));
   const before=await snapshot(),add=db.centralSaleEvents.add.bind(db.centralSaleEvents);
