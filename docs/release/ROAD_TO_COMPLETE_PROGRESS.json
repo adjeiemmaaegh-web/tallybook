@@ -32,9 +32,8 @@
       ],
       "tests": [],
       "blockers": [
-        "Deployed target still needs exact candidate/artifact compatibility reconciliation.",
-        "Source includes a pending 38th session-proof migration; not applied to hosted production.",
-        "Final release artifact not selected."
+        "Development migrations 38/39 remain unapplied to hosted production; current production source is still the earlier approved deployment.",
+        "Final scope and owner-approved exact deployment/artifact compatibility remain open."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
@@ -422,8 +421,8 @@
         }
       ],
       "blockers": [
-        "Chromium v1248 download returned invalid ZIP; browser acceptance blocked.",
-        "Exact hosted schema/deployment compatibility and final release scope remain unverified."
+        "Two builds reproduced identical bytes in one isolated Linux CI environment; independent-machine build reproduction and final release scope are not accepted.",
+        "Hosted Chrome/Firefox/Edge/WebKit selected checks pass; physical-device and real authentication acceptance remain separate."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
@@ -442,17 +441,27 @@
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/checkoutAuthority.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing local authoritative writers and report projections; no replacement ledger."
       ],
-      "changes": [],
+      "changes": [
+        "Canonical checkout captures its original company, parsed cart and staff unlock generation before asynchronous coordination, and revalidates through final durable-event write and idempotent replay reads."
+      ],
       "tests": [
         {
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Security regressions 44046916459 at 2bc1031dd36fd1164e503d2a53815e68ddec79a2",
+          "result": "pass",
+          "scope": "37 focused client cases, including all-table rollback for cash/credit/wallet final-write locks and same-owner re-unlock rejection; semantic types and 11 native security regressions passed.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44046916459"
         }
       ],
       "blockers": [
@@ -717,17 +726,27 @@
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/checkoutAuthority.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing local authoritative writers and report projections; no replacement ledger."
       ],
-      "changes": [],
+      "changes": [
+        "Canonical checkout captures its original company, parsed cart and staff unlock generation before asynchronous coordination, and revalidates through final durable-event write and idempotent replay reads."
+      ],
       "tests": [
         {
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Security regressions 44046916459 at 2bc1031dd36fd1164e503d2a53815e68ddec79a2",
+          "result": "pass",
+          "scope": "37 focused client cases, including all-table rollback for cash/credit/wallet final-write locks and same-owner re-unlock rejection; semantic types and 11 native security regressions passed.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44046916459"
         }
       ],
       "blockers": [
@@ -3778,11 +3797,17 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Release validation run 44045528700, actual checkout 198332faed5a6d04f4075b588eee9ac348ec1b2f; PR head ea61775af959d8016b35cd563b4068ac4cd7e507 has identical tree c29e198d66e7876a772acd94a24d92b81d0eb74e",
+          "result": "pass",
+          "scope": "1208 native, 1910 client, types/build, 30 Chromium checks, advisory audit, two identical build manifests, 136 packaged files and 190 production dependencies. Excludes later checkout guard source.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44045528700"
         }
       ],
       "blockers": [
         "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
-        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+        "Latest canonical checkout fix requires fresh complete regression after integration; the passing frozen checkpoint is not relabelled as that later source."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
@@ -3817,11 +3842,17 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Release validation run 44045528700, actual checkout 198332faed5a6d04f4075b588eee9ac348ec1b2f; PR head ea61775af959d8016b35cd563b4068ac4cd7e507 has identical tree c29e198d66e7876a772acd94a24d92b81d0eb74e",
+          "result": "pass",
+          "scope": "1208 native, 1910 client, types/build, 30 Chromium checks, advisory audit, two identical build manifests, 136 packaged files and 190 production dependencies. Excludes later checkout guard source.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44045528700"
         }
       ],
       "blockers": [
         "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
-        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+        "Latest canonical checkout fix requires fresh complete regression after integration; the passing frozen checkpoint is not relabelled as that later source."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
@@ -3945,27 +3976,38 @@
       "requirement": "Test supported Chrome, Edge, Firefox, Safari, Windows, Android and iOS with genuine engines/devices.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "versioned results with explicit unsupported combinations.",
-      "status": "owner-external-blocked",
+      "status": "partial",
       "files": [
         "scripts/freeze-development-checkpoint.mjs",
         "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json",
+        ".github/workflows/device-engines.yml",
+        "playwright.device-engines.config.mjs",
+        "scripts/browser-engine-metadata.mjs"
       ],
       "existingCapabilityReused": [
         "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
       ],
-      "changes": [],
+      "changes": [
+        "Added real Chrome and Firefox alongside Windows Edge and macOS WebKit, with exact engine/platform versions, JSON results and failure traces retained per job."
+      ],
       "tests": [
         {
           "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Device browser engines run 44046916471 at 2bc1031dd36fd1164e503d2a53815e68ddec79a2",
+          "result": "pass",
+          "scope": "Four real engine/platform jobs, eight selected local account/ledger/public-entry cases each (32 total); no real Auth/provider/physical-phone claim.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44046916471"
         }
       ],
       "blockers": [
-        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+        "This selected automation subset does not cover the entire supported browser/device matrix. Safari application, Android/iOS physical devices and full business workflows remain open."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
@@ -4152,11 +4194,17 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Release validation run 44045528700, actual checkout 198332faed5a6d04f4075b588eee9ac348ec1b2f; PR head ea61775af959d8016b35cd563b4068ac4cd7e507 has identical tree c29e198d66e7876a772acd94a24d92b81d0eb74e",
+          "result": "pass",
+          "scope": "1208 native, 1910 client, types/build, 30 Chromium checks, advisory audit, two identical build manifests, 136 packaged files and 190 production dependencies. Excludes later checkout guard source.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44045528700"
         }
       ],
       "blockers": [
         "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
-        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+        "Latest canonical checkout fix requires fresh complete regression after integration; the passing frozen checkpoint is not relabelled as that later source."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
@@ -4226,11 +4274,17 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Release validation run 44045528700, actual checkout 198332faed5a6d04f4075b588eee9ac348ec1b2f; PR head ea61775af959d8016b35cd563b4068ac4cd7e507 has identical tree c29e198d66e7876a772acd94a24d92b81d0eb74e",
+          "result": "pass",
+          "scope": "1208 native, 1910 client, types/build, 30 Chromium checks, advisory audit, two identical build manifests, 136 packaged files and 190 production dependencies. Excludes later checkout guard source.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44045528700"
         }
       ],
       "blockers": [
         "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
-        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+        "Latest canonical checkout fix requires fresh complete regression after integration; the passing frozen checkpoint is not relabelled as that later source."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
@@ -4320,5 +4374,20 @@
     "all119HaveSourceBackedDisposition": true,
     "fullyCompletedTasks": 1,
     "doesNotMean119Completed": true
-  }
+  },
+  "developmentCheckpoint": {
+    "kind": "NO-GO development artifact",
+    "reviewHead": "ea61775af959d8016b35cd563b4068ac4cd7e507",
+    "executedSource": "198332faed5a6d04f4075b588eee9ac348ec1b2f",
+    "identicalTree": "c29e198d66e7876a772acd94a24d92b81d0eb74e",
+    "retainedRef": "codex/checkpoint-20261117-198332fa",
+    "manifestSha256": "95d4c6e6dc3d6c75e42619518b8b043614db2b5348e4f1fa2ca3ce999f47c781",
+    "artifactId": 14312355794,
+    "artifactZipSha256": "703aa3e92948f4407ee391028da70decb2617931c962823f183d1a72ae6a941f",
+    "runId": 44045528700,
+    "artifactExpires": "2026-12-01",
+    "files": 136,
+    "productionDependencyVersions": 190
+  },
+  "latestIncrementEvidence": "docs/release/ROAD_TO_COMPLETE_VERIFIED_CHECKPOINT_2026-11-17.md"
 }

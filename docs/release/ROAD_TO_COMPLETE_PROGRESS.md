@@ -10,15 +10,18 @@ The [JSON register](ROAD_TO_COMPLETE_PROGRESS.json) is the detailed task-level r
 | --- | ---: |
 | Fully verified criterion | 1 |
 | Implemented pending formal acceptance | 0 |
-| Partial | 93 |
+| Partial | 94 |
 | Missing engineering | 4 |
-| Owner/external blocked | 21 |
+| Owner/external blocked | 20 |
 | Unreviewed | 0 |
 | Total | 119 |
 
 The [143 historical acceptance IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still need full current behavioral closure. General customer/credit/wallet/mixed-tender partial refunds, active-ledger encryption, durable real-provider settlement and complete financial replication are among open engineering requirements. Optional-scope decisions and real-device/provider/owner acceptance remain explicit, not silently removed.
 
 ## Evidence
+
+Latest verified development package: [checkpoint and canonical checkout repair](ROAD_TO_COMPLETE_VERIFIED_CHECKPOINT_2026-11-17.md). The full run associated with head `ea61775af959d8016b35cd563b4068ac4cd7e507` executed synthetic merge `198332faed5a6d04f4075b588eee9ac348ec1b2f`, with an identical tree confirmed. It passed 1,208 native/1,910 client tests, strict types/build, 30 Chromium cases and two identical build manifests (136 payload files, 190 dependency versions). The later canonical checkout repair passed 37 focused tests, all security jobs and 32 selected Chrome/Firefox/Windows Edge/macOS WebKit checks; a fresh complete integration run remains required.
+
 
 - [Canonical repairs and nine-task reconciliation](ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md).
 - [Security fixes and development checkpoint](ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md).
@@ -27,7 +30,7 @@ The [143 historical acceptance IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still 
 
 Observed complete release validation at `10355725d814dd04422debe717c2903435ab4a0a`: 1,193 native and 1,896 client tests, strict types, production build, 30 Chromium checks and dependency audit passed. Later security triage removed all 12 High CodeQL findings and source-verified 632 historical noncredential matches; every unknown match remains a failing gate. Security source `b35ebe555e226f9f4b2cffc1a37c5f30d14a23ac` passed all three security jobs.
 
-The latest source additionally repairs owner-policy, EOF import and local sync/quarantine boundaries and prepares a repeat-build web/schema development artifact with exact source hashes and an explicit NO-GO manifest. These latest changes require fresh integrated CI; prior results are not relabelled. Same-environment repeated builds do not establish independent-machine, physical-device or final release acceptance.
+The latest source additionally repairs owner-policy, EOF import and local sync/quarantine boundaries and prepares a repeat-build web/schema development artifact with exact source hashes and an explicit NO-GO manifest. The frozen development checkpoint passed complete CI; the subsequently repaired checkout requires a fresh integrated run. Prior artifact results are not relabelled. Same-environment repeated builds do not establish independent-machine, physical-device or final release acceptance.
 
 Hosted metadata remains read-only: 37 migrations, 47 RLS-protected shop tables, zero direct anon/authenticated table grants. Development migrations 38/39 are unapplied. Leaked-password protection remains disabled and owner-gated.
 
@@ -148,7 +151,7 @@ Each ID retains its original order in the [governing checklist](../../road-to-co
 | ST32-03 | CRITICAL | Two-Account Field Acceptance | owner-external-blocked |
 | ST32-04 | CRITICAL | Disaster-Recovery Acceptance | owner-external-blocked |
 | ST32-05 | CRITICAL | Final Financial & Security Certification | partial |
-| ST32-06 | HIGH | Cross-Browser Matrix | owner-external-blocked |
+| ST32-06 | HIGH | Cross-Browser Matrix | partial |
 | ST32-07 | HIGH | Real Hardware Acceptance | owner-external-blocked |
 | ST32-08 | HIGH | Production-Scale Performance | partial |
 | ST32-09 | HIGH | Reference & Requirement Signoff | partial |
