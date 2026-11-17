@@ -27,15 +27,18 @@
         "Clean main checkout; 37 canonical migration files; documented hosted timestamp mapping."
       ],
       "changes": [
-        "Pinned current main at 41d4bab619db1808f21471299bd7760eee1a6836; audit-to-head diff is roadmap only."
+        "Pinned current main at 41d4bab619db1808f21471299bd7760eee1a6836; audit-to-head diff is roadmap only.",
+        "Fresh read-only production metadata: 37 hosted migrations, 47 RLS-protected shop tables, zero direct anon/authenticated table grants."
       ],
       "tests": [],
       "blockers": [
-        "Deployed SHA and hosted schema are historical reports, not independently inspected in this increment.",
+        "Deployed target still needs exact candidate/artifact compatibility reconciliation.",
+        "Source includes a pending 38th session-proof migration; not applied to hosted production.",
         "Final release artifact not selected."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json"
       ],
       "nextAction": "Build and compare exact candidate/deployment/schema manifests without applying migrations."
     },
@@ -2969,7 +2972,14 @@
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "verificationSummary": {
+  "activeEngineeringStage": 26,
+  "candidateSource": {
+    "localCommit": "fa1c828274b7728181ce729b4c291996d26fe6a9",
+    "publishedCommit": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+    "tree": "7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58",
+    "pullRequest": 105
+  },
+  "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
       "failed": 0,
@@ -2987,5 +2997,23 @@
     "browser": "blocked: invalid Chromium download",
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
   },
-  "activeEngineeringStage": 26
+  "verificationSummary": {
+    "native": {
+      "passed": 1173,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-native.txt"
+    },
+    "client": {
+      "filesPassed": 232,
+      "passed": 1849,
+      "failed": 0,
+      "source": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-client.txt"
+    },
+    "types": "pass",
+    "build": "pass",
+    "browser": "All six hosted workflows passed on 334f2beaa5c2c52b3864e7069a0d4de115746b1d, including release Chromium, device Edge/WebKit, UI, integrated references, CodeQL and Clementia100x20. Local Chromium acquisition failed; physical field acceptance remains open.",
+    "unresolvedDefects": "Whole-ledger encryption, complete replication, commerce/provider lifecycle and comprehensive acceptance remain open."
+  }
 }

@@ -1,26 +1,28 @@
 # Road to Complete — live engineering progress
 
-17 November 2026. **NO-GO; Stage 21 in progress.** No roadmap task has been certified complete by this increment. The governing [roadmap](../../road-to-complete.md) is unchanged.
+17 November 2026. **NO-GO. Engineering increments through Stage 26; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
 
-Source baseline: `41d4bab619db1808f21471299bd7760eee1a6836`, on isolated branch `codex/road-to-complete`. This differs from audited `5633c3901136cd0024021255ae0c29eceb0f10be` only by the roadmap document. Production reference `175204d15c6d77a3ae9cadee505dfa1cf5821ac6` and hosted-schema statements remain historical evidence, not fresh production verification.
+Source baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development source: `334f2beaa5c2c52b3864e7069a0d4de115746b1d`, tree `7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58`, in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). Each published stage tree equals its local reviewed tree; [commit mapping](evidence/road-to-complete-continuation/commit-map.json). No main merge or deployment.
 
-The [119-task register](ROAD_TO_COMPLETE_PROGRESS.json) preserves each exact requirement, priority, original status and completion criterion with stable stage/order IDs. Current totals: **1 fully verified (candidate disposition only), 0 implemented pending formal acceptance, 10 partial, 0 newly confirmed missing, 2 owner/external blocked, 106 unreviewed**. Unreviewed does not mean missing. Failed/unexecuted checks are reported separately in the [execution evidence](ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md).
+The [task register](ROAD_TO_COMPLETE_PROGRESS.json) records exact requirements, priority, original audit status, implementation, tests, evidence and remaining work for all 119 IDs. Current dispositions:
 
-The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) preserve 82 acceptance units, 47 release blockers and 14 central blockers. Their current behavioral reconciliation is still open. Original registers and historical test results have not been rewritten.
+| Disposition | Tasks |
+| --- | ---: |
+| Fully verified criterion | 1 |
+| Implemented pending formal acceptance | 0 |
+| Partial | 40 |
+| Confirmed missing engineering | 1 |
+| Owner/external blocked | 7 |
+| Not yet behaviorally reconciled | 70 |
 
-Implemented in this increment:
+Unreviewed does not mean absent. Partial does not mean completed. Whole active-ledger encryption is missing engineering, not merely a hardware acceptance gate. The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still require current behavioral dispositions.
 
-- Executable roadmap integrity gate, included in CI, rejects requirement deletion, drift, duplicate IDs, unsupported statuses and unsupported completion claims.
-- Read-only Git reconciliation tool separates ancestry, equivalent patches and matching file blobs. It inventories all 42 non-main branches without merging or deleting them; [branch evidence](ROAD_TO_COMPLETE_BRANCHES.md).
-- PGlite test instances close after each invitation/refund-policy test, preserving all security and finance assertions while releasing database resources.
-- Configured candidate sales/returns E2E scaffolds now fail explicitly rather than treating page visibility as business acceptance.
-- Unreferenced historical `StagePlaceholder.tsx` retired; Git history and historical archive manifests retain its provenance. No active route imported it.
-- Field instructions require exact candidate/target/artifact/schema comparison rather than universally assuming an old deployment SHA.
+Working changes preserve the two operating models: canonical standalone IndexedDB services and server-authorized shared-shop PostgreSQL. Selected divergent work adds device-local stock allocation and atomic transfers; it does not enable distributed inventory. Financial export correctness, independent ledger conservation, reservation evidence, recovery coordination, active SQL sessions and exact sync acknowledgements now have additional regression coverage. See the [stage delivery evidence](ROAD_TO_COMPLETE_CONTINUATION.md).
 
-Next task: finish ST21-04/ST21-05 semantic reconciliation, starting with the unique owner-completion branch commerce/reservation and accounting changes against the current canonical migrations. Complete the remaining source/mutation inventory and historical-ID dispositions before claiming Stage 21 accepted. Then proceed to Stage 22 financial invariants. Do not cherry-pick the historical branch wholesale.
+Latest complete native/server run: **1,173 passed, zero failed/skipped**. Strict TypeScript and production build pass on Node 24.19.0/pnpm 10.34.0. The frozen Stage 26 source passed **232 client files/1,849 tests** and all six hosted workflows (release, Edge/WebKit, UI, integrated references, security and Clementia); prior source results remain separately labelled. Local browser acquisition failed; actual hardware, provider, real Auth and field acceptance are not inferred from mocks.
 
-No main merge, deployment, payment activation, production mutation, reset, auth change or branch-policy change was performed. Physical devices, real Auth, live providers, hosted restore and owner acceptance remain separate gates.
+Fresh read-only hosted metadata confirms 37 applied migrations and 47 RLS-protected shop tables with no direct anon/authenticated table grants. The new 38th source migration closes a business-classification session-proof bypass in isolated PostgreSQL tests; **it has not been applied to production**. The owner-controlled leaked-password protection warning remains open.
 
-Verified local results: **1,165 native/server + 1,823 client tests pass**, types/build/frozen install pass, no known dependency vulnerabilities. Chromium acquisition failed; browser/device/provider/production acceptance remains open. Full report and hashed logs: [execution evidence](ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md).
+Next engineering: finish Stage 26 integration proof, then Stage 27 order authorization/recovery and stock lifecycle. Earlier partial requirements remain open, including broader finance invariants, partial transfers, store batch provenance, full ledger encryption and full financial replication. Subsequent provider adapters, automation, UX, security and frozen release acceptance are not declared complete.
 
-Continuation: selected unique backup/reservation safety fixes are integrated and pass 42 focused real-service tests. All 42 original branches have explicit preservation/integration recommendations, and 26 legacy candidates have mapped archival dispositions. ST21-06 is verified for that source-disposition criterion only. The prior six hosted workflows have passed. Stage 22 financial engineering has begun while broader release and source-reconciliation criteria stay open.
+No production data/configuration/auth policy was changed, no real payment was initiated, and no protected history or branch was deleted. Production migration, deployment, physical acceptance and owner signoff remain separately gated.

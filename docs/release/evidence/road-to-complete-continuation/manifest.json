@@ -7,6 +7,11 @@
       "bytes": 324
     },
     {
+      "path": "docs/release/evidence/road-to-complete-continuation/commit-map.json",
+      "sha256": "bc9ba7db29e27ed32a01ddedfb5e66724fe4c4b06db2d90108bba036990e6595",
+      "bytes": 1684
+    },
+    {
       "path": "docs/release/evidence/road-to-complete-continuation/continuation-build.txt",
       "sha256": "426b83147fff59b210a2efbb0db341c2990794b3507204604469315c4e7ab703",
       "bytes": 10613
@@ -25,6 +30,26 @@
       "path": "docs/release/evidence/road-to-complete-continuation/final-native.txt",
       "sha256": "73f3dfad757dc03b4359c446a6b7a3f91b339204e8f7f3688225224d3d6adb99",
       "bytes": 99316
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/frozen-build.txt",
+      "sha256": "a74e96ba142f4c567192e559cfa76699c054a4f7f5b47c04fd6946c517625c02",
+      "bytes": 10505
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/frozen-client.txt",
+      "sha256": "3116aa2fd42b61c5e4c90e519e552580841e1a3941cd54f158a4c651be5f2914",
+      "bytes": 312282
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/frozen-native.txt",
+      "sha256": "6f966e8029f52bf9fc256c5215d3576a2b527f262521a1ab1276b74cb89a075e",
+      "bytes": 99552
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/frozen-types.txt",
+      "sha256": "f43095576b5d7862fbb1be638064ca6d4551159dc892e2e4862b6c1810fca5be",
+      "bytes": 86
     },
     {
       "path": "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json",
