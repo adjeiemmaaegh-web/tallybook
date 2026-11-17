@@ -7,6 +7,7 @@ import {validateCentralSaleEvent, type CentralSaleEvent} from './centralSaleEven
 import {enqueueSyncEvent, type SyncOutboxEvent} from './syncFoundation';
 import {signLocalSaleEvent} from './signedSaleEnvelope';
 import type {CentralUploadAdapter, PreparedUpload, ServerOperationReceipt} from './supabaseUploader.ts';
+import {verifyCentralReceipt} from './supabaseUploader.mjs';
 
 const ID=/^[A-Za-z0-9:_-]{1,128}$/;
 async function digest(event:CentralSaleEvent,subtle:SubtleCrypto):Promise<string> {
@@ -86,6 +87,7 @@ export function createSignedSaleUploadAdapter({database,deviceId,privateKey,endp
       if(raw.length>2048)throw Error('Oversized sale receipt.');
       let receipt:ServerOperationReceipt;
       try{receipt=JSON.parse(raw) as ServerOperationReceipt;}catch{throw Error('Invalid sale receipt.');}
+      verifyCentralReceipt(upload.event,receipt);
       return receipt;
     },
   };

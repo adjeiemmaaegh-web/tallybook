@@ -203,7 +203,7 @@
       "id": "ST21-07",
       "stage": 21,
       "priority": "HIGH",
-      "name": "PR #85 — Fresh-Start Release",
+      "name": "PR #85 \u2014 Fresh-Start Release",
       "requirement": "Resolve the open draft documenting mandatory sign-in and an irreversible production reset. Separate already integrated authentication safeguards from still-unapproved data-deletion and release decisions.",
       "initialAuditStatus": "Blocked",
       "completionCriterion": "owner-approved disposition and no destructive change through a documentation-only merge.",
@@ -307,7 +307,7 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
       ],
-      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
+      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23\u201326, #68 to Stage 25; close only with full evidence."
     },
     {
       "id": "ST21-11",
@@ -1402,7 +1402,7 @@
       "id": "ST25-05",
       "stage": 25,
       "priority": "HIGH",
-      "name": "Shared-Shop Shifts — Issue #68",
+      "name": "Shared-Shop Shifts \u2014 Issue #68",
       "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
@@ -1491,7 +1491,7 @@
       "stage": 25,
       "priority": "MEDIUM",
       "name": "Shared-Device Handover",
-      "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
+      "requirement": "Test account A offline sale \u2192 account B login \u2192 A returns and reconciles, including simultaneous tabs.",
       "initialAuditStatus": "Real-device unverified",
       "completionCriterion": "original cashier, queue scope and receipt preserved.",
       "status": "owner-external-blocked",
@@ -1516,17 +1516,35 @@
       "requirement": "Complete authenticated cross-device financial replication beyond the shared-shop sale outbox for approved sales, refunds, repayments, shifts, purchases and other immutable events.",
       "initialAuditStatus": "Partially implemented/missing",
       "completionCriterion": "durable transport, exact receipt and conservation.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/sync/outboxAcknowledgements.ts",
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/supabaseUploader.ts",
+        "client/src/features/sync/signedSaleDelivery.ts",
+        "client/src/features/sync/syncAcknowledgement.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect financial replication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical immutable queue, device consent, signed sale receipt and metadata-only staging; recovery write barrier and staff permissions."
+      ],
+      "changes": [
+        "Bind transport and acknowledgement to the original company, staff and immutable event snapshot; recheck recovery, consent, device and permission before send and acknowledgement. Validate exact central receipt at transport adapter boundary."
+      ],
+      "tests": [
+        {
+          "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Injected transport tests do not prove live authenticated device enrollment, complete financial replication, multi-device ordering or physical offline acceptance.",
+        "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+      ],
+      "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
     {
       "id": "ST26-02",
@@ -1536,17 +1554,35 @@
       "requirement": "Verify owner-issued enrollment, possession, revocation, company/store/staff binding and rejection of forged client device claims.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "real authenticated transport positive and negative tests.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/sync/outboxAcknowledgements.ts",
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/supabaseUploader.ts",
+        "client/src/features/sync/signedSaleDelivery.ts",
+        "client/src/features/sync/syncAcknowledgement.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect device enrollment & trust against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical immutable queue, device consent, signed sale receipt and metadata-only staging; recovery write barrier and staff permissions."
+      ],
+      "changes": [
+        "Bind transport and acknowledgement to the original company, staff and immutable event snapshot; recheck recovery, consent, device and permission before send and acknowledgement. Validate exact central receipt at transport adapter boundary."
+      ],
+      "tests": [
+        {
+          "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Injected transport tests do not prove live authenticated device enrollment, complete financial replication, multi-device ordering or physical offline acceptance.",
+        "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+      ],
+      "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
     {
       "id": "ST26-03",
@@ -1556,17 +1592,35 @@
       "requirement": "Close idempotency, ordering, acknowledgment, retry, revocation, multi-device and crash-recovery gaps.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no duplicated posting or lost acknowledged transactions under adversarial transport.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/sync/outboxAcknowledgements.ts",
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/supabaseUploader.ts",
+        "client/src/features/sync/signedSaleDelivery.ts",
+        "client/src/features/sync/syncAcknowledgement.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect offline replay against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical immutable queue, device consent, signed sale receipt and metadata-only staging; recovery write barrier and staff permissions."
+      ],
+      "changes": [
+        "Bind transport and acknowledgement to the original company, staff and immutable event snapshot; recheck recovery, consent, device and permission before send and acknowledgement. Validate exact central receipt at transport adapter boundary."
+      ],
+      "tests": [
+        {
+          "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Injected transport tests do not prove live authenticated device enrollment, complete financial replication, multi-device ordering or physical offline acceptance.",
+        "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+      ],
+      "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
     {
       "id": "ST26-04",
@@ -1636,17 +1690,33 @@
       "requirement": "Reconcile versioned POS/JSON/CSV exports with the actual authorized Watchdog importer, including refunds, discounts, no-sales, shifts, stock, cash counts and Mobile Money.",
       "initialAuditStatus": "Partially integrated",
       "completionCriterion": "agreed schema and repeatable actual importer tests.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/integrations/watchdogCanonicalCsv.ts",
+        "client/src/features/business/currencies.ts",
+        "qa/watchdog-canonical-export.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect alchemy watchdog contract against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Versioned local preview with explicit unverified provenance, omitted-event disclosure and original unknown register/device identity."
+      ],
+      "changes": [
+        "Correct canonical major-unit CSV values for existing whole-unit RWF/TZS/UGX ledgers, reuse the existing divisor convention, reject unknown monetary scales."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/watchdog-canonical-export.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        }
+      ],
+      "blockers": [
+        "Actual current Watchdog importer source is unavailable: accessible Alchemy-Watchdog main bc37f6fedbf80a184dbfbd3c1b53124a3c86564a is the website, not the importer. October parser evidence remains historical.",
+        "Shifts, Mobile Money and cash counts remain explicitly omitted from canonical CSV; current complete contract and provenance acceptance are open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+      ],
+      "nextAction": "Test the complete versioned contract with the authorized current importer; never invent identity or classify these exports as verified loss/theft evidence."
     },
     {
       "id": "ST26-08",
@@ -1656,17 +1726,33 @@
       "requirement": "Verify shop/device identity, times, cashier evidence, missing events and appropriate investigation use.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "no invented trust or automatic allegation of theft.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sync",
-        "client/src/cloud"
+        "client/src/features/integrations/watchdogCanonicalCsv.ts",
+        "client/src/features/business/currencies.ts",
+        "qa/watchdog-canonical-export.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect watchdog provenance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Versioned local preview with explicit unverified provenance, omitted-event disclosure and original unknown register/device identity."
+      ],
+      "changes": [
+        "Correct canonical major-unit CSV values for existing whole-unit RWF/TZS/UGX ledgers, reuse the existing divisor convention, reject unknown monetary scales."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/watchdog-canonical-export.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        }
+      ],
+      "blockers": [
+        "Actual current Watchdog importer source is unavailable: accessible Alchemy-Watchdog main bc37f6fedbf80a184dbfbd3c1b53124a3c86564a is the website, not the importer. October parser evidence remains historical.",
+        "Shifts, Mobile Money and cash counts remain explicitly omitted from canonical CSV; current complete contract and provenance acceptance are open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+      ],
+      "nextAction": "Test the complete versioned contract with the authorized current importer; never invent identity or classify these exports as verified loss/theft evidence."
     },
     {
       "id": "ST27-01",
@@ -1966,7 +2052,7 @@
       "stage": 29,
       "priority": "HIGH",
       "name": "Clementia Task Coverage",
-      "requirement": "Investigate unsupported/missed responses in 100-goal × 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
+      "requirement": "Investigate unsupported/missed responses in 100-goal \u00d7 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "agreed recognition/safety thresholds and repeatable tests.",
       "status": "unreviewed",

@@ -65,3 +65,18 @@ describe('explicit signed sale delivery',()=>{
     expect(()=>validateSignedSaleEndpoint('http://tallybook.example/api/central/sales')).toThrow();
   });
 });
+
+it('rejects foreign or contradictory signed-sale receipts at the adapter boundary',async()=>{
+ const keys=await webcrypto.subtle.generateKey('Ed25519',false,['sign','verify']);
+ const receipt={businessId:'localA',deviceId:'deviceA',operationId:'sale:s1',payloadDigest:sha256,
+   receivedAtUtc:'2026-10-27T01:00:00.000Z',status:'accepted'};
+ for(const mismatch of [{businessId:'foreign'},{deviceId:'foreign'},{operationId:'different'},
+   {payloadDigest:'f'.repeat(64)},{status:'rejected'},{receivedAtUtc:'invalid'}]){
+   const adapter=createSignedSaleUploadAdapter({database:{centralSaleEvents:{get:async()=>event}} as unknown as TallybookDB,
+     deviceId:'deviceA',privateKey:keys.privateKey,endpoint,accessToken:'x'.repeat(30),
+     subtle:webcrypto.subtle as unknown as SubtleCrypto,
+     transport:async url=>({status:200,redirected:false,type:'basic',url,
+       headers:new Headers({'content-type':'application/json'}),text:async()=>JSON.stringify({...receipt,...mismatch})} as Response)});
+   await expect(adapter.send(await adapter.prepare(pending))).rejects.toThrow(/acknowledgment does not reconcile/);
+ }
+});
