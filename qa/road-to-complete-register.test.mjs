@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 import { parseRoadmap, validateRegister } from '../scripts/road-to-complete-register.mjs';
 
 const text = readFileSync('road-to-complete.md', 'utf8');
-const tasks = parseRoadmap(text);
+// These fixtures model an entirely unreviewed snapshot, independently of
+// which requirements the live roadmap has subsequently checked off.
+const tasks = parseRoadmap(text).map(task => ({ ...task, checked: false }));
 function fixture() {
   return { tasks: tasks.map(t => ({ ...t, status: 'unreviewed', files: [], existingCapabilityReused: [],
     changes: [], tests: [], blockers: [], acceptanceEvidence: [], nextAction: 'Inspect authoritative implementation' })) };

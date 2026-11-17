@@ -1,4 +1,4 @@
-import { StoreFinancialReport } from "@/features/stores/StoreFinancialReport";
+import { StoreFinancialReport } from "@/features/stores/StoreSalesContributionPanel";
 import { STAGE9_RELEASE_SCOPE } from "@/features/stores/stage9ReleaseScope";
 import { confirmAction } from "@/lib/confirmAction";
 import { requestStoreTransfer, listStoreTransferRequests, cancelStoreTransfer, dispatchStoreTransfer, completeStoreTransfer, returnUndeliveredDispatch, requestStoreTransferReversal, type StoreTransferRequest } from "@/features/stores/storeTransfers";
