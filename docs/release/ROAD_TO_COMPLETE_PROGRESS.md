@@ -161,3 +161,5 @@ Each ID retains its original order in the [governing checklist](../../road-to-co
 | ST32-13 | HIGH | Final GO/NO-GO | partial |
 
 No source test, artifact hash or CI success grants owner acceptance or production authorization.
+
+Latest source evidence: [64 genuine-engine checks and dependency notices](ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md). The canonical checkout candidate passed the complete 1,208-native/1,915-client run; the subsequent notice-bearing source passed 37 focused client, 21 native security/package cases, types/build, strict security and two identical 321-file manifests. Its final integrated full workflow remains required. Main and production remain unchanged.
