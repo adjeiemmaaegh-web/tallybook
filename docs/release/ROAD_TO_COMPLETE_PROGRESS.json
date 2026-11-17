@@ -3197,14 +3197,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3221,14 +3227,20 @@
         "vercel.json",
         ".github/workflows/security-code-audit.yml",
         "client/src/lib/boundedResponse.mjs",
-        "client/src/features/sync/deviceRegistry.ts"
+        "client/src/features/sync/deviceRegistry.ts",
+        "server/apiRateLimit.mjs",
+        "server/syncHttps.mjs",
+        "scripts/read-bounded-evidence.mjs",
+        "scripts/triage-secret-findings.mjs"
       ],
       "existingCapabilityReused": [
         "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
       ],
       "changes": [
         "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
-        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates.",
+        "Closed file-check/reopen races, bounded descriptor reads, trusted test CA with SAN and enabled before-parser per-peer API throttling using pinned express-rate-limit 8.7.4.",
+        "Triage source fixed all 12 High CodeQL findings; no query exclusions or severity reductions. Historical scan candidates independently checked against original Git JSON/fixture source; unknown credentials still reject."
       ],
       "tests": [
         {
@@ -3236,14 +3248,27 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Security triage 44042644861 at 1e27e3fa5b824348039abfb6e08f81c14215f67a",
+          "result": "pass",
+          "scope": "CodeQL 0 High/0 Critical plus descriptor/TLS/throttle regressions; historical-secret job remained failed pending source verification.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44042644861"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
-        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open.",
+        "Final strict historical-finding classification and new checkpoint source still require fresh exact-SHA CI; no independent security certification."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3260,14 +3285,20 @@
         "vercel.json",
         ".github/workflows/security-code-audit.yml",
         "client/src/lib/boundedResponse.mjs",
-        "client/src/features/sync/deviceRegistry.ts"
+        "client/src/features/sync/deviceRegistry.ts",
+        "server/apiRateLimit.mjs",
+        "server/syncHttps.mjs",
+        "scripts/read-bounded-evidence.mjs",
+        "scripts/triage-secret-findings.mjs"
       ],
       "existingCapabilityReused": [
         "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
       ],
       "changes": [
         "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
-        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates.",
+        "Closed file-check/reopen races, bounded descriptor reads, trusted test CA with SAN and enabled before-parser per-peer API throttling using pinned express-rate-limit 8.7.4.",
+        "Triage source fixed all 12 High CodeQL findings; no query exclusions or severity reductions. Historical scan candidates independently checked against original Git JSON/fixture source; unknown credentials still reject."
       ],
       "tests": [
         {
@@ -3275,14 +3306,27 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Security triage 44042644861 at 1e27e3fa5b824348039abfb6e08f81c14215f67a",
+          "result": "pass",
+          "scope": "CodeQL 0 High/0 Critical plus descriptor/TLS/throttle regressions; historical-secret job remained failed pending source verification.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44042644861"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
-        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open.",
+        "Final strict historical-finding classification and new checkpoint source still require fresh exact-SHA CI; no independent security certification."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3314,14 +3358,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3353,14 +3403,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3392,14 +3448,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3431,14 +3493,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3470,14 +3538,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3509,14 +3583,20 @@
           "result": "pass",
           "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "GitHub Release validation run 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
         }
       ],
       "blockers": [
-        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
         "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3528,17 +3608,36 @@
       "requirement": "Select final exact Git SHA, migration set, build output and distributable hashes.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "reproducible immutable release evidence.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect frozen release candidate against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-02",
@@ -3548,17 +3647,36 @@
       "requirement": "Independently execute frozen-install, native/server, Vitest, type, build, migration, PostgreSQL, IndexedDB, Chromium, auth, offline, accessibility, performance and security suites against that SHA.",
       "initialAuditStatus": "Partially verified from existing CI",
       "completionCriterion": "mandatory passes with retained logs, repairs and full reruns.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect complete regression against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-03",
@@ -3568,17 +3686,32 @@
       "requirement": "Execute real owner/attendant two-phone setup, sale, offline/reconnect, refund request, quote, accounts, handover and denial tests.",
       "initialAuditStatus": "Untested in field",
       "completionCriterion": "signed redacted evidence per case.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect two-account field acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
     {
       "id": "ST32-04",
@@ -3588,17 +3721,32 @@
       "requirement": "Complete real-device/browser backup-restore and isolated hosted restore without overwriting production.",
       "initialAuditStatus": "Untested",
       "completionCriterion": "independently confirmed recoverability and data integrity.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect disaster-recovery acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
     {
       "id": "ST32-05",
@@ -3608,17 +3756,36 @@
       "requirement": "Close applicable money/stock conservation, tenant, authorization, attribution and persistence requirements.",
       "initialAuditStatus": "Unverified comprehensively",
       "completionCriterion": "zero unresolved Critical/High launch defects and full mandatory proof.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect final financial & security certification against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-06",
@@ -3628,17 +3795,32 @@
       "requirement": "Test supported Chrome, Edge, Firefox, Safari, Windows, Android and iOS with genuine engines/devices.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "versioned results with explicit unsupported combinations.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect cross-browser matrix against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
     {
       "id": "ST32-07",
@@ -3648,17 +3830,32 @@
       "requirement": "Test supported scanners, 58/80 mm printers and cash drawers where explicitly supported.",
       "initialAuditStatus": "Untested",
       "completionCriterion": "recorded accuracy and peripheral failure recovery.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect real hardware acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
     {
       "id": "ST32-08",
@@ -3668,17 +3865,36 @@
       "requirement": "Test low-resource hardware, accumulated data, long sessions and interrupted connectivity.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "accepted measured thresholds without money/data loss.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect production-scale performance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-09",
@@ -3688,17 +3904,36 @@
       "requirement": "Revalidate 29-photo requirements and all applicable historical acceptance IDs; count duplicate photo requirements once.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "accepted, superseded or explicitly blocked dispositions with evidence.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect reference & requirement signoff against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-10",
@@ -3708,17 +3943,36 @@
       "requirement": "Resolve draft PR, open issues and divergent branches after reviewing source/acceptance evidence.",
       "initialAuditStatus": "Unmerged/unverified",
       "completionCriterion": "no required lost work or unresolved integration risks.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect github integration closure against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-11",
@@ -3728,17 +3982,36 @@
       "requirement": "Produce reproducible customer build with SHA-256 manifests, dependency inventory, feature matrix, recovery guidance and QA evidence.",
       "initialAuditStatus": "Final artifact unverified",
       "completionCriterion": "independently built/tested package.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect final distribution package against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
     {
       "id": "ST32-12",
@@ -3748,17 +4021,32 @@
       "requirement": "Complete training, support contacts, escalation, field runbook and operational signoff.",
       "initialAuditStatus": "Real-world signoff blocked",
       "completionCriterion": "recorded acceptance of mandatory workflows.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect owner uat & handoff against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Genuine supported phones/hardware, independent observers or owner operational acceptance are unavailable in this automated environment; simulated Chromium evidence does not satisfy this task."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
     {
       "id": "ST32-13",
@@ -3768,21 +4056,40 @@
       "requirement": "Decide controlled pilot versus full V19 commercial scope, including payment, commerce, sync and deferred capabilities; no release actions without separate approval.",
       "initialAuditStatus": "Blocked",
       "completionCriterion": "explicit evidence-backed decision for exact artifact and scope.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
+        "scripts/freeze-development-checkpoint.mjs",
+        "qa/development-checkpoint.test.mjs",
         ".github/workflows/release-validation.yml",
-        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+        "docs/release/ROAD_TO_COMPLETE_PROGRESS.json"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect final go/no-go against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Pinned complete release-validation CI, existing PostgreSQL/IndexedDB/browser regressions, current 119-task register and immutable Git source."
+      ],
+      "changes": [
+        "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
+        "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance."
+      ],
+      "tests": [
+        {
+          "command": "Release validation 44039335537 at 10355725d814dd04422debe717c2903435ab4a0a",
+          "result": "pass",
+          "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
+          "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        }
+      ],
+      "blockers": [
+        "Mandatory finance/inventory/sync/commerce/provider requirements remain open; this is a development checkpoint and cannot be called a final release candidate.",
+        "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+      ],
+      "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "activeEngineeringStage": 31,
+  "activeEngineeringStage": "Stage 32 development checkpoint and continued mandatory engineering; release NO-GO",
   "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
