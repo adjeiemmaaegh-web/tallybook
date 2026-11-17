@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { formatMinorAmount } from "@/features/inventory/inventory";
 import { businessDateTimeLabel } from "@/features/business/businessCalendar.mjs";
 import { openWhatsAppShare } from "@/features/sharing/businessSharing";
-import { formatReceiptShareText, receiptPaymentDescription, shareReceiptText, type ReceiptDetail } from "@/features/receipts/receiptDetail";
+import { formatReceiptShareText, receiptPaymentDescription, receiptProviderStatus, shareReceiptText, type ReceiptDetail } from "@/features/receipts/receiptDetail";
 
 interface ReceiptDetailDialogProps {
   detail: ReceiptDetail | undefined;
@@ -58,16 +58,16 @@ export function ReceiptDetailDialog({ detail, open, onOpenChange, manualCopyText
         </DialogHeader>
         <section className="receipt-detail-summary" aria-label="Receipt totals">
           <div><span>Total</span><strong>{formatMinorAmount(detail.sale.totalMinor, detail.currency)}</strong></div>
-          <div><span>Settled</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}</strong></div>
+          <div><span>Recorded paid</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}</strong></div>
           {detail.sale.walletAppliedMinor ? <><div><span>Prepaid wallet applied</span><strong>{formatMinorAmount(detail.sale.walletAppliedMinor, detail.currency)}</strong></div><div><span>New money received</span><strong>{formatMinorAmount(detail.sale.amountPaidMinor - detail.sale.walletAppliedMinor, detail.currency)}</strong></div></> : null}
           <div><span>Remaining</span><strong>{formatMinorAmount(detail.sale.outstandingMinor, detail.currency)}</strong></div>
         </section>
         <section className="receipt-detail-meta" aria-label="Receipt information">
           <div><span>Customer</span><strong>{detail.customerName}</strong></div>
           <div><span>Payment</span><strong>{receiptPaymentDescription(detail)}</strong></div>
+          {receiptProviderStatus(detail)&&<p className="col-span-full">{receiptProviderStatus(detail)}</p>}
           {detail.sale.paymentMethod==="split" && <div className="col-span-full" aria-label="Split tender breakdown">
             {detail.payments.map(payment=><p key={payment.id}>{payment.method==="mobile"?"Mobile Money":payment.method==="card"?"Card":"Cash"}: {formatMinorAmount(payment.amountMinor,detail.currency)}{payment.mobileMoneyProviderName?" · "+payment.mobileMoneyProviderName:""}{payment.mobileMoneyReference?" · Ref "+payment.mobileMoneyReference:payment.cardReference?" · Terminal ref "+payment.cardReference:""}</p>)}
-            <p>Manually recorded tenders, not bank or provider settlement confirmation.</p>
           </div>}
         </section>
         <section className="receipt-detail-items" aria-labelledby="receipt-items-title">

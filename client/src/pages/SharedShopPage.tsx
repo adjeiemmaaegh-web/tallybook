@@ -20,7 +20,7 @@ import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSea
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { formatCustomerStatementText } from "@/cloud/customerStatementText";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
-import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
+import { countryForCurrency, formatShopReceiptText, shopReceiptProviderStatus } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
@@ -934,6 +934,7 @@ export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: ()
     {tenders.length
       ? <ul className="shop-tenders">{tenders.map((t, i) => <li key={i}><span>{tenderText(t, money)}</span></li>)}</ul>
       : <p className="shop-muted">{receipt.payment.method === "mobile" ? `Mobile money · ${receipt.payment.reference}` : receipt.payment.method === "card" ? "Card" : `Cash received ${money(receipt.payment.amountTenderedMinor)}`}</p>}
+    {shopReceiptProviderStatus(receipt)&&<p className="shop-muted">{shopReceiptProviderStatus(receipt)}</p>}
     {receipt.payment.changeMinor > 0 && <p className="shop-muted">Change {money(receipt.payment.changeMinor)}</p>}
     {receipt.customer && <p className="shop-muted">Customer: {receipt.customer.name} · now owes {money(receipt.customer.balanceMinor)}</p>}
     {(receipt.refunds ?? []).length > 0 && <div className="shop-refunds">

@@ -2133,16 +2133,26 @@
       "requirement": "Select an approved Ghana-relevant Mobile Money/card provider and authorize sandbox use.",
       "initialAuditStatus": "External authorization blocked",
       "completionCriterion": "provider contract and permitted sandbox access.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect provider selection against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "No approved real provider contract, sandbox access or fee/compliance policy is available. No provider credentials, settings or money movement were used."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Owner selects and authorizes provider/sandbox; keep local architecture and real activation separated."
     },
     {
       "id": "ST28-02",
@@ -2152,16 +2162,27 @@
       "requirement": "Replace the disabled/mock-only server/paymentGateway.mjs path with a reviewed backend-only provider integration when authorized.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "signed provider responses and secure secrets.",
-      "status": "unreviewed",
+      "status": "missing",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect real payment adapter against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
+        "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Implement durable provider-independent adapter and immutable settlement/refund contract with isolated transactional tests before authorized sandbox integration."
     },
     {
       "id": "ST28-03",
@@ -2171,16 +2192,27 @@
       "requirement": "Reconcile pending/succeeded/failed/unknown/reversed payments to exact orders, sales, balances and settlements.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "confirmed funds post once; unknown never recorded as settled.",
-      "status": "unreviewed",
+      "status": "missing",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect settlement integrity against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
+        "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Implement durable provider-independent adapter and immutable settlement/refund contract with isolated transactional tests before authorized sandbox integration."
     },
     {
       "id": "ST28-04",
@@ -2190,16 +2222,27 @@
       "requirement": "Implement provider refunds, partial refunds, disputes and chargeback lifecycle under business policy.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "original-payment linkage and financial conservation.",
-      "status": "unreviewed",
+      "status": "missing",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect refunds & chargebacks against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
+        "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Implement durable provider-independent adapter and immutable settlement/refund contract with isolated transactional tests before authorized sandbox integration."
     },
     {
       "id": "ST28-05",
@@ -2209,16 +2252,34 @@
       "requirement": "Test duplicate/forged/reordered webhooks, timeouts, retries, incorrect currency and amount limits.",
       "initialAuditStatus": "Not tested against real provider",
       "completionCriterion": "zero duplicated/unauthorized finance effects.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect payment failure testing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
+      "changes": [
+        "Standalone and shared-shop receipt screen/share/print text explicitly distinguish staff-recorded electronic tenders from unverified bank/provider settlement. Recorded paid replaces the ambiguous settled label; original sale currency takes precedence over current company settings."
+      ],
+      "tests": [
+        {
+          "command": "pnpm test receiptDetail.test.ts shopReceiptText.test.ts SharedShopReceipt.test.tsx --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        }
+      ],
+      "blockers": [
+        "No live provider or provider sandbox is verified; complete settlement, transport failure, replay and report-wide acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Complete durable settlement/provider-contract engineering, preserve unknown outcomes, then test authorized sandbox and all reports without falsely confirming manual tender references."
     },
     {
       "id": "ST28-06",
@@ -2228,16 +2289,34 @@
       "requirement": "Prevent manual cash/Mobile Money/card recording being labelled as actual provider confirmation.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "receipts/reports distinguish recorded from settled tenders.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect manual payment separation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
+      "changes": [
+        "Standalone and shared-shop receipt screen/share/print text explicitly distinguish staff-recorded electronic tenders from unverified bank/provider settlement. Recorded paid replaces the ambiguous settled label; original sale currency takes precedence over current company settings."
+      ],
+      "tests": [
+        {
+          "command": "pnpm test receiptDetail.test.ts shopReceiptText.test.ts SharedShopReceipt.test.tsx --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        }
+      ],
+      "blockers": [
+        "No live provider or provider sandbox is verified; complete settlement, transport failure, replay and report-wide acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Complete durable settlement/provider-contract engineering, preserve unknown outcomes, then test authorized sandbox and all reports without falsely confirming manual tender references."
     },
     {
       "id": "ST28-07",
@@ -2247,16 +2326,26 @@
       "requirement": "Document fees, reversal handling, reconciliation time, privacy and contract obligations.",
       "initialAuditStatus": "Provider-selection blocked",
       "completionCriterion": "approved operating contract.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
-        "server/paymentGateway.mjs"
+        "server/paymentGateway.mjs",
+        "server/run15PaymentSandboxHarness.mjs",
+        "server/tests/paymentGateway.test.mjs",
+        "client/src/features/receipts/receiptDetail.ts",
+        "client/src/cloud/shopReceiptText.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect provider compliance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "No approved real provider contract, sandbox access or fee/compliance policy is available. No provider credentials, settings or money movement were used."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+      ],
+      "nextAction": "Owner selects and authorizes provider/sandbox; keep local architecture and real activation separated."
     },
     {
       "id": "ST29-01",
@@ -3230,7 +3319,15 @@
       "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
     },
     "stage27Types": "pass",
-    "stage27Build": "pass"
+    "stage27Build": "pass",
+    "stage28FocusedClient": {
+      "filesPassed": 3,
+      "passed": 20,
+      "failed": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+    },
+    "stage28Types": "pass",
+    "stage28Build": "pass"
   },
   "frozenStage26Source": {
     "localCommit": "fa1c828274b7728181ce729b4c291996d26fe6a9",

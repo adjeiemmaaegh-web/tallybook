@@ -1,0 +1,33 @@
+
+> business-app@1.0.0 test /workspace/scratch/f8a637cc20b7/tallybook-stage27
+> vitest run client/src/features/receipts/receiptDetail.test.ts client/src/cloud/shopReceiptText.test.ts client/src/pages/SharedShopReceipt.test.tsx --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.12 /workspace/scratch/f8a637cc20b7/tallybook-stage27/client
+
+ ✓ src/pages/SharedShopReceipt.test.tsx > shared shop receipt actions > shares the receipt text through the device share sheet 172ms
+ ✓ src/pages/SharedShopReceipt.test.tsx > shared shop receipt actions > falls back to showing copyable text when nothing else works 24ms
+ ✓ src/pages/SharedShopReceipt.test.tsx > shared shop receipt actions > opens WhatsApp at the customer's normalised number 14ms
+ ✓ src/pages/SharedShopReceipt.test.tsx > shared shop receipt actions > opens WhatsApp without a recipient when the sale has no customer 12ms
+ ✓ src/pages/SharedShopReceipt.test.tsx > shared shop receipt actions > marks only this receipt for printing, then clears the mark after printing 12ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > distinguishes prepaid settlement from fresh cash received 19ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > reconstructs original part-paid Mobile Money sale facts without changing the saved records 2ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > renders clean professional share text without private database fields 1ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > uses the native sharing mechanism when supported 3ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > falls back to clipboard copy, then manual copy only when browser sharing is unavailable 1ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > keeps historical mobile records without provider details readable 0ms
+ ✓ src/features/receipts/receiptDetail.test.ts > read-only receipt detail > preserves the original credit-sale amount story without using a customer’s later total debt 1ms
+ ✓ src/features/receipts/receiptDetail.test.ts > recorded tender versus provider settlement > labels every manual electronic tender without manufacturing provider proof or changing money 2ms
+ ✓ src/features/receipts/receiptDetail.test.ts > recorded tender versus provider settlement > cash-only, wallet-only and credit-only evidence do not invent an electronic provider relationship 0ms
+ ✓ src/features/receipts/receiptDetail.test.ts > recorded tender versus provider settlement > original sale currency controls historical receipt values after company settings change 1ms
+ ✓ src/cloud/shopReceiptText.test.ts > formatShopReceiptText > restates items, discount, total, each tender and the customer's balance 21ms
+ ✓ src/cloud/shopReceiptText.test.ts > formatShopReceiptText > shows refunds and the amount kept 2ms
+ ✓ src/cloud/shopReceiptText.test.ts > formatShopReceiptText > falls back to the single-payment shape and reports change 1ms
+ ✓ src/cloud/shopReceiptText.test.ts > countryForCurrency > maps single-country currencies and refuses ambiguous ones 0ms
+ ✓ src/cloud/shopReceiptText.test.ts > shared-shop single and split electronic receipts retain explicit unverified settlement evidence 2ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  06:14:39
+   Duration  6.55s (transform 1.75s, setup 625ms, import 3.12s, tests 296ms, environment 1.92s)
+

@@ -1,6 +1,6 @@
 # Road to Complete — live engineering progress
 
-17 November 2026. **NO-GO. Engineering increments through Stage 27; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
+17 November 2026. **NO-GO. Engineering increments through Stage 28; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
 
 Source baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development source: `334f2beaa5c2c52b3864e7069a0d4de115746b1d`, tree `7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58`, in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). Each published stage tree equals its local reviewed tree; [commit mapping](evidence/road-to-complete-continuation/commit-map.json). No main merge or deployment.
 
@@ -10,12 +10,12 @@ The [task register](ROAD_TO_COMPLETE_PROGRESS.json) records exact requirements, 
 | --- | ---: |
 | Fully verified criterion | 1 |
 | Implemented pending formal acceptance | 0 |
-| Partial | 48 |
-| Confirmed missing engineering | 1 |
-| Owner/external blocked | 7 |
-| Not yet behaviorally reconciled | 62 |
+| Partial | 50 |
+| Confirmed missing engineering | 4 |
+| Owner/external blocked | 9 |
+| Not yet behaviorally reconciled | 55 |
 
-Unreviewed does not mean absent. Partial does not mean completed. Whole active-ledger encryption is missing engineering, not merely a hardware acceptance gate. The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still require current behavioral dispositions.
+Unreviewed does not mean absent. Partial does not mean completed. Whole active-ledger encryption and durable real-provider settlement/refund architecture are missing engineering, not merely hardware/provider acceptance gates. The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still require current behavioral dispositions.
 
 Working changes preserve the two operating models: canonical standalone IndexedDB services and server-authorized shared-shop PostgreSQL. Selected divergent work adds device-local stock allocation and atomic transfers; it does not enable distributed inventory. Financial export correctness, independent ledger conservation, reservation evidence, recovery coordination, active SQL sessions and exact sync acknowledgements now have additional regression coverage. See the [stage delivery evidence](ROAD_TO_COMPLETE_CONTINUATION.md).
 
