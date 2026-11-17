@@ -4,7 +4,7 @@ name: Security code audit
 # Produces GitHub code-scanning findings; never deploys or touches customer data.
 on:
   push:
-    branches: [main]
+    branches: [main, codex/road-to-complete-security-triage]
   pull_request:
   workflow_dispatch:
 
@@ -85,7 +85,9 @@ jobs:
           if(!Array.isArray(input))throw Error('Scanner did not produce a valid result');
           const findings=input.map(row=>({ruleId:row.RuleID,file:row.File,line:row.StartLine,commit:row.Commit,fingerprint:row.Fingerprint}));
           writeFileSync('artifacts/release-v19/gitleaks-redacted.json',JSON.stringify({findings},null,2)+'\n');
-          console.log(JSON.stringify({findings:findings.length,redacted:true,rawMatchesRetained:false}));
+          const groups=new Map();
+          for(const row of findings){const key=JSON.stringify([row.ruleId,row.file]);const group=groups.get(key)??{ruleId:row.ruleId,file:row.file,count:0,lines:[],sampleCommits:[]};group.count++;if(!group.lines.includes(row.line)&&group.lines.length<12)group.lines.push(row.line);if(!group.sampleCommits.includes(row.commit)&&group.sampleCommits.length<3)group.sampleCommits.push(row.commit);groups.set(key,group);}
+          console.log(JSON.stringify({findings:findings.length,redacted:true,rawMatchesRetained:false,groups:[...groups.values()]},null,2));
           NODE
       - name: Retain redacted scan evidence
         if: always()
