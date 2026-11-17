@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,writeFileSync,readFileSync,symlinkSync} from 'node:fs';
+import {mkdtempSync,rmSync,writeFileSync,readFileSync,symlinkSync,mkdirSync,truncateSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {writeCheckpoint,verifyCheckpoint} from '../scripts/freeze-development-checkpoint.mjs';
+import {writeCheckpoint,verifyCheckpoint,inspectDependencyPackage} from '../scripts/freeze-development-checkpoint.mjs';
 function setup(t){
  const root=mkdtempSync(join(tmpdir(),'tallybook-checkpoint-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  return {root,output:join(root,'checkpoint'),source:{sha:'a'.repeat(40),tree:'b'.repeat(40),committedAt:'2026-11-17T00:00:00Z'},
@@ -50,4 +50,30 @@ test('directory links cannot add external content to a verified package',t=>{
  const options=setup(t);writeCheckpoint(options);
  symlinkSync(options.root,join(options.output,'linked'),'junction');
  assert.throws(()=>verifyCheckpoint(options.output),/symlinks/);
+});
+
+test('dependency notices preserve exact source bytes and declared license metadata',t=>{
+ const options=setup(t),dir=join(options.root,'package');mkdirSync(dir);
+ writeFileSync(join(dir,'package.json'),JSON.stringify({name:'example',version:'1.0.0',license:'MIT'}));
+ const original='Synthetic example copyright notice\n';writeFileSync(join(dir,'LICENSE.txt'),original);
+ const inspected=inspectDependencyPackage(dir);
+ assert.equal(inspected.license,'MIT');assert.equal(inspected.notices[0].bytes.toString(),original);
+ const path='notices/example/LICENSE.txt';
+ const dependencies=[{name:'example',version:'1.0.0',license:inspected.license,noticeFiles:[path]}];
+ writeCheckpoint({...options,files:[...options.files,{path,bytes:inspected.notices[0].bytes}],dependencies});
+ const verified=verifyCheckpoint(options.output);
+ assert.deepEqual(verified.dependencies,dependencies);
+ assert.match(verified.licenseReview,/no legal approval/);
+});
+test('unknown declared license is explicit and nonexistent notices reject packaging',t=>{
+ const options=setup(t),dir=join(options.root,'unknown-package');mkdirSync(dir);writeFileSync(join(dir,'package.json'),'{}');
+ assert.deepEqual(inspectDependencyPackage(dir),{license:'UNKNOWN',notices:[]});
+ assert.throws(()=>writeCheckpoint({...options,dependencies:[{name:'example',version:'1.0.0',license:'UNKNOWN',noticeFiles:['notices/missing/LICENSE']}]}),/Missing/);
+});
+test('dependency notice size and symlink boundaries fail closed',t=>{
+ const options=setup(t),dir=join(options.root,'large-package');mkdirSync(dir);writeFileSync(join(dir,'package.json'),'{"license":"MIT"}');
+ const notice=join(dir,'LICENSE');writeFileSync(notice,'');truncateSync(notice,1024*1024+1);
+ assert.throws(()=>inspectDependencyPackage(dir),/oversized/);
+ rmSync(notice);symlinkSync(options.root,notice,'junction');
+ assert.throws(()=>inspectDependencyPackage(dir),/regular file/);
 });

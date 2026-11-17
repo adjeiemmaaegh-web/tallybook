@@ -5,10 +5,10 @@ import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function inside(root,path){const rel=relative(root,path);return rel!==''&&!rel.startsWith('..'+sep)&&rel!=='..'&&!rel.startsWith(sep);}
-function readRegular(path){
+function readRegular(path,maxBytes=64*1024*1024){
  const fd=openSync(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
  try{
-  const stat=fstatSync(fd);if(!stat.isFile()||stat.size>64*1024*1024)throw Error('Invalid or oversized package file');
+  const stat=fstatSync(fd);if(!stat.isFile()||stat.size>maxBytes)throw Error('Invalid or oversized package file');
   const buffer=Buffer.alloc(stat.size+1);let total=0,count;
   while(total<buffer.length&&(count=readSync(fd,buffer,total,buffer.length-total,null))>0)total+=count;
   if(total!==stat.size)throw Error('Package source changed during read');
@@ -27,18 +27,43 @@ function walk(root,prefix=''){
  return entries.sort();
 }
 function safeName(name){return typeof name==='string'&&name.length>0&&!/[\x00-\x1f:]/.test(name)&&!name.includes('\\')&&!name.startsWith('/')&&!name.split('/').some(x=>x==='..'||x==='.'||!x);}
+/** Package-declared license and exact top-level notice bytes. This neither
+ * infers legal rights nor certifies that bundled assets have complete notices. */
+export function inspectDependencyPackage(packageDirectory){
+ const metadata=JSON.parse(readRegular(join(packageDirectory,'package.json'),1024*1024).toString('utf8'));
+ const license=typeof metadata.license==='string'&&metadata.license.trim()?metadata.license:
+  typeof metadata.license?.type==='string'&&metadata.license.type.trim()?metadata.license.type:'UNKNOWN';
+ const notices=[];
+ for(const entry of readdirSync(packageDirectory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){
+  if(!/^(?:licen[sc]e|copying|notice|ofl)(?:[._-][a-z0-9_-]+)*$/i.test(entry.name))continue;
+  if(!entry.isFile()||entry.isSymbolicLink())throw Error('Dependency notice must be a regular file');
+  notices.push({name:entry.name,bytes:readRegular(join(packageDirectory,entry.name),1024*1024)});
+ }
+ return {license,notices};
+}
+function validateDependencyNotices(dependencies,names){
+ if(!Array.isArray(dependencies))throw Error('Dependency inventory must be an array');
+ const seen=new Set();
+ for(const item of dependencies){
+  if(!item||typeof item.name!=='string'||!item.name||typeof item.version!=='string'||!item.version||
+    typeof item.license!=='string'||!item.license||!Array.isArray(item.noticeFiles))throw Error('Invalid declared dependency metadata');
+  const key=item.name+'@'+item.version;if(seen.has(key))throw Error('Duplicate dependency identity');seen.add(key);
+  for(const file of item.noticeFiles)if(!safeName(file)||!file.startsWith('notices/')||!names.has(file))throw Error('Missing or unsafe dependency notice reference');
+ }
+}
 export function writeCheckpoint({output,source,files,dispositions,dependencies=[]}){
  if(existsSync(output))throw Error('Checkpoint output must not already exist');
  if(!/^[a-f0-9]{40}$/.test(source.sha)||!/^[a-f0-9]{40}$/.test(source.tree))throw Error('Exact source identity required');
  const seen=new Set(),entries=[];
  for(const file of files){
   if(!safeName(file.path)||seen.has(file.path)||file.path==='manifest.json')throw Error('Unsafe or duplicate package path');
-  if(!/^(web\/|schema\/|requirements\/|toolchain\/)/.test(file.path))throw Error('Unapproved package category');
+  if(!/^(web\/|schema\/|requirements\/|toolchain\/|notices\/)/.test(file.path))throw Error('Unapproved package category');
   seen.add(file.path);
   if(!Buffer.isBuffer(file.bytes))throw Error('Package payload must be bytes');
   entries.push({path:file.path,bytes:file.bytes.length,sha256:hash(file.bytes)});
  }
  if(!seen.has('web/index.html')||!seen.has('web/sw.js'))throw Error('Built web application and service worker required');
+ validateDependencyNotices(dependencies,seen);
  entries.sort((a,b)=>a.path.localeCompare(b.path,'en'));
  mkdirSync(output,{recursive:false,mode:0o700});
  for(const file of files){
@@ -51,6 +76,7 @@ export function writeCheckpoint({output,source,files,dispositions,dependencies=[
   decision:'NO-GO',productionAuthorized:false,ownerAccepted:false,realDeviceTested:false,
   security:'Not certified by this packager; separate exact-SHA security evidence is mandatory.',
   reproducibility:'Hashes describe file contents; no human signature or provider/hardware acceptance.',
+  licenseReview:'Declared package metadata and top-level notice files only; no legal approval or complete asset-rights audit.',
   dispositions,dependencies,files:entries
  };
  writeFileSync(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx',mode:0o600});
@@ -69,6 +95,7 @@ export function verifyCheckpoint(output){
   if(bytes.length!==file.bytes||hash(bytes)!==file.sha256)throw Error('Checkpoint checksum mismatch');
  }
  if(!names.has('web/index.html')||!names.has('web/sw.js'))throw Error('Incomplete web build');
+ validateDependencyNotices(manifest.dependencies,names);
  const actual=walk(output);
  if(JSON.stringify(actual)!==JSON.stringify(['manifest.json',...names].sort()))throw Error('Unlisted checkpoint files');
  return manifest;
@@ -101,7 +128,17 @@ function cli(){
  function collect(item){
   for(const field of ['dependencies','optionalDependencies'])for(const [name,value]of Object.entries(item[field]??{})){
    if(typeof value.version!=='string')throw Error('Invalid dependency inventory');
-   modules.set(name+'@'+value.version,{name,version:value.version});collect(value);
+   const key=name+'@'+value.version;
+   if(!modules.has(key)){
+    if(typeof value.path!=='string'||!inside(resolve(root,'node_modules'),resolve(value.path)))throw Error('Dependency package path is not in the frozen installation');
+    const inspected=inspectDependencyPackage(value.path),noticeFiles=[];
+    for(const notice of inspected.notices){
+     const path='notices/'+encodeURIComponent(key)+'/'+notice.name;
+     files.push({path,bytes:notice.bytes});noticeFiles.push(path);
+    }
+    modules.set(key,{name,version:value.version,license:inspected.license,noticeFiles});
+   }
+   collect(value);
   }
  }
  for(const item of listed)collect(item);
