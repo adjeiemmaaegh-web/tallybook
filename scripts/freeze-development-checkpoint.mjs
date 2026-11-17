@@ -35,7 +35,7 @@ export function inspectDependencyPackage(packageDirectory){
   typeof metadata.license?.type==='string'&&metadata.license.type.trim()?metadata.license.type:'UNKNOWN';
  const notices=[];
  for(const entry of readdirSync(packageDirectory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){
-  if(!/^(?:licen[sc]e|copying|notice|ofl)(?:[._-][a-z0-9_-]+)*$/i.test(entry.name))continue;
+  if(!/^(?:licen[sc]e|copying|notice|ofl)(?:[._-][a-z0-9._-]+)?$/i.test(entry.name))continue;
   if(!entry.isFile()||entry.isSymbolicLink())throw Error('Dependency notice must be a regular file');
   notices.push({name:entry.name,bytes:readRegular(join(packageDirectory,entry.name),1024*1024)});
  }

@@ -77,3 +77,10 @@ test('dependency notice size and symlink boundaries fail closed',t=>{
  rmSync(notice);symlinkSync(options.root,notice,'junction');
  assert.throws(()=>inspectDependencyPackage(dir),/regular file/);
 });
+
+test('malformed long notice names reject without ambiguous repeated matching',t=>{
+ const options=setup(t),dir=join(options.root,'odd-package');mkdirSync(dir);
+ writeFileSync(join(dir,'package.json'),'{"license":"MIT"}');
+ writeFileSync(join(dir,'LICENSE-'+ '_'.repeat(180)+'!'),'unrecognized filename');
+ assert.deepEqual(inspectDependencyPackage(dir),{license:'MIT',notices:[]});
+});
