@@ -116,11 +116,12 @@
         "Historical RC_RECONCILIATION.md dispositions retained as historical."
       ],
       "changes": [
-        "Inspected all 42 tips; recorded ancestry, patch identity, changed paths and matching blobs independently."
+        "Inspected all 42 tips; recorded ancestry, patch identity, changed paths and matching blobs independently.",
+        "Recorded explicit retain/supersede/selected-integration recommendations and authoritative source paths for all 42 original branches; retained unresolved underlying capability requirements."
       ],
       "tests": [],
       "blockers": [
-        "33 divergent branches still need current semantic disposition; no automatic merge decisions."
+        "Selected deferred capabilities still require integration and regression in their mapped stages; no blanket merge or branch deletion."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
@@ -138,15 +139,25 @@
       "status": "partial",
       "files": [
         "docs/release/ROAD_TO_COMPLETE_BRANCHES.md",
-        "docs/release/RC_RECONCILIATION.md"
+        "docs/release/RC_RECONCILIATION.md",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/commerce/run16Orders.ts",
+        "client/src/features/sales/sales.ts"
       ],
       "existingCapabilityReused": [
         "Canonical refund policy, session-bound RPC, sealed queue, supplier attribution."
       ],
       "changes": [
-        "Inspected six priority branch diffs and historical integration decisions; identified owner-completion commerce/scheduling work for deeper review."
+        "Inspected six priority branch diffs and historical integration decisions; identified owner-completion commerce/scheduling work for deeper review.",
+        "Integrated unique return-store backup and hold-validation safeguards from owner-completion branch, strengthened finite expiry/price/snapshot checks, preserving current preview identity and canonical migrations."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "vitest run sales.test.ts cashPartialReturnPosting.test.ts backup.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage21-integration-tests.txt"
+        }
+      ],
       "blockers": [
         "Unique behavior and migration compatibility need executable verification before porting."
       ],
@@ -163,28 +174,30 @@
       "requirement": "Reconcile candidate_modules/batch1 through batch5 with the authoritative application; these candidates are documented as not wired into production.",
       "initialAuditStatus": "Unmerged",
       "completionCriterion": "integrate only verified unique capabilities or formally retire each superseded candidate while retaining its source history.",
-      "status": "partial",
+      "status": "verified",
       "files": [
-        "candidate_modules/batch1/README.md",
-        "candidate_modules/batch2/README.md",
-        "candidate_modules/batch3/README.md",
-        "candidate_modules/batch4/README.md",
-        "candidate_modules/batch5/README.md"
+        "docs/release/ROAD_TO_COMPLETE_CANDIDATES.json",
+        "qa/candidate-module-disposition.test.mjs"
       ],
       "existingCapabilityReused": [
         "Read-only checkers remain distinct from authoritative services."
       ],
       "changes": [
-        "Documented inactive candidate boundaries; hardened configured Batch 5 placeholders against false passes."
+        "Mapped all 26 legacy candidate modules/scaffolds to existing authoritative services or explicit remaining requirements; retired their production integration while preserving all source and standalone tests."
       ],
-      "tests": [],
-      "blockers": [
-        "Module-by-module unique capability mapping remains open."
+      "tests": [
+        {
+          "command": "node --test qa/candidate-module-disposition.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/candidate-dispositions.txt"
+        }
       ],
+      "blockers": [],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_CANDIDATES.json",
+        "docs/release/evidence/road-to-complete-continuation/candidate-dispositions.txt"
       ],
-      "nextAction": "Compare each checker to authoritative service invariants; retain only justified gaps."
+      "nextAction": "Keep retired candidates out of runtime imports; underlying finance/sync/device criteria remain open in their mapped roadmap tasks."
     },
     {
       "id": "ST21-07",
@@ -2556,5 +2569,6 @@
     "expectedCandidateFailures": 2,
     "browser": "blocked: invalid Chromium download",
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
-  }
+  },
+  "activeEngineeringStage": 22
 }

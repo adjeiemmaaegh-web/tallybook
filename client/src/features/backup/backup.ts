@@ -357,6 +357,14 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     validateStoreStockCount(observation.observedQuantity, observation.note);
     if (!Number.isFinite(Date.parse(observation.observedAt))) throw new Error("Invalid stock observation date.");
   }
+  // A physical return must retain a real receiving location. Legacy returns
+  // without location evidence remain unknown; never infer a store for them.
+  for (const row of [...records.saleReversals, ...records.cashPartialReturns]) {
+    if (row.returnStoreId === undefined) continue;
+    const store = records.storeLocations.find(store => store.id === row.returnStoreId);
+    if (typeof row.returnStoreId !== "string" || !store || store.businessProfileId !== row.businessProfileId)
+      throw new Error("Return receiving store is missing or belongs to another company.");
+  }
   const extensionRelationships: Array<[keyof BackupRecords, string, keyof BackupRecords]> = [
     ["syncOutbox", "deviceId", "syncDevices"], ["storeAssignments", "storeId", "storeLocations"], ["storeAssignments", "staffId", "staffMembers"],
     ["storeTransferRequests", "sourceStoreId", "storeLocations"], ["storeTransferRequests", "destinationStoreId", "storeLocations"], ["storeTransferRequests", "productId", "products"], ["storeTransferRequests", "requestedByStaffId", "staffMembers"],

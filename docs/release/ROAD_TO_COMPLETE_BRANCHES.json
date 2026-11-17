@@ -82,7 +82,14 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-canonical-operations",
+      "reviewReason": "Canonical stage C/D RPCs and connected authoring screens on main cover stock, transfers, purchasing, payables and recorded orders. Alternate return-policy migration conflicts; retain canonical policy and negative PostgreSQL tests.",
+      "authoritativePaths": [
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/migration-rollbacks.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/backup/main-before-stakeholder-2026-10-30-ea165a5",
@@ -94,7 +101,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/chore/cleanup-historical-docs",
@@ -473,7 +484,13 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-do-not-integrate",
+      "reviewReason": "Deletes 361 historical records/manifests needed by requirements traceability. Conflicts with preservation requirement.",
+      "authoritativePaths": [
+        "docs/release/traceability.json"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/claude/happy-ptolemy-u4qo44",
@@ -502,7 +519,14 @@
         "supabase/functions/tallybook-telegram/README.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-canonical-telegram",
+      "reviewReason": "Earlier daily-summary SQL uses competing migration timestamp 20261113120000. Main has canonical 20261116090000, rollback and isolated Telegram tests. Do not duplicate migration.",
+      "authoritativePaths": [
+        "supabase/migrations/20261116090000_telegram_daily_summary.sql",
+        "qa/telegram-daily-summary.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/completion/cloud-foundation",
@@ -551,7 +575,15 @@
         "supabase/migrations/20261013123702_restrict_rls_helper.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-session-bound-cloud",
+      "reviewReason": "Earlier identity/AuthGate model is superseded by current membership session proof and device-binding boundary; do not introduce a second account gate or schema.",
+      "authoritativePaths": [
+        "qa/active-session-proof.test.mjs",
+        "qa/company-creation-active-session.test.mjs",
+        "client/src/auth/deviceEntry.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/development/v19-friends-web-test",
@@ -563,7 +595,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/development/v19-owner-completion-audit",
@@ -717,7 +753,15 @@
         "qa/stage11-local-insights.test.mjs"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "integrate-selected-behaviors",
+      "reviewReason": "Ported receiving-store backup validation and hold validation; added finite-expiry/price/snapshot checks with real checkout regression tests. Preserve stronger current return/preview checks. Store operations, reports, advisory scheduler and public-reservation SQL remain tracked for stages 23/27/29; never import the obsolete full tree.",
+      "authoritativePaths": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/commerce/run16Orders.ts",
+        "client/src/features/sales/sales.test.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/development/v19-unified-reconciliation",
@@ -785,7 +829,14 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-recovery-reference",
+      "reviewReason": "Alternate database identities/key vault/journal would change existing data/key discovery. Current restoreRecovery/deviceKeyVault remain authoritative; populated conversion and key-loss proof required under ST24.",
+      "authoritativePaths": [
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/sync/deviceKeyVault.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/docs/production-status-20261115",
@@ -812,7 +863,16 @@
         "supabase/MIGRATION_HISTORY.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "README.md",
+        "docs/release/CURRENT_STATUS.md",
+        "docs/release/PRODUCTION_STATUS_2026-11-15.md",
+        "supabase/MIGRATION_HISTORY.md"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/core-shop-operational-upgrades-20261114",
@@ -896,7 +956,17 @@
         "docs/ui-ux/SHOP_CORE_UPGRADE_2026-11-14.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/phase-b-persisted-business-types-20261115",
@@ -977,7 +1047,29 @@
         "supabase/rollback/20261115012500_cloud_business_type_down.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/businessSetup.css",
+        "client/src/cloud/cloudBusinessType.test.ts",
+        "client/src/cloud/cloudBusinessType.ts",
+        "client/src/cloud/cloudBusinessTypes.test.ts",
+        "client/src/cloud/cloudMembership.ts",
+        "client/src/cloud/cloudMembershipBoundary.d.mts",
+        "client/src/cloud/cloudMembershipBoundary.mjs",
+        "client/src/cloud/cloudMembershipBoundary.test.mjs",
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/business/businessTypes.ts",
+        "docs/ui-ux/PHASE_B_BUSINESS_TYPE_INCREMENT_2026-11-15.md",
+        "qa/browser-release.spec.mjs",
+        "qa/cloud-business-type-policy.test.mjs",
+        "supabase/migrations/20261115012500_cloud_business_type.sql",
+        "supabase/rollback/20261115012500_cloud_business_type_down.sql"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/phase-b-product-variants-20261115",
@@ -1044,7 +1136,17 @@
         "supabase/rollback/20261115033500_shop_product_variants_down.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/phase-b-secure-onboarding-20261114",
@@ -1089,7 +1191,17 @@
         "docs/ui-ux/PHASE_B_SECURE_ONBOARDING_2026-11-14.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/photo-stage11-atomic-batch-stocktake-20261115",
@@ -1190,7 +1302,17 @@
         "supabase/rollback/20261115070000_shop_stocktake_batch_sessions_down.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/photo-stage7-apple-oauth-gated-20261115",
@@ -1223,7 +1345,15 @@
         "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/photo13-public-order-requests-20261115",
@@ -1400,7 +1530,17 @@
         "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/photo29-integrated-source-20261115",
@@ -1533,7 +1673,17 @@
         "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/public-marketing-pillars-verified-20261114",
@@ -1568,7 +1718,16 @@
         "qa/shop-public-entry.spec.mjs"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "client/src/components/TallybookWelcome.css",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/components/TallybookWelcome.tsx",
+        "qa/shop-public-entry.spec.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/remaining-stages-business-joining-catalog-20261114",
@@ -1642,7 +1801,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-conflicting-design-reference",
+      "reviewReason": "Alternative owner business-type metadata migration/API duplicates canonical cloud_business_type; main retains verified invitation IDs, reversible business classification, category/variant controls and tests. Port only a proven UI gap under ST25/ST30, never competing metadata schema.",
+      "authoritativePaths": [
+        "client/src/cloud/cloudBusinessType.ts",
+        "qa/shop-variants-policy.test.mjs",
+        "qa/shop-onboarding.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/shop-stocktake-quotes-expenses-reporting-20261114",
@@ -1716,7 +1883,17 @@
         "docs/ui-ux/SHOP_INVENTORY_FINANCE_INCREMENT_2026-11-14.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feat/telegram-daily-summary",
@@ -1751,7 +1928,20 @@
         "supabase/rollback/README.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "docs/telegram-bot.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/telegram-daily-summary.test.mjs",
+        "supabase/functions/tallybook-telegram/README.md",
+        "supabase/functions/tallybook-telegram/index.ts",
+        "supabase/migrations/20261116090000_telegram_daily_summary.sql",
+        "supabase/rollback/20261116090000_telegram_daily_summary_down.sql",
+        "supabase/rollback/README.md"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/feature/premium-settings-business-staff-2026-10-15",
@@ -1838,7 +2028,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-design-reference",
+      "reviewReason": "Historical layouts/static preview do not supersede current authenticated staff/onboarding or ledger-backed screens. No new business authority is established. Keep design proposals for ST30-08 visual/keyboard review.",
+      "authoritativePaths": [
+        "client/src/components/AppShell.tsx",
+        "client/src/pages/AssistantPage.tsx",
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/fix/assistant-reversal-preview-identity-20261113",
@@ -1850,7 +2048,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/fix/physical-return-store-provenance-20261113",
@@ -1862,7 +2064,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/frontend-all-stages-20261106",
@@ -1948,7 +2154,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-design-reference",
+      "reviewReason": "Historical layouts/static preview do not supersede current authenticated staff/onboarding or ledger-backed screens. No new business authority is established. Keep design proposals for ST30-08 visual/keyboard review.",
+      "authoritativePaths": [
+        "client/src/components/AppShell.tsx",
+        "client/src/pages/AssistantPage.tsx",
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/qa/pilot-field-acceptance-20261116",
@@ -1979,7 +2193,14 @@
         "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md",
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/qa/production-public-smoke-20261116",
@@ -2012,7 +2233,15 @@
         "scripts/production-readonly-smoke.mjs"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        ".github/workflows/production-readonly-smoke.yml",
+        "qa/production-readonly-smoke.test.mjs",
+        "scripts/production-readonly-smoke.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/qa/reverify-16-existing-stages-20261114",
@@ -2059,7 +2288,17 @@
         "qa/shop-phone-layout.spec.mjs"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/release/fresh-start-required-signin-20261113",
@@ -2071,7 +2310,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/release/production-readiness-reset-20261113",
@@ -2099,7 +2342,14 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "owner-blocked-do-not-integrate",
+      "reviewReason": "PR85 is documentation for strict account/reset decisions. Optional safeguards already exist; no authority for destructive reset or policy activation.",
+      "authoritativePaths": [
+        "client/src/auth/freshStartReset.mjs",
+        "client/src/auth/mandatoryOnlineAccountPolicy.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/release/shared-shop-ledger",
@@ -2111,7 +2361,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/review/combined-settings-clementia-2026-10-15",
@@ -2212,7 +2466,15 @@
         "client/src/pages/AssistantPage.companyIsolation.test.tsx"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-design-reference",
+      "reviewReason": "Historical layouts/static preview do not supersede current authenticated staff/onboarding or ledger-backed screens. No new business authority is established. Keep design proposals for ST30-08 visual/keyboard review.",
+      "authoritativePaths": [
+        "client/src/components/AppShell.tsx",
+        "client/src/pages/AssistantPage.tsx",
+        "client/src/features/staff/staff.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/review/shop-entry-acceptance-20261107",
@@ -2256,7 +2518,17 @@
         "playwright.visual.config.mjs"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/security/enforce-csp-20261115",
@@ -2295,7 +2567,20 @@
         "vite.config.ts"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "superseded-by-integrated-blobs",
+      "reviewReason": "All branch-changed paths match main exactly. No duplicate import; retain historical branch.",
+      "authoritativePaths": [
+        "client/src/lib/zodConfig.ts",
+        "client/src/main.tsx",
+        "playwright.offline.config.mjs",
+        "qa/browser-csp.spec.mjs",
+        "qa/security-headers.test.mjs",
+        "server/index.ts",
+        "vercel.json",
+        "vite.config.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/security/mandatory-online-account-boundary-20261113",
@@ -2307,7 +2592,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/stage-b-offline-integrity-20261106",
@@ -2687,7 +2976,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-partially-superseded",
+      "reviewReason": "Main has cache allowlist and sealed retry path. Competing vault and refund revision schema must not replace canonical policy/key authority. Remaining conversion requirements stay ST24/ST26.",
+      "authoritativePaths": [
+        "client/src/cloud/safeShopCache.ts",
+        "client/src/cloud/secureStorage.ts",
+        "client/src/cloud/shopOutbox.ts"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/ui/stockdey-29-reference-parity-20261114",
@@ -2725,7 +3022,17 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/v19/run11-company-refund-policy-20261016",
@@ -2737,7 +3044,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/v19/run12-supplier-tax-20261016",
@@ -2875,7 +3186,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-finance-reference",
+      "reviewReason": "Main uses explicit supplier liability recognition, per-currency history and original-sale tax evidence. Alternative audit names/data contracts cannot be summed or swapped. Retain for Stage 22 edge-case comparison, no independent writer or migration.",
+      "authoritativePaths": [
+        "client/src/features/purchases/supplierPayables.ts",
+        "qa/supplier-attribution-reconciliation.test.mjs",
+        "qa/financial-supplier-full-history.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/v19/run4-session-lifecycle-20261016",
@@ -2887,7 +3206,11 @@
       "changedPaths": [],
       "matchingPaths": [],
       "disposition": "incorporated-by-ancestry",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-incorporated-history",
+      "reviewReason": "Tip is an ancestor of the audited main; no branch-only commits to integrate.",
+      "authoritativePaths": [],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/v19/run5-tenant-service-authorization-20261016",
@@ -3144,7 +3467,15 @@
       ],
       "matchingPaths": [],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-optional-server-reference",
+      "reviewReason": "Current main has scoped run5 server boundaries plus newer authenticated SQL authority; historical REST adapter must not replace active session/membership RPCs. Compare optional-server trust requirements in Stage 25/26.",
+      "authoritativePaths": [
+        "server/run5TenantRoutes.mjs",
+        "server/run5TenantScope.mjs",
+        "qa/active-session-proof.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     },
     {
       "ref": "origin/v19/stage-stakeholder-copy-finalization-20261109",
@@ -3174,7 +3505,17 @@
         "client/src/pages/ReportsPage.tsx"
       ],
       "disposition": "semantic-review-required",
-      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement.",
+      "reviewRecommendation": "retain-integrated-or-superseded-reference",
+      "reviewReason": "Squash/port history differs, but main retains newer integrated role-scoped shop, stocktake, quotes, expenses, joining, product variants, public requests and CSP. Blob matches identify exact reused files; remaining changed screens require ST30 acceptance, not wholesale branch replacement.",
+      "authoritativePaths": [
+        "client/src/pages/SharedShopPage.tsx",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-quotations.test.mjs"
+      ],
+      "acceptanceBoundary": "Recommendation preserves source and open roadmap requirements; not hardware/provider/production acceptance."
     }
   ]
 }

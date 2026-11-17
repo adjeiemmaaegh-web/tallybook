@@ -208,4 +208,16 @@ it('requires a physical receiving store for a pre-activation sale returned after
   expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
   const backup=await createBackup(database);
   expect(()=>parseBackup(JSON.stringify(backup))).not.toThrow();
+  for (const invalidStore of ['missing-receiving-store', null, '', 42]) {
+    const damaged=structuredClone(backup);
+    const row=damaged.records.cashPartialReturns.find(row=>row.id===recorded.id)!;
+    (row as unknown as {returnStoreId:unknown}).returnStoreId=invalidStore;
+    const event=damaged.records.centralOperationalEvents.find(event=>event.entityId===recorded.id);
+    if(!event||event.kind!=='sale.cash_partial_refund_recorded')throw Error('Missing return event');
+    event.payload.cashReturn=structuredClone(row);
+    expect(()=>parseBackup(JSON.stringify(damaged))).toThrow(/Return receiving store/);
+  }
+  // A rejected archive never changes the authoritative database.
+  expect(await database.cashPartialReturns.get(recorded.id)).toEqual(recorded);
+  expect((await database.products.get(product.id))?.stockQuantity).toBe(2);
 });

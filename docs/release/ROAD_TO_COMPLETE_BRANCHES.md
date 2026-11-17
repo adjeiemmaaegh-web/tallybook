@@ -59,3 +59,9 @@ Ancestry proves source history was incorporated. Patch equivalence and exact blo
 - Candidate batches 1–5 remain inactive reference/checker modules. They are not financial authorities or accepted E2E suites.
 
 Reproduce: `node scripts/road-to-complete-branches.mjs 41d4bab619db1808f21471299bd7760eee1a6836`. Full commit/path details: [ROAD_TO_COMPLETE_BRANCHES.json](ROAD_TO_COMPLETE_BRANCHES.json).
+
+## Continuation recommendations and selected integration
+
+All 42 original branches now have an explicit `reviewRecommendation`, `reviewReason` and current `authoritativePaths` in the JSON evidence. These decisions preserve every branch and do not certify the underlying roadmap capability. The owner-completion branch supplied unique receiving-store backup validation and saved-hold validation; the port additionally rejects nonfinite order expiry, mismatched held prices and changed expiry snapshots. Stronger main preview/receiving-store checks are retained. The current real-service regression covers 42 tests across checkout, returns and backups. Remaining store/report/schedule/public-reservation functionality stays in Stages 23, 27 and 29.
+
+The competing Telegram migration is superseded by the canonical November 16 migration; the cleanup branch that deletes historical evidence is explicitly not integrated. All 26 candidate modules have an explicit archival-production-retirement disposition in `ROAD_TO_COMPLETE_CANDIDATES.json`, with executable checks preventing accidental runtime imports.

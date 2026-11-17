@@ -281,7 +281,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
     if(input.commerceOrderId){
       if(!linkedOrder||linkedOrder.businessProfileId!==activeId||linkedOrder.saleId||
         linkedOrder.status!=="reserved"||linkedOrder.storeId!==input.storeId||
-        !linkedOrder.reservationExpiresAt||Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
+        !linkedOrder.reservationExpiresAt||!Number.isFinite(Date.parse(linkedOrder.reservationExpiresAt))||
+        Date.parse(linkedOrder.reservationExpiresAt)<=Date.parse(now))
         throw new Error("Commerce reservation is invalid, expired, already sold, or assigned to another store.");
       const savedLineMap=new Map(linkedOrder.lines.map(line=>[line.productId,line.quantity]));
       if(savedLineMap.size!==requestedLines.length ||
