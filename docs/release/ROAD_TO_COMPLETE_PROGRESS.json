@@ -30,14 +30,22 @@
         "Pinned current main at 41d4bab619db1808f21471299bd7760eee1a6836; audit-to-head diff is roadmap only.",
         "Fresh read-only production metadata: 37 hosted migrations, 47 RLS-protected shop tables, zero direct anon/authenticated table grants."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Development migrations 38/39 remain unapplied to hosted production; current production source is still the earlier approved deployment.",
         "Final scope and owner-approved exact deployment/artifact compatibility remain open."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
-        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json"
+        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Build and compare exact candidate/deployment/schema manifests without applying migrations."
     },
@@ -62,12 +70,20 @@
       "changes": [
         "Added 143-row reconciliation worklist preserving original status and source paths."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Per-ID behavioral reconciliation remains open; inventory is not proof."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Inspect every original acceptance criterion, map to current service and executed proof."
     },
@@ -92,12 +108,20 @@
       "changes": [
         "Executed source/test/workflow inventory; reviewed architecture and migration history."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Source-by-source mutation and inactive-module disposition is incomplete."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Trace active route -> service -> authorization -> persistence -> test for every mutation."
     },
@@ -121,12 +145,20 @@
         "Inspected all 42 tips; recorded ancestry, patch identity, changed paths and matching blobs independently.",
         "Recorded explicit retain/supersede/selected-integration recommendations and authoritative source paths for all 42 original branches; retained unresolved underlying capability requirements."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Selected deferred capabilities still require integration and regression in their mapped stages; no blanket merge or branch deletion."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Prioritize unique owner-completion, recovery, supplier and tenant changes against current services."
     },
@@ -158,13 +190,20 @@
           "command": "vitest run sales.test.ts cashPartialReturnPosting.test.ts backup.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage21-integration-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Unique behavior and migration compatibility need executable verification before porting."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Review branch-only changes with canonical ledger tests; port smallest compatible changes only."
     },
@@ -192,12 +231,19 @@
           "command": "node --test qa/candidate-module-disposition.test.mjs",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/candidate-dispositions.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_CANDIDATES.json",
-        "docs/release/evidence/road-to-complete-continuation/candidate-dispositions.txt"
+        "docs/release/evidence/road-to-complete-continuation/candidate-dispositions.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Keep retired candidates out of runtime imports; underlying finance/sync/device criteria remain open in their mapped roadmap tasks."
     },
@@ -247,12 +293,20 @@
       "changes": [
         "Replaced stale universal expected SHA with candidate-specific target/artifact/schema checks and isolated-target instructions."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Actual field execution and exact final candidate remain pending."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run instructions against frozen isolated candidate and record real device/restore results separately."
     },
@@ -275,12 +329,20 @@
       "changes": [
         "Recorded three historical UI branch tip/path evidence."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Current visual/behavioral parity comparison remains incomplete."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Compare real screens and keyboard/mobile behavior before reusing design changes."
     },
@@ -302,12 +364,20 @@
       "changes": [
         "Read open issues #5, #8, #9, #68 and draft #85 directly."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Requirement-by-requirement proof and milestone review remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
     },
@@ -358,12 +428,20 @@
         "Configured candidate browser tests explicitly fail instead of accepting body visibility.",
         "Retired unreferenced StagePlaceholder.tsx; no active import; historical Git/archive manifests retained."
       ],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Full remaining feature-flag/preview-adapter reachability audit is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Finish inactive feature-flag and preview-adapter dispositions; candidate E2E business assertions remain explicitly unimplemented."
     },
@@ -418,6 +496,12 @@
           "command": "corepack pnpm audit --audit-level moderate",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-stage21/audit-candidate.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -425,7 +509,8 @@
         "Hosted Chrome/Firefox/Edge/WebKit selected checks pass; physical-device and real authentication acceptance remain separate."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Reproduce browser gates with a valid pinned browser distribution; retain no production-readiness claim."
     },
@@ -468,6 +553,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -475,7 +566,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -505,13 +597,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Cash-only partial returns explicitly reject customer-linked, credit, wallet, loyalty, mixed-tender, batch-owned and classified Ghana-tax cases; those required dispositions are not a complete general refund workflow."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Cash-only partial returns explicitly reject customer-linked, credit, wallet, loyalty, mixed-tender, batch-owned and classified Ghana-tax cases; those required dispositions are not a complete general refund workflow."
     },
@@ -538,13 +637,20 @@
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -581,6 +687,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -588,7 +700,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "New guards and full policy cross-model acceptance require final integrated CI and field authorization evidence."
     },
@@ -615,13 +728,20 @@
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -648,13 +768,20 @@
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -681,13 +808,20 @@
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -718,13 +852,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Jurisdiction/registration certification, historical unsupported-currency provenance and complete corresponding partial-refund behavior remain open; code is not tax-invoice certification."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Jurisdiction/registration certification, historical unsupported-currency provenance and complete corresponding partial-refund behavior remain open; code is not tax-invoice certification."
     },
@@ -767,6 +908,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -774,7 +921,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
@@ -809,6 +957,12 @@
           "command": "vitest run financialJourney.integration.test.ts",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -816,7 +970,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage22-export-tests.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Extend report/export verification while preserving numeric values and tenant boundaries."
     },
@@ -849,13 +1004,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -888,13 +1050,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -926,13 +1095,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Independent simultaneous count/employee field acceptance and historical adjustment review are not fully demonstrated; local and cloud stocktaking remain distinct."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Independent simultaneous count/employee field acceptance and historical adjustment review are not fully demonstrated; local and cloud stocktaking remain distinct."
     },
@@ -965,13 +1141,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -1004,13 +1187,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "End-to-end supported product/variant/unit/expiry/archive behavior across both operating models still needs complete acceptance; existence of isolated conversion tests is insufficient."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "End-to-end supported product/variant/unit/expiry/archive behavior across both operating models still needs complete acceptance; existence of isolated conversion tests is insufficient."
     },
@@ -1043,13 +1233,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -1082,13 +1279,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -1121,13 +1325,20 @@
           "command": "vitest run storeOperations.integration.test.ts storeAuthorization.test.ts cashPartialReturnPosting.test.ts financialJourney.integration.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Partial transfer receipts, store-specific expiry batches, cross-device replication, scale/physical acceptance and full concurrency matrix remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage23-store-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining criterion without equating tested local full transfers with all multi-store acceptance."
     },
@@ -1157,13 +1368,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Shell timing and parser boundaries do not measure thousand-product purchasing/transfer/history workloads on low-resource physical hardware. Approved workload thresholds and scale evidence remain missing."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Shell timing and parser boundaries do not measure thousand-product purchasing/transfer/history workloads on low-resource physical hardware. Approved workload thresholds and scale evidence remain missing."
     },
@@ -1195,6 +1413,12 @@
           "result": "pass",
           "scope": "16 cases each on Windows Edge, macOS WebKit, Linux Chrome and Firefox (64 total), including native financial invariants, all historical schema opens, populated history and two-tab key recovery.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601544"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1202,7 +1426,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1234,6 +1459,12 @@
           "result": "pass",
           "scope": "16 cases each on Windows Edge, macOS WebKit, Linux Chrome and Firefox (64 total), including native financial invariants, all historical schema opens, populated history and two-tab key recovery.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601544"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1241,7 +1472,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1267,13 +1499,20 @@
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1343,13 +1582,20 @@
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1379,13 +1625,20 @@
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1411,13 +1664,20 @@
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
@@ -1476,6 +1736,12 @@
           "command": "node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/final-native.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1485,7 +1751,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage25-session-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage25-session-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json"
+        "docs/release/evidence/road-to-complete-continuation/production-readonly-metadata.json",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
@@ -1548,11 +1815,20 @@
       ],
       "existingCapabilityReused": [],
       "changes": [],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
       ],
-      "acceptanceEvidence": [],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+      ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
@@ -1570,11 +1846,20 @@
       ],
       "existingCapabilityReused": [],
       "changes": [],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
       ],
-      "acceptanceEvidence": [],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+      ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
@@ -1592,11 +1877,20 @@
       ],
       "existingCapabilityReused": [],
       "changes": [],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
       ],
-      "acceptanceEvidence": [],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+      ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
@@ -1614,11 +1908,20 @@
       ],
       "existingCapabilityReused": [],
       "changes": [],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
       ],
-      "acceptanceEvidence": [],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+      ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
@@ -1636,11 +1939,20 @@
       ],
       "existingCapabilityReused": [],
       "changes": [],
-      "tests": [],
+      "tests": [
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        }
+      ],
       "blockers": [
         "Complete per-action/role/tenant matrix, genuine hosted Auth and physical acceptance remain open; no production migration applied."
       ],
-      "acceptanceEvidence": [],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+      ],
       "nextAction": "Complete remaining criterion-specific authorization and attribution cases without changing live policy."
     },
     {
@@ -1692,6 +2004,12 @@
           "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1699,7 +2017,8 @@
         "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
@@ -1730,6 +2049,12 @@
           "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1737,7 +2062,8 @@
         "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
@@ -1768,6 +2094,12 @@
           "command": "pnpm test client/src/features/sync/{syncAcknowledgement.integration,signedSaleDelivery,outboxDelivery,outboxAcknowledgements,supabaseUploader}.test.ts --maxWorkers=1",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1775,7 +2107,8 @@
         "Replication beyond existing sale transport, conflict resolution and independent end-to-end conservation remain engineering requirements."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage26-sync-boundary-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete and verify immutable approved-event transport and authenticated device trust with an isolated real server; retain pending state on ambiguous transport."
     },
@@ -1811,6 +2144,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1818,7 +2157,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Permissioned audited owner resolution of actual finance, inventory and ownership conflicts is not implemented by metadata quarantine; that integration remains open."
     },
@@ -1849,13 +2189,20 @@
           "result": "pass",
           "scope": "Historical integrated canonical tests only; newly added refund/catalogue/local-sync guards require current-candidate CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Shared-shop cloud records and local device ledgers are not a completed combined trusted financial replication/reporting system. Central cross-product financial reconciliation remains open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Shared-shop cloud records and local device ledgers are not a completed combined trusted financial replication/reporting system. Central cross-product financial reconciliation remains open."
     },
@@ -1892,6 +2239,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1899,7 +2252,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Actual separate offline devices contending for one shop's stock under revoked staff and lost responses still require approved complete replication plus genuine device integration; metadata staging is not that feature."
     },
@@ -1928,6 +2282,12 @@
           "command": "node --experimental-strip-types --test qa/watchdog-canonical-export.test.mjs",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1935,7 +2295,8 @@
         "Shifts, Mobile Money and cash counts remain explicitly omitted from canonical CSV; current complete contract and provenance acceptance are open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Test the complete versioned contract with the authorized current importer; never invent identity or classify these exports as verified loss/theft evidence."
     },
@@ -1964,6 +2325,12 @@
           "command": "node --experimental-strip-types --test qa/watchdog-canonical-export.test.mjs",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -1971,7 +2338,8 @@
         "Shifts, Mobile Money and cash counts remain explicitly omitted from canonical CSV; current complete contract and provenance acceptance are open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Test the complete versioned contract with the authorized current importer; never invent identity or classify these exports as verified loss/theft evidence."
     },
@@ -2008,6 +2376,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2017,7 +2391,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2054,6 +2429,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2063,7 +2444,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2100,6 +2482,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2109,7 +2497,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2146,6 +2535,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2155,7 +2550,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2192,6 +2588,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2201,7 +2603,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2238,6 +2641,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2247,7 +2656,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2284,6 +2694,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2293,7 +2709,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2330,6 +2747,12 @@
           "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2339,7 +2762,8 @@
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
         "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
-        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
@@ -2489,13 +2913,20 @@
           "command": "pnpm test receiptDetail.test.ts shopReceiptText.test.ts SharedShopReceipt.test.tsx --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "No live provider or provider sandbox is verified; complete settlement, transport failure, replay and report-wide acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete durable settlement/provider-contract engineering, preserve unknown outcomes, then test authorized sandbox and all reports without falsely confirming manual tender references."
     },
@@ -2526,13 +2957,20 @@
           "command": "pnpm test receiptDetail.test.ts shopReceiptText.test.ts SharedShopReceipt.test.tsx --maxWorkers=1 --reporter=verbose",
           "result": "pass",
           "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "No live provider or provider sandbox is verified; complete settlement, transport failure, replay and report-wide acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+        "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Complete durable settlement/provider-contract engineering, preserve unknown outcomes, then test authorized sandbox and all reports without falsely confirming manual tender references."
     },
@@ -2594,6 +3032,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2601,7 +3045,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2634,6 +3079,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2641,7 +3092,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2674,6 +3126,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2681,7 +3139,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2714,6 +3173,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2721,7 +3186,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2793,6 +3259,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2800,7 +3272,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2833,6 +3306,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2840,7 +3319,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2873,6 +3353,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2880,7 +3366,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2913,6 +3400,12 @@
           "command": "Pinned local focused schedule/backup/guidance suite before workspace loss",
           "result": "pass",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -2920,7 +3413,8 @@
         "Notification delivery, physical/browser matrix, comprehensive analytics and saved-context acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify recovered source in hosted CI, then close remaining source and notification/device requirements without automatic financial writes."
     },
@@ -2949,13 +3443,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -2984,13 +3485,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3019,13 +3527,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3054,13 +3569,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3089,13 +3611,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3124,13 +3653,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3159,13 +3695,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3194,13 +3737,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3349,13 +3899,20 @@
           "result": "pass",
           "scope": "Historical before workspace loss; recovered tree pending CI",
           "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
         "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
@@ -3421,6 +3978,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3428,7 +3991,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3478,6 +4042,12 @@
           "result": "pass",
           "scope": "CodeQL 0 High/0 Critical plus descriptor/TLS/throttle regressions; historical-secret job remained failed pending source verification.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44042644861"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3486,7 +4056,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3545,6 +4116,12 @@
           "result": "pass",
           "scope": "All 3 jobs; 37 focused client, 21 native security/package cases, strict types, production build, two identical 321-file package manifests, 190 dependency license records, 185 notice files, 0 High/Critical CodeQL, no unclassified historical secret findings.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601404"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3554,7 +4131,8 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3592,6 +4170,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3599,7 +4183,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3637,6 +4222,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3644,7 +4235,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3682,6 +4274,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3689,7 +4287,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3727,6 +4326,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3734,7 +4339,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3772,6 +4378,12 @@
           "result": "pass",
           "scope": "1193 native, 1896 client, TypeScript, build, 30 Chromium checks, moderate-or-higher dependency audit",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3779,7 +4391,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3826,6 +4439,12 @@
           "result": "pass",
           "scope": "All 3 jobs; 37 focused client, 21 native security/package cases, strict types, production build, two identical 321-file package manifests, 190 dependency license records, 185 notice files, 0 High/Critical CodeQL, no unclassified historical secret findings.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601404"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3834,7 +4453,8 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
@@ -3887,6 +4507,12 @@
           "result": "pass",
           "scope": "All 3 jobs; 37 focused client, 21 native security/package cases, strict types, production build, two identical 321-file package manifests, 190 dependency license records, 185 notice files, 0 High/Critical CodeQL, no unclassified historical secret findings.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601404"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3895,7 +4521,8 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -3942,6 +4569,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -3949,7 +4582,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4057,6 +4691,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4065,7 +4705,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4114,6 +4755,12 @@
           "result": "pass",
           "scope": "16 cases each on Windows Edge, macOS WebKit, Linux Chrome and Firefox (64 total), including native financial invariants, all historical schema opens, populated history and two-tab key recovery.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601544"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4121,7 +4768,8 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute the exact real-device/owner requirement safely after its engineering dependencies exist; retain open status."
     },
@@ -4188,6 +4836,12 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4195,7 +4849,8 @@
         "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4227,6 +4882,12 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4234,7 +4895,8 @@
         "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4266,6 +4928,12 @@
           "result": "pass",
           "scope": "Earlier recovered candidate only: 1193 native, 1896 client, types/build, 30 Chromium checks and dependency audit; new checkpoint implementation pending fresh CI.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44039335537"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4273,7 +4941,8 @@
         "New packager and repeat-build verification require fresh exact-SHA CI; full independent scope, security, hardware and owner acceptance remain open."
       ],
       "acceptanceEvidence": [
-        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4326,6 +4995,12 @@
           "result": "pass",
           "scope": "All 3 jobs; 37 focused client, 21 native security/package cases, strict types, production build, two identical 321-file package manifests, 190 dependency license records, 185 notice files, 0 High/Critical CodeQL, no unclassified historical secret findings.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601404"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4334,7 +5009,8 @@
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     },
@@ -4413,6 +5089,12 @@
           "result": "pass",
           "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
           "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+        },
+        {
+          "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
+          "result": "pass",
+          "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
         }
       ],
       "blockers": [
@@ -4420,12 +5102,13 @@
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md",
-        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+        "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
+        "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
       "nextAction": "Execute checkpoint regressions and full CI, repair failures and continue all unresolved mandatory requirements without changing production."
     }
   ],
-  "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
+  "implementationCommit": "4acc36595d80e724f2293d8c8dc322ba503daddf",
   "activeEngineeringStage": "Stage 32 development checkpoint and continued mandatory engineering; release NO-GO",
   "historicalVerificationSummary": {
     "native": {
@@ -4446,45 +5129,79 @@
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
   },
   "verificationSummary": {
+    "reviewHead": "4acc36595d80e724f2293d8c8dc322ba503daddf",
+    "executedCheckout": "3a87d295e30fa6672986e874881aa26d46068f4b",
+    "identicalTree": "4d4b3f10af3230ca372b46a108c849e202aaee70",
+    "sourceRetainedRef": "codex/checkpoint-20261117-3a87d295",
+    "releaseRunId": 44050478753,
     "native": {
-      "passed": 1173,
+      "passed": 1211,
       "failed": 0,
-      "skipped": 0,
-      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-native.txt"
+      "skipped": 0
     },
     "client": {
-      "filesPassed": 232,
-      "passed": 1849,
-      "failed": 0,
-      "source": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
-      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-client.txt"
+      "filesPassed": 240,
+      "passed": 1915,
+      "failed": 0
     },
     "types": "pass",
     "build": "pass",
-    "browser": "All six hosted workflows passed on 334f2beaa5c2c52b3864e7069a0d4de115746b1d, including release Chromium, device Edge/WebKit, UI, integrated references, CodeQL and Clementia100x20. Local Chromium acquisition failed; physical field acceptance remains open.",
-    "unresolvedDefects": "Whole-ledger encryption, complete replication, commerce/provider lifecycle and comprehensive acceptance remain open.",
-    "stage27Native": {
-      "passed": 1177,
+    "chromiumChecks": 30,
+    "crossEngine": {
+      "passed": 64,
       "failed": 0,
-      "skipped": 0,
-      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      "engines": [
+        "Windows Edge",
+        "macOS WebKit",
+        "Linux Chrome",
+        "Linux Firefox"
+      ],
+      "scope": "16 native migration, synthetic financial, two-tab storage, account and public-entry cases per engine; real Auth/provider/physical-device acceptance remains open",
+      "runId": 44050478763
     },
-    "stage27FocusedClient": {
-      "filesPassed": 6,
-      "passed": 44,
-      "failed": 0,
-      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+    "allSevenHostedWorkflowsPassed": true,
+    "dependencyAudit": "No known vulnerabilities reported",
+    "security": {
+      "highCodeql": 0,
+      "criticalCodeql": 0,
+      "unclassifiedSecurityFindings": 0,
+      "historicalSecretMatches": 632,
+      "unclassifiedSecretMatches": 0,
+      "remainingModerateCodeql": "Push SARIF retains one 6.5 finding at server/tests/syncHttps.test.mjs:32. This generated public test certificate configures HTTPS CA validation and is not an HTTP request body. Finding is retained and reviewed, not suppressed; latest PR SARIF reports none.",
+      "runId": 44050478932,
+      "latestPrSarifCounts": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "unknown": 0
+      },
+      "fullPushRunId": 44050464982,
+      "fullPushCodeql": "Separate push workflow analyzed the same source: 0 Critical/High and one reviewed test-only CA file-flow finding (6.5); no query suppression.",
+      "fullPushSarifCounts": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 1,
+        "low": 0,
+        "unknown": 0
+      }
     },
-    "stage27Types": "pass",
-    "stage27Build": "pass",
-    "stage28FocusedClient": {
-      "filesPassed": 3,
-      "passed": 20,
-      "failed": 0,
-      "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+    "repeatBuild": {
+      "files": 321,
+      "productionDependencyVersions": 190,
+      "originalNoticeFiles": 185,
+      "manifestSha256": "a16e13403c19275545ed9a60a9412e3dd4977ab5c1c86dfec7f1937b2805c659",
+      "artifactId": 14314725167,
+      "artifactZipSha256": "b95213b857cb72627ed80b3d4d9f96cafc20be219c7f1e763c9bb4cfb65d28eb",
+      "sameIsolatedLinuxEnvironment": true,
+      "independentMachineAcceptance": false
     },
-    "stage28Types": "pass",
-    "stage28Build": "pass"
+    "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md",
+    "releaseDecision": "NO-GO",
+    "formalStageAcceptance": false,
+    "ownerAccepted": false,
+    "productionAuthorized": false,
+    "unresolvedDefects": "Whole-ledger encryption, provider adapter/settlements/refunds/disputes, complete financial replication, general-tender partial refunds and other required financial/inventory/privacy/recovery/acceptance work remain open."
   },
   "frozenStage26Source": {
     "localCommit": "fa1c828274b7728181ce729b4c291996d26fe6a9",
@@ -4495,12 +5212,13 @@
   "recovery": {
     "state": "local-workspace-unavailable",
     "publishedBaseline": "b7f5b1537bc9172529305ec7241325ac2c5f1ea8",
-    "newSourceVerification": "pending hosted CI; new severity/secret/startup gates added after interruption",
+    "newSourceVerification": "Reconstructed source independently re-executed through hosted CI: full validated candidate 4acc36595d80e724f2293d8c8dc322ba503daddf, actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b. Local interrupted processes remain unobserved historical runs.",
     "unobservedRuns": [
       "Latest full Stage31 regression",
       "Full-history Gitleaks scan",
       "Startup-guard post-fix test"
-    ]
+    ],
+    "unobservedRunsScope": "Original interrupted local processes only. Separate new hosted execution results are recorded in verificationSummary."
   },
   "reconciliationCheckpoint": {
     "date": "2026-11-17",
@@ -4562,5 +5280,47 @@
       "decision": "NO-GO"
     }
   ],
-  "latestIncrementEvidence": "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md"
+  "latestIncrementEvidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md",
+  "historicalStage21to28VerificationSummary": {
+    "native": {
+      "passed": 1173,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-native.txt"
+    },
+    "client": {
+      "filesPassed": 232,
+      "passed": 1849,
+      "failed": 0,
+      "source": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+      "evidence": "docs/release/evidence/road-to-complete-continuation/frozen-client.txt"
+    },
+    "types": "pass",
+    "build": "pass",
+    "browser": "All six hosted workflows passed on 334f2beaa5c2c52b3864e7069a0d4de115746b1d, including release Chromium, device Edge/WebKit, UI, integrated references, CodeQL and Clementia100x20. Local Chromium acquisition failed; physical field acceptance remains open.",
+    "unresolvedDefects": "Whole-ledger encryption, complete replication, commerce/provider lifecycle and comprehensive acceptance remain open.",
+    "stage27Native": {
+      "passed": 1177,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+    },
+    "stage27FocusedClient": {
+      "filesPassed": 6,
+      "passed": 44,
+      "failed": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+    },
+    "stage27Types": "pass",
+    "stage27Build": "pass",
+    "stage28FocusedClient": {
+      "filesPassed": 3,
+      "passed": 20,
+      "failed": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
+    },
+    "stage28Types": "pass",
+    "stage28Build": "pass"
+  },
+  "implementationCommitMeaning": "Latest fully validated source-bearing review candidate; this update changes evidence only."
 }

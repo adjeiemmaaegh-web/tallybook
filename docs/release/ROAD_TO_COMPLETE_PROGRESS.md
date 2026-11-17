@@ -1,14 +1,16 @@
 # Road to Complete — current engineering progress
 
-17 November 2026. **NO-GO. Source increments cover Stages 21–32, but no entire stage is certified complete.** All 119 governing requirements remain intact. Only ST21-06 is verified and checked.
+17 November 2026. **NO-GO. All seven workflows pass on the pinned development candidate; all 12 stages remain unaccepted.** The [governing roadmap](../../road-to-complete.md) retains every requirement. Only ST21-06 is verified and checked.
 
-Main baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development is reviewable in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). No main merge, production deployment, hosted SQL write, authentication-policy change or real payment was performed.
+[Draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105) contains the engineering work. Main remains `41d4bab619db1808f21471299bd7760eee1a6836`. Validated source is `4acc36595d80e724f2293d8c8dc322ba503daddf`; actual workflow checkout `3a87d295e30fa6672986e874881aa26d46068f4b` has an identical tree. The final evidence update does not relabel its own new documentation commit as already tested.
 
-The [JSON register](ROAD_TO_COMPLETE_PROGRESS.json) is the detailed task-level record, including priority, original audit status, reused source, changes, tests, blockers and next actions. Its dispositions are initial source findings, not completion statistics.
+**Observed:** 1,211 native tests, 1,915 client tests, types/build, 30 Chromium checks, 64 checks across Chrome/Firefox/Windows Edge/macOS WebKit, security, reference UI, Clementia and read-only public smoke pass. Two builds produced identical 321-file development package manifests; 190 declared dependency licenses and 185 original notice files are retained. These results do not prove real hosted Auth, provider settlement, physical phones/hardware, independent-machine reproduction or owner acceptance.
+
+See the [validated-source handoff and exact evidence](ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md). The [JSON register](ROAD_TO_COMPLETE_PROGRESS.json) retains each task's priority, audit status, source reuse, changes, tests, blockers and next action.
 
 | Disposition | Tasks |
 | --- | ---: |
-| Fully verified criterion | 1 |
+| Verified criterion | 1 |
 | Implemented pending formal acceptance | 0 |
 | Partial | 94 |
 | Missing engineering | 4 |
@@ -16,27 +18,11 @@ The [JSON register](ROAD_TO_COMPLETE_PROGRESS.json) is the detailed task-level r
 | Unreviewed | 0 |
 | Total | 119 |
 
-The [143 historical acceptance IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still need full current behavioral closure. General customer/credit/wallet/mixed-tender partial refunds, active-ledger encryption, durable real-provider settlement and complete financial replication are among open engineering requirements. Optional-scope decisions and real-device/provider/owner acceptance remain explicit, not silently removed.
+The [143 historical acceptance IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) remain a separate incomplete campaign. Active-ledger encryption, real-provider settlement/refund integration, general multi-tender partial refunds, full financial replication and other recorded engineering requirements remain open. Production migrations 38/39 and leaked-password policy are unchanged and owner-gated. No main merge, production deployment, live data change or real money movement occurred.
 
-## Evidence
+## Task dispositions
 
-Latest verified development package: [checkpoint and canonical checkout repair](ROAD_TO_COMPLETE_VERIFIED_CHECKPOINT_2026-11-17.md). The full run associated with head `ea61775af959d8016b35cd563b4068ac4cd7e507` executed synthetic merge `198332faed5a6d04f4075b588eee9ac348ec1b2f`, with an identical tree confirmed. It passed 1,208 native/1,910 client tests, strict types/build, 30 Chromium cases and two identical build manifests (136 payload files, 190 dependency versions). The later canonical checkout repair passed 37 focused tests, all security jobs and 32 selected Chrome/Firefox/Windows Edge/macOS WebKit checks; a fresh complete integration run remains required.
-
-
-- [Canonical repairs and nine-task reconciliation](ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md).
-- [Security fixes and development checkpoint](ROAD_TO_COMPLETE_SECURITY_AND_CHECKPOINT_2026-11-17.md).
-- [Pre-outage stage delivery evidence and commit mapping](ROAD_TO_COMPLETE_CONTINUATION.md).
-- [Workspace interruption, source reconstruction and limitations](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md).
-
-Observed complete release validation at `10355725d814dd04422debe717c2903435ab4a0a`: 1,193 native and 1,896 client tests, strict types, production build, 30 Chromium checks and dependency audit passed. Later security triage removed all 12 High CodeQL findings and source-verified 632 historical noncredential matches; every unknown match remains a failing gate. Security source `b35ebe555e226f9f4b2cffc1a37c5f30d14a23ac` passed all three security jobs.
-
-The latest source additionally repairs owner-policy, EOF import and local sync/quarantine boundaries and prepares a repeat-build web/schema development artifact with exact source hashes and an explicit NO-GO manifest. The frozen development checkpoint passed complete CI; the subsequently repaired checkout requires a fresh integrated run. Prior artifact results are not relabelled. Same-environment repeated builds do not establish independent-machine, physical-device or final release acceptance.
-
-Hosted metadata remains read-only: 37 migrations, 47 RLS-protected shop tables, zero direct anon/authenticated table grants. Development migrations 38/39 are unapplied. Leaked-password protection remains disabled and owner-gated.
-
-## All 119 dispositions
-
-Each ID retains its original order in the [governing checklist](../../road-to-complete.md). Detailed evidence and remaining work are in the corresponding JSON row.
+Each ID retains its original order in the governing roadmap. This table is a disposition list, not a completion claim.
 
 | ID | Priority | Requirement | Current disposition |
 | --- | --- | --- | --- |
@@ -160,6 +146,4 @@ Each ID retains its original order in the [governing checklist](../../road-to-co
 | ST32-12 | HIGH | Owner UAT & Handoff | owner-external-blocked |
 | ST32-13 | HIGH | Final GO/NO-GO | partial |
 
-No source test, artifact hash or CI success grants owner acceptance or production authorization.
-
-Latest source evidence: [64 genuine-engine checks and dependency notices](ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md). The canonical checkout candidate passed the complete 1,208-native/1,915-client run; the subsequent notice-bearing source passed 37 focused client, 21 native security/package cases, types/build, strict security and two identical 321-file manifests. Its final integrated full workflow remains required. Main and production remain unchanged.
+Earlier verification remains in the [continuation](ROAD_TO_COMPLETE_CONTINUATION.md), [recovery](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md), [checkpoint](ROAD_TO_COMPLETE_VERIFIED_CHECKPOINT_2026-11-17.md) and [browser/notice](ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md) reports, with their original source identities. The updated summary separates those historical results from the new hosted executions.

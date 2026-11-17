@@ -1,0 +1,132 @@
+{
+  "date": "2026-11-17",
+  "decision": "NO-GO",
+  "mainBaseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "reviewHead": "4acc36595d80e724f2293d8c8dc322ba503daddf",
+  "executedCheckout": "3a87d295e30fa6672986e874881aa26d46068f4b",
+  "identicalTree": "4d4b3f10af3230ca372b46a108c849e202aaee70",
+  "sourceRetainedRef": "codex/checkpoint-20261117-3a87d295",
+  "releaseRunId": 44050478753,
+  "native": {
+    "passed": 1211,
+    "failed": 0,
+    "skipped": 0
+  },
+  "client": {
+    "filesPassed": 240,
+    "passed": 1915,
+    "failed": 0
+  },
+  "types": "pass",
+  "build": "pass",
+  "chromiumChecks": 30,
+  "crossEngine": {
+    "passed": 64,
+    "failed": 0,
+    "engines": [
+      "Windows Edge",
+      "macOS WebKit",
+      "Linux Chrome",
+      "Linux Firefox"
+    ],
+    "scope": "16 native migration, synthetic financial, two-tab storage, account and public-entry cases per engine; real Auth/provider/physical-device acceptance remains open",
+    "runId": 44050478763
+  },
+  "allSevenHostedWorkflowsPassed": true,
+  "dependencyAudit": "No known vulnerabilities reported",
+  "security": {
+    "highCodeql": 0,
+    "criticalCodeql": 0,
+    "unclassifiedSecurityFindings": 0,
+    "historicalSecretMatches": 632,
+    "unclassifiedSecretMatches": 0,
+    "remainingModerateCodeql": "Push SARIF retains one 6.5 finding at server/tests/syncHttps.test.mjs:32. This generated public test certificate configures HTTPS CA validation and is not an HTTP request body. Finding is retained and reviewed, not suppressed; latest PR SARIF reports none.",
+    "runId": 44050478932,
+    "latestPrSarifCounts": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 0,
+      "low": 0,
+      "unknown": 0
+    },
+    "fullPushRunId": 44050464982,
+    "fullPushCodeql": "Separate push workflow analyzed the same source: 0 Critical/High and one reviewed test-only CA file-flow finding (6.5); no query suppression.",
+    "fullPushSarifCounts": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 1,
+      "low": 0,
+      "unknown": 0
+    }
+  },
+  "repeatBuild": {
+    "files": 321,
+    "productionDependencyVersions": 190,
+    "originalNoticeFiles": 185,
+    "manifestSha256": "a16e13403c19275545ed9a60a9412e3dd4977ab5c1c86dfec7f1937b2805c659",
+    "artifactId": 14314725167,
+    "artifactZipSha256": "b95213b857cb72627ed80b3d4d9f96cafc20be219c7f1e763c9bb4cfb65d28eb",
+    "sameIsolatedLinuxEnvironment": true,
+    "independentMachineAcceptance": false
+  },
+  "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md",
+  "releaseDecision": "NO-GO",
+  "formalStageAcceptance": false,
+  "ownerAccepted": false,
+  "productionAuthorized": false,
+  "unresolvedDefects": "Whole-ledger encryption, provider adapter/settlements/refunds/disputes, complete financial replication, general-tender partial refunds and other required financial/inventory/privacy/recovery/acceptance work remain open.",
+  "workflowRuns": [
+    {
+      "id": 44050478748,
+      "name": "Production public-site read-only smoke",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478904,
+      "name": "Integrated Tallybook Reference UI",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478932,
+      "name": "Security code audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478763,
+      "name": "Device browser engines",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478794,
+      "name": "UI branch verification",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478793,
+      "name": "Clementia sole-interface 100x20 QA",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 44050478753,
+      "name": "Release validation",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "evidenceUpdateScope": "Documentation and evidence only after the exact validated source; no runtime/test/tooling changes.",
+  "taskTotals": {
+    "verified": 1,
+    "implementedPendingAcceptance": 0,
+    "partial": 94,
+    "missing": 4,
+    "ownerExternalBlocked": 20,
+    "unreviewed": 0,
+    "total": 119
+  }
+}
