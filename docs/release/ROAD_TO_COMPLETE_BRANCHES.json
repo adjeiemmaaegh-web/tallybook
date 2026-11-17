@@ -1,0 +1,3180 @@
+{
+  "baseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "source": "local remote-tracking refs; refresh explicitly before a later review",
+  "branches": [
+    {
+      "ref": "origin/backend-b-e-20261106",
+      "sha": "9f14d66345fc6172d8ba713fd54cf12a2bd72b49",
+      "mergeBase": "0314873bf0f7e30ad8612b51be77f0a5107612d0",
+      "ahead": 14,
+      "behind": 455,
+      "patches": [
+        {
+          "sha": "cf8959d0ca11d7d972c93084015865dc2f268bb5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "907ac0487811babf3ae00d8cf961f21e33b0c1e9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1fe4009bdb86cf1624f2a9b2c1d17e3bb77b3e5e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8e3f87f147661452bb40996cd10caad9611b4e9a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "740f17b6ca87f1f4b94944d95ecea6bb560fd417",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bf65e4f4cc7c265a699df425136b4c161f011e1e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "84627e1820f229b0890873399d7d24bed2f2bd92",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5014988a65d3712b247f62e98ba44ac104f10fb8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2b66dc0194dd176590baaab2a488da67acd6c760",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f9d33ebb9d5e6839810400672f03390baa64d716",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "34a2f4bf9fbfe35ddb918ab20b4cabb2c8b5e262",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b363083e6272374056ccfe6169eb1c2360932a4d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "dfc8677a0a9aa77240f6223d9615b4f3e0d3bf66",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9f14d66345fc6172d8ba713fd54cf12a2bd72b49",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/backend-b-e-qa.yml",
+        "docs/backend-stages-b-e/API_CONTRACT.md",
+        "docs/backend-stages-b-e/README.md",
+        "docs/backend-stages-b-e/STAGE_E_EXIT_GATES.md",
+        "qa/backend-stage-b-e.test.mjs",
+        "qa/shared-shop-full-till.test.mjs",
+        "qa/shared-shop-refunds-import.test.mjs",
+        "supabase/migrations/20261106120000_shared_shop_return_policies.sql",
+        "supabase/migrations/20261106130000_shop_stage_c_read_models.sql",
+        "supabase/migrations/20261106140000_shop_stage_d_stock_workflows.sql",
+        "supabase/migrations/20261106150000_shop_stage_d_purchase_payables.sql",
+        "supabase/migrations/20261106160000_shop_stage_d_online_orders.sql"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/backup/main-before-stakeholder-2026-10-30-ea165a5",
+      "sha": "ba3481eb7742b065670dbe5b5ffcb93a62ee0edb",
+      "mergeBase": "ba3481eb7742b065670dbe5b5ffcb93a62ee0edb",
+      "ahead": 0,
+      "behind": 549,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/chore/cleanup-historical-docs",
+      "sha": "f4b7a81bbf43813e070e39be74683fffd843a42a",
+      "mergeBase": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+      "ahead": 1,
+      "behind": 280,
+      "patches": [
+        {
+          "sha": "f4b7a81bbf43813e070e39be74683fffd843a42a",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "ASSISTANT_BATCH_IMPLEMENTATION.md",
+        "ASSISTANT_UPDATE_NOTES.md",
+        "ASSISTANT_V2_QA_NOTES.md",
+        "ASSISTANT_V3_QA_NOTES.md",
+        "ASSISTANT_V4_IMPLEMENTATION.md",
+        "CENTRAL_INCREMENT_MANIFEST.json",
+        "CENTRAL_INCREMENT_REPORT.md",
+        "DEFERRED_QA_MASTER.md",
+        "HANDOVER_PACKAGE_SHA256.json",
+        "INTEGRATION_SHA256_MANIFEST.json",
+        "LOCAL_COMPLETION_INCREMENT_REPORT.md",
+        "LOCAL_SHA256_MANIFEST.json",
+        "MASTER_README.md",
+        "NEXT_AGENT_MASTER_PROMPT.md",
+        "PHASE2_MEMORY_BATCH_AUDIT_PHRASING.md",
+        "QA_PRE_HANDOVER_2026-10-23.md",
+        "QA_PRE_HANDOVER_TEST_LOG.txt",
+        "QA_REVIEW_2026-10-24.md",
+        "RELEASE_QA_V6.md",
+        "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+        "STAGE10_V17_LOCAL_COMMERCE_QA.md",
+        "STAGE11_COMPANY_ISOLATION_INCREMENT10_LEDGER.json",
+        "STAGE11_COMPANY_ISOLATION_INCREMENT10_PROGRESS.md",
+        "STAGE11_COMPANY_ISOLATION_INCREMENT10_TEST_LOG.txt",
+        "STAGE11_V18_BUILD1_QA.md",
+        "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+        "STAGE12_V19_CHECKOUT_QUANTITY_HARDENING_QA.md",
+        "STAGE12_V19_COSTING_CUTOFF_QA.md",
+        "STAGE12_V19_CREDIT_LEDGER_HARDENING_QA.md",
+        "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+        "STAGE12_V19_MONEY_ARITHMETIC_QA.md",
+        "STAGE1_DEVELOPMENT_LEDGER.json",
+        "STAGE1_INCREMENT2_PROGRESS.md",
+        "STAGE1_INCREMENT2_SHA256.json",
+        "STAGE1_INCREMENT2_TEST_LOG.txt",
+        "STAGE1_INCREMENT3_PROGRESS.md",
+        "STAGE1_INCREMENT3_SHA256.json",
+        "STAGE1_INCREMENT4_GATE_RESULTS.json",
+        "STAGE1_INCREMENT4_PROGRESS.md",
+        "STAGE1_INCREMENT4_SHA256.json",
+        "STAGE1_INCREMENT5_GATE_RESULTS.json",
+        "STAGE1_INCREMENT5_PROGRESS.md",
+        "STAGE1_INCREMENT5_SHA256.json",
+        "STAGE1_INCREMENT6_GATE_RESULTS.json",
+        "STAGE1_INCREMENT6_PATCH.diff",
+        "STAGE1_INCREMENT6_PROGRESS.md",
+        "STAGE1_INCREMENT6_SHA256.json",
+        "STAGE1_INCREMENT6_TARGETED_TEST_LOG.txt",
+        "STAGE1_INCREMENT7_LEDGER.json",
+        "STAGE1_INCREMENT7_PROGRESS.md",
+        "STAGE1_INCREMENT7_SHA256.json",
+        "STAGE1_INCREMENT8_GATE_RESULTS.json",
+        "STAGE1_INCREMENT8_LEDGER.json",
+        "STAGE1_INCREMENT8_PROGRESS.md",
+        "STAGE1_INCREMENT8_SHA256.json",
+        "STAGE1_INCREMENT8_TEST_LOG.txt",
+        "STAGE1_INCREMENT8_WINDOWS_ACCEPTANCE.md",
+        "STAGE1_PROGRESS_REPORT.md",
+        "STAGE1_SHA256_MANIFEST.json",
+        "STAGE1_V8_BUILD10_QA.md",
+        "STAGE1_V8_BUILD11_QA.md",
+        "STAGE1_V8_BUILD12_QA.md",
+        "STAGE1_V8_BUILD13_QA.md",
+        "STAGE1_V8_BUILD14_15_QA.md",
+        "STAGE1_V8_BUILD3.md",
+        "STAGE1_V8_BUILD4_QA.md",
+        "STAGE1_V8_BUILD5_QA.md",
+        "STAGE1_V8_BUILD6_QA.md",
+        "STAGE1_V8_BUILD7_QA.md",
+        "STAGE1_V8_BUILD8_QA.md",
+        "STAGE1_V8_BUILD9_QA.md",
+        "STAGE1_V8_PROGRESS.md",
+        "STAGE2_INTEGRATION_QA.md",
+        "STAGE2_PROGRESS_FIX2.md",
+        "STAGE2_STAGE3_HISTORICAL_COSTING_INCREMENT_QA.md",
+        "STAGE2_STAGE3_INCREMENT9_LEDGER.json",
+        "STAGE2_STAGE3_INCREMENT9_PROGRESS.md",
+        "STAGE2_STAGE3_INCREMENT9_TEST_LOG.txt",
+        "STAGE2_STAGE3_RECONCILIATION_INCREMENT_QA.md",
+        "STAGE2_V9_BACKUP_PROGRESS.md",
+        "STAGE2_V9_CURRENT_QA.md",
+        "STAGE2_V9_IMPLEMENTATION_REVIEW.md",
+        "STAGE2_V9_MASTER_QA.md",
+        "STAGE3_V10_BUILD8_RECONCILIATION_QA.md",
+        "STAGE3_V10_BUILD9_QA.md",
+        "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+        "STAGE4_V11_BUILD1_QA.md",
+        "STAGE4_V11_BUILD2_QA.md",
+        "STAGE4_V11_CONSOLIDATED_QA.md",
+        "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+        "STAGE4_V11_RETENTION_QA.md",
+        "STAGE5_V12_BUILD1_QA.md",
+        "STAGE5_V12_BUILD2_QA.md",
+        "STAGE5_V12_CONSOLIDATED_QA.md",
+        "STAGE5_V12_FINALIZATION_STATUS.md",
+        "STAGE6_V13_STATUS.md",
+        "STAGE7_V14_BUILD2_QA.md",
+        "STAGE7_V14_BUILD3_QA.md",
+        "STAGE7_V14_COMPLETION_AUDIT.md",
+        "STAGE7_V14_PROGRESS.md",
+        "STAGE8_V15_BUILD10_QA.md",
+        "STAGE8_V15_BUILD11_QA.md",
+        "STAGE8_V15_BUILD12_QA.md",
+        "STAGE8_V15_BUILD13_QA.md",
+        "STAGE8_V15_BUILD14_QA.md",
+        "STAGE8_V15_BUILD15_QA.md",
+        "STAGE8_V15_BUILD16_QA.md",
+        "STAGE8_V15_BUILD17_QA.md",
+        "STAGE8_V15_BUILD18_QA.md",
+        "STAGE8_V15_BUILD19_QA.md",
+        "STAGE8_V15_BUILD1_STATUS.md",
+        "STAGE8_V15_BUILD20_QA.md",
+        "STAGE8_V15_BUILD21_QA.md",
+        "STAGE8_V15_BUILD22_QA.md",
+        "STAGE8_V15_BUILD23_QA.md",
+        "STAGE8_V15_BUILD2_QA.md",
+        "STAGE8_V15_BUILD3_QA.md",
+        "STAGE8_V15_BUILD4_QA.md",
+        "STAGE8_V15_BUILD5_QA.md",
+        "STAGE8_V15_BUILD6_QA.md",
+        "STAGE8_V15_BUILD7_QA.md",
+        "STAGE8_V15_BUILD8_QA.md",
+        "STAGE8_V15_BUILD9_QA.md",
+        "STAGE9_LIMITED_RELEASE_DECISION.md",
+        "STAGE9_V16_COMPLETION_AUDIT.md",
+        "STAGE9_V16_IMPLEMENTATION_AUDIT.md",
+        "STAGE9_V16_STOCK_OBSERVATION_QA.md",
+        "V5_QA_CHANGES.md",
+        "V7_QA_CHANGES.md",
+        "docs/MAIN_V19_INTEGRATION_2026-10-13.md",
+        "docs/assistant-agent-phase-plan.md",
+        "docs/assistant-intelligence-stage-plan.md",
+        "docs/launch/LAUNCH_VALIDATION_REPORT_2026-10-12.md",
+        "docs/launch/WINDOWS_BUILD_IMPORT_FIX_2026-10-12.md",
+        "docs/launch/WINDOWS_QUICKSTART.md",
+        "docs/mission-go/INCREMENT_01_LIVE_BASELINE_2026-10-27.md",
+        "docs/mission-go/INCREMENT_01_MAIN_DEV_DELTA_REVIEW.md",
+        "docs/offline-language-understanding-plan.md",
+        "docs/reconciliation/BRANCH_DISPOSITION_2026-10-27.md",
+        "docs/reconciliation/BUILD_AND_CONTINUATION.md",
+        "docs/reconciliation/DEVICE_ACCEPTANCE_TEMPLATE.md",
+        "docs/reconciliation/DEXIE_MIGRATION_RECONCILIATION.md",
+        "docs/reconciliation/FEATURE_INTEGRATION_MAP.md",
+        "docs/reconciliation/FINAL_ENGINEERING_ASSESSMENT.md",
+        "docs/reconciliation/FRIENDS_WEB_TEST_CHECKPOINT_2026-10-27.md",
+        "docs/reconciliation/LOCAL_QA_AND_DEPENDENCY_CHECKPOINT.md",
+        "docs/reconciliation/LOCAL_TRY_NOW_2026-10-27.md",
+        "docs/reconciliation/MAIN_SOURCE_INTEGRATION_2026-10-27.md",
+        "docs/reconciliation/OFFLINE_CORE_READINESS_GATES.md",
+        "docs/reconciliation/OUTSTANDING_READINESS_BLOCKERS.md",
+        "docs/reconciliation/OWNER_ATTENDANT_AUTH_CHECKPOINT.md",
+        "docs/reconciliation/PROGRESS.md",
+        "docs/reconciliation/SECURITY_DEPENDENCY_AUDIT.md",
+        "docs/reconciliation/SOURCE_RESOLUTION_REGISTER.md",
+        "docs/reconciliation/STAFF_GOVERNANCE_V36_CHECKPOINT.md",
+        "docs/reconciliation/STAGE22_FINANCE_BRANCH_INTEGRATION_2026-10-27.md",
+        "docs/reconciliation/UNIFIED_12_STAGE_REGISTER.md",
+        "docs/reconciliation/branch_provenance.json",
+        "docs/reconciliation/evidence/2026-10-27/final-browser-auth-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-browser-offline-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-browser-release-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-build-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-client-full-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-dependency-audit-status-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-git-fsck-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-local-preview-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-native-full-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-server-focused-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-static-assets-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/final-typescript-2026-10-27.txt",
+        "docs/reconciliation/evidence/2026-10-27/stage22-client-full-2026-10-27.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-browser.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-build.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-cloud-policy.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-full-client.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-gate-tests.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-offline-browser-initial-failure.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-offline-browser.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-release-browser.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-tests.txt",
+        "docs/reconciliation/evidence/auth-owner-attendant-typescript.txt",
+        "docs/reconciliation/evidence/batch-merge-focused.txt",
+        "docs/reconciliation/evidence/build-after-batch.txt",
+        "docs/reconciliation/evidence/clean-clone-audit-3fd4b2f.json",
+        "docs/reconciliation/evidence/clean-clone-build-3fd4b2f.txt",
+        "docs/reconciliation/evidence/clean-clone-playwright-offline-3fd4b2f.txt",
+        "docs/reconciliation/evidence/clean-clone-playwright-release-3fd4b2f.txt",
+        "docs/reconciliation/evidence/clean-clone-qa-3fd4b2f.txt",
+        "docs/reconciliation/evidence/clean-clone-vitest-3fd4b2f.txt",
+        "docs/reconciliation/evidence/clean-clone-vitest-77086e2.txt",
+        "docs/reconciliation/evidence/client-build.txt",
+        "docs/reconciliation/evidence/cloud-membership-rls-extended.txt",
+        "docs/reconciliation/evidence/focused-security-migration.txt",
+        "docs/reconciliation/evidence/full-vitest-after-fixtures.txt",
+        "docs/reconciliation/evidence/full-vitest-current-stalled.txt",
+        "docs/reconciliation/evidence/hosted-smoke-2026-10-25.md",
+        "docs/reconciliation/evidence/native-node-windows-final.txt",
+        "docs/reconciliation/evidence/native-qa-escalated.txt",
+        "docs/reconciliation/evidence/native-qa-next.txt",
+        "docs/reconciliation/evidence/native-server-windows-after-audits.txt",
+        "docs/reconciliation/evidence/native-server-windows-next.txt",
+        "docs/reconciliation/evidence/native-v36-integration-audits.txt",
+        "docs/reconciliation/evidence/offline-checkout-after-stock-fix.txt",
+        "docs/reconciliation/evidence/patched-dependencies-audit.txt",
+        "docs/reconciliation/evidence/patched-dependencies-build.txt",
+        "docs/reconciliation/evidence/patched-dependencies-client.txt",
+        "docs/reconciliation/evidence/patched-dependencies-typescript.txt",
+        "docs/reconciliation/evidence/pnpm-audit-final.json",
+        "docs/reconciliation/evidence/readiness-increment.md",
+        "docs/reconciliation/evidence/server-audits-next.txt",
+        "docs/reconciliation/evidence/server-build.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-auth-browser.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-build.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-focused-migration.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-full-client-initial-failure.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-full-client.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-offline-browser.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-release-browser.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-schema-gate.txt",
+        "docs/reconciliation/evidence/staff-governance-v36-typescript.txt",
+        "docs/reconciliation/evidence/stage21-e607fc2-auth-browser.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-baseline.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-browser.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-build.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-client.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-dependencies.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-native.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-offline-browser.log",
+        "docs/reconciliation/evidence/stage21-e607fc2-summary.json",
+        "docs/reconciliation/evidence/stage21-e607fc2-types.log",
+        "docs/reconciliation/evidence/typecheck.txt",
+        "docs/reconciliation/evidence/unified-browser-offline.txt",
+        "docs/reconciliation/evidence/unified-browser-release.txt",
+        "docs/reconciliation/evidence/unified-full-vitest-stable.txt",
+        "docs/reconciliation/evidence/unified-native-qa-windows.txt",
+        "docs/reconciliation/evidence/unified-native-tests-escalated.txt",
+        "docs/reconciliation/evidence/unified-pnpm-audit-after-update.json",
+        "docs/reconciliation/evidence/unified-pnpm-audit-final.json",
+        "docs/reconciliation/evidence/unified-pnpm-audit.json",
+        "docs/reconciliation/evidence/verification-final-summary.md",
+        "docs/reconciliation/evidence/vitest-full-after-merge.txt",
+        "docs/reconciliation/evidence/vitest-full-contended.xml",
+        "docs/reconciliation/file_sha256_comparison.json",
+        "docs/reconciliation/inventory_summary.json",
+        "docs/reconciliation/master-clean-merge.json",
+        "docs/reconciliation/three_way_trial.json",
+        "docs/release/ADMIN_AUTH_RECOVERY_CONTINUATION_2026-10-12.md",
+        "docs/release/ASSISTANT_HISTORY_AUDIT_CONTINUATION_2026-10-11.md",
+        "docs/release/ASSISTANT_SNAPSHOT_SAFETY_CONTINUATION_2026-10-11.md",
+        "docs/release/BACKUP_RESOURCE_LIMIT_CONTINUATION_2026-10-11.md",
+        "docs/release/CASH_PARTIAL_RETURN_CONTINUATION_2026-10-11.md",
+        "docs/release/CASH_RETURN_LEDGER_AUDIT_CONTINUATION_2026-10-11.md",
+        "docs/release/CASH_RETURN_REVIEW_CONTINUATION_2026-10-11.md",
+        "docs/release/CASH_RETURN_STOCK_LINKS_CONTINUATION_2026-10-11.md",
+        "docs/release/COMPANY_CLEAR_CONTINUATION_2026-10-11.md",
+        "docs/release/CONTINUATION_2026-10-10.md",
+        "docs/release/CROSS_TAB_LOCK_CONTINUATION_2026-10-11.md",
+        "docs/release/DEVELOPER_ENGINEERING_CLOSURE_CONTINUATION_2026-10-17.md",
+        "docs/release/ENCRYPTED_ENVELOPE_PREFLIGHT_CONTINUATION_2026-10-11.md",
+        "docs/release/EXPANDED_RETAIL_WRITE_LOCK_CONTINUATION_2026-10-11.md",
+        "docs/release/FIN002_CURRENCY_EVIDENCE_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_PERIOD_CONSERVATION_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_POSTING_DATE_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_PREPAID_LIABILITY_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_SUPPLIER_CASH_REPORT_CONTINUATION_2026-10-12.md",
+        "docs/release/FIN002_WALLET_CHRONOLOGY_CONTINUATION_2026-10-12.md",
+        "docs/release/FINANCE_CONTINUATION_2026-10-10.md",
+        "docs/release/JOURNAL_CAS_CONTINUATION_2026-10-11.md",
+        "docs/release/PARTIAL_FIFO_RESTORATION_CONTINUATION_2026-10-11.md",
+        "docs/release/PARTIAL_RETURN_COMPONENTS_CONTINUATION_2026-10-11.md",
+        "docs/release/PAYABLES_CONTINUATION_2026-10-10.md",
+        "docs/release/RECEIVABLE_AUDIT_CONTINUATION_2026-10-11.md",
+        "docs/release/RECEIVABLE_CURRENCY_CONTINUATION_2026-10-11.md",
+        "docs/release/REPAYMENT_ALLOCATION_CONTINUATION_2026-10-10.md",
+        "docs/release/REPAYMENT_UI_CONTINUATION_2026-10-11.md",
+        "docs/release/RESTORE_JOURNAL_BYTE_BUDGET_CONTINUATION_2026-10-11.md",
+        "docs/release/RESTORE_JOURNAL_CONTINUATION_2026-10-11.md",
+        "docs/release/RETAIL_WRITE_CROSS_TAB_CONTINUATION_2026-10-11.md",
+        "docs/release/RETURN_SAFETY_CONTINUATION_2026-10-10.md",
+        "docs/release/RUN10_CREDIT_PREPAID_WINDOWS_QA_MATRIX_2026-10-16.md",
+        "docs/release/RUN10_RECEIVABLE_PREPAID_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN11_COMPANY_REFUND_POLICY_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN11_COMPANY_REFUND_POLICY_QA_MATRIX_2026-10-16.md",
+        "docs/release/RUN12_SUPPLIER_TAX_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN12_SUPPLIER_TAX_WINDOWS_QA_MATRIX_2026-10-16.md",
+        "docs/release/RUN13_DEVELOPMENT_CHECKPOINT_2026-10-16.md",
+        "docs/release/RUN13_MULTISTORE_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md",
+        "docs/release/RUN14_SECURE_SYNC_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md",
+        "docs/release/RUN15_PAYMENT_SANDBOX_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md",
+        "docs/release/RUN16_PUBLIC_COMMERCE_FULL_DEVELOPMENT_INCREMENT_2026-10-16.md",
+        "docs/release/RUN17_ASSISTANT_ANALYTICS_FULL_DEVELOPMENT_INCREMENT_2026-10-17.md",
+        "docs/release/RUN18_HARDENING_FULL_DEVELOPMENT_INCREMENT_2026-10-17.md",
+        "docs/release/RUN19_DEVICE_UAT_MATRIX_2026-10-17.md",
+        "docs/release/RUN19_REAL_DEVICE_UAT_FULL_DEVELOPMENT_INCREMENT_2026-10-17.md",
+        "docs/release/RUN20_FINAL_SOURCE_DEVELOPMENT_AND_NO_GO_2026-10-17.md",
+        "docs/release/RUN20_FULL_TRACEABILITY_AND_BLOCKERS_2026-10-17.md",
+        "docs/release/RUN20_STAGING_OPERATIONS_ROLLBACK_2026-10-17.md",
+        "docs/release/RUN2_FULL_IMPLEMENTATION_INCREMENT_2026-10-15.md",
+        "docs/release/RUN2_IDENTITY_OFFLINE_OWNERSHIP_2026-10-14.md",
+        "docs/release/RUN2_JWT_EXPIRY_CONTINUATION_2026-10-15.md",
+        "docs/release/RUN2_TRANSACTIONAL_RECOVERY_EVIDENCE_REVIEW_2026-10-15.md",
+        "docs/release/RUN3_CLOUD_MEMBERSHIP_FULL_INCREMENT_2026-10-15.md",
+        "docs/release/RUN4_AUTH_SESSION_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN5_TENANT_AUTH_AND_WRITE_BLOCK_DIAGNOSIS_2026-10-16.md",
+        "docs/release/RUN6_STAFF_AUTH_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN7_CROSS_DB_ATOMICITY_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN8_MIGRATION_ENCRYPTED_BACKUP_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN8_WINDOWS_BROWSER_RECOVERY_DRILL_2026-10-16.md",
+        "docs/release/RUN9_INVENTORY_COSTING_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN9_INVENTORY_FINANCIAL_QA_MATRIX_2026-10-16.md",
+        "docs/release/SECURITY_CONTINUATION_2026-10-10.md",
+        "docs/release/STAGE11_COMPANY_ISOLATION_INCREMENT10.md",
+        "docs/release/STAGE21_BASELINE_CI_RECOVERY_2026-10-17.md",
+        "docs/release/STAGE21_ORIGINAL_TRACEABILITY_SOURCE_REVIEW_2026-10-17.md",
+        "docs/release/STAGE2_12_CONTINUATION_PLAN_2026-10-23.md",
+        "docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md",
+        "docs/release/STAGE9_ROUND1_ACCOUNT_NAVIGATION_2026-10-14.md",
+        "docs/release/STAGE9_ROUND1_LOCKED_ACCOUNT_REVIEW_2026-10-14.md",
+        "docs/release/STAGE9_ROUND1_REFRESH_2026-10-14.md",
+        "docs/release/STORE_AUTH_INTEGRITY_CONTINUATION_2026-10-11.md",
+        "docs/release/V19_STAGES_21_TO_32_DEVELOPMENT_COMPLETION_ROADMAP_2026-10-17.md",
+        "docs/release/source/TALLYBOOK_V19_DEVELOPMENT_AGENT_MASTER_PROMPT.md",
+        "docs/release/source/TALLYBOOK_V19_FULL_RELEASE_AUDIT_2026-10-10.md",
+        "docs/stage1-completion-report.md",
+        "docs/stage1-mobile-money-plan.md",
+        "docs/stage1-validation-notes.md",
+        "docs/stage10-backup-export-completion-report.md",
+        "docs/stage10-public-verification-notes.md",
+        "docs/stage10-visual-validation-notes.md",
+        "docs/stage11-multiple-local-companies-completion-report.md",
+        "docs/stage11-multiple-local-companies-plan.md",
+        "docs/stage11-public-verification-notes.md",
+        "docs/stage11-sign-in-multiple-companies-discussion.md",
+        "docs/stage11-visual-validation-notes.md",
+        "docs/stage2-completion-report.md",
+        "docs/stage2-customer-debt-plan.md",
+        "docs/stage2-validation-notes.md",
+        "docs/stage3-completion-report.md",
+        "docs/stage3-receipts-sharing-plan.md",
+        "docs/stage3-validation-notes.md",
+        "docs/stage4-completion-report.md",
+        "docs/stage4-offline-confidence-plan.md",
+        "docs/stage5-completion-report.md",
+        "docs/stage5-daily-business-summary-plan.md",
+        "docs/stage6-completion-report.md",
+        "docs/stage6-end-of-day-summary-plan.md",
+        "docs/stage6-followup-and-stage7-suppliers-plan.md",
+        "docs/stage6-followup-stage7-completion-report.md",
+        "docs/stage6-followup-stage7-preimplementation-confirmation.md",
+        "docs/stage7-validation-notes.md",
+        "docs/stage8-expenses-business-health-completion-report.md",
+        "docs/stage8-expenses-business-health-plan.md",
+        "docs/stage9-sharing-completion-report.md",
+        "docs/stage9-sharing-preimplementation-confirmation.md",
+        "docs/stage9-visual-validation-notes.md",
+        "docs/tiny-nlu-v2-stage1-plan.md",
+        "docs/ui-ux-implementation-plan.md",
+        "docs/universal-assistant-stage-plan.md",
+        "ideas.md",
+        "new_assistant_implementation.md",
+        "todo.md"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/claude/happy-ptolemy-u4qo44",
+      "sha": "b1abed8e2634411209d300834045c0f9b5b77e01",
+      "mergeBase": "b538b59c25a8cdc2d51ce9c068628287180f3521",
+      "ahead": 1,
+      "behind": 193,
+      "patches": [
+        {
+          "sha": "b1abed8e2634411209d300834045c0f9b5b77e01",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "docs/telegram-bot.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/telegram-daily-summary.test.mjs",
+        "supabase/functions/tallybook-telegram/README.md",
+        "supabase/functions/tallybook-telegram/index.ts",
+        "supabase/migrations/20261113120000_telegram_daily_summary.sql",
+        "supabase/rollback/20261113120000_telegram_daily_summary_down.sql",
+        "supabase/rollback/README.md"
+      ],
+      "matchingPaths": [
+        "qa/telegram-daily-summary.test.mjs",
+        "supabase/functions/tallybook-telegram/README.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/completion/cloud-foundation",
+      "sha": "779a934fc0c4739db940e71bf2bec5f8c189154c",
+      "mergeBase": "8390c59acb40dbd8e497848674a2558bed3a5fa8",
+      "ahead": 2,
+      "behind": 1403,
+      "patches": [
+        {
+          "sha": "9fccdddc6365c8d6647720bc7234007eea645b16",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "779a934fc0c4739db940e71bf2bec5f8c189154c",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".env.example",
+        ".github/workflows/release-validation.yml",
+        ".gitignore",
+        "client/src/App.tsx",
+        "client/src/auth/AuthGate.tsx",
+        "client/src/auth/auth.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/businessIdentity.test.ts",
+        "client/src/cloud/businessIdentity.ts",
+        "client/src/components/AppShell.test.tsx",
+        "client/src/components/AppShell.tsx",
+        "client/src/pages/SyncStatusPage.tsx",
+        "docs/CLOUD_COMPLETION_STATUS.md",
+        "package.json",
+        "playwright.auth.config.mjs",
+        "pnpm-lock.yaml",
+        "qa/browser-auth.spec.mjs",
+        "qa/cloud-membership.test.mjs",
+        "qa/milestone1-supabase-preservation.test.mjs",
+        "supabase/README.md",
+        "supabase/migrations/20261013123347_business_identity.sql",
+        "supabase/migrations/20261013123702_restrict_rls_helper.sql"
+      ],
+      "matchingPaths": [
+        "docs/CLOUD_COMPLETION_STATUS.md",
+        "supabase/migrations/20261013123347_business_identity.sql",
+        "supabase/migrations/20261013123702_restrict_rls_helper.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/development/v19-friends-web-test",
+      "sha": "9aefbdc0e88aece957d1c338d59a2ac862f10255",
+      "mergeBase": "9aefbdc0e88aece957d1c338d59a2ac862f10255",
+      "ahead": 0,
+      "behind": 554,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/development/v19-owner-completion-audit",
+      "sha": "3896b5797693e1e3d074bd8f6f0cabe628092b08",
+      "mergeBase": "a55686f6689ac2a2898ee7ad89ccf9c6f6317361",
+      "ahead": 6,
+      "behind": 280,
+      "patches": [
+        {
+          "sha": "d2680004b8310474639992fa69de92ff034f0645",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a5aa13d882411447b1603720263fe2f7ce647f06",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "806f70b43762c0c90b0486caefac386d172d6312",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9c1527fc420868bde08b645f209384911844f84c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bf7abee2ace4b28b79278efe37bc82858c2c686a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3896b5797693e1e3d074bd8f6f0cabe628092b08",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/release-validation.yml",
+        "client/src/App.tsx",
+        "client/src/cloud/SharedShopCatalogue.tsx",
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/cloud/shopClient.ts",
+        "client/src/components/AppShell.tsx",
+        "client/src/components/CashReturnReviewDialog.tsx",
+        "client/src/features/assistant/assistant.ts",
+        "client/src/features/assistant/phase1Services.test.ts",
+        "client/src/features/assistant/reversals.ts",
+        "client/src/features/assistant/types.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/commerce/Run16OrderOperations.tsx",
+        "client/src/features/commerce/commerce.ts",
+        "client/src/features/commerce/run16Orders.ts",
+        "client/src/features/insights/AdvisoryScheduleRunner.tsx",
+        "client/src/features/insights/ScheduledAdvisories.tsx",
+        "client/src/features/insights/advisorySchedule.test.ts",
+        "client/src/features/insights/advisorySchedule.ts",
+        "client/src/features/insights/advisoryScheduleRules.ts",
+        "client/src/features/insights/localInsights.mjs",
+        "client/src/features/purchases/purchases.ts",
+        "client/src/features/reports/costReconciliation.ts",
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/sales/cashReturnReview.d.mts",
+        "client/src/features/sales/cashReturnReview.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/stores/StoreFinancialReport.tsx",
+        "client/src/features/stores/stage9ReleaseScope.ts",
+        "client/src/features/stores/storeFinancialReport.ts",
+        "client/src/features/stores/storeOperations.integration.test.ts",
+        "client/src/features/stores/storeStockLedger.ts",
+        "client/src/features/sync/centralOperationalEvent.ts",
+        "client/src/pages/CommercePage.tsx",
+        "client/src/pages/InsightsPage.tsx",
+        "client/src/pages/PublicCataloguePage.tsx",
+        "client/src/pages/SalesPage.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/StoresPage.tsx",
+        "docs/release/RC_QA.md",
+        "docs/release/owner-review-2026-11-09/BRANCHES.md",
+        "docs/release/owner-review-2026-11-09/DEVELOPMENT.md",
+        "docs/release/owner-review-2026-11-09/REVIEW.md",
+        "docs/release/owner-review-2026-11-09/TRACEABILITY.md",
+        "docs/release/owner-review-2026-11-09/branches.json",
+        "docs/release/owner-review-2026-11-09/evidence-sha256.json",
+        "docs/release/owner-review-2026-11-09/evidence/auth.txt",
+        "docs/release/owner-review-2026-11-09/evidence/browser.txt",
+        "docs/release/owner-review-2026-11-09/evidence/build-final.txt",
+        "docs/release/owner-review-2026-11-09/evidence/client-final.txt",
+        "docs/release/owner-review-2026-11-09/evidence/client.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/batch-guards.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/build-node24.22.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/chromium-auth.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/chromium-functional.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/chromium-offline-csp.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/chromium-reference.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/chromium-visual.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/client-node24.22.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-browser.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-build.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-client.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-functional.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-native.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-offline.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-sql.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-types.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/commerce-visual.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/dependencies.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/manifest.json",
+        "docs/release/owner-review-2026-11-09/evidence/continued/native-node24.22.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/pinned-build.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/pinned-install.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/pinned-offline.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/pinned-types.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/types-node24.22.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/verified-build.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/verified-client.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/verified-native.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/verified-types.txt",
+        "docs/release/owner-review-2026-11-09/evidence/continued/webkit-complete.txt",
+        "docs/release/owner-review-2026-11-09/evidence/dependencies.txt",
+        "docs/release/owner-review-2026-11-09/evidence/insights-regression.txt",
+        "docs/release/owner-review-2026-11-09/evidence/install.txt",
+        "docs/release/owner-review-2026-11-09/evidence/native-final.txt",
+        "docs/release/owner-review-2026-11-09/evidence/native.txt",
+        "docs/release/owner-review-2026-11-09/evidence/offline-final.txt",
+        "docs/release/owner-review-2026-11-09/evidence/offline.txt",
+        "docs/release/owner-review-2026-11-09/evidence/reference-ui.txt",
+        "docs/release/owner-review-2026-11-09/evidence/types-final.txt",
+        "docs/release/owner-review-2026-11-09/evidence/visual.txt",
+        "docs/release/owner-review-2026-11-09/evidence/webkit-install.txt",
+        "docs/release/owner-review-2026-11-09/evidence/webkit.txt",
+        "docs/release/owner-review-2026-11-09/migrations.json",
+        "docs/release/owner-review-2026-11-09/verification.json",
+        "docs/security/OFFLINE_DATA_THREAT_MODEL.md",
+        "playwright.commerce.config.mjs",
+        "playwright.offline.config.mjs",
+        "playwright.webkit.config.mjs",
+        "qa/browser-auth.spec.mjs",
+        "qa/browser-offline.spec.mjs",
+        "qa/browser-release.spec.mjs",
+        "qa/helpers/public-commerce-db.mjs",
+        "qa/premium-home-visual.spec.mjs",
+        "qa/public-commerce-browser.spec.mjs",
+        "qa/public-commerce.test.mjs",
+        "qa/security-headers.test.mjs",
+        "qa/stage10-commerce-check.cjs",
+        "qa/stage11-local-insights.test.mjs",
+        "server/index.ts",
+        "supabase/migrations/20261109123828_shop_public_commerce_reservations.sql",
+        "vercel.json"
+      ],
+      "matchingPaths": [
+        "client/src/features/sales/cashReturnReview.d.mts",
+        "qa/stage11-local-insights.test.mjs"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/development/v19-unified-reconciliation",
+      "sha": "669f1cf223385931de67f31d3c002d60d2cfa16d",
+      "mergeBase": "ea165a5ddfbcf6dcda6af0684acb3c5c3f271516",
+      "ahead": 3,
+      "behind": 487,
+      "patches": [
+        {
+          "sha": "9b3bd64dfd22acfd033dbbe210a557fbb947ef90",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b5bca94979f3faa43c056becbb01ddc8bf0a0443",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "669f1cf223385931de67f31d3c002d60d2cfa16d",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".env.example",
+        "client/src/App.tsx",
+        "client/src/auth/AuthGate.test.tsx",
+        "client/src/auth/AuthGate.tsx",
+        "client/src/auth/WorkspaceOnboarding.tsx",
+        "client/src/auth/auth.test.tsx",
+        "client/src/auth/useRun4CloudSession.ts",
+        "client/src/auth/workspaceBoundary.test.ts",
+        "client/src/auth/workspaceBoundary.ts",
+        "client/src/auth/workspaceCheckpointJournal.ts",
+        "client/src/auth/workspaceDatabaseBoundary.test.ts",
+        "client/src/auth/workspaceDatabaseBoundary.ts",
+        "client/src/auth/workspaceKeyVault.test.ts",
+        "client/src/auth/workspaceKeyVault.ts",
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/staff/staff.ts",
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "docs/central/2026-10-30_DEVELOPMENT_HANDOVER.md",
+        "docs/mission-go/PACKAGE_1_CHECKPOINT_2026-10-30.md",
+        "docs/mission-go/PACKAGE_1_KEY_VAULT_2026-10-31.md",
+        "docs/mission-go/evidence/key-vault/checkpoint-journal-build.log",
+        "docs/mission-go/evidence/key-vault/checkpoint-journal-tests.log",
+        "docs/mission-go/evidence/key-vault/checkpoint-journal-types.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-build.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-final-tests.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-native.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-recheck.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-retry.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-tests.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-types-final.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-types-recheck.log",
+        "docs/mission-go/evidence/key-vault/mission-go-key-vault-types.log",
+        "docs/mission-go/evidence/package-1-checkpoint/mission-go-auth-boundary.log",
+        "docs/mission-go/evidence/package-1-checkpoint/mission-go-auth-build.log",
+        "docs/mission-go/evidence/package-1-checkpoint/mission-go-auth-native.log",
+        "docs/mission-go/evidence/package-1-checkpoint/mission-go-auth-types.log",
+        "docs/mission-go/evidence/package-1-checkpoint/mission-go-staff-compatibility.log",
+        "qa/milestone1-supabase-preservation.test.mjs",
+        "qa/stage9-auth-shell-contract.test.mjs"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/docs/production-status-20261115",
+      "sha": "a462cfc024becec82ae350dc6f1994aaff72c9c0",
+      "mergeBase": "78a0b6f5a04eeb82d66e1b8e5b22e50b7e6dc3c4",
+      "ahead": 1,
+      "behind": 4,
+      "patches": [
+        {
+          "sha": "a462cfc024becec82ae350dc6f1994aaff72c9c0",
+          "patchEquivalent": true
+        }
+      ],
+      "changedPaths": [
+        "README.md",
+        "docs/release/CURRENT_STATUS.md",
+        "docs/release/PRODUCTION_STATUS_2026-11-15.md",
+        "supabase/MIGRATION_HISTORY.md"
+      ],
+      "matchingPaths": [
+        "README.md",
+        "docs/release/CURRENT_STATUS.md",
+        "docs/release/PRODUCTION_STATUS_2026-11-15.md",
+        "supabase/MIGRATION_HISTORY.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/core-shop-operational-upgrades-20261114",
+      "sha": "12f86f01698e892d966dfebab7b384abce5672d8",
+      "mergeBase": "cec7dbac2339b6e832dce00cd93b0b6068f2008a",
+      "ahead": 9,
+      "behind": 149,
+      "patches": [
+        {
+          "sha": "9f43e56e6061992c8b30860e39d8b8d7078fe244",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0f306ba7d94bc28525a54501e06777e785c6dab6",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0135758d20f9fa8a45a988b0f7fbb74747d17c98",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "928a63330b9493c8bd003e4014c509ab27c09205",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "690b32d0cc892171d42333905f4925aa9fc40817",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4a3b5254c6752c75be5a575c3e5e4712f194efe4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "973cc55abd457d81e901de98aa0f2c7ae58858d5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "61d76f5287c59a12df66cdc5d9e29f0f53fb445e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "12f86f01698e892d966dfebab7b384abce5672d8",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/SharedShopOrders.test.tsx",
+        "client/src/cloud/SharedShopOrders.tsx",
+        "client/src/cloud/SharedShopOwnerDashboard.test.tsx",
+        "client/src/cloud/SharedShopOwnerDashboard.tsx",
+        "client/src/cloud/SharedShopPurchasingPanel.test.tsx",
+        "client/src/cloud/SharedShopPurchasingPanel.tsx",
+        "client/src/cloud/SharedShopTransfers.test.tsx",
+        "client/src/cloud/SharedShopTransfers.tsx",
+        "client/src/cloud/shopOperationalReports.test.ts",
+        "client/src/cloud/shopOperationalReports.ts",
+        "client/src/features/business/currencies.ts",
+        "client/src/pages/SharedShopOnboarding.test.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/SharedShopProducts.test.tsx",
+        "client/src/pages/SharedShopQueueSafety.test.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "client/src/pages/sharedShop.css",
+        "docs/ui-ux/SHOP_CORE_UPGRADE_2026-11-14.md"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopOrders.test.tsx",
+        "client/src/cloud/SharedShopOwnerDashboard.test.tsx",
+        "client/src/cloud/SharedShopOwnerDashboard.tsx",
+        "client/src/cloud/SharedShopPurchasingPanel.test.tsx",
+        "client/src/cloud/SharedShopPurchasingPanel.tsx",
+        "client/src/cloud/SharedShopTransfers.test.tsx",
+        "client/src/cloud/SharedShopTransfers.tsx",
+        "client/src/cloud/shopOperationalReports.test.ts",
+        "client/src/cloud/shopOperationalReports.ts",
+        "client/src/features/business/currencies.ts",
+        "client/src/pages/SharedShopOnboarding.test.tsx",
+        "client/src/pages/SharedShopProducts.test.tsx",
+        "client/src/pages/SharedShopQueueSafety.test.tsx",
+        "client/src/pages/sharedShop.css",
+        "docs/ui-ux/SHOP_CORE_UPGRADE_2026-11-14.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/phase-b-persisted-business-types-20261115",
+      "sha": "ecd7eaebd138f29e4d029f6bcf6e714737a5e26e",
+      "mergeBase": "f27751e144eecc234881b550d5ab221ab47ebf87",
+      "ahead": 8,
+      "behind": 146,
+      "patches": [
+        {
+          "sha": "f64a480fd3bf2505501308128aa3bb0f9851a1f0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e6f5c5bff1edbef9d6f9844d80af37c7297a254d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "81b7eea35abcbe4cc60a4039713d5523419da297",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b37429d72604815b1ebe55559526680504c30c5f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "99621e71148ab133ebeb777afdce59af369a276f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ab2b73a0b3809b2398b8ca67700d933d604455e2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f605ece6177f23ee15182ae2fe7fb93834b8cb04",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ecd7eaebd138f29e4d029f6bcf6e714737a5e26e",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/businessSetup.css",
+        "client/src/cloud/cloudBusinessType.test.ts",
+        "client/src/cloud/cloudBusinessType.ts",
+        "client/src/cloud/cloudBusinessTypes.test.ts",
+        "client/src/cloud/cloudMembership.ts",
+        "client/src/cloud/cloudMembershipBoundary.d.mts",
+        "client/src/cloud/cloudMembershipBoundary.mjs",
+        "client/src/cloud/cloudMembershipBoundary.test.mjs",
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/business/businessTypes.ts",
+        "docs/ui-ux/PHASE_B_BUSINESS_TYPE_INCREMENT_2026-11-15.md",
+        "qa/browser-release.spec.mjs",
+        "qa/cloud-business-type-policy.test.mjs",
+        "supabase/migrations/20261115012500_cloud_business_type.sql",
+        "supabase/rollback/20261115012500_cloud_business_type_down.sql"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/businessSetup.css",
+        "client/src/cloud/cloudBusinessType.test.ts",
+        "client/src/cloud/cloudBusinessType.ts",
+        "client/src/cloud/cloudBusinessTypes.test.ts",
+        "client/src/cloud/cloudMembership.ts",
+        "client/src/cloud/cloudMembershipBoundary.d.mts",
+        "client/src/cloud/cloudMembershipBoundary.mjs",
+        "client/src/cloud/cloudMembershipBoundary.test.mjs",
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/business/businessTypes.ts",
+        "docs/ui-ux/PHASE_B_BUSINESS_TYPE_INCREMENT_2026-11-15.md",
+        "qa/browser-release.spec.mjs",
+        "qa/cloud-business-type-policy.test.mjs",
+        "supabase/migrations/20261115012500_cloud_business_type.sql",
+        "supabase/rollback/20261115012500_cloud_business_type_down.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/phase-b-product-variants-20261115",
+      "sha": "ee63f588cfcca2f2ebed6ba6b621ec09d1e941e5",
+      "mergeBase": "5d38563fd94abcb36d50141b19f08f5c3622fa76",
+      "ahead": 7,
+      "behind": 145,
+      "patches": [
+        {
+          "sha": "89ed661416db58ece69a2711b70a0de9014b86d3",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ed700dc5c68759ba271761c8e88fffb4a6cee6dc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "81a16f37d01c9cb6b832cd465e1b148ef65b3b79",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f936c19396ac6b49a9f70a7408df7278245ca460",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f494b5987d670c2e0351fd9bb9765cbdb24c7e9e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c650f3915034325de2148ca1e7fe0dd26706307b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ee63f588cfcca2f2ebed6ba6b621ec09d1e941e5",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/SharedShopVariantQuickPicker.test.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.tsx",
+        "client/src/cloud/SharedShopVariants.test.tsx",
+        "client/src/cloud/SharedShopVariants.tsx",
+        "client/src/cloud/shopClient.ts",
+        "client/src/cloud/shopVariants.test.ts",
+        "client/src/cloud/shopVariants.ts",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/PHASE_B_SKU_VARIANTS_2026-11-15.md",
+        "qa/shop-variants-policy.test.mjs",
+        "supabase/migrations/20261115033500_shop_product_variants.sql",
+        "supabase/rollback/20261115033500_shop_product_variants_down.sql"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopVariantQuickPicker.test.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.tsx",
+        "client/src/cloud/SharedShopVariants.test.tsx",
+        "client/src/cloud/SharedShopVariants.tsx",
+        "client/src/cloud/shopVariants.test.ts",
+        "client/src/cloud/shopVariants.ts",
+        "client/src/pages/SharedShopPage.tsx",
+        "docs/ui-ux/PHASE_B_SKU_VARIANTS_2026-11-15.md",
+        "qa/shop-variants-policy.test.mjs",
+        "supabase/migrations/20261115033500_shop_product_variants.sql",
+        "supabase/rollback/20261115033500_shop_product_variants_down.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/phase-b-secure-onboarding-20261114",
+      "sha": "a7f9d44d0a9daad4689400dada69151d0e7acd94",
+      "mergeBase": "59c8b8b98036edade28877549c03875c3bda11f4",
+      "ahead": 5,
+      "behind": 147,
+      "patches": [
+        {
+          "sha": "6ba8c3b94418b37e8a3cded2d64031d16ee0510c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "feefd500576a5a9a9580ed45c98d2c78eb2f20e7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5bc67efb5b3034384eecf0efa8109c631a057fd3",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5ef53f84a74f3623c7fd35cd7c6ca75301d00613",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a7f9d44d0a9daad4689400dada69151d0e7acd94",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/Run3MembershipPanel.test.tsx",
+        "client/src/cloud/Run3MembershipPanel.tsx",
+        "client/src/cloud/businessSetup.css",
+        "docs/ui-ux/PHASE_B_SECURE_ONBOARDING_2026-11-14.md",
+        "qa/shop-public-entry.spec.mjs"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/Run3MembershipPanel.test.tsx",
+        "client/src/cloud/Run3MembershipPanel.tsx",
+        "docs/ui-ux/PHASE_B_SECURE_ONBOARDING_2026-11-14.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/photo-stage11-atomic-batch-stocktake-20261115",
+      "sha": "71f89fc225dcb96be97b51f198c213eb3f23f40d",
+      "mergeBase": "5d38563fd94abcb36d50141b19f08f5c3622fa76",
+      "ahead": 16,
+      "behind": 145,
+      "patches": [
+        {
+          "sha": "c0354232b5b566f14b15d4cd1f4ed2bde1bbed31",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5b0a31d32d13c8e815176dfe11e44d2d7c9cf3bc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ff28b8057469cb9f874a3d852178ad98375c7870",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8e83a067e4b2bee826103ad4f920744a0e3c24b5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e248f9b60f48d991a90dc9f66962c2e5785c93f3",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3e2645485d3039b4fa396a1a359b61dcb9849a6f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bf22079ff586f9673b883ca7db9db9f57f9b937a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a09f84d6829ae7dd23f485ddb94714a06b3de6f5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b1551a869d169a7bd331cde5823feb17d0bd8a4c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3b9040f3e7e9f326c82a18147d80009968d06181",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3c93a516a39085a92c09b9ccab50cfb51ac167a8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "374c56ccbcb28b6d63d8cdca75489955587481a7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b22fc7e3fe363a36d3ddce0ab53ed628f374063e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "31ac71c9f731d05f60c18cb27c93098ab07ac055",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "59f2ffb19861ef13f6b390b92c917085a7608eb0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "71f89fc225dcb96be97b51f198c213eb3f23f40d",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/SharedShopBatchCountPanel.test.tsx",
+        "client/src/cloud/SharedShopBatchCountPanel.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/cloud/shopBatchStocktake.test.ts",
+        "client/src/cloud/shopBatchStocktake.ts",
+        "client/src/cloud/shopClient.ts",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/PHOTO_STAGE11_BATCH_STOCKTAKE_2026-11-15.md",
+        "qa/shop-batch-stocktake-contract.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "supabase/migrations/20261115070000_shop_stocktake_batch_sessions.sql",
+        "supabase/rollback/20261115070000_shop_stocktake_batch_sessions_down.sql"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopBatchCountPanel.test.tsx",
+        "client/src/cloud/SharedShopBatchCountPanel.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/cloud/shopBatchStocktake.test.ts",
+        "client/src/cloud/shopBatchStocktake.ts",
+        "docs/ui-ux/PHOTO_STAGE11_BATCH_STOCKTAKE_2026-11-15.md",
+        "qa/shop-batch-stocktake-contract.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "supabase/migrations/20261115070000_shop_stocktake_batch_sessions.sql",
+        "supabase/rollback/20261115070000_shop_stocktake_batch_sessions_down.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/photo-stage7-apple-oauth-gated-20261115",
+      "sha": "abab98a822b1db798f1fc029ac9a743856855400",
+      "mergeBase": "5d38563fd94abcb36d50141b19f08f5c3622fa76",
+      "ahead": 3,
+      "behind": 145,
+      "patches": [
+        {
+          "sha": "6f64b8c4a2b997ebf1a01d50508c91b9334b6228",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1739aae0448da3ed74276f57bcc8d23382bc05a0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "abab98a822b1db798f1fc029ac9a743856855400",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md"
+      ],
+      "matchingPaths": [
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/photo13-public-order-requests-20261115",
+      "sha": "e8cd7eaee96961f1fccb19a15a3ccfb4b5c4f4c1",
+      "mergeBase": "5d38563fd94abcb36d50141b19f08f5c3622fa76",
+      "ahead": 33,
+      "behind": 145,
+      "patches": [
+        {
+          "sha": "a5e9211e0989086e2159802e82e670baca1c00db",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f6809745c26b74210bee1d7425eb9dbdb99058c2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "16c4f1312881f2213d2c691f397e0f554ad034e4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b87ad6ed11119462cda2b6ea9a08c17dd09460ec",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f0d02d751f9d1e6b05cf289a4dedf1f8afd07595",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8c41610d12354bf94452eb3a664f0dd6db58dc45",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0090e936343a38a65e05bf921f4c891b8fc6db1d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "304208e4ad0ea6c7ddb12e821c9897803f09ddc9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d89a3916a622d07e2871fe39c114cc3f3d6c8fb1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "75c05ee8e309996bfb08477b405e8c7cf10107d8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "db57ac670e0672ea1c5d99ee3076c06eadc0561a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "32534a308d53c2b81a2b3e38ca74c85f02819027",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "eef07945b48072143afcebcda73574a6c98c451a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "914ca7a717493e10af1d6774ac525823667a03ef",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "47f198b50008e711c5481292ae16bda92be38e50",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5ad14d0aee6b66f5d190a0938ad3850807474748",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b7b00f80de3a84390c0aa69cb7c20a2f44598437",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "738236aab2ee1696ef36e2845b56c3f607be8d0c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "141663fce0453096c5b306bf1bc385a1a9f2f0a5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6e7c23768a92fb80da742fadc6267b99777484be",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3c3a63ec6b84ede1eb90c8cd0d469dd69ebcca07",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "dc606ce17d9abc5305b15dae78ecda6bb098fce6",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "92bff11e075a860a3698bc0d23a1d41aa7a18027",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d3b79d1a391f2642925a14318b22cecea1fccb9a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9aa8ee310374e3b7b569277b70df767224972e7d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ec3939c1fa5b193dd76459218f1aab118f25bcb9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2d9f2c585d84c323ecaa0ea522bd50588e22632f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "922f207ed9d0e25a2bce23791b9e5edd434b8c4d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "93d0c5f448713f5afbea7fd25de9538035604937",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "333e8c1419897f4cdee4dbb253272b508c8d1ca3",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cb34c789e27cdf152cce7fa5975d48254450f572",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bcc4c35d453e63d1bb217f53eaf40507fab354b4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e8cd7eaee96961f1fccb19a15a3ccfb4b5c4f4c1",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/App.tsx",
+        "client/src/cloud/SharedShopOrders.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.css",
+        "client/src/cloud/SharedShopPublicOrderInbox.test.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.tsx",
+        "client/src/cloud/shopClient.ts",
+        "client/src/cloud/shopPublicOrders.test.ts",
+        "client/src/cloud/shopPublicOrders.ts",
+        "client/src/pages/PublicShopOrderPage.css",
+        "client/src/pages/PublicShopOrderPage.test.tsx",
+        "client/src/pages/PublicShopOrderPage.tsx",
+        "docs/ui-ux/PHOTO13_PUBLIC_ORDER_REQUESTS_2026-11-15.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/shop-public-orders-contract.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopOrders.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.css",
+        "client/src/cloud/SharedShopPublicOrderInbox.tsx",
+        "client/src/cloud/shopPublicOrders.test.ts",
+        "client/src/cloud/shopPublicOrders.ts",
+        "client/src/pages/PublicShopOrderPage.css",
+        "client/src/pages/PublicShopOrderPage.test.tsx",
+        "client/src/pages/PublicShopOrderPage.tsx",
+        "docs/ui-ux/PHOTO13_PUBLIC_ORDER_REQUESTS_2026-11-15.md",
+        "qa/shop-public-orders-contract.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/photo29-integrated-source-20261115",
+      "sha": "093c32ac9718283a4a7826e5905522393eefb2c7",
+      "mergeBase": "5d38563fd94abcb36d50141b19f08f5c3622fa76",
+      "ahead": 7,
+      "behind": 145,
+      "patches": [
+        {
+          "sha": "0124a794f521be104b3e71e8ee91b81269f3e297",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "db02b4505c558ec1c3e3cf537b625f9cf3c59c9f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e2312987ce97fe8ac90d3756ec0db98b6bae1aa2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cf488ad95739359ba3cbbac05176442ba6070e96",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "23bf9ddd23cd15b0c3b0887ae3857362feca71bf",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5e8befc98b9950e3bf154b0963e4d9d7eadceb61",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "093c32ac9718283a4a7826e5905522393eefb2c7",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/App.tsx",
+        "client/src/cloud/SharedShopBatchCountPanel.test.tsx",
+        "client/src/cloud/SharedShopBatchCountPanel.tsx",
+        "client/src/cloud/SharedShopOrders.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.css",
+        "client/src/cloud/SharedShopPublicOrderInbox.test.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.test.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.tsx",
+        "client/src/cloud/SharedShopVariants.test.tsx",
+        "client/src/cloud/SharedShopVariants.tsx",
+        "client/src/cloud/shopBatchStocktake.test.ts",
+        "client/src/cloud/shopBatchStocktake.ts",
+        "client/src/cloud/shopClient.ts",
+        "client/src/cloud/shopPublicOrders.test.ts",
+        "client/src/cloud/shopPublicOrders.ts",
+        "client/src/cloud/shopVariants.test.ts",
+        "client/src/cloud/shopVariants.ts",
+        "client/src/components/TallybookWelcome.css",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/components/TallybookWelcome.tsx",
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "client/src/pages/PublicShopOrderPage.css",
+        "client/src/pages/PublicShopOrderPage.test.tsx",
+        "client/src/pages/PublicShopOrderPage.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/PHASE_B_SKU_VARIANTS_2026-11-15.md",
+        "docs/ui-ux/PHOTO13_PUBLIC_ORDER_REQUESTS_2026-11-15.md",
+        "docs/ui-ux/PHOTO_STAGE11_BATCH_STOCKTAKE_2026-11-15.md",
+        "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/shop-batch-stocktake-contract.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-entry.spec.mjs",
+        "qa/shop-public-orders-contract.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-variants-policy.test.mjs",
+        "supabase/migrations/20261115033500_shop_product_variants.sql",
+        "supabase/migrations/20261115070000_shop_stocktake_batch_sessions.sql",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/rollback/20261115033500_shop_product_variants_down.sql",
+        "supabase/rollback/20261115070000_shop_stocktake_batch_sessions_down.sql",
+        "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopBatchCountPanel.test.tsx",
+        "client/src/cloud/SharedShopBatchCountPanel.tsx",
+        "client/src/cloud/SharedShopOrders.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.css",
+        "client/src/cloud/SharedShopPublicOrderInbox.test.tsx",
+        "client/src/cloud/SharedShopPublicOrderInbox.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.test.tsx",
+        "client/src/cloud/SharedShopVariantQuickPicker.tsx",
+        "client/src/cloud/SharedShopVariants.test.tsx",
+        "client/src/cloud/SharedShopVariants.tsx",
+        "client/src/cloud/shopBatchStocktake.test.ts",
+        "client/src/cloud/shopBatchStocktake.ts",
+        "client/src/cloud/shopClient.ts",
+        "client/src/cloud/shopPublicOrders.test.ts",
+        "client/src/cloud/shopPublicOrders.ts",
+        "client/src/cloud/shopVariants.test.ts",
+        "client/src/cloud/shopVariants.ts",
+        "client/src/components/TallybookWelcome.css",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/components/TallybookWelcome.tsx",
+        "client/src/pages/GoogleSignInPage.test.tsx",
+        "client/src/pages/GoogleSignInPage.tsx",
+        "client/src/pages/PublicShopOrderPage.css",
+        "client/src/pages/PublicShopOrderPage.test.tsx",
+        "client/src/pages/PublicShopOrderPage.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/PHASE_B_SKU_VARIANTS_2026-11-15.md",
+        "docs/ui-ux/PHOTO13_PUBLIC_ORDER_REQUESTS_2026-11-15.md",
+        "docs/ui-ux/PHOTO_STAGE11_BATCH_STOCKTAKE_2026-11-15.md",
+        "docs/ui-ux/PHOTO_STAGE7_APPLE_OAUTH_2026-11-15.md",
+        "qa/shop-batch-stocktake-contract.test.mjs",
+        "qa/shop-batch-stocktake-pglite.test.mjs",
+        "qa/shop-public-entry.spec.mjs",
+        "qa/shop-public-orders-contract.test.mjs",
+        "qa/shop-public-orders-pglite.test.mjs",
+        "qa/shop-variants-policy.test.mjs",
+        "supabase/migrations/20261115033500_shop_product_variants.sql",
+        "supabase/migrations/20261115070000_shop_stocktake_batch_sessions.sql",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/rollback/20261115033500_shop_product_variants_down.sql",
+        "supabase/rollback/20261115070000_shop_stocktake_batch_sessions_down.sql",
+        "supabase/rollback/20261115090000_shop_public_order_requests_down.sql"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/public-marketing-pillars-verified-20261114",
+      "sha": "46c2e8d924278efadf941fd0309ec6d7d025df67",
+      "mergeBase": "59c8b8b98036edade28877549c03875c3bda11f4",
+      "ahead": 3,
+      "behind": 147,
+      "patches": [
+        {
+          "sha": "7c3357a2d4d7f2d1937ca86675865cb559d46361",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "721f9ab65cdfbb023fa24684252150ea4c6ae75b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "46c2e8d924278efadf941fd0309ec6d7d025df67",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/components/TallybookWelcome.css",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/components/TallybookWelcome.tsx",
+        "qa/shop-public-entry.spec.mjs"
+      ],
+      "matchingPaths": [
+        "client/src/components/TallybookWelcome.css",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/components/TallybookWelcome.tsx",
+        "qa/shop-public-entry.spec.mjs"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/remaining-stages-business-joining-catalog-20261114",
+      "sha": "30fb131178dd4a66c48c2411295e790f340fd305",
+      "mergeBase": "59c8b8b98036edade28877549c03875c3bda11f4",
+      "ahead": 11,
+      "behind": 147,
+      "patches": [
+        {
+          "sha": "cc9baa2622333e2b23523e53f47aa227570c2728",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "15541f62ef87c2ec7a975e259f8634b23248e54f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "008f23a7a4c6f3e790e940724def45dc3bb3ab3a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e294aa41ffdabaac121f80725e50770801688b05",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b19f4160c97e4d001843b6b00a6c0ee72a8dbabb",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cb2599769df16436fba612b765ef46b3178e902f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5bd7799f3fd90dca2a659dcea482ae9ac6c4724b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a13a46e536eae24806974e04161a5c818a0c5924",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7bdb04db25b9b5b5685f6a63b6953ff78d67a1bd",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "af882d2a634af9a84a9ac536001227005a269a96",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "30fb131178dd4a66c48c2411295e790f340fd305",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/BusinessTypeEditor.test.tsx",
+        "client/src/cloud/BusinessTypeEditor.tsx",
+        "client/src/cloud/CloudBusinessPanel.test.tsx",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/businessClassification.test.ts",
+        "client/src/cloud/businessClassification.ts",
+        "client/src/cloud/businessSetup.css",
+        "client/src/cloud/joinCodePresentation.test.ts",
+        "client/src/cloud/joinCodePresentation.ts",
+        "client/src/pages/SharedShopJoinCodes.test.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/SharedShopProducts.test.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/REMAINING_STAGE_INCREMENT_2026-11-14.md",
+        "server/tests/business_type_migration.test.mjs",
+        "supabase/migrations/20261114125300_business_type_owner_metadata.sql"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/shop-stocktake-quotes-expenses-reporting-20261114",
+      "sha": "5bd420a8686781f3975be275513f9b152a80d5c5",
+      "mergeBase": "6e3749ba2b296b8c3d7882063e616d5606727c8d",
+      "ahead": 9,
+      "behind": 148,
+      "patches": [
+        {
+          "sha": "19edf41f52753292b4c83d814ca54c77e4045ace",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0fe7ccabb061bc6bffdea814e6f8f1f5e813fbdb",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a07b2c23d00d3fb26a9f858daf645aa98e56b93d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0180d165cb82a994e064d094714100d9aacfe137",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4426a7bb00051e0f5a2b345e23757b7e0e5f9540",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c82ddebb70aea2ba35f30974afff6fd35088d464",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "910168d7835fd8b796bbe4bf43e68b1d62030dd5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "11b930b908e0644afc8b968b1f6df4c662ceb526",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5bd420a8686781f3975be275513f9b152a80d5c5",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/release-validation.yml",
+        "client/src/cloud/SharedShopExpenses.test.tsx",
+        "client/src/cloud/SharedShopExpenses.tsx",
+        "client/src/cloud/SharedShopQuotes.test.tsx",
+        "client/src/cloud/SharedShopQuotes.tsx",
+        "client/src/cloud/SharedShopReports.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.test.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/cloud/shopReconciliationView.test.ts",
+        "client/src/cloud/shopReconciliationView.ts",
+        "client/src/pages/SharedShopReports.test.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/SHOP_INVENTORY_FINANCE_INCREMENT_2026-11-14.md"
+      ],
+      "matchingPaths": [
+        "client/src/cloud/SharedShopExpenses.test.tsx",
+        "client/src/cloud/SharedShopExpenses.tsx",
+        "client/src/cloud/SharedShopQuotes.test.tsx",
+        "client/src/cloud/SharedShopQuotes.tsx",
+        "client/src/cloud/SharedShopReports.tsx",
+        "client/src/cloud/SharedShopStockCountPanel.test.tsx",
+        "client/src/cloud/shopReconciliationView.test.ts",
+        "client/src/cloud/shopReconciliationView.ts",
+        "client/src/pages/SharedShopReports.test.tsx",
+        "docs/ui-ux/SHOP_INVENTORY_FINANCE_INCREMENT_2026-11-14.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feat/telegram-daily-summary",
+      "sha": "d691cae3db3d23cd498bc3f1db454d0bfc11f824",
+      "mergeBase": "ca2e14c64d335bba26874a4aefd5e54e86d09d65",
+      "ahead": 1,
+      "behind": 6,
+      "patches": [
+        {
+          "sha": "d691cae3db3d23cd498bc3f1db454d0bfc11f824",
+          "patchEquivalent": true
+        }
+      ],
+      "changedPaths": [
+        "docs/telegram-bot.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/telegram-daily-summary.test.mjs",
+        "supabase/functions/tallybook-telegram/README.md",
+        "supabase/functions/tallybook-telegram/index.ts",
+        "supabase/migrations/20261116090000_telegram_daily_summary.sql",
+        "supabase/rollback/20261116090000_telegram_daily_summary_down.sql",
+        "supabase/rollback/README.md"
+      ],
+      "matchingPaths": [
+        "docs/telegram-bot.md",
+        "qa/migration-rollbacks.test.mjs",
+        "qa/telegram-daily-summary.test.mjs",
+        "supabase/functions/tallybook-telegram/README.md",
+        "supabase/functions/tallybook-telegram/index.ts",
+        "supabase/migrations/20261116090000_telegram_daily_summary.sql",
+        "supabase/rollback/20261116090000_telegram_daily_summary_down.sql",
+        "supabase/rollback/README.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/feature/premium-settings-business-staff-2026-10-15",
+      "sha": "88d35fc07f1677ea03c9225b513adf84207f37a4",
+      "mergeBase": "1d772d70163ce4b01d95f325321b64e651d17a81",
+      "ahead": 16,
+      "behind": 1402,
+      "patches": [
+        {
+          "sha": "16d0b015053c5e137fc207c42ac3b962159902a9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "61a3e644e0b0d7ed5161c3ea49c96009ae34662d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9a2ec8e98e2220ba2d1ebf21e1344c3efb5a5ce7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c5d60d180e0524b7a85f7217731a7bbd31298932",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "194f5f91730f051fc4c585e0b148773b91d6619b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "415ce8b97a9c54386e8aabc9fedfe389ac87db1a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d8bda6ae0caa1d5b159c5e5981e948067bb32eca",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "de9c707b04d4e519d78f88a6b4e022b2992cb088",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e1a9b4fb1ded61212f81057a60acf5c7052fa439",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2dbe7c110c3ed2e84745f8b0a408130e39ffbf81",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d05a331706fa8e52d2727c7d3f7d92d6b0249405",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9c8b22d714f6c6a8df801056dad0c77e6a9fe8e1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "535259be79ddfc358eccb01adced943ac318cf53",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cad7a76464be4eb84c9c5f82dec80f7168cbff65",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e5ac11e836948212ae63b1ef15736ac71a7f9442",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "88d35fc07f1677ea03c9225b513adf84207f37a4",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/components/TaxSettings.tsx",
+        "client/src/pages/BusinessSetup.tsx",
+        "client/src/pages/SettingsWorkspace.css",
+        "client/src/pages/StaffPage.tsx",
+        "playwright.settings.config.mjs",
+        "qa/PREMIUM_SETTINGS_UI_PLAN_2026-10-15.md",
+        "qa/PREMIUM_SETTINGS_UI_REVIEW_2026-10-15.md",
+        "qa/premium-settings-contract.test.mjs",
+        "qa/premium-settings-visual.spec.mjs"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/fix/assistant-reversal-preview-identity-20261113",
+      "sha": "f124bcea529e0e06982f3d53f8345b3a8e377ffa",
+      "mergeBase": "f124bcea529e0e06982f3d53f8345b3a8e377ffa",
+      "ahead": 0,
+      "behind": 164,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/fix/physical-return-store-provenance-20261113",
+      "sha": "90ec694c8b602c848e95edf44874cb51beccf353",
+      "mergeBase": "90ec694c8b602c848e95edf44874cb51beccf353",
+      "ahead": 0,
+      "behind": 163,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/frontend-all-stages-20261106",
+      "sha": "246d477cc4b4a93820d3cf2c6c5df2317dc1a905",
+      "mergeBase": "0314873bf0f7e30ad8612b51be77f0a5107612d0",
+      "ahead": 16,
+      "behind": 455,
+      "patches": [
+        {
+          "sha": "81e72df4df85dbe3174219d1246b2f90f1cb1db5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "835948a4e7b415e8c56b27b104815343eca4fabf",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "92230526716a8ff48fa74475484365a871ef72a4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ef431b6d342d64abbe34f6fa2e2cf3d5959e2b69",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ef79a729f660184a116fe52dede956e41573f358",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "fc910b1ae23bd2b8ffc6861cada1e06b7d04a8b6",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6632e6a4738bff9f174d9253fd51f19b9d5e6843",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f860f6a7c46d67e8d4411ab7e004c040f6a34670",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "07c5cb351f4bf6248b6f41ab62915e4aabb46a2a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "08429b9dff410382971e7a02ee9666c7d33940d4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ffd38657cb9daa3c81e152427b7f87154add0a65",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "16c574749b35dd55653aad8d7617d11089f7dc64",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cba36e5797f12ae777f1496eefd3a6f83b762069",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "58c56f56d8a3e5203f0ba7fb7c95ad88ca753499",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3936f954598c0c32332dac4d0e15e707683b6d6c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "246d477cc4b4a93820d3cf2c6c5df2317dc1a905",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/frontend-all-stages-qa.yml",
+        "frontend-prototype/README.md",
+        "frontend-prototype/app.js",
+        "frontend-prototype/index.html",
+        "frontend-prototype/playwright.config.mjs",
+        "frontend-prototype/qa_e2e.spec.mjs",
+        "frontend-prototype/qa_node.mjs",
+        "frontend-prototype/styles.css"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/qa/pilot-field-acceptance-20261116",
+      "sha": "1317b7635a8254dc0f2c61a61295c886ef101c13",
+      "mergeBase": "175204d15c6d77a3ae9cadee505dfa1cf5821ac6",
+      "ahead": 3,
+      "behind": 3,
+      "patches": [
+        {
+          "sha": "aa5a740edf32f32d8dcf3b10ef916fad6609aba0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "72d650c157c72484961566cc4edfe84506dfc99f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1317b7635a8254dc0f2c61a61295c886ef101c13",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md",
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "matchingPaths": [
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md",
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/qa/production-public-smoke-20261116",
+      "sha": "bd1b54fe63dba34b75c5a2a114bc0bafcab05359",
+      "mergeBase": "175204d15c6d77a3ae9cadee505dfa1cf5821ac6",
+      "ahead": 3,
+      "behind": 3,
+      "patches": [
+        {
+          "sha": "84a58b18f414b6a2efc837f8ceb451555fb30cbb",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4bc1ade1face36c1237b8d0fdcdc0fdecb4ba0ed",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bd1b54fe63dba34b75c5a2a114bc0bafcab05359",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/production-readonly-smoke.yml",
+        "qa/production-readonly-smoke.test.mjs",
+        "scripts/production-readonly-smoke.mjs"
+      ],
+      "matchingPaths": [
+        ".github/workflows/production-readonly-smoke.yml",
+        "qa/production-readonly-smoke.test.mjs",
+        "scripts/production-readonly-smoke.mjs"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/qa/reverify-16-existing-stages-20261114",
+      "sha": "80e8055ffa717f905657e199309a700edfffb955",
+      "mergeBase": "cd475e799011c027ebee3f09e0a67aa6c95ded6e",
+      "ahead": 5,
+      "behind": 150,
+      "patches": [
+        {
+          "sha": "a9e6c85a77446f8f9c014e56be38904ac3b3827b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "35d4fd3e197071898c554bd7d1afe21007dc2334",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3100634cbde1d82704ba9854c533173a8e51de93",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e6ce9ef098471bfa26b3f9366320fb9ebdc624a2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "80e8055ffa717f905657e199309a700edfffb955",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/SharedShopOrders.test.tsx",
+        "client/src/cloud/SharedShopOwnerDashboard.test.tsx",
+        "client/src/cloud/SharedShopPurchasingPanel.test.tsx",
+        "client/src/components/TallybookWelcome.test.tsx",
+        "client/src/pages/SharedShopOnboarding.test.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "docs/ui-ux/EXISTING_16_STRICT_REAUDIT_2026-11-14.md",
+        "docs/ui-ux/STOCKDEY_29_REFERENCE_AUDIT_2026-11-14.md",
+        "qa/shop-phone-layout.spec.mjs"
+      ],
+      "matchingPaths": [
+        "docs/ui-ux/EXISTING_16_STRICT_REAUDIT_2026-11-14.md",
+        "docs/ui-ux/STOCKDEY_29_REFERENCE_AUDIT_2026-11-14.md",
+        "qa/shop-phone-layout.spec.mjs"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/release/fresh-start-required-signin-20261113",
+      "sha": "590e047d24704a7fafc1ad79a3c3756d38a5bd50",
+      "mergeBase": "590e047d24704a7fafc1ad79a3c3756d38a5bd50",
+      "ahead": 0,
+      "behind": 151,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/release/production-readiness-reset-20261113",
+      "sha": "636e57a4940aafc8c234d663711b5688f33acac7",
+      "mergeBase": "590e047d24704a7fafc1ad79a3c3756d38a5bd50",
+      "ahead": 3,
+      "behind": 151,
+      "patches": [
+        {
+          "sha": "fc423f3859c8b908d6ec13ed9d09de9f1cfd0db7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "75207d7744a02106dd50145dd74f7a10614459a3",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "636e57a4940aafc8c234d663711b5688f33acac7",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "docs/release/PRODUCTION_AUDIT_EVIDENCE_2026-11-14.md",
+        "docs/release/PRODUCTION_FRESH_START_2026-11-13.md"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/release/shared-shop-ledger",
+      "sha": "a5c141f445393c1e1cb617ca1eed7b53d46d6175",
+      "mergeBase": "a5c141f445393c1e1cb617ca1eed7b53d46d6175",
+      "ahead": 0,
+      "behind": 473,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/review/combined-settings-clementia-2026-10-15",
+      "sha": "9153c386156d4d5905e034da83c570dd9b430369",
+      "mergeBase": "1d772d70163ce4b01d95f325321b64e651d17a81",
+      "ahead": 17,
+      "behind": 1402,
+      "patches": [
+        {
+          "sha": "16d0b015053c5e137fc207c42ac3b962159902a9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "61a3e644e0b0d7ed5161c3ea49c96009ae34662d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9a2ec8e98e2220ba2d1ebf21e1344c3efb5a5ce7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c5d60d180e0524b7a85f7217731a7bbd31298932",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "194f5f91730f051fc4c585e0b148773b91d6619b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "415ce8b97a9c54386e8aabc9fedfe389ac87db1a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d8bda6ae0caa1d5b159c5e5981e948067bb32eca",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "de9c707b04d4e519d78f88a6b4e022b2992cb088",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e1a9b4fb1ded61212f81057a60acf5c7052fa439",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2dbe7c110c3ed2e84745f8b0a408130e39ffbf81",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d05a331706fa8e52d2727c7d3f7d92d6b0249405",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9c8b22d714f6c6a8df801056dad0c77e6a9fe8e1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "535259be79ddfc358eccb01adced943ac318cf53",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cad7a76464be4eb84c9c5f82dec80f7168cbff65",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e5ac11e836948212ae63b1ef15736ac71a7f9442",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "88d35fc07f1677ea03c9225b513adf84207f37a4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9153c386156d4d5905e034da83c570dd9b430369",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/components/ClementiaLauncher.css",
+        "client/src/components/ClementiaLauncher.tsx",
+        "client/src/components/TaxSettings.tsx",
+        "client/src/lib/clementiaWindow.ts",
+        "client/src/pages/AssistantPage.companyIsolation.test.tsx",
+        "client/src/pages/AssistantPage.tsx",
+        "client/src/pages/BusinessSetup.tsx",
+        "client/src/pages/SettingsWorkspace.css",
+        "client/src/pages/StaffPage.tsx",
+        "playwright.settings.config.mjs",
+        "qa/CLEMENTIA_STATIC_REVIEW_2026-10-14.md",
+        "qa/LOCAL_WINDOWS_TEST_PLAN.md",
+        "qa/PREMIUM_SETTINGS_UI_PLAN_2026-10-15.md",
+        "qa/PREMIUM_SETTINGS_UI_REVIEW_2026-10-15.md",
+        "qa/premium-home-visual.spec.mjs",
+        "qa/premium-settings-contract.test.mjs",
+        "qa/premium-settings-visual.spec.mjs"
+      ],
+      "matchingPaths": [
+        "client/src/pages/AssistantPage.companyIsolation.test.tsx"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/review/shop-entry-acceptance-20261107",
+      "sha": "a6170ef1bfdbc856d5cf4fb914aa55e291e00d39",
+      "mergeBase": "3caefad023a7004c628c43b0b2e639c4b43ef1ae",
+      "ahead": 6,
+      "behind": 448,
+      "patches": [
+        {
+          "sha": "892b85d12f4b9215e5cf5d31e07e1e48364eeddf",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2c2972071171e87805b4e3c794b87bad2bb2961c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "99ba612217e7db4b4efec5677d4b8902d43ccdec",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f9535a98d5ca147c9a69e7692eea8500424cc4a7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5947683b009ffd34b364ae0c89f06740ce1379dc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a6170ef1bfdbc856d5cf4fb914aa55e291e00d39",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "playwright.config.mjs",
+        "playwright.visual.config.mjs",
+        "qa/shop-public-entry.spec.mjs"
+      ],
+      "matchingPaths": [
+        "playwright.config.mjs",
+        "playwright.visual.config.mjs"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/security/enforce-csp-20261115",
+      "sha": "cdf9a50f59ca500f4abba9c61f972d459f0da207",
+      "mergeBase": "ca2e14c64d335bba26874a4aefd5e54e86d09d65",
+      "ahead": 2,
+      "behind": 6,
+      "patches": [
+        {
+          "sha": "4c7ad526aa01114b3febde3069f4ce50ec87b80a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cdf9a50f59ca500f4abba9c61f972d459f0da207",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/lib/zodConfig.ts",
+        "client/src/main.tsx",
+        "playwright.offline.config.mjs",
+        "qa/browser-csp.spec.mjs",
+        "qa/security-headers.test.mjs",
+        "server/index.ts",
+        "vercel.json",
+        "vite.config.ts"
+      ],
+      "matchingPaths": [
+        "client/src/lib/zodConfig.ts",
+        "client/src/main.tsx",
+        "playwright.offline.config.mjs",
+        "qa/browser-csp.spec.mjs",
+        "qa/security-headers.test.mjs",
+        "server/index.ts",
+        "vercel.json",
+        "vite.config.ts"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/security/mandatory-online-account-boundary-20261113",
+      "sha": "0f453be184bc606188f7ec92782708b0a041fdb6",
+      "mergeBase": "0f453be184bc606188f7ec92782708b0a041fdb6",
+      "ahead": 0,
+      "behind": 7,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/stage-b-offline-integrity-20261106",
+      "sha": "d4589e2554afabf3e1b8b286b6ddbf8433734072",
+      "mergeBase": "0314873bf0f7e30ad8612b51be77f0a5107612d0",
+      "ahead": 86,
+      "behind": 455,
+      "patches": [
+        {
+          "sha": "f610e6d741faaf287b16c61969cbf4fba7edd6ec",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "596786124ef19ee4eff28493518095942450b2d6",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ec419a91231bbe2ccf8f11b01b4ab687be3a1828",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f9e539dcdb8d4501c745f0b7067a0ee289688f50",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "51dadedae93da9f0466ac0d79dba681aa15b1c5f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c960a9494d864c8a4d0cb3159d2e623b70244557",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ba4bb639363be528b95bd84f3afa4ccf5af1e74f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ccbbce26e916d067713c2b7fa85a0e73d0df7924",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "24fdfdbbaf0e507d4f71fac5b9aa9b01de814e9d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bc562b82254d005b58a560a59a3df7e6f5be3f4f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5189c207c38438531db541e44fa804f840839868",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1357199ed8f6a51b4e13d55f9c36c5f8166acb69",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2d3ac0bb938f41bcececfbf1195261dc6ec52bb7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6f0a5b99553811e78b2495b0aeb8982dc1a1f1f2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "dd1876db22a468021ab1cae24b70242241e6c0f9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e86e4a48ed6d1b9e36524eb3f8a12074df8ec6ee",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8063d72a98961823c8f7a051d318a8c3beb2aed4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c59e60be36b597294faef73de3dc28a3cdc28978",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2185587b3c50cd35138108338b9af4b01a8ad67f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3d7c4e59bd5f0a12e08fadce412f35ac5f5cb9e0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b864839ba05e43595e950b9a01ab47b84018e63d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a7c93b3d939c6eb2bcde90846f6c1feac60d36db",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "86cf001486441221839bc9f6044212234ccfb983",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c23cbccac12eccda13c14a005e92222a37a76c4e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8b7a2310be79801aeb45dbe219f469a61b31a599",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4c2bf2b9cec47f985fbe8aad819c9ed264987eb0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "438988ecbc77b40931e841cc61760adde8b62d68",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7cc412653d87602c7a0bc898b7a69b642aa137ce",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "52f734b42437ffacada430ea0de78473746ef402",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9b416060766dd3f6f69247d2567c69b8fd27db99",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2ce70e8afd6d7a31c27f2eeaabcc63c93b693ca4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "42dbfbb1caef2276fd80d68b994777b68e8f3edb",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6ec1ce58cb72320320e613b1693ed27fc5386cdc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9ebe3ea25daf871be1bd687d3cdcb673779d1d9c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "11b990211469eade8a3b24bd14a01a7311f90d58",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "831f8b1baeb79a07d65e39d96b1e176933b1125c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "26606e86c50e8e81b18ea5597cdc808364f0a25d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "870842c59be0d914c2492a6e7e4a58aafebf71f5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9b1acb79efb0f2bcdd6e6d143c2ded60e89fcad7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "82da9169b81ee827245d8e167f66f9133664a1bf",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "950bdc8dc8305cab6d7627ad534ec646369456de",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ff782521435ea4bef80d538e17aa5c2bf2761c10",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "90ab2c94c1a8070d7c4f17ed90ab3cd15876f8b5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c464e077501cb8a982a7a0a39a650d20098cd997",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d25d76f1bfa4f4d81ddbbc371e5a1849c87c5f36",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "91cfc3d6e39effce38b03c6444f926d0cf1ec17c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7155841fe286cc11518b0630914b1e77e2f61014",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e0bb0238bafb8e162f07e9276a4cd35533a00c11",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4108ba09167c9615e4e76de8d4696f9420e8eea9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f225e461ff58c22ca536d293151257bb1715e3aa",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7688cd615a1f3013c4b5701c2d381d4582c694b1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "09a80fd5420d511520888995eb85c7dab0ed1220",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "dfde558419b9df00201e3adcff9755ccd3c2e891",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ed4d688294ac0168c9f0d7ab1456edec63a8cea6",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c9b7939ba8d1c9ee9ab0558695774c4fe741b10e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "251b76e2b5384e65843e3c1a5df0706a87ac7025",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ffe0b5ab67cfca516844944c1f7f8fccd6814861",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9c5f8029b0a4daf52a6248786527c2f165337b04",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "cbe22742be8e4c8409b653e2d464d539a2f2b201",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e0f91e0175aefe317b09c877352c60d293c5fd88",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "fc79ab5f5a84b9193ae73bc51bee215f61db07b8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8886de21c298ec6e8a1cd002ce80e4d51838d4b1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3ac1a17a87ac095bc07fdc7413553175dd9373dc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "05f98f065caec9d73575b6923daa3fe63da24a0a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "952ad6585a4e7577dca73493006e11b193d3fff5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9c13916f3490b306764299a4109a1d0ead52246d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "87c1fa6fbeacc2b8947cd37343c22c34df4bbd60",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ab9bb3a37e0e8f0ef24f8a1f43345c2f60245098",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "926f80ec2f52e651cf2dfc4766686a82487b646d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "52a615bd863b4b194f967653a87019f564faf1d8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d752b7b201b74a2d9341b1105f5d32cbc751f7e1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "be8847b4a112872298a52a61a441a48ea7a97505",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e16222a3c94993f3262e9cd5d5be4b2d80569bf1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "98d31a4ddff6b43b18a6ca07060d9b69fd7a53d4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "99cf890a7f67e3737873634d90084f805f52d045",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1c35187460072206ceb0c85c8a1f86f755cd013d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5398d82eea507e9dbc74ceac762aaa84dcbb5a52",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4011b249a33e205082bbdba25eff0fddb441e98d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "dba369ae4b12e7404387a0205bd8e917ad6e94c4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "49c80133301f859c0ebac2f7b5f4dd3aecb71516",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4df9318e3e758c72721978a4c4376139c7541efc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b44c57100851f2b5b1e3ce71d2de35acdb8bdf0b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "03dd8b72542c59428b31cbe2f844270e61bedd2e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e49347bff4a35b530ab1e9c363698e8c1cf5e0b0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "16c27c750213be7c5c83f2b5a63b08936a05430a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d4589e2554afabf3e1b8b286b6ddbf8433734072",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        ".github/workflows/stage-b-qa.yml",
+        "client/src/cloud/ShopOutboxVaultPanel.tsx",
+        "client/src/cloud/ShopRefundPolicyPanel.tsx",
+        "client/src/cloud/safeShopCache.test.ts",
+        "client/src/cloud/safeShopCache.ts",
+        "client/src/cloud/shopClient.ts",
+        "client/src/cloud/shopOutbox.test.ts",
+        "client/src/cloud/shopOutbox.ts",
+        "client/src/cloud/shopVaultCrypto.d.mts",
+        "client/src/cloud/shopVaultCrypto.mjs",
+        "client/src/pages/SharedShopPage.test.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "docs/stage-b/LOCAL_LEDGER_ENCRYPTION_BOUNDARY.md",
+        "docs/stage-b/STAGE_B_IMPLEMENTATION_GATES.md",
+        "docs/stage-b/STAGE_B_VAULT_RECOVERY_PROTOCOL.md",
+        "playwright.stage-b.config.mjs",
+        "qa/browser-stage-b-vault.spec.mjs",
+        "qa/premium-home-visual.spec.mjs",
+        "qa/shared-shop-full-till.test.mjs",
+        "qa/shared-shop-refunds-import.test.mjs",
+        "qa/shop-vault-crypto.test.mjs",
+        "supabase/migrations/20261106120000_shared_shop_return_policies.sql"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/ui/stockdey-29-reference-parity-20261114",
+      "sha": "7afa4137ce8a0f4ea85390ce0866a35cc927ffd7",
+      "mergeBase": "590e047d24704a7fafc1ad79a3c3756d38a5bd50",
+      "ahead": 5,
+      "behind": 151,
+      "patches": [
+        {
+          "sha": "21418e4a747b82e2a6c6f1326efcc1cb85b17087",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "039b8ef86054f28e607c1b307cb0675b5cacc0c5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "44479cc1eacd0883d09890d4c026fb87e31f6231",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9949485a8d3ac8286a3018fce14c4347408dc892",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7afa4137ce8a0f4ea85390ce0866a35cc927ffd7",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/cloud/SharedShopStockCountPanel.tsx",
+        "client/src/pages/SharedShopPage.tsx",
+        "client/src/pages/referenceUpgrade.css",
+        "docs/ui-ux/STOCKDEY_29_REFERENCE_AUDIT_2026-11-14.md"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/v19/run11-company-refund-policy-20261016",
+      "sha": "8f91b8b55c06ac831866660dd352a695c803a8fe",
+      "mergeBase": "8f91b8b55c06ac831866660dd352a695c803a8fe",
+      "ahead": 0,
+      "behind": 1052,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/v19/run12-supplier-tax-20261016",
+      "sha": "2acd7ca22017b29c0470cb1ad3e9a452a5e8d87e",
+      "mergeBase": "8f91b8b55c06ac831866660dd352a695c803a8fe",
+      "ahead": 26,
+      "behind": 1052,
+      "patches": [
+        {
+          "sha": "4f1d0bbc63484ccbcf18eab596f9d071cca0a0b2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "db3836e7c451338dc11ac1428d79c01ef40afa8c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "60ab6d21802547698cbd0945b67e415f795d6921",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9bb5a0ddd776534d0abab77895af1b6d071c73dd",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1b8790eac70e99c287bb844a7af3600f0f97ce3d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "fc3627db2faa558eb0af8ffca265a1ee60e644ab",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "568d61fc660eddfb7f1c86fc2452b9f39b59f757",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ca02e2cc67416ac31f561311ba2e91c6f2da89d4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "edcb0e23b1adb10c84c8e4e9c1eebf366449c0a5",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c1d5974017d6d14f9b5f63a803cefedadc2ed61b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "08919b26d3b85f148482231f9780f8776f3d70a8",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "88b95b57717330d0a27eb9fbc41a3d9d583c78aa",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "551d9c9182430c56e6a2636b4f3e1660dfed1394",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8b57de42eed18384619d7907132382cc63f969ed",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "ea3118947c57fb80f4642926e61b8a9f7e960745",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6e1aeeb6478fdd753fa4b6a11c1fdf7b39d24faa",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2129de440c3ea9313b53e944f7d4478a37a1f283",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "594992508e9e9cedc24a39aa5a2524bae2cee9aa",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "04c1a2794d45274b37adf3172aa29fb1fea34d36",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2e31b3dbbb1a0ce89a2d7fc2a839455ea953c025",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "236130f67e095e86828baccac07786c63b186f61",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6786777120e41e74cc15f119f69083d2a01c9754",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "5b63032ff515f959968490326b4cb215015a870a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f76db31ab57de0dd7987d58b772f8475a525a256",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0cdfaa637375ce9e7f891fe7060b42c6face8857",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2acd7ca22017b29c0470cb1ad3e9a452a5e8d87e",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "Multistore.md",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/expenses/expenses.ts",
+        "client/src/features/purchases/supplierPayables.mjs",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/purchases/tests/run12SupplierPayables.test.mjs",
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/run12RecordedTaxAudit.d.mts",
+        "client/src/features/reports/run12RecordedTaxAudit.mjs",
+        "client/src/features/reports/run12SupplierCashAudit.d.mts",
+        "client/src/features/reports/run12SupplierCashAudit.mjs",
+        "client/src/features/reports/run12SupplierTaxIntegration.test.ts",
+        "client/src/features/reports/tests/run12RecordedTaxAudit.test.mjs",
+        "client/src/features/reports/tests/run12SupplierCashAudit.test.mjs",
+        "client/src/pages/FinancialIntelligencePage.tsx",
+        "docs/release/RUN12_SUPPLIER_TAX_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN12_SUPPLIER_TAX_QA_MATRIX_2026-10-16.md",
+        "docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md",
+        "scripts/RUN12_WINDOWS_READONLY_QA.cmd",
+        "server/tests/run12SupplierTaxWriteAudit.test.mjs"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/v19/run4-session-lifecycle-20261016",
+      "sha": "f983c7c924b1454c0cf0d2b215498887fd47d01e",
+      "mergeBase": "f983c7c924b1454c0cf0d2b215498887fd47d01e",
+      "ahead": 0,
+      "behind": 1250,
+      "patches": [],
+      "changedPaths": [],
+      "matchingPaths": [],
+      "disposition": "incorporated-by-ancestry",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/v19/run5-tenant-service-authorization-20261016",
+      "sha": "3d48eb9378e218d9c7cc6f80a2162d0f737378bc",
+      "mergeBase": "f983c7c924b1454c0cf0d2b215498887fd47d01e",
+      "ahead": 54,
+      "behind": 1250,
+      "patches": [
+        {
+          "sha": "450cdd00f450125451d567fc83eb56a4ef18d55c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b840ea8a4eb2bb287bbf1d13041dfbdd3e3f1213",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7be050caa38f2364ead81b2078e3f3dd201ac012",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "19be8eb8fdc2d3d21c7c4c0ccc73d38640ecbb9d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "76cf85c7bf54dfabcfda0a649d03a3e5d2d70c21",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "747af35962776b5b05f3162fe1f2903de02abaef",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "de1b69b95499c319da04d603632289a3ef5760dc",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9a293c52b1f5bd051f408f71df706ad3bbe0fdbf",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3e936c81efd2c13d0b0fd6cbecb6ec188bf89ed2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "15d4097cb1650303d04f9cd1aa408e266acc9bae",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "70366bc3626873ef483aa9c697bbc20d64e2bd6a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "05220b7ca03144b74843bbd7308ceb8053b85dfb",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "9403c4a561910ae6cd4729d1eb0bd5bf6a43be59",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a944d22e4785191ca0b3ca88e3ed3fa188368a4e",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "42bfbbcc3ced258a25b0fa93548537d5e7fbbc22",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "1bae7ccf9b3e8d13e8f8f392a39371a0ff5738ca",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "568e6d555b64cdd34172ad9a9918e3b96eef00da",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7bfaeb78a19449af12b8fba2f92356068486fd52",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "f58c3c342853e995a83ce9ce034b0ae8fe408839",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "68345cf592c17090f0ebc0a2072d9df555c348b0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "4d8b064721c5ad22c959bd82f8dd4502382d8ef4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "59907724762b5fb2c1dd174bb82af59fad989ba1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "50ec499a23ca1722455e81feaa718384cf62afd9",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d06cb3ebbd2791fa3d1243db3b070072e47a37da",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "26d01fe00c24b1f3ac21b37efe4b412709a928b4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "75fd9ddf87f15390e1ece49b66740da0809f3fc4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a733d7c50fb9018deb696e81dbd2c26f80a42f48",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "792f54db872128c7d51c8125c42a7a987d9b0d6f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "724a116ff53af9c36e8d030469c74bc22f2e4899",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "bd105c09daf43f20b168f66ba1d874c04d82faa4",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0754986c7a954352495cf90ece22994a4f0e3852",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "86830e20338701da9aa8ef045d92e8361389f94a",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "a237c9106259c9bb4016153c1f77b2fa643650bd",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "65bce23652b34e013f1054004d00175b80956832",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8d4e9d6d42c14a661accda3c20fb9a66b72e0008",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "361e1ae61d4b578c938db386cbef014a8698d984",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3c461df7bbd07a6e508ad6a649c0494829351125",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3d347915c574a5851e6c73e97ca8923afa279805",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8048ea94b702389024d645a1cd6a2c91866a2f07",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "05ec8378ccd6087df18ddfb70572f101f6fe8cc2",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3a58a58113887e760d6b453b5083c9ede6941cf1",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "2ed9597017cf5f47e199293694a596ba83d19d3f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "7ac0b191bc12b20b9b1d3b0fe5a2eb49653f2e1f",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "0effe2379e90aff0c3c09ae7c2ab23968818fd7d",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6f3a16f9da5c02b590ced3e770752dde385e5706",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8d48bef1d2146e319512135fa34a8acecdcd8cc7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "21ab67aa930a0a2e14d98a0d037bb8dade2bf2d7",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "b149777be35d6e2c4d0db1adf407226b2a5eb68b",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "c60d5640a2fdf9566d9451d2691aac696e536bb0",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "6faace9c4de5ff6687458131715f691e321b2ebe",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "8548442028b4dd51aecb3954de95fe6862af076c",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3ce3dc40156a47a32880769fa959d01ed95be7dd",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "e34d85eb38cb6372d4dd7e8ed85b68f5faafda03",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "3d48eb9378e218d9c7cc6f80a2162d0f737378bc",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "Multistore.md",
+        "client/src/cloud/CloudBusinessPanel.tsx",
+        "client/src/cloud/Run5TenantBoundaryPanel.tsx",
+        "client/src/cloud/run5TenantReadClient.ts",
+        "client/src/features/security/cloudMembershipModel.mjs",
+        "client/src/features/security/companyAccessPolicy.test.ts",
+        "client/src/features/security/companyAccessPolicy.ts",
+        "client/src/features/security/verifyCloudCompanyAccess.test.ts",
+        "client/src/features/security/verifyCloudCompanyAccess.ts",
+        "docs/release/RUN5_TENANT_AUTHORIZATION_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/RUN5_TENANT_AUTH_FULL_INCREMENT_2026-10-16.md",
+        "docs/release/STAGE9_20_RUN_ROADMAP_ALIGNMENT_2026-10-15.md",
+        "docs/security/RUN5_TENANT_RECORDS_RLS_DISPOSABLE_REVIEW.sql",
+        "qa/run5-disposable-rest-rls-probe.mjs",
+        "server/index.ts",
+        "server/run5TenantDataService.mjs",
+        "server/run5TenantPolicy.mjs",
+        "server/run5TenantPostgres.mjs",
+        "server/run5TenantRoutes.mjs",
+        "server/run5TenantRuntime.mjs",
+        "server/run5TenantService.mjs",
+        "server/tests/run5TenantDataService.test.mjs",
+        "server/tests/run5TenantPolicy.test.mjs",
+        "server/tests/run5TenantPolicyIsolation.test.mjs",
+        "server/tests/run5TenantPostgres.test.mjs",
+        "server/tests/run5TenantRoutes.test.mjs",
+        "server/tests/run5TenantService.test.mjs"
+      ],
+      "matchingPaths": [],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    },
+    {
+      "ref": "origin/v19/stage-stakeholder-copy-finalization-20261109",
+      "sha": "d5132fb98d590e55f6560833df133c6efd706d69",
+      "mergeBase": "0fdd65292d9e3631ed5336d9a8f68cafd3360a23",
+      "ahead": 3,
+      "behind": 284,
+      "patches": [
+        {
+          "sha": "e69e9d8c684e8cafa59520481b7f13929e0a0c48",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "908c4e0e741b1b9113f2e08c6cce82763b7c0e20",
+          "patchEquivalent": false
+        },
+        {
+          "sha": "d5132fb98d590e55f6560833df133c6efd706d69",
+          "patchEquivalent": false
+        }
+      ],
+      "changedPaths": [
+        "client/src/pages/ReportsPage.tsx",
+        "qa/stakeholder-interface-copy.test.mjs"
+      ],
+      "matchingPaths": [
+        "client/src/pages/ReportsPage.tsx"
+      ],
+      "disposition": "semantic-review-required",
+      "limitation": "Patch and blob equality are evidence signals, not behavioral equivalence. No automatic merge or retirement."
+    }
+  ]
+}

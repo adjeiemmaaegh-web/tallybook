@@ -9,6 +9,8 @@ Run standalone checks with Node 22+:
 
 Do not include these standalone suites indiscriminately in the app's Vitest glob: migrate to project imports and real fixtures first. Do not interpret a skipped browser spec as accepted QA.
 
+17 November 2026: configured sales/returns browser placeholders now fail explicitly until actual persisted-record assertions are implemented. Previously, setting a fixture URL could turn a body-visibility assertion into an apparent workflow pass. The active application suites remain under `qa/`; these candidates are not release acceptance evidence.
+
 
 ## 2026-10-24 pre-Batch-7 QA review
 Locally rerun standalone tests: **15/15 PASS**. See `QA_REVIEW.md` and `QA_TEST_LOG.txt` for the latest corrections/evidence; older test counts in this README refer to the earlier delivery. These remain standalone candidate modules/tests, not fully integrated application functionality. Live application tests and release acceptance remain outstanding.

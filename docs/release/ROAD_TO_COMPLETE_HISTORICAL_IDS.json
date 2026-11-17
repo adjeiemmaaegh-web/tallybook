@@ -1,0 +1,2652 @@
+{
+  "sourceBaseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "records": [
+    {
+      "family": "acceptance",
+      "id": "S1-01",
+      "requirement": "Atomic checkout and partial payments",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Persist sale, lines, payments, receipt and stock once; crash/failure rolls all records back.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/sales.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S1-02",
+      "requirement": "Barcode and SKU POS",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Unique company-scoped identifiers; keyboard scanner and camera behave on supported devices.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S1-03",
+      "requirement": "Park, resume and recover checkout",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Company-isolated recovery revalidates live stock/prices and never double posts.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/parkedCart.ts",
+        "client/src/features/sales/recoverSavedCheckout.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S1-04",
+      "requirement": "Receipts and money arithmetic",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Minor-unit arithmetic rejects overflow; saved receipts reconcile and print after commit.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/checkoutMoney.mjs",
+        "client/src/features/receipts/receiptDetail.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S1-05",
+      "requirement": "Discount, loyalty and wallet checkout",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Authorized tender and benefits reconcile with immutable ledgers and reversals.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/sales/walletRecovery.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S1-06",
+      "requirement": "Retail offline acceptance",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Checkout, customers, purchases, receipts and reload work with no internet or account.",
+      "source": "STAGE1_V8_PROGRESS.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-01",
+      "requirement": "Catalogue variants and categories",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Variant SKU/barcode uniqueness, hierarchy and legacy compatibility.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-02",
+      "requirement": "Wholesale units and pricing",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Positive safe integer base-unit conversions and authoritative price/stock quantities.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-03",
+      "requirement": "Services and attachments",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Non-stock service semantics; bounded validated local product media.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-04",
+      "requirement": "Secure catalogue CSV",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Preview/import/export reject malicious rows and duplicate identifiers atomically.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/catalogCsv.ts",
+        "client/src/features/inventory/advancedInventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-05",
+      "requirement": "Persisted stock counts",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Resume reviewed sessions, detect stale balances and post all changes atomically.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/inventory/advancedInventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-06",
+      "requirement": "Batch receiving and expiry allocation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Persist batch receipt quantities/cost and reconcile sales, returns and expiry.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S2-07",
+      "requirement": "Historical inventory ledger",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Immutable receipt/return/adjustment history reconstructs as-of quantity and FIFO costs.",
+      "source": "STAGE2_V9_MASTER_QA.md",
+      "files": [
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-01",
+      "requirement": "Financial definitions",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Distinguish revenue, collections, expenses, liabilities and actual cash movements.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-02",
+      "requirement": "Periods and trends",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Correct calendar/DST/custom windows over saved events.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-03",
+      "requirement": "Collections and receivables",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "All-time customer debt and period cash reconcile from independent source ledgers.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/reports.ts",
+        "client/src/features/credit/credit.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-04",
+      "requirement": "Management dashboard",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Company-scoped permissioned evidence, with honest unavailable states.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/pages/ReportsPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-05",
+      "requirement": "Financial export and print",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Exports/printed totals match source transactions and sanitize cells.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-06",
+      "requirement": "COGS, gross profit, valuation and payables",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Authoritative sale allocations reconcile with purchases, stock, reversals and liabilities.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/purchases/supplierPayables.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S3-07",
+      "requirement": "Tax policy and reconciliation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Owner-approved jurisdiction/rates/inclusion/rounding recorded immutably and reconciled.",
+      "source": "STAGE3_V10_PARALLEL_BUILD_PLAN.md",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-01",
+      "requirement": "Customer profiles and groups",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped customer history, groups and evidence-based retention.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customers.ts",
+        "client/src/features/customers/retentionInsights.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-02",
+      "requirement": "Credit policies and due dates",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Credit limits atomic; dated invoice terms and allocated repayments support accurate ageing.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/credit/credit.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-03",
+      "requirement": "Quotation conversion",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Reviewed live price changes; explicit state transitions and idempotent conversion.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/quotations.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-04",
+      "requirement": "Loyalty lifecycle",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Configured earning/redemption/reversal balances cannot overflow or be double spent.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/assistant/reversals.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-05",
+      "requirement": "Prepaid wallet lifecycle",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Deposits/refunds/tender/reversal reconcile cash and liability atomically.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-06",
+      "requirement": "Discount authorization",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Service permissions and customer limits enforced during checkout.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S4-07",
+      "requirement": "Customer durability",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "All benefit/quote/wallet rows survive migration, export, restore and rollback.",
+      "source": "STAGE4_V11_IMPLEMENTATION_COMPLETION.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/db/TallybookDB.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S5-01",
+      "requirement": "Confirmed quotation handoff",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-and-tested",
+      "priority": null,
+      "completionCriterion": "Company-scoped expiring confirmation opens a usable draft in the actual quotation workflow.",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/quotationDraft.ts",
+        "client/src/features/assistant/assistant.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S5-02",
+      "requirement": "Multi-turn customer tasks",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Clarification retains valid customer/item context and rejects ambiguity/cross-company input.",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "client/src/features/assistant/conversation.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S5-03",
+      "requirement": "Language and speech",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Supported language and speech variants preserve all requested items; physical microphone QA.",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/quotationAssistant.ts",
+        "client/src/features/assistant/voiceInput.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S5-04",
+      "requirement": "Record-grounded finance",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Never invent totals or write without permissioned existing services.",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/queries.ts",
+        "client/src/features/assistant/quotationAssistant.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S5-05",
+      "requirement": "Assistant integration and adversarial QA",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Full assistant tests and malicious-input/company-boundary checks pass.",
+      "source": "STAGE5_V12_FINALIZATION_STATUS.md",
+      "files": [
+        "client/src/features/assistant/assistant.test.ts",
+        "client/src/features/assistant/phase1Services.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-01",
+      "requirement": "Local identities and PIN",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped owner/cashier/supervisor enrollment, role changes and PIN sessions.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-02",
+      "requirement": "Every write-service permission",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "All service mutations enforce company, role, session, shift, approvals and device.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/business/activeCompany.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-03",
+      "requirement": "Shift cash reconciliation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Attributable cash sales/repayments/transfers/journals yield independently derived closing variance.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-04",
+      "requirement": "Device lock and WebAuthn",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Secure-context enrollment, challenge verification, expiration, unlock and revocation with PIN fallback.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-05",
+      "requirement": "Actor attribution and audit",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Every mutation stores auditable actor/shift attribution without credential disclosure.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S6-06",
+      "requirement": "Security recovery",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Secure migration/restore and authenticated/unauthenticated/privilege-escalation checks.",
+      "source": "STAGE6_V13_STATUS.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/db/TallybookDB.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-01",
+      "requirement": "Onboarding and navigation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped setup progress and all linked routes work.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/business/setupProgress.ts",
+        "client/src/App.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-02",
+      "requirement": "Mobile POS and customer display",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Touch checkout and isolated read-only customer display on phone/tablet.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/sales/customerCartSummary.ts",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-03",
+      "requirement": "Printing and receipt recovery",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Supported printers, saved-receipt recovery and agreed ESC/POS capability.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/receipts/browserPrint.ts",
+        "client/src/features/receipts/receiptDetail.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-04",
+      "requirement": "Local notifications",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Explicit opt-in, denial handling and truthful supported foreground notification behavior.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/inventory/alertPreferences.ts",
+        "client/src/features/inventory/localAlerts.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-05",
+      "requirement": "Encrypted backup and restore",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Authenticated encryption, mandatory staff protection, corrupt input rejection and atomic restore.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupCrypto.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S7-06",
+      "requirement": "Accessibility, performance and offline",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Keyboard/screen-reader/mobile/large-data and offline PWA recovery acceptance.",
+      "source": "STAGE7_V14_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts",
+        "client/src/App.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-01",
+      "requirement": "Cloud opt-in and durable outbox",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "No cloud account required locally; consent and durable company-scoped unique operations.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/syncFoundation.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-02",
+      "requirement": "Organization/member/device identity",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Persistent scoped enrollment/revocation, expiring sessions and hardened authentication.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/deviceRegistry.ts",
+        "server/syncEnrollment.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-03",
+      "requirement": "TLS and request boundaries",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Explicit TLS/proxy/CORS/session/rate-limiting configuration rejects unauthorized requests.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "server/syncHttps.mjs",
+        "server/index.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-04",
+      "requirement": "Durable server storage",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Transactional durable multi-instance storage and safe crash/lock recovery.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "server/syncJournal.mjs",
+        "server/syncSessionStore.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-05",
+      "requirement": "Remote receipts and acknowledgements",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Only matching authenticated remote receipts acknowledge metadata delivery.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/outboxAcknowledgements.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-06",
+      "requirement": "Business-data replication",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Cryptographically authenticated financial events, ordered replay, deduplication and full records.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/outboxDelivery.ts",
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-07",
+      "requirement": "Conflict and power-failure recovery",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Concurrent disconnected writes reconcile deterministically without overselling or duplicate money.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-08",
+      "requirement": "Encrypted recovery and keys",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Verified encrypted backup upload/download, key handling and complete restore.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/encryptedRecovery.ts",
+        "server/syncBackupVault.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S8-09",
+      "requirement": "Browser/cloud integration",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Authenticated UI/session acquisition, revoked devices, disconnected reconnection and staging end-to-end.",
+      "source": "STAGE8_V15_BUILD23_QA.md",
+      "files": [
+        "client/src/features/sync/syncStatus.ts",
+        "server/index.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-01",
+      "requirement": "Store directory",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Company-scoped stores and service access controls.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeDirectory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-02",
+      "requirement": "Staff store assignments",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Active membership and store scope rechecked at use.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeDirectory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-03",
+      "requirement": "Physical count observations",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Append-only scoped observations never imply saleable balances.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeStockCounts.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-04",
+      "requirement": "Transfer requests",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped validated cancellable planning requests never imply moved stock.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeTransfers.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-05",
+      "requirement": "Local store activity",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Report permission, local planning summaries and honest evidence limits.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeReport.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-06",
+      "requirement": "Authoritative store balances",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Receipt/sale/refund/adjustment ledgers preserve each store's quantities and costs.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-07",
+      "requirement": "Actual stock transfers",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Atomic double-entry physical movements preserve cost and reject duplicates.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeTransfers.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-08",
+      "requirement": "Offline attendant checkout",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Scoped revoked-device behavior, assigned-store checkout and attributed payments.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-09",
+      "requirement": "Multi-device replay",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Authenticated durable replay, ordered conflict resolution and owner visibility.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/sync/reconciliation.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-10",
+      "requirement": "Owner consolidation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Store-tagged sales/stock/profit/currency reconcile from source records.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/storeReport.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S9-11",
+      "requirement": "Multi-store acceptance",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Migration, concurrency, security, real browsers/devices and ledger QA pass.",
+      "source": "STAGE9_V16_COMPLETION_AUDIT.md",
+      "files": [
+        "client/src/features/stores/stage9ReleaseScope.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-01",
+      "requirement": "Authorized public catalogue",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Merchant consent and privacy; public catalogue served at server-trusted prices.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-02",
+      "requirement": "Verified customer orders",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Authenticated customer order identities and trusted totals.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-03",
+      "requirement": "Payment adapter and settlement",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "blocked",
+      "priority": null,
+      "completionCriterion": "Selected provider sandbox, signed webhooks, retries, capture/refund/chargeback/settlement reconciliation.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts",
+        "server/index.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-04",
+      "requirement": "Stock reservations and fulfillment",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Authoritative TTL reservation and atomic commit/release after all security/accounting gates.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts",
+        "client/src/features/inventory/inventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-05",
+      "requirement": "Shipment and delivery tracking",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "blocked",
+      "priority": null,
+      "completionCriterion": "Real fulfillment/carrier statuses; never derive delivery from preparation planning.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-06",
+      "requirement": "Portable commerce backup",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped drafts and current records restored atomically; pre-v25 compatibility.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/backup/backup.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S10-07",
+      "requirement": "Commerce security and acceptance",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Full sandbox/browser/migration/security and payment/inventory tests; live feature gates remain closed.",
+      "source": "STAGE10_V17_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "qa/stage10-local-lifecycle.test.cjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S11-01",
+      "requirement": "Evidence-based local insights",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Scoped saved facts, honest missing-data states and advisory-only defaults.",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S11-02",
+      "requirement": "SKU demand and reorders",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Historical unit sales/returns plus stock support validated reorder quantities without invented confidence.",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/skuDemand.mjs",
+        "client/src/features/insights/insightEvidence.ts",
+        "client/src/pages/InsightsPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S11-03",
+      "requirement": "Live batch expiry",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Validated live company-scoped batches feed expiry evidence.",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs",
+        "client/src/features/inventory/stage2Inventory.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S11-04",
+      "requirement": "Receivable ageing",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Explicit dated debt, due terms and repayment allocation ground ageing.",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/credit/creditTerms.mjs",
+        "client/src/features/reports/receivableAgeing.mjs",
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/pages/FinancialIntelligencePage.tsx",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S11-05",
+      "requirement": "Persisted permissioned automation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Audited opted-in rules with approvals, safe scheduling and notification verification.",
+      "source": "STAGE11_V18_CONSOLIDATED_AUDIT.md",
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-01",
+      "requirement": "Reproducible toolchain and CI",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Frozen install, all client/Node tests, semantic types, build and configured lint pass.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-02",
+      "requirement": "Stock and money reconciliation",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "missing",
+      "priority": null,
+      "completionCriterion": "Independent full-history reconciliation including duplicate/concurrent/crash/rollback scenarios.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/inventory/historicalCosting.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-03",
+      "requirement": "Migration and recovery matrix",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Every supported version through current migrates in real IndexedDB and survives backup recovery.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-04",
+      "requirement": "Security and dependencies",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Threat model, all-write authorization, malicious imports, audit/SBOM/license and security review.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "server/index.ts",
+        "client/src/features/staff/staff.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-05",
+      "requirement": "Full production acceptance",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": null,
+      "completionCriterion": "Offline PWA, browsers/mobile/hardware/WebAuthn/accessibility/performance/security acceptance.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "client/src/features/reliability/offlineReliability.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "acceptance",
+      "id": "S12-06",
+      "requirement": "Deployment and release artifact",
+      "originalRegister": "docs/release/traceability.json",
+      "historicalStatus": "blocked",
+      "priority": null,
+      "completionCriterion": "Manifest, hashed artifact, staging rollback/recovery drill, operator/user docs and explicit GO/NO-GO.",
+      "source": "STAGE12_V19_INITIAL_HARDENING_AUDIT.md",
+      "files": [
+        "docs/release-checklist.md"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "ENV-001",
+      "requirement": "Frozen dependencies and full toolchain",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Install pinned pnpm; run full tests/types/build, preserve exit status and logs.",
+      "source": null,
+      "files": [
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "ENV-002",
+      "requirement": "Nonportable Node QA compiler paths",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-and-tested",
+      "priority": "P0",
+      "completionCriterion": "Use repository TypeScript rather than an absolute global Linux installation.",
+      "source": null,
+      "files": [
+        "qa/stage10-local-lifecycle.test.cjs",
+        "scripts/stage9-transfer-qa.cjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "ENV-003",
+      "requirement": "Server filesystem adapters rely on POSIX security",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-and-tested",
+      "priority": "P0",
+      "completionCriterion": "Verify full integration on a POSIX filesystem or implement and test an equivalent native Windows ACL boundary; never bypass permission checks.",
+      "source": null,
+      "files": [
+        "server/syncLogin.mjs",
+        "server/syncJournal.mjs",
+        "server/syncSessionStore.mjs",
+        "server/syncBackupVault.mjs",
+        "server/tests/syncJournal.test.mjs",
+        "server/tests/syncBackupVault.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-001",
+      "requirement": "Persisted inventory history and atomic cost allocations",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Immutable cost/quantity events, atomic sale allocations and tested reversals/reconciliation.",
+      "source": null,
+      "files": [
+        "client/src/features/inventory/historicalCosting.ts",
+        "client/src/features/sales/sales.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-002",
+      "requirement": "Financial reconciliation and tax policy",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P0",
+      "completionCriterion": "Independent full-history accounting reconciliation; obtain jurisdiction/rate/inclusion rules for tax.",
+      "source": null,
+      "files": [
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/supplierReporting.mjs",
+        "client/src/features/reports/saleTenderReconciliation.mjs",
+        "client/src/pages/FinancialIntelligencePage.tsx",
+        "client/src/features/reports/financialCurrencyEvidence.mjs",
+        "client/src/features/expenses/expenses.ts",
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reports/prepaidLiabilityReconciliation.mjs",
+        "client/src/features/reports/prepaidLiabilityReconciliation.d.mts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/reports/financialPeriodConservation.mjs",
+        "client/src/features/reports/financialPeriodConservation.d.mts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "SEC-001",
+      "requirement": "Complete authorization and actor coverage",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Enumerate every mutation and run positive/negative service-level security checks.",
+      "source": null,
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/customers/customers.ts",
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/assistant/assistantLocalStore.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-001",
+      "requirement": "Historical migration and restore matrix",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Real IndexedDB every supported schema, corrupted backups, rollback and large data.",
+      "source": null,
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "CLOUD-001",
+      "requirement": "Authenticated financial replication and durable identity",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P0",
+      "completionCriterion": "Implement persistent production identity and full authenticated record replay; obtain authorized staging configuration.",
+      "source": null,
+      "files": [
+        "server/index.ts",
+        "client/src/features/sync",
+        "server/syncLogin.mjs",
+        "server/syncEnrollment.mjs",
+        "server/syncDirectory.mjs",
+        "server/syncSessionStore.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "STORE-001",
+      "requirement": "Authoritative store stock, transfers and attendants",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P0",
+      "completionCriterion": "Implement after FIN-001, SEC-001 and CLOUD-001 pass.",
+      "source": null,
+      "files": [
+        "client/src/features/stores"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "PAY-001",
+      "requirement": "Payment provider and sandbox credentials",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "blocked",
+      "priority": "P0",
+      "completionCriterion": "Owner selects MoMo/card provider and supplies authorized sandbox configuration through local environment; no live captures.",
+      "source": null,
+      "files": [
+        "client/src/features/commerce/commerce.ts",
+        "server/index.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "COM-001",
+      "requirement": "Public storefront, reservations and delivery",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P0",
+      "completionCriterion": "Authenticated orders, trusted prices, TTL reservations, fulfillment and actual carrier tracking.",
+      "source": null,
+      "files": [
+        "client/src/features/commerce/commerce.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "AST-001",
+      "requirement": "Quotation handoff and complete assistant workflows",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Integrate usable draft handoff, retained context, record grounding and permission checks.",
+      "source": null,
+      "files": [
+        "client/src/features/assistant/quotationDraft.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "INT-001",
+      "requirement": "Live intelligence and permissioned automation",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P1",
+      "completionCriterion": "SKU units, real batch evidence, dated debt and opt-in persisted approved rules.",
+      "source": null,
+      "files": [
+        "client/src/features/insights/localInsights.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "HW-001",
+      "requirement": "Physical devices and supported hardware acceptance",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "blocked",
+      "priority": "P0",
+      "completionCriterion": "Obtain supported phone/tablet, camera/scanner, printer and WebAuthn testing access; results cannot be simulated as physical passes.",
+      "source": null,
+      "files": [
+        "docs/release/traceability.json"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "OPS-001",
+      "requirement": "Staging deployment, recovery, monitoring and release",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "blocked",
+      "priority": "P0",
+      "completionCriterion": "Authorized staging target, secrets through environment, production configuration and rollback/recovery drills.",
+      "source": null,
+      "files": [
+        "docs/release"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "ARCH-001",
+      "requirement": "Historical Stage 2/3 reconciliation",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Inspect available Stage 2 archive selectively and identify missing Stage 3 branch source.",
+      "source": null,
+      "files": [
+        "STAGE2_INTEGRATION_QA.md",
+        "STAGE3_V10_PARALLEL_BUILD_PLAN.md"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-002",
+      "requirement": "Crash atomicity across main and assistant databases",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "missing",
+      "priority": "P0",
+      "completionCriterion": "Unify storage or implement a durable recovery protocol; test interruption after each restore/clear phase and retain all required audit records.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/restoreJournal.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "PERF-001",
+      "requirement": "Device performance and bundle budget",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Measure low-end supported devices and define/pass performance budgets before release.",
+      "source": null,
+      "files": [
+        "vite.config.ts",
+        "client/src/main.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "RUNTIME-001",
+      "requirement": "Runtime patch and distribution notices review",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Review latest supported runtime security patch, pin/rerun tests; verify required notices and modified wouter patch license obligations.",
+      "source": null,
+      "files": [
+        ".node-version",
+        "docs/release/dependency-inventory.json"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "SEC-002",
+      "requirement": "Optional server identity snapshot cross-process and file safety",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-and-tested",
+      "priority": "P1",
+      "completionCriterion": "Concurrent independent issuer/enrollment instances preserve all records; revoked identity cannot mint a session after lock wait; symlink/hardlink/public file and parent modes fail closed; all native regressions pass.",
+      "source": null,
+      "files": [
+        "server/syncLogin.mjs",
+        "server/syncEnrollment.mjs",
+        "server/syncDirectory.mjs",
+        "server/syncSessionStore.mjs",
+        "server/tests/syncLogin.test.mjs",
+        "server/tests/syncEnrollment.test.mjs",
+        "server/tests/syncDirectory.test.mjs",
+        "server/tests/syncSessionStore.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-003",
+      "requirement": "Customer credit reversal sign, net-balance reporting and full-reversal linkage",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Rerun full client Vitest/types/build/browser on pinned runtime. Verify real purchase/refund/repayment/credit scenarios against independent reference totals, actor permission races, legacy migrations and malformed records; do not close this issue from native pure-helper tests alone.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/reports.ts",
+        "qa/stage12-credit-reconciliation.test.mjs",
+        "client/src/features/credit/credit.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-004",
+      "requirement": "Explicit supplier payable recognition, manual settlements and currency integrity",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Run pinned client Vitest/types/build and real v26->v27 IndexedDB migrations, backup corrupt/restore and offline reload tests; verify original-currency precision; add opening balances/partially paid historical purchase policy, independent cash-flow reconciliation, supplier returns and invoicing. Manual entries are not proof of provider settlement.",
+      "source": null,
+      "files": [
+        "client/src/features/purchases/supplierPayables.mjs",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/purchases/supplierPayables.d.mts",
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/purchases/purchases.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/pages/PurchasesPage.tsx",
+        "qa/stage12-supplier-payables.test.mjs",
+        "client/src/features/purchases/supplierPayables.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-005",
+      "requirement": "Partial return allocation groundwork and ambiguous credit-sale reversal prevention",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Define owner-approved disposition policy and per-sale repayment allocation; implement atomic durable partial-return/reversal ledger, original FIFO and batch restoration, loyalty/wallet/discount/tax/tender conservation, immutable cash/provider refund verification, historic migration and backup/restore. Execute client integration/types/build/offline browser plus policy and end-to-end financial reconciliation. Read-only draft helper alone does not close financial refunds.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/partialReturnPlan.mjs",
+        "client/src/features/sales/partialReturnPlan.d.mts",
+        "client/src/features/sales/reversalDebtGuard.mjs",
+        "client/src/features/sales/reversalDebtGuard.d.mts",
+        "client/src/features/assistant/reversals.ts",
+        "qa/partial-return-draft.test.mjs",
+        "client/src/features/credit/credit.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-006",
+      "requirement": "New per-sale repayment evidence is service-implemented; legacy allocations and full refund reconciliation remain open",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Run real client/Vitest IndexedDB and backup/migration tests plus semantic typecheck, build and offline browsers. Deliver reviewed customer allocation UI and historical evidence policy, per-sale currency and due-date tracking, compensating credit/debt changes for genuine partial refunds, and full financial reconciliation. Keep financial release NO-GO until all required gates pass.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/reversalDebtGuard.mjs",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/stage12-repayment-allocations.test.mjs",
+        "client/src/features/credit/credit.test.ts",
+        "client/src/features/backup/backup.test.ts",
+        "client/src/features/credit/repaymentTargets.mjs",
+        "client/src/features/credit/repaymentTargets.d.mts",
+        "client/src/pages/CustomersPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-007",
+      "requirement": "Repayment UI with explicit recorded-currency target evidence is source-implemented but unverified in real browser",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Run client Vitest/IndexedDB/browser/typecheck/build with locked dependencies; verify payment mode selection, customer/company switch, stale sale and currency policy end-to-end; design policy for mixed historical currency/repayments, split-UI, dates, full-history cash and refunds.",
+      "source": null,
+      "files": [
+        "client/src/pages/CustomersPage.tsx",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/credit/repaymentTargets.mjs",
+        "client/src/features/credit/repaymentTargets.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/stage12-repayment-targets.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-008",
+      "requirement": "Mixed and unknown currency customer receivables can be silently summed",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Run pinned client Vitest with real IndexedDB, semantic TS, build and browser regression; design evidence-based legacy currency reconciliation and cross-currency policy, and separate all monetary reporting/printing/cash flow by known currency. Complete full partial refunds, multi-database crash recovery and owner policy acceptance before financial GO.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/creditLedger.mjs",
+        "client/src/features/sales/creditLedger.d.mts",
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/backup/backup.ts",
+        "qa/receivable-currency-safety.test.mjs",
+        "client/src/features/credit/credit.test.ts",
+        "client/src/features/backup/backup.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-009",
+      "requirement": "Independent saved customer receivable/reversal/allocation integrity audit",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Independently detect malformed/foreign/duplicate reversals, impossible repayment allocations, mixed-currency debt and negative/overflow balances without mutating saved records; run full client/IndexedDB and migration verification.",
+      "source": null,
+      "files": [
+        "client/src/features/reliability/receivableAudit.mjs",
+        "client/src/features/reliability/receivableAudit.d.mts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/reliability/integrity.test.ts",
+        "qa/receivable-audit.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-003",
+      "requirement": "Durable cross-IndexedDB backup restore preimage journal",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Persist and validate the assistant preimage before its update; atomically commit retail records and remove marker; repeat startup recovery after interrupted phases; fail closed on malformed/inaccessible marker; verify real IndexedDB interruption tests, concurrent tabs, quota, all audit/clear semantics.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/contexts/DatabaseContext.tsx",
+        "client/src/features/business/activeCompany.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-004",
+      "requirement": "Cross-IndexedDB company clear assistant preimage recovery",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Run client Vitest/Dexie tests and full rollback/crash/reopen matrix across before-marker, after-marker, after-assistant-commit, failed/committed-retail-delete, and recovery interruption. Verify app startup, multiple companies, low quota, tab races and retention policy; audit all cross-database mutation writers before DATA-002 is closed.",
+      "source": null,
+      "files": [
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/restoreJournal.mjs",
+        "qa/restore-journal.test.mjs",
+        "client/src/features/backup/restoreRecovery.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-005",
+      "requirement": "Recovery journal protects against stale and unexpected assistant preimage overwrites",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Run real Dexie/IndexedDB client tests and multi-tab crash/race matrix. Require journal before/after state verification without loss; add global mutation coordination and physical interruption tests before DATA-002 closes.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "qa/restore-journal.test.mjs",
+        "client/src/features/backup/restoreRecovery.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "SEC-003",
+      "requirement": "Assistant local conversation and saved-record read isolation",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Deny all foreign-company direct calls; validate inside assistant write transactions and after reads; do not record async responses under a newly selected company; execute real Vitest/Dexie tests and cross-tab review.",
+      "source": null,
+      "files": [
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/assistant/assistant.ts",
+        "client/src/features/assistant/assistantDataSafety.mjs",
+        "client/src/features/assistant/assistantLocalStore.security.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-006",
+      "requirement": "Assistant backup history truncated to recent display limit and activity-log prune non-atomic",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Backup retains all authorized company history, never silently truncates; activity-log retention append/prune is transactionally atomic, with real IndexedDB failure tests and backup size/recovery checks. Audit-record policy remains a distinct owner decision.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/backup.ts",
+        "client/src/features/assistant/assistantLocalStore.ts",
+        "client/src/features/assistant/audit.ts",
+        "client/src/features/backup/backup.test.ts",
+        "client/src/features/assistant/audit.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "SEC-004",
+      "requirement": "Stage 9 store and Stage 4 customer benefit writes had time-of-check staff authorization gaps",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Verify inside-transaction staff role/company and actor audit, positive/negative role tests, session expiry and company-switch rollback in real IndexedDB.",
+      "source": null,
+      "files": [
+        "client/src/features/stores/storeDirectory.ts",
+        "client/src/features/stores/storeStockCounts.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/stores/storeAuthorization.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "STORE-002",
+      "requirement": "Local store records lacked an independent read-only integrity audit",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Independent company-scoped malformed/orphan/duplicate/date/quantity/actor tests, Dexie integration, and no confusion with authoritative stock balances.",
+      "source": null,
+      "files": [
+        "client/src/features/stores/storeIntegrity.mjs",
+        "client/src/features/reliability/integrity.ts",
+        "qa/stage9-store-integrity.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-011",
+      "requirement": "Saved invoice tax/discount component conservation in partial-return draft",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Verify cumulative exact tax, taxable and discount amounts from original invoice under partial returns; reject tampered tax policies and imprecise totals; execute client/IndexedDB integration before closing.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/partialReturnPlan.mjs",
+        "client/src/features/sales/partialReturnPlan.d.mts",
+        "qa/partial-return-draft.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-012",
+      "requirement": "Partial FIFO cost restoration conserves original receipt allocations",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Validate multiple immutable partial restoration events against original issue and exact receipt costs; reject duplicate or excessive restorations, tampering, foreign sale/company records and overflow; verify atomic integration and reconciliation with real partial-return postings in client tests.",
+      "source": null,
+      "files": [
+        "client/src/features/inventory/partialCostRestoration.mjs",
+        "client/src/features/inventory/partialCostRestoration.d.mts",
+        "client/src/features/inventory/costLedger.ts",
+        "client/src/features/inventory/costLedger.test.ts",
+        "qa/stage12-partial-fifo-restoration.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-013",
+      "requirement": "Narrow atomic, staff-confirmed cash-only partial-return posting and reporting",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Execute and verify real IndexedDB atomicity and schema 27-to-28 migrations; staff authorization, receipt/tender validation, saved tax/discount component conservation, exact FIFO/restock and repeat/idempotency rejection, independent cross-period cash/revenue/COGS/shift reconciliation, tampered backup rollback, browser UI and full QA; expand to other return methods only with agreed policy.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/sales/cashPartialReturn.mjs",
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/costReconciliation.ts",
+        "client/src/features/staff/staff.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "client/src/features/assistant/reversals.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-014",
+      "requirement": "Read-only return review and narrow cash refund workflow activation",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Execute Vitest/IndexedDB and browser checks of the read-only review, verify keyboard/accessibility/company isolation, reconcile original tax and FIFO snapshots against tampered records; obtain owner policy and test full cash workflow before separately enabling an actual posting control.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/cashReturnReview.mjs",
+        "client/src/features/sales/cashReturnReview.d.mts",
+        "client/src/features/sales/cashReturnReview.ts",
+        "client/src/components/CashReturnReviewDialog.tsx",
+        "client/src/pages/SalesPage.tsx"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-015",
+      "requirement": "Match prior cash refunds with immutable physical stock and original FIFO evidence before further returns",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Validate original issue, each historical return, movement, cost restoration and receipt-layer allocations at a consistent company-scoped read/write snapshot; reject absent, duplicate, altered, foreign or out-of-order evidence, and run real IndexedDB, browser and backup/restore integration tests before enabling operational posting.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/cashReturnStockLinks.mjs",
+        "client/src/features/sales/cashReturnStockLinks.d.mts",
+        "client/src/features/sales/cashReturnReview.ts",
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "qa/stage12-cash-return-stock-links.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "FIN-016",
+      "requirement": "Audit cash-return physical stock and original FIFO links across backups and company history",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "At a consistent company-scoped snapshot, check every saved cash return against matching original sale/line issue, stock movement and receipt-layer FIFO restoration; reject absent, altered, foreign and multiply linked evidence in backup import and local audit; run actual IndexedDB, cross-company backup, browser and mutation/rollback tests on the pinned toolchain.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/cashReturnStockLinks.mjs",
+        "client/src/features/sales/cashReturnStockLinks.d.mts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/reliability/integrity.ts",
+        "qa/stage12-cash-return-ledger-links.test.mjs",
+        "client/src/features/sales/cashPartialReturnPosting.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-007",
+      "requirement": "Portable byte-bound enforcement and semantic postimage validation for durable recovery journals",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Reject oversized UTF-8 encoded journal on parse and save; reject populated company-clear postimage while preserving legacy journal compatibility; run native tests and real IndexedDB restore/company-clear across browser interruption, quota and multiple tabs before closing DATA-002 or release.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/restoreJournal.mjs",
+        "qa/restore-journal.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-008",
+      "requirement": "Bound local backup import and encryption/decryption resources",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Run full client Vitest/types/build, browser and real IndexedDB restore on both valid and oversized files, wrong keys and corrupted envelopes; measure memory/quota on low-end Windows and agree safe supported archive sizes with owner. Large historical archives requiring a higher cap need an approved streamed/import-recovery design, never silent truncation.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/backupResourceLimits.mjs",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupCrypto.ts",
+        "client/src/pages/BackupPage.tsx",
+        "qa/backup-resource-limits.test.mjs",
+        "qa/backup-crypto-size.test.mjs",
+        "client/src/features/backup/backupCrypto.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-009",
+      "requirement": "Origin-wide Web Locks coordination for destructive two-database work and assistant writers",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Execute Dexie and multi-tab real Chromium/Firefox support matrix; verify lock ordering, fallback fail-closed, power loss at each journal phase, mixed retail writes, browser reopen, and quota failures; ensure supported browser/secure-context policy documented.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/crossTabDataLock.mjs",
+        "client/src/features/backup/restoreRecovery.ts",
+        "client/src/features/backup/backup.ts",
+        "client/src/features/business/activeCompany.ts",
+        "client/src/features/assistant/assistantLocalStore.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-010",
+      "requirement": "Coordinate selected core retail mutations with origin-wide recovery Web Locks",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Run the complete pinned TypeScript/IndexedDB/Vitest suite, including nested quotation conversion, concurrent tabs and lock denial with exact rollback. Test actual secure-context browsers including lock-release after tab termination. Audit and coordinate ALL remaining retail writers and direct/raw IndexedDB access, startup recovery and physical interruption before closing DATA-002, this issue or declaring release ready.",
+      "source": null,
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/customers/quotations.ts",
+        "client/src/features/purchases/purchases.ts",
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/supplierPayables.ts",
+        "client/src/features/assistant/reversals.ts",
+        "client/src/features/sales/cashPartialReturnPosting.ts",
+        "client/src/features/backup/retailWriteCoordination.test.ts",
+        "qa/retail-write-lock-coverage.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-011",
+      "requirement": "Coordinate additional customer, wallet, store, catalogue, stock-count and supplier mutations with recovery lock",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P0",
+      "completionCriterion": "Run locked client Vitest/IndexedDB including nested stock-count and catalogue flows, Deny/Allow race tests for every affected mutation, wallet staff revocation and shift close during dispatch, multi-tab restore/clear contention, actual browser interruption and rollback. Review unguarded staff, business profile, quote drafting, debt and direct/raw IndexedDB writers before claiming DATA-002 solved.",
+      "source": null,
+      "files": [
+        "client/src/features/backup/retailWriteLock.mjs",
+        "client/src/features/backup/retailWriteLock.d.mts",
+        "client/src/features/backup/coordinatedRetailWrite.ts",
+        "client/src/features/customers/customers.ts",
+        "client/src/features/customers/customerBenefits.ts",
+        "client/src/features/customers/walletTransfers.ts",
+        "client/src/features/stores/storeDirectory.ts",
+        "client/src/features/stores/storeTransfers.ts",
+        "client/src/features/stores/storeStockCounts.ts",
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/inventory/stage2Inventory.ts",
+        "client/src/features/inventory/advancedInventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "DATA-012",
+      "requirement": "Business, staff and local commerce mutations participate in recovery coordination",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Execute real Dexie/IndexedDB and browser Web Locks contention tests; verify company-switch and staff permission races, no partial writes and recovery interoperability.",
+      "source": null,
+      "files": [
+        "client/src/features/business/businessProfile.ts",
+        "client/src/features/commerce/commerce.ts",
+        "client/src/features/staff/staff.ts",
+        "client/src/features/backup/adminRecoveryCoordination.test.ts"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "release",
+      "id": "SEC-006",
+      "requirement": "Staff authenticator and supervisor approval must reject stale credentials and sessions",
+      "originalRegister": "docs/release/blockers.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "P1",
+      "completionCriterion": "Real WebAuthn/browser + IndexedDB tests on supported devices, credential/session races and counter replay, shift-close authorization within the write transaction; native guard test must pass.",
+      "source": null,
+      "files": [
+        "client/src/features/staff/staff.ts",
+        "client/src/features/staff/credentialFreshness.mjs",
+        "client/src/features/staff/credentialFreshness.d.mts",
+        "qa/staff-recovery-coordination.test.mjs"
+      ],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-001",
+      "requirement": "Trusted server-side ingestion endpoint/RPC with auth-user, device, shop, staff, version and payload authorization; no direct browser finance writes",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "critical",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-002",
+      "requirement": "Durable full-operation payload and outbox written atomically with each local sale/shift/refund; retry, replay, revocation and status UI",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "critical",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-003",
+      "requirement": "Real PostgreSQL test-project migrations, constraints, RLS negative tests and authorization review",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "unverified",
+      "priority": "critical",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-004",
+      "requirement": "Mandatory sale staff/shift/MoMo changes may break older onboarding/UI integration tests; real Dexie and Vitest not run",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-005",
+      "requirement": "No-sale PIN/shift/store/device workflow integrated locally but device ID is a local claim; physical drawer hardware not connected",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-006",
+      "requirement": "Source v29 vs other branch v33 needs an additive migration rebase and three-way merge before any GitHub integration",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-007",
+      "requirement": "Authoritative shop and device provenance in new sale data; central ingest must never invent or trust client claims",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-008",
+      "requirement": "Watchdog v1 export per-shop per-day with version/row-count, verified field contract and actual Watchdog importer test",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-009",
+      "requirement": "Owner cross-shop reports and provider MoMo-statement reconciliation verified against trusted central data",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-010",
+      "requirement": "Full React/Vitest/typecheck/build/Playwright real-browser multi-tab and recovery tests; pnpm dependency installation unavailable locally",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "unverified",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-011",
+      "requirement": "Full refund disbursement and financial ledger reconciliation still incomplete across app",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "critical",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-012",
+      "requirement": "New Watchdog daily JSON preview and local integrity review pass native focused tests; full React/Vitest/IndexedDB/actual Watchdog importer test unverified",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "implemented-unverified",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-013",
+      "requirement": "Batch 1–5 candidate-only financial/inventory/backup modules cannot replace existing authoritative writers without domain-specific migrations and full integration acceptance",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    },
+    {
+      "family": "central",
+      "id": "CENTRAL-014",
+      "requirement": "Watchdog JSON output is explicitly local-preview; genuine importer-negotiated v1 contract, authoritative register/device provenance, signed central receipts and full multi-store events remain unimplemented",
+      "originalRegister": "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+      "historicalStatus": "missing",
+      "priority": "high",
+      "completionCriterion": null,
+      "source": null,
+      "files": [],
+      "missingReferencedPaths": [],
+      "currentDisposition": "unreviewed",
+      "acceptanceEvidence": [],
+      "nextAction": "Reconcile the entire original criterion against current services and executed tests. File existence and historical test counts are not current acceptance."
+    }
+  ]
+}

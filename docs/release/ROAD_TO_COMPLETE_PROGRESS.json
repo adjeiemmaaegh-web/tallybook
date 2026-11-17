@@ -1,0 +1,2560 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "auditBaseline": "5633c3901136cd0024021255ae0c29eceb0f10be",
+  "updated": "2026-11-17",
+  "decision": "NO-GO",
+  "boundaries": [
+    "No main merge, deployment, live database changes, auth policy changes, or payment activation authorized.",
+    "Historical and new verification remain separate. Unreviewed means not yet reconciled, not missing."
+  ],
+  "tasks": [
+    {
+      "id": "ST21-01",
+      "stage": 21,
+      "priority": "CRITICAL",
+      "name": "Release Baseline",
+      "requirement": "Freeze the authoritative release candidate at GitHub main commit 5633c3901136cd0024021255ae0c29eceb0f10be. Reconcile it against deployed Vercel commit 175204d15c6d77a3ae9cadee505dfa1cf5821ac6 and the 37 recorded production database migrations.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "one exact source, deployment, schema and artifact compatibility record.",
+      "status": "partial",
+      "files": [
+        "README.md",
+        "supabase/MIGRATION_HISTORY.md",
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [
+        "Clean main checkout; 37 canonical migration files; documented hosted timestamp mapping."
+      ],
+      "changes": [
+        "Pinned current main at 41d4bab619db1808f21471299bd7760eee1a6836; audit-to-head diff is roadmap only."
+      ],
+      "tests": [],
+      "blockers": [
+        "Deployed SHA and hosted schema are historical reports, not independently inspected in this increment.",
+        "Final release artifact not selected."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Build and compare exact candidate/deployment/schema manifests without applying migrations."
+    },
+    {
+      "id": "ST21-02",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Requirements Traceability",
+      "requirement": "Reassess all 82 historical acceptance units, 47 release blockers and 14 central-workspace blockers. Map each to current source, executed tests, missing requirements and documented replacements.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "every original ID has an evidence-backed current disposition without deleting historical records.",
+      "status": "partial",
+      "files": [
+        "docs/release/traceability.json",
+        "docs/release/blockers.json",
+        "docs/central/CENTRAL_WORKSPACE_BLOCKERS.json",
+        "docs/release/ROAD_TO_COMPLETE_HISTORICAL_IDS.json"
+      ],
+      "existingCapabilityReused": [
+        "82 acceptance IDs, 47 release IDs, 14 central IDs retained."
+      ],
+      "changes": [
+        "Added 143-row reconciliation worklist preserving original status and source paths."
+      ],
+      "tests": [],
+      "blockers": [
+        "Per-ID behavioral reconciliation remains open; inventory is not proof."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Inspect every original acceptance criterion, map to current service and executed proof."
+    },
+    {
+      "id": "ST21-03",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Repository Architecture",
+      "requirement": "Complete the remaining source-by-source audit across the 2,090 tracked files, covering standalone IndexedDB, shared-shop frontend, PostgreSQL, optional sync server, Clementia, Telegram, public commerce, testing infrastructure and historical candidates.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "every active entrypoint, dependency, business mutation and inactive module is accounted for.",
+      "status": "partial",
+      "files": [
+        "docs/release/RC_INTEGRATION.md",
+        "client/src/App.tsx",
+        "server/index.ts",
+        "scripts/full-repository-qa-inventory.mjs"
+      ],
+      "existingCapabilityReused": [
+        "Existing two-ledger architecture and static import preflight."
+      ],
+      "changes": [
+        "Executed source/test/workflow inventory; reviewed architecture and migration history."
+      ],
+      "tests": [],
+      "blockers": [
+        "Source-by-source mutation and inactive-module disposition is incomplete."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Trace active route -> service -> authorization -> persistence -> test for every mutation."
+    },
+    {
+      "id": "ST21-04",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "GitHub Branches",
+      "requirement": "Complete semantic and patch-equivalence reconciliation for all 42 non-main branches. Branch-tip comparisons were performed, but unique commits and changed-file lists must be checked against the integrated implementation before declaring functionality missing or superseded.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "every branch receives an evidence-backed retain, integrate, supersede or close recommendation.",
+      "status": "partial",
+      "files": [
+        "scripts/road-to-complete-branches.mjs",
+        "docs/release/ROAD_TO_COMPLETE_BRANCHES.json"
+      ],
+      "existingCapabilityReused": [
+        "Historical RC_RECONCILIATION.md dispositions retained as historical."
+      ],
+      "changes": [
+        "Inspected all 42 tips; recorded ancestry, patch identity, changed paths and matching blobs independently."
+      ],
+      "tests": [],
+      "blockers": [
+        "33 divergent branches still need current semantic disposition; no automatic merge decisions."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Prioritize unique owner-completion, recovery, supplier and tenant changes against current services."
+    },
+    {
+      "id": "ST21-05",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Unmerged Engineering",
+      "requirement": "Review unique work in development/v19-owner-completion-audit, development/v19-unified-reconciliation, stage-b-offline-integrity-20261106, backend-b-e-20261106, v19/run5-tenant-service-authorization-20261016 and v19/run12-supplier-tax-20261016.",
+      "initialAuditStatus": "Unmerged/diverged",
+      "completionCriterion": "identify genuinely unique finance, recovery, security and integration changes without blind cherry-picks or duplicate migrations.",
+      "status": "partial",
+      "files": [
+        "docs/release/ROAD_TO_COMPLETE_BRANCHES.md",
+        "docs/release/RC_RECONCILIATION.md"
+      ],
+      "existingCapabilityReused": [
+        "Canonical refund policy, session-bound RPC, sealed queue, supplier attribution."
+      ],
+      "changes": [
+        "Inspected six priority branch diffs and historical integration decisions; identified owner-completion commerce/scheduling work for deeper review."
+      ],
+      "tests": [],
+      "blockers": [
+        "Unique behavior and migration compatibility need executable verification before porting."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Review branch-only changes with canonical ledger tests; port smallest compatible changes only."
+    },
+    {
+      "id": "ST21-06",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Candidate Modules",
+      "requirement": "Reconcile candidate_modules/batch1 through batch5 with the authoritative application; these candidates are documented as not wired into production.",
+      "initialAuditStatus": "Unmerged",
+      "completionCriterion": "integrate only verified unique capabilities or formally retire each superseded candidate while retaining its source history.",
+      "status": "partial",
+      "files": [
+        "candidate_modules/batch1/README.md",
+        "candidate_modules/batch2/README.md",
+        "candidate_modules/batch3/README.md",
+        "candidate_modules/batch4/README.md",
+        "candidate_modules/batch5/README.md"
+      ],
+      "existingCapabilityReused": [
+        "Read-only checkers remain distinct from authoritative services."
+      ],
+      "changes": [
+        "Documented inactive candidate boundaries; hardened configured Batch 5 placeholders against false passes."
+      ],
+      "tests": [],
+      "blockers": [
+        "Module-by-module unique capability mapping remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Compare each checker to authoritative service invariants; retain only justified gaps."
+    },
+    {
+      "id": "ST21-07",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "PR #85 — Fresh-Start Release",
+      "requirement": "Resolve the open draft documenting mandatory sign-in and an irreversible production reset. Separate already integrated authentication safeguards from still-unapproved data-deletion and release decisions.",
+      "initialAuditStatus": "Blocked",
+      "completionCriterion": "owner-approved disposition and no destructive change through a documentation-only merge.",
+      "status": "owner-external-blocked",
+      "files": [
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [
+        "Optional auth/fresh-start gates remain unchanged."
+      ],
+      "changes": [
+        "Read current PR #85: open draft, two documentation files, no release authorization."
+      ],
+      "tests": [],
+      "blockers": [
+        "Owner decision on strict account policy and irreversible reset; latest instruction forbids production changes."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Keep PR #85 unmerged; continue safe engineering without changing reset flags."
+    },
+    {
+      "id": "ST21-08",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Field Acceptance Documentation",
+      "requirement": "Reconcile qa/pilot-field-acceptance-20261116 with main, incorporating two-phone and disaster-recovery runbooks without outdated commit expectations.",
+      "initialAuditStatus": "Unmerged",
+      "completionCriterion": "current executable acceptance instructions linked to the exact candidate.",
+      "status": "partial",
+      "files": [
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md",
+        "docs/release/REMOTE_VERIFICATION_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [
+        "Both field-acceptance branch document blobs already match main."
+      ],
+      "changes": [
+        "Replaced stale universal expected SHA with candidate-specific target/artifact/schema checks and isolated-target instructions."
+      ],
+      "tests": [],
+      "blockers": [
+        "Actual field execution and exact final candidate remain pending."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Run instructions against frozen isolated candidate and record real device/restore results separately."
+    },
+    {
+      "id": "ST21-09",
+      "stage": 21,
+      "priority": "MEDIUM",
+      "name": "Historical UI Branches",
+      "requirement": "Compare feature/premium-settings-business-staff-2026-10-15, review/combined-settings-clementia-2026-10-15 and frontend-all-stages-20261106 with working screens.",
+      "initialAuditStatus": "Unmerged",
+      "completionCriterion": "identify useful design improvements separately from unconnected prototypes and conflicting implementations.",
+      "status": "partial",
+      "files": [
+        "docs/release/ROAD_TO_COMPLETE_BRANCHES.json",
+        "docs/release/RC_RECONCILIATION.md"
+      ],
+      "existingCapabilityReused": [
+        "Integrated real home/staff/assistant flows retained."
+      ],
+      "changes": [
+        "Recorded three historical UI branch tip/path evidence."
+      ],
+      "tests": [],
+      "blockers": [
+        "Current visual/behavioral parity comparison remains incomplete."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Compare real screens and keyboard/mobile behavior before reusing design changes."
+    },
+    {
+      "id": "ST21-10",
+      "stage": 21,
+      "priority": "MEDIUM",
+      "name": "GitHub Issues & Milestones",
+      "requirement": "Reassess open issues #5, #8, #9 and #68 against current source and acceptance evidence, and review historical planning milestones before closure.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "each issue has updated remaining work or justified closure.",
+      "status": "partial",
+      "files": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "existingCapabilityReused": [
+        "Current GitHub issue requirements retained; no issue closure performed."
+      ],
+      "changes": [
+        "Read open issues #5, #8, #9, #68 and draft #85 directly."
+      ],
+      "tests": [],
+      "blockers": [
+        "Requirement-by-requirement proof and milestone review remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
+    },
+    {
+      "id": "ST21-11",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Repository Governance",
+      "requirement": "Establish protected release branches, mandatory review, required CI checks and controlled release-tag procedures; inspected main reports protected: false.",
+      "initialAuditStatus": "Missing governance verification",
+      "completionCriterion": "enforced and independently verified controls.",
+      "status": "owner-external-blocked",
+      "files": [
+        ".github/workflows/release-validation.yml"
+      ],
+      "existingCapabilityReused": [
+        "Read-only CI workflows; automatic Vercel deployment disabled in vercel.json."
+      ],
+      "changes": [
+        "Added roadmap integrity check to preflight."
+      ],
+      "tests": [],
+      "blockers": [
+        "Protected-branch/review/tag controls not independently verified or changed; source development authorization does not authorize live repository policy changes."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Prepare required-check names from successful candidate CI and request separate governance decision."
+    },
+    {
+      "id": "ST21-12",
+      "stage": 21,
+      "priority": "MEDIUM",
+      "name": "Dead Code & Test Placeholders",
+      "requirement": "Audit inactive routes such as StagePlaceholder.tsx, historical preview adapters, unused feature flags and incomplete assertions in candidate_modules/batch5/endToEndBusinessFlows.spec.ts.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "each placeholder is connected to a legitimate workflow, retained as an inactive candidate or safely retired.",
+      "status": "partial",
+      "files": [
+        "candidate_modules/batch5/endToEndBusinessFlows.spec.ts",
+        "candidate_modules/batch5/README.md"
+      ],
+      "existingCapabilityReused": [
+        "Candidate scaffolds stay outside active release suites."
+      ],
+      "changes": [
+        "Configured candidate browser tests explicitly fail instead of accepting body visibility.",
+        "Retired unreferenced StagePlaceholder.tsx; no active import; historical Git/archive manifests retained."
+      ],
+      "tests": [],
+      "blockers": [
+        "Full remaining feature-flag/preview-adapter reachability audit is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Finish inactive feature-flag and preview-adapter dispositions; candidate E2E business assertions remain explicitly unimplemented."
+    },
+    {
+      "id": "ST21-13",
+      "stage": 21,
+      "priority": "HIGH",
+      "name": "Independent Build Reproduction",
+      "requirement": "Reproduce successful CI from a clean checkout using Node 24.19.0, pnpm 10.34.0 and frozen lockfile. The inspected CI reports 1,159 native/server and 1,823 client tests passed; these were not independently rerun in the audit workspace.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "repeatable clean-install, type, build, test and browser logs with hashes.",
+      "status": "partial",
+      "files": [
+        "qa/membership-invite-24h.test.mjs",
+        "qa/shared-shop-refund-policy.test.mjs",
+        ".node-version",
+        "package.json"
+      ],
+      "existingCapabilityReused": [
+        "Frozen lockfile, existing complete client/native/type/build suites."
+      ],
+      "changes": [
+        "Added PGlite test cleanup; reproduced pinned install/type/build; executed focused tests."
+      ],
+      "tests": [
+        {
+          "command": "corepack pnpm install --frozen-lockfile",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/install-pinned.txt"
+        },
+        {
+          "command": "node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/native-ci-command.txt"
+        },
+        {
+          "command": "corepack pnpm test --maxWorkers=1 --testTimeout=60000 --hookTimeout=60000 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/client-complete.txt"
+        },
+        {
+          "command": "corepack pnpm check",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/types-candidate.txt"
+        },
+        {
+          "command": "corepack pnpm build",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/build-candidate.txt"
+        },
+        {
+          "command": "corepack pnpm audit --audit-level moderate",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-stage21/audit-candidate.txt"
+        }
+      ],
+      "blockers": [
+        "Chromium v1248 download returned invalid ZIP; browser acceptance blocked.",
+        "Exact hosted schema/deployment compatibility and final release scope remain unverified."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md"
+      ],
+      "nextAction": "Reproduce browser gates with a valid pinned browser distribution; retain no production-readiness claim."
+    },
+    {
+      "id": "ST22-01",
+      "stage": 22,
+      "priority": "CRITICAL",
+      "name": "Sales Ledger",
+      "requirement": "Independently reconcile every local/cloud checkout mode: sale lines, discounts, tax, cash, card, manually recorded Mobile Money, credit, wallet, change, stock and receipt totals.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "independent financial oracles match persisted records after normal and interrupted transactions.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect sales ledger against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-02",
+      "stage": 22,
+      "priority": "CRITICAL",
+      "name": "Refunds & Reversals",
+      "requirement": "Verify full and partial returns across cash, credit, wallet and mixed tender histories, including refund disbursement, original-sale linkage, duplicate prevention, inventory restoration and cost conservation.",
+      "initialAuditStatus": "Partially implemented/verified",
+      "completionCriterion": "authorized refunds post exactly once with complete reversal evidence.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect refunds & reversals against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-03",
+      "stage": 22,
+      "priority": "CRITICAL",
+      "name": "Customer Receivables",
+      "requirement": "Reconcile debt, partial repayments, original-sale allocation, negative reversals, prepaid balances, legacy receivables and mixed-currency histories.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "no cross-currency summation, orphan allocation, overpayment or disappearing debt.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect customer receivables against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-04",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "Company Refund Policies",
+      "requirement": "Verify per-company opt-in/opt-out refund model, sale-time policy snapshots, current restrictions and staff approvals.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "differing company policies produce correct results without rewriting history.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect company refund policies against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-05",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "Supplier Accounting",
+      "requirement": "Reconcile purchase liabilities, partial goods receipts, supplier settlements, cancellations, currencies and payment history across both ledgers.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "supplier balances, purchases and cash outflows agree without duplicate liabilities.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect supplier accounting against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-06",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "FIFO, COGS & Historical Costing",
+      "requirement": "Validate receipt cost layers, partial cost restoration, missing-cost legacy records, valuation, gross margin and historical cutoff.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "quantity and cost conservation with no invented historical cost.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect fifo, cogs & historical costing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-07",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "Cash, Shifts & Accounts",
+      "requirement": "Reconcile cash declarations, money movements, expenses, repayments, supplier payments, transfers and closing variances.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "source-ledger totals match reports and unexplained differences stay explicit.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect cash, shifts & accounts against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-08",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "Currency & Tax",
+      "requirement": "Test monetary limits, decimal rounding, tax snapshots, unsupported currencies, legacy currency evidence and jurisdiction-specific configuration.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "deterministic arithmetic and rejection of unsupported financial assumptions.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect currency & tax against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-09",
+      "stage": 22,
+      "priority": "HIGH",
+      "name": "Transactional Safety",
+      "requirement": "Run duplicate-click, identical-key replay, concurrent submissions, failed writes, lost responses and restart tests for financial mutation services.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "exactly-once success and zero partial effects on rejection.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect transactional safety against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST22-10",
+      "stage": 22,
+      "priority": "MEDIUM",
+      "name": "Financial Reports & Exports",
+      "requirement": "Verify periods, reconciliation exports, spreadsheet formulas, negative values and safe CSV output.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "exported totals equal authoritative source records and are safe in spreadsheet software.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sales/sales.ts",
+        "client/src/features/credit/credit.ts",
+        "client/src/features/reports/financialIntelligence.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect financial reports & exports against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-01",
+      "stage": 23,
+      "priority": "CRITICAL",
+      "name": "Stock Authority",
+      "requirement": "Reconcile local/shared stock across purchases, sales, refunds, transfers, counts and adjustments.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no unsupported negative stock, double movement or inconsistent store quantity.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect stock authority against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-02",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Store Transfers",
+      "requirement": "Verify request, dispatch, partial/full receipt, cancellation and cross-store reconciliation.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "exact in-transit and destination quantities, actor attribution and safe retries.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect store transfers against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-03",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Batch Stocktaking",
+      "requirement": "Complete acceptance for batch stocktake, including stale quantities, simultaneous counts, review, adjustment history and failed submissions.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "counts and applied movements remain consistent under concurrency.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect batch stocktaking against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-04",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Purchasing",
+      "requirement": "Test partial receipts, over-receipt rejection, duplicate supplier transactions, unit costs, inventory movements and payables.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "purchase quantities, costs and liabilities reconcile.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect purchasing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-05",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Product Catalogue",
+      "requirement": "Validate product variants, SKUs, barcodes, units, wholesale pricing, service items, expiry and active/inactive transitions.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "every supported product type works across purchase, checkout, stock and reports.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect product catalogue against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-06",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Historical Inventory",
+      "requirement": "Reconcile legacy unassigned-store stock, missing origins and existing batches without inventing historical ownership.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "evidence or explicit unknown attribution for every historical difference.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect historical inventory against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-07",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Store Authorization",
+      "requirement": "Verify owner/supervisor/cashier/delegated count and receiving rights at the server mutation boundary.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "unauthorized role/store/company changes rejected.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect store authorization against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-08",
+      "stage": 23,
+      "priority": "HIGH",
+      "name": "Stock Concurrency",
+      "requirement": "Stress simultaneous checkout, receipt, refund, count and transfer on the same item.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "serializable stock, no oversell and deterministic conflict rollback.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect stock concurrency against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST23-09",
+      "stage": 23,
+      "priority": "MEDIUM",
+      "name": "Inventory Scale",
+      "requirement": "Verify search, stocktake, purchasing and transfers with thousands of products and long histories.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "approved performance/memory thresholds without missing or duplicated results.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/inventory/inventory.ts",
+        "client/src/features/purchases/purchases.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect inventory scale against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-01",
+      "stage": 24,
+      "priority": "CRITICAL",
+      "name": "IndexedDB Migrations",
+      "requirement": "Validate complete historical Dexie migrations through the current schema, conflicting branch histories, populated databases and interrupted upgrades.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "IDs, company ownership, money and stock preserved.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect indexeddb migrations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-02",
+      "stage": 24,
+      "priority": "CRITICAL",
+      "name": "Cross-Database Atomicity",
+      "requirement": "Verify restore journals, assistant-history preservation, company clearing, cross-database coordination and power-loss recovery.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "interrupted operations recover/roll back without silent partial finance state.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect cross-database atomicity against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-03",
+      "stage": 24,
+      "priority": "CRITICAL",
+      "name": "Local Backup & Restore",
+      "requirement": "Restore application-generated backups into separate browser profiles/devices; test encrypted archives, wrong passwords, corruption and restart.",
+      "initialAuditStatus": "Unverified in real environments",
+      "completionCriterion": "matching source counts, IDs, balances, stock and audit history.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect local backup & restore against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-04",
+      "stage": 24,
+      "priority": "CRITICAL",
+      "name": "Hosted Database Recovery",
+      "requirement": "Confirm Supabase backup schedule/retention/PITR and restore a safe copy to isolated non-production infrastructure.",
+      "initialAuditStatus": "Untested/owner blocked",
+      "completionCriterion": "verified recovered schema, records, permissions, integrity and duration.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect hosted database recovery against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-05",
+      "stage": 24,
+      "priority": "HIGH",
+      "name": "Device-Ledger Encryption",
+      "requirement": "Design and complete encryption at rest for sensitive standalone IndexedDB data; sealed queues/caches do not protect the entire ledger.",
+      "initialAuditStatus": "Missing",
+      "completionCriterion": "tested keys, migration, recovery and supported-device threat model.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect device-ledger encryption against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-06",
+      "stage": 24,
+      "priority": "HIGH",
+      "name": "Encryption-Key Recovery",
+      "requirement": "Test profile loss, replacement, missing keys and recovery without falsely promising unreadable sealed data is recoverable.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "documented successful and unrecoverable cases.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect encryption-key recovery against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-07",
+      "stage": 24,
+      "priority": "HIGH",
+      "name": "Multi-Tab & Storage Failure",
+      "requirement": "Test Web Locks, tabs, quota, eviction, stale IndexedDB, migration interruption and failed saves.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no false success, unsafe concurrent writes or unnoticed loss.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect multi-tab & storage failure against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-08",
+      "stage": 24,
+      "priority": "HIGH",
+      "name": "Import & Backup Validation",
+      "requirement": "Test oversized/tampered archives, unsupported versions, malformed CSV, resource exhaustion and rejection rollback.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "unsafe input cannot alter valid records.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect import & backup validation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST24-09",
+      "stage": 24,
+      "priority": "HIGH",
+      "name": "Destructive Reset & Clear",
+      "requirement": "Validate company-clear recovery and optional VITE_TALLYBOOK_FRESH_START_EPOCH against interruptions, old offline clients and unbacked-up data.",
+      "initialAuditStatus": "Implemented but unaccepted",
+      "completionCriterion": "owner approval, safe preconditions and no uncontrolled deletion.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/db/TallybookDB.ts",
+        "client/src/features/backup/backup.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect destructive reset & clear against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-01",
+      "stage": 25,
+      "priority": "CRITICAL",
+      "name": "PostgreSQL RPC Security",
+      "requirement": "Independently audit every reachable SECURITY DEFINER operation, including 11 authenticated-executable warnings and intentionally anonymous guest-order endpoint.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "per-action session, role, owner, store, tenant and input negative tests.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect postgresql rpc security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-02",
+      "stage": 25,
+      "priority": "CRITICAL",
+      "name": "Real Authentication",
+      "requirement": "Test real Supabase signup, confirmation, login, recovery, expiration, revocation and membership with independent owner/attendant accounts.",
+      "initialAuditStatus": "Unverified end-to-end",
+      "completionCriterion": "successful authorized flows and server-enforced negative cases.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect real authentication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-03",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Mandatory Online Account Policy",
+      "requirement": "Decide whether strict accounts apply to a new online-only release or existing standalone offline product.",
+      "initialAuditStatus": "Blocked by owner decision",
+      "completionCriterion": "explicit policy and fail-closed mode without silently destroying offline use.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect mandatory online account policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-04",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Staff Permission Boundaries",
+      "requirement": "Verify every write-service permission, role change, company/store switch and session-revocation race.",
+      "initialAuditStatus": "Implemented but not comprehensively verified",
+      "completionCriterion": "no UI-only or stale-role mutation bypass.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect staff permission boundaries against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-05",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Shared-Shop Shifts — Issue #68",
+      "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect shared-shop shifts — issue #68 against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-06",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Owner Employee Audit",
+      "requirement": "Verify activity chronology, server/device timestamps, historical identities, stock differences and investigation review.",
+      "initialAuditStatus": "Implemented but unverified",
+      "completionCriterion": "permission-filtered evidence without accusations or fabricated time.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect owner employee audit against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-07",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Local Staff Authentication",
+      "requirement": "Test PIN changes, lockouts, revocation, supervisor approval, WebAuthn and per-company unlock.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "stale credentials and cross-company unlock rejected.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect local staff authentication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-08",
+      "stage": 25,
+      "priority": "HIGH",
+      "name": "Business & Employee Onboarding",
+      "requirement": "Verify invitations, join codes, expiry, cancellation, repeated attempts, removal, ownership recovery and configured OAuth.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "correct least-privilege membership.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect business & employee onboarding against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST25-09",
+      "stage": 25,
+      "priority": "MEDIUM",
+      "name": "Shared-Device Handover",
+      "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
+      "initialAuditStatus": "Real-device unverified",
+      "completionCriterion": "original cashier, queue scope and receipt preserved.",
+      "status": "unreviewed",
+      "files": [
+        "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
+        "client/src/features/staff/staff.ts"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect shared-device handover against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-01",
+      "stage": 26,
+      "priority": "CRITICAL",
+      "name": "Financial Replication",
+      "requirement": "Complete authenticated cross-device financial replication beyond the shared-shop sale outbox for approved sales, refunds, repayments, shifts, purchases and other immutable events.",
+      "initialAuditStatus": "Partially implemented/missing",
+      "completionCriterion": "durable transport, exact receipt and conservation.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect financial replication against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-02",
+      "stage": 26,
+      "priority": "CRITICAL",
+      "name": "Device Enrollment & Trust",
+      "requirement": "Verify owner-issued enrollment, possession, revocation, company/store/staff binding and rejection of forged client device claims.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "real authenticated transport positive and negative tests.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect device enrollment & trust against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-03",
+      "stage": 26,
+      "priority": "CRITICAL",
+      "name": "Offline Replay",
+      "requirement": "Close idempotency, ordering, acknowledgment, retry, revocation, multi-device and crash-recovery gaps.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no duplicated posting or lost acknowledged transactions under adversarial transport.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect offline replay against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-04",
+      "stage": 26,
+      "priority": "HIGH",
+      "name": "Conflict Resolution",
+      "requirement": "Complete permissioned resolution for conflicting finance, inventory and ownership histories rather than auto-merging untrusted records.",
+      "initialAuditStatus": "Incomplete",
+      "completionCriterion": "explicit audited owner resolution/quarantine.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect conflict resolution against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-05",
+      "stage": 26,
+      "priority": "HIGH",
+      "name": "Central Management Reports",
+      "requirement": "Validate multi-store sales, stock, receivables and staff reports from trusted central records.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "reconciled totals and properly scoped access.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect central management reports against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-06",
+      "stage": 26,
+      "priority": "HIGH",
+      "name": "Offline Multi-Employee Operation",
+      "requirement": "Exercise separate devices submitting offline sales to one shop under revoked staff, stock contention and lost responses.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "correct accepted/rejected state and original attribution.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect offline multi-employee operation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-07",
+      "stage": 26,
+      "priority": "HIGH",
+      "name": "Alchemy Watchdog Contract",
+      "requirement": "Reconcile versioned POS/JSON/CSV exports with the actual authorized Watchdog importer, including refunds, discounts, no-sales, shifts, stock, cash counts and Mobile Money.",
+      "initialAuditStatus": "Partially integrated",
+      "completionCriterion": "agreed schema and repeatable actual importer tests.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect alchemy watchdog contract against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST26-08",
+      "stage": 26,
+      "priority": "HIGH",
+      "name": "Watchdog Provenance",
+      "requirement": "Verify shop/device identity, times, cashier evidence, missing events and appropriate investigation use.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "no invented trust or automatic allegation of theft.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/sync",
+        "client/src/cloud"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect watchdog provenance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-01",
+      "stage": 27,
+      "priority": "CRITICAL",
+      "name": "Complete Customer Ordering",
+      "requirement": "Finish approved customer-to-merchant ordering beyond existing guest request submission.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "verified authorized workflow and explicit payment/stock boundaries.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect complete customer ordering against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-02",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Guest Order Security",
+      "requirement": "Probe public bearer catalog/order RPC for rate limits, replay, revoked links, unauthorized product access and cross-tenant leaks.",
+      "initialAuditStatus": "Implemented but unverified live",
+      "completionCriterion": "real HTTP negative tests pass with isolated accounts.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect guest order security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-03",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Pricing & Quotations",
+      "requirement": "Verify server prices, tax/currency snapshots, variant quantities, quote expiry, reapproval and exactly-once conversion.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no stale-price order or duplicate stock/sale.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect pricing & quotations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-04",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Stock Reservations",
+      "requirement": "Complete reservation creation, expiry, release, cancellation and competition under the approved commerce scope.",
+      "initialAuditStatus": "Missing",
+      "completionCriterion": "conserved inventory during online/in-store races.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect stock reservations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-05",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Fulfillment",
+      "requirement": "Complete pickup/delivery states, partial fulfillment, cancellation, returns and staff audit.",
+      "initialAuditStatus": "Partially implemented/missing",
+      "completionCriterion": "each accepted order has traceable reversible lifecycle.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect fulfillment against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-06",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Commerce Refund Policy",
+      "requirement": "Consistently apply company refund terms to online orders and POS linkage.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "correct original snapshots and owner authorization.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect commerce refund policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-07",
+      "stage": 27,
+      "priority": "HIGH",
+      "name": "Customer Privacy",
+      "requirement": "Verify contact consent, retention, deletion/export, spam limits and protected customer information.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "explicit consent and safe lifecycle.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect customer privacy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST27-08",
+      "stage": 27,
+      "priority": "MEDIUM",
+      "name": "Commerce Scope & Marketing",
+      "requirement": "Distinguish guest order requests from verified checkout, reservations, fulfillment and payment settlement.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "truthful customer claims and standalone merchant offline use.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/cloud/publicCommerce.ts",
+        "client/src/features/commerce"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect commerce scope & marketing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-01",
+      "stage": 28,
+      "priority": "CRITICAL",
+      "name": "Provider Selection",
+      "requirement": "Select an approved Ghana-relevant Mobile Money/card provider and authorize sandbox use.",
+      "initialAuditStatus": "External authorization blocked",
+      "completionCriterion": "provider contract and permitted sandbox access.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect provider selection against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-02",
+      "stage": 28,
+      "priority": "CRITICAL",
+      "name": "Real Payment Adapter",
+      "requirement": "Replace the disabled/mock-only server/paymentGateway.mjs path with a reviewed backend-only provider integration when authorized.",
+      "initialAuditStatus": "Missing",
+      "completionCriterion": "signed provider responses and secure secrets.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect real payment adapter against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-03",
+      "stage": 28,
+      "priority": "CRITICAL",
+      "name": "Settlement Integrity",
+      "requirement": "Reconcile pending/succeeded/failed/unknown/reversed payments to exact orders, sales, balances and settlements.",
+      "initialAuditStatus": "Missing",
+      "completionCriterion": "confirmed funds post once; unknown never recorded as settled.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect settlement integrity against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-04",
+      "stage": 28,
+      "priority": "HIGH",
+      "name": "Refunds & Chargebacks",
+      "requirement": "Implement provider refunds, partial refunds, disputes and chargeback lifecycle under business policy.",
+      "initialAuditStatus": "Missing",
+      "completionCriterion": "original-payment linkage and financial conservation.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect refunds & chargebacks against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-05",
+      "stage": 28,
+      "priority": "HIGH",
+      "name": "Payment Failure Testing",
+      "requirement": "Test duplicate/forged/reordered webhooks, timeouts, retries, incorrect currency and amount limits.",
+      "initialAuditStatus": "Not tested against real provider",
+      "completionCriterion": "zero duplicated/unauthorized finance effects.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect payment failure testing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-06",
+      "stage": 28,
+      "priority": "HIGH",
+      "name": "Manual Payment Separation",
+      "requirement": "Prevent manual cash/Mobile Money/card recording being labelled as actual provider confirmation.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "receipts/reports distinguish recorded from settled tenders.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect manual payment separation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST28-07",
+      "stage": 28,
+      "priority": "MEDIUM",
+      "name": "Provider Compliance",
+      "requirement": "Document fees, reversal handling, reconciliation time, privacy and contract obligations.",
+      "initialAuditStatus": "Provider-selection blocked",
+      "completionCriterion": "approved operating contract.",
+      "status": "unreviewed",
+      "files": [
+        "server/paymentGateway.mjs"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect provider compliance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-01",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Clementia Task Coverage",
+      "requirement": "Investigate unsupported/missed responses in 100-goal × 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "agreed recognition/safety thresholds and repeatable tests.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect clementia task coverage against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-02",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Financial Intelligence",
+      "requirement": "Independently check assistant revenue, profit, cost, debt, customer, stock and supplier answers against authorized source records.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no invented numbers or cross-company disclosure.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect financial intelligence against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-03",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Permissioned Automation",
+      "requirement": "Reconcile S11-05 for persisted, approved schedules and review actions with current manual/disabled automation.",
+      "initialAuditStatus": "Missing/partial",
+      "completionCriterion": "durable audited implementation or formal scope deferral.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect permissioned automation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-04",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Demand & Risk Insights",
+      "requirement": "Validate reorders, expiry alerts, ageing, exceptions and owner review notes against historical records.",
+      "initialAuditStatus": "Implemented but incompletely verified",
+      "completionCriterion": "correct calculations and traceable uncertainty.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect demand & risk insights against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-05",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Telegram Integration",
+      "requirement": "Complete separately approved activation/testing of Telegram daily summary, pairing, secrets, schedule, revocation and failure recovery.",
+      "initialAuditStatus": "Implemented but disabled/unverified",
+      "completionCriterion": "authorized delivery without cross-business data leakage.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect telegram integration against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-06",
+      "stage": 29,
+      "priority": "HIGH",
+      "name": "Assistant Write Safety",
+      "requirement": "Verify all suggested transactions, reviews and corrections require proper permissions and explicit service-boundary confirmation.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no automatic or duplicate financial writes.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect assistant write safety against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-07",
+      "stage": 29,
+      "priority": "MEDIUM",
+      "name": "Language & Speech",
+      "requirement": "Check supported English/Pidgin expressions, ambiguity and browser speech on supported/offline devices.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "documented actual coverage.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect language & speech against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-08",
+      "stage": 29,
+      "priority": "MEDIUM",
+      "name": "Analytics Sharing",
+      "requirement": "Test exports, charts, assistant excerpts and shared summaries for privacy leaks and CSV formula injection.",
+      "initialAuditStatus": "Unverified comprehensively",
+      "completionCriterion": "scoped, accurately labelled outputs.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect analytics sharing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST29-09",
+      "stage": 29,
+      "priority": "MEDIUM",
+      "name": "Assistant Isolation",
+      "requirement": "Test saved conversations, multi-company switching and restored context for stale-user exposure.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no cross-user/company data reuse.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/features/assistant/assistant.ts",
+        "supabase/functions/tallybook-telegram"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect assistant isolation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-01",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "All UI Entrypoints",
+      "requirement": "Execute an inventory of each active page, button, dialog, menu, form, confirmation and error state in both applications.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "functioning authorized outcome or explicit unavailable state.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect all ui entrypoints against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-02",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "Onboarding UX",
+      "requirement": "Verify owner setup, business configuration, joining staff, recovery, store creation and first sale without developer assistance.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "successful cold-start user walkthroughs.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect onboarding ux against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-03",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "Receipts & Scanning",
+      "requirement": "Complete supported barcode acquisition, receipt formatting/reprint and diagnostics without assuming peripheral success.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "repeatable virtual-peripheral and print tests.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect receipts & scanning against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-04",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "PWA Lifecycle",
+      "requirement": "Verify install, update, service-worker replacement, offline navigation and returning-user storage.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no stranded installs, stale auth bypass or unsupported offline promise.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect pwa lifecycle against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-05",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "Accessibility",
+      "requirement": "Add real keyboard, focus, screen-reader, touch, contrast, zoom and error-state acceptance to automated scans.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "approved WCAG evidence on supported workflows.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect accessibility against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-06",
+      "stage": 30,
+      "priority": "HIGH",
+      "name": "Low-Spec Performance",
+      "requirement": "Test long cashier sessions, large catalogues, extensive history, IndexedDB growth and background load.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "approved startup, latency, memory and stability budgets.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect low-spec performance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-07",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Currencies & Business Types",
+      "requirement": "Reconcile support matrix against requirements, including reference gaps such as EUR.",
+      "initialAuditStatus": "Partially implemented",
+      "completionCriterion": "functioning approved options and explicit unsupported options.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect currencies & business types against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-08",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Premium UI Proposal",
+      "requirement": "Decide which remaining issue #5 / premium-settings / Clementia changes add approved value beyond integrated screens.",
+      "initialAuditStatus": "Unmerged/partially superseded",
+      "completionCriterion": "reviewed feature parity and isolated acceptance.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect premium ui proposal against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-09",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Product Images",
+      "requirement": "Complete or formally defer product images, including storage, privacy, offline and sync.",
+      "initialAuditStatus": "Missing later-phase",
+      "completionCriterion": "approved scope and implementation or explicit deferral.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect product images against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-10",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Loyalty",
+      "requirement": "Reconcile historical local loyalty with shared-shop scope; complete earning, redemption and reversal if retained.",
+      "initialAuditStatus": "Partially implemented/missing in shared shop",
+      "completionCriterion": "policy-specific verified lifecycle or exclusion.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect loyalty against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-11",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Bluetooth Printing",
+      "requirement": "Decide whether native Bluetooth printing is required beyond browser print.",
+      "initialAuditStatus": "Missing optional capability",
+      "completionCriterion": "device-tested implementation or explicit limitation.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect bluetooth printing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-12",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "App-Store Packaging",
+      "requirement": "Complete or defer Android/iOS store packaging and compliance.",
+      "initialAuditStatus": "Missing later-phase",
+      "completionCriterion": "approved distribution and verified packages where applicable.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect app-store packaging against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-13",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Apple Sign-In",
+      "requirement": "Validate gated Apple OAuth only with authorized/configured provider.",
+      "initialAuditStatus": "Implemented but disabled/unverified",
+      "completionCriterion": "real provider sign-in/recovery or explicit disabling.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect apple sign-in against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST30-14",
+      "stage": 30,
+      "priority": "MEDIUM",
+      "name": "Marketing, Help & Packaging",
+      "requirement": "Verify the 29-photo references, public claims and no-install normal-user experience.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "no misleading cloud/payment/app-store claims and no developer tools required for normal use.",
+      "status": "unreviewed",
+      "files": [
+        "client/src/App.tsx",
+        "client/src/components/AppShell.tsx"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect marketing, help & packaging against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-01",
+      "stage": 31,
+      "priority": "CRITICAL",
+      "name": "Supabase Password Security",
+      "requirement": "Enable leaked-password protection through authorized settings and confirm warning clears.",
+      "initialAuditStatus": "Owner-controlled outstanding",
+      "completionCriterion": "enabled setting and authentication regression.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect supabase password security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-02",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Content Security Policy",
+      "requirement": "Revalidate enforced CSP across production integrations, OAuth, PWA, browsers and approved endpoints.",
+      "initialAuditStatus": "Implemented but not fully accepted",
+      "completionCriterion": "no broken legitimate flows or unreviewed policy relaxation.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect content security policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-03",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Independent Security Testing",
+      "requirement": "Perform threat-driven tests for XSS, authorization, session reuse, privileged RPC, public order links, exports and device trust.",
+      "initialAuditStatus": "Unverified comprehensively",
+      "completionCriterion": "demonstrated Critical/High findings fixed and retested.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect independent security testing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-04",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Security Tool Findings",
+      "requirement": "Review CodeQL findings, remaining low-severity dependency advisory, production dependency graph, licenses and supply chain.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "triage, approved fixes/exceptions and inventory.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect security tool findings against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-05",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Data Privacy",
+      "requirement": "Verify business, staff, customer, assistant, backups, public orders and support-report data handling.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "access, retention, deletion and disclosure controls.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect data privacy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-06",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Environment Configuration",
+      "requirement": "Verify production Vercel/Supabase targets, redirects, variables, secrets and disabled test/payment flags without exposing values.",
+      "initialAuditStatus": "Unverified end-to-end",
+      "completionCriterion": "exact safe environment matrix.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect environment configuration against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-07",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Operational Monitoring",
+      "requirement": "Validate read-only production smoke workflow, alerts, log redaction, escalation and recovery.",
+      "initialAuditStatus": "Implemented but operationally unverified",
+      "completionCriterion": "actual alert delivery and controlled incident drill.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect operational monitoring against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-08",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Backup Operations",
+      "requirement": "Approve retention, protection, restore, ownership and recovery objectives for local and hosted data.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "tested usable disaster-recovery process.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect backup operations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-09",
+      "stage": 31,
+      "priority": "HIGH",
+      "name": "Legacy Client Security",
+      "requirement": "Verify older SW/offline sessions, cached data and strict-auth/fresh-start transitions cannot bypass release boundaries.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "safe transitions and documented unreachable-device limitations.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect legacy client security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST31-10",
+      "stage": 31,
+      "priority": "MEDIUM",
+      "name": "Licensing & Distribution",
+      "requirement": "Finalize dependency notices, asset licenses, privacy/support terms and applicable distribution obligations.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "approved release materials.",
+      "status": "unreviewed",
+      "files": [
+        "vercel.json",
+        ".github/workflows/security-code-audit.yml"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect licensing & distribution against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-01",
+      "stage": 32,
+      "priority": "CRITICAL",
+      "name": "Frozen Release Candidate",
+      "requirement": "Select final exact Git SHA, migration set, build output and distributable hashes.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "reproducible immutable release evidence.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect frozen release candidate against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-02",
+      "stage": 32,
+      "priority": "CRITICAL",
+      "name": "Complete Regression",
+      "requirement": "Independently execute frozen-install, native/server, Vitest, type, build, migration, PostgreSQL, IndexedDB, Chromium, auth, offline, accessibility, performance and security suites against that SHA.",
+      "initialAuditStatus": "Partially verified from existing CI",
+      "completionCriterion": "mandatory passes with retained logs, repairs and full reruns.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect complete regression against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-03",
+      "stage": 32,
+      "priority": "CRITICAL",
+      "name": "Two-Account Field Acceptance",
+      "requirement": "Execute real owner/attendant two-phone setup, sale, offline/reconnect, refund request, quote, accounts, handover and denial tests.",
+      "initialAuditStatus": "Untested in field",
+      "completionCriterion": "signed redacted evidence per case.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect two-account field acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-04",
+      "stage": 32,
+      "priority": "CRITICAL",
+      "name": "Disaster-Recovery Acceptance",
+      "requirement": "Complete real-device/browser backup-restore and isolated hosted restore without overwriting production.",
+      "initialAuditStatus": "Untested",
+      "completionCriterion": "independently confirmed recoverability and data integrity.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect disaster-recovery acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-05",
+      "stage": 32,
+      "priority": "CRITICAL",
+      "name": "Final Financial & Security Certification",
+      "requirement": "Close applicable money/stock conservation, tenant, authorization, attribution and persistence requirements.",
+      "initialAuditStatus": "Unverified comprehensively",
+      "completionCriterion": "zero unresolved Critical/High launch defects and full mandatory proof.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect final financial & security certification against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-06",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Cross-Browser Matrix",
+      "requirement": "Test supported Chrome, Edge, Firefox, Safari, Windows, Android and iOS with genuine engines/devices.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "versioned results with explicit unsupported combinations.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect cross-browser matrix against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-07",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Real Hardware Acceptance",
+      "requirement": "Test supported scanners, 58/80 mm printers and cash drawers where explicitly supported.",
+      "initialAuditStatus": "Untested",
+      "completionCriterion": "recorded accuracy and peripheral failure recovery.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect real hardware acceptance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-08",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Production-Scale Performance",
+      "requirement": "Test low-resource hardware, accumulated data, long sessions and interrupted connectivity.",
+      "initialAuditStatus": "Unverified",
+      "completionCriterion": "accepted measured thresholds without money/data loss.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect production-scale performance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-09",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Reference & Requirement Signoff",
+      "requirement": "Revalidate 29-photo requirements and all applicable historical acceptance IDs; count duplicate photo requirements once.",
+      "initialAuditStatus": "Partially verified",
+      "completionCriterion": "accepted, superseded or explicitly blocked dispositions with evidence.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect reference & requirement signoff against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-10",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "GitHub Integration Closure",
+      "requirement": "Resolve draft PR, open issues and divergent branches after reviewing source/acceptance evidence.",
+      "initialAuditStatus": "Unmerged/unverified",
+      "completionCriterion": "no required lost work or unresolved integration risks.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect github integration closure against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-11",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Final Distribution Package",
+      "requirement": "Produce reproducible customer build with SHA-256 manifests, dependency inventory, feature matrix, recovery guidance and QA evidence.",
+      "initialAuditStatus": "Final artifact unverified",
+      "completionCriterion": "independently built/tested package.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect final distribution package against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-12",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Owner UAT & Handoff",
+      "requirement": "Complete training, support contacts, escalation, field runbook and operational signoff.",
+      "initialAuditStatus": "Real-world signoff blocked",
+      "completionCriterion": "recorded acceptance of mandatory workflows.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect owner uat & handoff against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    },
+    {
+      "id": "ST32-13",
+      "stage": 32,
+      "priority": "HIGH",
+      "name": "Final GO/NO-GO",
+      "requirement": "Decide controlled pilot versus full V19 commercial scope, including payment, commerce, sync and deferred capabilities; no release actions without separate approval.",
+      "initialAuditStatus": "Blocked",
+      "completionCriterion": "explicit evidence-backed decision for exact artifact and scope.",
+      "status": "unreviewed",
+      "files": [
+        ".github/workflows/release-validation.yml",
+        "docs/release/FIELD_ACCEPTANCE_2026-11-16.md"
+      ],
+      "existingCapabilityReused": [],
+      "changes": [],
+      "tests": [],
+      "blockers": [],
+      "acceptanceEvidence": [],
+      "nextAction": "Inspect final go/no-go against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+    }
+  ],
+  "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
+  "verificationSummary": {
+    "native": {
+      "passed": 1165,
+      "failed": 0,
+      "skipped": 0
+    },
+    "client": {
+      "filesPassed": 228,
+      "passed": 1823,
+      "failed": 0
+    },
+    "types": "pass",
+    "build": "pass",
+    "dependencyAudit": "no known vulnerabilities",
+    "expectedCandidateFailures": 2,
+    "browser": "blocked: invalid Chromium download",
+    "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
+  }
+}

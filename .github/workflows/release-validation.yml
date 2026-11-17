@@ -51,6 +51,7 @@ jobs:
             pnpm --version
             git status --short
             node scripts/stage21-baseline-audit.mjs --sha "${GITHUB_SHA}"
+            node scripts/road-to-complete-register.mjs
           } 2>&1 | tee artifacts/release-v19/stage21-preflight.log
       - name: Install frozen dependencies
         id: install

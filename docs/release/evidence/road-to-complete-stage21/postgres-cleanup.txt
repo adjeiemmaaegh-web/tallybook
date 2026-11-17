@@ -1,0 +1,20 @@
+✔ an invitation lasts 24 hours, is account-bound and single-use (1697.199073ms)
+✔ an invitation older than 24 hours cannot be accepted (1363.400681ms)
+✔ the database caps any invitation at 24 hours (934.562093ms)
+✔ refunds are off by default and an older sale is not reopened by enabling later (1749.275303ms)
+✔ only the owner of the company can read history or change policy (1068.653127ms)
+✔ policy changes are validated, confirmed and use optimistic concurrency (1059.356741ms)
+✔ lanes: void-only policy refuses partial refunds, partial-only refuses voids (1094.813703ms)
+✔ both sale-time and current terms must allow it; disabling later blocks new refunds only (1008.600789ms)
+✔ refund window uses the stricter of sale-time and current limits (1129.148014ms)
+✔ decision evidence is stored; replays and duplicates are safe; over-refunds are blocked (928.010078ms)
+✔ legacy sales without a snapshot are never auto-refundable; attendants and rivals cannot refund (1054.29625ms)
+✔ policy history is append-only (933.839749ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14434.590852
