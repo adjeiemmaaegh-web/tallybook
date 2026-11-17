@@ -56,7 +56,8 @@ jobs:
           node-version-file: .node-version
       - run: corepack enable && corepack prepare pnpm@10.34.0 --activate
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm test --maxWorkers=1 src/features/business/run11ReturnPolicyIntegration.test.ts src/features/inventory/catalogCsv.test.ts
+      - run: pnpm test --maxWorkers=1 src/features/business/run11ReturnPolicyIntegration.test.ts src/features/inventory/catalogCsv.test.ts src/features/sync/syncFoundation.integration.test.ts
+      - run: pnpm check
       - run: node --check scripts/stage21-run-developer-qa.mjs && node --test qa/secret-findings-triage.test.mjs qa/bounded-evidence-file.test.mjs server/tests/syncHttps.test.mjs server/tests/apiRateLimit.test.mjs
 
   secrets:
