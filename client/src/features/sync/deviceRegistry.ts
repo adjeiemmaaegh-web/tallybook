@@ -1,6 +1,9 @@
 /** Stage 8: opt-in LOCAL registry, not remote authentication or a cloud identity. */
 import type { TallybookDB } from "@/db/TallybookDB";
-import { requirePermission } from "@/features/staff/staff";
+import { currentStaffId, requirePermission } from "@/features/staff/staff";
+import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { assertRun7RetailWriteReady } from "@/features/backup/run7RetailWriteBarrier.mjs";
 
 export type LocalSyncDevice = {
   id: string;
@@ -12,6 +15,10 @@ export type LocalSyncDevice = {
   revokedAt?: string;
 };
 const ID = /^[A-Za-z0-9:_-]{1,128}$/;
+function activeRegistryScope(company:string,actor:string|null){
+  if(!actor||company!==getActiveBusinessProfileId()||currentStaffId(company)!==actor)
+    throw new Error("Company or staff session changed in device registry.");
+}
 export function validateLocalSyncDevice(record: LocalSyncDevice): void {
   if (!ID.test(record.id) || !ID.test(record.businessProfileId)) throw new Error("Invalid device or business ID.");
   if (typeof record.label !== "string" || !record.label.trim() || record.label.length > 80 || /[\x00-\x1f]/.test(record.label)) throw new Error("Invalid device label.");
@@ -26,19 +33,24 @@ export async function registerLocalSyncDevice(db: TallybookDB, businessProfileId
   const timestamp = new Date().toISOString();
   const record: LocalSyncDevice = { id: deviceId, businessProfileId, label: label.trim(), registeredAt: timestamp, updatedAt: timestamp, status: "active" };
   validateLocalSyncDevice(record);
-  return db.transaction("rw", [db.businessProfiles, db.syncConsents, db.syncDevices, db.staffMembers], async () => {
-    await requirePermission("staff", db, businessProfileId);
+  const actor=currentStaffId(businessProfileId);activeRegistryScope(businessProfileId,actor);
+  return withCoordinatedRetailWrite(()=>db.transaction("rw", [db.appMeta,db.businessProfiles, db.syncConsents, db.syncDevices, db.staffMembers], async () => {
+    await assertRun7RetailWriteReady(db.appMeta);
+    const staff=await requirePermission("staff", db, businessProfileId);
+    if(staff?.id!==actor)throw new Error("Device registry actor changed.");
     if (!(await db.businessProfiles.get(businessProfileId))) throw new Error("Business not found.");
     if ((await db.syncConsents.get(businessProfileId))?.enabled !== true) throw new Error("Synchronization is not enabled for this business.");
     const existing = await db.syncDevices.get(deviceId);
     if (existing) {
       if (existing.businessProfileId !== businessProfileId) throw new Error("Device ID belongs to another business.");
       if (existing.status === "revoked") throw new Error("Revoked device cannot be reactivated automatically.");
+      activeRegistryScope(businessProfileId,actor);
       return existing;
     }
+    activeRegistryScope(businessProfileId,actor);
     await db.syncDevices.add(record);
     return record;
-  });
+  }));
 }
 
 export async function listLocalSyncDevices(db: TallybookDB, businessProfileId: string): Promise<LocalSyncDevice[]> {
@@ -50,12 +62,16 @@ export async function listLocalSyncDevices(db: TallybookDB, businessProfileId: s
 /** Local revocation blocks queueing by this device; it cannot revoke a remote session. */
 export async function revokeLocalSyncDevice(db: TallybookDB, businessProfileId: string, deviceId: string): Promise<void> {
   if (!ID.test(businessProfileId) || !ID.test(deviceId)) throw new Error("Invalid identifier.");
-  await db.transaction("rw", [db.syncDevices, db.staffMembers], async () => {
-    await requirePermission("staff", db, businessProfileId);
+  const actor=currentStaffId(businessProfileId);activeRegistryScope(businessProfileId,actor);
+  await withCoordinatedRetailWrite(()=>db.transaction("rw", [db.appMeta,db.syncDevices, db.staffMembers], async () => {
+    await assertRun7RetailWriteReady(db.appMeta);
+    const staff=await requirePermission("staff", db, businessProfileId);
+    if(staff?.id!==actor)throw new Error("Device registry actor changed.");
     const current = await db.syncDevices.get(deviceId);
     if (!current || current.businessProfileId !== businessProfileId) throw new Error("Device not found in this business.");
+    activeRegistryScope(businessProfileId,actor);
     if (current.status === "revoked") return;
     const now = new Date().toISOString();
     await db.syncDevices.put({ ...current, status: "revoked", revokedAt: now, updatedAt: now });
-  });
+  }));
 }

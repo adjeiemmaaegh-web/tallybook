@@ -1032,17 +1032,29 @@
       "requirement": "Validate complete historical Dexie migrations through the current schema, conflicting branch histories, populated databases and interrupted upgrades.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "IDs, company ownership, money and stock preserved.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect indexeddb migrations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-02",
@@ -1052,17 +1064,29 @@
       "requirement": "Verify restore journals, assistant-history preservation, company clearing, cross-database coordination and power-loss recovery.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "interrupted operations recover/roll back without silent partial finance state.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect cross-database atomicity against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-03",
@@ -1072,17 +1096,29 @@
       "requirement": "Restore application-generated backups into separate browser profiles/devices; test encrypted archives, wrong passwords, corruption and restart.",
       "initialAuditStatus": "Unverified in real environments",
       "completionCriterion": "matching source counts, IDs, balances, stock and audit history.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect local backup & restore against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-04",
@@ -1092,7 +1128,7 @@
       "requirement": "Confirm Supabase backup schedule/retention/PITR and restore a safe copy to isolated non-production infrastructure.",
       "initialAuditStatus": "Untested/owner blocked",
       "completionCriterion": "verified recovered schema, records, permissions, integrity and duration.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
@@ -1100,9 +1136,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Hosted restore requires an approved isolated destination and backup/retention evidence; only project health, migrations, advisors and schema metadata were inspected read-only."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect hosted database recovery against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Retain the gate; complete safe code work without executing a production reset or hosted restore."
     },
     {
       "id": "ST24-05",
@@ -1112,17 +1150,19 @@
       "requirement": "Design and complete encryption at rest for sensitive standalone IndexedDB data; sealed queues/caches do not protect the entire ledger.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "tested keys, migration, recovery and supported-device threat model.",
-      "status": "unreviewed",
+      "status": "missing",
       "files": [
         "client/src/db/TallybookDB.ts",
-        "client/src/features/backup/backup.ts"
+        "docs/security/OFFLINE_DATA_THREAT_MODEL.md"
       ],
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Full active-ledger encryption is not implemented. Sealed queues and encrypted exports do not protect the whole IndexedDB ledger."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect device-ledger encryption against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Implement and verify compatible full-ledger key handling, migration and recovery; do not relabel this as a device-only acceptance gate."
     },
     {
       "id": "ST24-06",
@@ -1132,17 +1172,29 @@
       "requirement": "Test profile loss, replacement, missing keys and recovery without falsely promising unreadable sealed data is recoverable.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "documented successful and unrecoverable cases.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect encryption-key recovery against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-07",
@@ -1152,17 +1204,33 @@
       "requirement": "Test Web Locks, tabs, quota, eviction, stale IndexedDB, migration interruption and failed saves.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no false success, unsafe concurrent writes or unnoticed loss.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/db/TallybookDB.ts",
-        "client/src/features/backup/backup.ts"
+        "client/src/features/sync/deviceRegistry.ts",
+        "client/src/features/sync/deviceRegistry.integration.test.ts",
+        "client/src/test/syncBoundaryFixture.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect multi-tab & storage failure against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
+      "changes": [
+        "Registration/revocation now use the canonical recovery lock and in-transaction journal barrier.",
+        "Revalidate original staff/company identity after asynchronous reads; blocked attempts leave registry unchanged."
+      ],
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-08",
@@ -1172,17 +1240,29 @@
       "requirement": "Test oversized/tampered archives, unsupported versions, malformed CSV, resource exhaustion and rejection rollback.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "unsafe input cannot alter valid records.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect import & backup validation against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Headless IndexedDB evidence does not certify physical power-loss, browser eviction, low-storage hardware or hosted recovery."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt"
+      ],
+      "nextAction": "Complete the remaining supported browser/device and interruption matrix; preserve the tested local guard behavior."
     },
     {
       "id": "ST24-09",
@@ -1192,7 +1272,7 @@
       "requirement": "Validate company-clear recovery and optional VITE_TALLYBOOK_FRESH_START_EPOCH against interruptions, old offline clients and unbacked-up data.",
       "initialAuditStatus": "Implemented but unaccepted",
       "completionCriterion": "owner approval, safe preconditions and no uncontrolled deletion.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/db/TallybookDB.ts",
         "client/src/features/backup/backup.ts"
@@ -1200,9 +1280,11 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
+      "blockers": [
+        "Irreversible reset/clear release policy remains explicitly unauthorized; no fresh-start flag changed."
+      ],
       "acceptanceEvidence": [],
-      "nextAction": "Inspect destructive reset & clear against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "nextAction": "Retain the gate; complete safe code work without executing a production reset or hosted restore."
     },
     {
       "id": "ST25-01",
@@ -2777,5 +2859,5 @@
     "browser": "blocked: invalid Chromium download",
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
   },
-  "activeEngineeringStage": 23
+  "activeEngineeringStage": 25
 }

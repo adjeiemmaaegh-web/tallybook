@@ -60,6 +60,21 @@
       "path": "docs/release/evidence/road-to-complete-continuation/stage23-native.txt",
       "sha256": "876ba3a77ec568f61d9784024153102931eee6499b3d1e0aead954158b8afc91",
       "bytes": 98742
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage24-recovery-tests.txt",
+      "sha256": "fc79adaf7f7d5b1e632c87bd6500aebe2e768637f5c775f610a9c15b379f2704",
+      "bytes": 240
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage23-client.txt",
+      "sha256": "2e5fa7956c204c630971122b810c48f23406328bd1f8fb0c8b5f5ce1e29671f6",
+      "bytes": 310571
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage23-portability-tests.txt",
+      "sha256": "0878a3ef286a4c3d89a7d84aeec0b53849635cd3597e143c61b18f43b131d6a0",
+      "bytes": 916
     }
   ],
   "boundary": "New local pinned-toolchain results. Source tree under development; full client continuation pending. Prior GitHub six workflows passed at baseline."
