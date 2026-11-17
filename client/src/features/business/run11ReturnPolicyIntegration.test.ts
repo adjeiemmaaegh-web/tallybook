@@ -214,11 +214,10 @@ describe('Run 11 company return policy database and posting protection',()=>{
 
  it('re-unlocking the same owner during policy coordination invalidates the old approval',async()=>{
   const {db}=await fixture(),owner=await db.staffMembers.where('businessProfileId').equals('primary').first();
-  const get=db.businessProfiles.get.bind(db.businessProfiles);
-  vi.spyOn(db.businessProfiles,'get').mockImplementationOnce(async key=>{
-   const profile=await get(key);
-   lockStaff('primary');await Dexie.waitFor(unlockStaff(owner!.id,'123456',db));return profile;
-  });
+  const request=navigator.locks.request.bind(navigator.locks);
+  vi.spyOn(navigator.locks,'request').mockImplementationOnce((async(name:string,options:LockOptions,callback:LockGrantedCallback)=>{
+   lockStaff('primary');await unlockStaff(owner!.id,'123456',db);return request(name,options,callback);
+  }) as typeof navigator.locks.request);
   await expect(updateCompanyReturnPolicy(allowBoth,'Old unlock approval',db)).rejects.toThrow(/session changed/);
   expect((await db.businessProfiles.get('primary'))?.returnPolicyHistory).toBeUndefined();
  });
