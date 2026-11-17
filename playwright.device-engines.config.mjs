@@ -6,5 +6,7 @@ export default defineConfig({
   projects:[
     {name:'edge',use:{browserName:'chromium',channel:'msedge'}},
     {name:'webkit',use:{browserName:'webkit'}},
+    {name:'firefox',use:{browserName:'firefox'}},
+    {name:'chrome',use:{browserName:'chromium',channel:'chrome'}},
   ],
 });

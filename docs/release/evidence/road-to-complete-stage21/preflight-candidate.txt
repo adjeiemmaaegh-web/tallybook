@@ -1,0 +1,43 @@
+{
+  "stage": 21,
+  "sourceSha": "280216bf01530bae984bb396a7c971e6790f1c3f",
+  "decision": "NO-GO",
+  "registries": {
+    "acceptance": {
+      "count": 82,
+      "byStatus": {
+        "implemented-unverified": 62,
+        "missing": 16,
+        "implemented-and-tested": 1,
+        "blocked": 3
+      },
+      "originalCount": 82,
+      "originalMissing": [],
+      "addedIds": []
+    },
+    "blockers": {
+      "count": 47,
+      "byStatus": {
+        "implemented-unverified": 35,
+        "implemented-and-tested": 3,
+        "missing": 6,
+        "blocked": 3
+      },
+      "originalCount": 47,
+      "originalMissing": [],
+      "addedIds": []
+    }
+  },
+  "importScan": {
+    "sourceFiles": 1133,
+    "localImports": 2709,
+    "unresolved": 0,
+    "ambiguousTsMjs": 0
+  },
+  "lockfilePresent": true,
+  "notes": [],
+  "problems": [],
+  "internallyVerified": false,
+  "ownerUatAuthorized": false,
+  "externalReleaseAuthorized": false
+}

@@ -214,9 +214,11 @@ export async function consumeRun16OrderForSale(
  requireCompany(company);
  if(!ID.test(saleId)||order.businessProfileId!==company||
     order.status!=="reserved"||order.saleId||
-    !order.reservationExpiresAt||Date.parse(order.reservationExpiresAt)<=Date.parse(now))
+    !order.reservationExpiresAt||!Number.isFinite(Date.parse(order.reservationExpiresAt))||
+    !Number.isFinite(Date.parse(now))||Date.parse(order.reservationExpiresAt)<=Date.parse(now))
    throw Error("Order reservation expired, changed, or already sold.");
  const holds=await database.commerceHolds.where("orderId").equals(order.id).toArray();
+ for(const hold of holds)validateRun16Hold(hold);
  const stockLines=order.lines.filter(x=>x.quantity>0);
  const stocked=[];
  for(const line of stockLines){
@@ -232,7 +234,8 @@ export async function consumeRun16OrderForSale(
    if(product.itemKind==="service")continue;
    const hold=holds.find(h=>h.productId===line.productId);
    if(!hold||hold.businessProfileId!==company||hold.status!=="active"||
-      hold.quantity!==line.quantity||hold.storeId!==order.storeId||
+      hold.quantity!==line.quantity||hold.unitPriceMinor!==line.unitPriceMinor||
+      hold.expiresAt!==order.reservationExpiresAt||hold.storeId!==order.storeId||
       Date.parse(hold.expiresAt)<=Date.parse(now))
      throw Error("POS sale requires exact current active stock reservation.");
  }

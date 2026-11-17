@@ -3,7 +3,7 @@
  * Never executes QA, builds, deployment, provider payments or sign-off.
  * Usage: node scripts/run20-verify-release-worksheet.mjs --file evidence.json --sha <40-char commit>
  */
-import {readFile,stat} from "node:fs/promises";
+import {readBoundedEvidence} from "./read-bounded-evidence.mjs";
 import {createHash} from "node:crypto";
 import {resolve} from "node:path";
 import {evaluateRun20Release,RUN20_GATES} from "../client/src/features/release/run20ReleaseGates.mjs";
@@ -16,11 +16,8 @@ function args(values){
 }
 async function main(){
  const {file,sha}=args(process.argv.slice(2));
- const statValue=await stat(file);
- if(!statValue.isFile()||statValue.size<100||statValue.size>384000)
-   reject("Missing or oversized worksheet.");
  let root;
- try{root=JSON.parse(await readFile(file,"utf8"));}
+ try{root=JSON.parse(await readBoundedEvidence(file,{minBytes:100,maxBytes:384000}));}
  catch{reject("Invalid worksheet JSON.");}
  if(!root||typeof root!=="object"||Array.isArray(root)||
    Object.keys(root).sort().join(",")!=="formatVersion,kind,payload,sha256"||

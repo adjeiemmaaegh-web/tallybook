@@ -8,7 +8,7 @@ const files=readdirSync(new URL('../supabase/migrations/',import.meta.url))
  .filter(n=>n.endsWith('.sql')).sort();
 const sql=n=>readFileSync(new URL('../supabase/migrations/'+n,import.meta.url),'utf8');
 const rollback=readFileSync(new URL('../supabase/rollback/20261115090000_shop_public_order_requests_down.sql',import.meta.url),'utf8');
-async function setup(){
+async function setup({beforeQuoteGuard=false}={}){
  const db=new PGlite();
  await db.exec("CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth;"+
   "CREATE TABLE auth.users(id uuid PRIMARY KEY,email text);"+
@@ -19,7 +19,7 @@ async function setup(){
   "SELECT (current_setting('test.claims')::jsonb->>'sub')::uuid$$;"+
   "CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql AS $$"+
   "SELECT current_setting('test.claims')::jsonb$$;");
- for(const file of files.slice(1))await db.exec(sql(file));
+ for(const file of files.slice(1)){if(beforeQuoteGuard&&file.endsWith("_guest_order_price_snapshots.sql"))continue;await db.exec(sql(file));}
  const owner={id:randomUUID(),session:randomUUID()},staff={id:randomUUID(),session:randomUUID()};
  const company=randomUUID(),store=randomUUID(),rice=randomUUID(),sugar=randomUUID();
  await db.query("INSERT INTO auth.users(id,email) VALUES($1,'owner@example.test'),($2,'staff@example.test')",[owner.id,staff.id]);
@@ -144,5 +144,58 @@ test('rate limit: active public links cannot accept unlimited rapid submissions'
   for(let i=0;i<8;i++)await t.guest('submit',request(t,share.shareToken));
   await assert.rejects(t.guest('submit',request(t,share.shareToken)),/Too many order requests/i);
   assert.equal((await t.ownerAdmin('list')).requests.length,8);
+ }finally{await t.db.close();}
+});
+
+test('equal-total repricing cannot silently change the customer product quote at conversion',async()=>{
+ const t=await setup();try{
+  const share=await t.ownerAdmin('createShare',{storeId:t.store});
+  const form=request(t,share.shareToken),submitted=await t.guest('submit',form);
+  // Original 2*1000 + 1*2000 = 4000; new 2*1500 + 1*1000 is also 4000.
+  await t.admin('UPDATE public.shop_products SET unit_price_minor=CASE WHEN id=$2 THEN 1500 ELSE 1000 END WHERE business_id=$1 AND id IN ($2,$3)',[t.company,t.rice,t.sugar]);
+  const stock=await t.admin('SELECT * FROM public.shop_store_stock WHERE business_id=$1',[t.company]);
+  await assert.rejects(t.ownerAdmin('convert',{requestId:submitted.requestId}),/Prices changed/i);
+  assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_online_orders WHERE business_id=$1',[t.company]))[0].n,0);
+  assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_online_order_lines WHERE business_id=$1',[t.company]))[0].n,0);
+  assert.deepEqual(await t.admin('SELECT * FROM public.shop_store_stock WHERE business_id=$1',[t.company]),stock);
+  assert.equal((await t.ownerAdmin('list')).requests[0].status,'new');
+  assert.equal((await t.guest('submit',form)).quotedTotalMinor,'4000','lost response returns original quote');
+  await t.admin('UPDATE public.shop_products SET unit_price_minor=CASE WHEN id=$2 THEN 1000 ELSE 2000 END WHERE business_id=$1 AND id IN ($2,$3)',[t.company,t.rice,t.sugar]);
+  const converted=await t.ownerAdmin('convert',{requestId:submitted.requestId});assert.equal(converted.replayed,false);
+  assert.equal((await t.ownerAdmin('convert',{requestId:submitted.requestId})).replayed,true);
+ }finally{await t.db.close();}
+});
+
+
+test('currency drift is rejected and quote-guard rollback preserves original evidence',async()=>{
+ const t=await setup();try{
+  const share=await t.ownerAdmin('createShare',{storeId:t.store});
+  const submission=await t.guest('submit',request(t,share.shareToken));
+  const original=(await t.admin('SELECT lines FROM public.shop_public_order_requests WHERE id=$1',[submission.requestId]))[0].lines;
+  assert.ok(original.every(l=>l.currency==='GHS' && Number.isInteger(l.unitPriceMinor)));
+  await t.admin("UPDATE public.shop_ledgers SET currency='USD' WHERE business_id=$1",[t.company]);
+  await assert.rejects(t.ownerAdmin('convert',{requestId:submission.requestId}),/Prices changed/i);
+  assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_online_orders WHERE business_id=$1',[t.company]))[0].n,0);
+  await t.db.exec('RESET ROLE');
+  await assert.rejects(t.db.exec(readFileSync(new URL('../supabase/rollback/20261117060608_guest_order_price_snapshots_down.sql',import.meta.url),'utf8')),/forward-only/);
+  await t.db.exec('ROLLBACK');
+  assert.deepEqual((await t.db.query('SELECT lines FROM public.shop_public_order_requests WHERE id=$1',[submission.requestId])).rows[0].lines,original);
+ }finally{await t.db.close();}
+});
+
+test('legacy unconverted requests stay unchanged and require a new verifiable customer quote',async()=>{
+ const t=await setup({beforeQuoteGuard:true});try{
+  const share=await t.ownerAdmin('createShare',{storeId:t.store});
+  const form=request(t,share.shareToken),submission=await t.guest('submit',form);
+  const original=(await t.admin('SELECT * FROM public.shop_public_order_requests WHERE id=$1',[submission.requestId]))[0];
+  assert.equal(original.lines.some(l=>Object.hasOwn(l,'unitPriceMinor')),false);
+  await t.db.exec('RESET ROLE');await t.db.exec(sql('20261117060608_guest_order_price_snapshots.sql'));
+  assert.deepEqual((await t.admin('SELECT * FROM public.shop_public_order_requests WHERE id=$1',[submission.requestId]))[0],original);
+  assert.equal((await t.guest('submit',form)).requestId,submission.requestId,'original lost-response reconciliation survives migration');
+  await assert.rejects(t.ownerAdmin('convert',{requestId:submission.requestId}),/Price snapshot unavailable/);
+  assert.equal((await t.admin('SELECT count(*)::int AS n FROM public.shop_online_orders WHERE business_id=$1',[t.company]))[0].n,0);
+  await t.ownerAdmin('decline',{requestId:submission.requestId});
+  const fresh=await t.guest('submit',request(t,share.shareToken));
+  assert.equal((await t.ownerAdmin('convert',{requestId:fresh.requestId})).status,'converted');
  }finally{await t.db.close();}
 });

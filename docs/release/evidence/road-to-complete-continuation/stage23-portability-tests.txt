@@ -1,0 +1,17 @@
+✔ every legacy candidate has an explicit disposition, surviving source and current authority (1.77967ms)
+✔ production modules cannot silently import retired standalone candidate authorities (169.771864ms)
+✔ ancestry, cherry-picked patch and genuinely unique work stay distinct (214.562212ms)
+✔ preserves all 119 requirements with stable ordered IDs and original audit statuses (4.488981ms)
+✔ rejects deleted and unparseable requirements instead of silently losing scope (1.166239ms)
+✔ rejects missing, duplicate, altered and invented task records (1.98763ms)
+✔ passing subset cannot certify an unverified or blocked task (1.980636ms)
+✔ checked roadmap and owner-blocked status require corresponding evidence (0.675154ms)
+✔ no two source files differ only by letter case (8.193946ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 648.033776

@@ -1,0 +1,40 @@
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {act,cleanup,fireEvent,render,screen} from '@testing-library/react';
+import CommercePage from './CommercePage';
+import {listCatalogue,listDraftOrders} from '@/features/commerce/commerce';
+const context=vi.hoisted(()=>({activeCompanyId:'primary',profile:{name:'Fixture shop',currency:'TZS'}}));
+vi.mock('@/contexts/BusinessProfileContext',()=>({useBusinessProfile:()=>context}));
+vi.mock('@/features/commerce/commerce',()=>({listCatalogue:vi.fn(),listDraftOrders:vi.fn(),createDraftOrder:vi.fn(),transitionLocalOrder:vi.fn()}));
+vi.mock('@/features/commerce/Run16OrderOperations',()=>({Run16OrderOperations:()=>null}));
+vi.mock('@/lib/internalTools',()=>({internalToolsEnabled:false}));
+beforeEach(()=>{vi.clearAllMocks();context.activeCompanyId='primary';context.profile={name:'Fixture shop',currency:'TZS'};
+ vi.mocked(listCatalogue).mockResolvedValue([{id:'rice',name:'Rice',priceMinor:1500,itemKind:'stock'}]);vi.mocked(listDraftOrders).mockResolvedValue([]);
+});
+afterEach(cleanup);
+it('displays whole-unit catalogue currency without a factor-of-100 understatement',async()=>{
+ render(<CommercePage/>);const rice=await screen.findByText(/Rice ·/);
+ expect(rice.textContent).toContain('1,500');expect(rice.textContent).toContain('TZS');expect(rice.textContent).not.toContain('15.00');
+ expect(screen.getByText(/Draft requests do not reserve/)).toBeInTheDocument();
+});
+it('switching company clears private form data and ignores the previous pending catalogue',async()=>{
+ let resolve!:(items:Awaited<ReturnType<typeof listCatalogue>>)=>void;
+ vi.mocked(listCatalogue).mockReturnValueOnce(new Promise(done=>{resolve=done;}));
+ const view=render(<CommercePage/>);
+ fireEvent.change(screen.getByLabelText('Customer name'),{target:{value:'Private old customer'}});
+ fireEvent.change(screen.getByLabelText(/Customer contact/),{target:{value:'Private old contact'}});
+ fireEvent.change(screen.getByLabelText(/Delivery \/ pickup instructions/),{target:{value:'Private old address'}});
+ context.activeCompanyId='second';context.profile={name:'Second company',currency:'GHS'};view.rerender(<CommercePage/>);
+ expect(screen.getByLabelText('Customer name')).toHaveValue('');expect(screen.getByLabelText(/Customer contact/)).toHaveValue('');expect(screen.getByLabelText(/Delivery \/ pickup instructions/)).toHaveValue('');
+ await screen.findByText(/Rice ·/);
+ await act(async()=>resolve([{id:'old',name:'Private old catalogue',priceMinor:100,itemKind:'stock'}]));
+ expect(screen.queryByText(/Private old catalogue/)).not.toBeInTheDocument();
+});
+it('employee handover removes customer contact and stale orders even without a company switch',async()=>{
+ render(<CommercePage/>);await screen.findByText(/Rice ·/);
+ fireEvent.change(screen.getByLabelText('Customer name'),{target:{value:'Private customer'}});
+ fireEvent.change(screen.getByLabelText(/Customer contact/),{target:{value:'Private contact'}});
+ vi.mocked(listCatalogue).mockRejectedValue(new Error('Staff access locked'));vi.mocked(listDraftOrders).mockRejectedValue(new Error('Staff access locked'));
+ act(()=>window.dispatchEvent(new Event('tallybook:staff-session')));
+ expect(screen.getByLabelText('Customer name')).toHaveValue('');expect(screen.getByLabelText(/Customer contact/)).toHaveValue('');
+ expect(await screen.findByRole('alert')).toHaveTextContent('Staff access locked');expect(screen.queryByText(/Rice ·/)).not.toBeInTheDocument();
+});

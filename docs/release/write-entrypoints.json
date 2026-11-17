@@ -4,17 +4,17 @@
     {
       "file": "client/src/features/assistant/audit.ts",
       "name": "recordAudit",
-      "line": 59,
+      "line": 60,
       "writes": [
         {
           "method": "add",
           "target": "database.assistantAudit",
-          "line": 62
+          "line": 67
         },
         {
           "method": "bulkDelete",
           "target": "database.assistantAudit",
-          "line": 66
+          "line": 70
         }
       ],
       "permissionCalls": [],
@@ -22,99 +22,123 @@
     },
     {
       "file": "client/src/features/assistant/reversals.ts",
-      "name": "executeLatestSaleReversal",
-      "line": 45,
+      "name": "executeLatestSaleReversalWhileLocked",
+      "line": 74,
       "writes": [
         {
           "method": "put",
           "target": "database.inventoryBatches",
-          "line": 117
+          "line": 205
         },
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 132
+          "line": 226
         },
         {
           "method": "add",
           "target": "database.saleReversals",
-          "line": 138
+          "line": 239
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 240
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 139
+          "line": 241
         },
         {
           "method": "put",
           "target": "database.products",
-          "line": 142
+          "line": 244
         },
         {
           "method": "bulkAdd",
           "target": "database.inventoryMovements",
-          "line": 144
+          "line": 247
         }
       ],
       "permissionCalls": [
         "requirePermission",
-        "activeStaffShift"
+        "activeStaffShift",
+        "authorized",
+        "authorizeReturnPolicy"
       ],
       "status": "requires-service-boundary-review"
     },
     {
       "file": "client/src/features/backup/backup.ts",
       "name": "recordBackupExportedAt",
-      "line": 102,
+      "line": 152,
       "writes": [
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 106
+          "line": 172
         },
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 107
+          "line": 175
+        },
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 184
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 188
         }
       ],
-      "permissionCalls": [],
+      "permissionCalls": [
+        "requirePermission"
+      ],
       "status": "requires-service-boundary-review"
     },
     {
       "file": "client/src/features/backup/backup.ts",
-      "name": "restoreBackup",
-      "line": 332,
+      "name": "restoreBackupWhileLocked",
+      "line": 666,
       "writes": [
         {
           "method": "bulkDelete",
           "target": "database.stockCountSessions",
-          "line": 384
-        },
-        {
-          "method": "delete",
-          "target": "database.assistantAudit.where(\"businessProfileId\").equals(companyId)",
-          "line": 386
+          "line": 723
         },
         {
           "method": "delete",
           "target": "database.businessProfiles",
-          "line": 387
+          "line": 737
         },
         {
           "method": "put",
           "target": "database.businessProfiles",
-          "line": 388
+          "line": 740
         },
         {
           "method": "bulkPut",
           "target": "database.table(key)",
-          "line": 392
+          "line": 750
         },
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 394
+          "line": 752
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 755
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 756
         }
       ],
       "permissionCalls": [
@@ -124,14 +148,44 @@
       "status": "requires-service-boundary-review"
     },
     {
-      "file": "client/src/features/business/activeCompany.ts",
-      "name": "persistActiveBusinessProfileId",
-      "line": 30,
+      "file": "client/src/features/backup/restoreRecovery.ts",
+      "name": "beginAssistantPreimageJournal",
+      "line": 75,
       "writes": [
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 32
+          "line": 84
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/backup/restoreRecovery.ts",
+      "name": "recoverPendingBackupRestoreWhileLocked",
+      "line": 103,
+      "writes": [
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 122
+        }
+      ],
+      "permissionCalls": [
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/business/activeCompany.ts",
+      "name": "persistActiveBusinessProfileId",
+      "line": 35,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.appMeta",
+          "line": 42
         }
       ],
       "permissionCalls": [],
@@ -139,23 +193,43 @@
     },
     {
       "file": "client/src/features/business/activeCompany.ts",
-      "name": "clearCompanyData",
-      "line": 39,
+      "name": "clearCompanyDataWhileLocked",
+      "line": 60,
       "writes": [
         {
           "method": "delete",
           "target": "database.businessProfiles",
-          "line": 51
+          "line": 88
         },
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 53
+          "line": 91
         },
         {
           "method": "delete",
           "target": "database.appMeta",
-          "line": 54
+          "line": 92
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 94
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 95
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 103
+        },
+        {
+          "method": "delete",
+          "target": "database.appMeta",
+          "line": 106
         }
       ],
       "permissionCalls": [
@@ -167,17 +241,17 @@
     {
       "file": "client/src/features/business/businessProfile.ts",
       "name": "saveBusinessProfile",
-      "line": 90,
+      "line": 94,
       "writes": [
         {
           "method": "put",
           "target": "database.businessProfiles",
-          "line": 114
+          "line": 125
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 116
+          "line": 127
         }
       ],
       "permissionCalls": [
@@ -188,17 +262,17 @@
     {
       "file": "client/src/features/business/businessProfile.ts",
       "name": "createBusinessProfile",
-      "line": 121,
+      "line": 133,
       "writes": [
         {
           "method": "add",
           "target": "database.businessProfiles",
-          "line": 131
+          "line": 143
         },
         {
           "method": "put",
           "target": "database.appMeta",
-          "line": 133
+          "line": 146
         }
       ],
       "permissionCalls": [
@@ -209,31 +283,52 @@
     {
       "file": "client/src/features/business/businessProfile.ts",
       "name": "saveInitialProvider",
-      "line": 138,
+      "line": 151,
       "writes": [
         {
           "method": "add",
           "target": "database.mobileMoneyProviders",
-          "line": 144
+          "line": 157
         }
       ],
       "permissionCalls": [],
       "status": "requires-service-boundary-review"
     },
     {
-      "file": "client/src/features/commerce/commerce.ts",
-      "name": "createDraftOrder",
-      "line": 47,
+      "file": "client/src/features/business/returnPolicySettings.ts",
+      "name": "updateCompanyReturnPolicy",
+      "line": 15,
       "writes": [
         {
-          "method": "add",
-          "target": "database.commerceOrders",
-          "line": 66
+          "method": "put",
+          "target": "database.businessProfiles",
+          "line": 35
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 67
+          "line": 38
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/commerce.ts",
+      "name": "createDraftOrder",
+      "line": 48,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.commerceOrders",
+          "line": 75
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 76
         }
       ],
       "permissionCalls": [
@@ -244,17 +339,17 @@
     {
       "file": "client/src/features/commerce/commerce.ts",
       "name": "cancelDraftOrder",
-      "line": 77,
+      "line": 86,
       "writes": [
         {
           "method": "update",
           "target": "database.commerceOrders",
-          "line": 83
+          "line": 92
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 84
+          "line": 93
         }
       ],
       "permissionCalls": [
@@ -265,17 +360,17 @@
     {
       "file": "client/src/features/commerce/commerce.ts",
       "name": "transitionLocalOrder",
-      "line": 89,
+      "line": 98,
       "writes": [
         {
           "method": "update",
           "target": "database.commerceOrders",
-          "line": 98
+          "line": 107
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 99
+          "line": 108
         }
       ],
       "permissionCalls": [
@@ -284,19 +379,143 @@
       "status": "requires-service-boundary-review"
     },
     {
-      "file": "client/src/features/credit/credit.ts",
-      "name": "recordRepayment",
-      "line": 89,
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "appendEvent",
+      "line": 29,
       "writes": [
         {
           "method": "add",
-          "target": "database.repayments",
-          "line": 117
+          "target": "database.commerceDeliveryEvents",
+          "line": 36
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "reserveRun16Order",
+      "line": 39,
+      "writes": [
+        {
+          "method": "bulkAdd",
+          "target": "database.commerceHolds",
+          "line": 116
+        },
+        {
+          "method": "put",
+          "target": "database.commerceOrders",
+          "line": 119
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 118
+          "line": 122
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "cancelRun16Order",
+      "line": 144,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.commerceHolds",
+          "line": 166
+        },
+        {
+          "method": "put",
+          "target": "database.commerceOrders",
+          "line": 172
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 173
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "expireRun16Order",
+      "line": 181,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.commerceHolds",
+          "line": 198
+        },
+        {
+          "method": "put",
+          "target": "database.commerceOrders",
+          "line": 203
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "consumeRun16OrderForSale",
+      "line": 210,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.commerceHolds",
+          "line": 239
+        },
+        {
+          "method": "put",
+          "target": "database.commerceOrders",
+          "line": 244
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/commerce/run16Orders.ts",
+      "name": "recordRun16Delivery",
+      "line": 248,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.commerceOrders",
+          "line": 294
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 295
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/credit/credit.ts",
+      "name": "recordRepayment",
+      "line": 140,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.repayments",
+          "line": 228
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 229
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 230
         }
       ],
       "permissionCalls": [
@@ -308,12 +527,17 @@
     {
       "file": "client/src/features/customers/customerBenefits.ts",
       "name": "setCustomerPolicy",
-      "line": 16,
+      "line": 19,
       "writes": [
         {
           "method": "put",
           "target": "database.customerPolicies",
-          "line": 29
+          "line": 35
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 36
         }
       ],
       "permissionCalls": [
@@ -324,12 +548,17 @@
     {
       "file": "client/src/features/customers/customerBenefits.ts",
       "name": "recordCustomerBenefit",
-      "line": 47,
+      "line": 68,
       "writes": [
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 64
+          "line": 88
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 89
         }
       ],
       "permissionCalls": [
@@ -340,26 +569,10 @@
     {
       "file": "client/src/features/customers/customers.ts",
       "name": "createCustomer",
-      "line": 55,
+      "line": 66,
       "writes": [
         {
           "method": "add",
-          "target": "database.customers",
-          "line": 64
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/customers/customers.ts",
-      "name": "updateCustomer",
-      "line": 68,
-      "writes": [
-        {
-          "method": "put",
           "target": "database.customers",
           "line": 78
         }
@@ -371,13 +584,29 @@
     },
     {
       "file": "client/src/features/customers/customers.ts",
-      "name": "archiveCustomer",
-      "line": 82,
+      "name": "updateCustomer",
+      "line": 85,
       "writes": [
         {
           "method": "put",
           "target": "database.customers",
-          "line": 87
+          "line": 98
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/customers/customers.ts",
+      "name": "archiveCustomer",
+      "line": 105,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.customers",
+          "line": 163
         }
       ],
       "permissionCalls": [
@@ -388,12 +617,12 @@
     {
       "file": "client/src/features/customers/quotations.ts",
       "name": "createQuotation",
-      "line": 17,
+      "line": 19,
       "writes": [
         {
           "method": "add",
           "target": "database.quotations",
-          "line": 46
+          "line": 50
         }
       ],
       "permissionCalls": [
@@ -404,12 +633,12 @@
     {
       "file": "client/src/features/customers/quotations.ts",
       "name": "setQuotationStatus",
-      "line": 54,
+      "line": 58,
       "writes": [
         {
           "method": "put",
           "target": "database.quotations",
-          "line": 65
+          "line": 69
         }
       ],
       "permissionCalls": [
@@ -419,13 +648,13 @@
     },
     {
       "file": "client/src/features/customers/quotations.ts",
-      "name": "convertQuotationToSale",
-      "line": 103,
+      "name": "convertQuotationToSaleWhileLocked",
+      "line": 114,
       "writes": [
         {
           "method": "put",
           "target": "database.quotations",
-          "line": 121
+          "line": 132
         }
       ],
       "permissionCalls": [
@@ -436,44 +665,67 @@
     {
       "file": "client/src/features/customers/walletTransfers.ts",
       "name": "recordWalletTransfer",
-      "line": 17,
+      "line": 21,
       "writes": [
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 51
+          "line": 132
         },
         {
           "method": "add",
           "target": "database.walletTransfers",
-          "line": 54
+          "line": 135
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 55
+          "line": 136
         }
       ],
       "permissionCalls": [
         "requirePermission",
         "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/drawer/noSaleEvent.ts",
+      "name": "recordAuthorizedNoSale",
+      "line": 15,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.noSaleEvents",
+          "line": 47
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 48
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift",
+        "authorizedBy"
       ],
       "status": "requires-service-boundary-review"
     },
     {
       "file": "client/src/features/expenses/expenses.ts",
-      "name": "createExpense",
-      "line": 64,
+      "name": "createExpenseWhileLocked",
+      "line": 74,
       "writes": [
         {
           "method": "add",
           "target": "database.expenses",
-          "line": 86
+          "line": 112
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 87
+          "line": 113
         }
       ],
       "permissionCalls": [
@@ -483,294 +735,37 @@
       "status": "requires-service-boundary-review"
     },
     {
+      "file": "client/src/features/insights/run17ReviewStore.ts",
+      "name": "recordRun17Review",
+      "line": 44,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.run17ReviewEvents",
+          "line": 96
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 97
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
       "file": "client/src/features/inventory/advancedInventory.ts",
       "name": "postStockCount",
-      "line": 25,
+      "line": 29,
       "writes": [
         {
           "method": "bulkPut",
           "target": "database.products",
-          "line": 50
+          "line": 59
         },
         {
           "method": "bulkAdd",
           "target": "database.inventoryMovements",
-          "line": 51
-        },
-        {
-          "method": "add",
-          "target": "database.staffAudits",
-          "line": 52
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/advancedInventory.ts",
-      "name": "importProductCatalogCsv",
-      "line": 81,
-      "writes": [
-        {
-          "method": "bulkAdd",
-          "target": "database.products",
-          "line": 109
-        },
-        {
-          "method": "bulkAdd",
-          "target": "database.inventoryMovements",
-          "line": 111
-        },
-        {
-          "method": "add",
-          "target": "database.staffAudits",
-          "line": 112
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/costLedger.ts",
-      "name": "appendInventoryCostChange",
-      "line": 123,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.inventoryCostEvents",
-          "line": 131
-        },
-        {
-          "method": "add",
-          "target": "database.inventoryCostEvents",
-          "line": 149
-        }
-      ],
-      "permissionCalls": [],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/costLedger.ts",
-      "name": "restoreInventoryCost",
-      "line": 162,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.inventoryCostEvents",
-          "line": 171
-        }
-      ],
-      "permissionCalls": [],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/inventory.ts",
-      "name": "createCategory",
-      "line": 160,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.categories",
-          "line": 170
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/inventory.ts",
-      "name": "createProduct",
-      "line": 190,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.products",
-          "line": 212
-        },
-        {
-          "method": "add",
-          "target": "database.inventoryMovements",
-          "line": 213
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/inventory.ts",
-      "name": "updateProduct",
-      "line": 219,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.products",
-          "line": 237
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/inventory.ts",
-      "name": "archiveProduct",
-      "line": 242,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.products",
-          "line": 249
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/inventory.ts",
-      "name": "adjustStock",
-      "line": 254,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.products",
-          "line": 273
-        },
-        {
-          "method": "add",
-          "target": "database.inventoryMovements",
-          "line": 274
-        },
-        {
-          "method": "add",
-          "target": "database.staffAudits",
-          "line": 275
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/stage2Inventory.ts",
-      "name": "setCatalogueOptions",
-      "line": 29,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.products",
-          "line": 49
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/stage2Inventory.ts",
-      "name": "saveStockCountSession",
-      "line": 53,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.stockCountSessions",
-          "line": 61
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/stage2Inventory.ts",
-      "name": "updateStockCountSession",
-      "line": 65,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.stockCountSessions",
-          "line": 72
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/stage2Inventory.ts",
-      "name": "postSavedStockCount",
-      "line": 76,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.stockCountSessions",
-          "line": 82
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/inventory/stage2Inventory.ts",
-      "name": "registerBatch",
-      "line": 87,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.inventoryBatches",
-          "line": 99
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/payments/mobileMoney.ts",
-      "name": "addMobileMoneyProvider",
-      "line": 32,
-      "writes": [
-        {
-          "method": "add",
-          "target": "database.mobileMoneyProviders",
-          "line": 46
-        },
-        {
-          "method": "add",
-          "target": "database.staffAudits",
-          "line": 47
-        }
-      ],
-      "permissionCalls": [
-        "requirePermission"
-      ],
-      "status": "requires-service-boundary-review"
-    },
-    {
-      "file": "client/src/features/payments/mobileMoney.ts",
-      "name": "setMobileMoneyProviderActive",
-      "line": 52,
-      "writes": [
-        {
-          "method": "put",
-          "target": "database.mobileMoneyProviders",
           "line": 60
         },
         {
@@ -785,14 +780,359 @@
       "status": "requires-service-boundary-review"
     },
     {
+      "file": "client/src/features/inventory/advancedInventory.ts",
+      "name": "importProductCatalogCsv",
+      "line": 92,
+      "writes": [
+        {
+          "method": "bulkAdd",
+          "target": "database.products",
+          "line": 125
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryMovements",
+          "line": 127
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 128
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/costLedger.ts",
+      "name": "appendInventoryCostChange",
+      "line": 131,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 146
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 164
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/costLedger.ts",
+      "name": "restorePartialInventoryCost",
+      "line": 183,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryCostEvents",
+          "line": 197
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "createCategory",
+      "line": 190,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.categories",
+          "line": 211
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "createProduct",
+      "line": 233,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.products",
+          "line": 259
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryMovements",
+          "line": 261
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "updateProduct",
+      "line": 269,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 290
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "archiveProduct",
+      "line": 297,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 311
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/inventory.ts",
+      "name": "adjustStockWhileLocked",
+      "line": 323,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 348
+        },
+        {
+          "method": "add",
+          "target": "database.inventoryMovements",
+          "line": 350
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 351
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/promotions.ts",
+      "name": "setProductPromotion",
+      "line": 17,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 41
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 42
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "setCatalogueOptions",
+      "line": 32,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 55
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "saveStockCountSession",
+      "line": 61,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.stockCountSessions",
+          "line": 73
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "updateStockCountSession",
+      "line": 79,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.stockCountSessions",
+          "line": 90
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "postSavedStockCount",
+      "line": 96,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.stockCountSessions",
+          "line": 108
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/inventory/stage2Inventory.ts",
+      "name": "registerBatch",
+      "line": 115,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryBatches",
+          "line": 131
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/mobileMoney.ts",
+      "name": "addMobileMoneyProvider",
+      "line": 37,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.mobileMoneyProviders",
+          "line": 53
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 54
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/mobileMoney.ts",
+      "name": "setMobileMoneyProviderActive",
+      "line": 60,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.mobileMoneyProviders",
+          "line": 70
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 71
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/run15MockStore.ts",
+      "name": "createRun15MockIntent",
+      "line": 23,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.paymentSandboxIntents",
+          "line": 54
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 55
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/payments/run15MockStore.ts",
+      "name": "applyRun15MockAction",
+      "line": 61,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.paymentSandboxEvents",
+          "line": 106
+        },
+        {
+          "method": "put",
+          "target": "database.paymentSandboxIntents",
+          "line": 107
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 108
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
       "file": "client/src/features/purchases/purchases.ts",
       "name": "createSupplier",
-      "line": 76,
+      "line": 97,
       "writes": [
         {
           "method": "add",
           "target": "database.suppliers",
-          "line": 84
+          "line": 110
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 111
         }
       ],
       "permissionCalls": [
@@ -803,12 +1143,17 @@
     {
       "file": "client/src/features/purchases/purchases.ts",
       "name": "updateSupplier",
-      "line": 87,
+      "line": 117,
       "writes": [
         {
           "method": "put",
           "target": "database.suppliers",
-          "line": 95
+          "line": 132
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 133
         }
       ],
       "permissionCalls": [
@@ -819,12 +1164,17 @@
     {
       "file": "client/src/features/purchases/purchases.ts",
       "name": "archiveSupplier",
-      "line": 98,
+      "line": 139,
       "writes": [
         {
           "method": "put",
           "target": "database.suppliers",
-          "line": 103
+          "line": 162
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 163
         }
       ],
       "permissionCalls": [
@@ -834,33 +1184,43 @@
     },
     {
       "file": "client/src/features/purchases/purchases.ts",
-      "name": "completePurchase",
-      "line": 106,
+      "name": "completePurchaseWhileLocked",
+      "line": 174,
       "writes": [
         {
           "method": "add",
           "target": "database.purchases",
-          "line": 142
+          "line": 235
         },
         {
           "method": "bulkAdd",
           "target": "database.purchaseLines",
-          "line": 142
+          "line": 235
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 236
+        },
+        {
+          "method": "bulkAdd",
+          "target": "database.inventoryBatches",
+          "line": 242
         },
         {
           "method": "put",
           "target": "database.products",
-          "line": 144
+          "line": 243
         },
         {
           "method": "bulkAdd",
           "target": "database.inventoryMovements",
-          "line": 145
+          "line": 245
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 146
+          "line": 246
         }
       ],
       "permissionCalls": [
@@ -870,90 +1230,193 @@
       "status": "requires-service-boundary-review"
     },
     {
-      "file": "client/src/features/sales/sales.ts",
-      "name": "completeSale",
-      "line": 130,
+      "file": "client/src/features/purchases/supplierPayables.ts",
+      "name": "recognizeUnpaidPurchaseWhileLocked",
+      "line": 38,
       "writes": [
         {
-          "method": "bulkPut",
-          "target": "database.inventoryBatches",
-          "line": 297
+          "method": "add",
+          "target": "database.supplierPayableEntries",
+          "line": 71
         },
         {
           "method": "add",
-          "target": "database.sales",
-          "line": 298
+          "target": "database.centralOperationalEvents",
+          "line": 72
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 299
+          "line": 73
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/purchases/supplierPayables.ts",
+      "name": "recordSupplierSettlementWhileLocked",
+      "line": 95,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.supplierPayableEntries",
+          "line": 139
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 140
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 141
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sales/cashPartialReturnPosting.ts",
+      "name": "recordConfirmedCashPartialReturnWhileLocked",
+      "line": 65,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.inventoryMovements",
+          "line": 168
+        },
+        {
+          "method": "put",
+          "target": "database.products",
+          "line": 169
+        },
+        {
+          "method": "add",
+          "target": "database.cashPartialReturns",
+          "line": 188
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 189
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 190
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "activeStaffShift",
+        "authorizeReturnPolicy"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sales/sales.ts",
+      "name": "completeSaleWhileLocked",
+      "line": 208,
+      "writes": [
+        {
+          "method": "bulkPut",
+          "target": "database.inventoryBatches",
+          "line": 487
+        },
+        {
+          "method": "add",
+          "target": "database.sales",
+          "line": 488
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 490
         },
         {
           "method": "bulkAdd",
           "target": "database.saleLines",
-          "line": 300
+          "line": 491
         },
         {
-          "method": "add",
+          "method": "bulkAdd",
           "target": "database.payments",
-          "line": 301
+          "line": 492
         },
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 303
+          "line": 494
         },
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 308
+          "line": 499
         },
         {
           "method": "add",
           "target": "database.customerBenefits",
-          "line": 318
+          "line": 509
         },
         {
           "method": "add",
           "target": "database.receipts",
-          "line": 323
+          "line": 514
         },
         {
           "method": "add",
           "target": "database.customerActivities",
-          "line": 324
+          "line": 515
         },
         {
           "method": "bulkPut",
           "target": "database.products",
-          "line": 325
+          "line": 516
         },
         {
           "method": "bulkAdd",
           "target": "database.inventoryMovements",
-          "line": 326
+          "line": 517
+        },
+        {
+          "method": "add",
+          "target": "database.centralSaleEvents",
+          "line": 519
         }
       ],
       "permissionCalls": [
-        "requirePermission"
+        "requirePermission",
+        "authorized"
       ],
       "status": "requires-service-boundary-review"
     },
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "createStaff",
-      "line": 34,
+      "line": 64,
       "writes": [
         {
           "method": "add",
           "target": "database.staffMembers",
-          "line": 47
+          "line": 81
+        },
+        {
+          "method": "update",
+          "target": "database.businessProfiles",
+          "line": 83
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 48
+          "line": 84
         }
       ],
       "permissionCalls": [
@@ -964,17 +1427,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "enrollStaffAuthenticator",
-      "line": 68,
+      "line": 134,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 84
+          "line": 151
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 85
+          "line": 152
         }
       ],
       "permissionCalls": [
@@ -985,12 +1448,12 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "unlockStaffWithAuthenticator",
-      "line": 88,
+      "line": 155,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 126
+          "line": 198
         }
       ],
       "permissionCalls": [],
@@ -999,17 +1462,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "revokeStaffAuthenticator",
-      "line": 129,
+      "line": 208,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 134
+          "line": 216
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 135
+          "line": 217
         }
       ],
       "permissionCalls": [
@@ -1020,17 +1483,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "changeStaffStatus",
-      "line": 149,
+      "line": 266,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 149
+          "line": 276
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 149
+          "line": 278
         }
       ],
       "permissionCalls": [
@@ -1041,17 +1504,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "setStaffPermissions",
-      "line": 150,
+      "line": 282,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 158
+          "line": 292
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 159
+          "line": 294
         }
       ],
       "permissionCalls": [
@@ -1062,17 +1525,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "changeStaffRole",
-      "line": 162,
+      "line": 298,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 168
+          "line": 307
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 169
+          "line": 309
         }
       ],
       "permissionCalls": [
@@ -1083,17 +1546,17 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "resetStaffPin",
-      "line": 172,
+      "line": 313,
       "writes": [
         {
           "method": "update",
           "target": "database.staffMembers",
-          "line": 179
+          "line": 323
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 180
+          "line": 325
         }
       ],
       "permissionCalls": [
@@ -1104,17 +1567,22 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "openShift",
-      "line": 183,
+      "line": 329,
       "writes": [
         {
           "method": "add",
           "target": "database.staffShifts",
-          "line": 183
+          "line": 340
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 341
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 183
+          "line": 342
         }
       ],
       "permissionCalls": [
@@ -1125,17 +1593,59 @@
     {
       "file": "client/src/features/staff/staff.ts",
       "name": "closeShift",
-      "line": 239,
+      "line": 412,
       "writes": [
         {
           "method": "update",
           "target": "database.staffShifts",
-          "line": 250
+          "line": 428
+        },
+        {
+          "method": "add",
+          "target": "database.centralOperationalEvents",
+          "line": 429
         },
         {
           "method": "add",
           "target": "database.staffAudits",
-          "line": 251
+          "line": 430
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "reviewClosedShift",
+      "line": 452,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.staffShifts",
+          "line": 471
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 472
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/staff/staff.ts",
+      "name": "approveCheckoutDiscount",
+      "line": 483,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 517
         }
       ],
       "permissionCalls": [
@@ -1146,12 +1656,17 @@
     {
       "file": "client/src/features/stores/storeDirectory.ts",
       "name": "createStore",
-      "line": 18,
+      "line": 24,
       "writes": [
         {
           "method": "add",
           "target": "database.storeLocations",
-          "line": 27
+          "line": 36
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 37
         }
       ],
       "permissionCalls": [
@@ -1162,12 +1677,17 @@
     {
       "file": "client/src/features/stores/storeDirectory.ts",
       "name": "assignStore",
-      "line": 31,
+      "line": 44,
       "writes": [
         {
           "method": "add",
           "target": "database.storeAssignments",
-          "line": 42
+          "line": 58
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 59
         }
       ],
       "permissionCalls": [
@@ -1178,12 +1698,17 @@
     {
       "file": "client/src/features/stores/storeStockCounts.ts",
       "name": "recordStoreStockObservation",
-      "line": 27,
+      "line": 29,
       "writes": [
         {
           "method": "add",
           "target": "database.storeStockObservations",
-          "line": 40
+          "line": 45
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 46
         }
       ],
       "permissionCalls": [
@@ -1192,14 +1717,77 @@
       "status": "requires-service-boundary-review"
     },
     {
+      "file": "client/src/features/stores/storeStockLedger.ts",
+      "name": "postStoreStockDelta",
+      "line": 97,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeStockEntries",
+          "line": 131
+        }
+      ],
+      "permissionCalls": [
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeStockLedger.ts",
+      "name": "activateStoreInventory",
+      "line": 139,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeStockEntries",
+          "line": 197
+        },
+        {
+          "method": "add",
+          "target": "database.storeStockModes",
+          "line": 207
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 208
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeStockLedger.ts",
+      "name": "postPairedStoreTransfer",
+      "line": 240,
+      "writes": [
+        {
+          "method": "bulkAdd",
+          "target": "database.storeStockEntries",
+          "line": 284
+        }
+      ],
+      "permissionCalls": [
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
       "file": "client/src/features/stores/storeTransfers.ts",
       "name": "requestStoreTransfer",
-      "line": 16,
+      "line": 22,
       "writes": [
         {
           "method": "add",
           "target": "database.storeTransferRequests",
-          "line": 29
+          "line": 51
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 52
         }
       ],
       "permissionCalls": [
@@ -1210,17 +1798,143 @@
     {
       "file": "client/src/features/stores/storeTransfers.ts",
       "name": "cancelStoreTransfer",
-      "line": 33,
+      "line": 57,
       "writes": [
         {
           "method": "put",
           "target": "database.storeTransferRequests",
-          "line": 41
+          "line": 69
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 70
         }
       ],
       "permissionCalls": [
         "requirePermission"
       ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "completeStoreTransfer",
+      "line": 84,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.storeTransferRequests",
+          "line": 121
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 122
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "dispatchStoreTransfer",
+      "line": 134,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.storeTransferRequests",
+          "line": 190
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 191
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "returnUndeliveredDispatch",
+      "line": 201,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.storeTransferRequests",
+          "line": 234
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 235
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/stores/storeTransfers.ts",
+      "name": "requestStoreTransferReversal",
+      "line": 244,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.storeTransferRequests",
+          "line": 285
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 286
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/deviceKeyVault.ts",
+      "name": "write",
+      "line": 63,
+      "writes": [
+        {
+          "method": "add",
+          "target": "tx.objectStore('keys')",
+          "line": 67
+        },
+        {
+          "method": "put",
+          "target": "tx.objectStore('keys')",
+          "line": 68
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/deviceKeyVault.ts",
+      "name": "remove",
+      "line": 74,
+      "writes": [
+        {
+          "method": "delete",
+          "target": "tx.objectStore('keys')",
+          "line": 78
+        }
+      ],
+      "permissionCalls": [],
       "status": "requires-service-boundary-review"
     },
     {
@@ -1270,6 +1984,28 @@
       "status": "requires-service-boundary-review"
     },
     {
+      "file": "client/src/features/sync/qaSaleClaimInbox.ts",
+      "name": "pullWhileAccountStable",
+      "line": 48,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.qaSaleClaimInbox",
+          "line": 93
+        },
+        {
+          "method": "put",
+          "target": "database.qaSaleClaimCursors",
+          "line": 98
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
       "file": "client/src/features/sync/reconciliation.ts",
       "name": "inspectRemoteClaim",
       "line": 33,
@@ -1286,14 +2022,117 @@
       "status": "requires-service-boundary-review"
     },
     {
+      "file": "client/src/features/sync/run14LocalRelay.ts",
+      "name": "queueRun14Evidence",
+      "line": 60,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.syncReplicaOutbox",
+          "line": 117
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/run14LocalRelay.ts",
+      "name": "importRun14Page",
+      "line": 140,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.syncReplicaInbox",
+          "line": 189
+        },
+        {
+          "method": "put",
+          "target": "database.syncReplicaCursors",
+          "line": 195
+        }
+      ],
+      "permissionCalls": [],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/run14RelayTransport.ts",
+      "name": "recordConflict",
+      "line": 86,
+      "writes": [
+        {
+          "method": "add",
+          "target": "database.syncReplicaConflicts",
+          "line": 103
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission",
+        "authorized"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/run14RelayTransport.ts",
+      "name": "sendOneRun14Event",
+      "line": 110,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.syncReplicaOutbox",
+          "line": 150
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/run14RelayTransport.ts",
+      "name": "markRun14ConflictReviewed",
+      "line": 218,
+      "writes": [
+        {
+          "method": "put",
+          "target": "database.syncReplicaConflicts",
+          "line": 240
+        },
+        {
+          "method": "add",
+          "target": "database.staffAudits",
+          "line": 241
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
+      "file": "client/src/features/sync/supabaseUploader.ts",
+      "name": "uploadOnePendingOperation",
+      "line": 19,
+      "writes": [
+        {
+          "method": "update",
+          "target": "database.syncOutbox",
+          "line": 45
+        }
+      ],
+      "permissionCalls": [
+        "requirePermission"
+      ],
+      "status": "requires-service-boundary-review"
+    },
+    {
       "file": "client/src/features/sync/syncFoundation.ts",
       "name": "setSyncConsent",
-      "line": 44,
+      "line": 52,
       "writes": [
         {
           "method": "put",
           "target": "database.syncConsents",
-          "line": 51
+          "line": 66
         }
       ],
       "permissionCalls": [
@@ -1304,12 +2143,12 @@
     {
       "file": "client/src/features/sync/syncFoundation.ts",
       "name": "enqueueSyncEvent",
-      "line": 56,
+      "line": 71,
       "writes": [
         {
           "method": "add",
           "target": "database.syncOutbox",
-          "line": 72
+          "line": 95
         }
       ],
       "permissionCalls": [

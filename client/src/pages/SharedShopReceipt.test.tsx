@@ -13,6 +13,8 @@ describe("shared shop receipt actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     await waitFor(() => expect(share).toHaveBeenCalled());
     expect(share.mock.calls[0][0].text).toContain("Receipt #42");
+    expect(share.mock.calls[0][0].text).toContain("bank or payment-provider settlement is not verified.");
+    expect(screen.getByText(/bank or payment-provider settlement is not verified/)).toBeInTheDocument();
     expect(await screen.findByRole("status")).toHaveTextContent("opened in your share options");
   });
 

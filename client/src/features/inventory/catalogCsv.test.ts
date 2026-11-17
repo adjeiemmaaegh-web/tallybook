@@ -20,3 +20,12 @@ describe("offline catalogue CSV preview", () => {
     expect(escapeCsvSpreadsheetFormula('=HYPERLINK("x")')).toBe('\'=HYPERLINK("x")');
   });
 });
+
+it('enforces 10,000 product rows equally with or without a trailing newline',()=>{
+ const rows=Array.from({length:10000},(_,i)=>'Item '+i+',,,,100,50,1,0').join('\n');
+ expect(previewCatalogImport(header+rows)).toHaveLength(10000);
+ expect(previewCatalogImport(header+rows+'\n')).toHaveLength(10000);
+ for(const ending of ['', '\n']){
+  expect(()=>previewCatalogImport(header+rows+'\nOne extra,,,,100,50,1,0'+ending)).toThrow(/10,000/);
+ }
+});

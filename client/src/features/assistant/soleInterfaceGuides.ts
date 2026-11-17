@@ -122,6 +122,7 @@ const FAQ_GUIDES:readonly Guide[]=[
 ];
 
 const BOUNDARIES: readonly Guide[]=[
+  {id:"scheduled-reviews",match:/\b(?:scheduled|schedule|scheduling|advisory)\b.{0,45}\breviews?\b/i,title:"Scheduled local advisory reviews",route:"/insights",summary:"The unlocked owner can approve daily or weekly local stock, debt and expiry reviews in Insights. Reviews run while this app is open, catch up once after inactivity and pause after backup restore. They never send messages or change money, stock or orders.",steps:["Open Insights as the unlocked company owner.","Choose the review frequency and included findings, then explicitly enable the schedule.","Review supporting records; pause or cancel the schedule whenever needed."]},
   {id:"staff-create",match:/\b(?:add|create|hire|register)\b.{0,30}\b(?:employee|staff|cashier|attendant)\b/i,title:"Adding staff",route:ROUTES.staff,summary:"Clementia cannot provision staff or grant permissions through chat.",steps:["Open Staff.","Use the protected staff management controls.","Verify the person's assigned role and stores."]},
   {id:"staff-shift",match:/\b(?:close|end|finish)\b.{0,25}\b(?:staff|cashier|employee|register)\s*shift\b|\bclose (?:today'?s|the|my)?\s*shift\b/i,title:"Closing a staff shift",route:ROUTES.staff,summary:"An end-of-day summary is not a shift closure. Clementia cannot finalize shift cash or balances.",steps:["Use the staff shift workflow.","Reconcile the drawer and payment totals.","Confirm the shift close in the permissioned UI."]},
   {id:"stock-transfer",match:/\btransfer\b.{0,40}\b(?:stock|eggs|rice|items?|store|shop|warehouse)\b/i,title:"Transferring stock",route:ROUTES.stores,summary:"Clementia cannot dispatch or receive inter-store transfers from chat.",steps:["Open Stores or Stock transfers.","Select the source and destination stores and products.","Dispatch and receive using their verified stock workflows."]},
@@ -143,7 +144,7 @@ const BOUNDARIES: readonly Guide[]=[
 
 ];
 const ASK_HOW = /^(?:how (?:do|can|should|would|to)\b|what (?:steps|is the easiest way)\b|where can i\b|which screen\b|is there a way\b|please explain\b|explain (?:the process|how)\b|teach me\b|show me how\b|can you (?:show|tell|explain|walk)\b|could you (?:show|guide|explain|walk)\b|i (?:do not|don't) know how\b|as a beginner\b|tell me how\b|help me learn\b)/i;
-const DIRECT_BOUNDARY = /^(?:edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
+const DIRECT_BOUNDARY = /^(?:schedule|enable scheduled|pause (?:my )?(?:scheduled|advisory)|cancel (?:my )?(?:scheduled|advisory)|edit|delete|remove|change|update|refund|apply|give|offer|transfer|add (?:staff|employee|cashier|attendant)|create (?:business profile|my business)|close (?:the |today'?s |my )?(?:staff|cashier|shift)|sign\s?in|log\s?in|reset|restore|export|email|send|publish|fulfill|fulfil|set|charge|collect|record (?:a |an |the )?(?:expense|rent))\b/i;
 
 function guideResponse(guide:Guide,askedHow:boolean,prepared:string):AssistantReply {
   const canDo=Boolean(guide.inChat);

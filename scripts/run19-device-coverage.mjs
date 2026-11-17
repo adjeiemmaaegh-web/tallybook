@@ -6,7 +6,7 @@
  * Example:
  *  node scripts/run19-device-coverage.mjs --sha EXACT40 --files win.json android.json
  */
-import {readFile,stat} from "node:fs/promises";
+import {readBoundedEvidence} from "./read-bounded-evidence.mjs";
 import {createHash} from "node:crypto";
 import {resolve} from "node:path";
 import {verifyRun19EvidencePayload,run19CrossDeviceCoverage}
@@ -14,10 +14,7 @@ import {verifyRun19EvidencePayload,run19CrossDeviceCoverage}
 function fail(text){throw Error("Run 19 coverage: "+text);}
 async function checkedPayload(file,expectedSha){
  const path=resolve(file);
- const info=await stat(path);
- if(!info.isFile()||info.size<50||info.size>768*1024)
-   fail("Missing or oversized archive: "+file);
- let envelope;try{envelope=JSON.parse(await readFile(path,"utf8"));}
+ let envelope;try{envelope=JSON.parse(await readBoundedEvidence(path,{minBytes:50,maxBytes:768*1024}));}
  catch{fail("Invalid JSON in one device file.");}
  if(!envelope||typeof envelope!=="object"||Array.isArray(envelope)||
     Object.keys(envelope).sort().join(",")!=="kind,payload,sha256,version"||

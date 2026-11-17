@@ -29,7 +29,7 @@ export function resolveReceiptDetail({ receiptId, snapshot, profile, customers }
   const payments = snapshot.payments.filter((item) => item.saleId === sale.id);
   const payment=payments[0];
   const customerName = sale.customerId ? customers.find((customer) => customer.id === sale.customerId)?.name ?? "Saved customer unavailable" : "Walk-in customer";
-  return { receipt, sale, lines, payment, payments, businessName: profile.name, currency: profile.currency, country: profile.country, customerName };
+  return { receipt, sale, lines, payment, payments, businessName: profile.name, currency: sale.currency ?? profile.currency, country: profile.country, customerName };
 }
 
 export function receiptPaymentDescription(detail: ReceiptDetail) {
@@ -40,6 +40,13 @@ export function receiptPaymentDescription(detail: ReceiptDetail) {
   const provider = detail.payment?.mobileMoneyProviderName;
   const reference = detail.payment?.mobileMoneyReference;
   return [method, provider, reference ? `Ref ${reference}` : undefined].filter(Boolean).join(" · ");
+}
+
+/** A staff-entered tender/reference is accounting evidence, never a provider receipt. */
+export function receiptProviderStatus(detail:ReceiptDetail):string|undefined {
+  return ['mobile','card','split'].includes(detail.sale.paymentMethod) ||
+    detail.payments.some(payment=>payment.method==='mobile'||payment.method==='card')
+    ? 'Manually recorded tender; bank or payment-provider settlement is not verified.' : undefined;
 }
 
 export function formatReceiptShareText(detail: ReceiptDetail) {
@@ -75,7 +82,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
       ...(detail.sale.tax.policy.registrationNumber ? [`Tax registration: ${detail.sale.tax.policy.registrationNumber}`] : [])
     ] : []),
     `Total: ${formatMinorAmount(detail.sale.totalMinor, detail.currency)}`,
-    `Settled: ${formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}`,
+    `Recorded paid: ${formatMinorAmount(detail.sale.amountPaidMinor, detail.currency)}`,
     ...(detail.sale.walletAppliedMinor ? [
       `Prepaid wallet used: ${formatMinorAmount(detail.sale.walletAppliedMinor, detail.currency)}`,
       `New cash received: ${formatMinorAmount(detail.sale.amountPaidMinor - detail.sale.walletAppliedMinor, detail.currency)}`,
@@ -87,6 +94,7 @@ export function formatReceiptShareText(detail: ReceiptDetail) {
     `Remaining: ${formatMinorAmount(detail.sale.outstandingMinor, detail.currency)}`,
     payment,
     ...tenderLines,
+    receiptProviderStatus(detail),
     "",
     "Thank you for your business.",
   ].filter((line): line is string => Boolean(line)).join("\n");

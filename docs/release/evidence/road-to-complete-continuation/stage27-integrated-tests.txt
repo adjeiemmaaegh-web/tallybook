@@ -1,0 +1,57 @@
+
+> business-app@1.0.0 test /workspace/scratch/f8a637cc20b7/tallybook
+> vitest run client/src/features/commerce/commerceBoundary.integration.test.ts client/src/pages/CommercePage.test.tsx client/src/features/inventory/writeSafety.test.ts client/src/features/backup/adminRecoveryCoordination.test.ts client/src/features/stores/storeOperations.integration.test.ts client/src/features/sales/sales.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.12 /workspace/scratch/f8a637cc20b7/tallybook/client
+
+ ✓ src/features/sales/sales.test.ts > atomic sales > retains original credit terms after the customer policy changes 327ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > commits distinct exact-sales for the same retry key in independent companies 398ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > enforces customer discount limits without changing stock or financial records 251ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > completes a cash sale by writing sale, line, payment, receipt, and stock movement together 237ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rolls back checkout and stock when durable event insertion fails 240ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > recovers a committed two-item partial-payment receipt from IndexedDB without writing again 252ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects corrupted persisted payment data on recovery without changing the ledger 246ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > accepts a comma-grouped full payment amount and records the sale once 224ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > handles a partial customer sale and derives the customer outstanding amount from saved sales 269ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > writes a full Mobile Money payment and provider snapshot atomically, then returns the same result for a repeat key 236ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a reused provider transaction reference without posting a second sale 243ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a Mobile Money payment without a configured provider before creating records or changing stock 273ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > returns the same completed sale on a repeated checkout key without duplicating stock, payment, receipt, or customer activity 246ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > supports a credit sale and an atomic multi-product stock update 273ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects changed cart or payment details for an already committed checkout key 281ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects a changed partial payment on retry without duplicating customer debt 264ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > rejects insufficient stock and customerless credit without leaving partial records 238ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > migrates a Stage 4 customer database into the sale schema without removing existing records 177ms
+ ✓ src/features/sales/sales.test.ts > atomic sales > upgrades a version-7 database with a historical mobile payment without rewriting it and creates an empty provider store 168ms
+ ✓ src/features/sales/sales.test.ts > restored commerce reservations at the real checkout boundary > rejects corrupted hold evidence with zero financial, stock or audit effects 279ms
+ ✓ src/features/sales/sales.test.ts > restored commerce reservations at the real checkout boundary > consumes valid evidence and returns the same saved sale after a lost response 252ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > refuses untransactional or fabricated dispatch claims at the posting boundary 377ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > rejects a new unlocated batch receipt after store activation without partial stock or cost writes 277ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > separate source and destination supervisors can dispatch and receive only at their assigned store 461ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > dispatch protects stock, receipt moves units once, and reversal preserves original legs 269ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > returned undelivered goods release only their reservation without inventing stock 253ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > a failed receipt audit rolls back both transfer legs and permits the same-key retry 270ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > rejects a cashier attempting transfer administration and unassigned store checkout 331ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > store contribution reconciles sales and cross-store returns without moving historical revenue 290ms
+ ✓ src/features/stores/storeOperations.integration.test.ts > authoritative device-local store operations > a pre-allocation sale can be returned to an explicit store without inventing its original location 268ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > serializes simultaneous adjustments without losing stock or movement continuity 290ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > rolls stock back if the movement write fails 230ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > posts a saved count with all nested transaction tables and rejects a second posting 184ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > denies direct cashier import, count and payment-configuration calls, and locked commerce mutations 338ms
+ ✓ src/features/inventory/writeSafety.test.ts > inventory and planning write safety > rejects purchase arithmetic overflow before any records or stock are written 181ms
+ ✓ src/features/commerce/commerceBoundary.integration.test.ts > interrupted recovery prevents every local draft mutation without partial state 299ms
+ ✓ src/features/commerce/commerceBoundary.integration.test.ts > locking during authoritative product lookup aborts draft creation and audit 267ms
+ ✓ src/features/commerce/commerceBoundary.integration.test.ts > locking during order lookup prevents cancellation and preparation under the old employee 333ms
+ ✓ src/features/commerce/commerceBoundary.integration.test.ts > private customer drafts and catalogue reject locked reads and a new unlock of the same owner 313ms
+ ✓ src/features/commerce/commerceBoundary.integration.test.ts > audit failure rolls back a new request, and authorized planning never posts money or stock 270ms
+ ✓ src/pages/CommercePage.test.tsx > displays whole-unit catalogue currency without a factor-of-100 understatement 97ms
+ ✓ src/pages/CommercePage.test.tsx > switching company clears private form data and ignores the previous pending catalogue 52ms
+ ✓ src/pages/CommercePage.test.tsx > employee handover removes customer contact and stale orders even without a company switch 167ms
+ ✓ src/features/backup/adminRecoveryCoordination.test.ts > rejects business edits and local commerce drafts during exclusive recovery without partial writes 244ms
+
+ Test Files  6 passed (6)
+      Tests  44 passed (44)
+   Start at  06:11:25
+   Duration  22.43s (transform 997ms, setup 1.41s, import 3.37s, tests 11.45s, environment 4.75s)
+

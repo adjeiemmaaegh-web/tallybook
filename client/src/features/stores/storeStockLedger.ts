@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import Dexie from "dexie";
 import {reservedRun16Units} from "@/features/commerce/run16Availability";
 import type { TallybookDB } from "@/db/TallybookDB";
 import { db } from "@/db/TallybookDB";
@@ -146,7 +147,7 @@ export async function activateStoreInventory(
       throw new Error("Invalid opening store allocation list.");
     return database.transaction("rw",[
       database.appMeta,database.businessProfiles,database.products,database.inventoryBatches,database.inventoryCostEvents,
-      database.storeLocations,database.storeStockEntries,database.storeStockModes,
+      database.storeLocations,database.storeStockEntries,database.storeStockModes,database.commerceHolds,
       database.staffMembers,database.staffAudits
     ],async()=>{
       await assertRun7RetailWriteReady(database.appMeta);
@@ -155,6 +156,9 @@ export async function activateStoreInventory(
         throw new Error("Unlock company owner to activate store stock.");
       if (!(await database.businessProfiles.get(company))) throw new Error("Active company missing.");
       if (await database.storeStockModes.get(company)) throw new Error("Store stock already activated.");
+      if (await database.commerceHolds.where("businessProfileId").equals(company)
+          .and(hold => hold.status === "active").count())
+        throw new Error("Fulfill or release existing customer reservations before allocating stock to stores.");
       const products=await database.products.where("businessProfileId").equals(company).toArray();
       const stock=products.filter(p=>!p.archivedAt && p.itemKind!=="service");
       if (products.some(p=>p.itemKind!=="service" && p.archivedAt && p.stockQuantity!==0))
@@ -243,7 +247,16 @@ export async function postPairedStoreTransfer(
   }, staffId:string, submissionKey:string, now:string
 ) {
   requireStage9Capability("executeStoreTransfer");
+  if (Dexie.currentTransaction?.db !== database)
+    throw new Error("Store transfer posting requires the existing atomic transaction.");
   requireCompany(company);
+  const dispatched=await database.storeTransferRequests.get(request.id);
+  if (!dispatched || dispatched.businessProfileId!==company || dispatched.status!=="dispatched" ||
+      !dispatched.dispatchKey || !dispatched.dispatchedByStaffId ||
+      !dispatched.dispatchedAt || !Number.isFinite(Date.parse(dispatched.dispatchedAt)) ||
+      dispatched.sourceStoreId!==request.sourceStoreId || dispatched.destinationStoreId!==request.destinationStoreId ||
+      dispatched.productId!==request.productId || dispatched.quantity!==request.quantity)
+    throw new Error("Authoritative saved dispatch evidence is required for transfer posting.");
   if (!await database.storeStockModes.get(company)) throw new Error("Activate company store stock before transferring.");
   if (!whole(request.quantity) || request.quantity<1 || !submissionKey.trim()) throw new Error("Invalid transfer.");
   if(request.status!=="dispatched")throw new Error("Transfer dispatch evidence required before receipt.");
@@ -276,10 +289,12 @@ export async function postPairedStoreTransfer(
   ];
   const actor=staffId ? await database.staffMembers.get(staffId) : undefined;
   if(!actor || actor.businessProfileId!==company || actor.disabledAt || actor.role==="cashier" || currentStaffId(company)!==staffId) throw new Error("Verified inventory-authorized transfer actor required.");
-  if(actor.role!=="owner")for(const storeId of [source.id,destination.id]){
-    if(!await database.storeAssignments.where("[businessProfileId+staffId+storeId]").equals([company,staffId,storeId]).first())
-      throw new Error("Transfer actor is not assigned to both stores.");
-  }
+  // Dispatch already checks the source actor. Receipt independently checks
+  // the receiving actor's assignment; stores may have different supervisors.
+  if(actor.role!=="owner" && !await database.storeAssignments.where("[businessProfileId+staffId+storeId]")
+      .equals([company,staffId,destination.id]).first())
+    throw new Error("Receiving staff is not assigned to the destination store.");
+  if(currentStaffId(company)!==staffId)throw new Error("Staff session changed before transfer posting.");
   requireCompany(company);
   await database.storeStockEntries.bulkAdd(legs);
   return transferId;

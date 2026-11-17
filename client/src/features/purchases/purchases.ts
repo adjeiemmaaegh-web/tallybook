@@ -209,6 +209,8 @@ async function completePurchaseWhileLocked(values: PurchaseFormValues, currency:
       throw new Error('Purchase currency differs from active company currency; foreign stock costs require a separately approved FX model.');
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error('Company switched before purchase cost posting.');
+    if (input.lines.some(line => clean(line.batchCode)) && await database.storeStockModes.get(activeId))
+      throw new Error("Store-specific batch provenance is required before receiving expiry-tracked stock. No purchase was saved.");
     const supplier = await database.suppliers.get(input.supplierId);
     if (!supplier || supplier.businessProfileId !== activeId || supplier.archivedAt) throw new Error("Choose an active supplier before completing a purchase.");
     const products = await Promise.all(input.lines.map((line) => database.products.get(line.productId)));

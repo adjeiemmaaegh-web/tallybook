@@ -13,8 +13,9 @@ const MIGRATIONS = [
   '20261105120712_shared_shop_full_till', '20261106120000_shop_refund_policy',
 ];
 
-async function setup() {
+async function setup(context) {
   const db = new PGlite();
+  context.after(() => db.close());
   await db.exec(`create role anon; create role authenticated; create role service_role; create schema auth;
     create table auth.users(id uuid primary key, email text);
     create table auth.sessions(id uuid, user_id uuid, not_after timestamptz);
@@ -64,8 +65,8 @@ const backdate = (t, saleId, days) => t.adminExec(`
   alter table public.shop_sales enable trigger shop_sales_append_only;`);
 const denied = (re, code = '42501') => err => { assert.match(err.message, re); if (err.code !== undefined) assert.equal(err.code, code); return true; };
 
-test('refunds are off by default and an older sale is not reopened by enabling later', async () => {
-  const t = await setup(), s = await shop(t);
+test('refunds are off by default and an older sale is not reopened by enabling later', async context => {
+  const t = await setup(context), s = await shop(t);
   const old = await sell(t, s);
   assert.equal((await t.owner('refundPolicy', {})).refundsEnabled, false);
   assert.equal((await t.owner('refundPolicy', {})).revision, 0);
@@ -77,8 +78,8 @@ test('refunds are off by default and an older sale is not reopened by enabling l
   assert.equal(receipt.refundedMinor, 9000);
 });
 
-test('only the owner of the company can read history or change policy', async () => {
-  const t = await setup(); await shop(t);
+test('only the owner of the company can read history or change policy', async context => {
+  const t = await setup(context); await shop(t);
   await assert.rejects(t.attendant('setRefundPolicy', {}), denied(/Only the business owner/));
   await assert.rejects(t.rival('setRefundPolicy', {}), denied(/Business access denied/));
   await assert.rejects(t.rival('refundPolicy', {}), denied(/Business access denied/));
@@ -87,8 +88,8 @@ test('only the owner of the company can read history or change policy', async ()
   assert.equal((await t.owner('refundPolicy', {})).history.length, 1);
 });
 
-test('policy changes are validated, confirmed and use optimistic concurrency', async () => {
-  const t = await setup(); await shop(t);
+test('policy changes are validated, confirmed and use optimistic concurrency', async context => {
+  const t = await setup(context); await shop(t);
   await assert.rejects(setPolicy(t, {confirmed: false}, 0), /Confirm the refund policy change/);
   await assert.rejects(setPolicy(t, {allowVoid: false, allowPartial: false}, 0), /Choose which refunds/);
   await assert.rejects(setPolicy(t, {maxAgeDays: 0}, 0), /Invalid maxAgeDays/);
@@ -99,8 +100,8 @@ test('policy changes are validated, confirmed and use optimistic concurrency', a
   await assert.rejects(setPolicy(t, {}, 0), denied(/changed; reload/, '40001'));
 });
 
-test('lanes: void-only policy refuses partial refunds, partial-only refuses voids', async () => {
-  const t = await setup(), s = await shop(t);
+test('lanes: void-only policy refuses partial refunds, partial-only refuses voids', async context => {
+  const t = await setup(context), s = await shop(t);
   await setPolicy(t, {allowPartial: false}, 0);
   const a = await sell(t, s);
   const lines = [{lineNo: 1, quantity: 1}];
@@ -112,8 +113,8 @@ test('lanes: void-only policy refuses partial refunds, partial-only refuses void
   assert.equal((await refund(t, b, {lines})).refunds.length, 1);
 });
 
-test('both sale-time and current terms must allow it; disabling later blocks new refunds only', async () => {
-  const t = await setup(), s = await shop(t);
+test('both sale-time and current terms must allow it; disabling later blocks new refunds only', async context => {
+  const t = await setup(context), s = await shop(t);
   await setPolicy(t, {}, 0);
   const posted = await sell(t, s), later = await sell(t, s);
   await refund(t, posted);
@@ -126,8 +127,8 @@ test('both sale-time and current terms must allow it; disabling later blocks new
   await assert.rejects(refund(t, underOff), denied(/Refunds are turned off/)); // sale-time snapshot was off
 });
 
-test('refund window uses the stricter of sale-time and current limits', async () => {
-  const t = await setup(), s = await shop(t);
+test('refund window uses the stricter of sale-time and current limits', async context => {
+  const t = await setup(context), s = await shop(t);
   await setPolicy(t, {maxAgeDays: 30}, 0);
   const a = await sell(t, s);
   await backdate(t, a.saleId, 40);
@@ -140,8 +141,8 @@ test('refund window uses the stricter of sale-time and current limits', async ()
   await assert.rejects(refund(t, b), denied(/past the 100 day/)); // current 100 binds
 });
 
-test('decision evidence is stored; replays and duplicates are safe; over-refunds are blocked', async () => {
-  const t = await setup(), s = await shop(t);
+test('decision evidence is stored; replays and duplicates are safe; over-refunds are blocked', async context => {
+  const t = await setup(context), s = await shop(t);
   await setPolicy(t, {}, 0);
   const sale = await sell(t, s);
   const refundKey = key();
@@ -159,8 +160,8 @@ test('decision evidence is stored; replays and duplicates are safe; over-refunds
   assert.equal(e.decisionTerms.maxAgeDays, 30);
 });
 
-test('legacy sales without a snapshot are never auto-refundable; attendants and rivals cannot refund', async () => {
-  const t = await setup(), s = await shop(t);
+test('legacy sales without a snapshot are never auto-refundable; attendants and rivals cannot refund', async context => {
+  const t = await setup(context), s = await shop(t);
   await setPolicy(t, {}, 0);
   const sale = await sell(t, s);
   await assert.rejects(refund(t, sale, {}, 'attendant'), denied(/Only the business owner/));
@@ -172,8 +173,8 @@ test('legacy sales without a snapshot are never auto-refundable; attendants and 
   await assert.rejects(refund(t, sale), denied(/pre-dates refund policies/));
 });
 
-test('policy history is append-only', async () => {
-  const t = await setup(); await shop(t);
+test('policy history is append-only', async context => {
+  const t = await setup(context); await shop(t);
   await setPolicy(t, {}, 0);
   await assert.rejects(t.admin("update public.shop_refund_policy_history set reason = 'x'"), /append-only/);
   await assert.rejects(t.admin('delete from public.shop_refund_policy_history'), /append-only/);
