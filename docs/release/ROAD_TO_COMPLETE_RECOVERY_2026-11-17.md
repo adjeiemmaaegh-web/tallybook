@@ -24,3 +24,9 @@ Stage29 recovered functionality: explicit owner opt-in to persisted daily/weekly
 The governing 119 requirements remain intact. Full ledger encryption, durable real-provider adapter/settlement/refund architecture, full financial replication, public reservations/fulfillment and comprehensive field/release acceptance remain open. Decision remains **NO-GO**.
 
 Stage30 source is also recovered: chart axes respect all ten supported currency scales, with exact-value table disclosure. The previous 12 unit checks/types/build and Playwright discovery passed in the lost workspace. New real-keyboard assertions have not yet passed on the recovered candidate. Optional scope and physical acceptance stay open.
+
+Stage31 recovery: streamed response limits cancel oversized/invalid bodies before full materialization; same-owner re-unlock cannot authorize old device or queue work. Standard Response fixtures exercise real byte streams. The optional backend previously returned exit zero after an invalid production TLS startup (observed failing regression); recovered code now sets a sanitized nonzero failure, with fresh CI required.
+
+Additional CI preparation after workspace loss is **not yet tested**: parse actual pinned CodeQL SARIF and fail on high/critical/unclassified security results; run Gitleaks 8.30.1 over fetched history with the verified official archive SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`. Retained scan metadata excludes raw matches, secret values and author/contact fields. Scanner/analysis failures remain failed gates; no findings are waived automatically. Scan limits (one archive level, files up to 20 MB, 180-second scan limit) remain explicit and do not certify larger/unscanned archives.
+
+No live auth setting, TLS configuration, credential, payment adapter or hosted migration was changed. Production password protection, pending schema guards and remaining engineering/acceptance still prevent GO.

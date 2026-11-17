@@ -1,6 +1,6 @@
 import type { TallybookDB } from '@/db/TallybookDB';
 import { getActiveBusinessProfileId } from '@/features/business/activeCompany';
-import { currentStaffId, requirePermission } from '@/features/staff/staff';
+import { currentStaffId, currentStaffSessionGeneration, requirePermission } from '@/features/staff/staff';
 import {withCoordinatedRetailWrite} from '@/features/backup/coordinatedRetailWrite';
 import {assertRun7RetailWriteReady} from '@/features/backup/run7RetailWriteBarrier.mjs';
 import { listPendingSyncEvents, type SyncOutboxEvent } from './syncFoundation';
@@ -20,9 +20,9 @@ export interface CentralUploadAdapter {
 const QUEUE_IDENTITY_KEYS=['id','businessProfileId','deviceId','operationId','entityType','entityId','payloadDigest','createdAt'] as const;
 /** Manual, controlled upload of one existing outbox operation. Not a live auto-sync integration. */
 export async function uploadOnePendingOperation(database:TallybookDB, company:string, adapter:CentralUploadAdapter) {
- const actor=currentStaffId(company);
+ const actor=currentStaffId(company),generation=currentStaffSessionGeneration(company);
  const scope=()=>{
-  if(!actor||getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor)
+  if(!actor||getActiveBusinessProfileId()!==company||currentStaffId(company)!==actor||currentStaffSessionGeneration(company)!==generation)
    throw new Error('Company or staff session changed during upload.');
  };
  scope();

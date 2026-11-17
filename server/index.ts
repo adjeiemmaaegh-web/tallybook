@@ -350,4 +350,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(() => {
+  // A misconfigured server is not a healthy zero-exit process.
+  // Do not print server-only configuration values or credential-bearing errors.
+  console.error("Server startup failed. Validate the configured transport and TLS files.");
+  process.exitCode = 1;
+});

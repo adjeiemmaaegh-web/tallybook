@@ -6,7 +6,7 @@
 import type { TallybookDB } from "@/db/TallybookDB";
 import { validateOutboxEvent, type SyncOutboxEvent } from "./syncFoundation";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
-import {currentStaffId,requirePermission} from "@/features/staff/staff";
+import {currentStaffId,currentStaffSessionGeneration,requirePermission} from "@/features/staff/staff";
 import {withCoordinatedRetailWrite} from "@/features/backup/coordinatedRetailWrite";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 
@@ -46,9 +46,9 @@ export async function acknowledgeStagedEvent(
   if (!KEY.test(businessProfileId) || !KEY.test(eventId) ||
       receipt?.organizationId !== businessProfileId || receipt?.eventId !== eventId)
     throw new Error("Invalid acknowledgement scope.");
-  const actor=currentStaffId(businessProfileId);
+  const actor=currentStaffId(businessProfileId),generation=currentStaffSessionGeneration(businessProfileId);
   const scope=()=>{
-    if(!actor||getActiveBusinessProfileId()!==businessProfileId||currentStaffId(businessProfileId)!==actor)
+    if(!actor||getActiveBusinessProfileId()!==businessProfileId||currentStaffId(businessProfileId)!==actor||currentStaffSessionGeneration(businessProfileId)!==generation)
       throw new Error("Company or staff session changed before acknowledgement.");
   };
   scope();

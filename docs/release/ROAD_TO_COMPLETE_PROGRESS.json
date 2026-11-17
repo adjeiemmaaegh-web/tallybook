@@ -3149,17 +3149,25 @@
       "requirement": "Enable leaked-password protection through authorized settings and confirm warning clears.",
       "initialAuditStatus": "Owner-controlled outstanding",
       "completionCriterion": "enabled setting and authentication regression.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect supabase password security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Fresh read-only Supabase advisor still reports leaked-password protection disabled. Changing live authentication policy requires separate owner authorization."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Owner authorizes the prepared authentication setting change and genuine sign-in regression; do not alter production policy implicitly."
     },
     {
       "id": "ST31-02",
@@ -3169,17 +3177,36 @@
       "requirement": "Revalidate enforced CSP across production integrations, OAuth, PWA, browsers and approved endpoints.",
       "initialAuditStatus": "Implemented but not fully accepted",
       "completionCriterion": "no broken legitimate flows or unreviewed policy relaxation.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect content security policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-03",
@@ -3189,17 +3216,36 @@
       "requirement": "Perform threat-driven tests for XSS, authorization, session reuse, privileged RPC, public order links, exports and device trust.",
       "initialAuditStatus": "Unverified comprehensively",
       "completionCriterion": "demonstrated Critical/High findings fixed and retested.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect independent security testing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-04",
@@ -3209,17 +3255,36 @@
       "requirement": "Review CodeQL findings, remaining low-severity dependency advisory, production dependency graph, licenses and supply chain.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "triage, approved fixes/exceptions and inventory.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect security tool findings against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-05",
@@ -3229,17 +3294,36 @@
       "requirement": "Verify business, staff, customer, assistant, backups, public orders and support-report data handling.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "access, retention, deletion and disclosure controls.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect data privacy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-06",
@@ -3249,17 +3333,36 @@
       "requirement": "Verify production Vercel/Supabase targets, redirects, variables, secrets and disabled test/payment flags without exposing values.",
       "initialAuditStatus": "Unverified end-to-end",
       "completionCriterion": "exact safe environment matrix.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect environment configuration against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-07",
@@ -3269,17 +3372,36 @@
       "requirement": "Validate read-only production smoke workflow, alerts, log redaction, escalation and recovery.",
       "initialAuditStatus": "Implemented but operationally unverified",
       "completionCriterion": "actual alert delivery and controlled incident drill.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect operational monitoring against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-08",
@@ -3289,17 +3411,36 @@
       "requirement": "Approve retention, protection, restore, ownership and recovery objectives for local and hosted data.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "tested usable disaster-recovery process.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect backup operations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-09",
@@ -3309,17 +3450,36 @@
       "requirement": "Verify older SW/offline sessions, cached data and strict-auth/fresh-start transitions cannot bypass release boundaries.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "safe transitions and documented unreachable-device limitations.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect legacy client security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST31-10",
@@ -3329,17 +3489,36 @@
       "requirement": "Finalize dependency notices, asset licenses, privacy/support terms and applicable distribution obligations.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "approved release materials.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "vercel.json",
-        ".github/workflows/security-code-audit.yml"
+        ".github/workflows/security-code-audit.yml",
+        "client/src/lib/boundedResponse.mjs",
+        "client/src/features/sync/deviceRegistry.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect licensing & distribution against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical recovery locks, staff unlock epochs, immutable queue receipts, pinned CodeQL workflow and read-only production smoke."
+      ],
+      "changes": [
+        "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
+        "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates."
+      ],
+      "tests": [
+        {
+          "command": "Original pre-interruption focused streaming/unlock verification",
+          "result": "pass",
+          "scope": "Historical local 13 native/26 client tests; recovered candidate and new security/startup gates pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and added CI/startup gates are not yet verified on a published candidate.",
+        "Real Auth/field recovery, notification/monitoring delivery, full privacy/legacy-client and licensing acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Run all recovered-source CI, triage every security finding, preserve strict authorization and close remaining operational/owner requirements."
     },
     {
       "id": "ST32-01",
@@ -3603,7 +3782,7 @@
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "activeEngineeringStage": 30,
+  "activeEngineeringStage": 31,
   "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
@@ -3672,7 +3851,7 @@
   "recovery": {
     "state": "local-workspace-unavailable",
     "publishedBaseline": "b7f5b1537bc9172529305ec7241325ac2c5f1ea8",
-    "newSourceVerification": "pending hosted CI",
+    "newSourceVerification": "pending hosted CI; new severity/secret/startup gates added after interruption",
     "unobservedRuns": [
       "Latest full Stage31 regression",
       "Full-history Gitleaks scan",

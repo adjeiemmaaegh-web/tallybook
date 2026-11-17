@@ -31,3 +31,5 @@ No production data/configuration/auth policy was changed, no real payment was in
 Recovery checkpoint: the execution workspace became unavailable after additional local work. Stage29 scheduling source is being reconstructed through GitHub; its fresh CI remains pending. Prior local results are explicitly separate from recovered-source acceptance. See [recovery evidence](ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md). No complete-stage or production-readiness claim.
 
 Stage30 chart/currency/accessibility source has been recovered. Tests and optional-scope limitations remain separately labelled in the recovery checkpoint; new hosted verification is pending.
+
+Stage31 security/reliability source has been reconstructed, with streaming caps, original-unlock checks, nonzero startup failure, and fresh CodeQL-severity/redacted-secret-scan gates. The complete recovered tree and added gates require hosted verification. The interrupted local full regression/secret scan has no observed result.

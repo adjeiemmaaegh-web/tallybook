@@ -1,10 +1,11 @@
+import {jsonResponseFixture} from "@/test/httpResponseFixture";
 /** Real local records with injected transport only; no live replication/provider claim. */
 import {afterEach,expect,it,vi} from 'vitest';
 import {syncBoundaryFixture,closeSyncFixture} from '@/test/syncBoundaryFixture';
 import {acknowledgeStagedEvent} from './outboxAcknowledgements';
 import {deliverPendingOutboxEvent} from './outboxDelivery';
 import {uploadOnePendingOperation,type CentralUploadAdapter} from './supabaseUploader.ts';
-import {lockStaff} from '@/features/staff/staff';
+import {lockStaff,unlockStaff} from '@/features/staff/staff';
 import {setActiveBusinessProfileId} from '@/features/business/activeCompany';
 import {RESTORE_JOURNAL_KEY} from '@/features/backup/restoreJournal.mjs';
 const fixtures:Awaited<ReturnType<typeof syncBoundaryFixture>>[]=[];
@@ -14,8 +15,7 @@ const endpoint='https://fixture.invalid/api/sync/events/stage';
 const credentials={capability:'abc.def',session:'ghi.jkl'};
 it('acknowledges a matching staged receipt once without modifying business records',async()=>{
  const f=await setup();
- const transport=vi.fn(async()=>({status:201,url:endpoint,redirected:false,type:'basic',
-   headers:{get:()=> 'application/json'},text:async()=>JSON.stringify(f.receipt)} as unknown as Response));
+ const transport=vi.fn(async()=>jsonResponseFixture(endpoint,f.receipt,201));
  expect(await deliverPendingOutboxEvent(f.db,'primary',f.event.id,endpoint,credentials,transport)).toBe('acknowledged');
  const acknowledged=await f.db.syncOutbox.get(f.event.id);
  expect(await acknowledgeStagedEvent(f.db,'primary',f.event.id,f.receipt)).toBe('already-acknowledged');
@@ -82,8 +82,7 @@ it('does not acknowledge a replacement payload using the original metadata-only 
  const f=await setup();
  const transport=async()=>{
    await f.db.syncOutbox.update(f.event.id,{payloadDigest:'b'.repeat(64)});
-   return {status:201,url:endpoint,redirected:false,type:'basic',headers:{get:()=> 'application/json'},
-     text:async()=>JSON.stringify(f.receipt)} as unknown as Response;
+   return jsonResponseFixture(endpoint,f.receipt,201);
  };
  await expect(deliverPendingOutboxEvent(f.db,'primary',f.event.id,endpoint,credentials,transport)).rejects.toThrow(/Outbox changed/);
  expect(await f.db.syncOutbox.get(f.event.id)).toMatchObject({status:'pending',payloadDigest:'b'.repeat(64)});
@@ -96,4 +95,25 @@ it('consent withdrawn during preparation prevents transmission',async()=>{
  },send};
  await expect(uploadOnePendingOperation(f.db,'primary',adapter)).rejects.toThrow(/consent changed/);
  expect(send).not.toHaveBeenCalled();expect(await f.db.syncOutbox.get(f.event.id)).toEqual(f.event);
+});
+
+it('an oversized chunked metadata response leaves the exact event pending and every financial row untouched',async()=>{
+ const f=await setup();let cancelled=false;
+ const response=new Response(new ReadableStream<Uint8Array>({pull(controller){controller.enqueue(new Uint8Array(4096));},cancel(){cancelled=true;}}),{status:201,headers:{'content-type':'application/json'}});
+ Object.defineProperty(response,'url',{value:endpoint});
+ await expect(deliverPendingOutboxEvent(f.db,'primary',f.event.id,endpoint,credentials,async()=>response)).rejects.toThrow(/Oversized/);
+ expect(cancelled).toBe(true);expect(await f.db.syncOutbox.get(f.event.id)).toEqual(f.event);
+ expect(await Promise.all([f.db.sales.count(),f.db.payments.count(),f.db.purchases.count(),f.db.inventoryMovements.count()])).toEqual([0,0,0,0]);
+});
+it('a fresh unlock of the same employee cannot acknowledge an operation begun by the prior session',async()=>{
+ const f=await setup();
+ const transport=async()=>{lockStaff('primary');await unlockStaff(f.owner.id,'123456',f.db);return jsonResponseFixture(endpoint,f.receipt,201);};
+ await expect(deliverPendingOutboxEvent(f.db,'primary',f.event.id,endpoint,credentials,transport)).rejects.toThrow(/session changed/);
+ expect(await f.db.syncOutbox.get(f.event.id)).toEqual(f.event);
+ const adapter:CentralUploadAdapter={prepare:async event=>({event,sha256:event.payloadDigest,immutablePayload:{synthetic:true}}),send:async()=>{
+  lockStaff('primary');await unlockStaff(f.owner.id,'123456',f.db);
+  return {businessId:'primary',deviceId:f.device.id,operationId:f.event.operationId,payloadDigest:f.event.payloadDigest,receivedAtUtc:new Date().toISOString(),status:'accepted'};
+ }};
+ await expect(uploadOnePendingOperation(f.db,'primary',adapter)).rejects.toThrow(/session changed/);
+ expect(await f.db.syncOutbox.get(f.event.id)).toEqual(f.event);
 });

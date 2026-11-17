@@ -1,3 +1,4 @@
+import {readBoundedResponseText} from "@/lib/boundedResponse.mjs";
 /** Explicit, single-event HTTPS metadata delivery. Does not replicate business records.
  * Credentials are provided by the caller for this invocation and are never persisted here.
  * No automatic retries: ambiguous transport errors leave the event pending for safe replay.
@@ -6,7 +7,7 @@ import type { TallybookDB } from "@/db/TallybookDB";
 import { validateOutboxEvent, type SyncOutboxEvent } from "./syncFoundation";
 import { acknowledgeStagedEvent, validateJournalReceipt, type JournalReceipt } from "./outboxAcknowledgements";
 import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
-import {currentStaffId,requirePermission} from "@/features/staff/staff";
+import {currentStaffId,currentStaffSessionGeneration,requirePermission} from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 
 export type StageCredentials = { capability: string; session: string };
@@ -52,8 +53,7 @@ export async function deliverStagedMetadata(
     throw new Error("Untrusted or unsuccessful staging response; event remains pending.");
   const contentType = response.headers.get("content-type") ?? "";
   if (!/^application\/json(?:\s*;|\s*$)/i.test(contentType)) throw new Error("Invalid staging response media type.");
-  const raw = await response.text();
-  if (raw.length > 2048) throw new Error("Oversized staging response.");
+  const raw = await readBoundedResponseText(response,2048,"staging response");
   let receipt: JournalReceipt;
   try { receipt = JSON.parse(raw) as JournalReceipt; } catch { throw new Error("Malformed staging receipt."); }
   validateJournalReceipt(receipt);
@@ -70,9 +70,9 @@ export async function deliverStagedMetadata(
 export async function deliverPendingOutboxEvent(database: TallybookDB, businessProfileId: string,
   eventId: string, endpoint: string, credentials: StageCredentials,
   transport: StageTransport = fetch): Promise<StageResult> {
-  const actor=currentStaffId(businessProfileId);
+  const actor=currentStaffId(businessProfileId),generation=currentStaffSessionGeneration(businessProfileId);
   const scope=()=>{
-    if(!actor||getActiveBusinessProfileId()!==businessProfileId||currentStaffId(businessProfileId)!==actor)
+    if(!actor||getActiveBusinessProfileId()!==businessProfileId||currentStaffId(businessProfileId)!==actor||currentStaffSessionGeneration(businessProfileId)!==generation)
       throw new Error("Company or staff session changed before metadata delivery.");
   };
   scope();
