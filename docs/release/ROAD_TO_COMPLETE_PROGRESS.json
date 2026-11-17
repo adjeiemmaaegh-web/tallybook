@@ -2714,17 +2714,32 @@
       "requirement": "Execute an inventory of each active page, button, dialog, menu, form, confirmation and error state in both applications.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "functioning authorized outcome or explicit unavailable state.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect all ui entrypoints against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-02",
@@ -2734,17 +2749,32 @@
       "requirement": "Verify owner setup, business configuration, joining staff, recovery, store creation and first sale without developer assistance.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "successful cold-start user walkthroughs.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect onboarding ux against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-03",
@@ -2754,17 +2784,32 @@
       "requirement": "Complete supported barcode acquisition, receipt formatting/reprint and diagnostics without assuming peripheral success.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "repeatable virtual-peripheral and print tests.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect receipts & scanning against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-04",
@@ -2774,17 +2819,32 @@
       "requirement": "Verify install, update, service-worker replacement, offline navigation and returning-user storage.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no stranded installs, stale auth bypass or unsupported offline promise.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect pwa lifecycle against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-05",
@@ -2794,17 +2854,32 @@
       "requirement": "Add real keyboard, focus, screen-reader, touch, contrast, zoom and error-state acceptance to automated scans.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "approved WCAG evidence on supported workflows.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect accessibility against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-06",
@@ -2814,17 +2889,32 @@
       "requirement": "Test long cashier sessions, large catalogues, extensive history, IndexedDB growth and background load.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "approved startup, latency, memory and stability budgets.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect low-spec performance against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-07",
@@ -2834,17 +2924,32 @@
       "requirement": "Reconcile support matrix against requirements, including reference gaps such as EUR.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "functioning approved options and explicit unsupported options.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect currencies & business types against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-08",
@@ -2854,17 +2959,32 @@
       "requirement": "Decide which remaining issue #5 / premium-settings / Clementia changes add approved value beyond integrated screens.",
       "initialAuditStatus": "Unmerged/partially superseded",
       "completionCriterion": "reviewed feature parity and isolated acceptance.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect premium ui proposal against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST30-09",
@@ -2874,7 +2994,7 @@
       "requirement": "Complete or formally defer product images, including storage, privacy, offline and sync.",
       "initialAuditStatus": "Missing later-phase",
       "completionCriterion": "approved scope and implementation or explicit deferral.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/App.tsx",
         "client/src/components/AppShell.tsx"
@@ -2882,9 +3002,13 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect product images against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Exact optional scope/provider/device approval or formal deferral remains unavailable; no silent exclusion or implementation claim."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Obtain the applicable optional scope decision and implement/test it, or record an explicit approved deferral."
     },
     {
       "id": "ST30-10",
@@ -2894,7 +3018,7 @@
       "requirement": "Reconcile historical local loyalty with shared-shop scope; complete earning, redemption and reversal if retained.",
       "initialAuditStatus": "Partially implemented/missing in shared shop",
       "completionCriterion": "policy-specific verified lifecycle or exclusion.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/App.tsx",
         "client/src/components/AppShell.tsx"
@@ -2902,9 +3026,13 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect loyalty against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Exact optional scope/provider/device approval or formal deferral remains unavailable; no silent exclusion or implementation claim."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Obtain the applicable optional scope decision and implement/test it, or record an explicit approved deferral."
     },
     {
       "id": "ST30-11",
@@ -2914,7 +3042,7 @@
       "requirement": "Decide whether native Bluetooth printing is required beyond browser print.",
       "initialAuditStatus": "Missing optional capability",
       "completionCriterion": "device-tested implementation or explicit limitation.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/App.tsx",
         "client/src/components/AppShell.tsx"
@@ -2922,9 +3050,13 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect bluetooth printing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Exact optional scope/provider/device approval or formal deferral remains unavailable; no silent exclusion or implementation claim."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Obtain the applicable optional scope decision and implement/test it, or record an explicit approved deferral."
     },
     {
       "id": "ST30-12",
@@ -2934,7 +3066,7 @@
       "requirement": "Complete or defer Android/iOS store packaging and compliance.",
       "initialAuditStatus": "Missing later-phase",
       "completionCriterion": "approved distribution and verified packages where applicable.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/App.tsx",
         "client/src/components/AppShell.tsx"
@@ -2942,9 +3074,13 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect app-store packaging against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Exact optional scope/provider/device approval or formal deferral remains unavailable; no silent exclusion or implementation claim."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Obtain the applicable optional scope decision and implement/test it, or record an explicit approved deferral."
     },
     {
       "id": "ST30-13",
@@ -2954,7 +3090,7 @@
       "requirement": "Validate gated Apple OAuth only with authorized/configured provider.",
       "initialAuditStatus": "Implemented but disabled/unverified",
       "completionCriterion": "real provider sign-in/recovery or explicit disabling.",
-      "status": "unreviewed",
+      "status": "owner-external-blocked",
       "files": [
         "client/src/App.tsx",
         "client/src/components/AppShell.tsx"
@@ -2962,9 +3098,13 @@
       "existingCapabilityReused": [],
       "changes": [],
       "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect apple sign-in against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "blockers": [
+        "Exact optional scope/provider/device approval or formal deferral remains unavailable; no silent exclusion or implementation claim."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Obtain the applicable optional scope decision and implement/test it, or record an explicit approved deferral."
     },
     {
       "id": "ST30-14",
@@ -2974,17 +3114,32 @@
       "requirement": "Verify the 29-photo references, public claims and no-install normal-user experience.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no misleading cloud/payment/app-store claims and no developer tools required for normal use.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/App.tsx",
-        "client/src/components/AppShell.tsx"
+        "client/src/components/AppShell.tsx",
+        "client/src/components/PremiumHomeOverview.tsx",
+        "qa/device-a11y.spec.mjs"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect marketing, help & packaging against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "changes": [
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+      ],
+      "tests": [
+        {
+          "command": "Original workspace dashboard currency tests",
+          "result": "pass",
+          "scope": "Historical before workspace loss; recovered tree pending CI",
+          "evidence": "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+        }
+      ],
+      "blockers": [
+        "Recovered source and new keyboard assertions need hosted CI; full UX/physical hardware/screen-reader/long-session acceptance is open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/ROAD_TO_COMPLETE_RECOVERY_2026-11-17.md"
+      ],
+      "nextAction": "Verify the recovered candidate and complete remaining genuine UX/performance/device acceptance."
     },
     {
       "id": "ST31-01",
@@ -3448,7 +3603,7 @@
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "activeEngineeringStage": 29,
+  "activeEngineeringStage": 30,
   "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
