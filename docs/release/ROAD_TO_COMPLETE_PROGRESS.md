@@ -1,6 +1,6 @@
 # Road to Complete — live engineering progress
 
-17 November 2026. **NO-GO. Engineering increments through Stage 26; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
+17 November 2026. **NO-GO. Engineering increments through Stage 27; no complete stage certification.** The [governing roadmap](../../road-to-complete.md) retains all 119 requirements. Only ST21-06, the legacy candidate disposition criterion, is checked off with evidence.
 
 Source baseline: `41d4bab619db1808f21471299bd7760eee1a6836`. Development source: `334f2beaa5c2c52b3864e7069a0d4de115746b1d`, tree `7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58`, in [draft PR #105](https://github.com/adjeiemmaaegh-web/tallybook/pull/105). Each published stage tree equals its local reviewed tree; [commit mapping](evidence/road-to-complete-continuation/commit-map.json). No main merge or deployment.
 
@@ -10,19 +10,19 @@ The [task register](ROAD_TO_COMPLETE_PROGRESS.json) records exact requirements, 
 | --- | ---: |
 | Fully verified criterion | 1 |
 | Implemented pending formal acceptance | 0 |
-| Partial | 40 |
+| Partial | 48 |
 | Confirmed missing engineering | 1 |
 | Owner/external blocked | 7 |
-| Not yet behaviorally reconciled | 70 |
+| Not yet behaviorally reconciled | 62 |
 
 Unreviewed does not mean absent. Partial does not mean completed. Whole active-ledger encryption is missing engineering, not merely a hardware acceptance gate. The [143 historical IDs](ROAD_TO_COMPLETE_HISTORICAL_IDS.json) still require current behavioral dispositions.
 
 Working changes preserve the two operating models: canonical standalone IndexedDB services and server-authorized shared-shop PostgreSQL. Selected divergent work adds device-local stock allocation and atomic transfers; it does not enable distributed inventory. Financial export correctness, independent ledger conservation, reservation evidence, recovery coordination, active SQL sessions and exact sync acknowledgements now have additional regression coverage. See the [stage delivery evidence](ROAD_TO_COMPLETE_CONTINUATION.md).
 
-Latest complete native/server run: **1,173 passed, zero failed/skipped**. Strict TypeScript and production build pass on Node 24.19.0/pnpm 10.34.0. The frozen Stage 26 source passed **232 client files/1,849 tests** and all six hosted workflows (release, Edge/WebKit, UI, integrated references, security and Clementia); prior source results remain separately labelled. Local browser acquisition failed; actual hardware, provider, real Auth and field acceptance are not inferred from mocks.
+Latest Stage 27 complete native/server run: **1,177 passed, zero failed/skipped**. Six focused client files/44 tests pass. Strict TypeScript and production build pass on Node 24.19.0/pnpm 10.34.0. The frozen Stage 26 source passed **232 client files/1,849 tests** and all six hosted workflows (release, Edge/WebKit, UI, integrated references, security and Clementia); prior source results remain separately labelled. Local browser acquisition failed; actual hardware, provider, real Auth and field acceptance are not inferred from mocks.
 
-Fresh read-only hosted metadata confirms 37 applied migrations and 47 RLS-protected shop tables with no direct anon/authenticated table grants. The new 38th source migration closes a business-classification session-proof bypass in isolated PostgreSQL tests; **it has not been applied to production**. The owner-controlled leaked-password protection warning remains open.
+Fresh read-only hosted metadata confirms 37 applied migrations and 47 RLS-protected shop tables with no direct anon/authenticated table grants. The new development migrations (38th and 39th source migrations) close business-classification session-proof and equal-total guest repricing bypasses in isolated PostgreSQL tests; **it has not been applied to production**. The owner-controlled leaked-password protection warning remains open.
 
-Next engineering: finish Stage 26 integration proof, then Stage 27 order authorization/recovery and stock lifecycle. Earlier partial requirements remain open, including broader finance invariants, partial transfers, store batch provenance, full ledger encryption and full financial replication. Subsequent provider adapters, automation, UX, security and frozen release acceptance are not declared complete.
+Next engineering: Stage 28 recorded-versus-provider payment evidence and provider readiness; unresolved earlier criteria remain open. Earlier partial requirements remain open, including broader finance invariants, partial transfers, store batch provenance, full ledger encryption and full financial replication. Subsequent provider adapters, automation, UX, security and frozen release acceptance are not declared complete.
 
 No production data/configuration/auth policy was changed, no real payment was initiated, and no protected history or branch was deleted. Production migration, deployment, physical acceptance and owner signoff remain separately gated.

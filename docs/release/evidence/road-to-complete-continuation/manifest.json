@@ -130,6 +130,36 @@
       "path": "docs/release/evidence/road-to-complete-continuation/stage26-watchdog-currency.txt",
       "sha256": "957bba89523e9229e9f293cd6203be6a73e7b5a5713cacf0b447e54ebe7f7673",
       "bytes": 591
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-build.txt",
+      "sha256": "c8622c4af66d479edad201e127ddfd8b07919fb26f2686ae81e4dfb704dda4ae",
+      "bytes": 10565
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt",
+      "sha256": "501a7c6683b0601d2f54bd7c83e0ae2dd350c71786642fe8114efd5725bbe5d3",
+      "bytes": 7887
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt",
+      "sha256": "5de4494449e45eed31e8de98d0ba8e4308b0b6a5ec82dca57f83bdd7c56de76a",
+      "bytes": 99930
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+      "sha256": "33f5ad38dcd65cb7124f5490d2793bd41eb5e3bbb2da03688ee17031e3b0c29e",
+      "bytes": 1357
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+      "sha256": "f2a7a5b64842bb3c4e0ee364f52f2138d80542cb35ab63c8340ed3cf0b36af37",
+      "bytes": 1236
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-continuation/stage27-types.txt",
+      "sha256": "608c0aea38fd774a249bbf5b3b3ecfb7c6ca4e3e70a9f53fa72bc09b3742cfda",
+      "bytes": 94
     }
   ],
   "boundary": "New local pinned-toolchain results. Source tree under development; full client continuation pending. Prior GitHub six workflows passed at baseline."

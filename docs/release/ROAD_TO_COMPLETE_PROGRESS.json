@@ -1765,17 +1765,43 @@
       "requirement": "Finish approved customer-to-merchant ordering beyond existing guest request submission.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "verified authorized workflow and explicit payment/stock boundaries.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect complete customer ordering against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-02",
@@ -1785,17 +1811,43 @@
       "requirement": "Probe public bearer catalog/order RPC for rate limits, replay, revoked links, unauthorized product access and cross-tenant leaks.",
       "initialAuditStatus": "Implemented but unverified live",
       "completionCriterion": "real HTTP negative tests pass with isolated accounts.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect guest order security against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-03",
@@ -1805,17 +1857,43 @@
       "requirement": "Verify server prices, tax/currency snapshots, variant quantities, quote expiry, reapproval and exactly-once conversion.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "no stale-price order or duplicate stock/sale.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect pricing & quotations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-04",
@@ -1825,17 +1903,43 @@
       "requirement": "Complete reservation creation, expiry, release, cancellation and competition under the approved commerce scope.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "conserved inventory during online/in-store races.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect stock reservations against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-05",
@@ -1845,17 +1949,43 @@
       "requirement": "Complete pickup/delivery states, partial fulfillment, cancellation, returns and staff audit.",
       "initialAuditStatus": "Partially implemented/missing",
       "completionCriterion": "each accepted order has traceable reversible lifecycle.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect fulfillment against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-06",
@@ -1865,17 +1995,43 @@
       "requirement": "Consistently apply company refund terms to online orders and POS linkage.",
       "initialAuditStatus": "Unverified",
       "completionCriterion": "correct original snapshots and owner authorization.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect commerce refund policy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-07",
@@ -1885,17 +2041,43 @@
       "requirement": "Verify contact consent, retention, deletion/export, spam limits and protected customer information.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "explicit consent and safe lifecycle.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect customer privacy against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST27-08",
@@ -1905,17 +2087,43 @@
       "requirement": "Distinguish guest order requests from verified checkout, reservations, fulfillment and payment settlement.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "truthful customer claims and standalone merchant offline use.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/cloud/publicCommerce.ts",
-        "client/src/features/commerce"
+        "client/src/features/commerce/commerce.ts",
+        "client/src/pages/CommercePage.tsx",
+        "supabase/migrations/20261115090000_shop_public_order_requests.sql",
+        "supabase/migrations/20261117060608_guest_order_price_snapshots.sql",
+        "qa/shop-public-orders-pglite.test.mjs"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect commerce scope & marketing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical guest request, owner conversion, shared-shop online orders and POS linkage; standalone unpaid local drafts remain separate."
+      ],
+      "changes": [
+        "Original per-line server price/currency snapshots now reject equal-total repricing at guest conversion. Legacy requests remain unchanged and require fresh quote when original price provenance is unavailable.",
+        "Draft operations guard recovery and original employee unlock epoch; private reads require permission, company/staff switches clear form state and stale responses; whole-unit catalogue values render correctly."
+      ],
+      "tests": [
+        {
+          "command": "node --experimental-strip-types --test qa/shop-public-orders-pglite.test.mjs qa/shop-public-orders-contract.test.mjs qa/rpc-catalog-negative.test.mjs",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt"
+        },
+        {
+          "command": "pnpm test commerceBoundary.integration.test.ts CommercePage.test.tsx writeSafety.test.ts adminRecoveryCoordination.test.ts storeOperations.integration.test.ts sales.test.ts --maxWorkers=1 --reporter=verbose",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+        }
+      ],
+      "blockers": [
+        "Public intake still creates guest requests, not paid checkout or stock reservations; full reservation, quote-expiry/reapproval, partial fulfillment, customer privacy lifecycle and consistent public refund acceptance remain open.",
+        "Real HTTP with isolated Auth accounts and physical two-device concurrency remain unverified; new quote guard is not applied to hosted production."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-before.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-price-after.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+      ],
+      "nextAction": "Complete approved stock reservation and reversible fulfillment lifecycle on canonical services, then verify isolated real HTTP/tenant/concurrency and customer privacy acceptance."
     },
     {
       "id": "ST28-01",
@@ -2972,13 +3180,7 @@
     }
   ],
   "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f",
-  "activeEngineeringStage": 26,
-  "candidateSource": {
-    "localCommit": "fa1c828274b7728181ce729b4c291996d26fe6a9",
-    "publishedCommit": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
-    "tree": "7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58",
-    "pullRequest": 105
-  },
+  "activeEngineeringStage": 28,
   "historicalVerificationSummary": {
     "native": {
       "passed": 1165,
@@ -3014,6 +3216,26 @@
     "types": "pass",
     "build": "pass",
     "browser": "All six hosted workflows passed on 334f2beaa5c2c52b3864e7069a0d4de115746b1d, including release Chromium, device Edge/WebKit, UI, integrated references, CodeQL and Clementia100x20. Local Chromium acquisition failed; physical field acceptance remains open.",
-    "unresolvedDefects": "Whole-ledger encryption, complete replication, commerce/provider lifecycle and comprehensive acceptance remain open."
+    "unresolvedDefects": "Whole-ledger encryption, complete replication, commerce/provider lifecycle and comprehensive acceptance remain open.",
+    "stage27Native": {
+      "passed": 1177,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-native-final.txt"
+    },
+    "stage27FocusedClient": {
+      "filesPassed": 6,
+      "passed": 44,
+      "failed": 0,
+      "evidence": "docs/release/evidence/road-to-complete-continuation/stage27-integrated-tests.txt"
+    },
+    "stage27Types": "pass",
+    "stage27Build": "pass"
+  },
+  "frozenStage26Source": {
+    "localCommit": "fa1c828274b7728181ce729b4c291996d26fe6a9",
+    "publishedCommit": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+    "tree": "7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58",
+    "pullRequest": 105
   }
 }
