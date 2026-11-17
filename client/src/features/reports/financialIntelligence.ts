@@ -279,7 +279,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   assertCompanyScope(company, getActiveBusinessProfileId());
   return summary;
 }
-function csvCell(value:string|number){const s=String(value);const protectedValue=/^[\s]*[=+@\-\t\r]/.test(s)?`'${s}`:s;return `"${protectedValue.replace(/"/g,'""')}"`;}
+function csvCell(value:string|number){const s=String(value);const protectedValue=typeof value!=="number"&&/^[\s]*[=+@\-\t\r]/.test(s)?`'${s}`:s;return `"${protectedValue.replace(/"/g,'""')}"`;}
 export function financialCsv(summary:FinancialSummary):string {
   const supplier = summary.supplierReconciliation;
   const supplierRows: (string | number)[][] = supplier ? [

@@ -435,18 +435,30 @@
       "requirement": "Independently reconcile every local/cloud checkout mode: sale lines, discounts, tax, cash, card, manually recorded Mobile Money, credit, wallet, change, stock and receipt totals.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "independent financial oracles match persisted records after normal and interrupted transactions.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect sales ledger against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-02",
@@ -477,18 +489,30 @@
       "requirement": "Reconcile debt, partial repayments, original-sale allocation, negative reversals, prepaid balances, legacy receivables and mixed-currency histories.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "no cross-currency summation, orphan allocation, overpayment or disappearing debt.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect customer receivables against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-04",
@@ -519,18 +543,30 @@
       "requirement": "Reconcile purchase liabilities, partial goods receipts, supplier settlements, cancellations, currencies and payment history across both ledgers.",
       "initialAuditStatus": "Implemented but unverified",
       "completionCriterion": "supplier balances, purchases and cash outflows agree without duplicate liabilities.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect supplier accounting against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-06",
@@ -540,18 +576,30 @@
       "requirement": "Validate receipt cost layers, partial cost restoration, missing-cost legacy records, valuation, gross margin and historical cutoff.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "quantity and cost conservation with no invented historical cost.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect fifo, cogs & historical costing against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-07",
@@ -561,18 +609,30 @@
       "requirement": "Reconcile cash declarations, money movements, expenses, repayments, supplier payments, transfers and closing variances.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "source-ledger totals match reports and unexplained differences stay explicit.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect cash, shifts & accounts against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-08",
@@ -603,18 +663,30 @@
       "requirement": "Run duplicate-click, identical-key replay, concurrent submissions, failed writes, lost responses and restart tests for financial mutation services.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "exactly-once success and zero partial effects on rejection.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
         "client/src/features/reports/financialIntelligence.ts"
       ],
-      "existingCapabilityReused": [],
+      "existingCapabilityReused": [
+        "Existing local authoritative writers and report projections; no replacement ledger."
+      ],
       "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect transactional safety against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "tests": [
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "This mixed local scenario is scoped evidence; the entire local/cloud, concurrency and historical criterion remains open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Complete remaining criterion-specific local/cloud cases; retain exact current scenario proof."
     },
     {
       "id": "ST22-10",
@@ -624,18 +696,39 @@
       "requirement": "Verify periods, reconciliation exports, spreadsheet formulas, negative values and safe CSV output.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "exported totals equal authoritative source records and are safe in spreadsheet software.",
-      "status": "unreviewed",
+      "status": "partial",
       "files": [
-        "client/src/features/sales/sales.ts",
-        "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reports/financialIntelligence.test.ts",
+        "client/src/features/reports/financialJourney.integration.test.ts"
       ],
-      "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
-      "blockers": [],
-      "acceptanceEvidence": [],
-      "nextAction": "Inspect financial reports & exports against its full criterion after preceding-stage reconciliation; retain existing implementation and add invariant tests where justified."
+      "existingCapabilityReused": [
+        "Canonical report summaries and existing persisted accounting services."
+      ],
+      "changes": [
+        "Preserve signed numeric CSV cells; continue neutralizing formula-like textual cells.",
+        "Added an independent real-service conservation journey covering purchase, payable recognition/settlement, prepaid deposit/refund, cash/credit/wallet checkout, repayment, partial return, expense and receipt-write failure."
+      ],
+      "tests": [
+        {
+          "command": "vitest run financialIntelligence.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-export-tests.txt"
+        },
+        {
+          "command": "vitest run financialJourney.integration.test.ts",
+          "result": "pass",
+          "evidence": "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+        }
+      ],
+      "blockers": [
+        "Other accounting-export formats and spreadsheet application acceptance remain open."
+      ],
+      "acceptanceEvidence": [
+        "docs/release/evidence/road-to-complete-continuation/stage22-export-tests.txt",
+        "docs/release/evidence/road-to-complete-continuation/stage22-conservation-oracle.txt"
+      ],
+      "nextAction": "Extend report/export verification while preserving numeric values and tenant boundaries."
     },
     {
       "id": "ST23-01",
@@ -2570,5 +2663,5 @@
     "browser": "blocked: invalid Chromium download",
     "unresolvedDefects": "Not comprehensively reconciled; no complete release certification"
   },
-  "activeEngineeringStage": 22
+  "activeEngineeringStage": 23
 }
