@@ -7,7 +7,7 @@
  * Usage:
  *   node scripts/run19-verify-evidence.mjs --file path/to/evidence.json --sha EXACT_40_CHAR_COMMIT
  */
-import {readFile,stat} from "node:fs/promises";
+import {readBoundedEvidence} from "./read-bounded-evidence.mjs";
 import {createHash} from "node:crypto";
 import {resolve} from "node:path";
 import {verifyRun19EvidencePayload,RUN19_CASES} from "../client/src/features/qa/run19Acceptance.mjs";
@@ -23,10 +23,7 @@ function argumentsFrom(argv){
 }
 async function main(){
  const {file,sourceSha}=argumentsFrom(process.argv.slice(2));
- const meta=await stat(file);
- if(!meta.isFile()||meta.size<50||meta.size>768*1024)
-   fail("Evidence file is missing, is not a regular file or exceeds 768 KiB.");
- const text=await readFile(file,"utf8");
+ const text=await readBoundedEvidence(file,{minBytes:50,maxBytes:768*1024});
  let envelope;
  try{envelope=JSON.parse(text);}catch{fail("Malformed JSON envelope.");}
  if(!envelope||typeof envelope!=="object"||Array.isArray(envelope)||
