@@ -2,7 +2,7 @@ import { reconcileCashPartialReturns, MANUAL_REFUND_TENDERS } from './cashPartia
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 
 /** Read-only, provisional return review. NEVER authorize, record or issue a refund here. */
-export function prepareCashReturnReview({company, sale, saleLines, payments, receipts, priorReturns, fullReversals, products, costEvents, batches}) {
+export function prepareCashReturnReview({company, sale, saleLines, payments, receipts, priorReturns, fullReversals, products, costEvents, batches, stillOwedMinor}) {
   if (!company || !sale || sale.businessProfileId !== company) throw new Error('The sale does not belong to the active company.');
   if (![saleLines,payments,receipts,priorReturns,fullReversals,products,costEvents,batches].every(Array.isArray))
     throw new Error('Return review evidence is incomplete.');
@@ -17,12 +17,17 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   if (fullReversals.length) throw new Error('This sale has already been fully reversed.');
   // This also validates the exact saved tender, sequence, tax and earlier refunds.
   reconcileCashPartialReturns([sale],saleLines,payments,priorReturns,fullReversals);
-  if (sale.customerId !== undefined || !MANUAL_REFUND_TENDERS.includes(sale.paymentMethod) || sale.outstandingMinor !== 0 ||
+  const hasCustomer = sale.customerId !== undefined;
+  if (!['credit',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) ||
       !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor <= 0 ||
-      sale.amountPaidMinor !== sale.totalMinor || sale.walletAppliedMinor || sale.loyaltyRedeemedMinor ||
-      sale.loyaltyRedeemedPoints || !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
-      payments.length !== 1 || payments[0].method !== sale.paymentMethod || payments[0].amountMinor !== sale.totalMinor)
-    throw new Error('Only a fully paid, non-customer cash, mobile-money or card sale can use this narrow return review.');
+      sale.walletAppliedMinor || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
+      !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
+      (hasCustomer
+        ? sale.outstandingMinor <= 0 || !Number.isSafeInteger(stillOwedMinor) || stillOwedMinor < 0
+        : (sale.paymentMethod === 'credit' || sale.outstandingMinor !== 0 || sale.amountPaidMinor !== sale.totalMinor)) ||
+      (sale.amountPaidMinor === 0 ? payments.length !== 0
+        : (payments.length !== 1 || payments[0].method !== sale.paymentMethod || payments[0].amountMinor !== sale.amountPaidMinor)))
+    throw new Error('Only a single-tender cash, mobile-money or card sale, or a customer credit sale with a verified receivable, can use this narrow return review.');
   const previous = priorReturns.flatMap(item => item.lines.map(line=>({saleLineId:line.saleLineId,quantity:line.quantity})));
   const productsById=new Map(products.map(product=>[product.id,product]));
   const eventsById=new Map(costEvents.map(event=>[event.id,event]));
@@ -44,7 +49,7 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
     options.push({saleLineId:line.id,productName:product.name,remainingQuantity:Number(remaining)});
   }
   if (!options.length) throw new Error('No supported original sale lines.');
-  return {refundMethod:sale.paymentMethod, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
+  return {refundMethod:sale.paymentMethod, stillOwedMinor: hasCustomer ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
 }
 
 export function quoteReviewedCashReturn(review,saleLineId,quantity) {
@@ -57,6 +62,11 @@ export function quoteReviewedCashReturn(review,saleLineId,quantity) {
   // never present that draft as a payable cash refund.
   if (!Number.isSafeInteger(plan.draftAmountMinor) || plan.draftAmountMinor <= 0)
     throw new Error('Selected quantity has no refundable cash amount at the saved invoice precision.');
-  return {amountMinor:plan.draftAmountMinor,taxMinor:plan.draftTaxMinor,
+  // Receivable credit comes first; only the remainder goes back through the original tender.
+  const debtReducedMinor=Math.min(plan.draftAmountMinor,review.stillOwedMinor??0);
+  const refundMinor=plan.draftAmountMinor-debtReducedMinor;
+  if (refundMinor>0 && review.sale.paymentMethod==='credit')
+    throw new Error('This quantity exceeds the unpaid balance of a credit sale; refunding the customer\'s repayments is not supported here.');
+  return {amountMinor:plan.draftAmountMinor,debtReducedMinor,refundMinor,taxMinor:plan.draftTaxMinor,
     discountMinor:plan.draftDiscountMinor,taxableMinor:plan.draftTaxableMinor};
 }

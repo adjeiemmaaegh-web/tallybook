@@ -14,7 +14,7 @@ const historicalReturn={id:'ret-1',businessProfileId:'shop-1',submissionKey:'uni
 test('read-only review returns precise original remaining units and a proportional minor-unit quote',()=>{
   const review=valid();
   assert.equal(review.options[0].remainingQuantity,3);
-  assert.deepEqual(quoteReviewedCashReturn(review,'line-1',2),{amountMinor:600,taxMinor:0,discountMinor:0,taxableMinor:600});
+  assert.deepEqual(quoteReviewedCashReturn(review,'line-1',2),{amountMinor:600,debtReducedMinor:0,refundMinor:600,taxMinor:0,discountMinor:0,taxableMinor:600});
   assert.equal(review.priorReturnCount,0);
 });
 test('review accounts for immutable previous returns and prevents excess units',()=>{

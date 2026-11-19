@@ -23,6 +23,7 @@ import { selectUnitPrice } from "@/features/inventory/stage2Inventory";
 import {effectivePromotionPrice,promotionPriceReviewKey} from "@/features/inventory/promotionRules.mjs";
 import { allocationCost, appendInventoryCostChange } from "@/features/inventory/costLedger";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { creditReturnsForSales } from "@/features/credit/creditReturns";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { makeCentralSaleEvent } from '@/features/sync/centralSaleEvent';
 import {captureSalePostingEvidence} from '@/features/sync/centralSalePostingEvidence';
@@ -179,18 +180,20 @@ export async function getSaleSnapshot(database: TallybookDB = db): Promise<SaleS
 
 export async function getCustomerSaleSummary(customerId: string, currency: string, database: TallybookDB = db) {
   const activeId = getActiveBusinessProfileId();
-  const [sales, activities, reversals, repayments] = await database.transaction("r", [database.sales, database.customerActivities, database.saleReversals, database.repayments, database.staffMembers], async () => {
+  const [sales, activities, reversals, repayments, creditReturns] = await database.transaction("r", [database.sales, database.customerActivities, database.saleReversals, database.repayments, database.cashPartialReturns, database.staffMembers], async () => {
     await requirePermission("sell",database,activeId);
+    const customerSales = await database.sales.where("customerId").equals(customerId).and((sale) => sale.businessProfileId === activeId).toArray();
     return Promise.all([
-    database.sales.where("customerId").equals(customerId).and((sale) => sale.businessProfileId === activeId).toArray(),
+    Promise.resolve(customerSales),
     database.customerActivities.where("customerId").equals(customerId).and((activity) => activity.businessProfileId === activeId).reverse().sortBy("createdAt"),
     database.saleReversals.where("customerId").equals(customerId).and((reversal) => reversal.businessProfileId === activeId).toArray(),
     database.repayments.where("customerId").equals(customerId).and((repayment) => repayment.businessProfileId === activeId).toArray(),
+    creditReturnsForSales(database, activeId, customerSales),
   ]);
   });
   assertCompanyScope(activeId, getActiveBusinessProfileId());
   await requirePermission("sell",database,activeId);
-  const { outstandingMinor } = reconcileCreditLedger(sales, reversals, repayments);
+  const { outstandingMinor } = reconcileCreditLedger(sales, reversals, repayments, creditReturns);
   const denomination = inspectReceivableCurrency(sales, repayments);
   const outstandingLabel = denomination.hasUnknownMoney
     ? `${outstandingMinor} minor units (historical currency unverified)`
@@ -223,7 +226,7 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
   const mergedLines = mergeCheckoutQuantities(input.lines);
   const activeId = approval.companyId;
 
-  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents, database.centralSaleEvents], async () => {
+  return database.transaction("rw", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.mobileMoneyProviders, database.inventoryBatches, database.customerPolicies, database.repayments, database.saleReversals, database.cashPartialReturns, database.customerBenefits, database.staffMembers, database.staffShifts, database.staffAudits, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceOrders, database.commerceHolds, database.commerceDeliveryEvents, database.centralSaleEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     assertCompanyScope(activeId, getActiveBusinessProfileId());
     const nowDate = new Date();
@@ -399,7 +402,8 @@ async function completeSaleWhileLocked(values: CompleteSaleInput, database: Tall
         database.saleReversals.where('customerId').equals(customer.id).and(r=>r.businessProfileId===activeId).toArray(),
       ]);
       assertReceivableWriteCurrency(priorSales, priorRepayments, input.currency);
-      const exposure = checkedCreditExposure(priorSales, priorReversals, priorRepayments, outstandingMinor);
+      const priorCreditReturns = await creditReturnsForSales(database, activeId, priorSales);
+      const exposure = checkedCreditExposure(priorSales, priorReversals, priorRepayments, outstandingMinor, priorCreditReturns);
       const customerPolicy = await database.customerPolicies.get(`${activeId}:${customer.id}`);
       creditTermsAtSale=snapshotCreditTerms(now,customerPolicy?.paymentDueDays);
       if (customerPolicy?.creditLimitMinor !== undefined &&

@@ -590,7 +590,8 @@
       ],
       "changes": [
         "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created.",
-        "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r."
+        "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r.",
+        "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments."
       ],
       "tests": [
         {
@@ -610,6 +611,12 @@
           "result": "pass",
           "scope": "Local run on the integrated candidate (Codex 7b3815a + main c550a55 + this increment): 1920 client tests, 1211 native tests, tsc clean. Not yet CI-verified on GitHub.",
           "evidence": "local execution 2026-11-19"
+        },
+        {
+          "command": "pnpm exec vitest run client/src/features/sales/creditSalePartialReturn.test.ts; pnpm test; node --test native suite",
+          "result": "pass",
+          "scope": "Local: 1926 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-19"
         }
       ],
       "blockers": [
@@ -619,7 +626,7 @@
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Still missing for ST22-02: credit-sale/customer-debt partial returns, prepaid-wallet restoration, split-tender allocation, loyalty reversal, batch/service lines, Ghana VAT lines. Each needs receivables-ledger integration (creditLedger.mjs) before posting. Status remains partial."
+      "nextAction": "Remaining for ST22-02: prepaid-wallet restoration, split tender allocation, loyalty/points reversal, batch/service lines, Ghana VAT lines; refunding customer repayments (return exceeding unpaid balance); credit-note rows are not yet shown in the customer debt activity timeline UI. Status stays partial."
     },
     {
       "id": "ST22-03",

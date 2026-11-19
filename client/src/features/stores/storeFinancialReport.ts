@@ -109,7 +109,7 @@ export async function getStoreFinancialReport(
       const netSalesMinor = exact([
         ...posted.map(sale => sale.totalMinor),
         ...returned.map(row => row.reversedSaleTotalMinor),
-        ...partial.map(row => -row.refundedMinor),
+        ...partial.map(row => -(row.refundedMinor + (row.debtReducedMinor ?? 0))),
       ]);
       const recordedTaxMinor = exact([
         ...posted.map(sale => sale.tax?.taxMinor ?? 0),

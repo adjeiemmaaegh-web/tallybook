@@ -465,6 +465,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       records.sales.filter(row => row.customerId === customerId),
       records.saleReversals.filter(row => row.customerId === customerId),
       records.repayments.filter(row => row.customerId === customerId),
+      records.cashPartialReturns.filter(row => row.customerId === customerId && (row.debtReducedMinor ?? 0) > 0),
     );
   }
   // Full-history customer-level conservation: never let one customer's
@@ -472,7 +473,8 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   // No old unallocated repayment is silently assigned to a particular sale.
   auditRun10CompanyReceivables({
     company:companyId,customers:records.customers,sales:records.sales,
-    repayments:records.repayments,reversals:records.saleReversals
+    repayments:records.repayments,reversals:records.saleReversals,
+    creditReturns:records.cashPartialReturns.filter(row=>(row.debtReducedMinor??0)>0)
   });
   // Wallet cash is NOT a second collection on wallet-funded checkout.
   // Validate all transfers, actual stored-value debits, and reversal credits

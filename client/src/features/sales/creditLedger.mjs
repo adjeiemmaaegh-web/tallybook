@@ -3,6 +3,39 @@
  * are immutable NEGATIVE deltas in the saved ledger, not positive refund values.
  * No historical cost, payment or due-date facts are inferred here.
  */
+/**
+ * Apply immutable partial-return DEBT REDUCTIONS (credit notes) to a customer's
+ * sale rows, returning a view whose outstandingMinor is the still-owed amount.
+ * The saved sale is never mutated. A reduction can never exceed the sale's
+ * original debt, and a return must belong to a sale in this same ledger.
+ */
+export function applyCreditReturns(sales, creditReturns = []) {
+  if (!Array.isArray(sales) || !Array.isArray(creditReturns))
+    throw new Error('Customer credit-return history is unavailable.');
+  const reduced = new Map();
+  for (const entry of creditReturns) {
+    const amount = entry?.debtReducedMinor;
+    if (amount === undefined || amount === 0) continue;
+    if (typeof entry.originalSaleId !== 'string' || !entry.originalSaleId ||
+        !Number.isSafeInteger(amount) || amount < 0)
+      throw new Error('Customer credit return has an invalid debt reduction.');
+    const total = (reduced.get(entry.originalSaleId) ?? 0) + amount;
+    if (!Number.isSafeInteger(total)) throw new Error('Customer credit returns exceed safe monetary limits.');
+    reduced.set(entry.originalSaleId, total);
+  }
+  if (reduced.size === 0) return sales;
+  const known = new Set(sales.map(sale => sale?.id));
+  for (const id of reduced.keys())
+    if (!known.has(id)) throw new Error('A credit return refers to a sale outside this customer ledger.');
+  return sales.map(sale => {
+    const amount = reduced.get(sale.id);
+    if (amount === undefined) return sale;
+    if (!Number.isSafeInteger(sale.outstandingMinor) || amount > sale.outstandingMinor)
+      throw new Error('Credit returns exceed the original sale debt.');
+    return { ...sale, outstandingMinor: sale.outstandingMinor - amount };
+  });
+}
+
 export function checkedMinorSum(records, key) {
   if (!Array.isArray(records)) throw new Error('Customer ledger is unavailable for reconciliation.');
   let total = 0;
@@ -22,7 +55,8 @@ export function checkedMinorSum(records, key) {
  * This is pure, so callers can validate inside a write transaction and while
  * parsing a backup. It does not issue payments or resolve old transactions.
  */
-export function reconcileRepaymentAllocations(sales, reversals, repayments) {
+export function reconcileRepaymentAllocations(sales, reversals, repayments, creditReturns = []) {
+  sales = applyCreditReturns(sales, creditReturns);
   if (![sales, reversals, repayments].every(Array.isArray))
     throw new Error('Customer repayment allocation records are unavailable.');
   const bySale = new Map();
@@ -143,10 +177,11 @@ export function assertReceivableWriteCurrency(sales, repayments, currency) {
  * negative balance: it indicates an orphan reversal, over-repayment or damage.
  * The full-reversal contract requires a single exact reversal per original sale.
  */
-export function reconcileCreditLedger(sales, reversals, repayments) {
+export function reconcileCreditLedger(sales, reversals, repayments, creditReturns = []) {
   if (!Array.isArray(sales) || !Array.isArray(reversals) || !Array.isArray(repayments)) {
     throw new Error('Customer ledger is unavailable for reconciliation.');
   }
+  sales = applyCreditReturns(sales, creditReturns);
   const saleById = new Map();
   let ledgerOwner = null;
   // Every record in this aggregate must refer to one exact customer/company.
@@ -208,9 +243,9 @@ export function reconcileCreditLedger(sales, reversals, repayments) {
   return { salesOutstandingMinor, repaidMinor, outstandingMinor };
 }
 
-export function checkedCreditExposure(sales, reversals, repayments, newOutstanding = 0) {
+export function checkedCreditExposure(sales, reversals, repayments, newOutstanding = 0, creditReturns = []) {
   if (!Number.isSafeInteger(newOutstanding) || newOutstanding < 0) throw new Error('Invalid new credit balance.');
-  const balance = reconcileCreditLedger(sales, reversals, repayments).outstandingMinor;
+  const balance = reconcileCreditLedger(sales, reversals, repayments, creditReturns).outstandingMinor;
   if (!Number.isSafeInteger(balance + newOutstanding)) {
     throw new Error('Customer ledger needs reconciliation before extending credit.');
   }

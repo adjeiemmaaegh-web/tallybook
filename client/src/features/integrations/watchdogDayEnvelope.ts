@@ -10,7 +10,7 @@ export interface WatchdogDayShift {
 export interface WatchdogDayReturn {
   id: string; businessProfileId: string; originalSaleId: string; createdAt: string;
   staffId?: string; shiftId?: string; refundedMinor: number; currency: string;
-  refundMethod: 'cash'|'mobile'|'card'; originalReceiptNumber: string;
+  refundMethod: 'cash'|'mobile'|'card'|'credit'; originalReceiptNumber: string;
 }
 export interface WatchdogDaySource {
   companyId: string; storeId: string; dayUtc: string;
@@ -95,6 +95,8 @@ export function createWatchdogDayEnvelope(source:WatchdogDaySource, generatedAt 
   }
   const originalSaleIds=new Set(source.events.filter(e=>e.eventType==='sale').map(e=>e.saleId).filter((id):id is string=>Boolean(id)));
   for(const refund of source.returns??[]){
+    // A credit-note return moves no cash/provider money: it is a receivable adjustment, not a refund disbursement.
+    if(refund.refundMethod==='credit') continue;
     if(refund.businessProfileId!==companyId || !refund.originalSaleId?.trim() || !refund.staffId?.trim() || !refund.shiftId?.trim() ||
        !['cash','mobile','card'].includes(refund.refundMethod) || !/^[A-Z]{3}$/.test(refund.currency))
       throw new Error('Unverified local cash return cannot be exported.');

@@ -50,12 +50,13 @@ export function auditRun12RecordedTaxConservation(sales,reversals,returns,compan
     if(!sale||!id(row?.id)||usedReturns.has(row.id)||!id(row.submissionKey)||
       keys.has(row.submissionKey)||row.businessProfileId!==company||
       !time(row.createdAt)||Date.parse(row.createdAt)<Date.parse(sale.createdAt)||
-      fullIds.has(sale.id)||!safe(row.refundedMinor)||row.refundedMinor===0||
-      !safe(row.returnedTaxMinor)||row.returnedTaxMinor>row.refundedMinor)
+      fullIds.has(sale.id)||!safe(row.refundedMinor)||(row.refundedMinor===0&&row.refundMethod!=='credit')||
+      !safe(row.debtReducedMinor??0)||
+      !safe(row.returnedTaxMinor)||row.returnedTaxMinor>row.refundedMinor+(row.debtReducedMinor??0))
       fail('orphan, duplicate, foreign or invalid cash return');
     usedReturns.add(row.id);keys.add(row.submissionKey);
     const previous=partialBySale.get(sale.id)??{cash:0n,tax:0n};
-    const cash=previous.cash+BigInt(row.refundedMinor);
+    const cash=previous.cash+BigInt(row.refundedMinor)+BigInt(row.debtReducedMinor??0); // total returned VALUE (tender refund + receivable credit)
     const tax=previous.tax+BigInt(row.returnedTaxMinor);
     if(cash>BigInt(sale.totalMinor)||tax>BigInt(sale.tax?.taxMinor??0) && sale.tax!==undefined)
       fail('cash returns exceed original saved invoice amounts or recorded tax');
