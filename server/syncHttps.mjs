@@ -1,15 +1,24 @@
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
-import { readFileSync, lstatSync } from 'node:fs';
+import { readSync, openSync, fstatSync, closeSync, constants } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import { X509Certificate, createPrivateKey, createPublicKey } from 'node:crypto';
 
 function loadSecretFile(filename, label) {
   if (typeof filename !== 'string' || !isAbsolute(filename)) throw new Error(`${label} must use an absolute path`);
-  const stat = lstatSync(filename);
-  if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`${label} must be a regular file`);
-  if (process.platform !== 'win32' && (stat.mode & 0o022) !== 0) throw new Error(`${label} is writable by group or others`);
-  return readFileSync(filename);
+  // Inspect and read the same opened object; never reopen a checked pathname.
+  const fd = openSync(filename, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile()) throw new Error(`${label} must be a regular file`);
+    if (process.platform !== 'win32' && (stat.mode & 0o022) !== 0) throw new Error(`${label} is writable by group or others`);
+    if (stat.size > 1024 * 1024) throw new Error(`${label} exceeds the TLS file limit`);
+    const bytes = Buffer.alloc(1024 * 1024 + 1);
+    let total=0, count=0;
+    while (total < bytes.length && (count=readSync(fd,bytes,total,bytes.length-total,null)) > 0) total+=count;
+    if (total > 1024 * 1024) throw new Error(`${label} exceeds the TLS file limit`);
+    return bytes.subarray(0,total);
+  } finally { closeSync(fd); }
 }
 
 export function selectServerTransport(config, app) {
