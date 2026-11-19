@@ -211,7 +211,7 @@ export function validateCentralOperationalEvent(event:CentralOperationalEvent,so
      event.createdAt!==row.createdAt || !Number.isFinite(Date.parse(event.createdAt)) ||
      event.shopId!==(originalSale.storeId??null) ||
      event.staffId!==(row.staffId??null) || event.shiftId!==(row.shiftId??null) ||
-     row.refundMethod!=='cash' || row.disposition!=='restockable' ||
+     !['cash','mobile','card'].includes(row.refundMethod) || originalSale.paymentMethod!==row.refundMethod || row.disposition!=='restockable' ||
      !/^[A-Z]{3}$/.test(row.currency) || row.currency!==originalSale.currency ||
      !Number.isSafeInteger(row.refundedMinor) || row.refundedMinor<=0 ||
      !Array.isArray(row.lines) || row.lines.length===0)

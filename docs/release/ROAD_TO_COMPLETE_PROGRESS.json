@@ -251,7 +251,7 @@
       "id": "ST21-07",
       "stage": 21,
       "priority": "HIGH",
-      "name": "PR #85 — Fresh-Start Release",
+      "name": "PR #85 \u2014 Fresh-Start Release",
       "requirement": "Resolve the open draft documenting mandatory sign-in and an irreversible production reset. Separate already integrated authentication safeguards from still-unapproved data-deletion and release decisions.",
       "initialAuditStatus": "Blocked",
       "completionCriterion": "owner-approved disposition and no destructive change through a documentation-only merge.",
@@ -379,7 +379,7 @@
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
+      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23\u201326, #68 to Stage 25; close only with full evidence."
     },
     {
       "id": "ST21-11",
@@ -589,7 +589,8 @@
         "Reused canonical full reversal and atomic cash-only partial-return posting with original receipt, FIFO restoration, policy evidence, duplicate refusal and multi-ledger regression coverage."
       ],
       "changes": [
-        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created.",
+        "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r."
       ],
       "tests": [
         {
@@ -603,6 +604,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm exec vitest run client/src/features/sales/manualTenderPartialReturn.test.ts; pnpm test; node --test native suite",
+          "result": "pass",
+          "scope": "Local run on the integrated candidate (Codex 7b3815a + main c550a55 + this increment): 1920 client tests, 1211 native tests, tsc clean. Not yet CI-verified on GitHub.",
+          "evidence": "local execution 2026-11-19"
         }
       ],
       "blockers": [
@@ -612,7 +619,7 @@
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Cash-only partial returns explicitly reject customer-linked, credit, wallet, loyalty, mixed-tender, batch-owned and classified Ghana-tax cases; those required dispositions are not a complete general refund workflow."
+      "nextAction": "Still missing for ST22-02: credit-sale/customer-debt partial returns, prepaid-wallet restoration, split-tender allocation, loyalty reversal, batch/service lines, Ghana VAT lines. Each needs receivables-ledger integration (creditLedger.mjs) before posting. Status remains partial."
     },
     {
       "id": "ST22-03",
@@ -1084,7 +1091,7 @@
         "client/src/features/inventory/advancedInventory.ts"
       ],
       "existingCapabilityReused": [
-        "Reused bounded 2–50-product shared-shop batches with canonical sorted counts, atomic PostgreSQL apply, stale count rejection, owner-only access and populated rollback guard; local recount rejects stale quantities and unsupported batch/store ownership."
+        "Reused bounded 2\u201350-product shared-shop batches with canonical sorted counts, atomic PostgreSQL apply, stale count rejection, owner-only access and populated rollback guard; local recount rejects stale quantities and unsupported batch/store ownership."
       ],
       "changes": [
         "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
@@ -1835,7 +1842,7 @@
       "id": "ST25-05",
       "stage": 25,
       "priority": "HIGH",
-      "name": "Shared-Shop Shifts — Issue #68",
+      "name": "Shared-Shop Shifts \u2014 Issue #68",
       "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
@@ -1960,7 +1967,7 @@
       "stage": 25,
       "priority": "MEDIUM",
       "name": "Shared-Device Handover",
-      "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
+      "requirement": "Test account A offline sale \u2192 account B login \u2192 A returns and reconciles, including simultaneous tabs.",
       "initialAuditStatus": "Real-device unverified",
       "completionCriterion": "original cashier, queue scope and receipt preserved.",
       "status": "owner-external-blocked",
@@ -3008,7 +3015,7 @@
       "stage": 29,
       "priority": "HIGH",
       "name": "Clementia Task Coverage",
-      "requirement": "Investigate unsupported/missed responses in 100-goal × 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
+      "requirement": "Investigate unsupported/missed responses in 100-goal \u00d7 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "agreed recognition/safety thresholds and repeatable tests.",
       "status": "partial",

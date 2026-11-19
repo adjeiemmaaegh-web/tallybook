@@ -2,6 +2,13 @@ import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 
 const validId = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 140;
 const money = value => Number.isSafeInteger(value) && value >= 0;
+/**
+ * Single-tender sales may be refunded back to their ORIGINAL tender only. Mobile
+ * Money and card refunds are manual, staff-confirmed local evidence: they are
+ * never provider-confirmed settlement. Credit, wallet, split and customer sales
+ * stay outside this lane until their liability postings exist.
+ */
+export const MANUAL_REFUND_TENDERS = Object.freeze(['cash','mobile','card']);
 
 /**
  * Independently validate the append-only, cash-only return journal. This is an
@@ -32,7 +39,11 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         keys.has(JSON.stringify([entry.businessProfileId, entry.submissionKey])) ||
         !validId(entry.originalSaleId) || !validId(entry.businessProfileId) ||
         typeof entry.createdAt !== 'string' || !Number.isFinite(Date.parse(entry.createdAt)) ||
-        entry.refundMethod !== 'cash' || entry.disposition !== 'restockable' ||
+        !MANUAL_REFUND_TENDERS.includes(entry.refundMethod) ||
+        (entry.refundMethod !== 'cash' && entry.disbursementEvidence !== 'staff_confirmed_manual_unverified') ||
+        (entry.refundMethod === 'cash' && entry.disbursementEvidence !== undefined) ||
+        (entry.manualReference !== undefined && (typeof entry.manualReference !== 'string' || !entry.manualReference.trim() || entry.manualReference.length > 64 || entry.refundMethod === 'cash')) ||
+        entry.disposition !== 'restockable' ||
         !Number.isSafeInteger(entry.returnSequence) || entry.returnSequence < 1 ||
         !money(entry.refundedMinor) || entry.refundedMinor === 0 ||
         !money(entry.returnedTaxMinor) || !money(entry.returnedTaxableMinor) || !money(entry.returnedDiscountMinor) ||
@@ -42,7 +53,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     ids.add(entry.id);keys.add(JSON.stringify([entry.businessProfileId, entry.submissionKey]));
     const sale = saleById.get(entry.originalSaleId);
     if (!sale || sale.businessProfileId !== entry.businessProfileId || reversed.has(sale.id) ||
-        sale.customerId !== undefined || sale.paymentMethod !== 'cash' ||
+        sale.customerId !== undefined || sale.paymentMethod !== entry.refundMethod ||
         !/^[A-Z]{3}$/.test(sale.currency ?? '') || sale.currency !== entry.currency ||
         !money(sale.totalMinor) || !money(sale.amountPaidMinor) || sale.amountPaidMinor !== sale.totalMinor ||
         sale.outstandingMinor !== 0 || sale.walletAppliedMinor || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
@@ -52,7 +63,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     }
     if (sale.tax?.ghana) throw new Error("Ghana VAT partial refund evidence requires a separate certified tax-correction process.");
     const paid = payments.filter(p => p.saleId === sale.id);
-    if (paid.length !== 1 || paid[0].method !== 'cash' || paid[0].businessProfileId !== sale.businessProfileId ||
+    if (paid.length !== 1 || paid[0].method !== entry.refundMethod || paid[0].businessProfileId !== sale.businessProfileId ||
         paid[0].amountMinor !== sale.totalMinor) throw new Error('Cash return has unverified original tender evidence.');
     const lines = saleLines.filter(line => line.saleId === sale.id);
     for (const row of entry.lines) {

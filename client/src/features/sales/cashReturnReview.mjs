@@ -1,4 +1,4 @@
-import { reconcileCashPartialReturns } from './cashPartialReturn.mjs';
+import { reconcileCashPartialReturns, MANUAL_REFUND_TENDERS } from './cashPartialReturn.mjs';
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 
 /** Read-only, provisional return review. NEVER authorize, record or issue a refund here. */
@@ -17,12 +17,12 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   if (fullReversals.length) throw new Error('This sale has already been fully reversed.');
   // This also validates the exact saved tender, sequence, tax and earlier refunds.
   reconcileCashPartialReturns([sale],saleLines,payments,priorReturns,fullReversals);
-  if (sale.customerId !== undefined || sale.paymentMethod !== 'cash' || sale.outstandingMinor !== 0 ||
+  if (sale.customerId !== undefined || !MANUAL_REFUND_TENDERS.includes(sale.paymentMethod) || sale.outstandingMinor !== 0 ||
       !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor <= 0 ||
       sale.amountPaidMinor !== sale.totalMinor || sale.walletAppliedMinor || sale.loyaltyRedeemedMinor ||
       sale.loyaltyRedeemedPoints || !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
-      payments.length !== 1 || payments[0].method !== 'cash' || payments[0].amountMinor !== sale.totalMinor)
-    throw new Error('Only a fully paid, non-customer cash sale can use this narrow return review.');
+      payments.length !== 1 || payments[0].method !== sale.paymentMethod || payments[0].amountMinor !== sale.totalMinor)
+    throw new Error('Only a fully paid, non-customer cash, mobile-money or card sale can use this narrow return review.');
   const previous = priorReturns.flatMap(item => item.lines.map(line=>({saleLineId:line.saleLineId,quantity:line.quantity})));
   const productsById=new Map(products.map(product=>[product.id,product]));
   const eventsById=new Map(costEvents.map(event=>[event.id,event]));
@@ -44,7 +44,7 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
     options.push({saleLineId:line.id,productName:product.name,remainingQuantity:Number(remaining)});
   }
   if (!options.length) throw new Error('No supported original sale lines.');
-  return {sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
+  return {refundMethod:sale.paymentMethod, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
 }
 
 export function quoteReviewedCashReturn(review,saleLineId,quantity) {
