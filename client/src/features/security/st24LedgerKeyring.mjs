@@ -110,12 +110,42 @@ async function unlock(meta, credential, purpose) {
 export const unlockLedgerWithPassphrase=(keyring,credential)=>unlock(keyring,credential,'passphrase');
 export const unlockLedgerWithRecoveryCode=(keyring,code)=>unlock(keyring,code,'recovery');
 
+/** Encrypted storage must not silently drop JS/IndexedDB values during JSON conversion.
+ * Real Dexie migration needs explicit per-table serializers for non-JSON fields. */
+function assertLosslessJson(value, seen=new WeakSet(),depth=0) {
+  if(depth>64)fail('Unsupported ledger record depth.');
+  if(value===null||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number') {if(!Number.isFinite(value))fail('Unsupported JSON number.');return;}
+  if(typeof value!=='object')fail('Non-JSON value in ledger record.');
+  if(seen.has(value))fail('Cyclic ledger record.');
+  const proto=Object.getPrototypeOf(value);
+  if(!Array.isArray(value)&&proto!==Object.prototype&&proto!==null)fail('Non-JSON object in ledger record.');
+  seen.add(value);
+  if(Array.isArray(value)) {
+    for(let i=0;i<value.length;i++) {
+      if(!Object.hasOwn(value,i))fail('Sparse ledger record array.');
+      assertLosslessJson(value[i],seen,depth+1);
+    }
+    if(Reflect.ownKeys(value).length!==value.length+1)fail('Unsupported ledger array property.');
+  } else {
+    for(const key of Reflect.ownKeys(value)) {
+      if(typeof key!=='string'||['__proto__','constructor','prototype'].includes(key))fail('Unsafe ledger record key.');
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(!descriptor||!('value' in descriptor)||!descriptor.enumerable)fail('Unsupported ledger property.');
+      assertLosslessJson(descriptor.value,seen,depth+1);
+    }
+  }
+  seen.delete(value);
+}
+
 function recordIdentity(table,primaryKey) {
   if(typeof table!=='string'||!/^[A-Za-z][A-Za-z0-9]{0,79}$/.test(table) ||
      typeof primaryKey!=='string'||primaryKey.length<1||primaryKey.length>256||/[\u0000-\u001f]/.test(primaryKey)) fail('Invalid ledger record identity.');
 }
 export async function sealLedgerRecord(handle,table,primaryKey,record) {
   const {key,scope}=handleInfo(handle);recordIdentity(table,primaryKey);
+  if(!record||typeof record!=='object'||Array.isArray(record))fail('Ledger record must be a plain JSON object.');
+  assertLosslessJson(record);
   const json=JSON.stringify(record);
   if(typeof json!=='string')fail('Record must be JSON-serializable.');
   const plain=enc.encode(json);
