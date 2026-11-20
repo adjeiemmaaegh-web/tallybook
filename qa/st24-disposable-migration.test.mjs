@@ -5,7 +5,7 @@ import {indexedDB,IDBKeyRange} from 'fake-indexeddb';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 if(!globalThis.IDBKeyRange)globalThis.IDBKeyRange=IDBKeyRange;
 import {createLedgerKeyring,unlockLedgerWithRecoveryCode} from '../client/src/features/security/st24LedgerKeyring.mjs';
-import {stageSt24PopulatedDisposableLedger,restoreSt24ShadowToDisposableLedger,compareSt24DisposableLedgers}
+import {stageSt24PopulatedDisposableLedger,restoreSt24ShadowToDisposableLedger,compareSt24DisposableLedgers,discardSt24DisposableRestore}
  from '../client/src/features/security/st24DisposableMigration.mjs';
 
 const COMPANY='test-company-001',PASS='high entropy fixture password at least sixteen characters';
@@ -120,4 +120,25 @@ test('ST24: tenant mixing rejected without copying another company financial row
   sourceDbName:source,companyId:COMPANY,keyring,handle,ownerPassphrase:PASS,idb:indexedDB,locks
  }),/cross-company/);
  assert.equal((await access(source,'customers','other')).name,'Do not copy');
+});
+
+test('ST24: interrupted disposable restore target can be explicitly discarded and retried',async()=>{
+ const source=await seedDb(),target=id('tallybook-st24-restore-');
+ const {keyring,handle}=await createLedgerKeyring({workspaceId:'owner-qa',companyId:COMPANY,ownerPassphrase:PASS});
+ const staged=await stageSt24PopulatedDisposableLedger({sourceDbName:source,companyId:COMPANY,keyring,handle,ownerPassphrase:PASS,idb:indexedDB,locks});
+ const partial=await request(indexedDB.open(target,39));
+ partial.createObjectStore; // intentionally keep a nonempty target from a simulated prior crash
+ partial.close();
+ await assert.rejects(restoreSt24ShadowToDisposableLedger({
+  snapshotId:staged.snapshotId,targetDbName:target,companyId:COMPANY,
+  handle,expectedSourceSha256:staged.sourceSha256,idb:indexedDB
+ }),/existing restore/);
+ await assert.rejects(discardSt24DisposableRestore({targetDbName:'tallybook-db',idb:indexedDB}),/non-disposable/);
+ assert.equal((await discardSt24DisposableRestore({targetDbName:target,idb:indexedDB})).discarded,true);
+ const recovered=await restoreSt24ShadowToDisposableLedger({
+  snapshotId:staged.snapshotId,targetDbName:target,companyId:COMPANY,
+  handle,expectedSourceSha256:staged.sourceSha256,idb:indexedDB
+ });
+ assert.equal(recovered.sha256,staged.sourceSha256);
+ assert.equal((await access(source,'sales','sale-1')).amountMinor??(await access(source,'sales','sale-1')).totalMinor,135000);
 });
