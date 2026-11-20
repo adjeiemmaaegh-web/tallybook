@@ -86,3 +86,12 @@ test('ST24-05 rejects lossy or non-plain IndexedDB values until explicit seriali
  for(const record of bad)
   await assert.rejects(sealLedgerRecord(handle,'sales','source-row',record),/JSON|ledger|Unsupported|Non-/);
 });
+
+test('ST24-05 explicit lock revokes a handle without removing its sealed records',async()=>{
+ const {keyring,handle}=await createLedgerKeyring(args);
+ const sealed=await sealLedgerRecord(handle,'sales','s9',{amount:42});
+ lockLedgerHandle(handle);
+ await assert.rejects(openLedgerRecord(handle,'sales','s9',sealed),/Ledger is locked/);
+ const unlocked=await unlockLedgerWithPassphrase(keyring,args.ownerPassphrase);
+ assert.deepEqual(await openLedgerRecord(unlocked,'sales','s9',sealed),{amount:42});
+});
