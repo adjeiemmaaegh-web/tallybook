@@ -30,6 +30,6 @@
 
 ## Proof and limits
 
-Local Node 22 WebCrypto prototype: **7 focused test cases passed** for the equivalent local source before branch publication (including a lossless JSON guard). The GitHub branch has its own tests and must pass exact-commit GitHub Actions independently; local results are **not** a claim of CI, IndexedDB integration, migration, browser UAT, or production readiness.
+Local Node 22 WebCrypto prototype: **8 focused test cases passed** for the equivalent local source before branch publication (including a lossless JSON guard and explicit handle revocation). The GitHub branch has its own tests and must pass exact-commit GitHub Actions independently; local results are **not** a claim of CI, IndexedDB integration, migration, browser UAT, or production readiness.
 
 **Release decision:** ST24-05 OPEN. Do not auto-merge this PR merely because its isolated crypto tests pass. Data encryption is not active; current ledger remains plaintext at rest.
