@@ -57,6 +57,8 @@ async function setup(){
  return {db,owner,staff,other,company,otherCompany,call,admin,script,publish,as};
 }
 const key=()=>randomUUID();
+// The hash the client must have displayed: publish() stores sha(track+version).
+const sh=(track,version)=>sha(track+version);
 
 test("everything is OFF by default and nothing is effective, for every track",async()=>{
  const t=await setup();
@@ -72,13 +74,13 @@ test("everything is OFF by default and nothing is effective, for every track",as
 test("opt-in needs a legally reviewed consent text; flag needs consent; revoke switches off at once",async()=>{
  const t=await setup();
  // No reviewed text published: cannot even grant.
- await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v1",operationKey:key()}),/CC:REQUIRES_CONFIRMATION/);
+ await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sh("discover","v1"),operationKey:key()}),/CC:REQUIRES_CONFIRMATION/);
  await t.publish("discover","v1");
  // Wrong (non-current) version is stale.
- await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v0",operationKey:key()}),/CC:STALE_VERSION/);
+ await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v0",textSha256:sh("discover","v0"),operationKey:key()}),/CC:STALE_VERSION/);
  // Flag cannot be enabled before consent.
  await assert.rejects(t.call("setFlag",{track:"discover",enabled:true,operationKey:key()}),/CC:REQUIRES_CONFIRMATION/);
- let s=await t.call("grantConsent",{track:"discover",consentVersion:"v1",operationKey:key()});
+ let s=await t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sh("discover","v1"),operationKey:key()});
  assert.equal(s.tracks.discover.consent,"granted");assert.equal(s.tracks.discover.effective,false,"consent alone is not enough");
  s=await t.call("setFlag",{track:"discover",enabled:true,operationKey:key()});
  assert.equal(s.tracks.discover.effective,true);
@@ -96,7 +98,7 @@ test("opt-in needs a legally reviewed consent text; flag needs consent; revoke s
 test("a new consent version voids old consent until the owner accepts it again",async()=>{
  const t=await setup();
  await t.publish("supply","v1");
- await t.call("grantConsent",{track:"supply",consentVersion:"v1",operationKey:key()});
+ await t.call("grantConsent",{track:"supply",consentVersion:"v1",textSha256:sh("supply","v1"),operationKey:key()});
  await t.call("setFlag",{track:"supply",enabled:true,operationKey:key()});
  assert.equal((await t.call("status")).tracks.supply.effective,true);
  await t.admin("UPDATE public.cc_consent_versions SET is_current=false WHERE track='supply' AND version='v1'");
@@ -109,7 +111,7 @@ test("a new consent version voids old consent until the owner accepts it again",
 test("platform kill switch overrides an enabled merchant and blocks enabling",async()=>{
  const t=await setup();
  await t.publish("network","v1");
- await t.call("grantConsent",{track:"network",consentVersion:"v1",operationKey:key()});
+ await t.call("grantConsent",{track:"network",consentVersion:"v1",textSha256:sh("network","v1"),operationKey:key()});
  await t.call("setFlag",{track:"network",enabled:true,operationKey:key()});
  await t.admin("INSERT INTO public.cc_platform_kill_switch(track,disabled,reason) VALUES('network',true,'incident')");
  const s=await t.call("status");
@@ -122,12 +124,12 @@ test("only the owner of THIS business may act; staff, other tenants, anon, wrong
  const t=await setup();
  await t.publish("passport","v1");
  await assert.rejects(t.call("status",{},t.staff),/Only the business owner|CC:NOT_AUTHORIZED/);
- await assert.rejects(t.call("grantConsent",{track:"passport",consentVersion:"v1",operationKey:key()},t.staff),/CC:NOT_AUTHORIZED/);
+ await assert.rejects(t.call("grantConsent",{track:"passport",consentVersion:"v1",textSha256:sh("passport","v1"),operationKey:key()},t.staff),/CC:NOT_AUTHORIZED/);
  // Another merchant's owner cannot read or change this merchant's settings.
  await assert.rejects(t.call("status",{},t.other,t.company),/Business access denied/);
  await assert.rejects(t.call("setFlag",{track:"passport",enabled:false,operationKey:key()},t.other,t.company),/Business access denied/);
  // ...and their own company is isolated from ours.
- await t.call("grantConsent",{track:"passport",consentVersion:"v1",operationKey:key()});
+ await t.call("grantConsent",{track:"passport",consentVersion:"v1",textSha256:sh("passport","v1"),operationKey:key()});
  assert.equal((await t.call("status",{},t.other,t.otherCompany)).tracks.passport.consent,"none");
  // Wrong session id, revoked session, and no session.
  await assert.rejects(t.call("status",{},{...t.owner,session:randomUUID()}),/Active Auth session required/);
@@ -156,14 +158,14 @@ test("operation keys: replay is exact and silent; same key with a different requ
  const t=await setup();
  await t.publish("clementia","v1");
  const k=key();
- const a=await t.call("grantConsent",{track:"clementia",consentVersion:"v1",operationKey:k});
- const b=await t.call("grantConsent",{track:"clementia",consentVersion:"v1",operationKey:k});
+ const a=await t.call("grantConsent",{track:"clementia",consentVersion:"v1",textSha256:sh("clementia","v1"),operationKey:k});
+ const b=await t.call("grantConsent",{track:"clementia",consentVersion:"v1",textSha256:sh("clementia","v1"),operationKey:k});
  assert.equal(a.replayed,false);assert.equal(b.replayed,true);
  assert.deepEqual({...a,replayed:0},{...b,replayed:0});
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM public.cc_consent_events"))[0].n,1);
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM public.cc_outbox WHERE event_type='cc.consent.changed.v1'"))[0].n,1);
  await assert.rejects(t.call("revokeConsent",{track:"clementia",operationKey:k}),/CC:CONFLICT/);
- await assert.rejects(t.call("grantConsent",{track:"clementia",consentVersion:"v2",operationKey:k}),/CC:CONFLICT/);
+ await assert.rejects(t.call("grantConsent",{track:"clementia",consentVersion:"v2",textSha256:sh("clementia","v2"),operationKey:k}),/CC:CONFLICT/);
  // Optimistic concurrency on the flag.
  const s=await t.call("setFlag",{track:"clementia",enabled:true,operationKey:key()});
  await assert.rejects(t.call("setFlag",{track:"clementia",enabled:false,expectedVersion:s.tracks.clementia.flagVersion-1,operationKey:key()}),/CC:STALE_VERSION/);
@@ -171,8 +173,8 @@ test("operation keys: replay is exact and silent; same key with a different requ
  assert.equal(ok.tracks.clementia.flagEnabled,false);
  // Two simultaneous grants with different keys: both complete, consent ends granted exactly as the later event says.
  const results=await Promise.allSettled([
-  t.call("grantConsent",{track:"clementia",consentVersion:"v1",operationKey:key()}),
-  t.call("grantConsent",{track:"clementia",consentVersion:"v1",operationKey:key()})]);
+  t.call("grantConsent",{track:"clementia",consentVersion:"v1",textSha256:sh("clementia","v1"),operationKey:key()}),
+  t.call("grantConsent",{track:"clementia",consentVersion:"v1",textSha256:sh("clementia","v1"),operationKey:key()})]);
  assert.ok(results.every(r=>r.status==="fulfilled"));
 });
 
@@ -204,7 +206,7 @@ test("verification: owner can only produce UNREVIEWED states; the label never cl
 test("evidence is append-only for everyone; outbox payloads are minimal and PII-free by constraint",async()=>{
  const t=await setup();
  await t.publish("discover","v1");
- await t.call("grantConsent",{track:"discover",consentVersion:"v1",operationKey:key()});
+ await t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sh("discover","v1"),operationKey:key()});
  await t.call("setFlag",{track:"discover",enabled:true,operationKey:key()});
  await t.call("submitVerification",{declaredName:"Kofi Stores",operationKey:key()});
  for(const sql of ["UPDATE public.cc_consent_events SET action='revoke'","DELETE FROM public.cc_consent_events","TRUNCATE public.cc_consent_events",
@@ -235,7 +237,21 @@ test("rollback script: removes an unused platform cleanly; refuses once evidence
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM pg_proc WHERE proname LIKE 'cc\\_%' OR proname='tallybook_cc_platform'"))[0].n,0);
  await t.script(read(MIGRATION)); // forward again is clean
  await t.publish("discover","v1");
- await t.call("grantConsent",{track:"discover",consentVersion:"v1",operationKey:key()});
+ await t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sh("discover","v1"),operationKey:key()});
  await assert.rejects(t.script(down()),/evidence exists/i);
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM public.cc_consent_events"))[0].n,1);
+});
+
+test("consent is bound to the DISPLAYED text: a missing or wrong hash is refused, and status publishes the hash to compare",async()=>{
+ const t=await setup();
+ await t.publish("discover","v1");
+ const status=await t.call("status");
+ assert.equal(status.tracks.discover.currentConsentSha256,sha("discoverv1"));
+ assert.equal(status.tracks.supply.currentConsentSha256,null);
+ await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v1",operationKey:key()}),/Invalid textSha256/);
+ await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:"z".repeat(64),operationKey:key()}),/Invalid textSha256/);
+ await assert.rejects(t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sha("some other text"),operationKey:key()}),/CC:STALE_VERSION/);
+ assert.equal((await t.admin("SELECT count(*)::int AS n FROM public.cc_consent_events"))[0].n,0);
+ const ok=await t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sha("discoverv1"),operationKey:key()});
+ assert.equal(ok.tracks.discover.consent,"granted");
 });

@@ -10,18 +10,19 @@ import { ShopRejectedError, ShopUnreachableError } from "../shopClient";
 import { CcError, getCcStatus, grantCcConsent, nextTrackAction, parseCcError, revokeCcConsent, setCcFlag, submitCcVerification, type CcTrackState } from "./platform";
 
 const state = (over: Partial<CcTrackState> = {}): CcTrackState => ({ track: "discover", consent: "none", consentVersion: null,
-  currentConsentVersion: null, flagEnabled: false, flagVersion: 0, killed: false, effective: false, ...over });
+  currentConsentVersion: null, currentConsentSha256: null, flagEnabled: false, flagVersion: 0, killed: false, effective: false, ...over });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 beforeEach(() => m.callShop.mockReset());
 
 describe("platform client contract", () => {
   it("always targets the owner-only platform RPC and generates a fresh operation key per mutation", async () => {
     m.callShop.mockResolvedValue({ tracks: {}, verification: {}, publicationDefault: "off" });
-    await grantCcConsent("c1", "discover", "v1"); await grantCcConsent("c1", "discover", "v1");
+    await grantCcConsent("c1", "discover", "v1", "a".repeat(64)); await grantCcConsent("c1", "discover", "v1", "a".repeat(64));
     await revokeCcConsent("c1", "supply"); await setCcFlag("c1", "network", true, 3); await submitCcVerification("c1", "Ama Stores", "doc-1");
     for (const call of m.callShop.mock.calls) expect(call[2]).toBe("tallybook_cc_platform");
     const keys = m.callShop.mock.calls.slice(0, 2).map(c => c[1].operationKey as string);
     expect(keys[0]).toMatch(UUID); expect(keys[0]).not.toBe(keys[1]);
+    expect(m.callShop.mock.calls[0][1]).toMatchObject({ track: "discover", consentVersion: "v1", textSha256: "a".repeat(64) });
     expect(m.callShop.mock.calls[3][1]).toMatchObject({ track: "network", enabled: true, expectedVersion: 3 });
   });
   it("a caller-supplied operation key is preserved so a retry replays instead of duplicating", async () => {

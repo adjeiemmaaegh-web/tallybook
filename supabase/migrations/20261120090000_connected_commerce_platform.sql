@@ -169,19 +169,22 @@ DECLARE
  v_flag public.cc_merchant_flags;
  v_last public.cc_consent_events;
  v_current text;
+ v_sha text;
  v_killed boolean;
  v_consent text:='none';
 BEGIN
  SELECT * INTO v_flag FROM public.cc_merchant_flags WHERE business_id=p_company AND track=p_track;
  SELECT * INTO v_last FROM public.cc_consent_events
    WHERE business_id=p_company AND track=p_track ORDER BY id DESC LIMIT 1;
- SELECT version INTO v_current FROM public.cc_consent_versions WHERE track=p_track AND is_current;
+ SELECT version,text_sha256 INTO v_current,v_sha FROM public.cc_consent_versions WHERE track=p_track AND is_current;
  SELECT COALESCE(disabled,false) INTO v_killed FROM public.cc_platform_kill_switch WHERE track=p_track;
  v_killed:=COALESCE(v_killed,false);
  IF v_last.id IS NOT NULL THEN v_consent:=CASE WHEN v_last.action='grant' THEN 'granted' ELSE 'revoked' END; END IF;
  RETURN jsonb_build_object('track',p_track,'consent',v_consent,
    'consentVersion',CASE WHEN v_consent='granted' THEN v_last.consent_version END,
    'currentConsentVersion',v_current,
+   -- The client may offer "accept" only for text it can display whose SHA-256 equals this value.
+   'currentConsentSha256',v_sha,
    'flagEnabled',COALESCE(v_flag.enabled,false),'flagVersion',COALESCE(v_flag.version,0),
    'killed',v_killed,
    'effective',COALESCE(v_flag.enabled,false) AND v_consent='granted'
@@ -272,7 +275,11 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM public.cc_consent_versions WHERE track=v_track AND is_current) THEN
    RAISE EXCEPTION 'CC:REQUIRES_CONFIRMATION No reviewed consent text is published for this track yet' USING ERRCODE='42501';
   END IF;
-  IF NOT EXISTS(SELECT 1 FROM public.cc_consent_versions WHERE track=v_track AND version=v_version AND is_current) THEN
+  IF p_input->>'textSha256' IS NULL OR p_input->>'textSha256' !~ '^[a-f0-9]{64}$' THEN
+   RAISE EXCEPTION 'Invalid textSha256' USING ERRCODE='22023';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.cc_consent_versions WHERE track=v_track AND version=v_version AND is_current
+      AND text_sha256=p_input->>'textSha256') THEN
    RAISE EXCEPTION 'CC:STALE_VERSION The consent text has changed; review the current version' USING ERRCODE='40001';
   END IF;
   INSERT INTO public.cc_consent_events(business_id,track,action,consent_version,actor_id,operation_key)

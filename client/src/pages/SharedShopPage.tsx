@@ -33,6 +33,10 @@ import {convertShopQuotation} from "@/cloud/quotations";
 import {purchaseRetry} from "@/cloud/purchaseRetry";
 import {exportLoadedSalesCsv} from "@/cloud/shopOperationalReports";
 import {SharedShopAccounts} from "@/cloud/SharedShopAccounts";
+import {SharedShopConnectedCommerce} from "@/cloud/connectedCommerce/SharedShopConnectedCommerce";
+
+/** Build-time switch, off by default: Connected Commerce services are not offered to owners until explicitly enabled. */
+const CONNECTED_COMMERCE_UI = import.meta.env.VITE_CONNECTED_COMMERCE === "1";
 import {SharedShopAsk} from "@/cloud/SharedShopAsk";
 import type {PurchaseDraft} from "@/cloud/shopAssistant";
 import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
@@ -70,7 +74,7 @@ import { currencies, currencyLabels } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "shifts" | "audit" | "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "shifts" | "audit" | "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers" | "connected";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -355,7 +359,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["shifts", "Staff shifts"], ["audit", "Activity audit"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["shifts", "Staff shifts"], ["audit", "Activity audit"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"], ...(CONNECTED_COMMERCE_UI ? [["connected", "Connected Commerce"] as [Tab, string]] : [])]
     : [["home", "Home"], ["shifts", "My shift"], ["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
@@ -428,6 +432,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "refund-requests" && isOwner && <OwnerRefundRequests companyId={business.id} overview={overview} online={online} refresh={refresh} onChanged={() => void refresh()} />}
     {tab === "accounts" && isOwner && <SharedShopAccounts companyId={business.id} overview={overview} online={online} shopName={business.name} />}
     {tab === "expenses" && isOwner && <SharedShopExpenses companyId={business.id} overview={overview} online={online} />}
+    {tab === "connected" && isOwner && CONNECTED_COMMERCE_UI && <SharedShopConnectedCommerce companyId={business.id} online={online} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}

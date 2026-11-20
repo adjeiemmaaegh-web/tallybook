@@ -16,6 +16,8 @@ export interface CcTrackState {
   consent: "none" | "granted" | "revoked";
   consentVersion: string | null;
   currentConsentVersion: string | null;
+  /** SHA-256 of the current legally reviewed text. Offer "accept" only for text that hashes to exactly this. */
+  currentConsentSha256: string | null;
   flagEnabled: boolean;
   flagVersion: number;
   killed: boolean;
@@ -72,8 +74,8 @@ async function call(action: string, input: Record<string, unknown>): Promise<CcP
 }
 
 export const getCcStatus = (companyId: string) => call("status", { companyId });
-export const grantCcConsent = (companyId: string, track: CcTrack, consentVersion: string, operationKey = newKey()) =>
-  call("grantConsent", { companyId, track, consentVersion, operationKey });
+export const grantCcConsent = (companyId: string, track: CcTrack, consentVersion: string, textSha256: string, operationKey = newKey()) =>
+  call("grantConsent", { companyId, track, consentVersion, textSha256, operationKey });
 export const revokeCcConsent = (companyId: string, track: CcTrack, operationKey = newKey()) =>
   call("revokeConsent", { companyId, track, operationKey });
 export const setCcFlag = (companyId: string, track: CcTrack, enabled: boolean, expectedVersion?: number, operationKey = newKey()) =>
