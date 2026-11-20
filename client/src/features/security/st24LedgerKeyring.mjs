@@ -82,6 +82,11 @@ function handleInfo(handle) {
   if(!info) fail('Ledger is locked.');
   return info;
 }
+/** Explicitly revoke this tab's ephemeral handle on sign-out or lock.
+ * A sealed record still exists; no data is deleted by locking. */
+export function lockLedgerHandle(handle) {
+  if (!handles.delete(handle)) fail('Ledger is locked.');
+}
 export async function createLedgerKeyring({workspaceId,companyId,ownerPassphrase}) {
   const scope=scopeOf(workspaceId,companyId);
   const secret=random(32);
