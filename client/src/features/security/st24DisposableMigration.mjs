@@ -171,7 +171,17 @@ async function readGraph({dbName,companyId,idb,kind='source'}){
     };
    });
   });
-  await Promise.all(pending);await done;
+  try {
+   await Promise.all(pending);
+   await done;
+  } catch (error) {
+   // A deliberately rejected tenant/codec row aborts every pending cursor.
+   // Observe the transaction's rejection even when cursor promises reject
+   // first; otherwise the browser/Node can report an unhandled rejection.
+   try { tx.abort(); } catch {}
+   await done.catch(()=>{});
+   throw error;
+  }
   validateGraph(graph,companyId);
   const json=digestInput(graph);
   if(encoder.encode(json).length>MAX_BYTES)fail('serialized migration exceeds 8 MiB pilot budget');
