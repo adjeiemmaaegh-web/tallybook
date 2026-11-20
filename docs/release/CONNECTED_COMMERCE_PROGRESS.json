@@ -617,45 +617,87 @@
       "id": "CC-X-01",
       "requirement": "Owner-specific opt-in for *each* network track, revocation and auditable consent versions; initial network publication OFF.",
       "source": "01_PRODUCT_REQUIREMENTS_PRD.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Server + typed client done: per-track consent versions (need a legal-review reference), flags OFF by default, revoke switches off at once. MISSING: owner UI to review/accept terms and toggle."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
       "id": "CC-X-02",
       "requirement": "Merchant identity and business verification workflow with traceable review; never describe self-declared identities as externally verified.",
       "source": "01_PRODUCT_REQUIREMENTS_PRD.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Honest verification states; owner can only produce unreviewed states; editing voids a review. MISSING: reviewer workflow/tooling (review is a service-side SQL action only), evidence storage."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
       "id": "CC-X-03",
       "requirement": "Separate identities for merchant account, assigned staff, public guest and shopper; tenant- and store-scoped server auth for every mutation.",
       "source": "01_PRODUCT_REQUIREMENTS_PRD.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Owner boundary enforced server-side (session proof, tenant, owner-only; staff/other tenant/anon denied). MISSING: shopper, supplier, guest-partner identities and store-scoped authorization."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
@@ -707,30 +749,58 @@
       "id": "CC-X-07",
       "requirement": "Privacy, anti-spam, data retention, abuse appeals, rate limits, indexing controls, audit logs and redacted telemetry.",
       "source": "01_PRODUCT_REQUIREMENTS_PRD.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Append-only audit, minimal PII-free outbox enforced by constraint. MISSING: rate limits, retention policy, abuse appeals, redacted telemetry, indexing controls. Denied attempts are not audited (rolled back with the failed call)."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
       "id": "CC-X-08",
       "requirement": "All new workflows feature flagged per merchant and service, safe migration rollback, production monitoring and incident playbook.",
       "source": "01_PRODUCT_REQUIREMENTS_PRD.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Per-merchant per-track flags (default OFF), platform kill switch, guarded rollback. MISSING: monitoring, incident playbook, staged rollout, flags for later services."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
@@ -769,30 +839,58 @@
       "id": "CC-X-1",
       "requirement": "consent versions, merchant verification status, new scope/roles, separate guest and shopper auth, privacy retention policy.",
       "source": "04_IMPLEMENTATION_ROADMAP_AGENT_PLAYBOOK.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Consent versions, verification status, flags and merchant owner boundary built. MISSING: separate shopper/guest auth, retention policy."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
       "id": "CC-X-2",
       "requirement": "stable operation keys, events/outbox, typed contracts, redacted telemetry, opt-in service flags and kill switches.",
       "source": "04_IMPLEMENTATION_ROADMAP_AGENT_PLAYBOOK.md",
-      "currentCodeLocation": [],
+      "currentCodeLocation": [
+        "supabase/migrations/20261120090000_connected_commerce_platform.sql",
+        "supabase/rollback/20261120090000_connected_commerce_platform_down.sql",
+        "client/src/cloud/connectedCommerce/platform.ts"
+      ],
       "originalStatus": "not-implemented",
-      "currentVerifiedStatus": "not-implemented",
-      "implementationCommit": null,
-      "tests": [],
-      "testExecutionEvidence": [],
-      "securityPrivacyReview": "not-started",
-      "remainingDefects": [],
-      "externalApprovalDependencies": [],
+      "currentVerifiedStatus": "partial",
+      "implementationCommit": "2b38910",
+      "tests": [
+        "qa/connected-commerce-platform-pglite.test.mjs",
+        "client/src/cloud/connectedCommerce/platform.test.ts"
+      ],
+      "testExecutionEvidence": [
+        "Local 2026-11-20: PGlite 11/11 (3 mutation checks caught), client 13/13; full regression 1963 client + 1222 native, tsc clean. Not CI-verified; not applied to any hosted database."
+      ],
+      "securityPrivacyReview": "developer self-review only; independent review not done",
+      "remainingDefects": [
+        "Operation-key idempotency with request hashing, version checks, minimal outbox, kill switches built for the platform RPC. MISSING: outbox worker/consumers, typed contracts for the five tracks, redacted telemetry."
+      ],
+      "externalApprovalDependencies": [
+        "Counsel-approved consent text per track (CC-X-09) before any track can be enabled",
+        "Owner approval to apply the migration to any hosted database"
+      ],
       "acceptanceStatus": "not-accepted"
     },
     {
