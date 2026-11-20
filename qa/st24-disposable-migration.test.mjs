@@ -64,7 +64,7 @@ test('ST24: populated v39 source copies all object stores and indexes into a sep
  const original=await access(source,'sales','sale-1');
  const staged=await stageSt24PopulatedDisposableLedger({sourceDbName:source,companyId:COMPANY,keyring,handle,ownerPassphrase:PASS,idb:indexedDB,locks});
  assert.equal(staged.sourceVersion,39);
- assert.equal(staged.tables,8);
+ assert.equal(staged.tableCount,8);
  assert.equal(staged.rows,8);
  assert.equal(staged.minorTotals['sales.totalMinor'],'135000');
  assert.equal(staged.minorTotals['sales.paidMinor'],'100000');
