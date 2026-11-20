@@ -33,3 +33,49 @@ test('ST24-05 WebCrypto keyring unlock, recovery, record scope and lock work in 
    wrongPassRejected:true,lockRejected:true,hasSecureContext:true
  });
 });
+
+
+test('ST24-05 encrypted shadow survives browser reload and exposes no customer plaintext in IndexedDB',async({page})=>{
+ await page.goto('/',{waitUntil:'domcontentloaded'});
+ const initial=await page.evaluate(async()=>{
+  const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
+  const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
+  const passphrase='synthetic shadow snapshot browser test password';
+  const {keyring,handle}=await keys.createLedgerKeyring({workspaceId:'shadow-browser-fixture',companyId:'shop-browser-qa',ownerPassphrase:passphrase});
+  const text=JSON.stringify({kind:'fixture-only',records:{sales:[{id:'browser-sale',amountMinor:3200,customer:'Do Not Persist Plaintext'}]}});
+  const result=await shadow.stageSt24ShadowSnapshot({keyring,handle,ownerPassphrase:passphrase,verifiedBackupJson:text});
+  const db=await new Promise((resolve,reject)=>{
+   const req=indexedDB.open(shadow.ST24_SHADOW_DB_NAME);
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+  const raw=await new Promise((resolve,reject)=>{
+   const tx=db.transaction(['snapshots','chunks'],'readonly');
+   const snapshots=tx.objectStore('snapshots').get(result.snapshotId);
+   const chunks=tx.objectStore('chunks').index('bySnapshot').getAll(result.snapshotId);
+   tx.oncomplete=()=>resolve({snapshot:snapshots.result,chunks:chunks.result});
+   tx.onerror=()=>reject(tx.error);
+  });
+  db.close();
+  return {id:result.snapshotId,clear:!JSON.stringify(raw).includes('Do Not Persist Plaintext'),text};
+ });
+ expect(initial.clear).toBe(true);
+ await page.reload({waitUntil:'domcontentloaded'});
+ const restored=await page.evaluate(async({id,text})=>{
+   const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
+   const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
+   const db=await new Promise((resolve,reject)=>{
+    const req=indexedDB.open(shadow.ST24_SHADOW_DB_NAME);
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+   const snapshot=await new Promise((resolve,reject)=>{
+    const tx=db.transaction('snapshots','readonly');
+    const req=tx.objectStore('snapshots').get(id);
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+   db.close();
+   const handle=await keys.unlockLedgerWithPassphrase(snapshot.keyring,'synthetic shadow snapshot browser test password');
+   const actual=await shadow.readSt24ShadowSnapshot({snapshotId:id,handle});
+   return {verified:actual.state==='verified',exact:actual.text===text};
+ },{id:initial.id,text:initial.text});
+ expect(restored).toEqual({verified:true,exact:true});
+});
