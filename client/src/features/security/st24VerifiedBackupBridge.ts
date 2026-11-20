@@ -8,15 +8,12 @@ import {requirePermission} from '@/features/staff/staff';
 import {parseBackup,stringifyBackup,getVerifiedBackupReceipt,getBackupSummary,type TallybookBackup}
   from '@/features/backup/backup';
 import {decryptBackupText} from '@/features/backup/backupCrypto';
-import {verifyRun8FileReceipt} from '@/features/backup/run8BackupFileReceipt.mjs';
+import {verifyRun8FileReceipt,type Run8BackupFileReceipt} from '@/features/backup/run8BackupFileReceipt.mjs';
 import {stageSt24ShadowSnapshot,readSt24ShadowSnapshot}
   from './st24ShadowSnapshot.mjs';
 import type {LedgerKeyringV1,UnlockedLedgerHandle}
   from './st24LedgerKeyring.mjs';
 
-interface VerifiedFileReceipt {
-  companyId:string; createdAt:string; format:string; sha256:string;
-}
 function checkCompany(backup:TallybookBackup,companyId:string) {
   if(backup.records.businessProfiles.length!==1||
      backup.records.businessProfiles[0]?.id!==companyId)
@@ -27,7 +24,7 @@ function checkCompany(backup:TallybookBackup,companyId:string) {
 export async function prepareSt24ShadowFromVerifiedFile(params:{
   selectedEncryptedFileText:string;
   backupPassphrase:string;
-  receipt:VerifiedFileReceipt;
+  receipt:Run8BackupFileReceipt;
   companyId:string;
   keyring:LedgerKeyringV1;
   ledgerPassphrase:string;
