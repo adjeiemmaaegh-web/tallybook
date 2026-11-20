@@ -44,8 +44,9 @@ async function startServer() {
   });
 
 
-  // Enforce before every API parser, identity lookup and file-backed operation.
-  app.use("/api",createApiRateLimit());
+  // Shared process-local API shield before JSON parsers or private I/O.
+  // Existing per-operation authentication limits still apply.
+  app.use("/api", createApiRateLimit());
 
   // The HTTP surface is present for development but stays fail-closed. A
   // separately reviewed server-only coordinator and isolated test DB must be
