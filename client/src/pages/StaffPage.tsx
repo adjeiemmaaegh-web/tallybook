@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useBusinessProfile } from '@/contexts/BusinessProfileContext';
 import { businessDateTimeLabel } from '@/features/business/businessCalendar.mjs';
@@ -16,7 +16,11 @@ export default function StaffPage(){
  const [reviewNote,setReviewNote]=useState("");
  const [reviewDecision,setReviewDecision]=useState<"accepted"|"attention">("accepted");
  const [name,setName]=useState('');const [role,setRole]=useState<'owner'|'supervisor'|'cashier'>('cashier');const [pin,setPin]=useState('');const [chosen,setChosen]=useState('');const [float,setFloat]=useState('0');const [count,setCount]=useState('0');const [cashPreview,setCashPreview]=useState<{expectedCashMinor:number;movementMinor:number}|null>(null);const [busy,setBusy]=useState(false);const [unlocked,setUnlocked]=useState(false);const [resetPin,setResetPin]=useState('');
+ // Out-of-order refreshes (mount vs. session-change) must never overwrite newer state:
+ // a stale pre-unlock read finishing late would re-lock the visible session.
+ const refreshSeq=useRef(0);
  const refresh=useCallback(async()=>{
+   const seq=++refreshSeq.current;
    const members=await listStaff();
    const profile=await db.businessProfiles.get(activeCompanyId);
    let active=null;
@@ -37,6 +41,7 @@ export default function StaffPage(){
    if(active&&(active.role==="owner"||active.role==="supervisor")){
      try{reviewable=await listClosedShiftsForReview();}catch{reviewable=[];}
    }
+   if(seq!==refreshSeq.current)return;
    setReviewableShifts(reviewable);
    setPeople(members);
    setGovernanceEnabled(profile?.staffGovernanceEnabled===true);
