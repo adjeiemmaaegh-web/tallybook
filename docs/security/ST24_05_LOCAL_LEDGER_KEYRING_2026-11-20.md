@@ -33,3 +33,27 @@
 Local Node 22 WebCrypto prototype: **8 focused test cases passed** for the equivalent local source before branch publication (including a lossless JSON guard and explicit handle revocation). The GitHub branch has its own tests and must pass exact-commit GitHub Actions independently; local results are **not** a claim of CI, IndexedDB integration, migration, browser UAT, or production readiness.
 
 **Release decision:** ST24-05 OPEN. Do not auto-merge this PR merely because its isolated crypto tests pass. Data encryption is not active; current ledger remains plaintext at rest.
+
+
+## Second development increment: encrypted inactive shadow copy
+
+Added an independently named IndexedDB database, tallybook-st24-shadow-v1, **not** the active tallybook-db. The new library client/src/features/security/st24ShadowSnapshot.mjs:
+
+- Accepts a bounded, already validated backup JSON text, an in-memory key handle, its matching wrapped keyring and owner passphrase. Challenges the wrapped key to prevent persisting ciphertext under the wrong DEK.
+- Splits a maximum 8 MiB **pilot** backup into 192 KiB segments; encrypts each with AES-GCM and authenticated sequence; stores no plaintext record ID, customer data or raw file bytes in the shadow database. The encrypted manifest contains total length, hash and chunk count. The keyring and random snapshot identifiers are stored in unencrypted metadata (scope IDs and chunk counts may still be inferred).
+- Stores all chunks plus a "prepared" snapshot record in one IndexedDB transaction. An interrupted transaction must leave no partial snapshot. After commit, reopens the shadow, authenticates and reconstructs every chunk and compares its exact JSON with the source in memory; only afterward marks the snapshot "verified". An interruption between preparation and verification is recoverable by explicitly supplying the original verified backup text again.
+- Never deletes, alters or switches the source TallybookDB, the assistant store or active-storage markers. No automatic app startup or migration action calls this code.
+- The bridge st24VerifiedBackupBridge.ts requires the currently selected company, a current staff permission check, a previously recorded verified backup receipt, byte-identical reselected v2 encrypted file, successful decryption, strict parseBackup relationship validation, and a second staff/company check. The bridge is **not connected to a UI or app entrypoint**; proof of off-device recovery is still a separate acceptance requirement.
+- Pilot 8 MiB cap means large stores are explicitly rejected, not truncated. A real rollout needs streaming and device performance verification for the supported 64 MiB backup limits.
+- Fake IndexedDB tests cover atomic preparation/readback, ciphertext inspection, corruption, mismatch between handle/keyring, wrong externally compared backup, recovery after the prepared state, missing Web Locks and oversize input. Browser tests cover real WebCrypto, IndexedDB persistence through reload and origin-wide two-tab lock refusal.
+
+These are **migration rehearsals**, not active encryption. The original v39 Dexie ledger continues to store plaintext. The direct shadow API is an internal testing primitive; only the guarded bridge is a candidate for later owner-authorized UI integration. No independent customer-data migration, production key storage or clean-device recovery acceptance has occurred.
+
+### Additional acceptance before activation
+
+1. Add verified per-table structured-clone codecs, index and query redesign, and source/target reconciliation; an exported backup's JSON normalization is not a lossless substitute for Dexie storage semantics.
+2. Demonstrate owner-reselected external backup restored on a second clean device, with shadow and main stores demonstrably isolated and count/amount conservation verified.
+3. Exercise paused/crashed two-tab writers and keyboard/system interruptions; Web Locks are advisory and other retail write paths may not cooperate. Add explicit writer coordination and optimistic version checks.
+4. Introduce intentional active-storage switch only after the owner has signed off on rollback, prior-data retention, multi-business authorization, Safari/mobile support and privacy review. Do not interpret an isolated shadow as signoff.
+
+**Updated status:** ST24-05 PARTIAL SOURCE DEVELOPMENT / NO-GO. Exact-commit GitHub Actions must be inspected separately from local prototype tests. The source ledger has not been encrypted or migrated.
