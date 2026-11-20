@@ -15,8 +15,8 @@ function webcrypto() {
 }
 function scopeOf(workspaceId, companyId) {
   for (const value of [workspaceId, companyId])
-    if (typeof value !== 'string' || value.length < 1 || value.length > 128 ||
-        !/^[A-Za-z0-9._:/-]+$/.test(value)) fail('Invalid ledger identity.');
+    if (typeof value !== 'string' || value.length < 1 || value.length > 256 ||
+        /[\u0000-\u001f\u007f]/.test(value)) fail('Invalid ledger identity.');
   return [workspaceId, companyId];
 }
 function random(length) { const b = new Uint8Array(length); webcrypto().getRandomValues(b); return b; }
