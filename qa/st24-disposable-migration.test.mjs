@@ -126,8 +126,9 @@ test('ST24: interrupted disposable restore target can be explicitly discarded an
  const source=await seedDb(),target=id('tallybook-st24-restore-');
  const {keyring,handle}=await createLedgerKeyring({workspaceId:'owner-qa',companyId:COMPANY,ownerPassphrase:PASS});
  const staged=await stageSt24PopulatedDisposableLedger({sourceDbName:source,companyId:COMPANY,keyring,handle,ownerPassphrase:PASS,idb:indexedDB,locks});
- const partial=await request(indexedDB.open(target,39));
- partial.createObjectStore; // intentionally keep a nonempty target from a simulated prior crash
+ const partialOpen=indexedDB.open(target,39);
+ partialOpen.onupgradeneeded=()=>partialOpen.result.createObjectStore('interrupted',{keyPath:'id'});
+ const partial=await request(partialOpen); // simulated abandoned rollback target
  partial.close();
  await assert.rejects(restoreSt24ShadowToDisposableLedger({
   snapshotId:staged.snapshotId,targetDbName:target,companyId:COMPANY,
@@ -140,5 +141,5 @@ test('ST24: interrupted disposable restore target can be explicitly discarded an
   handle,expectedSourceSha256:staged.sourceSha256,idb:indexedDB
  });
  assert.equal(recovered.sha256,staged.sourceSha256);
- assert.equal((await access(source,'sales','sale-1')).amountMinor??(await access(source,'sales','sale-1')).totalMinor,135000);
+ assert.equal((await access(source,'sales','sale-1')).totalMinor,135000);
 });
