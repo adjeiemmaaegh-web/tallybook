@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { sortAsIndexed } from "@/lib/indexOrder";
 import { requirePermission } from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {reconcileCreditLedger} from "@/features/sales/creditLedger.mjs";
@@ -55,7 +56,7 @@ export async function getCustomerSnapshot(database: TallybookDB = db): Promise<C
   const activeId = getActiveBusinessProfileId();
   const allCustomers = await database.transaction("r",[database.customers,database.staffMembers],async()=>{
     await requirePermission("sell",database,activeId);
-    return (await database.customers.orderBy("name").toArray())
+    return sortAsIndexed(await database.customers.toArray(), "name")
       .filter((customer) => customer.businessProfileId === activeId);
   });
   assertCompanyScope(activeId, getActiveBusinessProfileId());

@@ -1,0 +1,52 @@
+name: ST24 isolated ledger encryption gate
+
+# Fast developer-only verification of disposable encrypted-ledger engineering.
+# Never touches a hosted database, production company, deployment, payment or
+# real owner backup. Full release validation remains a separate mandatory gate.
+on:
+  pull_request:
+    paths:
+      - 'client/src/features/security/st24*'
+      - 'qa/st24-*'
+      - '.github/workflows/st24-isolated-encryption.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/features/security/st24*'
+      - 'qa/st24-*'
+      - '.github/workflows/st24-isolated-encryption.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: st24-isolated-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  crypto-and-disposable-migration:
+    name: Native codec / synthetic IDB / real Dexie v39
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: ST24 isolated Node regression
+        run: node --experimental-strip-types --test qa/st24-*.test.mjs
+      - name: ST24 genuine v39 Dexie integration (fake IndexedDB harness)
+        run: pnpm exec vitest run client/src/features/security/st24DisposableMigration.test.ts client/src/features/security/st24EncryptedRepository.test.ts --maxWorkers=1 --testTimeout=120000 --hookTimeout=120000
+      - name: Static TypeScript validation
+        run: pnpm check

@@ -14,6 +14,7 @@ import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
 import { auditLocalIntegrity, type IntegrityAudit } from "@/features/reliability/integrity";
 import {rehearseDisasterRecovery,type ReadOnlyRecoveryDrill} from "@/features/backup/disasterRecoveryDrill";
 import {db} from "@/db/TallybookDB";
+import { LedgerSecurityPanel } from "@/components/LedgerSecurityPanel";
 import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 
 function formatBackupDate(value: string) {
@@ -225,6 +226,7 @@ export default function BackupPage() {
     </section>
     <section className="backup-boundary"><ShieldCheck className="h-5 w-5" aria-hidden="true" /><div><strong>Restore replaces one company’s local workspace.</strong><p>Download a fresh backup before restoring. Other companies on this phone are kept separate. Restoring does not add cloud storage or automatic sync.</p></div></section>
 
+    <LedgerSecurityPanel onLocked={() => window.location.reload()} />
     {passphrases.dialog}
     <AlertDialog open={message === "Confirm the replacement below to restore this checked local backup."} onOpenChange={(open) => { if (!open && !restoring) setMessage(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Restore this company’s records?</AlertDialogTitle><AlertDialogDescription>This cannot be undone here for that company. The selected backup will replace or add only its business details, products, inventory movements, customers, suppliers, purchases, sales, payments, repayments, receipts, expenses, and Mobile Money details. Other companies on this phone will not be changed.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={restoring}>Keep current records</AlertDialogCancel><AlertDialogAction onClick={(event) => { event.preventDefault(); void confirmRestore(); }} disabled={restoring||readingFile||passphrases.active}>{restoring ? "Restoring…" : "Replace with backup"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>;
