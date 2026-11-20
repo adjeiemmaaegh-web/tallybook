@@ -91,7 +91,7 @@ async function sha256(text){
 function validateGraph(graph,companyId) {
  if(!graph||graph.kind!=='tallybook-st24-disposable-source-v1'||graph.version!==1||
     graph.companyId!==companyId||!Number.isSafeInteger(graph.sourceVersion)||
-    graph.sourceVersion<1||graph.sourceVersion>39||!Array.isArray(graph.tables)||
+    graph.sourceVersion<1||graph.sourceVersion>390||!Array.isArray(graph.tables)||
     graph.tables.length<1||graph.tables.length>MAX_STORES)
   fail('invalid source graph');
  const seen=new Set();let rows=0;
