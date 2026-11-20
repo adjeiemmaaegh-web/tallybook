@@ -101,3 +101,29 @@ test('ST24 shadow missing Web Locks or oversized input leaves source untouched',
   verifiedBackupJson:'x'.repeat(8*1024*1024+1),idb:indexedDB,locks}),/pilot budget/);
  assert.equal((await indexedDB.databases()).some(x=>x.name==='tallybook-db'),false);
 });
+
+
+test('ST24 shadow never mutates even a populated disposable source DB on successful or denied staging',async()=>{
+ const reqOpen=indexedDB.open('tallybook-db',1);
+ reqOpen.onupgradeneeded=()=>{
+  reqOpen.result.createObjectStore('sales',{keyPath:'id'});
+ };
+ const sourceDb=await req(reqOpen);
+ const tx=sourceDb.transaction('sales','readwrite');
+ tx.objectStore('sales').put({id:'live-fixture-sale',amountMinor:9999,customer:'Plaintext source must survive'});
+ await new Promise((resolve,reject)=>{
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+ });
+ sourceDb.close();
+ const original=JSON.stringify({id:'live-fixture-sale',amountMinor:9999,customer:'Plaintext source must survive'});
+ const {keyring,handle}=await fresh();
+ await assert.rejects(stageSt24ShadowSnapshot({keyring,handle,ownerPassphrase:options.ownerPassphrase,
+  verifiedBackupJson:sample,idb:indexedDB,locks:null}),/Web Locks/);
+ const staged=await stageSt24ShadowSnapshot({keyring,handle,ownerPassphrase:options.ownerPassphrase,
+  verifiedBackupJson:sample,idb:indexedDB,locks});
+ assert.equal(staged.state,'verified');
+ const reopened=await req(indexedDB.open('tallybook-db',1));
+ const got=await req(reopened.transaction('sales','readonly').objectStore('sales').get('live-fixture-sale'));
+ reopened.close();
+ assert.equal(JSON.stringify(got),original);
+});
