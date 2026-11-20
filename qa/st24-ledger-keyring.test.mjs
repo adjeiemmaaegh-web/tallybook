@@ -95,3 +95,11 @@ test('ST24-05 explicit lock revokes a handle without removing its sealed records
  const unlocked=await unlockLedgerWithPassphrase(keyring,args.ownerPassphrase);
  assert.deepEqual(await openLedgerRecord(unlocked,'sales','s9',sealed),{amount:42});
 });
+
+test('ST24-05 percent-encoded account IDs bind correctly without accepting control characters',async()=>{
+ const owner='owner:user%40example.com';
+ const {keyring,handle}=await createLedgerKeyring({...args,workspaceId:owner});
+ const sealed=await sealLedgerRecord(handle,'sales','1',{amountMinor:100});
+ assert.deepEqual(await openLedgerRecord(await unlockLedgerWithPassphrase(keyring,args.ownerPassphrase),'sales','1',sealed),{amountMinor:100});
+ await assert.rejects(createLedgerKeyring({...args,workspaceId:'bad\nowner'}),/identity/);
+});
