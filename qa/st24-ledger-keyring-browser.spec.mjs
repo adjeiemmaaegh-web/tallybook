@@ -177,7 +177,7 @@ test('ST24-05 real browser Dexie v39 disposable source encrypts and reconstructs
   return;
  }
  expect(result).toEqual({
-  supported:true,exact:true,sourceVersion:39,
+  supported:true,exact:true,sourceVersion:390,
   tableCount:result.expectedTables,expectedTables:result.expectedTables,
   shaMatch:true,financialSale:true,financialPayment:true,indexedSale:true
  });
