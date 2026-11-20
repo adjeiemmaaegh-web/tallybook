@@ -266,3 +266,25 @@ export async function compareSt24DisposableLedgers({
   fail('financial source/restore mismatch');
  return {exact:true,sha256:source.sha256,...source.summary};
 }
+
+
+/**
+ * Explicitly discard a failed / interrupted DISPOSABLE restore target.
+ * Cannot touch tallybook-db, owner workspaces, original fixture databases,
+ * or the encrypted shadow. No automatic deletion is performed on exception.
+ */
+export async function discardSt24DisposableRestore({
+ targetDbName,idb=globalThis.indexedDB
+}){
+ nameIsAllowed(targetDbName,'restore');assertIdb(idb);
+ const existing=await idb.databases();
+ if(!existing.some(entry=>entry.name===targetDbName))
+  return Object.freeze({targetDbName,discarded:false,reason:'target absent'});
+ const request=idb.deleteDatabase(targetDbName);
+ const result=await new Promise((resolve,reject)=>{
+  request.onsuccess=()=>resolve(true);
+  request.onerror=()=>reject(request.error||Error('disposable restore deletion failed'));
+  request.onblocked=()=>reject(Error('disposable restore is open in another tab; close it before discarding'));
+ });
+ return Object.freeze({targetDbName,discarded:result,reason:'explicit disposable cleanup'});
+}
