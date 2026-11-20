@@ -65,7 +65,7 @@ describe('ST24-05 actual 39-version Dexie schema encrypted disposable migration'
    sourceDbName:source.name,companyId:'primary',keyring,handle,
    ownerPassphrase:passphrase,idb:indexedDB,locks:navigator.locks
   });
-  expect(staged.sourceVersion).toBe(DATABASE_SCHEMA_VERSION);
+  expect(staged.sourceVersion).toBe(DATABASE_SCHEMA_VERSION*10);
   expect(staged.tableCount).toBe(count);
   expect(staged.tableCounts.sales).toBeGreaterThan(0);
   expect(staged.tableCounts.inventoryMovements).toBeGreaterThan(0);
