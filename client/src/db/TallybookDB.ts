@@ -12,6 +12,7 @@ import type { Purchase, PurchaseLine, Supplier } from "@/features/purchases/purc
 import type { Expense } from "@/features/expenses/expenses";
 import type { AssistantAuditEntry } from "@/features/assistant/audit";
 import { loadActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { LedgerSeal, installLedgerSeal } from "@/features/security/st24LedgerSeal";
 
 export const DATABASE_NAME = "tallybook-db";
 export const DATABASE_SCHEMA_VERSION = 39;
@@ -88,6 +89,9 @@ export class TallybookDB extends Dexie {
   commerceHolds!: Table<import("@/features/commerce/run16Rules.mjs").Run16CommerceHold, string>;
   commerceDeliveryEvents!: Table<import("@/features/commerce/run16Rules.mjs").Run16OrderEvent, string>;
   run17ReviewEvents!: Table<import("@/features/insights/run17ReviewAudit.mjs").Run17ReviewEvent, string>;
+
+  /** At-rest encryption state for this connection (ST24-05). */
+  readonly ledgerSeal: LedgerSeal;
 
   constructor(name = workspaceKey(DATABASE_NAME)) {
     super(name);
@@ -355,6 +359,9 @@ export class TallybookDB extends Dexie {
       qaSaleClaimInbox: 'id, businessProfileId, cloudCompanyId, receivedAtUtc, &[businessProfileId+cloudCompanyId+operationId]',
       qaSaleClaimCursors: 'id, businessProfileId, cloudCompanyId, deviceId'
     });
+    // ST24-05: encryption layer. Plaintext mode is a pure pass-through until a ledger is explicitly sealed.
+    this.ledgerSeal = new LedgerSeal(name);
+    installLedgerSeal(this, this.ledgerSeal);
   }
 }
 

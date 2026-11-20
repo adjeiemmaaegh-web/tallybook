@@ -30,7 +30,8 @@ const BYTES_PER_ELEMENT={
  Int32Array:4,Uint32Array:4,Float32Array:4,Float64Array:8,BigInt64Array:8,BigUint64Array:8,DataView:1
 };
 const forbidden=new Set(['__proto__','prototype','constructor']);
-export function encodeSt24Clone(value){
+export function encodeSt24Clone(value,options={}){
+ const sortKeys=options.preserveOrder!==true;
  const seen=new WeakSet();
  function inner(x,depth){
   if(depth>MAX_DEPTH)fail('nested value exceeds depth limit');
@@ -90,13 +91,15 @@ export function encodeSt24Clone(value){
      fail('accessors and hidden fields not supported');
     entries.push([key,inner(descriptor.value,depth+1)]);
    }
-   entries.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+   // Canonical (sorted) for fingerprints; insertion order kept when the caller needs a transparent round trip.
+   if(sortKeys)entries.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
    return [TAG,'object',entries];
   }finally{seen.delete(x);}
  }
  return inner(value,0);
 }
-export function decodeSt24Clone(value){
+export function decodeSt24Clone(value,options={}){
+ const ordered=options.preserveOrder!==true;
  function inner(x,depth){
   if(depth>MAX_DEPTH)fail('encoded depth limit');
   if(x===null||typeof x==='string'||typeof x==='boolean')return x;
@@ -139,11 +142,11 @@ export function decodeSt24Clone(value){
     return arg.map(v=>inner(v,depth+1));
    case 'object':{
     exact(3);if(!Array.isArray(arg)||arg.length>100000)fail('bad object');
-    const out=Object.create(null);let last=null;
+    const out=Object.create(null);let last=null;const seenKeys=new Set();
     for(const tuple of arg){
      if(!Array.isArray(tuple)||tuple.length!==2||typeof tuple[0]!=='string'||forbidden.has(tuple[0])||
-        (last!==null&&tuple[0]<=last))fail('invalid object key ordering');
-     last=tuple[0];out[last]=inner(tuple[1],depth+1);
+        (ordered?(last!==null&&tuple[0]<=last):seenKeys.has(tuple[0])))fail('invalid object key ordering');
+     last=tuple[0];seenKeys.add(last);out[last]=inner(tuple[1],depth+1);
     }
     return out;
    }

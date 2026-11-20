@@ -211,3 +211,38 @@ export async function replaceLedgerRecoveryCode(keyring,currentPassphrase) {
     return {keyring:next,recoveryCode};
   } finally {raw.fill(0);}
 }
+
+/**
+ * Active-ledger support (ST24-05 activation). The synchronous row cipher needs the raw 32-byte DEK, so these
+ * variants return it. The CALLER must derive its subkeys immediately and zero the returned array.
+ * They exist beside, and do not weaken, the non-extractable handle API above.
+ */
+export async function createLedgerKeyringWithDek({workspaceId,companyId,ownerPassphrase}) {
+  const scope=scopeOf(workspaceId,companyId);
+  const secret=random(32);
+  const recoveryCode=b64(random(32));
+  try {
+    const psalt=random(16),rsalt=random(16);
+    const [passwordWrap,recoveryWrap]=await Promise.all([
+      (async()=>({salt:b64(psalt),...await wrap(await passKey(ownerPassphrase,psalt),secret,scope,'password')}))(),
+      (async()=>({salt:b64(rsalt),...await wrap(await recoveryKey(recoveryCode,rsalt),secret,scope,'recovery')}))()
+    ]);
+    const keyring={kind:KEYRING_KIND,version:1,workspaceId,companyId,iterations:KDF_ITERATIONS,
+      passphrase:passwordWrap,recovery:recoveryWrap};
+    parseKeyring(keyring);
+    return {keyring,recoveryCode,dek:new Uint8Array(secret)};
+  } finally { secret.fill(0); }
+}
+export async function unlockLedgerDek(meta,credential,purpose) {
+  if(purpose!=='passphrase'&&purpose!=='recovery')fail();
+  const scope=parseKeyring(meta),part=meta[purpose];
+  const salt=un64(part.salt,16,16),iv=un64(part.iv,12,12),data=un64(part.ciphertext,48,48);
+  try {
+    const key=purpose==='passphrase'?await passKey(credential,salt):await recoveryKey(credential,salt);
+    const raw=new Uint8Array(await webcrypto().subtle.decrypt({name:'AES-GCM',iv,additionalData:aad('key-wrap',scope,purpose==='passphrase'?'password':'recovery')},key,data));
+    if(raw.length!==32){raw.fill(0);fail();}
+    return raw;
+  } catch { fail('Incorrect credential or corrupted keyring. No data was changed.'); }
+}
+/** Structural validation only (no secret needed): used before trusting an imported recovery package. */
+export function validateLedgerKeyring(meta) { parseKeyring(meta); return true; }

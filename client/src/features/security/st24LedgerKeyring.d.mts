@@ -44,3 +44,7 @@ export function sealLedgerRecord(
 export function openLedgerRecord(
   handle:UnlockedLedgerHandle,table:string,primaryKey:string,envelope:SealedLedgerRecordV1
 ):Promise<unknown>;
+
+export function createLedgerKeyringWithDek(args:{workspaceId:string;companyId:string;ownerPassphrase:string}):Promise<{keyring:LedgerKeyringV1;recoveryCode:string;dek:Uint8Array}>;
+export function unlockLedgerDek(keyring:LedgerKeyringV1,credential:string,purpose:'passphrase'|'recovery'):Promise<Uint8Array>;
+export function validateLedgerKeyring(keyring:unknown):true;

@@ -1,4 +1,5 @@
 import { lockStaff, requirePermission } from "@/features/staff/staff";
+import { sortAsIndexed } from "@/lib/indexOrder";
 import { RESTORE_JOURNAL_KEY } from "@/features/backup/restoreJournal.mjs";
 import {RUN8_VERIFIED_RECEIPT_KEY,parseRun8VerifiedReceipt} from "@/features/backup/run8VerifiedReceipt.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
@@ -44,7 +45,7 @@ export async function persistActiveBusinessProfileId(id: string, database: Tally
 }
 
 export async function getLocalCompanyProfiles(database: TallybookDB) {
-  return database.businessProfiles.orderBy("name").toArray();
+  return sortAsIndexed(await database.businessProfiles.toArray(), "name");
 }
 
 /** Clear assistant records before the retail transaction. A durable assistant
@@ -86,7 +87,7 @@ async function clearCompanyDataWhileLocked(companyId: string, database: Tallyboo
         await table.where("businessProfileId").equals(companyId).delete();
       }
       await database.businessProfiles.delete(companyId);
-      const remaining = (await database.businessProfiles.orderBy("name").toArray())[0];
+      const remaining = sortAsIndexed(await database.businessProfiles.toArray(), "name")[0];
       const now = new Date().toISOString();
       if (remaining) await database.appMeta.put({ key: "activeBusinessProfileId", value: remaining.id, updatedAt: now });
       else await database.appMeta.delete("activeBusinessProfileId");
