@@ -130,7 +130,7 @@ function graphSummary(graph){
   tables[t.name]=t.records.length;rows+=t.records.length;
   for(const pair of t.records)aggregateMinor(decodeSt24Clone(pair.value),t.name,totals);
  }
- return {tables,rows,minorTotals:Object.fromEntries([...totals].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>[k,v.toString()]))};
+ return {tableCounts:tables,rows,minorTotals:Object.fromEntries([...totals].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>[k,v.toString()]))};
 }
 /** Read one atomic IndexedDB snapshot. A schema includes every store and index. */
 async function readGraph({dbName,companyId,idb,kind='source'}){
@@ -204,7 +204,7 @@ export async function stageSt24PopulatedDisposableLedger({
   fail('source changed during rehearsal; no active storage was changed');
  return Object.freeze({
   snapshotId:shadow.snapshotId,sourceSha256:source.sha256,sourceVersion:source.graph.sourceVersion,
-  tables:source.graph.tables.length,...source.summary
+  tableCount:source.graph.tables.length,...source.summary
  });
 }
 /** Restore to a new disposable database, never the user's real source. */
@@ -252,7 +252,7 @@ export async function restoreSt24ShadowToDisposableLedger({
  if(restored.sha256!==expectedSourceSha256||restored.json!==rows.text)
   fail('restored data/schema differs; target is unsafe and source untouched');
  return Object.freeze({restoredDatabase:targetDbName,sha256:restored.sha256,
-  tables:restored.graph.tables.length,...restored.summary});
+  tableCount:restored.graph.tables.length,...restored.summary});
 }
 /** Explicit source/restore digest proof; never promotes either DB. */
 export async function compareSt24DisposableLedgers({
