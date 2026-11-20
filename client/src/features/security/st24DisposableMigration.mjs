@@ -53,6 +53,7 @@ function aggregateMinor(record,table,totals) {
   if(Array.isArray(value)){value.forEach(v=>visit(v,path+'[]',depth+1));return;}
   for(const [k,v] of Object.entries(value)){
    if(/Minor$/.test(k)){
+    if(v===undefined||v===null)continue; // truly absent optional monetary fields remain absent
     if(typeof v!=='number'||!Number.isSafeInteger(v))fail('unsafe money field '+table+'.'+k);
     const metric=table+'.'+path+k;
     totals.set(metric,(totals.get(metric)||0n)+BigInt(v));
