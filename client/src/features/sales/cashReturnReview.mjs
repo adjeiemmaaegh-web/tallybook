@@ -49,7 +49,9 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
     options.push({saleLineId:line.id,productName:product.name,remainingQuantity:Number(remaining)});
   }
   if (!options.length) throw new Error('No supported original sale lines.');
-  return {refundMethod:sale.paymentMethod, stillOwedMinor: hasCustomer ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
+  const refundableTenderMinor=sale.amountPaidMinor-priorReturns.reduce((n,r)=>n+r.refundedMinor,0);
+  if(!Number.isSafeInteger(refundableTenderMinor)||refundableTenderMinor<0) throw new Error('Prior refunds exceed the original payment; reconcile first.');
+  return {refundMethod:sale.paymentMethod, refundableTenderMinor, stillOwedMinor: hasCustomer ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
 }
 
 export function quoteReviewedCashReturn(review,saleLineId,quantity) {
@@ -67,6 +69,8 @@ export function quoteReviewedCashReturn(review,saleLineId,quantity) {
   const refundMinor=plan.draftAmountMinor-debtReducedMinor;
   if (refundMinor>0 && review.sale.paymentMethod==='credit')
     throw new Error('This quantity exceeds the unpaid balance of a credit sale; refunding the customer\'s repayments is not supported here.');
+  if (refundMinor>(review.refundableTenderMinor??Number.MAX_SAFE_INTEGER))
+    throw new Error('This return would refund money the customer paid through later repayments, beyond the original payment; refunding repayments is not supported here. Reconcile with the owner.');
   return {amountMinor:plan.draftAmountMinor,debtReducedMinor,refundMinor,taxMinor:plan.draftTaxMinor,
     discountMinor:plan.draftDiscountMinor,taxableMinor:plan.draftTaxableMinor};
 }

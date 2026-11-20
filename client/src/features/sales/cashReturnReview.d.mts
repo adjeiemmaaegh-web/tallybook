@@ -7,6 +7,7 @@ import type { InventoryBatch } from '../inventory/stage2Inventory';
 export interface CashReturnReview {
   refundMethod: 'cash'|'mobile'|'card'|'credit';
   stillOwedMinor: number;
+  refundableTenderMinor: number;
   storeMode?: boolean;
   receivingStores?: Array<{id:string;name:string}>;
   sale: Sale;

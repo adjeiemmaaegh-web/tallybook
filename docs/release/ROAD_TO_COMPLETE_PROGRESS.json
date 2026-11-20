@@ -591,7 +591,8 @@
       "changes": [
         "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created.",
         "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r.",
-        "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments."
+        "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments.",
+        "2026-11-20: return that would refund customer repayments beyond the original payment is now refused in the review quote AND before posting, with a clear message (found by the randomized conservation suite)."
       ],
       "tests": [
         {
@@ -617,6 +618,12 @@
           "result": "pass",
           "scope": "Local: 1926 client + 1211 native tests, tsc clean. Not yet CI-verified.",
           "evidence": "local execution 2026-11-19"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -811,12 +818,15 @@
       "files": [
         "client/src/features/sales/sales.ts",
         "client/src/features/credit/credit.ts",
-        "client/src/features/reports/financialIntelligence.ts"
+        "client/src/features/reports/financialIntelligence.ts",
+        "client/src/features/reliability/ledgerConservation.property.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing local authoritative writers and report projections; no replacement ledger."
       ],
-      "changes": [],
+      "changes": [
+        "2026-11-20: added seeded randomized conservation suite (8 seeds) across cash/card/credit/part-paid sales, linked repayments, credit-note and tender returns; independent oracle for revenue, collections, receivables, per-customer debt, stock and movement ledger equals app reports, integrity audit is clear, and full backup restores table-for-table identical."
+      ],
       "tests": [
         {
           "command": "vitest run financialJourney.integration.test.ts",
@@ -828,6 +838,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -952,14 +968,16 @@
       "files": [
         "client/src/features/reports/financialIntelligence.ts",
         "client/src/features/reports/financialIntelligence.test.ts",
-        "client/src/features/reports/financialJourney.integration.test.ts"
+        "client/src/features/reports/financialJourney.integration.test.ts",
+        "client/src/features/reliability/ledgerConservation.property.test.ts"
       ],
       "existingCapabilityReused": [
         "Canonical report summaries and existing persisted accounting services."
       ],
       "changes": [
         "Preserve signed numeric CSV cells; continue neutralizing formula-like textual cells.",
-        "Added an independent real-service conservation journey covering purchase, payable recognition/settlement, prepaid deposit/refund, cash/credit/wallet checkout, repayment, partial return, expense and receipt-write failure."
+        "Added an independent real-service conservation journey covering purchase, payable recognition/settlement, prepaid deposit/refund, cash/credit/wallet checkout, repayment, partial return, expense and receipt-write failure.",
+        "2026-11-20: same randomized suite verifies report totals (revenue/collections/receivables) against raw-table oracle, including restored database."
       ],
       "tests": [
         {
@@ -977,6 +995,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -1324,7 +1348,8 @@
         "client/src/features/stores/storeTransfers.ts",
         "client/src/features/stores/storeFinancialReport.ts",
         "client/src/pages/StoresPage.tsx",
-        "client/src/features/stores/storeOperations.integration.test.ts"
+        "client/src/features/stores/storeOperations.integration.test.ts",
+        "client/src/features/reliability/ledgerConservation.property.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
@@ -1332,7 +1357,8 @@
       "changes": [
         "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
         "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
-        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost."
+        "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost.",
+        "2026-11-20: stock on-hand equals initial - sold + returned and links previous->resulting across the movement ledger under randomized operation sequences. Does NOT yet cover true parallel multi-tab writers."
       ],
       "tests": [
         {
@@ -1345,6 +1371,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -1502,12 +1534,15 @@
       "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
-        "client/src/features/backup/backup.ts"
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupTamperFuzz.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
       ],
-      "changes": [],
+      "changes": [
+        "2026-11-20: interrupted restore of a newer backup rolls back to the previously restored ledger exactly (fault proven to fire), journal cleared, retry succeeds; tampered backup rejected before any target write."
+      ],
       "tests": [
         {
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
@@ -1519,6 +1554,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -1667,12 +1708,15 @@
       "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
-        "client/src/features/backup/backup.ts"
+        "client/src/features/backup/backup.ts",
+        "client/src/features/backup/backupTamperFuzz.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
       ],
-      "changes": [],
+      "changes": [
+        "2026-11-20: 128 single-field +1 mutations across money/quantity tables: 125 rejected; only products.costPriceMinor/sellingPriceMinor/lowStockThreshold accepted (mutable catalogue data, no embedded digest; protected only by optional external SHA-256 file receipt) - pinned in test. 40 truncations all rejected; 400 seeded byte flips: 394 rejected, 36 accepted only when data identical."
+      ],
       "tests": [
         {
           "command": "vitest run deviceRegistry.integration.test.ts deviceRegistry.test.ts run7CrashStages.test.ts run8MigrationRestore.test.ts --maxWorkers=1",
@@ -1684,6 +1728,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
@@ -1825,16 +1875,25 @@
       "status": "partial",
       "files": [
         "supabase/migrations/20261111180000_shop_staff_shifts_audit.sql",
-        "client/src/features/staff/staff.ts"
+        "client/src/features/staff/staff.ts",
+        "client/src/features/staff/permissionMatrix.integration.test.ts"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
+      "changes": [
+        "2026-11-20: role x entry-point matrix (locked/cashier/supervisor/owner x 15 real mutation/report entry points) enforces declared policy at the service layer and denied calls leave tables byte-identical; mutation-checked (widening cashier in staffAuthority.mjs fails it); UI policy and service authority tables proven not to drift; per-member narrowing and mid-session demotion honoured. Local IndexedDB only; does not cover PostgreSQL RPCs."
+      ],
       "tests": [
         {
           "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm test (vitest) + native suite",
+          "result": "pass",
+          "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [

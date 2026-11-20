@@ -137,3 +137,24 @@ it('rolls back stock, FIFO, journal and debt when the final write fails', async 
   expect(await database.inventoryCostEvents.toArray()).toEqual(costs);
   expect((await getCustomerDebtSummary(customer.id, 'GHS', database)).outstandingMinor).toBe(2000);
 });
+
+it('refuses up front (quote and post) a return that would refund the customer\'s later repayments', async () => {
+  // total 2000, paid 500 cash, owed 1500; customer repays 1000 linked -> stillOwed 500.
+  const { database, product, customer, original } = await fixture({ method: 'cash', paid: '5' });
+  await recordRepayment({ customerId: customer.id, amount: '10.00', method: 'cash', currency: 'GHS', submissionKey: 'repay-cap-key-001',
+    saleAllocations: [{ saleId: original.sale.id, amountMinor: 1000 }] }, database);
+  // Return 1 (1000): 500 credit + 500 cash = exactly the original payment. Allowed.
+  const review1 = await getCashReturnReview(original.sale.id, database);
+  expect(review1.refundableTenderMinor).toBe(500);
+  expect(quoteReviewedCashReturn(review1, original.lines[0].id, 1)).toMatchObject({ debtReducedMinor: 500, refundMinor: 500 });
+  await recordConfirmedCashPartialReturn(credit(original.sale.id, original.lines[0].id, 'cap-ret-1-key-01', 500, 500, { refundMethod: 'cash' }), database);
+  // Return 2 (1000) would refund 1000 of repayments: refused in the review quote AND in posting, with no side effects.
+  const review2 = await getCashReturnReview(original.sale.id, database);
+  expect(review2.refundableTenderMinor).toBe(0);
+  expect(() => quoteReviewedCashReturn(review2, original.lines[0].id, 1)).toThrow(/refund money the customer paid through later repayments/);
+  const stock = (await database.products.get(product.id))?.stockQuantity;
+  await expect(recordConfirmedCashPartialReturn(credit(original.sale.id, original.lines[0].id, 'cap-ret-2-key-01', 0, 1000, { refundMethod: 'cash' }), database))
+    .rejects.toThrow(/refund money the customer paid through later repayments/);
+  expect((await database.products.get(product.id))?.stockQuantity).toBe(stock);
+  expect(await database.cashPartialReturns.count()).toBe(1);
+});

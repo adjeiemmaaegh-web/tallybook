@@ -169,6 +169,8 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
           ? 'This return exceeds the unpaid balance of a credit sale; refunding the customer\'s repayments is not supported here.'
           : 'A refund must go back through the original single tender; this sale was not paid by that method.');
     }
+    if (tenderMinor > sale.amountPaidMinor - prior.reduce((n, row) => n + row.refundedMinor, 0))
+      throw new Error('This return would refund money the customer paid through later repayments, beyond the original payment; refunding repayments is not supported here. Reconcile with the owner.');
     if (tenderMinor > 0 && sale.amountPaidMinor === 0) throw new Error('This sale has no paid tender to refund.');
     // Single-tender evidence only; wallet, loyalty and split tenders remain blocked.
     if (!/^[A-Z]{3}$/.test(sale.currency ?? '') || sale.walletAppliedMinor ||
