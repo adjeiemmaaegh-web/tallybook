@@ -1,0 +1,35 @@
+# ST24-05 — Local-ledger encryption: key and recovery decision
+
+**Date:** 20 November 2026. **Status:** SOURCE FOUNDATION ONLY / NO-GO for active-ledger encryption or production. Branch: development/st24-05-local-ledger-keyring-20261120. Base: main at c2792d17. All existing customer data and environments remain unchanged.
+
+## Decision: key custody and recovery
+
+- Each local workspace + business ledger has an independent random 256-bit data-encryption key (DEK).
+- The ledger DEK is wrapped twice using AES-256-GCM with authenticated workspace/business scope and distinct random 96-bit IVs.
+- **Owner passphrase:** minimum 12 characters; recommend five or more randomly selected words. A distinct 128-bit salt and fixed PBKDF2-HMAC-SHA-256 (310,000 iterations) derive a nonextractable AES-GCM wrapping key. Authentication uses the GCM tag. The passphrase is never stored. A weak chosen passphrase is vulnerable to offline guessing if an attacker steals the keyring.
+- **Recovery code:** a generated 256-bit random, printable 43-character base64url code shown once. Derive its wrapping key with HKDF-SHA-256 and a distinct random salt and domain info. The code is NOT stored; only its AES-GCM wrapped DEK is stored. Store the code off-device (ideally print or in a trusted password manager), separately from the device. Never send it to a server or analytics.
+- **At runtime:** raw DEK is imported into a nonextractable WebCrypto key and held through a revocable, in-memory per-tab handle. The input byte array is overwritten best-effort, but JavaScript cannot guarantee wiping every heap copy; compromised scripts and an unlocked computer remain threats. The handle is explicitly revoked on lock/sign-out by the caller.
+- **Lost passphrase with intact keyring:** recovery code unwraps DEK without the old passphrase, then re-wraps it under a new passphrase. Rotate a compromised recovery code after owner reauthenticates; neither operation re-encrypts every stored record. Recovering a **lost device** also requires surviving encrypted ledger records AND the associated keyring; a recovery code alone reconstructs neither. The existing portable encrypted backup is a separate format protected by its **backup passphrase**, not by the ST24-05 recovery code.
+- **Both credentials lost:** no backdoor, no default password and no silent reset. If an independent verified backup exists, it can be restored under its own credentials and validation rules; otherwise the sealed ledger is irrecoverable.
+
+## Implemented in this branch
+
+- client/src/features/security/st24LedgerKeyring.mjs and .d.mts: WebCrypto random DEK, isolated credential wraps, strict version/salt/IV/ciphertext and KDF bounds, authenticated scope, bound record envelopes, credential rotation/reset, explicit in-memory handle revocation. No account dependency or cloud calls.
+- qa/st24-ledger-keyring.test.mjs: native tests for creation, both unlock methods, loss recovery, invalid passphrase, tampering, cross-company identity, wrong record/primary key, rotation, malicious KDF sizes, encoding bounds, lossy JSON and explicit lock. Native suites discover qa/*.test.mjs.
+- **No production app entrypoint imports this module yet.** It does not make Dexie records encrypted. It is deliberately impossible to mistake importing this helper for enabling secure storage.
+
+## Remaining blockers before ST24-05 can be called complete
+
+1. **Record schemas and indexes:** current Dexie schema v39 has plaintext sales, payments, customer identity, staff, stock and many sensitive indexed properties. Review every indexed/query field; replace exposed PII indexes with a documented minimal public metadata schema or a consciously scoped encrypted search design. Validate behavior and accept explicitly documented metadata leakage. A per-record envelope alone does not encrypt primary keys, table names, row counts or any indexes that remain clear.
+2. **Serialization:** current records may contain Date, typed arrays, undefined and other IndexedDB structured-clone values. The prototype intentionally rejects nonlossless JSON rather than silently dropping values. Inventory all tables and implement round-trip-safe codecs for every field with deterministic domain and financial validation. Data with unknown types fails closed.
+3. **Read/write integration:** do not add async WebCrypto into live IndexedDB transactions; WebCrypto promises can cause auto-commit. Stage ciphertext before a short atomic write and use optimistic version/revision CAS plus Web Locks; decrypt after read. Rework all Dexie callers, migrations, staff operations, exports, sync and assistant reads so no old plaintext path bypasses enforcement.
+4. **Migration:** on a disposable populated copy only, require a reselected and independently restore-verified encrypted backup. Freeze cooperating tabs and use an origin-wide exclusive lock. Encrypt into a **shadow** database; check counts, IDs, totals, per-table checksums and financial conservation after decrypting; journal source and target versions; atomically switch the active-storage marker only after full verification. On crash, leave original readable data intact under recovery control; never delete or overwrite it in a failed pass. Explicitly inspect old localStorage, assistant DB, caches and service-worker storage for residual plaintext. Demonstrate rollback; do not delete original plaintext until separate owner-approved evidence confirms recoverability.
+5. **Keyring durability:** store wrapped keyring metadata transactionally with version/CAS, encrypted ledgers and recovery/backup metadata; test corruption, duplicate setup, interrupted key rewrap and recovery-code rotation. A reset must not orphan active ciphertext. Test clean-device import from a verified package and every recovery path.
+6. **Real-browser concurrency:** two-tab, tab killed during write, simultaneous sale/refund/inventory, refresh, browser storage eviction/quota, offline restart, Windows Chrome/Edge, macOS Safari, mobile PWA, and actual devices. No bypass via background POS, backup restore, login/logout, staff role change, multiple businesses or account switching.
+7. **Independent security and release acceptance:** real CSP/XSS review, app permissions/tenant checks, export format compatibility, performance on low-spec Windows, full Node/pnpm/TS/browser/migration/regression CI, external backup restore and owner QA. Production databases, Vercel deployment, remote sync, payments and destructive data reset need separate approval.
+
+## Proof and limits
+
+Local Node 22 WebCrypto prototype: **7 focused test cases passed** for the equivalent local source before branch publication (including a lossless JSON guard). The GitHub branch has its own tests and must pass exact-commit GitHub Actions independently; local results are **not** a claim of CI, IndexedDB integration, migration, browser UAT, or production readiness.
+
+**Release decision:** ST24-05 OPEN. Do not auto-merge this PR merely because its isolated crypto tests pass. Data encryption is not active; current ledger remains plaintext at rest.
