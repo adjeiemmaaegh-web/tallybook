@@ -1,0 +1,28 @@
+✔ guest: public link opt-in, private API denied, server prices and no payment or stock change (4554.636485ms)
+✔ owner: convert a submitted request once; price drift rolls back, staff denied, decline is final (2607.444294ms)
+✔ rate limit: active public links cannot accept unlimited rapid submissions (2499.122139ms)
+✖ equal-total repricing cannot silently change the customer product quote at conversion (2488.449029ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12447.314097
+
+✖ failing tests:
+
+test at qa/shop-public-orders-pglite.test.mjs:150:1
+✖ equal-total repricing cannot silently change the customer product quote at conversion (2488.449029ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/f8a637cc20b7/tallybook-stage27/qa/shop-public-orders-pglite.test.mjs:157:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Prices changed/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }

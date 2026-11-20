@@ -11,6 +11,23 @@ describe("Stage 3 management reporting",()=>{
  it("rejects over-repayment instead of disguising negative receivables as zero",()=>{const sale={id:"s1",customerId:"c1",createdAt:at("2026-10-09"),totalMinor:1000,outstandingMinor:500} as FinancialInputs["sales"][number];const repayment={createdAt:at("2026-10-09"),amountMinor:600} as FinancialInputs["repayments"][number];expect(()=>summarizeFinancials({...base,sales:[sale],repayments:[repayment]},financialRange("today",new Date("2026-10-09T12:00:00")))).toThrow(/do not reconcile/);});
  it("rejects negative and unsafe monetary inputs",()=>{const bad={saleId:"s1",createdAt:at("2026-10-09"),amountMinor:-1} as FinancialInputs["payments"][number];expect(()=>summarizeFinancials({...base,sales:[{id:"s1",createdAt:at("2026-10-09"),totalMinor:0,outstandingMinor:0} as FinancialInputs["sales"][number]],payments:[bad]},financialRange("today",new Date("2026-10-09T12:00:00")))).toThrow(/invalid monetary/);const huge={saleId:"s1",createdAt:at("2026-10-09"),amountMinor:Number.MAX_SAFE_INTEGER+1} as FinancialInputs["payments"][number];expect(()=>summarizeFinancials({...base,sales:[{id:"s1",createdAt:at("2026-10-09"),totalMinor:0,outstandingMinor:0} as FinancialInputs["sales"][number]],payments:[huge]},financialRange("today",new Date("2026-10-09T12:00:00")))).toThrow(/safe integer/);});
  it("exports a labeled CSV without formula injection",()=>{const s=summarizeFinancials(base,financialRange("today",new Date("2026-10-09T12:00:00")));expect(financialCsv(s)).toContain("Not a statutory profit");});
+ it("keeps a negative cash result numeric when a spreadsheet imports the CSV",()=>{
+   const expense={id:'export-rent',expenseDate:'2026-10-09',createdAt:at('2026-10-09'),amountMinor:4000,category:'rent'} as FinancialInputs['expenses'][number];
+   const summary=summarizeFinancials({...base,expenses:[expense]},financialRange('today',new Date(at('2026-10-09'))));
+   const csv=financialCsv(summary);
+   const row=csv.split('\r\n').find(row=>row.startsWith('"Collections minus recorded expenses'))!;
+   const importedAmount=Number(row.slice(row.lastIndexOf(',')+1).replace(/^"|"$/g,''));
+   expect(importedAmount).toBe(-4000);
+   expect(importedAmount).toBe(summary.collectionsMinor-summary.expensesMinor);
+ });
+ it("still neutralizes formula-like text, even when financial values are negative",()=>{
+   for(const label of ['=SUM(1,1)','+1+1','@SUM(A1:A2)','-1+1','  =1+1','\t=1+1']){
+     const summary=summarizeFinancials(base,financialRange('today',new Date(at('2026-10-09'))));
+     summary.range.label=label;
+     const firstRow=financialCsv(summary).split('\r\n')[0];
+     expect(firstRow).toBe(`"Tallybook management report","'${label}"`);
+   }
+ });
  it("rejects orphaned payments, including those outside the selected period",()=>{
    const payment={saleId:"missing",createdAt:at("2026-01-01"),amountMinor:100} as FinancialInputs["payments"][number];
    expect(()=>summarizeFinancials({...base,payments:[payment]},financialRange("today",new Date("2026-10-09T12:00:00")))).toThrow(/orphaned sale payment/);

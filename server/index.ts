@@ -1,4 +1,5 @@
 import express from "express";
+import {createApiRateLimit} from "./apiRateLimit.mjs";
 import { verifySyncCapability, checkSyncRequestScope } from "./syncAuth.mjs";
 import { authorizeSyncInspect, disabledSyncIdentityDirectory } from "./syncMembership.mjs";
 import { verifySyncSession, authorizeActiveSyncSession, disabledSyncSessionStore } from "./syncSession.mjs";
@@ -42,6 +43,9 @@ async function startServer() {
     next();
   });
 
+
+  // Enforce before every API parser, identity lookup and file-backed operation.
+  app.use("/api",createApiRateLimit());
 
   // The HTTP surface is present for development but stays fail-closed. A
   // separately reviewed server-only coordinator and isolated test DB must be
@@ -350,4 +354,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(() => {
+  // A misconfigured server is not a healthy zero-exit process.
+  // Do not print server-only configuration values or credential-bearing errors.
+  console.error("Server startup failed. Validate the configured transport and TLS files.");
+  process.exitCode = 1;
+});

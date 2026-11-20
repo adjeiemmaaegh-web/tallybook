@@ -1,5 +1,9 @@
 # Rolling migrations back
 
+**17 November development branch:** `20261117052213_business_type_active_session.sql` is a new, isolated-test-verified authorization repair and is **not applied to production**. It preserves the public invoker API while checking the canonical active-session proof before owner classification writes. The rollback script intentionally refuses to restore the revoked-session bypass; use a reviewed forward corrective migration. Hosted migration history was read-only checked at 37 entries; the development source now has 39 (both new development migrations remain unapplied). All earlier dated hosted status below remains historical.
+
+**Stage 27 development increment:** `20261117060608_guest_order_price_snapshots.sql` adds a restricted trigger to capture server unit-price/currency evidence for new guest requests and compare every line against canonical converted orders. It repairs equal-total repricing bypasses without adding a parallel order engine or rewriting legacy records. Legacy unconverted requests without price provenance require a fresh customer quote; exact submission replay and previously converted request replay remain intact. Its down script intentionally refuses to remove protection. New quotes still do not reserve stock, take payment or imply checkout acceptance. This migration is **not applied to production**. The historical rollback drill excludes the guest base table and its dependent trigger together; full-chain guest tests independently cover upgrade, unchanged historical records, failed conversion rollback, replay and forward-only safety.
+
 Each migration from `20261106120000` onward has a matching `*_down.sql` here.
 
 **Order matters: run rollbacks newest first.** Each one restores the state its migration found, so they only fit together in reverse order:
