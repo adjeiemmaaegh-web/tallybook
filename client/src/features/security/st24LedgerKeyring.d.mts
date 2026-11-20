@@ -37,6 +37,7 @@ export function resetLedgerPassphraseWithRecovery(
 export function replaceLedgerRecoveryCode(
   keyring:LedgerKeyringV1,currentPassphrase:string
 ):Promise<{keyring:LedgerKeyringV1;recoveryCode:string}>;
+export function lockLedgerHandle(handle:UnlockedLedgerHandle):void;
 export function sealLedgerRecord(
   handle:UnlockedLedgerHandle,table:string,primaryKey:string,record:Record<string,unknown>
 ):Promise<SealedLedgerRecordV1>;
