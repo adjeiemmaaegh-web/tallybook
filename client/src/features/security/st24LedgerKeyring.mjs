@@ -194,8 +194,9 @@ export const changeLedgerPassphrase=(keyring,currentPassphrase,newPassphrase)=>
 export const resetLedgerPassphraseWithRecovery=(keyring,recoveryCode,newPassphrase)=>
   rewrapPassphrase(keyring,recoveryCode,'recovery',newPassphrase);
 
-/** Compromised recovery credential can be rotated after an owner proves the
- * current passphrase; old codes no longer unlock the returned keyring. */
+/** Replace the recovery credential in the CURRENT keyring after passphrase proof.
+ * WARNING: archived copies of an old keyring remain unlockable by old codes;
+ * compromise needs DEK rotation and re-encryption of all records. */
 export async function replaceLedgerRecoveryCode(keyring,currentPassphrase) {
   const scope=parseKeyring(keyring);
   const old=keyring.passphrase;
