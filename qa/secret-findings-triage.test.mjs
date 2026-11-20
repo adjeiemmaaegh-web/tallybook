@@ -30,3 +30,14 @@ test('private keys and arbitrary credentials never inherit a nonsecret classific
  }
  assert.equal(classifyFinding({...row,Secret:'x'.repeat(64)}),'unclassified');
 });
+
+test('the backup tamper fixture is a reviewed fixture: exact submissionKey literal required, nothing else inherits it',()=>{
+ const file='client/src/features/backup/backupTamperFuzz.test.ts';
+ const secretId='tamper-cash-key01';
+ const hit={...row,File:file,Secret:secretId,Match:"submissionKey: '"+secretId+"'"};
+ assert.equal(verifyFinding(hit,{sourceFiles:["await sale({ submissionKey: '"+secretId+"' });"]}),'verified-nonauthentication-submission-id');
+ assert.equal(verifyFinding(hit,{sourceFiles:[]}),'unclassified');                                   // literal must exist in that commit's source
+ assert.equal(verifyFinding({...hit,Match:"apiKey: '"+secretId+"'"},{sourceFiles:["apiKey: '"+secretId+"'"]}),'unclassified'); // not a credential field
+ assert.equal(verifyFinding({...hit,File:'client/src/features/backup/backup.ts'},{sourceFiles:["submissionKey: '"+secretId+"'"]}),'unclassified'); // production code is never allowlisted
+ assert.equal(verifyFinding({...hit,RuleID:'private-key'},{sourceFiles:["submissionKey: '"+secretId+"'"]}),'unclassified');
+});

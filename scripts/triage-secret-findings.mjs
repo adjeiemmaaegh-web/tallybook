@@ -13,7 +13,9 @@ const fixtureFiles=new Set([
 'client/src/features/customers/customers.test.ts','client/src/features/purchases/tests/run12SupplierPayables.test.mjs',
 'client/src/features/reports/run12SupplierTaxIntegration.test.ts','client/src/features/reports/run10FinancialConservation.test.ts',
 'client/src/features/credit/credit.test.ts','client/src/features/customers/walletTransfers.test.ts',
-'client/src/features/reliability/integrity.test.ts','client/src/features/purchases/purchases.test.ts'
+'client/src/features/reliability/integrity.test.ts','client/src/features/purchases/purchases.test.ts',
+// Added 2026-11-20 (reviewed): synthetic idempotency keys such as submissionKey:'tamper-cash-key01' in a backup tamper test.
+'client/src/features/backup/backupTamperFuzz.test.ts'
 ]);
 export function classifyFinding(row){
  if(row?.RuleID!=='generic-api-key'||typeof row.Secret!=='string'||typeof row.Match!=='string')return 'unclassified';
