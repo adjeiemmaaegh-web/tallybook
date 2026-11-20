@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 if (!globalThis.crypto) globalThis.crypto=webcrypto;
 import {createLedgerKeyring,unlockLedgerWithPassphrase,unlockLedgerWithRecoveryCode,
-  sealLedgerRecord,openLedgerRecord,changeLedgerPassphrase,resetLedgerPassphraseWithRecovery,replaceLedgerRecoveryCode}
+  sealLedgerRecord,openLedgerRecord,lockLedgerHandle,changeLedgerPassphrase,resetLedgerPassphraseWithRecovery,replaceLedgerRecoveryCode}
   from '../client/src/features/security/st24LedgerKeyring.mjs';
 
 const args={workspaceId:'owner:1',companyId:'company-a',ownerPassphrase:'correct horse battery horse 123'};
