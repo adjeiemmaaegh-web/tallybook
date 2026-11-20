@@ -79,3 +79,43 @@ test('ST24-05 encrypted shadow survives browser reload and exposes no customer p
  },{id:initial.id,text:initial.text});
  expect(restored).toEqual({verified:true,exact:true});
 });
+
+
+test('ST24-05 two-tab exclusive recovery lock denies concurrent shadow staging',async({browser})=>{
+ const context=await browser.newContext();
+ const first=await context.newPage(),second=await context.newPage();
+ try{
+  await first.goto('/',{waitUntil:'domcontentloaded'});
+  await second.goto('/',{waitUntil:'domcontentloaded'});
+  const locksSupported=await first.evaluate(()=>Boolean(navigator.locks?.request));
+  if(!locksSupported){
+   const blocked=await second.evaluate(async()=>{
+    const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
+    const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
+    const ownerPassphrase='unavailable locks fixture passphrase';
+    const {keyring,handle}=await keys.createLedgerKeyring({workspaceId:'lock-fixture',companyId:'test-company',ownerPassphrase});
+    try{await shadow.stageSt24ShadowSnapshot({keyring,handle,ownerPassphrase,verifiedBackupJson:'{"x":1}'});return false;}catch(e){return /Web Locks support/.test(String(e));}
+   });
+   expect(blocked).toBe(true);
+   return;
+  }
+  await first.evaluate(()=>{
+   window.__held=false;
+   void navigator.locks.request('tallybook-v19:retail-assistant-recovery',{mode:'exclusive'},async()=>{
+    window.__held=true;
+    await new Promise(resolve=>{window.__releaseLock=resolve;});
+   });
+  });
+  await expect.poll(()=>first.evaluate(()=>Boolean(window.__held)),{timeout:30000}).toBe(true);
+  const denied=await second.evaluate(async()=>{
+   const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
+   const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
+   const ownerPassphrase='concurrent staging fixture passphrase';
+   const {keyring,handle}=await keys.createLedgerKeyring({workspaceId:'lock-fixture',companyId:'test-company',ownerPassphrase});
+   try{await shadow.stageSt24ShadowSnapshot({keyring,handle,ownerPassphrase,verifiedBackupJson:'{"x":1}'});return false;}
+   catch(e){return /Another tab is editing/.test(String(e));}
+  });
+  expect(denied).toBe(true);
+  await first.evaluate(()=>window.__releaseLock());
+ }finally{await context.close();}
+});
