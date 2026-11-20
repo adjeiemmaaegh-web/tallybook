@@ -1349,7 +1349,8 @@
         "client/src/features/stores/storeFinancialReport.ts",
         "client/src/pages/StoresPage.tsx",
         "client/src/features/stores/storeOperations.integration.test.ts",
-        "client/src/features/reliability/ledgerConservation.property.test.ts"
+        "client/src/features/reliability/ledgerConservation.property.test.ts",
+        "client/src/features/reliability/multiTabConcurrency.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing store journals, dispatch/receipt services, FIFO authority and original sale/return evidence."
@@ -1358,7 +1359,8 @@
         "Integrated owner-reviewed opening allocation, local dispatch/full receipt/undelivered return and reconciled store sales reporting.",
         "Preserved stronger receiving-store checks and accessible confirmations; posting requires actual saved dispatch evidence in the active atomic transaction.",
         "Block expiry-tracked store receipts/sales until location-specific batch evidence exists; never infer historical store or cost.",
-        "2026-11-20: stock on-hand equals initial - sold + returned and links previous->resulting across the movement ledger under randomized operation sequences. Does NOT yet cover true parallel multi-tab writers."
+        "2026-11-20: stock on-hand equals initial - sold + returned and links previous->resulting across the movement ledger under randomized operation sequences. Does NOT yet cover true parallel multi-tab writers.",
+        "2026-11-20: two connections to one IndexedDB database (tab stand-ins): 8 simultaneous sales for 3 units -> exactly 3 succeed, stock 0, movement ledger -3, integrity clear; same submission key from both connections posts once; 10 concurrent stock adjustments all reflected exactly once. Real browser tabs/Web Locks are NOT modelled (test shim), so real multi-tab acceptance remains open."
       ],
       "tests": [
         {
@@ -1376,6 +1378,12 @@
           "command": "pnpm test (vitest) + native suite",
           "result": "pass",
           "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
+          "evidence": "local execution 2026-11-20"
+        },
+        {
+          "command": "vitest multiTabConcurrency.test.ts",
+          "result": "pass",
+          "scope": "Local fake-indexeddb only; not CI, not real browsers.",
           "evidence": "local execution 2026-11-20"
         }
       ],
@@ -1666,14 +1674,16 @@
       "files": [
         "client/src/features/sync/deviceRegistry.ts",
         "client/src/features/sync/deviceRegistry.integration.test.ts",
-        "client/src/test/syncBoundaryFixture.ts"
+        "client/src/test/syncBoundaryFixture.ts",
+        "client/src/features/reliability/multiTabConcurrency.test.ts"
       ],
       "existingCapabilityReused": [
         "Existing Dexie history, cross-database restore journal, encrypted backup envelopes and coordinated retail write locks."
       ],
       "changes": [
         "Registration/revocation now use the canonical recovery lock and in-transaction journal barrier.",
-        "Revalidate original staff/company identity after asynchronous reads; blocked attempts leave registry unchanged."
+        "Revalidate original staff/company identity after asynchronous reads; blocked attempts leave registry unchanged.",
+        "2026-11-20: two connections to one IndexedDB database (tab stand-ins): 8 simultaneous sales for 3 units -> exactly 3 succeed, stock 0, movement ledger -3, integrity clear; same submission key from both connections posts once; 10 concurrent stock adjustments all reflected exactly once. Real browser tabs/Web Locks are NOT modelled (test shim), so real multi-tab acceptance remains open."
       ],
       "tests": [
         {
@@ -1686,6 +1696,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "vitest multiTabConcurrency.test.ts",
+          "result": "pass",
+          "scope": "Local fake-indexeddb only; not CI, not real browsers.",
+          "evidence": "local execution 2026-11-20"
         }
       ],
       "blockers": [
