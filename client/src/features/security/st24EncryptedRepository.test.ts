@@ -1,11 +1,11 @@
 import {describe,it,expect} from 'vitest';
 import 'fake-indexeddb/auto';
-import {createLedgerKeyring,lockLedgerHandle} from './st24LedgerKeyring.mjs';
+import {createLedgerKeyring,unlockLedgerWithRecoveryCode,lockLedgerHandle} from './st24LedgerKeyring.mjs';
 import {createSt24EncryptedFixture,writeSt24EncryptedFixture,readSt24EncryptedFixture} from './st24EncryptedRepository.mjs';
 
 describe('ST24 encrypted disposable fixture repository',()=>{
  it('seals rows, rejects stale revisions, and never creates a production database',async()=>{
-  const {keyring,handle}=await createLedgerKeyring({workspaceId:'test-owner',companyId:'shop-a',ownerPassphrase:'test passphrase that is long enough'});
+  const {keyring,handle,recoveryCode}=await createLedgerKeyring({workspaceId:'test-owner',companyId:'shop-a',ownerPassphrase:'test passphrase that is long enough'});
   const dbName='tallybook-st24-encrypted-fixture-'+crypto.randomUUID().replaceAll('-','');
   const repo=await createSt24EncryptedFixture({dbName,keyring,handle});
   const id='opaque_1234567890123456';
@@ -20,5 +20,11 @@ describe('ST24 encrypted disposable fixture repository',()=>{
   await expect(createSt24EncryptedFixture({dbName:'tallybook-db',keyring,handle})).rejects.toThrow(/production database/);
   lockLedgerHandle(handle);
   await expect(readSt24EncryptedFixture(repo,{table:'sales',id})).rejects.toThrow(/locked/);
+  const recoveredHandle=await unlockLedgerWithRecoveryCode(keyring,recoveryCode);
+  const recovered={...repo,handle:recoveredHandle};
+  expect(await readSt24EncryptedFixture(recovered,{table:'sales',id})).toEqual({revision:2,record:{amountMinor:1235}});
+  await expect(readSt24EncryptedFixture(recovered,{table:'customers',id})).resolves.toBeNull();
+  await expect(writeSt24EncryptedFixture(recovered,{table:'sales',id,record:{amountMinor:8},expectedRevision:1})).rejects.toThrow(/revision conflict/);
+  lockLedgerHandle(recoveredHandle);
  });
 });
