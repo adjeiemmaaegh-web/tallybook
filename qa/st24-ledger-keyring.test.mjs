@@ -69,3 +69,20 @@ test('ST24-05 recovery resets a lost passphrase and rotates a compromised recove
  await assert.rejects(unlockLedgerWithRecoveryCode(changed.keyring,recoveryCode),/Incorrect credential/);
  assert.deepEqual(await openLedgerRecord(await unlockLedgerWithRecoveryCode(changed.keyring,changed.recoveryCode),'payments','p7',sealed),{amount:77});
 });
+
+test('ST24-05 rejects lossy or non-plain IndexedDB values until explicit serializers exist',async()=>{
+ const {handle}=await createLedgerKeyring(args);
+ const bad=[
+  {date:new Date('2026-11-20T00:00:00Z')},
+  {amount:NaN},
+  {value:Infinity},
+  {optional:undefined},
+  {bytes:Uint8Array.from([1,2,3])},
+  {notPortable:new Map([['x',1]])},
+  {row:[1,,3]},
+  {unsafe:JSON.parse('{"__proto__":{"admin":true}}')},
+ ];
+ const cyclic={id:'cyclic'};cyclic.self=cyclic;bad.push(cyclic);
+ for(const record of bad)
+  await assert.rejects(sealLedgerRecord(handle,'sales','source-row',record),/JSON|ledger|Unsupported|Non-/);
+});
