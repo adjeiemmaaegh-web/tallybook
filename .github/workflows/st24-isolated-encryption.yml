@@ -47,6 +47,6 @@ jobs:
       - name: ST24 isolated Node regression
         run: node --experimental-strip-types --test qa/st24-*.test.mjs
       - name: ST24 genuine v39 Dexie integration (fake IndexedDB harness)
-        run: pnpm exec vitest run client/src/features/security/st24DisposableMigration.test.ts --maxWorkers=1 --testTimeout=120000 --hookTimeout=120000
+        run: pnpm exec vitest run client/src/features/security/st24DisposableMigration.test.ts client/src/features/security/st24EncryptedRepository.test.ts --maxWorkers=1 --testTimeout=120000 --hookTimeout=120000
       - name: Static TypeScript validation
         run: pnpm check
