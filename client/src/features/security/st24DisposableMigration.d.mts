@@ -1,6 +1,6 @@
 import type {LedgerKeyringV1,UnlockedLedgerHandle} from './st24LedgerKeyring.mjs';
 export interface St24DisposableMoneySummary {
-  tables:Record<string,number>;
+  tableCounts:Record<string,number>;
   rows:number;
   minorTotals:Record<string,string>;
 }
@@ -12,7 +12,7 @@ export function stageSt24PopulatedDisposableLedger(args:{
   ownerPassphrase:string;
   idb?:IDBFactory;
   locks?:LockManager|null;
-}):Promise<Readonly<St24DisposableMoneySummary & {snapshotId:string;sourceSha256:string;sourceVersion:number;tables:number}>>;
+}):Promise<Readonly<St24DisposableMoneySummary & {snapshotId:string;sourceSha256:string;sourceVersion:number;tableCount:number}>>;
 export function restoreSt24ShadowToDisposableLedger(args:{
   snapshotId:string;targetDbName:string;companyId:string;handle:UnlockedLedgerHandle;
   expectedSourceSha256:string;idb?:IDBFactory;
