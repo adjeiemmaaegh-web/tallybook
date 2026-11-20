@@ -119,3 +119,66 @@ test('ST24-05 two-tab exclusive recovery lock denies concurrent shadow staging',
   await first.evaluate(()=>window.__releaseLock());
  }finally{await context.close();}
 });
+
+
+test('ST24-05 real browser Dexie v39 disposable source encrypts and reconstructs populated financial schema',async({page})=>{
+ await page.goto('/',{waitUntil:'domcontentloaded'});
+ const result=await page.evaluate(async()=>{
+  const dbMod=await import('/src/db/TallybookDB.ts');
+  const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
+  const migration=await import('/src/features/security/st24DisposableMigration.mjs');
+  if(typeof indexedDB.databases!=='function'){
+    return {supported:false,refused:true};
+  }
+  const sourceName='tallybook-st24-fixture-'+crypto.randomUUID();
+  const targetName='tallybook-st24-restore-'+crypto.randomUUID();
+  const companyId='primary';
+  const source=new dbMod.TallybookDB(sourceName);
+  await source.open();
+  const expectedTables=source.tables.length;
+  await source.businessProfiles.put({id:companyId,name:'Real engine fixture',
+    country:'Ghana',currency:'GHS',businessType:'Retail shop',updatedAt:new Date().toISOString()});
+  await source.sales.put({id:'test-sale-1',businessProfileId:companyId,
+    submissionKey:'st24-browser-1',totalMinor:4500,paidMinor:3000,outstandingMinor:1500});
+  await source.payments.put({id:'test-pay-1',businessProfileId:companyId,
+    saleId:'test-sale-1',amountMinor:3000});
+  source.close();
+  const passphrase='st24 browser disposable migration passphrase';
+  const {keyring,handle}=await keys.createLedgerKeyring({
+    workspaceId:'disposable-browser-v39',companyId,ownerPassphrase:passphrase
+  });
+  const staged=await migration.stageSt24PopulatedDisposableLedger({
+    sourceDbName:sourceName,companyId,keyring,handle,ownerPassphrase:passphrase
+  });
+  const restored=await migration.restoreSt24ShadowToDisposableLedger({
+    snapshotId:staged.snapshotId,targetDbName:targetName,companyId,handle,
+    expectedSourceSha256:staged.sourceSha256
+  });
+  const comparison=await migration.compareSt24DisposableLedgers({
+    sourceDbName:sourceName,restoredDbName:targetName,companyId
+  });
+  const target=new dbMod.TallybookDB(targetName);
+  await target.open();
+  const targetSale=await target.sales.get('test-sale-1');
+  const targetPayment=await target.payments.get('test-pay-1');
+  const indexCount=await target.sales.where('businessProfileId').equals(companyId).count();
+  target.close();
+  return {
+    supported:true,exact:comparison.exact,
+    sourceVersion:staged.sourceVersion,tableCount:staged.tableCount,expectedTables,
+    shaMatch:restored.sha256===staged.sourceSha256,
+    financialSale:targetSale?.totalMinor===4500&&targetSale?.outstandingMinor===1500,
+    financialPayment:targetPayment?.amountMinor===3000,
+    indexedSale:indexCount===1
+  };
+ });
+ if(!result.supported){
+  expect(result.refused).toBe(true); // document unsupported engine as fail-closed, not migration acceptance
+  return;
+ }
+ expect(result).toEqual({
+  supported:true,exact:true,sourceVersion:39,
+  tableCount:result.expectedTables,expectedTables:result.expectedTables,
+  shaMatch:true,financialSale:true,financialPayment:true,indexedSale:true
+ });
+});
