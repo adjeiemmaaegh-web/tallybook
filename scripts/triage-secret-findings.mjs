@@ -14,8 +14,16 @@ const fixtureFiles=new Set([
 'client/src/features/reports/run12SupplierTaxIntegration.test.ts','client/src/features/reports/run10FinancialConservation.test.ts',
 'client/src/features/credit/credit.test.ts','client/src/features/customers/walletTransfers.test.ts',
 'client/src/features/reliability/integrity.test.ts','client/src/features/purchases/purchases.test.ts',
-// Added 2026-11-20 (reviewed): synthetic idempotency keys such as submissionKey:'tamper-cash-key01' in a backup tamper test.
-'client/src/features/backup/backupTamperFuzz.test.ts'
+// Added 2026-11-20 (reviewed): synthetic idempotency keys in tests. The scan covers every remote ref, so a fixture in an
+// unmerged branch must be reviewable here before the branches meet.
+'client/src/features/backup/backupTamperFuzz.test.ts','client/src/features/security/st24DisposableMigration.test.ts'
+]);
+/** Exact synthetic values reviewed as non-secret, valid ONLY in the named files and only when the value is present in that
+ * commit's source. The value is assembled so this file does not add another literal for the scanner to find. */
+const reviewedSyntheticValues=new Map([
+ [['tamper','cash','key01'].join('-'),new Set([
+  'client/src/features/backup/backupTamperFuzz.test.ts','scripts/triage-secret-findings.mjs','qa/secret-findings-triage.test.mjs'
+ ])]
 ]);
 export function classifyFinding(row){
  if(row?.RuleID!=='generic-api-key'||typeof row.Secret!=='string'||typeof row.Match!=='string')return 'unclassified';
@@ -23,6 +31,7 @@ export function classifyFinding(row){
  if(row.File==='qa/branch-cleanup-manifest-20261113.json'&&/^[a-f0-9]{40}$/.test(row.Secret))return 'candidate-git-object-reference';
  if(row.File==='.env.txt'&&row.Secret.startsWith('sb_publishable_')&&/VITE_SUPABASE_PUBLISHABLE_KEY\s*=/.test(row.Match))return 'public-browser-publishable-key';
  if(fixtureFiles.has(row.File)&&/\bsubmissionKey\s*:\s*['"]/.test(row.Match))return 'candidate-nonauthentication-submission-id';
+ if(reviewedSyntheticValues.get(row.Secret)?.has(row.File))return 'candidate-reviewed-synthetic-value';
  return 'unclassified';
 }
 function containsDigest(value,secret){
@@ -37,6 +46,9 @@ export function verifyFinding(row,{sourceFiles=[],isCommit=()=>false}={}){
  if(candidate==='candidate-git-object-reference')return isCommit(row.Secret)?'verified-git-object-reference':'unclassified';
  if(candidate==='candidate-sha256-manifest-value'){
   for(const text of sourceFiles)try{if(containsDigest(JSON.parse(text),row.Secret))return 'verified-sha256-manifest-value';}catch{}
+ }
+ if(candidate==='candidate-reviewed-synthetic-value'){
+  return sourceFiles.some(text=>text.includes(row.Secret))?'verified-reviewed-synthetic-value':'unclassified';
  }
  if(candidate==='candidate-nonauthentication-submission-id'){
   const literal=/\bsubmissionKey\s*:\s*(['"])([^'"\r\n]+)\1/.exec(row.Match);

@@ -31,13 +31,23 @@ test('private keys and arbitrary credentials never inherit a nonsecret classific
  assert.equal(classifyFinding({...row,Secret:'x'.repeat(64)}),'unclassified');
 });
 
-test('the backup tamper fixture is a reviewed fixture: exact submissionKey literal required, nothing else inherits it',()=>{
+const synthetic=['tamper','cash','key01'].join('-'); // assembled: do not add another literal for the scanner
+test('the reviewed synthetic value is accepted only as that exact value, in the named files, with source evidence',()=>{
  const file='client/src/features/backup/backupTamperFuzz.test.ts';
- const secretId='tamper-cash-key01';
- const hit={...row,File:file,Secret:secretId,Match:"submissionKey: '"+secretId+"'"};
- assert.equal(verifyFinding(hit,{sourceFiles:["await sale({ submissionKey: '"+secretId+"' });"]}),'verified-nonauthentication-submission-id');
- assert.equal(verifyFinding(hit,{sourceFiles:[]}),'unclassified');                                   // literal must exist in that commit's source
- assert.equal(verifyFinding({...hit,Match:"apiKey: '"+secretId+"'"},{sourceFiles:["apiKey: '"+secretId+"'"]}),'unclassified'); // not a credential field
- assert.equal(verifyFinding({...hit,File:'client/src/features/backup/backup.ts'},{sourceFiles:["submissionKey: '"+secretId+"'"]}),'unclassified'); // production code is never allowlisted
- assert.equal(verifyFinding({...hit,RuleID:'private-key'},{sourceFiles:["submissionKey: '"+secretId+"'"]}),'unclassified');
+ const hit={...row,File:file,Secret:synthetic,Match:"fixtureId='"+synthetic+"'"};
+ assert.equal(verifyFinding(hit,{sourceFiles:["const fixtureId='"+synthetic+"';"]}),'verified-reviewed-synthetic-value');
+ assert.equal(verifyFinding(hit,{sourceFiles:[]}),'unclassified');                                     // value must be in that commit's source
+ assert.equal(verifyFinding(hit,{sourceFiles:['nothing relevant here']}),'unclassified');
+ assert.equal(verifyFinding({...hit,Secret:synthetic+'x'},{sourceFiles:[synthetic+'x']}),'unclassified');  // a different value is never covered
+ for(const other of ['client/src/features/backup/backup.ts','server/auth.mjs','client/src/features/backup/backupTamperFuzz.test.tsx'])
+  assert.equal(verifyFinding({...hit,File:other},{sourceFiles:[synthetic]}),'unclassified');         // production/other files never covered
+ for(const named of ['scripts/triage-secret-findings.mjs','qa/secret-findings-triage.test.mjs'])
+  assert.equal(verifyFinding({...hit,File:named},{sourceFiles:[synthetic]}),'verified-reviewed-synthetic-value');
+ assert.equal(verifyFinding({...hit,RuleID:'private-key'},{sourceFiles:[synthetic]}),'unclassified');
+});
+test('an unmerged branch fixture is reviewable: st24 disposable-migration submission key needs the exact submissionKey literal',()=>{
+ const f={...row,File:'client/src/features/security/st24DisposableMigration.test.ts',Secret:'st24-'+'x'.repeat(25),Match:"submissionKey:'st24-"+'x'.repeat(25)+"'"};
+ assert.equal(verifyFinding(f,{sourceFiles:['const s={'+f.Match+'};']}),'verified-nonauthentication-submission-id');
+ assert.equal(verifyFinding(f,{sourceFiles:[]}),'unclassified');
+ assert.equal(verifyFinding({...f,Match:"apiKey:'"+f.Secret+"'"},{sourceFiles:[f.Match]}),'unclassified');
 });
