@@ -89,7 +89,9 @@ export function reconcileFinancialPeriodDisplay({sales=[],payments=[],repayments
   for(const refund of refunds) {
     const day=key(refund.createdAt);
     const value=amount(refund.refundedMinor,'cash return');
-    post(day,'revenue',-value);
+    // Receivable credit notes reduce revenue but move no money, so they never reduce collections.
+    const creditNote=amount(refund.debtReducedMinor??0,'credit-note return');
+    post(day,'revenue',-(value+creditNote));
     post(day,'collections',-value);
   }
   for(const transfer of walletTransfers) {

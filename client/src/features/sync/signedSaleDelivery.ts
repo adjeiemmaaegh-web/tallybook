@@ -1,3 +1,4 @@
+import {readBoundedResponseText} from "@/lib/boundedResponse.mjs";
 /** Explicit, opt-in sale upload. The immutable local sale event is the durable
  * source; outbox metadata can be reconstructed after a crash or restore.
  */
@@ -7,6 +8,7 @@ import {validateCentralSaleEvent, type CentralSaleEvent} from './centralSaleEven
 import {enqueueSyncEvent, type SyncOutboxEvent} from './syncFoundation';
 import {signLocalSaleEvent} from './signedSaleEnvelope';
 import type {CentralUploadAdapter, PreparedUpload, ServerOperationReceipt} from './supabaseUploader.ts';
+import {verifyCentralReceipt} from './supabaseUploader.mjs';
 
 const ID=/^[A-Za-z0-9:_-]{1,128}$/;
 async function digest(event:CentralSaleEvent,subtle:SubtleCrypto):Promise<string> {
@@ -82,10 +84,10 @@ export function createSignedSaleUploadAdapter({database,deviceId,privateKey,endp
       if(response.status!==200||response.redirected||response.type==='opaque'||response.url!==url||
          !/^application\/json(?:\s*;|\s*$)/i.test(response.headers.get('content-type')??''))
         throw Error('Untrusted signed sale response; queue remains pending.');
-      const raw=await response.text();
-      if(raw.length>2048)throw Error('Oversized sale receipt.');
+      const raw=await readBoundedResponseText(response,2048,'sale receipt');
       let receipt:ServerOperationReceipt;
       try{receipt=JSON.parse(raw) as ServerOperationReceipt;}catch{throw Error('Invalid sale receipt.');}
+      verifyCentralReceipt(upload.event,receipt);
       return receipt;
     },
   };

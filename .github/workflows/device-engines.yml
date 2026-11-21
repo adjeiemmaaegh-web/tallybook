@@ -1,5 +1,9 @@
 name: Device browser engines
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [codex/road-to-complete-security-triage]
 permissions:
   contents: read
 jobs:
@@ -12,6 +16,10 @@ jobs:
             project: edge
           - os: macos-latest
             project: webkit
+          - os: ubuntu-24.04
+            project: firefox
+          - os: ubuntu-24.04
+            project: chrome
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     steps:
@@ -28,4 +36,24 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - if: matrix.project == 'webkit'
         run: pnpm exec playwright install webkit
-      - run: pnpm exec playwright test --config playwright.device-engines.config.mjs --project ${{ matrix.project }}
+      - if: matrix.project == 'firefox'
+        run: pnpm exec playwright install --with-deps firefox
+      - if: matrix.project == 'chrome'
+        run: pnpm exec playwright install --with-deps chrome
+      - name: Record actual engine and platform identity
+        run: node scripts/browser-engine-metadata.mjs ${{ matrix.project }}
+      - name: Exercise selected local ledger and account boundaries
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/release-v19/device-${{ matrix.project }}-results.json
+        run: pnpm exec playwright test --config playwright.device-engines.config.mjs --project ${{ matrix.project }} --reporter=line,json --output artifacts/release-v19/device-${{ matrix.project }}-output
+      - name: Retain exact-engine test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tallybook-engine-${{ matrix.project }}-${{ github.run_id }}
+          path: |
+            artifacts/release-v19/device-${{ matrix.project }}-metadata.json
+            artifacts/release-v19/device-${{ matrix.project }}-results.json
+            artifacts/release-v19/device-${{ matrix.project }}-output/**
+          retention-days: 14
+          if-no-files-found: warn

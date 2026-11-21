@@ -13,6 +13,8 @@ import { reconcileCreditLedger, inspectReceivableCurrency, assertReceivableWrite
 import { getRepaymentTargetsFromLedger, type RepaymentTargetsResult } from "@/features/credit/repaymentTargets.mjs";
 import type { PaymentMethod, Sale } from "@/features/sales/sales";
 import type { SaleReversal } from "@/features/assistant/reversals";
+import type { CashPartialSaleReturn } from "@/features/sales/cashPartialReturnPosting";
+import { creditReturnsForSales } from "@/features/credit/creditReturns";
 import {makeCentralRepaymentEvent} from '@/features/sync/centralOperationalEvent';
 
 export const repaymentMethods = ["cash", "card", "mobile"] as const;
@@ -90,20 +92,24 @@ function parseAmount(value: string, currency: string) {
   return Number(minor);
 }
 
-function debtFromRecords(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[] = []) {
-  return reconcileCreditLedger(sales, reversals, repayments);
+function debtFromRecords(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[] = [], creditReturns: CashPartialSaleReturn[] = []) {
+  return reconcileCreditLedger(sales, reversals, repayments, creditReturns);
 }
 
 export async function getCustomerDebtSummary(customerId: string, currency: string, database: TallybookDB = db): Promise<CustomerDebtSummary> {
   const activeId = getActiveBusinessProfileId();
-  const [sales, repayments, reversals] = await database.transaction("r", [database.sales, database.repayments, database.saleReversals], async () => Promise.all([
-    database.sales.where("customerId").equals(customerId).and((sale) => sale.businessProfileId === activeId).toArray(),
+  const [sales, repayments, reversals, creditReturns] = await database.transaction("r", [database.sales, database.repayments, database.saleReversals, database.cashPartialReturns], async () => {
+    const customerSales = await database.sales.where("customerId").equals(customerId).and((sale) => sale.businessProfileId === activeId).toArray();
+    return Promise.all([
+    Promise.resolve(customerSales),
     database.repayments.where("customerId").equals(customerId).and((repayment) => repayment.businessProfileId === activeId).toArray(),
     database.saleReversals.where("customerId").equals(customerId).and((reversal) => reversal.businessProfileId === activeId).toArray(),
-  ]));
+    creditReturnsForSales(database, activeId, customerSales),
+  ]);
+  });
   if (getActiveBusinessProfileId()!==activeId)
     throw new Error("Company changed while reading customer credit history.");
-  const totals = debtFromRecords(sales, repayments, reversals);
+  const totals = debtFromRecords(sales, repayments, reversals, creditReturns);
   const activities: DebtActivity[] = [
     ...sales.map((sale) => ({ id: `sale-${sale.id}`, type: "sale" as const, createdAt: sale.createdAt, saleId: sale.id, totalMinor: sale.totalMinor, amountPaidMinor: sale.amountPaidMinor, outstandingMinor: sale.outstandingMinor, receiptNumber: sale.receiptNumber })),
     ...repayments.map((repayment) => ({ id: `repayment-${repayment.id}`, type: "repayment" as const, createdAt: repayment.createdAt, repaymentId: repayment.id, amountMinor: repayment.amountMinor, method: repayment.method, note: repayment.note })),
@@ -122,7 +128,7 @@ export async function getCustomerDebtSummary(customerId: string, currency: strin
 /** Read-only, company-scoped sale choices. The write path checks again before posting. */
 export async function getCustomerRepaymentTargets(customerId: string, currency: string, database: TallybookDB = db): Promise<RepaymentTargetsResult> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("r", [database.customers, database.sales, database.repayments, database.saleReversals], async () => {
+  return database.transaction("r", [database.customers, database.sales, database.repayments, database.saleReversals, database.cashPartialReturns], async () => {
     const customer = await database.customers.get(customerId);
     if (!customer || customer.businessProfileId !== activeId || customer.archivedAt)
       throw new Error("Choose an active customer before linking a repayment to a sale.");
@@ -133,7 +139,8 @@ export async function getCustomerRepaymentTargets(customerId: string, currency: 
     ]);
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company changed while reading repayment targets.");
-    return getRepaymentTargetsFromLedger(sales, reversals, repayments, {customerId, businessProfileId: activeId, currency});
+    const creditReturns = await creditReturnsForSales(database, activeId, sales);
+    return getRepaymentTargetsFromLedger(sales, reversals, repayments, {customerId, businessProfileId: activeId, currency}, creditReturns);
   });
 }
 
@@ -144,7 +151,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
   return withCoordinatedRetailWrite(async()=>{
   const input = recordRepaymentSchema.parse(values);
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.centralOperationalEvents, database.saleReversals, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
+  return database.transaction("rw", [database.appMeta, database.customers, database.sales, database.repayments, database.centralOperationalEvents, database.saleReversals, database.cashPartialReturns, database.staffAudits, database.staffMembers, database.staffShifts], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched before recording customer repayment.");
@@ -176,7 +183,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       ]);
       if (!savedPayments.some(row => row.id === existing.id))
         throw new Error("Saved repayment retry is missing its original ledger evidence.");
-      reconcileCreditLedger(savedSales, savedReversals, savedPayments);
+      reconcileCreditLedger(savedSales, savedReversals, savedPayments, await creditReturnsForSales(database, activeId, savedSales));
       return existing;
     }
     const customer = await database.customers.get(input.customerId);
@@ -186,9 +193,10 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       database.repayments.where("customerId").equals(customer.id).and((repayment) => repayment.businessProfileId === activeId).toArray(),
       database.saleReversals.where("customerId").equals(customer.id).and((reversal) => reversal.businessProfileId === activeId).toArray(),
     ]);
+    const creditReturns = await creditReturnsForSales(database, activeId, sales);
     // No actual money can be posted against mismatched or unidentified currency.
     assertReceivableWriteCurrency(sales, repayments, input.currency);
-    const balance = debtFromRecords(sales, repayments, reversals).outstandingMinor;
+    const balance = debtFromRecords(sales, repayments, reversals, creditReturns).outstandingMinor;
     if (balance <= 0) throw new Error(`${customer.name} has no outstanding balance to repay.`);
     const amountMinor = parseAmount(input.amount, input.currency);
     if (canonicalAllocations) {
@@ -196,7 +204,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       // and target amounts inside the same transaction that records the money.
       const choices = getRepaymentTargetsFromLedger(sales, reversals, repayments, {
         customerId: customer.id, businessProfileId: activeId, currency: input.currency,
-      });
+      }, creditReturns);
       if (!choices.canLink) throw new Error(choices.reason ?? "No eligible credit sale can be linked.");
       for (const entry of canonicalAllocations) {
         const target = choices.targets.find(row => row.saleId === entry.saleId);
@@ -207,7 +215,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
       // repayment BEFORE it is written. No historical allocation is invented.
       reconcileCreditLedger(sales, reversals, [...repayments, {
         amountMinor, currency: input.currency, customerId: customer.id, businessProfileId: activeId, saleAllocations: canonicalAllocations,
-      }]);
+      }], creditReturns);
     }
     if (amountMinor > balance) throw new Error(`Repayment cannot exceed the outstanding balance of ${formatMinorAmount(balance, input.currency)}.`);
     const repayment: DebtRepayment = { id: nanoid(14), businessProfileId: activeId, customerId: customer.id, amountMinor, currency: input.currency, method: input.method, note: input.note?.trim() || undefined, submissionKey, createdAt: now, ...(canonicalAllocations ? {saleAllocations: canonicalAllocations} : {}), ...(staff ? {staffId:staff.id} : {}), ...(shift ? {shiftId:shift.id} : {}) };
@@ -216,7 +224,7 @@ export async function recordRepayment(values: RecordRepaymentInput, database: Ta
     // checked and historical customer-only payments remain unallocated.
     auditRun10CompanyReceivables({
       company:activeId,customers:[customer],sales,
-      repayments:[...repayments,repayment],reversals
+      repayments:[...repayments,repayment],reversals,creditReturns
     });
     if(getActiveBusinessProfileId()!==activeId)
       throw new Error("Company switched during customer repayment authorization.");

@@ -15,7 +15,9 @@ import { requirePermission, activeStaffShift } from '@/features/staff/staff';
 import { restorePartialInventoryCost } from '@/features/inventory/costLedger';
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
-import { reconcileCashPartialReturns } from './cashPartialReturn.mjs';
+import { reconcileCashPartialReturns, MANUAL_REFUND_TENDERS } from './cashPartialReturn.mjs';
+import { reconcileCreditLedger } from './creditLedger.mjs';
+import { stillOwedOnSale } from '@/features/credit/creditReturns';
 import { assertCashReturnStockLinks } from './cashReturnStockLinks.mjs';
 import { assertCashReturnActorUnchanged } from './cashReturnActorGuard.mjs';
 import type { InventoryMovement } from '@/features/inventory/inventory';
@@ -34,7 +36,16 @@ export interface CashPartialSaleReturn {
   createdAt: string;
   returnSequence: number;
   submissionKey: string;
-  refundMethod: 'cash';
+  /** Original single tender. Mobile/card are manual staff-confirmed evidence, never provider settlement. */
+  /** 'credit' = no money out; the return only reduced the customer's receivable on this sale. */
+  refundMethod: 'cash'|'mobile'|'card'|'credit';
+  /** Present on customer sales: the identity whose receivable was credited. */
+  customerId?: string;
+  /** Receivable credit-note portion of this return (debt is reduced BEFORE any tender refund). */
+  debtReducedMinor?: number;
+  disbursementEvidence?: 'staff_confirmed_manual_unverified';
+  /** Optional staff-typed note (e.g. MoMo transaction reference); unverified free text. */
+  manualReference?: string;
   disposition: 'restockable';
   refundedMinor: number;
   returnedTaxableMinor: number;
@@ -51,12 +62,18 @@ export async function recordConfirmedCashPartialReturn(values: {
   originalSaleId: string;
   submissionKey: string;
   lines: Array<{ saleLineId: string; quantity: number }>;
-  /** Must be affirmatively confirmed by the cashier for this exact refund. */
-  cashWasRefunded: true;
+  /** Must be affirmatively confirmed by the cashier whenever money was actually handed back. */
+  cashWasRefunded?: boolean;
+  /** Exact receivable credit the cashier reviewed (customer credit sales); default 0. */
+  confirmedDebtReductionMinor?: number;
   /** Explicit amount physically returned, in the saved sale's minor currency units. */
   confirmedRefundMinor: number;
   /** Physically inspected, accepted sellable stock. Other dispositions are not supported. */
   disposition: 'restockable';
+  /** Must equal the original sale's single tender; defaults to cash. */
+  refundMethod?: 'cash'|'mobile'|'card';
+  /** Optional manual reference for a non-cash refund; unverified. */
+  manualReference?: string;
 }, database: TallybookDB = db): Promise<CashPartialSaleReturn> {
   // Acquire the cross-tab shared lock before opening the IndexedDB write transaction.
   return withCrossTabDataLock("shared", () => recordConfirmedCashPartialReturnWhileLocked(values, database));
@@ -68,23 +85,36 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
   originalSaleId: string;
   submissionKey: string;
   lines: Array<{ saleLineId: string; quantity: number }>;
-  /** Must be affirmatively confirmed by the cashier for this exact refund. */
-  cashWasRefunded: true;
+  /** Must be affirmatively confirmed by the cashier whenever money was actually handed back. */
+  cashWasRefunded?: boolean;
+  /** Exact receivable credit the cashier reviewed (customer credit sales); default 0. */
+  confirmedDebtReductionMinor?: number;
   /** Explicit amount physically returned, in the saved sale's minor currency units. */
   confirmedRefundMinor: number;
   /** Physically inspected, accepted sellable stock. Other dispositions are not supported. */
   disposition: 'restockable';
+  /** Must equal the original sale's single tender; defaults to cash. */
+  refundMethod?: 'cash'|'mobile'|'card';
+  /** Optional manual reference for a non-cash refund; unverified. */
+  manualReference?: string;
 }, database: TallybookDB = db): Promise<CashPartialSaleReturn> {
-  if (values?.cashWasRefunded !== true || values.disposition !== 'restockable' ||
-      !Number.isSafeInteger(values.confirmedRefundMinor) || values.confirmedRefundMinor <= 0 ||
+  const confirmedDebt = values?.confirmedDebtReductionMinor ?? 0;
+  if (values.disposition !== 'restockable' ||
+      !Number.isSafeInteger(values.confirmedRefundMinor) || values.confirmedRefundMinor < 0 ||
+      !Number.isSafeInteger(confirmedDebt) || confirmedDebt < 0 ||
+      values.confirmedRefundMinor + confirmedDebt <= 0 ||
+      (values.confirmedRefundMinor > 0 && values.cashWasRefunded !== true) ||
       !values.originalSaleId ||
+      !MANUAL_REFUND_TENDERS.includes(values.refundMethod ?? 'cash') ||
+      (values.manualReference !== undefined && ((values.refundMethod ?? 'cash') === 'cash' ||
+        typeof values.manualReference !== 'string' || !values.manualReference.trim() || values.manualReference.length > 64)) ||
       !/^[A-Za-z0-9:_-]{8,80}$/.test(values.submissionKey ?? '') ||
       !Array.isArray(values.lines) || values.lines.length < 1 || values.lines.length > 256 ||
       new Set(values.lines.map(row=>row.saleLineId)).size !== values.lines.length)
     throw new Error('Confirm the actual cash refund and provide a unique return request with valid sale lines.');
   const company = getActiveBusinessProfileId();
   return database.transaction('rw', [database.appMeta, database.businessProfiles, database.staffMembers, database.staffShifts, database.staffAudits,
-    database.sales, database.saleLines, database.payments, database.receipts, database.saleReversals, database.cashPartialReturns,
+    database.sales, database.saleLines, database.payments, database.receipts, database.saleReversals, database.cashPartialReturns, database.customers, database.customerBenefits, database.repayments,
     database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.storeStockModes, database.storeStockEntries, database.storeLocations, database.storeAssignments, database.storeTransferRequests, database.commerceHolds, database.centralOperationalEvents], async () => {
     await assertRun7RetailWriteReady(database.appMeta);
     const staff = await requirePermission('refund',database,company);
@@ -114,15 +144,42 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     const full = await database.saleReversals.where('originalSaleId').equals(sale.id).toArray();
     if (sale.tax?.ghana) throw new Error("Ghana VAT partial refunds require exact per-class tax correction evidence; this cash-only refund lane is not supported.");
     const plan = planPartialSaleReturn(sale, lines, prior.flatMap(item=>item.lines.map(line=>({saleLineId:line.saleLineId,quantity:line.quantity}))), values.lines);
-    if (sale.tax && !plan.taxPolicyVerified) throw new Error('Saved tax settings must be reconciled before issuing this refund.');
-    if (values.confirmedRefundMinor !== plan.draftAmountMinor) throw new Error('Confirmed cash refund does not equal the exact saved invoice return amount.');
-    // This initial path deliberately cannot alter customer balances, loyalty,
+    // This lane credits ONLY the sale's own receivable; it never alters loyalty,
     // saved wallets, remote payments, service quantities or batch ownership.
-    if (sale.customerId !== undefined || sale.paymentMethod !== 'cash' || !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
-        sale.outstandingMinor !== 0 || sale.amountPaidMinor !== sale.totalMinor || sale.walletAppliedMinor ||
+    if (sale.tax && !plan.taxPolicyVerified) throw new Error('Saved tax settings must be reconciled before issuing this refund.');
+    // Customer credit: split the returned value into receivable credit (first) and tender refund.
+    let debtReducedMinor = 0, customerId: string | undefined;
+    if (sale.customerId !== undefined) {
+      customerId = sale.customerId;
+      const customer = await database.customers.get(customerId);
+      if (!customer || customer.businessProfileId !== company) throw new Error('The customer on this sale is unavailable in this company.');
+      if (sale.outstandingMinor === 0) throw new Error('A fully paid customer sale needs the customer reward and wallet refund workflow; it is not supported here.');
+      const stillOwed = await stillOwedOnSale(database, company, sale);
+      debtReducedMinor = Math.min(plan.draftAmountMinor, stillOwed);
+    }
+    const tenderMinor = plan.draftAmountMinor - debtReducedMinor;
+    if (values.confirmedRefundMinor !== tenderMinor || confirmedDebt !== debtReducedMinor)
+      throw new Error('Confirmed cash refund does not equal the exact saved invoice return amount (receivable credit first, tender refund for the remainder).');
+    let refundMethod: 'cash'|'mobile'|'card'|'credit';
+    if (tenderMinor === 0) refundMethod = 'credit';
+    else {
+      refundMethod = values.refundMethod ?? 'cash';
+      if (sale.paymentMethod !== refundMethod)
+        throw new Error(sale.paymentMethod === 'credit'
+          ? 'This return exceeds the unpaid balance of a credit sale; refunding the customer\'s repayments is not supported here.'
+          : 'A refund must go back through the original single tender; this sale was not paid by that method.');
+    }
+    if (tenderMinor > sale.amountPaidMinor - prior.reduce((n, row) => n + row.refundedMinor, 0))
+      throw new Error('This return would refund money the customer paid through later repayments, beyond the original payment; refunding repayments is not supported here. Reconcile with the owner.');
+    if (tenderMinor > 0 && sale.amountPaidMinor === 0) throw new Error('This sale has no paid tender to refund.');
+    // Single-tender evidence only; wallet, loyalty and split tenders remain blocked.
+    if (!/^[A-Z]{3}$/.test(sale.currency ?? '') || sale.walletAppliedMinor ||
         sale.loyaltyRedeemedPoints || sale.loyaltyRedeemedMinor || full.length ||
-        payments.length !== 1 || payments[0].businessProfileId !== company || payments[0].method !== 'cash' || payments[0].amountMinor !== sale.totalMinor)
-      throw new Error('This sale requires the full customer/tender refund workflow; cash-only refund is not supported.');
+        sale.paymentMethod === 'split' || sale.paymentMethod === 'wallet' ||
+        (sale.customerId === undefined && (sale.paymentMethod !== refundMethod || sale.outstandingMinor !== 0 || sale.amountPaidMinor !== sale.totalMinor)) ||
+        (sale.amountPaidMinor === 0 ? payments.length !== 0 :
+          (payments.length !== 1 || payments[0].businessProfileId !== company || payments[0].method !== sale.paymentMethod || payments[0].amountMinor !== sale.amountPaidMinor)))
+      throw new Error('This sale requires the full customer/tender refund workflow; this return lane does not support it.');
     reconcileCashPartialReturns([sale],lines,payments,prior,full);
     // A valid money journal is insufficient: validate its saved stock and FIFO
     // references before any further cash return is recorded.
@@ -163,7 +220,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       const event = await restorePartialInventoryCost(database, product, originalEvent.id, {sourceId:movementId,createdAt:now,saleId:sale.id,saleLineId:originalLine.id},item.quantity);
       const movement: InventoryMovement = {id:movementId,businessProfileId:company,productId:product.id,movementType:'reversal',
         quantityDelta:item.quantity,previousQuantity:product.stockQuantity,resultingQuantity:product.stockQuantity+item.quantity,
-        note:`Partial cash refund of ${sale.receiptNumber}`,createdAt:now};
+        note:`Partial ${refundMethod==='credit'?'credit-note':refundMethod} return of ${sale.receiptNumber}`,createdAt:now};
       await postStoreStockDelta(database,company,product.id,receivingStoreId,item.quantity,movement.id,"refund",now,product.stockQuantity,movement.resultingQuantity);
       await database.inventoryMovements.add(movement);
       await database.products.put({...product,stockQuantity:movement.resultingQuantity,updatedAt:now});
@@ -173,11 +230,22 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       ...(values.returnStoreId?{returnStoreId:receivingStoreId}:{}),
       policyEvidence,id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
       originalReceiptNumber:sale.receiptNumber,currency:sale.currency!,submissionKey:values.submissionKey,createdAt:now,returnSequence:prior.length+1,
-      refundMethod:'cash',disposition:'restockable',refundedMinor:plan.draftAmountMinor,
+      refundMethod,...(refundMethod!=='cash'&&refundMethod!=='credit'?{disbursementEvidence:'staff_confirmed_manual_unverified' as const}:{}),
+      ...(values.manualReference?{manualReference:values.manualReference.trim()}:{}),disposition:'restockable',refundedMinor:tenderMinor,
+      ...(customerId!==undefined?{customerId,debtReducedMinor}:{}),
       returnedTaxableMinor:plan.draftTaxableMinor,returnedTaxMinor:plan.draftTaxMinor,
       returnedDiscountMinor:plan.draftDiscountMinor,lines:savedLines,
       ...(staff?{staffId:staff.id}:{}),...(shift?{shiftId:shift.id}:{})};
     reconcileCashPartialReturns([sale],lines,payments,[...prior,recorded],full);
+    if (customerId!==undefined) {
+      // Final conservation proof: the customer's receivable must remain valid with this credit note.
+      const [s2,r2,p2]=await Promise.all([
+        database.sales.where('customerId').equals(customerId).and(row=>row.businessProfileId===company).toArray(),
+        database.saleReversals.where('customerId').equals(customerId).and(row=>row.businessProfileId===company).toArray(),
+        database.repayments.where('customerId').equals(customerId).and(row=>row.businessProfileId===company).toArray()]);
+      const existingCredit=(await database.cashPartialReturns.where('originalSaleId').anyOf(s2.map(row=>row.id)).toArray()).filter(row=>row.businessProfileId===company);
+      reconcileCreditLedger(s2,r2,p2,[...existingCredit,recorded]);
+    }
     if (getActiveBusinessProfileId() !== company) throw new Error("Company switched during cash refund posting.");
     await assertRun7RetailWriteReady(database.appMeta);
     const postingStaff = await requirePermission("refund",database,company);
@@ -188,7 +256,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     await database.cashPartialReturns.add(recorded);
     await database.centralOperationalEvents.add(makeCentralCashRefundEvent(recorded,sale));
     if (staff) await database.staffAudits.add({id:nanoid(14),businessProfileId:company,staffId:staff.id,
-      action:'sale.partial-cash-refund',createdAt:now,details:`${recorded.id}:${sale.id}:${recorded.refundedMinor}:${sale.currency}`});
+      action:refundMethod==='cash'?'sale.partial-cash-refund':refundMethod==='credit'?'sale.partial-credit-note':`sale.partial-${refundMethod}-refund-manual`,createdAt:now,details:`${recorded.id}:${sale.id}:${recorded.refundedMinor}:${sale.currency}`});
     assertCompanyScope(company, getActiveBusinessProfileId());
     return recorded;
   });

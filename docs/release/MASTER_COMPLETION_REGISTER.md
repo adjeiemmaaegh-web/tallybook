@@ -1,0 +1,54 @@
+# Tallybook master completion register
+
+**Maintained by the engineering sessions. Updated 2026-11-21.** One row per roadmap stage / Connected Commerce product.
+Rule: nothing is "done" without evidence. "Tested" means executed by me locally unless a CI run is cited. "Development complete" and "production ready" are different milestones; **nothing here is production ready.** The machine-readable per-task registers are `docs/release/ROAD_TO_COMPLETE_PROGRESS.json` (119 V19 tasks) and `docs/release/CONNECTED_COMMERCE_PROGRESS.json` (55 rows); this file is the roll-up.
+
+## Where the work lives (PRs, authoritative as of this update)
+
+| PR | Branch | Content | State |
+|---|---|---|---|
+| #112 | `claude/cool-ride-cf8i8r` | Codex Stages 21-32 engineering (#105, 40 commits) + `main` c2792d1 merged + manual-tender and credit-note returns + conservation/permission/backup/concurrency verification + Connected Commerce platform foundation and owner screen | open, was *dirty*; **conflict resolved** by merge `b7486a6`; CI to be re-run on the merged head |
+| #111 | `development/st24-05-local-ledger-keyring-20261120` | ST24-05 active-ledger encryption, recovery, unlock gate, owner panel, browser spec | draft; CI green on `bd50b32` (see below) |
+| #105 | `codex/road-to-complete` | original Codex branch | draft; **fully contained in #112** (`7b3815a`); keep open until #112 is approved |
+| #85 | `release/production-readiness-reset-20261113` | old "fresh start" proposal on a stale base (`590e047`) | draft; **not reconciled**: it is a data-reset/mandatory-auth release proposal that needs your decision, not an engineering merge |
+
+**#111 and #112 overlap** in `customers.ts` and `playwright.device-engines.config.mjs`. A trial merge (local scratch branch `scratch/combine-111-112`, not pushed) needed only two trivial resolutions (import union, test-list union). Resolution is recorded in commit `9e38816` (local); it must be redone when the first of the two PRs is approved and merged.
+
+## Roll-up
+
+| Stage / Product | Implemented | Tested | Remaining | Blocker |
+|---|---|---|---|---|
+| **21 Integration** | Codex branch (#105) merged with `main`; #112 conflict-free; QA lifecycle/evidence integrity (Codex); two WebKit failures diagnosed and fixed (StaffPage refresh ordering, spec lock race) | merged tree: tsc, build, `pnpm audit` clean, client 1963/1963, native 1222/1222; device-engine runs on `bd50b32` (#111): 3/3 success incl. macOS WebKit | 143 historical acceptance IDs not dispositioned; `RELEASE_GATE_MATRIX.md` not written; #85 decision; CI re-run on #112 merged head; combined #111+#112 CI; branch protections | owner approval to merge; GitHub settings are owner-controlled |
+| **22 Financial integrity** | single-tender cash/Mobile Money/card partial returns (manual, unverified evidence); credit-sale and part-paid returns with debt-first credit notes wired through ledger, reports, backup, repayments, ageing; refusal to refund customer repayments | unit + IndexedDB integration; seeded randomized conservation (8 seeds) with independent oracle; mutation-checked | wallet, split-tender, loyalty-points returns; batch/service/Ghana-VAT lines; credit-note rows in customer history UI; central event still named `...cash_partial_refund...` for credit notes | none (developer-owned) |
+| **23 Inventory** | Codex store/transfer/stocktake work; conservation + two-connection concurrency tests (oversell, idempotency, lost update) | local fake-IndexedDB only | multi-store partial dispatch/receipt acceptance, scale/performance at thousand-product volume, real multi-tab browsers | none (developer-owned) |
+| **24 Data reliability** | **Active ledger encryption + recovery (#111)**: sync AEAD below Dexie, blinded indexes, durable key record, crash-safe resumable conversion, fingerprint verification, unlock gate, owner panel, recovery code/package, rollback, schema pin; backup tamper (128 field changes, truncation, byte flips) and interrupted-restore rollback | tsc; 21+19+6 new tests; whole 1872-test client suite forced encrypted (migrating 1844 pass/0 fail; strict 20 expected legacy-plaintext failures); real Chromium 3/3 incl. killed tab mid-conversion; CI on `bd50b32`: Chrome, Edge, Firefox, WebKit success ×3 | DEK rotation, encrypted-ledger schema-upgrade path, auto-lock, encrypt residual `localStorage` (parked carts, stocktake draft), performance at scale | real-device (Android/iOS/low-spec Windows) acceptance and independent security review are owner-run; encryption stays opt-in |
+| **25 Authentication** | local staff permission matrix (4 roles × 15 entry points, mutation-checked); UI and service role tables proven not to drift; Codex RPC/shift work | local IndexedDB only | PostgreSQL RPC negative tests with real role identities, issue #68 cash reconciliation, real Supabase Auth flows | real Auth acceptance and mandatory-account policy are owner decisions (ST25-02/03/09) |
+| **26 Synchronization** | Codex foundations (central events, device registry, outbox) | Codex historical suites; not re-run end to end this session beyond the shared suites | full financial replication, conflict resolution, revocation e2e | not started this session |
+| **27 Public commerce** | Codex guest-order price snapshots (migration 39, **unapplied**) | Codex tests in the shared suite | fulfilment states, holds/expiry, cancellation/refund, customer communication | migration 38/39 need your approval before any hosted apply |
+| **28 Payments** | Codex sandbox/mock adapters only | mock contract tests | real adapter, settlement integrity, provider refunds/chargebacks (ST28-02/03/04 missing) | **real-provider credentials, legal/licensing and your authorization** |
+| **29 Clementia** | Codex assistant work | shared suite | evidence-grounded analytics expansion, scheduled reviews | not started this session |
+| **30 UX / packaging** | Codex partial; StaffPage stale-refresh fix | StaffPage ordering regression test; WebKit pass | route-by-route audit, onboarding, printer/scanner, accessibility sweep, low-spec performance | real devices and peripherals are owner-run |
+| **31 Security** | `pnpm audit` clean on `main`+branches today; #109/#110 (owner) merged to `main`; blinded indexes, tamper evidence | audit run, native security tests | CSP/XSS review of in-memory key exposure, retention/privacy, support/monitoring, incident runbook, supply-chain/licence record | independent review is owner-commissioned |
+| **32 Final integration** | not started | n/a | frozen exact-commit candidate, SHA-256 manifest, rollback rehearsal, owner-testing handoff | depends on 21-31 |
+| **CC-X shared platform** | migration `20261120090000` (+ guarded rollback) + typed client + **owner settings screen** (flag `VITE_CONNECTED_COMMERCE`, off by default): per-service consent bound to displayed text hash, legal-review-gated, flags OFF, kill switch, honest verification, idempotent owner RPC, minimal PII-free outbox, append-only audit | PGlite 12/12 (4 mutation checks caught); client 25/25; **not applied to any hosted database** | outbox worker, shopper/supplier identities, rate limits, retention, monitoring/incident playbook, reviewer tooling | counsel-approved consent texts (CC-X-09); approval to apply the migration |
+| **Discover** (CC-D) | backend only: migration `20261121090000` (+ guarded rollback): owner profile/listings (availability is an owner-confirmed label, never stock), anonymous search, bounded shopper requests (consent, rate limits, one open request per contact/item, one-time cancel token, 14-day expiry); a request is never a sale, payment or stock hold; invisible unless consent+flag on and kill switch clear | PGlite 16/16; 4 mutation checks each caught by a test; `qa/*.test.mjs` 812/812 after fixing 3 earlier tests the new migration affected (CI run 44847760301 caught them; fixed locally, CI re-run pending); **not applied to any hosted database** | client typed API and owner/shopper screens, attribution, outbox worker, counsel-approved consent text, monitoring | legal review of public listings (CC-X-09); approval to apply migration |
+| **Business Network** (CC-N) | not started | n/a | whole pillar | depends on CC-X |
+| **Supply** (CC-S) | not started | n/a | whole pillar | depends on CC-X |
+| **Clementia 2.0** (CC-C) | not started | n/a | whole pillar | depends on CC-X |
+| **Passport** (CC-P) | not started | n/a | whole pillar | depends on CC-X; legal/privacy review |
+
+## Evidence index
+
+- Merged-tree verification (#112 head `b7486a6`): `pnpm build` OK; `pnpm audit --audit-level moderate` clean; `pnpm test` 1963/1963; native `node --test` 1222/1222.
+- #111 CI on `bd50b32`: Device browser engines runs 44798745763, 44798750068, 44798750645 all success (Chrome, Edge, Firefox, macOS WebKit). Earlier `142c338` WebKit failure was the new spec racing app-startup Web Lock; fixed in `bd50b32`; cause inferred from the error text, WebKit trace not inspected.
+- WebKit failure from Codex PR run 44053229960 (`browser-release.spec.mjs` "Lock this session"): trace not downloadable in the agent sandbox; hardening shipped; **cause unproven**; passed on CI for `2dea87e` and later.
+- #112 CI at `8ba82f3` (run set 448477602xx): secret scan, verify, visual-integration, CodeQL, Chrome/Edge/Firefox/WebKit, public smoke, Clementia 100x20 all success. Pinned Node 24 developer QA failed at the Discover push `7eff221` (3 native tests assumed no later migration); fixed, see Discover row.
+- Real-device acceptance: **none performed.** No result in this register is a real-device result.
+
+## Next developer-owned increments (in order)
+
+1. Re-run CI on #112's merged head (`b7486a6` + the Connected Commerce screen commit) and on the combined #111+#112 scratch merge.
+2. `RELEASE_GATE_MATRIX.md` and the 143 historical-ID disposition (Stage 21 close-out).
+3. Stage 22 remainder: wallet / split-tender / loyalty returns.
+4. PostgreSQL role-level RPC negative tests (Stage 25), issue #68.
+5. First Connected Commerce pillar on the CC-X foundation: Discover (merchant listings + bounded buyer request + attribution), keeping everything flag-off and unpublished by default.

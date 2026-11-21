@@ -1,0 +1,43 @@
+{
+  "baseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "initialPublished": "5b2dfdc3b650a8b5fd014473b18d8d1ad8e4a539",
+  "publishedSource": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+  "publication": "GitHub object APIs, exact local tree equality checked for every commit; fast-forward lease update, no force.",
+  "commits": [
+    {
+      "local": "f42571f8c22496856658070fad4e1fafa84d7774",
+      "published": "5a4412009305e7c6d3070d1d11cd6a9c34d2871b",
+      "tree": "0c1aad0a9e34ffbf1733a3db8e7b655fb9360dc3"
+    },
+    {
+      "local": "652e0587a7b9b875400ae6f16961b93d0dbde534",
+      "published": "d3b0dc5ddc4dae0012f81516d6294d943850873d",
+      "tree": "949a92b515b7cf86ea83558ee51b76232188c81b"
+    },
+    {
+      "local": "92f8c4e50896d6a77faacf1f47e9e316368c5e8e",
+      "published": "d434db979cf6b0041c3e7d80aea6c74b7592abdc",
+      "tree": "2f70c1929eb9f2317eced6cc508c5dd9eae0de8c"
+    },
+    {
+      "local": "4359b29526df926179994eeb7bc65bdb2ff90451",
+      "published": "df78ddb6af27fd7529f21cac01140c06645870ad",
+      "tree": "8eb1e9ae13cd8354260032e6f273603e778b4bce"
+    },
+    {
+      "local": "a8435cb31e85bda275b7663cc4b04fbfade85e29",
+      "published": "acf8d2c6d54c0c479e3a5aed980cf67c49bd00ac",
+      "tree": "cb37a8b1eab71af2df327c20523e7f008b1286df"
+    },
+    {
+      "local": "86c6b191378b387542a82381459b428994669bce",
+      "published": "d951c730e74d810a297afc1d040f088669d8ea40",
+      "tree": "9e0678de6c82136e3a975afce6af3bbb15011337"
+    },
+    {
+      "local": "fa1c828274b7728181ce729b4c291996d26fe6a9",
+      "published": "334f2beaa5c2c52b3864e7069a0d4de115746b1d",
+      "tree": "7fc275fcb4aa3b3c1a30274e7c1062fc7dac2f58"
+    }
+  ]
+}

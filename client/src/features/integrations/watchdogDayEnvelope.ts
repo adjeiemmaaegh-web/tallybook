@@ -10,7 +10,7 @@ export interface WatchdogDayShift {
 export interface WatchdogDayReturn {
   id: string; businessProfileId: string; originalSaleId: string; createdAt: string;
   staffId?: string; shiftId?: string; refundedMinor: number; currency: string;
-  refundMethod: 'cash'; originalReceiptNumber: string;
+  refundMethod: 'cash'|'mobile'|'card'|'credit'; originalReceiptNumber: string;
 }
 export interface WatchdogDaySource {
   companyId: string; storeId: string; dayUtc: string;
@@ -95,8 +95,10 @@ export function createWatchdogDayEnvelope(source:WatchdogDaySource, generatedAt 
   }
   const originalSaleIds=new Set(source.events.filter(e=>e.eventType==='sale').map(e=>e.saleId).filter((id):id is string=>Boolean(id)));
   for(const refund of source.returns??[]){
+    // A credit-note return moves no cash/provider money: it is a receivable adjustment, not a refund disbursement.
+    if(refund.refundMethod==='credit') continue;
     if(refund.businessProfileId!==companyId || !refund.originalSaleId?.trim() || !refund.staffId?.trim() || !refund.shiftId?.trim() ||
-       refund.refundMethod!=='cash' || !/^[A-Z]{3}$/.test(refund.currency))
+       !['cash','mobile','card'].includes(refund.refundMethod) || !/^[A-Z]{3}$/.test(refund.currency))
       throw new Error('Unverified local cash return cannot be exported.');
     if(!originalSaleIds.has(refund.originalSaleId)) throw new Error('Local cash return has no reconciled original sale.');
     const shift=shifts.get(refund.shiftId);
@@ -108,8 +110,8 @@ export function createWatchdogDayEnvelope(source:WatchdogDaySource, generatedAt 
     row.receipt_number=refund.originalReceiptNumber;
     row.amount_minor=money(refund.refundedMinor,'cash refund');
     if(row.amount_minor===0) throw new Error('Zero cash refund cannot be exported.');
-    row.currency=refund.currency; row.payment_method='cash';
-    row.reason='Cash return recorded by attendant; independent disbursement unverified';
+    row.currency=refund.currency; row.payment_method=refund.refundMethod;
+    row.reason=refund.refundMethod==='cash'?'Cash return recorded by attendant; independent disbursement unverified':`Manual ${refund.refundMethod} return recorded by attendant; provider settlement unverified`;
     add(row);
   }
   output.sort((a,b)=>a.occurred_at_utc.localeCompare(b.occurred_at_utc)||a.event_id.localeCompare(b.event_id));

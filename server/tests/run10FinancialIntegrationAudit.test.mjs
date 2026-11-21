@@ -21,7 +21,8 @@ test('full customer snapshot is mandatory before labeling current credit as audi
 test('one customer cannot hide an overpayment with another customer debt in report',()=>{
  const x=source('features/reports/run10ReceivablesAudit.mjs');
  assert.match(x,/for\(const customer of customers\)/);
- assert.match(x,/reconcileCreditLedger\(customerSales,customerReversals,customerRepayments\)/);
+ assert.match(x,/reconcileCreditLedger\(customerSales,customerReversals,customerRepayments,customerCreditReturns\)/);
+ assert.match(x,/row\.businessProfileId===company&&saleIds\.has\(row\.originalSaleId\)/);
  assert.match(x,/has unreconciled debt/);
 });
 test('sale-level allocation remains optional but legacy customer-level payments are never attributed',()=>{

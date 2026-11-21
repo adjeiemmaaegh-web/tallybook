@@ -1,4 +1,5 @@
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { creditReturnsForSales } from "@/features/credit/creditReturns";
 import { requirePermission } from "@/features/staff/staff";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import {reconcileCreditLedger} from "@/features/sales/creditLedger.mjs";
@@ -107,7 +108,7 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
     const activeId = getActiveBusinessProfileId();
     return database.transaction("rw", [
       database.appMeta,database.businessProfiles,database.customers,database.sales,database.saleReversals,
-      database.repayments,database.customerBenefits,database.walletTransfers,database.staffMembers
+      database.repayments,database.cashPartialReturns,database.customerBenefits,database.walletTransfers,database.staffMembers
     ], async () => {
       await assertRun7RetailWriteReady(database.appMeta);
       await requirePermission("staff", database, activeId);
@@ -124,7 +125,7 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
         database.customerBenefits.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray(),
         database.walletTransfers.where("customerId").equals(customerId).and(row=>row.businessProfileId===activeId).toArray()
       ]);
-      const debt=reconcileCreditLedger(sales,reversals,repayments);
+      const debt=reconcileCreditLedger(sales,reversals,repayments,await creditReturnsForSales(database,activeId,sales));
       if(debt.outstandingMinor>0)
         throw new Error("Customer has outstanding receivables. Record and reconcile repayments before archiving.");
       if(transfers.length||benefits.some(row=>row.kind==="wallet")||

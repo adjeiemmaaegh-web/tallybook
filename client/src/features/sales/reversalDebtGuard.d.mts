@@ -6,4 +6,5 @@ export declare function assertDebtReversalIsUnallocatedPaymentSafe(
   customerSales: readonly Sale[],
   reversals: readonly SaleReversal[],
   repayments: readonly DebtRepayment[],
+  creditReturns?: readonly { originalSaleId: string; debtReducedMinor?: number }[],
 ): void;

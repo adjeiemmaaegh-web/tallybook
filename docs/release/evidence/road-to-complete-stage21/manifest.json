@@ -1,0 +1,88 @@
+{
+  "sourceBaseline": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "environment": "Linux; Node 24.19.0; pnpm 10.34.0; road-tooling standalone rerun also on host 24.22.1",
+  "boundary": "Working-tree execution evidence. No production data, release approval or live provider acceptance.",
+  "files": [
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/native-pinned.txt",
+      "sha256": "c3de85916ce4fb8e12763d98ae18058e7a7888ccc2a607a94b9535eaae9be39d",
+      "bytes": 98419
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/postgres-cleanup.txt",
+      "sha256": "9bdb07bcb2be6dd9a269af9d7be5fe68302f7d488bd864cef96e0ae26800774f",
+      "bytes": 1169
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/road-tooling.txt",
+      "sha256": "a5ea637aee8c6f6c223032e1ab2bb775d2959321b884914aa7928c9774df309f",
+      "bytes": 641
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/install-pinned.txt",
+      "sha256": "4d687eb5d571e1e059b94666abcb5b9df3cf2fd2c782febd8c03a89bedf182bd",
+      "bytes": 994
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/types-pinned.txt",
+      "sha256": "f43095576b5d7862fbb1be638064ca6d4551159dc892e2e4862b6c1810fca5be",
+      "bytes": 86
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/build-pinned.txt",
+      "sha256": "97af0234af7a5c1f5f93400c45703f4f9b97daf39a7759d972442a9c51107ca7",
+      "bytes": 10611
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/chromium-install.txt",
+      "sha256": "5545efc16f349be81c7fc99c5dfc0f0d12126e0a1f1f89300c919f33239a8617",
+      "bytes": 5598
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/candidate-placeholder-negative.txt",
+      "sha256": "6962838379fb1fe8d9d86cac89c16fe7ae0cd83215adde44cc11bdb80bc94a64",
+      "bytes": 3365
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/vitest-diagnostic.txt",
+      "sha256": "1e5b1ac0f47ec4edbf1c3b0b114584b636a4d853e05fdadef81eae51121e530f",
+      "bytes": 4647
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/native-ci-command.txt",
+      "sha256": "c17346acce1832930cfca66afcf018ef34772bf6f97d3cffe077ae940434e9e9",
+      "bytes": 98475
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/client-complete.txt",
+      "sha256": "8174d69341e6da2e3f36ff2d078ee58fdcaeb93fbd7957a12406b813b9a79846",
+      "bytes": 307571
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/types-candidate.txt",
+      "sha256": "f43095576b5d7862fbb1be638064ca6d4551159dc892e2e4862b6c1810fca5be",
+      "bytes": 86
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/build-candidate.txt",
+      "sha256": "3c8e99daa0e0716bf4f48d5ff7720519e484e017613a4dcb7ee57fa8315528e9",
+      "bytes": 10613
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/audit-candidate.txt",
+      "sha256": "15950a68a7ed99c59779717acefdceb3f69cfd31bde67d2c954f2a3cea4d7955",
+      "bytes": 31
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/preflight-candidate.txt",
+      "sha256": "94addc04cc959c5c8f22ee85a682424ac79b51e2616f66b49787d71b9990f40c",
+      "bytes": 940
+    },
+    {
+      "path": "docs/release/evidence/road-to-complete-stage21/register-candidate.txt",
+      "sha256": "2652a02c7c127c14fc8ce239efd86f5b73a66ce848277fcc9e89b2cabe41157f",
+      "bytes": 233
+    }
+  ],
+  "implementationCommit": "280216bf01530bae984bb396a7c971e6790f1c3f"
+}

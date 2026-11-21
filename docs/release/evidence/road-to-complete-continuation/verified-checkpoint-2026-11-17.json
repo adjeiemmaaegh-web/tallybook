@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-17",
+  "decision": "NO-GO",
+  "mainUnchanged": "41d4bab619db1808f21471299bd7760eee1a6836",
+  "releaseValidation": {
+    "runId": 44045528700,
+    "reviewHead": "ea61775af959d8016b35cd563b4068ac4cd7e507",
+    "executedCheckout": "198332faed5a6d04f4075b588eee9ac348ec1b2f",
+    "identicalTree": "c29e198d66e7876a772acd94a24d92b81d0eb74e",
+    "native": {
+      "passed": 1208,
+      "failed": 0,
+      "skipped": 0
+    },
+    "client": {
+      "files": 239,
+      "passed": 1910
+    },
+    "chromiumChecks": 30,
+    "types": "pass",
+    "productionBuild": "pass",
+    "dependencyAdvisoryGate": "pass; no known vulnerabilities reported",
+    "repeatBuild": {
+      "pass": true,
+      "environment": "same isolated Linux CI job; not independent-machine reproduction",
+      "files": 136,
+      "productionDependencyVersions": 190,
+      "manifestSha256": "95d4c6e6dc3d6c75e42619518b8b043614db2b5348e4f1fa2ca3ce999f47c781",
+      "artifactId": 14312355794,
+      "artifactZipSha256": "703aa3e92948f4407ee391028da70decb2617931c962823f183d1a72ae6a941f",
+      "expires": "2026-12-01"
+    }
+  },
+  "earlierRecoveredValidation": {
+    "runId": 44039335537,
+    "reviewHead": "10355725d814dd04422debe717c2903435ab4a0a",
+    "executedCheckout": "e591fb0aaf9e227a8c9a356856d94f37c5d09d39",
+    "identicalTree": "3aeb4428ec4c195a47c63def127309edb40d5426"
+  },
+  "checkoutGuardCandidate": {
+    "sha": "2bc1031dd36fd1164e503d2a53815e68ddec79a2",
+    "securityRun": 44046916459,
+    "security": "all three jobs pass",
+    "focusedClient": {
+      "files": 5,
+      "passed": 37
+    },
+    "nativeSecurityRegressions": {
+      "passed": 11,
+      "failed": 0
+    },
+    "semanticTypeScript": "pass",
+    "fullRegression": "not yet executed against this later checkout guard"
+  },
+  "browserMatrix": {
+    "runId": 44046916471,
+    "sha": "2bc1031dd36fd1164e503d2a53815e68ddec79a2",
+    "casesPerEngine": 8,
+    "passed": 32,
+    "scope": "selected local account/ledger/public-entry scenarios, not complete financial matrix or real hosted Auth",
+    "engines": [
+      {
+        "project": "edge",
+        "os": "Windows",
+        "version": "156.0.4314.58",
+        "result": "pass"
+      },
+      {
+        "project": "webkit",
+        "os": "macOS",
+        "version": "27.2",
+        "result": "pass",
+        "safariApplication": false
+      },
+      {
+        "project": "chrome",
+        "os": "Linux",
+        "version": "157.0.8103.78",
+        "result": "pass"
+      },
+      {
+        "project": "firefox",
+        "os": "Linux",
+        "version": "157.0",
+        "result": "pass"
+      }
+    ]
+  },
+  "originalSecurityFindings": {
+    "high": 12,
+    "critical": 0,
+    "historicalPatternMatches": 632,
+    "confirmedLiveSecrets": 0,
+    "remainingUnknownFindingsAtLastVerifiedScan": 0,
+    "limitations": [
+      "History scan targets capped at 20 MB, archive depth one, 180-second scan.",
+      "Classification source-verifies explicit known noncredential formats; not a production credential/copy certification."
+    ]
+  },
+  "authorization": {
+    "mainMerge": false,
+    "productionDeployment": false,
+    "hostedSchemaWrite": false,
+    "liveAuthenticationPolicyChange": false,
+    "realPayment": false,
+    "ownerAcceptance": false,
+    "realPhoneTest": false
+  }
+}

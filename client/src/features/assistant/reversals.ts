@@ -8,6 +8,7 @@ import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { assertCompanyScope } from "@/features/business/companyScope.mjs";
 import { formatMinorAmount, type InventoryMovement } from "@/features/inventory/inventory";
 import { appendInventoryCostChange, restoreInventoryCost } from "@/features/inventory/costLedger";
+import { creditReturnsForSales } from "@/features/credit/creditReturns";
 import { assertDebtReversalIsUnallocatedPaymentSafe } from "@/features/sales/reversalDebtGuard.mjs";
 import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
 import {makeCentralSaleReversalEvent} from '@/features/sync/centralOperationalEvent';
@@ -18,6 +19,8 @@ export interface SaleReversal {
   policyEvidence?:ReturnPolicyEvidence;
   id: string;
   businessProfileId: string;
+  /** Optional historical physical receiving location; never infer it on restore. */
+  returnStoreId?: string;
   originalSaleId: string;
   originalReceiptNumber: string;
   customerId?: string;
@@ -117,7 +120,7 @@ async function executeLatestSaleReversalWhileLocked(currency: string, database: 
       const debts = await database.sales.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
       const reversals = await database.saleReversals.where("businessProfileId").equals(activeId).and(row => row.customerId === sale.customerId).toArray();
       const repayments = await database.repayments.where("customerId").equals(sale.customerId).and(row => row.businessProfileId === activeId).toArray();
-      assertDebtReversalIsUnallocatedPaymentSafe(sale, debts, reversals, repayments);
+      assertDebtReversalIsUnallocatedPaymentSafe(sale, debts, reversals, repayments, await creditReturnsForSales(database, activeId, debts));
     }
     // A negative accounting receipt cannot be created from an unverifiable
     // original tender. Wallet tenders use customer-benefit postings instead

@@ -1,0 +1,20 @@
+✔ privileged RPCs reject absent or forged sessions; only audited invoker delegates are reachable (4878.269134ms)
+ℹ Inspected 17 privileged public signatures; 68 catalog negative calls plus 8 invoker-delegate negative calls; 59 empty business tables conserved.
+✔ guest intake creates separate requests without touching financial tables (1.403145ms)
+✔ guest sees a catalogue, never private cost, stock or customer ledgers (0.382865ms)
+✔ business owners explicitly issue and can revoke links, staff cannot see PII (0.303963ms)
+✔ no customer data is lost through a routine rollback (0.229308ms)
+✔ guest: public link opt-in, private API denied, server prices and no payment or stock change (4429.254948ms)
+✔ owner: convert a submitted request once; price drift rolls back, staff denied, decline is final (2349.055176ms)
+✔ rate limit: active public links cannot accept unlimited rapid submissions (2632.005585ms)
+✔ equal-total repricing cannot silently change the customer product quote at conversion (2346.673662ms)
+✔ currency drift is rejected and quote-guard rollback preserves original evidence (2293.380264ms)
+✔ legacy unconverted requests stay unchanged and require a new verifiable customer quote (2476.567137ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16783.209818

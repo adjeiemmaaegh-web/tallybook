@@ -352,7 +352,7 @@ export function calculateTrackedShiftCash(shift:StaffShift, rows: {
   repayments: Array<{shiftId?:string;method:string;amountMinor:number}>;
   transfers: Array<{shiftId?:string;method:string;kind:string;amountMinor:number}>;
   reversals: Array<{shiftId?:string;originalSaleId:string;reversedReceivedMinor:number}>;
-  cashReturns?: Array<{shiftId?:string;originalSaleId:string;refundedMinor:number}>;
+  cashReturns?: Array<{shiftId?:string;originalSaleId:string;refundedMinor:number;refundMethod?:string}>;
 }) {
   // Validate individual journal entries before aggregation. Otherwise a negative or
   // corrupt entry could be hidden by a positive movement in the same shift.
@@ -361,7 +361,7 @@ export function calculateTrackedShiftCash(shift:StaffShift, rows: {
   const recordedAmounts = [...rows.payments, ...rows.repayments, ...rows.transfers];
   if (recordedAmounts.some(row => !Number.isSafeInteger(row.amountMinor) || row.amountMinor < 0) ||
       rows.reversals.some(row => !Number.isSafeInteger(row.reversedReceivedMinor) || row.reversedReceivedMinor > 0) ||
-      (rows.cashReturns ?? []).some(row => !Number.isSafeInteger(row.refundedMinor) || row.refundedMinor <= 0) ||
+      (rows.cashReturns ?? []).some(row => !Number.isSafeInteger(row.refundedMinor) || row.refundedMinor < 0 || (row.refundMethod !== 'credit' && row.refundedMinor === 0)) ||
       rows.transfers.some(row => row.kind !== 'deposit' && row.kind !== 'refund'))
     throw new Error('Invalid recorded cash movement requires reconciliation.');
   const scopedSales=rows.sales.filter(s=>s.businessProfileId===shift.businessProfileId);
@@ -376,9 +376,11 @@ export function calculateTrackedShiftCash(shift:StaffShift, rows: {
     .reduce((n,t)=>n+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0);
   const refunds=rows.reversals.filter(r=>r.shiftId===shift.id && sales.get(r.originalSaleId)?.paymentMethod==='cash')
     .reduce((n,r)=>n+r.reversedReceivedMinor,0);
-  if ((rows.cashReturns ?? []).some(r=>!sales.get(r.originalSaleId) || sales.get(r.originalSaleId)?.paymentMethod!=='cash'))
-    throw new Error('Cash refund shift record refers to a missing or noncash original sale.');
-  const partialRefunds=(rows.cashReturns ?? []).filter(r=>r.shiftId===shift.id)
+  // Mobile-money/card returns are manual non-drawer evidence: they never reduce physical cash.
+  const drawerReturns=(rows.cashReturns ?? []).filter(r=>(r.refundMethod ?? 'cash')==='cash');
+  if ((rows.cashReturns ?? []).some(r=>!sales.get(r.originalSaleId) || (r.refundMethod!=='credit' && sales.get(r.originalSaleId)?.paymentMethod!==(r.refundMethod ?? 'cash'))))
+    throw new Error('Refund shift record refers to a missing original sale or a different original tender.');
+  const partialRefunds=drawerReturns.filter(r=>r.shiftId===shift.id)
     .reduce((n,r)=>n-r.refundedMinor,0);
   const movementMinor=cashSales+cashRepayments+prepaidCash+refunds+partialRefunds;
   const expectedCashMinor=shift.openingFloatMinor+movementMinor;

@@ -4,15 +4,17 @@ import { reconcileCreditLedger, reconcileRepaymentAllocations } from './creditLe
  * An aggregate positive debt balance cannot prove that THIS sale is unpaid.
  * Fail closed rather than erase previously collected money from another sale.
  */
-export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, reversals, repayments) {
+export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, reversals, repayments, creditReturns = []) {
   if (!sale || !Number.isSafeInteger(sale.outstandingMinor) || sale.outstandingMinor < 0)
     throw new Error('Sale debt needs reconciliation before reversal.');
-  reconcileCreditLedger(customerSales, reversals, repayments);
+  if (creditReturns.some(row => row.originalSaleId === sale.id && (row.debtReducedMinor ?? 0) > 0))
+    throw new Error('This credit sale already has a partial return; a full reversal would double-credit its receivable.');
+  reconcileCreditLedger(customerSales, reversals, repayments, creditReturns);
   if (!customerSales.some(row => row.id === sale.id && row.businessProfileId === sale.businessProfileId && row.customerId === sale.customerId && row.outstandingMinor === sale.outstandingMinor))
     throw new Error('Reversal sale is not part of the customer ledger.');
   if (reversals.some(row => row.originalSaleId === sale.id)) throw new Error('Sale is already reversed.');
   if (sale.outstandingMinor > 0) {
-    const allocation = reconcileRepaymentAllocations(customerSales, reversals, repayments);
+    const allocation = reconcileRepaymentAllocations(customerSales, reversals, repayments, creditReturns);
     if (allocation.unallocatedMinor > 0)
       throw new Error('Customer repayments are not linked to individual sales. Reconcile their allocation before reversing a credit sale.');
     if ((allocation.allocatedBySale.get(sale.id) ?? 0) > 0)
@@ -26,5 +28,5 @@ export function assertDebtReversalIsUnallocatedPaymentSafe(sale, customerSales, 
     customerId: sale.customerId,
     originalSaleId: sale.id,
     reversedOutstandingMinor: -sale.outstandingMinor,
-  }], repayments);
+  }], repayments, creditReturns);
 }
