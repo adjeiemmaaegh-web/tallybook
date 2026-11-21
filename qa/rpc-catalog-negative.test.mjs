@@ -43,7 +43,7 @@ test('privileged RPCs reject absent or forged sessions; only audited invoker del
     ['create_owned_business(text,uuid)','set_cloud_business_type(uuid,text)'],
     'Only the two session-checked SECURITY INVOKER delegates may be directly reachable');
   for(const row of catalog){
-    assert.ok(!row.anonymous||row.proname==='tallybook_guest_order','Unexpected anonymous privileged endpoint '+row.proname);
+    assert.ok(!row.anonymous||['tallybook_guest_order','tallybook_cc_discover_public'].includes(row.proname),'Unexpected anonymous privileged endpoint '+row.proname);
     const args=row.types?row.types.split(',').map(type=>argument(type.trim())).join(','):'';
     for(const claims of [{},{sub:user,session_id:randomUUID(),exp:Math.floor(Date.now()/1000)+3600}]){
       await db.query("select set_config('test.claims',$1,false)",[JSON.stringify(claims)]);

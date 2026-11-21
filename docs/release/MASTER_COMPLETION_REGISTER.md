@@ -1,6 +1,6 @@
 # Tallybook master completion register
 
-**Maintained by the engineering sessions. Updated 2026-11-20.** One row per roadmap stage / Connected Commerce product.
+**Maintained by the engineering sessions. Updated 2026-11-21.** One row per roadmap stage / Connected Commerce product.
 Rule: nothing is "done" without evidence. "Tested" means executed by me locally unless a CI run is cited. "Development complete" and "production ready" are different milestones; **nothing here is production ready.** The machine-readable per-task registers are `docs/release/ROAD_TO_COMPLETE_PROGRESS.json` (119 V19 tasks) and `docs/release/CONNECTED_COMMERCE_PROGRESS.json` (55 rows); this file is the roll-up.
 
 ## Where the work lives (PRs, authoritative as of this update)
@@ -31,7 +31,7 @@ Rule: nothing is "done" without evidence. "Tested" means executed by me locally 
 | **31 Security** | `pnpm audit` clean on `main`+branches today; #109/#110 (owner) merged to `main`; blinded indexes, tamper evidence | audit run, native security tests | CSP/XSS review of in-memory key exposure, retention/privacy, support/monitoring, incident runbook, supply-chain/licence record | independent review is owner-commissioned |
 | **32 Final integration** | not started | n/a | frozen exact-commit candidate, SHA-256 manifest, rollback rehearsal, owner-testing handoff | depends on 21-31 |
 | **CC-X shared platform** | migration `20261120090000` (+ guarded rollback) + typed client + **owner settings screen** (flag `VITE_CONNECTED_COMMERCE`, off by default): per-service consent bound to displayed text hash, legal-review-gated, flags OFF, kill switch, honest verification, idempotent owner RPC, minimal PII-free outbox, append-only audit | PGlite 12/12 (4 mutation checks caught); client 25/25; **not applied to any hosted database** | outbox worker, shopper/supplier identities, rate limits, retention, monitoring/incident playbook, reviewer tooling | counsel-approved consent texts (CC-X-09); approval to apply the migration |
-| **Discover** (CC-D) | not started | n/a | whole pillar | depends on CC-X; legal review for public listings |
+| **Discover** (CC-D) | backend only: migration `20261121090000` (+ guarded rollback): owner profile/listings (availability is an owner-confirmed label, never stock), anonymous search, bounded shopper requests (consent, rate limits, one open request per contact/item, one-time cancel token, 14-day expiry); a request is never a sale, payment or stock hold; invisible unless consent+flag on and kill switch clear | PGlite 16/16; 4 mutation checks each caught by a test; `qa/*.test.mjs` 812/812 after fixing 3 earlier tests the new migration affected (CI run 44847760301 caught them; fixed locally, CI re-run pending); **not applied to any hosted database** | client typed API and owner/shopper screens, attribution, outbox worker, counsel-approved consent text, monitoring | legal review of public listings (CC-X-09); approval to apply migration |
 | **Business Network** (CC-N) | not started | n/a | whole pillar | depends on CC-X |
 | **Supply** (CC-S) | not started | n/a | whole pillar | depends on CC-X |
 | **Clementia 2.0** (CC-C) | not started | n/a | whole pillar | depends on CC-X |
@@ -42,6 +42,7 @@ Rule: nothing is "done" without evidence. "Tested" means executed by me locally 
 - Merged-tree verification (#112 head `b7486a6`): `pnpm build` OK; `pnpm audit --audit-level moderate` clean; `pnpm test` 1963/1963; native `node --test` 1222/1222.
 - #111 CI on `bd50b32`: Device browser engines runs 44798745763, 44798750068, 44798750645 all success (Chrome, Edge, Firefox, macOS WebKit). Earlier `142c338` WebKit failure was the new spec racing app-startup Web Lock; fixed in `bd50b32`; cause inferred from the error text, WebKit trace not inspected.
 - WebKit failure from Codex PR run 44053229960 (`browser-release.spec.mjs` "Lock this session"): trace not downloadable in the agent sandbox; hardening shipped; **cause unproven**; passed on CI for `2dea87e` and later.
+- #112 CI at `8ba82f3` (run set 448477602xx): secret scan, verify, visual-integration, CodeQL, Chrome/Edge/Firefox/WebKit, public smoke, Clementia 100x20 all success. Pinned Node 24 developer QA failed at the Discover push `7eff221` (3 native tests assumed no later migration); fixed, see Discover row.
 - Real-device acceptance: **none performed.** No result in this register is a real-device result.
 
 ## Next developer-owned increments (in order)

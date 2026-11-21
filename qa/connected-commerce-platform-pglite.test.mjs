@@ -149,7 +149,8 @@ test("tables and internal functions are unreachable to authenticated and anon (d
  await assert.rejects(t.db.query("SELECT private.cc_track_enabled($1,'discover')",[t.company]),/permission denied/i);
  await assert.rejects(t.db.query("SELECT private.cc_emit($1,'cc.flag.changed.v1','{}')",[t.company]),/permission denied/i);
  const forced=await t.admin("SELECT relname,relrowsecurity,relforcerowsecurity FROM pg_class WHERE relname LIKE 'cc\\_%' AND relkind='r'");
- assert.equal(forced.length,8);
+ for(const name of ["cc_merchant_flags","cc_consent_events","cc_consent_versions","cc_merchant_verification","cc_operation_keys","cc_outbox","cc_audit_events","cc_platform_kill_switch"])
+  assert.ok(forced.some(r=>r.relname===name),name+" must exist");
  for(const r of forced){assert.equal(r.relrowsecurity,true,r.relname);assert.equal(r.relforcerowsecurity,true,r.relname);}
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM pg_policies WHERE tablename LIKE 'cc\\_%'"))[0].n,0,"no permissive policy may exist");
 });
@@ -232,10 +233,12 @@ test("a consent text cannot exist without a legal review reference, and only one
 
 test("rollback script: removes an unused platform cleanly; refuses once evidence exists",async()=>{
  const t=await setup();
+ await t.script(readFileSync(new URL("../supabase/rollback/20261121090000_connected_commerce_discover_down.sql",import.meta.url),"utf8")); // later migration depends on the platform
  await t.script(down());
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM pg_tables WHERE tablename LIKE 'cc\\_%'"))[0].n,0);
  assert.equal((await t.admin("SELECT count(*)::int AS n FROM pg_proc WHERE proname LIKE 'cc\\_%' OR proname='tallybook_cc_platform'"))[0].n,0);
  await t.script(read(MIGRATION)); // forward again is clean
+ await t.script(read("20261121090000_connected_commerce_discover.sql"));
  await t.publish("discover","v1");
  await t.call("grantConsent",{track:"discover",consentVersion:"v1",textSha256:sh("discover","v1"),operationKey:key()});
  await assert.rejects(t.script(down()),/evidence exists/i);
