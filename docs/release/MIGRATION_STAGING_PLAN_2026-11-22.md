@@ -51,3 +51,9 @@ Approved: a **new project separate from production** (not the paused "V19 Sync T
 
 ## 4. Decisions needed
 - ~~Staging target~~ decided: new isolated project. - Approval to create it and apply (staging only), per migration or all six. - Whether 5 (payments ledger) is applied now or held until a provider is chosen (it is inert, but holds financial-record tables). - Backup/rollback window.
+
+
+## 5. Cost and provisioning status (2026-11-22, later)
+- Organization "adjeiemmaaegh-web's Org" is on the **Free** plan (read-only check). It has 3 projects: production "Tallybook" (active), and two paused (V19 Sync Test, Cashflow-app).
+- A new project in `eu-west-2` would be the **second active project**. Free-plan limits (to verify in the dashboard before provisioning): a small fixed number of active projects, projects pause after a period of inactivity, and no point-in-time recovery or daily backups. If the limit is exceeded, or you want backups/PITR for staging, the project would be a **paid** project: the exact monthly figure must be confirmed in the Supabase dashboard (I have no tool that quotes it).
+- **Not provisioned.** I am waiting for your cost confirmation. Nothing hosted was created or changed.

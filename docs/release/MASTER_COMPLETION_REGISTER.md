@@ -63,6 +63,14 @@ Rule: nothing is "done" without evidence. "Tested" means executed by me locally 
 - `REAL_WORLD_ACCEPTANCE_PROCEDURES_2026-11-22.md`: owner-run procedures; scheduling of devices, printers, physical keys, restore drill and independent review is **not yet confirmed**.
 - Native suite exactly as CI runs it: 1357 pass / 0 fail. Combined #111+#112 scratch merge: tsc clean, 273 files / 2153 client tests pass.
 
+## Third-round decisions applied 2026-11-22 (owner approvals recorded)
+- **#112 merged** (`63d70ae`) after final review of head `c427173`: 13 checks success, 1 skipped by design, no review threads, no dependency/workflow/migration changes since review. **#105 closed as superseded** after verification against `main` (tip is an ancestor, 0 unique commits, evidence docs present; branches and the retained checkpoint ref kept).
+- **#111** (branch `development/st24-05-local-ledger-keyring-20261120`, pushes authorized for its remaining encryption work): merged `main` into it (2 import/test-list conflicts, union), then added security-key step-up gating of "turn encryption off" and "change the encryption key" with recovery-code alternative, an owner security-keys panel and `verifyRecoveryCode`. Pushed `57a1387` (fast-forward, no force). Full client suite on the merged tree 275 files / 2163 tests pass; forced-encrypted pass fixed one test-isolation issue. **Not yet merged: conditions below.**
+- **#111 merge conditions status:** encryption (done), key rotation (done), auto-lock (done), parked-cart/pending-checkout protection (done), recovery (done, simulated; clean-device drill is owner-scheduled), step-up (done). **Open:** encrypted-ledger schema upgrade (today a safe refusal; must exist before the next schema bump), real-device/clean-device recovery drill, independent security review. CI on `57a1387`: not yet checked.
+- **Alerts:** Resend adapter + DNS pre-check + activation checklist built and inactive (`server/resendEmailAdapter.mjs`, 8 tests, 10 mutants caught). No credential, domain, recipient or network use.
+- **Retention/legal:** `docs/privacy/RETENTION_AND_LEGAL_BASIS_PROPOSAL_2026-11-22.md` for counsel (bases, periods, 10 questions, what must exist before enforcement). No deletion executor.
+- **Staging:** cost and provisioning status recorded in the migration plan; **not provisioned** pending the owner's cost confirmation.
+
 ## Next developer-owned increments (in order)
 
 1. Re-run CI on #112's merged head (`b7486a6` + the Connected Commerce screen commit) and on the combined #111+#112 scratch merge.

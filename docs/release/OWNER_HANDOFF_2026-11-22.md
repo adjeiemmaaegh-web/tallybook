@@ -60,3 +60,12 @@ Recorded: merge order #112 then #111; new isolated staging project; retention de
 7. Counsel verification of the retention periods and legal bases per jurisdiction before any enforcement (and approval of a deletion executor, which is not built).
 8. Push permission for #111's branch if you want my remaining encryption work there (nothing was pushed to it this round).
 **#111 merge conditions still open:** encrypted-ledger schema upgrade (not built), physical-device and clean-device recovery drill, independent security review, and moving security-key credentials into the encrypted ledger.
+
+
+## Third round (2026-11-22): done and still needed
+Done under your approvals: #112 merged, #105 closed, #111 updated and pushed (no merge), alert adapter and activation checklist built (inactive), legal-basis proposal written for counsel.
+**Still needing you (none performed):**
+1. **Staging cost confirmation**, then I create the isolated `eu-west-2` project and apply the 37 + 6 migrations to staging only. 2. Production database changes: separate approval, not requested yet.
+3. The actual security administrator's name and contact, the company-owned sender domain, DNS records, Resend dashboard verification and API key as a server secret. Until then no external alert can be sent.
+4. Counsel's verification of the proposal; a deletion executor needs your separate authorization.
+5. Merge of #111 once its open conditions (schema upgrade, real-device recovery drill, independent review) are met. 6. Hardware availability and the independent reviewer's schedule.

@@ -1,6 +1,6 @@
 # Optional security-key step-up (WebAuthn / FIDO2)
 
-**Status: implemented and tested with a simulated authenticator and a Chromium virtual authenticator. NOT yet tested with a physical key. NOT yet wired into any screen** (no owner/admin operation currently asks for it, so existing behaviour is unchanged).
+**Status: implemented and tested with a simulated authenticator and a Chromium virtual authenticator. NOT yet tested with a physical key. wired on the PR #111 branch into the encryption panel** (see "Wiring" below); on `main` the verifier and client exist but no screen uses them until #111 merges.
 
 ## Design
 - A key is an **additional** factor for sensitive operations (`SENSITIVE_OPERATIONS`: disable encryption, rotate data key, change refund policy, export/restore backup, change retention, manage staff admin, approve payment provider). It never replaces the PIN/passphrase, and the **recovery code always remains an alternative** (`evaluateStepUp` allows it, flags `key-bypass-with-recovery-code` for the audit log).
@@ -19,3 +19,9 @@
 2. UI: an owner security-keys panel (register, rename, remove, "require for sensitive operations" toggle) and gating of the listed operations. Not built.
 3. Safari/iOS, Windows Hello and Android platform authenticators, and real USB/NFC keys: **owner-scheduled device tests** (see acceptance procedures section D).
 4. RS256/EdDSA keys are not supported (some older keys); ES256 covers current FIDO2 keys and platform authenticators.
+
+## Wiring (PR #111 branch, commit `57a1387`)
+- `stepUpGate.ts` (`authorizeSensitiveOperation`): not required or no key enrolled -> unchanged; required -> touch the key, or type the **recovery code** instead (verified against the current keyring by `verifyRecoveryCode`, audited as `key-bypass-with-recovery-code`).
+- `LedgerSecurityPanel`: "Turn encryption off" and "Start key change" call the gate first; when refused the panel shows the reason and a recovery-code field. `SecurityKeysPanel` lets the owner add/remove keys and toggle "require", and refuses to require a key unless lockout is impossible.
+- Tests: 5 gate tests + 5 panel tests on a real encrypted ledger; 6 deliberate-break checks (ungating either operation, ignoring the result, accepting any recovery code, always prompting, skipping the code check) each made a test fail. Full client suite on the merged tree: 275 files / 2163 tests pass; forced-encrypted run passes after one test-isolation fix.
+- Still open: physical keys and platform authenticators (owner-scheduled), moving credential storage into the encrypted ledger, gating the other `SENSITIVE_OPERATIONS` once their screens are touched.
