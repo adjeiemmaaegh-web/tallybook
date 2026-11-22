@@ -16,7 +16,9 @@ const fixtureFiles=new Set([
 'client/src/features/reliability/integrity.test.ts','client/src/features/purchases/purchases.test.ts',
 // Added 2026-11-20 (reviewed): synthetic idempotency keys in tests. The scan covers every remote ref, so a fixture in an
 // unmerged branch must be reviewable here before the branches meet.
-'client/src/features/backup/backupTamperFuzz.test.ts','client/src/features/security/st24DisposableMigration.test.ts'
+'client/src/features/backup/backupTamperFuzz.test.ts','client/src/features/security/st24DisposableMigration.test.ts',
+// Added 2026-11-22 (reviewed): synthetic idempotency key for a wallet deposit fixture (wallet-return test).
+'client/src/features/sales/walletPartialReturn.test.ts'
 ]);
 /** Exact synthetic values reviewed as non-secret, valid ONLY in the named files and only when the value is present in that
  * commit's source. The value is assembled so this file does not add another literal for the scanner to find. */
