@@ -53,6 +53,12 @@ Rule: nothing is "done" without evidence. "Tested" means executed by me locally 
 - Multi-device sync: `server/tests/multiDeviceSyncSimulation.test.mjs` (7 tests): six seeded offline devices with their own keys, shuffled + duplicated + concurrent delivery through the real signature verifier and ingest service; exactly-once storage, per-device server total equals device ledger, conflicting same-operation content refused, forged/cross-device refused, revocation mid-sync. Mutation: removing the digest conflict check and the duplicate path are both caught.
 - Refund policy vs payment ledger: `qa/payment-refund-policy-simulation.test.mjs` (2 tests): split-tender sales returned in parts under both policies; provider refund events equal the policy's electronic legs; ledger reconciles to zero net. Mutation (refund off by 1) caught.
 
+## Owner-prep documents added 2026-11-22 (plans and disabled-by-default code; nothing enabled or applied)
+- `PR_MERGE_READINESS_2026-11-22.md`: CI evidence for #112/#111, #105 contained in #112, recommended merge order.
+- `MIGRATION_STAGING_PLAN_2026-11-22.md`: exactly six migrations absent from production (read-only comparison), none partially applied, dependency order, rollback behaviour, staging-first plan. **Not applied.** Paused "V19 Sync Test" project state unread.
+- `RETENTION_AND_ALERTS_PLAN_2026-11-22.md` + `server/retentionPolicy.mjs`, `server/alertChannel.mjs`, `qa/retention-and-alerts.test.mjs` (10 tests, 4 mutants caught): retention off by default, financial records never expirable, no deletion executor; alerts off by default, no external delivery without approval.
+- `REAL_WORLD_ACCEPTANCE_PROCEDURES_2026-11-22.md`: owner-run procedures (two accounts, devices, printers, encryption/key, restore drill, security review). Hardware security key support is not implemented.
+
 ## Next developer-owned increments (in order)
 
 1. Re-run CI on #112's merged head (`b7486a6` + the Connected Commerce screen commit) and on the combined #111+#112 scratch merge.

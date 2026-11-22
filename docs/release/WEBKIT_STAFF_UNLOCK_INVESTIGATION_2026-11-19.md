@@ -22,3 +22,6 @@ if WebKit still fails, inspect trace.zip (`pnpm exec playwright show-trace`).
 - This is ONE pass. The original failure was a single occurrence and may be timing dependent, so a pass neither proves the
   race fixed it nor rules out recurrence. Repeat runs on later SHAs are the evidence to accumulate; if WebKit fails again,
   download trace.zip first (artifact host is blocked in the agent sandbox; the owner can download it).
+
+## Recurrence 2 (2026-11-22, #112 head a78e17e, run 45050166002)
+Same symptom: `browser-release.spec.mjs:49`, `Lock this session` not visible for 60 s after `unlockFixtureOwner`; 15 other WebKit cases passed. **Rerunning only the failed job on the same SHA passed** (macOS WebKit job success at 17:49). A separate, different WebKit lock race ("Another tab is editing...", PR #111 two-tab spec) was fixed with a bounded retry in `qa/st24-active-ledger-browser.spec.mjs`. Root cause of this one is still not proven; trace.zip was not inspected (blob host blocked in the agent sandbox). Not a regression of the code under test, but it is an intermittent failure that should be diagnosed from the trace by someone who can download it.
