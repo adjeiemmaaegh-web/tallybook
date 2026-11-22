@@ -18,6 +18,8 @@ import { canonicalSt24CloneJson } from "./st24CloneCodec.mjs";
 
 /** decrypting = reversible path back to plaintext: reads open sealed rows, writes store plaintext. */
 export type SealMode = "plaintext" | "migrating" | "encrypted" | "decrypting";
+/** Keys for one generation of the ledger data key (row sealing + blind indexes). */
+export interface SealKeys { rowKey: Uint8Array; blindKey: Uint8Array }
 export class LedgerLockedError extends Error { constructor(message = "The ledger is locked. Enter your passphrase to unlock it.") { super(message); this.name = "LedgerLockedError"; } }
 export class LedgerIntegrityError extends Error { constructor(message: string) { super(message); this.name = "LedgerIntegrityError"; } }
 
@@ -49,15 +51,29 @@ export function isSealFenced(scope: string): boolean {
 
 export class LedgerSeal {
   mode: SealMode = "plaintext";
-  private keys: { rowKey: Uint8Array; blindKey: Uint8Array } | null = null;
+  private keys: SealKeys | null = null;
+  /** ONLY while a data-key rotation is in progress: the outgoing generation, used to READ rows not yet re-sealed. Never used to write. */
+  private previous: SealKeys | null = null;
   constructor(readonly scope: string) {}
   get unlocked() { return this.keys !== null; }
-  unlock(keys: { rowKey: Uint8Array; blindKey: Uint8Array }) {
+  get rotating() { return this.previous !== null; }
+  unlock(keys: SealKeys) {
     this.lock();
     this.keys = { rowKey: new Uint8Array(keys.rowKey), blindKey: new Uint8Array(keys.blindKey) };
   }
+  /** Data-key rotation: write with `next`, but keep reading rows still sealed under `previous`. */
+  unlockForRotation(next: SealKeys, previous: SealKeys) {
+    this.unlock(next);
+    this.previous = { rowKey: new Uint8Array(previous.rowKey), blindKey: new Uint8Array(previous.blindKey) };
+  }
+  /** Rotation finished: the outgoing key is destroyed and can no longer open anything. */
+  dropPrevious() {
+    if (this.previous) { zeroSt24Key(this.previous.rowKey); zeroSt24Key(this.previous.blindKey); }
+    this.previous = null;
+  }
   /** Overwrites the in-memory keys (best effort). Nothing on disk changes. */
   lock() {
+    this.dropPrevious();
     if (this.keys) { zeroSt24Key(this.keys.rowKey); zeroSt24Key(this.keys.blindKey); }
     this.keys = null;
   }
@@ -67,7 +83,34 @@ export class LedgerSeal {
     return sealSt24Row({ rowKey: this.requireKeys().rowKey, scope: this.scope, table, primaryKey, record });
   }
   open(table: string, primaryKey: unknown, sealed: unknown): Record<string, unknown> {
-    return openSt24Row({ rowKey: this.requireKeys().rowKey, scope: this.scope, table, primaryKey, sealed });
+    const current = this.requireKeys();
+    try {
+      return openSt24Row({ rowKey: current.rowKey, scope: this.scope, table, primaryKey, sealed });
+    } catch (error) {
+      // During a rotation a row may still be sealed under the outgoing key. Outside a rotation there is no fallback at all.
+      if (!this.previous) throw error;
+      return openSt24Row({ rowKey: this.previous.rowKey, scope: this.scope, table, primaryKey, sealed });
+    }
+  }
+  /** Like open(), but also reports which key generation opened the row (only 'previous' during a rotation). */
+  openWithGeneration(table: string, primaryKey: unknown, sealed: unknown): { record: Record<string, unknown>; generation: "current" | "previous" } {
+    const current = this.requireKeys();
+    try {
+      return { record: openSt24Row({ rowKey: current.rowKey, scope: this.scope, table, primaryKey, sealed }), generation: "current" };
+    } catch (error) {
+      if (!this.previous) throw error;
+      return { record: openSt24Row({ rowKey: this.previous.rowKey, scope: this.scope, table, primaryKey, sealed }), generation: "previous" };
+    }
+  }
+  /** Blind with the OUTGOING key: used only to verify the index copies of rows that have not been re-sealed yet. */
+  blindPrevious(table: string, field: string, value: unknown) {
+    if (!this.previous) throw new LedgerLockedError();
+    return blindSt24Value({ blindKey: this.previous.blindKey, scope: this.scope, table, field, value });
+  }
+  /** Rotation check: true when this row is sealed under the OUTGOING key (it still needs re-sealing). */
+  isOnPreviousKey(table: string, primaryKey: unknown, sealed: unknown): boolean {
+    const current = this.requireKeys();
+    try { openSt24Row({ rowKey: current.rowKey, scope: this.scope, table, primaryKey, sealed }); return false; } catch { return true; }
   }
   blind(table: string, field: string, value: unknown) {
     return blindSt24Value({ blindKey: this.requireKeys().blindKey, scope: this.scope, table, field, value });
@@ -107,12 +150,12 @@ export function installLedgerSeal(db: Dexie, seal: LedgerSeal) {
       const metas = metaFor(down);
       const get = (name: string) => metas.get(name)!;
 
-      const clearProjection = (meta: TableMeta, record: Record<string, unknown>) => {
+      const clearProjection = (meta: TableMeta, record: Record<string, unknown>, generation: "current" | "previous" = "current") => {
         const stored: Record<string, unknown> = {};
         for (const [path, isBlinded] of meta.indexPaths) {
           const value = Dexie.getByKeyPath(record, path);
           if (value === undefined) continue;
-          Dexie.setByKeyPath(stored, path, isBlinded && blindable(value) ? seal.blind(meta.name, path, value) : value);
+          Dexie.setByKeyPath(stored, path, isBlinded && blindable(value) ? (generation === "previous" ? seal.blindPrevious(meta.name, path, value) : seal.blind(meta.name, path, value)) : value);
         }
         for (const path of meta.primaryPaths) Dexie.setByKeyPath(stored, path, Dexie.getByKeyPath(record, path));
         return stored;
@@ -132,9 +175,10 @@ export function installLedgerSeal(db: Dexie, seal: LedgerSeal) {
           if (seal.mode === "encrypted") throw new LedgerIntegrityError(NOT_SEALED_READS);
           return row; // plaintext or migrating: row not converted yet
         }
-        const record = seal.open(meta.name, primaryKeyOf(meta, row), row[SEAL_FIELD]);
-        // Clear/blinded index copies must agree with the authenticated body, or someone edited the index.
-        const expected = clearProjection(meta, record);
+        const { record, generation } = seal.openWithGeneration(meta.name, primaryKeyOf(meta, row), row[SEAL_FIELD]);
+        // Clear/blinded index copies must agree with the authenticated body, or someone edited the index. A row still under the
+        // outgoing key (mid-rotation only) is checked against the outgoing blind key; everything else against the current one.
+        const expected = clearProjection(meta, record, generation);
         for (const path of meta.indexPaths.keys())
           if (!sameJson(Dexie.getByKeyPath(expected, path), Dexie.getByKeyPath(row, path)))
             throw new LedgerIntegrityError(`An index value of ${meta.name} does not match its encrypted record. The row was refused.`);

@@ -23,10 +23,11 @@ import {
   changeLedgerPassphrase, createLedgerKeyringWithDek, replaceLedgerRecoveryCode, resetLedgerPassphraseWithRecovery,
   unlockLedgerDek, validateLedgerKeyring, type LedgerKeyringV1,
 } from "./st24LedgerKeyring.mjs";
-import { deriveSt24Subkeys, openSt24Row, zeroSt24Key } from "./st24RowCipher.mjs";
+import { deriveSt24Subkeys, openSt24Row, sealSt24Row, zeroSt24Key, type SealedSt24Row } from "./st24RowCipher.mjs";
 import { BLINDED_INDEX_FIELDS, SEAL_EXEMPT_TABLES, SEAL_FIELD, setSealFence, type SealMode } from "./st24LedgerSeal";
 
-export type LedgerSecurityState = "plaintext" | "migrating" | "encrypted" | "decrypting";
+/** rekeying = the data key is being replaced (rows are moving from the old key to the new one); resumable. */
+export type LedgerSecurityState = "plaintext" | "migrating" | "encrypted" | "decrypting" | "rekeying";
 export const KEYRING_DB_NAME = "tallybook-keyring-v1";
 const STORE = "keyrings";
 const BATCH = 200;
@@ -36,6 +37,8 @@ interface TableFingerprint { count: number; sha256: string }
 interface LedgerRecord {
   dbName: string; version: number; state: Exclude<LedgerSecurityState, "plaintext">;
   keyring: LedgerKeyringV1; precheck?: Record<string, TableFingerprint>; startedAt?: string; updatedAt: string;
+  /** Only while rekeying: the incoming keyring (wrapped by the same passphrase + a NEW recovery code) and the incoming data key sealed under the OUTGOING key, so anyone holding the old credentials can resume. */
+  rekey?: { nextKeyring: LedgerKeyringV1; nextDek: SealedSt24Row };
   /** Ledger schema the sealed rows were projected for. A different app schema must not open them (see prepare). */
   schemaVersion: number;
 }
@@ -234,6 +237,7 @@ export type Credential = { passphrase: string } | { recoveryCode: string };
 /** Unlock with the passphrase or recovery code. Wrong credentials change nothing. */
 export async function unlockLedger(db: TallybookDB, credential: Credential, idb: IDBFactory = indexedDB): Promise<void> {
   const rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  if (rec.state === "rekeying") fail("An encryption key change was interrupted. Finish it first (enter your passphrase or recovery code to continue).");
   const dek = await ("passphrase" in credential ? unlockLedgerDek(rec.keyring, credential.passphrase, "passphrase") : unlockLedgerDek(rec.keyring, credential.recoveryCode, "recovery"));
   const keys = await deriveFrom(dek);
   db.ledgerSeal.unlock(keys); db.ledgerSeal.setMode(modeFor(rec.state)); setSealFence(db.name, rec.state !== "decrypting");
@@ -264,6 +268,7 @@ export async function disableLedgerEncryption(db: TallybookDB, opts: { onProgres
   const idb = opts.idb ?? indexedDB;
   if (!db.ledgerSeal.unlocked) fail("Unlock the ledger first.");
   let rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  if (rec.state === "rekeying") fail("Finish the interrupted key change before turning encryption off.");
   await withCrossTabDataLock("exclusive", async () => {
     const current = await fingerprintLedger(db);
     // Baseline = what the ledger looked like BEFORE any encryption began, when we still have it (interrupted
@@ -279,6 +284,90 @@ export async function disableLedgerEncryption(db: TallybookDB, opts: { onProgres
     await deleteRecord(db.name, rec.version, idb);
     setSealFence(db.name, false); db.ledgerSeal.setMode("plaintext"); db.ledgerSeal.lock();
   });
+}
+
+// ---------- data-key rotation (every row IS re-encrypted under a brand-new key) ----------
+const REKEY_TABLE = "rekeyMarker", REKEY_PK = "next-data-key";
+const toB64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+const fromB64 = (t: string) => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+export interface PreparedRotation { readonly recoveryCode: string; readonly keyring: LedgerKeyringV1 }
+const preparedRotations = new WeakMap<PreparedRotation, Uint8Array>();
+/** Step 1: check the passphrase and make a NEW data key + NEW recovery code in memory. Nothing is written yet. */
+export async function prepareDataKeyRotation(db: TallybookDB, passphrase: string, idb: IDBFactory = indexedDB): Promise<PreparedRotation> {
+  const rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  if (rec.state !== "encrypted") fail("Finish or roll back the encryption in progress first.");
+  if (!db.ledgerSeal.unlocked) fail("Unlock the ledger first.");
+  zeroSt24Key(await unlockLedgerDek(rec.keyring, passphrase, "passphrase")); // wrong passphrase throws here, before anything changes
+  const { keyring, recoveryCode, dek } = await createLedgerKeyringWithDek({ workspaceId: db.name, companyId: LEDGER_SCOPE, ownerPassphrase: passphrase });
+  const prepared: PreparedRotation = Object.freeze({ recoveryCode, keyring });
+  preparedRotations.set(prepared, dek);
+  return prepared;
+}
+export function discardPreparedRotation(prepared: PreparedRotation) { const d = preparedRotations.get(prepared); if (d) d.fill(0); preparedRotations.delete(prepared); }
+
+export interface RotateOptions { passphrase: string; typedRecoveryCode: string; onProgress?: (done: number, total: number) => void; idb?: IDBFactory }
+/**
+ * Step 2: re-seal every row under the new data key. Crash-safe: both keyrings are durable BEFORE the first row changes (the new data key
+ * is stored sealed under the old one), rows are readable under either key at every instant, the app-visible content is fingerprinted
+ * before and after, and the old key is destroyed only after every row opens with the new key alone.
+ */
+export async function beginDataKeyRotation(db: TallybookDB, prepared: PreparedRotation, opts: RotateOptions): Promise<void> {
+  const idb = opts.idb ?? indexedDB; const newDek = preparedRotations.get(prepared);
+  if (!newDek) throw new Error("This key change was already used or cancelled. Start again.");
+  if (opts.typedRecoveryCode.trim() !== prepared.recoveryCode) fail("The recovery code you typed does not match. Copy it exactly and keep it somewhere safe.");
+  const rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  if (rec.state !== "encrypted") fail("Finish or roll back the encryption in progress first.");
+  if (!db.ledgerSeal.unlocked) fail("Unlock the ledger first.");
+  if (!(await getVerifiedBackupReceipt(db))) fail("Export and verify an encrypted backup first. A key change rewrites every record.");
+  const oldKeys = await deriveFrom(await unlockLedgerDek(rec.keyring, opts.passphrase, "passphrase"));
+  const newKeys = await deriveFrom(new Uint8Array(newDek));
+  const sealedNext = sealSt24Row({ rowKey: oldKeys.rowKey, scope: db.name, table: REKEY_TABLE, primaryKey: REKEY_PK, record: { dek: toB64(newDek) } });
+  preparedRotations.delete(prepared); newDek.fill(0);
+  await withCrossTabDataLock("exclusive", async () => {
+    const before = await fingerprintLedger(db);
+    const next = await writeRecord({ dbName: db.name, state: "rekeying", keyring: rec.keyring, rekey: { nextKeyring: prepared.keyring, nextDek: sealedNext }, precheck: before, startedAt: new Date().toISOString() }, rec.version, idb);
+    db.ledgerSeal.unlockForRotation(newKeys, oldKeys); db.ledgerSeal.setMode("encrypted");
+    zeroSt24Key(oldKeys.rowKey); zeroSt24Key(oldKeys.blindKey); zeroSt24Key(newKeys.rowKey); zeroSt24Key(newKeys.blindKey);
+    await finishRotation(db, next, before, idb, opts.onProgress);
+  });
+}
+/** After a crash mid-rotation: the OLD passphrase or OLD recovery code recovers the new key from the durable record, then finishes. */
+export async function resumeDataKeyRotation(db: TallybookDB, credential: Credential, opts: { onProgress?: (d: number, t: number) => void; idb?: IDBFactory } = {}) {
+  const idb = opts.idb ?? indexedDB;
+  const rec = await readRecord(db.name, idb);
+  if (!rec || rec.state !== "rekeying" || !rec.rekey || !rec.precheck) fail("There is no interrupted key change to resume.");
+  const oldKeys = await deriveFrom(await ("passphrase" in credential ? unlockLedgerDek(rec!.keyring, credential.passphrase, "passphrase") : unlockLedgerDek(rec!.keyring, credential.recoveryCode, "recovery")));
+  let newDek: Uint8Array;
+  try { newDek = fromB64((openSt24Row({ rowKey: oldKeys.rowKey, scope: db.name, table: REKEY_TABLE, primaryKey: REKEY_PK, sealed: rec!.rekey!.nextDek }) as { dek: string }).dek); }
+  catch { zeroSt24Key(oldKeys.rowKey); zeroSt24Key(oldKeys.blindKey); return fail("The interrupted key change record cannot be read with this credential."); }
+  const newKeys = await deriveFrom(newDek);
+  db.ledgerSeal.unlockForRotation(newKeys, oldKeys); db.ledgerSeal.setMode("encrypted"); setSealFence(db.name, true);
+  zeroSt24Key(oldKeys.rowKey); zeroSt24Key(oldKeys.blindKey); zeroSt24Key(newKeys.rowKey); zeroSt24Key(newKeys.blindKey);
+  await db.open();
+  await withCrossTabDataLock("exclusive", () => finishRotation(db, rec!, rec!.precheck!, idb, opts.onProgress));
+}
+/** Count raw sealed rows that do NOT yet open with the incoming key alone. */
+async function rowsStillOnOldKey(db: TallybookDB): Promise<number> {
+  let stale = 0;
+  for (const name of sealedTables(db)) {
+    const [keys, rows] = await Promise.all([
+      rawStore<IDBValidKey[]>(db, name, s => s.getAllKeys() as IDBRequest<IDBValidKey[]>),
+      rawStore<Record<string, unknown>[]>(db, name, s => s.getAll() as IDBRequest<Record<string, unknown>[]>),
+    ]);
+    rows.forEach((row, i) => { if (SEAL_FIELD in row && db.ledgerSeal.isOnPreviousKey(name, keys[i], row[SEAL_FIELD])) stale++; });
+  }
+  return stale;
+}
+async function finishRotation(db: TallybookDB, rec: LedgerRecord, before: Record<string, TableFingerprint>, idb: IDBFactory, onProgress?: (d: number, t: number) => void) {
+  await convertAll(db, onProgress); // reads rows under either key, writes them under the new one (and re-blinds every index)
+  const bad = diffFingerprints(before, await fingerprintLedger(db));
+  if (bad.length) fail(`Verification failed for ${bad.join(", ")}. Nothing was deleted; the ledger stays readable under either key. Resume to finish.`);
+  const scan = await scanRawLedger(db);
+  if (scan.plaintext > 0 || scan.unblinded > 0) fail(`${scan.plaintext} plaintext rows were found during the key change. Resume to finish.`);
+  const stale = await rowsStillOnOldKey(db);
+  if (stale > 0) fail(`${stale} rows are still sealed under the old key. Resume to finish.`);
+  await writeRecord({ dbName: db.name, state: "encrypted", keyring: rec.rekey!.nextKeyring }, rec.version, idb);
+  db.ledgerSeal.dropPrevious(); db.ledgerSeal.setMode("encrypted");
 }
 
 // ---------- credential management (rows are not re-encrypted: only the key wrap changes) ----------
@@ -302,6 +391,7 @@ export const rotateLedgerRecoveryCode = (db: TallybookDB, passphrase: string, id
 export const RECOVERY_PACKAGE_KIND = "tallybook-ledger-recovery-package";
 export async function exportRecoveryPackage(db: TallybookDB, idb: IDBFactory = indexedDB): Promise<string> {
   const rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  if (rec.state === "rekeying") fail("Finish the interrupted key change before exporting a recovery package.");
   return JSON.stringify({ kind: RECOVERY_PACKAGE_KIND, version: 1, ledger: db.name, exportedAt: new Date().toISOString(), keyring: rec.keyring }, null, 2);
 }
 /** Rebuild the key record for a ledger whose record is missing. Refuses if a record already exists. */
