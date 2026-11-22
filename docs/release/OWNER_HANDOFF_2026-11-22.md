@@ -49,3 +49,14 @@ node scripts/release-candidate-manifest.mjs --out candidate.json   # on a clean,
 
 ## Branch-push disclosure (encryption work)
 On the strength of "Continue development: Encryption ..." I pushed commits `1a1453f` and `598d95d` to PR #111's branch `development/st24-05-local-ledger-keyring-20261120`, not only to `claude/cool-ride-cf8i8r`. Nothing was merged. CI has not yet run on those commits. If you did not intend that, say so and I will leave the branch as is; no force-push was used.
+
+
+## Decisions recorded 2026-11-22 (second round) and what is still needed
+Recorded: merge order #112 then #111; new isolated staging project; retention defaults; email + in-app alerts with owner/security-administrator routing; optional WebAuthn; simulations only for payments.
+**Exact operations still needing your authorization (none performed):**
+1. Merge #112 into `main` (after you accept `PR_MERGE_READINESS_2026-11-22.md`). 2. Merge #111 (after the encryption conditions below). 3. Close #105 as superseded (after #112 merges).
+4. Create the new staging Supabase project and apply the 37-migration baseline plus the six migrations to **staging only**. 5. Later, a separate approval for production.
+6. Name the security administrator, the email provider and sender domain; until then no external alert is possible.
+7. Counsel verification of the retention periods and legal bases per jurisdiction before any enforcement (and approval of a deletion executor, which is not built).
+8. Push permission for #111's branch if you want my remaining encryption work there (nothing was pushed to it this round).
+**#111 merge conditions still open:** encrypted-ledger schema upgrade (not built), physical-device and clean-device recovery drill, independent security review, and moving security-key credentials into the encrypted ledger.
