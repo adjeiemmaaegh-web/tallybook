@@ -42,7 +42,8 @@ for (const [name, A] of Object.entries(ADAPTERS)) {
     const good = A.event(adapter, t.company, intentId, "succeeded", 5000);
     const wrongKey = A.event(A.make(OTHER), t.company, intentId, "succeeded", 5000);
     const stale = A.event(adapter, t.company, intentId, "succeeded", 5000, randomUUID(), Date.now() - 3_600_000);
-    for (const bad of [wrongKey, stale, {...good, rawBody: good.rawBody.replace("5000", "9999")}, {rawBody: good.rawBody, headers: {}}, {rawBody: "{", headers: good.headers}, {rawBody: "x".repeat(5000), headers: good.headers}])
+    const unknownKind = A.event(adapter, t.company, intentId, "bogus", 5000);   // correctly signed, but not an event we understand
+    for (const bad of [wrongKey, stale, unknownKind, {...good, rawBody: good.rawBody.replace("5000", "9999")}, {rawBody: good.rawBody, headers: {}}, {rawBody: "{", headers: good.headers}, {rawBody: "x".repeat(5000), headers: good.headers}])
       await assert.rejects(send(bad), e => e instanceof SettlementError && e.code === "unauthenticated");
     assert.equal(writes(), 0, "nothing unauthenticated reaches the ledger");
     assert.equal((await send(good)).status, "succeeded");
