@@ -1,0 +1,86 @@
+{
+  "date": "2026-11-17",
+  "decision": "NO-GO",
+  "reviewBaseline": "00999a7c00ddec022ed77ceaf6007443a0a31300",
+  "testedBranchSource": "294f7744aa92ab293b3c0093a505ca6435a37a62",
+  "fullRun": {
+    "command": "Release validation 44047956971; checkout edf115e1d69bc8f38fae4073807da3ba20ff41e0 equals review head 00999a7c00ddec022ed77ceaf6007443a0a31300 tree 15a7e643e2a8772080350a47865c440f80114c48",
+    "result": "pass",
+    "scope": "1208 native, 1915 client in 240 files, types/build, 30 Chromium checks, dependency advisory gate and identical two-build manifests. Later browser-suite and notice-packager changes are separately verified.",
+    "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44047956971"
+  },
+  "browserMatrix": {
+    "command": "Four-engine run 44049601544 at 294f7744aa92ab293b3c0093a505ca6435a37a62",
+    "result": "pass",
+    "scope": "16 cases each on Windows Edge, macOS WebKit, Linux Chrome and Firefox (64 total), including native financial invariants, all historical schema opens, populated history and two-tab key recovery.",
+    "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601544"
+  },
+  "packageRun": {
+    "command": "Security and package run 44049601404 at 294f7744aa92ab293b3c0093a505ca6435a37a62",
+    "result": "pass",
+    "scope": "All 3 jobs; 37 focused client, 21 native security/package cases, strict types, production build, two identical 321-file package manifests, 190 dependency license records, 185 notice files, 0 High/Critical CodeQL, no unclassified historical secret findings.",
+    "evidence": "https://github.com/adjeiemmaaegh-web/tallybook/actions/runs/44049601404"
+  },
+  "checkpoints": [
+    {
+      "kind": "NO-GO development artifact",
+      "reviewHead": "ea61775af959d8016b35cd563b4068ac4cd7e507",
+      "executedSource": "198332faed5a6d04f4075b588eee9ac348ec1b2f",
+      "identicalTree": "c29e198d66e7876a772acd94a24d92b81d0eb74e",
+      "retainedRef": "codex/checkpoint-20261117-198332fa",
+      "manifestSha256": "95d4c6e6dc3d6c75e42619518b8b043614db2b5348e4f1fa2ca3ce999f47c781",
+      "artifactId": 14312355794,
+      "artifactZipSha256": "703aa3e92948f4407ee391028da70decb2617931c962823f183d1a72ae6a941f",
+      "runId": 44045528700,
+      "artifactExpires": "2026-12-01",
+      "files": 136,
+      "productionDependencyVersions": 190
+    },
+    {
+      "reviewHead": "00999a7c00ddec022ed77ceaf6007443a0a31300",
+      "executedSource": "edf115e1d69bc8f38fae4073807da3ba20ff41e0",
+      "identicalTree": "15a7e643e2a8772080350a47865c440f80114c48",
+      "retainedRef": "codex/checkpoint-20261117-edf115e1",
+      "manifestSha256": "f21d780a76f103ebca8e5aad2e142da9cb9debcb80224bf2cfe569df7eaab878",
+      "artifactId": 14313341497,
+      "artifactZipSha256": "5e64c30539b708d52258f1774f463dab5e86fd6e7f807b81578c5a3d874abc32",
+      "runId": 44047956971,
+      "files": 136,
+      "productionDependencyVersions": 190,
+      "decision": "NO-GO"
+    },
+    {
+      "executedSource": "294f7744aa92ab293b3c0093a505ca6435a37a62",
+      "manifestSha256": "446cf059a75b09f82fec3e3efcebbae93de1e2547e32674dca789a9a82da2a3b",
+      "artifactId": 14312399375,
+      "artifactZipSha256": "a2f17231954c47984bff4015aa7a3ee4835231da534f45280f08c0fd23c6418d",
+      "runId": 44049601404,
+      "files": 321,
+      "productionDependencyVersions": 190,
+      "originalTopLevelNoticeFiles": 185,
+      "decision": "NO-GO"
+    }
+  ],
+  "caughtAndRepairedFinding": {
+    "source": "325463ebdc7e077599b3cd3c35e136c554e85e08",
+    "runId": 44049026845,
+    "rule": "js/redos",
+    "severity": 7.5,
+    "file": "scripts/freeze-development-checkpoint.mjs",
+    "line": 38,
+    "fixedSource": "5301c8817ddf171984ac0b0a0c87432641960e6f",
+    "resolution": "Replace ambiguous nested filename repetition with a linear suffix pattern; malformed long-name regression and unchanged CodeQL gate pass."
+  },
+  "remaining": {
+    "verifiedTasks": 1,
+    "partialTasks": 94,
+    "missingEngineeringTasks": 4,
+    "ownerExternalBlockedTasks": 20,
+    "unreviewedTasks": 0,
+    "formalStageAcceptance": false,
+    "productionAuthorization": false,
+    "physicalPhoneAcceptance": false,
+    "realProviderAcceptance": false
+  },
+  "artifactRetention": "Hosted artifacts expire after 14 days; exact source refs and committed metadata persist. No final release evidence-retention policy is approved."
+}

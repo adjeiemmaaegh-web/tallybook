@@ -1,3 +1,4 @@
+import {jsonResponseFixture} from "@/test/httpResponseFixture";
 import {describe,it,expect,vi} from 'vitest';
 import {createHash,webcrypto} from 'node:crypto';
 import type {TallybookDB} from '@/db/TallybookDB';
@@ -50,9 +51,7 @@ describe('explicit signed sale delivery',()=>{
         expect(url).toBe(endpoint);
         expect(init.credentials).toBe('omit');
         expect((JSON.parse(init.body as string) as {envelope:{payloadBase64:string}}).envelope.payloadBase64).toBeTruthy();
-        return {status:200,redirected:false,type:'basic',url,headers:new Headers({'content-type':'application/json'}),
-          text:async()=>JSON.stringify({businessId:'localA',deviceId:'deviceA',operationId:'sale:s1',
-            payloadDigest:sha256,receivedAtUtc:'2026-10-27T01:00:00.000Z',status:'accepted'})} as Response;
+        return jsonResponseFixture(url,{businessId:'localA',deviceId:'deviceA',operationId:'sale:s1',payloadDigest:sha256,receivedAtUtc:'2026-10-27T01:00:00.000Z',status:'accepted'});
       }});
     const prepared=await adapter.prepare(pending);
     expect(prepared.sha256).toBe(sha256);
@@ -64,4 +63,18 @@ describe('explicit signed sale delivery',()=>{
     await expect(adapter.prepare({...pending,payloadDigest:'f'.repeat(64)})).rejects.toThrow();
     expect(()=>validateSignedSaleEndpoint('http://tallybook.example/api/central/sales')).toThrow();
   });
+});
+
+it('rejects foreign or contradictory signed-sale receipts at the adapter boundary',async()=>{
+ const keys=await webcrypto.subtle.generateKey('Ed25519',false,['sign','verify']);
+ const receipt={businessId:'localA',deviceId:'deviceA',operationId:'sale:s1',payloadDigest:sha256,
+   receivedAtUtc:'2026-10-27T01:00:00.000Z',status:'accepted'};
+ for(const mismatch of [{businessId:'foreign'},{deviceId:'foreign'},{operationId:'different'},
+   {payloadDigest:'f'.repeat(64)},{status:'rejected'},{receivedAtUtc:'invalid'}]){
+   const adapter=createSignedSaleUploadAdapter({database:{centralSaleEvents:{get:async()=>event}} as unknown as TallybookDB,
+     deviceId:'deviceA',privateKey:keys.privateKey,endpoint,accessToken:'x'.repeat(30),
+     subtle:webcrypto.subtle as unknown as SubtleCrypto,
+     transport:async url=>jsonResponseFixture(url,{...receipt,...mismatch})});
+   await expect(adapter.send(await adapter.prepare(pending))).rejects.toThrow(/acknowledgment does not reconcile/);
+ }
 });

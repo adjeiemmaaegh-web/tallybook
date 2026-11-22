@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatReceiptShareText, receiptPaymentDescription, resolveReceiptDetail, shareReceiptText } from "@/features/receipts/receiptDetail";
+import { formatReceiptShareText, receiptPaymentDescription, receiptProviderStatus, resolveReceiptDetail, shareReceiptText } from "@/features/receipts/receiptDetail";
 import type { SaleSnapshot } from "@/features/sales/sales";
 
 const profile = { name: "Kofi's Corner", currency: "GHS" };
@@ -19,7 +19,7 @@ describe("read-only receipt detail", () => {
     const wallet: SaleSnapshot = { ...snapshot, sales: [{ ...snapshot.sales[0], paymentMethod: "wallet", walletAppliedMinor: 1500 }], payments: [] };
     const detail = resolveReceiptDetail({ receiptId: "receipt-1", snapshot: wallet, profile, customers })!;
     const text = formatReceiptShareText(detail);
-    expect(text).toMatch(/Settled: GHS\s15\.00/);
+    expect(text).toMatch(/Recorded paid: GHS\s15\.00/);
     expect(text).toMatch(/Prepaid wallet used: GHS\s15\.00/);
     expect(text).toMatch(/New cash received: GHS\s0\.00/);
     expect(text).toMatch(/Remaining: GHS\s30\.00/);
@@ -45,7 +45,7 @@ describe("read-only receipt detail", () => {
     expect(text).toContain("Customer: Ama Mensah");
     expect(text).toContain("Cooking oil × 2");
     expect(text).toMatch(/Discount: GHS\s5\.00/);
-    expect(text).toMatch(/Settled: GHS\s15\.00/);
+    expect(text).toMatch(/Recorded paid: GHS\s15\.00/);
     expect(text).toMatch(/Remaining: GHS\s30\.00/);
     expect(text).toContain("Payment: Mobile Money · MTN MoMo · Ref MOMO-77");
     expect(text).not.toContain("sale-1");
@@ -84,6 +84,33 @@ describe("read-only receipt detail", () => {
 
     expect(detail.sale).toMatchObject({ totalMinor: 4500, amountPaidMinor: 0, outstandingMinor: 4500 });
     expect(receiptPaymentDescription(detail)).toBe("Credit · Pay later");
-    expect(formatReceiptShareText(detail)).toMatch(/Settled: GHS\s0\.00[\s\S]*Remaining: GHS\s45\.00/);
+    expect(formatReceiptShareText(detail)).toMatch(/Recorded paid: GHS\s0\.00[\s\S]*Remaining: GHS\s45\.00/);
   });
+});
+
+
+describe('recorded tender versus provider settlement',()=>{
+ it('labels every manual electronic tender without manufacturing provider proof or changing money',()=>{
+  for(const method of ['mobile','card','split'] as const){
+   const original=structuredClone(snapshot),input={...original,sales:[{...original.sales[0],paymentMethod:method}]};
+   const before=JSON.stringify(input);
+   const detail=resolveReceiptDetail({receiptId:'receipt-1',snapshot:input,profile,customers})!;
+   const text=formatReceiptShareText(detail);
+   expect(text).toContain('Manually recorded tender; bank or payment-provider settlement is not verified.');
+   expect(text).toMatch(/Recorded paid: GHS\s15\.00/);expect(text).not.toMatch(/^Settled:/m);
+   expect(JSON.stringify(input)).toBe(before);
+  }
+ });
+ it('cash-only, wallet-only and credit-only evidence do not invent an electronic provider relationship',()=>{
+  for(const method of ['cash','wallet','credit'] as const){
+   const detail=resolveReceiptDetail({receiptId:'receipt-1',snapshot:{...snapshot,sales:[{...snapshot.sales[0],paymentMethod:method}],payments:[]},profile,customers})!;
+   expect(receiptProviderStatus(detail)).toBeUndefined();
+  }
+ });
+ it('original sale currency controls historical receipt values after company settings change',()=>{
+  const historical={...snapshot,sales:[{...snapshot.sales[0],currency:'UGX'}]};
+  const detail=resolveReceiptDetail({receiptId:'receipt-1',snapshot:historical,profile,customers})!;
+  expect(detail.currency).toBe('UGX');const text=formatReceiptShareText(detail);
+  expect(text).toMatch(/Total: UGX\s4,500/);expect(text).not.toContain('GHS');expect(historical.sales[0].totalMinor).toBe(4500);
+ });
 });

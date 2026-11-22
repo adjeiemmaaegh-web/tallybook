@@ -83,7 +83,10 @@ export function financialRange(period: FinancialPeriod, now = new Date(), custom
   const start = businessDayStart(now, country);
   const end = businessDayEnd(now, country);
   const setDay = (date: Date, value: number) => ghana ? date.setUTCDate(value) : date.setDate(value);
-  const setMonth = (date: Date, month: number, day?: number) => ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day);
+  // Passing an explicit `undefined` day makes setMonth/setUTCMonth produce an Invalid Date, so only pass it when given.
+  const setMonth = (date: Date, month: number, day?: number) => day === undefined
+    ? (ghana ? date.setUTCMonth(month) : date.setMonth(month))
+    : (ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day));
   const getDay = (date: Date) => ghana ? date.getUTCDate() : date.getDate();
   const getMonth = (date: Date) => ghana ? date.getUTCMonth() : date.getMonth();
   const weekday = ghana ? start.getUTCDay() : start.getDay();
@@ -166,7 +169,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
     throw new Error('Prepaid liability report needs complete transfer and currency evidence.');
   const prepaidLiability = input.customerBenefits !== undefined
     ? auditRun10PrepaidCashConservation({transfers: input.walletTransfers!, benefits: input.customerBenefits,
-      sales: input.sales, reversals: input.reversals}, input.walletCurrency!)
+      sales: input.sales, reversals: input.reversals, returns: input.cashReturns ?? []}, input.walletCurrency!)
     : undefined;
   const partialReturns = input.cashReturns ?? [];
   if (partialReturns.length) reconcileCashPartialReturns(input.sales,input.saleLines ?? [],input.payments,partialReturns,input.reversals);
@@ -178,10 +181,10 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   const walletNetCashMinor=total(walletTransfers,t=>t.kind==='deposit'?t.amountMinor:-t.amountMinor);
   const expenses=input.expenses.filter(e=>within(`${e.expenseDate}T12:00:00`,range));
   const reversals=input.reversals.filter(r=>within(r.createdAt,range));
-  const revenueMinor=total(sales,s=>s.totalMinor)+total(reversals,r=>r.reversedSaleTotalMinor)-total(refunds,r=>r.refundedMinor);
+  const revenueMinor=total(sales,s=>s.totalMinor)+total(reversals,r=>r.reversedSaleTotalMinor)-total(refunds,r=>r.refundedMinor+(r.debtReducedMinor??0));
   const recordedTaxMinor=total(sales,s=>s.tax?.taxMinor ?? 0)-total(reversals,r=>saleById.get(r.originalSaleId)?.tax?.taxMinor ?? 0)-total(refunds,r=>r.returnedTaxMinor);
   const salesExcludingRecordedTaxMinor=revenueMinor-recordedTaxMinor;
-  const saleCollectionsMinor=total(payments,p=>p.amountMinor)+total(reversals,r=>r.reversedReceivedMinor + (saleById.get(r.originalSaleId)?.walletAppliedMinor ?? 0))-total(refunds,r=>r.refundedMinor);
+  const saleCollectionsMinor=total(payments,p=>p.amountMinor)+total(reversals,r=>r.reversedReceivedMinor + (saleById.get(r.originalSaleId)?.walletAppliedMinor ?? 0))-total(refunds,r=>r.refundMethod==='wallet'?0:r.refundedMinor);
   const debtCollectionsMinor=total(repayments,p=>p.amountMinor);
   const collectionsMinor=saleCollectionsMinor+debtCollectionsMinor+walletNetCashMinor;
   const expensesMinor=total(expenses,e=>e.amountMinor);
@@ -194,12 +197,12 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   const receivableAudit=input.customers!==undefined
     ? auditRun10CompanyReceivables({
         company:input.company!,customers:input.customers,
-        sales:input.sales,repayments:input.repayments,reversals:input.reversals
+        sales:input.sales,repayments:input.repayments,reversals:input.reversals,creditReturns:input.cashReturns??[]
       })
     : undefined;
   const customerSales=input.sales.filter(s=>Boolean(s.customerId));
   const receivables=receivableAudit?.outstandingMinor??
-    (total(customerSales,s=>s.outstandingMinor)+total(input.reversals,r=>r.reversedOutstandingMinor)-total(input.repayments,p=>p.amountMinor));
+    (total(customerSales,s=>s.outstandingMinor)+total(input.reversals,r=>r.reversedOutstandingMinor)-total(input.repayments,p=>p.amountMinor)-total(input.cashReturns??[],r=>r.debtReducedMinor??0));
   // Rebuild the daily/category display from independent saved-event postings,
   // using exact integer arithmetic. A final net amount must never disguise an
   // overflowing daily balance, or a missing period row.
@@ -261,7 +264,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
     expenses:scoped(expenses),range
   });
   summary.receivableAgeing=summarizeReceivableAgeing({company,customers:scoped(customers),
-    sales:scoped(sales),repayments:scoped(repayments),reversals:scoped(reversals)},now.toISOString().slice(0,10));
+    sales:scoped(sales),repayments:scoped(repayments),reversals:scoped(reversals),creditReturns:scoped(cashReturns).filter(r=>(r.debtReducedMinor??0)>0)},now.toISOString().slice(0,10));
   summary.inventoryValuation=costs.inventoryValuation;
   summary.purchaseCostEvidence=costs.purchaseCostEvidence;
   if (costs.cogsMinor !== undefined) {
@@ -279,7 +282,7 @@ export async function getFinancialSummary(period:FinancialPeriod,now=new Date(),
   assertCompanyScope(company, getActiveBusinessProfileId());
   return summary;
 }
-function csvCell(value:string|number){const s=String(value);const protectedValue=/^[\s]*[=+@\-\t\r]/.test(s)?`'${s}`:s;return `"${protectedValue.replace(/"/g,'""')}"`;}
+function csvCell(value:string|number){const s=String(value);const protectedValue=typeof value!=="number"&&/^[\s]*[=+@\-\t\r]/.test(s)?`'${s}`:s;return `"${protectedValue.replace(/"/g,'""')}"`;}
 export function financialCsv(summary:FinancialSummary):string {
   const supplier = summary.supplierReconciliation;
   const supplierRows: (string | number)[][] = supplier ? [

@@ -42,3 +42,24 @@ test('cash refund is exact and an accounting void has no invented payout', () =>
   assert.match(csv, /refund:partial,refund,2026-10-24T13:00:00.000Z,fixture-shop,,FIXTURE-001,3.75,GHS/);
   assert.match(csv, /void:reversal,void,2026-10-24T14:00:00.000Z,fixture-shop,,FIXTURE-001,,/);
 });
+
+
+test('Watchdog monetary exports preserve every supported ledger currency without rescaling whole units', () => {
+  for (const currency of ['GHS','KES','NGN','RWF','TZS','UGX','USD','EUR','ZAR','ZMW']) {
+    for (const kind of ['sale','refund','discount']) {
+      const changed = structuredClone(envelope);
+      const event = changed.events.find(e => e.event_type === 'sale');
+      Object.assign(event, {event_type: kind, currency, amount_minor: 12345});
+      changed.events = [event]; changed.row_count = 1;
+      const expected = ['RWF','TZS','UGX'].includes(currency) ? '12345.00' : '123.45';
+      assert.ok(serializeWatchdogCanonicalCsv(changed).csv.endsWith(`,${expected},${currency}\r\n`), `${kind}/${currency}`);
+      assert.equal(event.amount_minor, 12345, 'export is read-only');
+    }
+  }
+});
+
+test('unknown currency cannot silently inherit a monetary scale', () => {
+  const changed = structuredClone(envelope);
+  changed.events.find(e => e.event_type === 'sale').currency = 'JPY';
+  assert.throws(() => serializeWatchdogCanonicalCsv(changed), /amount and currency/);
+});

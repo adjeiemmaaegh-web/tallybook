@@ -48,10 +48,23 @@ test('new setup displays Ghana, GHS, MoMo and provider fields', async ({ page })
 
 test('owner explicitly configures tax and prepared quotation reaches a saved offer', async ({ page }) => {
   await page.goto('/business');
-  await page.evaluate(async () => {
-    const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
-    await saveBusinessProfile({name:'Browser QA',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
-  });
+  // App start-up can briefly hold the cross-tab data lock. The app correctly refuses ("no data was changed"), and a user
+  // would simply retry, so retry ONLY that exact refusal, bounded (~15 s). Any other error fails immediately.
+  let saved=false,lastLockError='';
+  for(let attempt=0;attempt<30&&!saved;attempt++){
+    const outcome=await page.evaluate(async () => {
+      try{
+        const {saveBusinessProfile}=await import('/src/features/business/businessProfile.ts');
+        await saveBusinessProfile({name:'Browser QA',country:'Ghana',currency:'GHS',businessType:'Retail shop'});
+        return {ok:true};
+      }catch(error){return {ok:false,message:String(error?.message??error)};}
+    });
+    if(outcome.ok){saved=true;break;}
+    if(!/Another tab is editing assistant data or recovering Tallybook/.test(outcome.message))throw new Error(outcome.message);
+    lastLockError=outcome.message;
+    await page.waitForTimeout(500);
+  }
+  expect(saved,'start-up lock never released: '+lastLockError).toBe(true);
   // Verified local staff unlock is intentionally memory-only. A subsequent
   // page.goto() or reload would lock it again: never weaken that security rule
   // to accommodate a test fixture.

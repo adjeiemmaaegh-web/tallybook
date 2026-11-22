@@ -6,4 +6,5 @@ export interface RepaymentTargetsResult { canLink: boolean; reason: string | nul
 export function getRepaymentTargetsFromLedger(
   sales: readonly Sale[], reversals: readonly SaleReversal[], repayments: readonly DebtRepayment[],
   scope: {customerId: string; businessProfileId: string; currency: string},
+  creditReturns?: readonly {originalSaleId: string; debtReducedMinor?: number}[],
 ): RepaymentTargetsResult;

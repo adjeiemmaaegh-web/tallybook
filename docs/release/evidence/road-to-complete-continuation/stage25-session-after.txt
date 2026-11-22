@@ -1,0 +1,22 @@
+✔ business type migration is additive to the member-owned business row (1.445617ms)
+✔ privileged change checks actual authenticated owner and canonical membership (0.452288ms)
+✔ rollback refuses to erase owner-populated business classifications (0.327659ms)
+✔ a forged or revoked session cannot change business classification through either SQL boundary (6122.00798ms)
+✔ active owner updates and retries work; a live attendant cannot change the owner record (2862.978548ms)
+✔ security rollback refuses to reopen the bypass; forward reapplication preserves owner data (2430.210815ms)
+✔ first business creation works with active session and remains idempotent (4925.933725ms)
+✔ revoked session cannot create a new business using an otherwise valid JWT (1732.506415ms)
+✔ wrong identity, expired session or absent session claim fails closed (1707.915951ms)
+✔ every rollback file exists and is wrapped in a transaction (8.332976ms)
+✔ with stock counts, transfers and purchases on record, the chain unwinds until the guarded step and that one refuses (5922.247892ms)
+✔ with no such history, all managed rollbacks run, the core shop still works, and the migrations apply again cleanly (2987.115614ms)
+✔ privileged RPCs reject absent or forged sessions; only audited invoker delegates are reachable (6380.51585ms)
+ℹ Inspected 17 privileged public signatures; 68 catalog negative calls plus 8 invoker-delegate negative calls; 59 empty business tables conserved.
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11695.781239

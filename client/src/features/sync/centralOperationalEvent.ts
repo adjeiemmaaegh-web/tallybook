@@ -211,9 +211,9 @@ export function validateCentralOperationalEvent(event:CentralOperationalEvent,so
      event.createdAt!==row.createdAt || !Number.isFinite(Date.parse(event.createdAt)) ||
      event.shopId!==(originalSale.storeId??null) ||
      event.staffId!==(row.staffId??null) || event.shiftId!==(row.shiftId??null) ||
-     row.refundMethod!=='cash' || row.disposition!=='restockable' ||
+     !['cash','mobile','card','credit','wallet','split'].includes(row.refundMethod) || (row.refundMethod==='credit'?row.refundedMinor!==0||!((row.debtReducedMinor??0)>0)||row.customerId!==originalSale.customerId:originalSale.paymentMethod!==row.refundMethod || (row.refundMethod==='wallet'&&(row.customerId!==originalSale.customerId||(row.debtReducedMinor??0)!==0)) || (row.refundMethod==='split'&&(!Array.isArray((row as {legs?:unknown[]}).legs)||(row as {legs:Array<{amountMinor:number}>}).legs.reduce((n,l)=>n+l.amountMinor,0)!==row.refundedMinor))) || row.disposition!=='restockable' ||
      !/^[A-Z]{3}$/.test(row.currency) || row.currency!==originalSale.currency ||
-     !Number.isSafeInteger(row.refundedMinor) || row.refundedMinor<=0 ||
+     !Number.isSafeInteger(row.refundedMinor) || row.refundedMinor<0 || (row.refundMethod!=='credit'&&row.refundedMinor===0) ||
      !Array.isArray(row.lines) || row.lines.length===0)
     throw new Error('Central cash refund event does not reconcile with its saved return.');
 }

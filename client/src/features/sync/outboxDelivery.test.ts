@@ -1,10 +1,12 @@
+import {jsonResponseFixture} from "@/test/httpResponseFixture";
 import { describe, expect, it, vi } from "vitest";
 import { deliverStagedMetadata, eventMetadata, validateStageEndpoint } from "./outboxDelivery";
 const event = {id:"ev1",businessProfileId:"org1",deviceId:"dev1",operationId:"op1",entityType:"sale",entityId:"sale1",payloadDigest:"a".repeat(64),createdAt:"2026-01-01T00:00:00Z",status:"pending" as const};
 const cred = {capability:"abc.def",session:"ghi.jkl"};
 const receipt = {organizationId:"org1",eventId:"ev1",operationId:"op1",status:"stored",reason:null,financialReplicationEnabled:false};
 const endpoint = "https://example.org/api/sync/events/stage";
-function mockResponse(body: unknown, status=201, url=endpoint) { return { status, url, redirected:false, type:"basic",headers:{get:()=>"application/json"},text:async()=>JSON.stringify(body) } as unknown as Response; }
+function mockResponse(body: unknown, status=201, url=endpoint) {return jsonResponseFixture(url,body,status);}
+
 describe("HTTPS outbox staging (metadata-only)",()=>{
  it("requires HTTPS without URL credentials or redirects",()=>{
   expect(()=>validateStageEndpoint("http://example.org/api/sync/events/stage")).toThrow();

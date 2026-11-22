@@ -2,7 +2,7 @@ import {useEffect,useState,type FormEvent} from 'react';
 import { confirmAction } from "@/lib/confirmAction";
 import {toast} from 'sonner';
 import {useBusinessProfile} from '@/contexts/BusinessProfileContext';
-import {currentCompanyReturnPolicy} from '@/features/business/returnPolicy.mjs';
+import {currentCompanyReturnPolicy,companyReturnChoices} from '@/features/business/returnPolicy.mjs';
 import {updateCompanyReturnPolicy} from '@/features/business/returnPolicySettings';
 
 /** Owner-facing, per-company opt-in. No universal refund promise is assumed.
@@ -15,6 +15,9 @@ export function CompanyReturnPolicySettings(){
  const [full,setFull]=useState(saved.allowFullReversal);
  const [partial,setPartial]=useState(saved.allowCashPartial);
  const [days,setDays]=useState(String(saved.maxAgeDays));
+ const savedChoices=companyReturnChoices(profile?.returnPolicyHistory);
+ const [allocation,setAllocation]=useState<'proportional'|'reverse-order'>(savedChoices.refundAllocation);
+ const [loyalty,setLoyalty]=useState<'reverse'|'keep'>(savedChoices.loyaltyOnReturn);
  const [reason,setReason]=useState('');
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState<string|null>(null);
@@ -22,6 +25,7 @@ export function CompanyReturnPolicySettings(){
   const p=currentCompanyReturnPolicy(profile?.returnPolicyHistory);
   setEnabled(p.enabled);setFull(p.allowFullReversal);
   setPartial(p.allowCashPartial);setDays(String(p.maxAgeDays));
+  const c=companyReturnChoices(profile?.returnPolicyHistory);setAllocation(c.refundAllocation);setLoyalty(c.loyaltyOnReturn);
   setReason('');setError(null);
  },[profile?.id,profile?.updatedAt]);
  if(!profile)return null;
@@ -30,7 +34,7 @@ export function CompanyReturnPolicySettings(){
   if(!profile||busy)return;
   const maxAgeDays=Number(days);
   const settings={enabled,allowFullReversal:enabled&&full,
-   allowCashPartial:enabled&&partial,maxAgeDays};
+   allowCashPartial:enabled&&partial,maxAgeDays,refundAllocation:allocation,loyaltyOnReturn:loyalty};
   if(!Number.isSafeInteger(maxAgeDays)||maxAgeDays<1||maxAgeDays>3650){
    setError('Choose a whole-number return window between 1 and 3650 days.');
    return;
@@ -74,7 +78,15 @@ export function CompanyReturnPolicySettings(){
     <label><input type="checkbox" checked={partial}
       onChange={e=>setPartial(e.target.checked)} disabled={busy}/>
       {' '}Allow eligible restockable cash-only partial returns</label>
-    <p>Card/provider refunds, credit changes, services and unsupported stock dispositions remain unavailable even when the company allows returns.</p>
+    <label><span>Refunding a sale paid with several methods</span><select value={allocation} onChange={e=>setAllocation(e.target.value as 'proportional'|'reverse-order')} disabled={busy}>
+     <option value="proportional">Back to each original payment method, in proportion (recommended)</option>
+     <option value="reverse-order">Back to the last payment method used first, then the one before</option>
+    </select></label>
+    <label><span>Loyalty points earned by a returned sale</span><select value={loyalty} onChange={e=>setLoyalty(e.target.value as 'reverse'|'keep')} disabled={busy}>
+     <option value="reverse">Take back the points the returned value earned (recommended)</option>
+     <option value="keep">Let the customer keep the points</option>
+    </select></label>
+    <p>Refunds always go back through the payment methods the customer used. Points already spent are never taken below zero. Card/provider settlement, services and unsupported stock dispositions remain unavailable even when the company allows returns.</p>
    </div>}
    <label><span>Maximum return age (days)</span><input type="number"
     min={1} max={3650} step={1} value={days} onChange={e=>setDays(e.target.value)}

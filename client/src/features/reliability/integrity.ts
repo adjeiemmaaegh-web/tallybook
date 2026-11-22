@@ -8,6 +8,7 @@ import { expenseCategories, localExpenseDate } from "@/features/expenses/expense
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { reconcileSupplierPayables } from "@/features/purchases/supplierPayables.mjs";
 import { reconcilePrepaidLiability } from "@/features/reports/prepaidLiabilityReconciliation.mjs";
+import { reconcileLoyaltyReturns } from "@/features/sales/loyaltyReturnAudit.mjs";
 import { auditReceivableRecords } from "./receivableAudit.mjs";
 import { auditStoreRecords } from "@/features/stores/storeIntegrity.mjs";
 import { reconcileCashPartialReturns } from "@/features/sales/cashPartialReturn.mjs";
@@ -46,6 +47,7 @@ export type IntegrityIssueCode =
   | "purchase-total"
   | "supplier-payable-integrity"
   | "prepaid-wallet-integrity"
+  | "loyalty-return-integrity"
   | "store-location-invalid"
   | "store-reference-invalid"
   | "store-assignment-invalid"
@@ -153,10 +155,12 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
     } catch { issues.push(issue("supplier-payable-integrity", "Supplier payable records cannot be reconciled safely; do not trust these liabilities.")); }
     try {
       reconcilePrepaidLiability({transfers:walletTransfers,benefits:customerBenefits,
-        sales,reversals},businesses[0]?.currency);
+        sales,reversals,returns:cashPartialReturns},businesses[0]?.currency);
     } catch {
       issues.push(issue("prepaid-wallet-integrity", "Prepaid transfers, wallet benefit entries, wallet sale spending or reversal credits do not reconcile. Do not rely on the stored prepaid liability."));
     }
+    try { reconcileLoyaltyReturns({sales,benefits:customerBenefits,returns:cashPartialReturns}); }
+    catch { issues.push(issue("loyalty-return-integrity", "Loyalty points taken back by returns do not match the saved returns and earned points. Do not rely on stored loyalty balances.")); }
     for (const finding of auditStoreRecords(activeId, stores, storeAssignments, storeObservations, storeRequests, products, staffMembers)) {
       issues.push(issue(finding.code, "Local store directory, assignment, observation or transfer request does not reconcile. Store observations and requests do not establish actual stock balances.", finding.recordId));
     }

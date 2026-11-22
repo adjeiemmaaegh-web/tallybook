@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /workspace/scratch/f8a637cc20b7/tallybook/client
+
+
+ Test Files  3 passed (3)
+      Tests  42 passed (42)
+   Start at  04:52:28
+   Duration  17.87s (transform 1.11s, setup 754ms, import 2.45s, tests 11.57s, environment 2.39s)
+

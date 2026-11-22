@@ -2,7 +2,9 @@
 Date: 16 November 2026. Scope: **controlled pilot only**.
 
 ## Before testing
-- Production URL: https://tallybook-eight.vercel.app ; expected commit `175204d15c6d77a3ae9cadee505dfa1cf5821ac6`.
+- Historical production reference: https://tallybook-eight.vercel.app at `175204d15c6d77a3ae9cadee505dfa1cf5821ac6` on 16 November. This is not the expected SHA for every later candidate.
+- For each new drill, record the **exact candidate SHA, built artifact hashes, target URL and applied migration versions** in its private log. Verify the target serves that candidate before testing; stop on mismatch. For the Road to Complete development increment, use an isolated local/test target; production writes and deployment are not authorized.
+- Run `node scripts/stage21-baseline-audit.mjs --sha "$(git rev-parse HEAD)"` from the clean candidate checkout, then `node scripts/road-to-complete-register.mjs`. Neither command checks the hosted target; record that comparison separately. Read [ROAD_TO_COMPLETE_PROGRESS.md](ROAD_TO_COMPLETE_PROGRESS.md) for current engineering evidence and unresolved gates.
 - Use **two distinct, owner-approved test accounts**, an **isolated test business**, and non-customer test SKUs with known starting stock and prices. Do not disturb genuine shop sales or existing inventory.
 - Device A: owner; Device B: attendant; record make/model, operating system, browser/PWA, test date and software version in a private test log.
 - Keep existing production data and real payment credentials untouched. Do not use the fresh-start/clear-data flag. Confirm a safe backup *before* doing any destructive recovery exercise.

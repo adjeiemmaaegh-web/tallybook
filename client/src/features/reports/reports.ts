@@ -79,12 +79,13 @@ function customerMap(customers: Customer[]) { return new Map(customers.map((cust
 function salesRows(sales: Sale[], customerById: Map<string, Customer>): SalesReportRow[] {
   return sales.map((sale) => ({ id: sale.id, receiptNumber: sale.receiptNumber, createdAt: sale.createdAt, paymentMethod: sale.paymentMethod, totalMinor: sale.totalMinor, receivedMinor: sale.amountPaidMinor - (sale.walletAppliedMinor ?? 0), outstandingMinor: sale.outstandingMinor, customerName: sale.customerId ? customerById.get(sale.customerId)?.name : undefined })).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
-function debtRows(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[], customers: Customer[]): DebtReportRow[] {
+function debtRows(sales: Sale[], repayments: DebtRepayment[], reversals: SaleReversal[], customers: Customer[], creditReturns: Array<{originalSaleId:string;debtReducedMinor?:number}> = []): DebtReportRow[] {
   return customers.filter((customer) => !customer.archivedAt).map((customer) => {
     const { salesOutstandingMinor, repaidMinor, outstandingMinor } = reconcileCreditLedger(
       sales.filter((sale) => sale.customerId === customer.id),
       reversals.filter((reversal) => reversal.customerId === customer.id),
       repayments.filter((repayment) => repayment.customerId === customer.id),
+      creditReturns.filter((row) => sales.some((sale) => sale.customerId === customer.id && sale.id === row.originalSaleId)),
     );
     return { customerId: customer.id, customerName: customer.name, phone: customer.phone, salesOutstandingMinor, repaidMinor, outstandingMinor };
   }).filter((row) => row.salesOutstandingMinor > 0 || row.repaidMinor > 0).sort((left, right) => right.outstandingMinor - left.outstandingMinor || left.customerName.localeCompare(right.customerName));
@@ -101,14 +102,14 @@ function paymentRows(payments: Payment[], repayments: DebtRepayment[], customerB
 
 async function sourceRecords(database: TallybookDB) {
   const activeId = getActiveBusinessProfileId();
-  const [allSales, allPayments, allRepayments, allReversals, allCustomers, allProducts, allSaleLines, allExpenses, allWalletTransfers] = await database.transaction("r", [database.sales, database.payments, database.repayments, database.saleReversals, database.customers, database.products, database.saleLines, database.expenses, database.walletTransfers], async () => Promise.all([database.sales.toArray(), database.payments.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.customers.toArray(), database.products.toArray(), database.saleLines.toArray(), database.expenses.toArray(), database.walletTransfers.toArray()]));
+  const [allSales, allPayments, allRepayments, allReversals, allCustomers, allProducts, allSaleLines, allExpenses, allWalletTransfers, allCashReturns] = await database.transaction("r", [database.sales, database.payments, database.repayments, database.saleReversals, database.customers, database.products, database.saleLines, database.expenses, database.walletTransfers, database.cashPartialReturns], async () => Promise.all([database.sales.toArray(), database.payments.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.customers.toArray(), database.products.toArray(), database.saleLines.toArray(), database.expenses.toArray(), database.walletTransfers.toArray(), database.cashPartialReturns.toArray()]));
   assertCompanyScope(activeId, getActiveBusinessProfileId());
-  const snapshot={ sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), reversals: allReversals.filter((reversal) => reversal.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId), walletTransfers: allWalletTransfers.filter((t) => t.businessProfileId === activeId) };
+  const snapshot={ sales: allSales.filter((sale) => sale.businessProfileId === activeId), payments: allPayments.filter((payment) => payment.businessProfileId === activeId), repayments: allRepayments.filter((repayment) => repayment.businessProfileId === activeId), reversals: allReversals.filter((reversal) => reversal.businessProfileId === activeId), customers: allCustomers.filter((customer) => customer.businessProfileId === activeId), products: allProducts.filter((product) => product.businessProfileId === activeId), saleLines: allSaleLines.filter((line) => line.businessProfileId === activeId), expenses: allExpenses.filter((expense) => expense.businessProfileId === activeId), walletTransfers: allWalletTransfers.filter((t) => t.businessProfileId === activeId), creditReturns: allCashReturns.filter((r) => r.businessProfileId === activeId && (r.debtReducedMinor ?? 0) > 0) };
   // The dashboard, debt table and end-of-day report must not mask one
   // customer's overpayment behind another customer's unpaid credit.
   auditRun10CompanyReceivables({company:activeId,customers:snapshot.customers,
     sales:snapshot.sales,repayments:snapshot.repayments,
-    reversals:snapshot.reversals});
+    reversals:snapshot.reversals,creditReturns:snapshot.creditReturns});
   assertCompanyScope(activeId,getActiveBusinessProfileId());
   return snapshot;
 }
@@ -119,13 +120,13 @@ export async function getReportsSnapshot(period: ReportPeriod, now = new Date(),
   const selectedProfile = await database.businessProfiles.get(company);
   assertCompanyScope(company, getActiveBusinessProfileId());
   const range = reportDateRange(period, now, selectedProfile?.country);
-  const { sales, payments, repayments, reversals, customers, products, walletTransfers } = await sourceRecords(database);
+  const { sales, payments, repayments, reversals, customers, products, walletTransfers, creditReturns } = await sourceRecords(database);
   const customerById = customerMap(customers);
   const filteredSales = sales.filter((sale) => inRange(sale.createdAt, range));
   const filteredPayments = payments.filter((payment) => inRange(payment.createdAt, range));
   const filteredRepayments = repayments.filter((repayment) => inRange(repayment.createdAt, range));
   const filteredReversals = reversals.filter((reversal) => inRange(reversal.createdAt, range));
-  const debts = debtRows(sales, repayments, reversals, customers);
+  const debts = debtRows(sales, repayments, reversals, customers, creditReturns);
   const receivedMinor = [...filteredPayments, ...filteredRepayments].reduce((sum, payment) => sum + payment.amountMinor, 0) + filteredReversals.reduce((sum, reversal) => sum + reversal.reversedReceivedMinor + (sales.find(sale => sale.id === reversal.originalSaleId)?.walletAppliedMinor ?? 0), 0) + walletTransfers.filter(t=>inRange(t.createdAt,range)).reduce((sum,t)=>sum+(t.kind==='deposit'?t.amountMinor:-t.amountMinor),0);
   assertCompanyScope(company, getActiveBusinessProfileId());
   await requirePermission("reports",database,company);

@@ -1,7 +1,8 @@
-import {describe,expect,it,vi} from "vitest";
-import {render,screen,within,waitFor} from "@testing-library/react";
+import {afterEach,describe,expect,it,vi} from "vitest";
+import {render,screen,within,waitFor,cleanup,fireEvent} from "@testing-library/react";
 import {PremiumHomeOverview} from "./PremiumHomeOverview";
-import {formatMinorAmount} from "@/features/inventory/inventory";
+import {currencies} from "@/features/business/currencies";
+import {formatMinorAmount,currencyMinorDivisor} from "@/features/inventory/inventory";
 
 // The display-only component receives genuinely shaped report results.
 // The mock never writes sales, stock, customers, debt or financial records.
@@ -31,6 +32,8 @@ vi.mock("@/features/business/setupProgress",()=>({
   hasReportsExplored:()=>false
 }));
 
+afterEach(cleanup);
+
 describe("Screenshot-aligned REAL local dashboard",()=>{
   it("renders accurate till, receipts and customer debt from the report API",async()=>{
     render(<PremiumHomeOverview companyId="qa-company" companyName="Test Shop"
@@ -58,4 +61,17 @@ describe("Screenshot-aligned REAL local dashboard",()=>{
     expect(document.querySelectorAll(".premium-step")).toHaveLength(5);
     expect(document.querySelector(".premium-setup")?.getAttribute("id")).toBe("getting-started");
   });
+});
+
+it.each(currencies)('chart axes and accessible data values preserve %s ledger units',async(currency)=>{
+ const view=render(<PremiumHomeOverview companyId="qa-company" companyName="Currency fixture" country="Ghana" currency={currency} online counts={{products:1,customers:0,sales:1}}/>);
+ const chart=await screen.findByRole('img',{name:/Sales line chart/});
+ const axis=chart.querySelectorAll('text');expect(axis).toHaveLength(5);
+ expect(axis[4].textContent).toBe(Math.round(12500/currencyMinorDivisor(currency)).toLocaleString());
+ expect(axis[4].getAttribute('aria-label')).toBe(formatMinorAmount(12500,currency));
+ fireEvent.click(screen.getByText('View seven-day sales values'));
+ expect(view.container.querySelector('details')).toHaveAttribute('open');
+ const table=screen.getByRole('table',{name:`Recorded sales by date (${currency})`});
+ expect(within(table).getAllByRole('row')).toHaveLength(8);
+ expect(within(table).getAllByRole('cell').at(-1)?.textContent).toBe(formatMinorAmount(12500,currency));
 });

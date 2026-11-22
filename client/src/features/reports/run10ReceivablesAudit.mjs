@@ -19,9 +19,9 @@ const instant=v=>{
  return Date.parse(v);
 };
 export function auditRun10CompanyReceivables({
- company,customers,sales,repayments,reversals
+ company,customers,sales,repayments,reversals,creditReturns=[]
 }={}){
- if(!id(company)||![customers,sales,repayments,reversals].every(Array.isArray))
+ if(!id(company)||![customers,sales,repayments,reversals,creditReturns].every(Array.isArray))
   fail('missing company-scoped saved financial evidence');
  const customersById=new Map(),saleById=new Map(),saleDates=new Map();
  const seenPaymentIds=new Set(),seenPaymentKeys=new Set();
@@ -95,9 +95,11 @@ export function auditRun10CompanyReceivables({
   const customerRepayments=repaymentsByCustomer.get(customer.id)??[];
   const customerReversals=reversalsByCustomer.get(customer.id)??[];
   let debt,allocations,currency;
+  const saleIds=new Set(customerSales.map(row=>row.id));
+  const customerCreditReturns=creditReturns.filter(row=>row.businessProfileId===company&&saleIds.has(row.originalSaleId));
   try{
-   debt=reconcileCreditLedger(customerSales,customerReversals,customerRepayments);
-   allocations=reconcileRepaymentAllocations(customerSales,customerReversals,customerRepayments);
+   debt=reconcileCreditLedger(customerSales,customerReversals,customerRepayments,customerCreditReturns);
+   allocations=reconcileRepaymentAllocations(customerSales,customerReversals,customerRepayments,customerCreditReturns);
    currency=inspectReceivableCurrency(customerSales,customerRepayments);
   }catch(err){fail('customer '+customer.id+' has unreconciled debt: '+(err?.message??String(err)));}
   outstandingMinor=money(outstandingMinor,debt.outstandingMinor);

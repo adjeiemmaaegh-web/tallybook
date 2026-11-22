@@ -1,5 +1,9 @@
 export interface ReturnPolicySettings {
  enabled:boolean;allowFullReversal:boolean;allowCashPartial:boolean;maxAgeDays:number;
+ /** How a refund is split across the original tenders of a split-tender sale. Default 'proportional'. */
+ refundAllocation?:'proportional'|'reverse-order';
+ /** Whether loyalty points earned by the returned value are taken back. Default 'reverse'. */
+ loyaltyOnReturn?:'reverse'|'keep';
 }
 export interface ReturnPolicySnapshot extends ReturnPolicySettings {
  revision:number;effectiveAt:string;
@@ -22,6 +26,7 @@ export function appendCompanyReturnPolicy(
  settings:ReturnPolicySettings,
  now:string,reason:string,actorStaffId?:string
 ):readonly ReturnPolicyRevision[];
+export function companyReturnChoices(history:ReturnPolicyRevision[]|undefined):Readonly<{refundAllocation:'proportional'|'reverse-order';loyaltyOnReturn:'reverse'|'keep'}>;
 export function saleReturnPolicySnapshot(history:ReturnPolicyRevision[]|undefined):ReturnPolicySnapshot;
 export function checkSaleReturnPolicySnapshot(
  history:ReturnPolicyRevision[]|undefined,saved:ReturnPolicySnapshot|undefined

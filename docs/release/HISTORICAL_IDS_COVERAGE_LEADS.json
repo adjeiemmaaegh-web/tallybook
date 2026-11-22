@@ -1,0 +1,3952 @@
+{
+ "count": 97,
+ "records": [
+  {
+   "id": "S1-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Barcode and SKU POS",
+   "sourceModules": [
+    "inventory",
+    "SalesPage"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/cloud/localBooksExport.test.ts",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/components/ArchivedProductsPanel.test.tsx",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/components/PremiumHomeOverview.reference.test.tsx",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/batch.test.ts",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S1-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Park, resume and recover checkout",
+   "sourceModules": [
+    "parkedCart",
+    "recoverSavedCheckout"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/customers/walletTransfers.test.ts",
+     "imports": [
+      "recoverSavedCheckout"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/promotions.test.ts",
+     "imports": [
+      "recoverSavedCheckout"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/parkedCart.test.ts",
+     "imports": [
+      "parkedCart"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/recoverSavedCheckout.test.ts",
+     "imports": [
+      "recoverSavedCheckout"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "recoverSavedCheckout"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/splitTender.test.ts",
+     "imports": [
+      "recoverSavedCheckout"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S1-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Receipts and money arithmetic",
+   "sourceModules": [
+    "checkoutMoney",
+    "receiptDetail"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    },
+    {
+     "file": "client/src/features/receipts/receiptDetail.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/tax.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    },
+    {
+     "file": "qa/stage12-money-integrity.test.mjs",
+     "imports": [
+      "checkoutMoney"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Catalogue variants and categories",
+   "sourceModules": [
+    "inventory",
+    "stage2Inventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/stage2Inventory.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/purchases.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/security/serviceAuthorityContinuation.test.ts",
+     "imports": [
+      "inventory",
+      "stage2Inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Wholesale units and pricing",
+   "sourceModules": [
+    "stage2Inventory",
+    "sales"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/batch.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "sales"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Services and attachments",
+   "sourceModules": [
+    "stage2Inventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/stage2Inventory.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/purchases.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/security/serviceAuthorityContinuation.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Secure catalogue CSV",
+   "sourceModules": [
+    "catalogCsv",
+    "advancedInventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "advancedInventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/advancedInventory.test.ts",
+     "imports": [
+      "advancedInventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/catalogCsv.test.ts",
+     "imports": [
+      "catalogCsv"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "advancedInventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Persisted stock counts",
+   "sourceModules": [
+    "stage2Inventory",
+    "advancedInventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "advancedInventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "advancedInventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/advancedInventory.test.ts",
+     "imports": [
+      "advancedInventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/stage2Inventory.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/purchases.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-06",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Batch receiving and expiry allocation",
+   "sourceModules": [
+    "stage2Inventory",
+    "purchases"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/purchases.test.ts",
+     "imports": [
+      "stage2Inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S2-07",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Historical inventory ledger",
+   "sourceModules": [
+    "historicalCosting",
+    "purchases"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/createRecords.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7PostingBarrier.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "purchases"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Financial definitions",
+   "sourceModules": [
+    "financialIntelligence"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialIntelligence.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Periods and trends",
+   "sourceModules": [
+    "financialIntelligence"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialIntelligence.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Collections and receivables",
+   "sourceModules": [
+    "reports",
+    "credit"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/offlineReliability.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/reports.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run10FinancialConservation.test.ts",
+     "imports": [
+      "reports",
+      "credit"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Management dashboard",
+   "sourceModules": [
+    "financialIntelligence",
+    "ReportsPage"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialIntelligence.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Financial export and print",
+   "sourceModules": [
+    "financialIntelligence"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialIntelligence.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-06",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "COGS, gross profit, valuation and payables",
+   "sourceModules": [
+    "financialIntelligence",
+    "historicalCosting",
+    "supplierPayables",
+    "supplierPayables"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "supplierPayables"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "supplierPayables"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run12SupplierTaxIntegration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "supplierPayables"
+     ]
+    },
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "supplierPayables"
+     ]
+    },
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "supplierPayables"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S3-07",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Tax policy and reconciliation",
+   "sourceModules": [
+    "sales",
+    "financialIntelligence"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run10FinancialConservation.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run12SupplierTaxIntegration.test.ts",
+     "imports": [
+      "sales",
+      "financialIntelligence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Customer profiles and groups",
+   "sourceModules": [
+    "customers",
+    "retentionInsights"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "customers",
+      "retentionInsights"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/createRecords.test.ts",
+     "imports": [
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/errorRecovery.test.ts",
+     "imports": [
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/quotationAssistant.test.ts",
+     "imports": [
+      "customers"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Credit policies and due dates",
+   "sourceModules": [
+    "customerBenefits",
+    "credit"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "customerBenefits",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "imports": [
+      "customerBenefits",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "customerBenefits",
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/batch.test.ts",
+     "imports": [
+      "credit"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/conversation.test.ts",
+     "imports": [
+      "credit"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Quotation conversion",
+   "sourceModules": [
+    "quotations"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/cloud/quotations.test.ts",
+     "imports": [
+      "quotations"
+     ]
+    },
+    {
+     "file": "client/src/cloud/SharedShopQuotes.test.tsx",
+     "imports": [
+      "quotations"
+     ]
+    },
+    {
+     "file": "client/src/cloud/shopReconciliationView.test.ts",
+     "imports": [
+      "quotations"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/quotationAssistant.test.ts",
+     "imports": [
+      "quotations"
+     ]
+    },
+    {
+     "file": "client/src/features/customers/quotations.test.ts",
+     "imports": [
+      "quotations"
+     ]
+    },
+    {
+     "file": "client/src/pages/SharedShopQuotes.test.tsx",
+     "imports": [
+      "quotations"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Loyalty lifecycle",
+   "sourceModules": [
+    "customerBenefits",
+    "sales",
+    "reversals"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "sales",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/customers/walletTransfers.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "sales",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/integrity.test.ts",
+     "imports": [
+      "sales",
+      "reversals"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Prepaid wallet lifecycle",
+   "sourceModules": [
+    "walletTransfers",
+    "sales"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/customers/customers.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/customers/walletTransfers.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run10FinancialConservation.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/checkoutAuthority.test.ts",
+     "imports": [
+      "walletTransfers",
+      "sales"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-06",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Discount authorization",
+   "sourceModules": [
+    "customerBenefits",
+    "sales"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/customers/walletTransfers.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "customerBenefits",
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "sales"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S4-07",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Customer durability",
+   "sourceModules": [
+    "backup",
+    "TallybookDB"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S5-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-and-tested",
+   "requirement": "Confirmed quotation handoff",
+   "sourceModules": [
+    "quotationDraft",
+    "assistant"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/compoundSales.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/conversation.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/quotationDraft.test.ts",
+     "imports": [
+      "quotationDraft"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S5-02",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Multi-turn customer tasks",
+   "sourceModules": [
+    "assistant",
+    "conversation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/conversation.test.ts",
+     "imports": [
+      "assistant",
+      "conversation"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/compoundSales.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/transactionSafety.test.ts",
+     "imports": [
+      "assistant"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S5-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Language and speech",
+   "sourceModules": [
+    "quotationAssistant",
+    "voiceInput"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/quotationAssistant.test.ts",
+     "imports": [
+      "quotationAssistant"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S5-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Record-grounded finance",
+   "sourceModules": [
+    "queries",
+    "quotationAssistant"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/quotationAssistant.test.ts",
+     "imports": [
+      "quotationAssistant"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Local identities and PIN",
+   "sourceModules": [
+    "staff"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/auth/verifyDeviceOwner.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/components/AppShell.test.tsx",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/expenseAssistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Every write-service permission",
+   "sourceModules": [
+    "staff",
+    "activeCompany"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/expenseAssistant.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/quotationDraft.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/shiftAssistant.test.ts",
+     "imports": [
+      "staff",
+      "activeCompany"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Shift cash reconciliation",
+   "sourceModules": [
+    "staff"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/auth/verifyDeviceOwner.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/components/AppShell.test.tsx",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/expenseAssistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Device lock and WebAuthn",
+   "sourceModules": [
+    "staff"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/auth/verifyDeviceOwner.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/components/AppShell.test.tsx",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/expenseAssistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Actor attribution and audit",
+   "sourceModules": [
+    "staff",
+    "sales",
+    "purchases"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "staff",
+      "sales",
+      "purchases"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S6-06",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Security recovery",
+   "sourceModules": [
+    "backup",
+    "TallybookDB"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "backup",
+      "TallybookDB"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S7-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Onboarding and navigation",
+   "sourceModules": [
+    "setupProgress"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/setupProgress.test.ts",
+     "imports": [
+      "setupProgress"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S7-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Mobile POS and customer display",
+   "sourceModules": [
+    "customerCartSummary",
+    "SalesPage"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sales/customerCartSummary.test.ts",
+     "imports": [
+      "customerCartSummary"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S7-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Printing and receipt recovery",
+   "sourceModules": [
+    "browserPrint",
+    "receiptDetail"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    },
+    {
+     "file": "client/src/features/receipts/receiptDetail.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/tax.test.ts",
+     "imports": [
+      "receiptDetail"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S7-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Local notifications",
+   "sourceModules": [
+    "alertPreferences",
+    "localAlerts"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/alertPreferences.test.ts",
+     "imports": [
+      "alertPreferences"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/localAlerts.test.ts",
+     "imports": [
+      "localAlerts"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S7-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Encrypted backup and restore",
+   "sourceModules": [
+    "backup",
+    "backupCrypto"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupCrypto.test.ts",
+     "imports": [
+      "backupCrypto"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "backup"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Cloud opt-in and durable outbox",
+   "sourceModules": [
+    "syncFoundation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/outboxAcknowledgements.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/reconciliation.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/signedSaleDelivery.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/syncFoundation.integration.test.ts",
+     "imports": [
+      "syncFoundation"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Organization/member/device identity",
+   "sourceModules": [
+    "deviceRegistry",
+    "syncEnrollment"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "deviceRegistry"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "deviceRegistry"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/deviceRegistry.integration.test.ts",
+     "imports": [
+      "deviceRegistry"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/deviceRegistry.test.ts",
+     "imports": [
+      "deviceRegistry"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/syncStatus.test.ts",
+     "imports": [
+      "deviceRegistry"
+     ]
+    },
+    {
+     "file": "server/tests/syncEnrollment.test.mjs",
+     "imports": [
+      "syncEnrollment"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "TLS and request boundaries",
+   "sourceModules": [
+    "syncHttps"
+   ],
+   "candidateTests": [
+    {
+     "file": "server/tests/syncHttps.test.mjs",
+     "imports": [
+      "syncHttps"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-04",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Durable server storage",
+   "sourceModules": [
+    "syncJournal",
+    "syncSessionStore"
+   ],
+   "candidateTests": [
+    {
+     "file": "server/tests/syncJournal.test.mjs",
+     "imports": [
+      "syncJournal"
+     ]
+    },
+    {
+     "file": "server/tests/syncLogin.test.mjs",
+     "imports": [
+      "syncSessionStore"
+     ]
+    },
+    {
+     "file": "server/tests/syncSessionStore.test.mjs",
+     "imports": [
+      "syncSessionStore"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Remote receipts and acknowledgements",
+   "sourceModules": [
+    "outboxDelivery",
+    "outboxAcknowledgements"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/syncAcknowledgement.integration.test.ts",
+     "imports": [
+      "outboxDelivery",
+      "outboxAcknowledgements"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/outboxAcknowledgements.test.ts",
+     "imports": [
+      "outboxAcknowledgements"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/outboxDelivery.test.ts",
+     "imports": [
+      "outboxDelivery"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-06",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Business-data replication",
+   "sourceModules": [
+    "outboxDelivery",
+    "reconciliation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/outboxDelivery.test.ts",
+     "imports": [
+      "outboxDelivery"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/reconciliation.integration.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/reconciliation.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/syncAcknowledgement.integration.test.ts",
+     "imports": [
+      "outboxDelivery"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-07",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Conflict and power-failure recovery",
+   "sourceModules": [
+    "reconciliation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/reconciliation.integration.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/reconciliation.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-08",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Encrypted recovery and keys",
+   "sourceModules": [
+    "encryptedRecovery",
+    "syncBackupVault"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/encryptedRecovery.test.ts",
+     "imports": [
+      "encryptedRecovery"
+     ]
+    },
+    {
+     "file": "server/tests/syncBackupVault.test.mjs",
+     "imports": [
+      "syncBackupVault"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S8-09",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Browser/cloud integration",
+   "sourceModules": [
+    "syncStatus"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/syncStatus.test.ts",
+     "imports": [
+      "syncStatus"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Store directory",
+   "sourceModules": [
+    "storeDirectory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Staff store assignments",
+   "sourceModules": [
+    "storeDirectory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeDirectory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Physical count observations",
+   "sourceModules": [
+    "storeStockCounts"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "storeStockCounts"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeStockCounts"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Transfer requests",
+   "sourceModules": [
+    "storeTransfers"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-05",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Local store activity",
+   "sourceModules": [
+    "storeReport"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeReport"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-06",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Authoritative store balances",
+   "sourceModules": [
+    "stage9ReleaseScope"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "stage9ReleaseScope"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-07",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Actual stock transfers",
+   "sourceModules": [
+    "storeTransfers"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeTransfers"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-08",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Offline attendant checkout",
+   "sourceModules": [
+    "stage9ReleaseScope"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "stage9ReleaseScope"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-09",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Multi-device replay",
+   "sourceModules": [
+    "reconciliation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sync/reconciliation.integration.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    },
+    {
+     "file": "client/src/features/sync/reconciliation.test.ts",
+     "imports": [
+      "reconciliation"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-10",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Owner consolidation",
+   "sourceModules": [
+    "storeReport"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/stores/storeReport.test.ts",
+     "imports": [
+      "storeReport"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S9-11",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Multi-store acceptance",
+   "sourceModules": [
+    "stage9ReleaseScope"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "stage9ReleaseScope"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-01",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Authorized public catalogue",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-02",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Verified customer orders",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-03",
+   "family": "acceptance",
+   "historicalStatus": "blocked",
+   "requirement": "Payment adapter and settlement",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-04",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Stock reservations and fulfillment",
+   "sourceModules": [
+    "commerce",
+    "inventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/cloud/localBooksExport.test.ts",
+     "imports": [
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/components/ArchivedProductsPanel.test.tsx",
+     "imports": [
+      "inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-05",
+   "family": "acceptance",
+   "historicalStatus": "blocked",
+   "requirement": "Shipment and delivery tracking",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S10-06",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Portable commerce backup",
+   "sourceModules": [
+    "backup"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "backup"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S11-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Evidence-based local insights",
+   "sourceModules": [
+    "localInsights"
+   ],
+   "candidateTests": [
+    {
+     "file": "qa/stage11-advanced-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    },
+    {
+     "file": "qa/stage11-local-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S11-02",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "SKU demand and reorders",
+   "sourceModules": [
+    "skuDemand",
+    "insightEvidence",
+    "InsightsPage"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/insights/skuDemand.test.mjs",
+     "imports": [
+      "skuDemand"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "insightEvidence"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "insightEvidence"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S11-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Live batch expiry",
+   "sourceModules": [
+    "localInsights",
+    "stage2Inventory"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/stage2Inventory.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/purchases/purchases.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/security/serviceAuthorityContinuation.test.ts",
+     "imports": [
+      "stage2Inventory"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S11-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Receivable ageing",
+   "sourceModules": [
+    "creditTerms",
+    "receivableAgeing",
+    "financialIntelligence",
+    "FinancialIntelligencePage",
+    "sales",
+    "backup"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run10FinancialConservation.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run12SupplierTaxIntegration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "sales",
+      "backup"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S11-05",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Persisted permissioned automation",
+   "sourceModules": [
+    "localInsights",
+    "advisorySchedule"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "advisorySchedule"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/AdvisoryScheduleRunner.test.tsx",
+     "imports": [
+      "advisorySchedule"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/ScheduledAdvisories.test.tsx",
+     "imports": [
+      "advisorySchedule"
+     ]
+    },
+    {
+     "file": "qa/stage11-advanced-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    },
+    {
+     "file": "qa/stage11-local-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S12-01",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Reproducible toolchain and CI",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "S12-02",
+   "family": "acceptance",
+   "historicalStatus": "missing",
+   "requirement": "Stock and money reconciliation",
+   "sourceModules": [
+    "integrity",
+    "historicalCosting"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/integrity.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/multiTabConcurrency.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/splitTender.test.ts",
+     "imports": [
+      "integrity"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S12-03",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Migration and recovery matrix",
+   "sourceModules": [
+    "TallybookDB",
+    "backup"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S12-04",
+   "family": "acceptance",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Security and dependencies",
+   "sourceModules": [
+    "staff"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/auth/verifyDeviceOwner.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/components/AppShell.test.tsx",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/expenseAssistant.test.ts",
+     "imports": [
+      "staff"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "S12-06",
+   "family": "acceptance",
+   "historicalStatus": "blocked",
+   "requirement": "Deployment and release artifact",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "ENV-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Frozen dependencies and full toolchain",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "FIN-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Persisted inventory history and atomic cost allocations",
+   "sourceModules": [
+    "historicalCosting",
+    "sales"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/batch.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/customersByProduct.test.ts",
+     "imports": [
+      "sales"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/stockCount.test.ts",
+     "imports": [
+      "sales"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "FIN-002",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Financial reconciliation and tax policy",
+   "sourceModules": [
+    "financialIntelligence",
+    "supplierReporting",
+    "saleTenderReconciliation",
+    "FinancialIntelligencePage",
+    "financialCurrencyEvidence",
+    "expenses",
+    "walletTransfers",
+    "backup",
+    "prepaidLiabilityReconciliation",
+    "integrity",
+    "financialPeriodConservation"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "expenses",
+      "walletTransfers",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "backup",
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "backup",
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run10FinancialConservation.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "walletTransfers",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/run12SupplierTaxIntegration.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "expenses",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "financialIntelligence",
+      "backup",
+      "integrity"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "SEC-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Complete authorization and actor coverage",
+   "sourceModules": [
+    "staff",
+    "customers",
+    "stage2Inventory",
+    "assistantLocalStore"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "staff",
+      "customers",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "staff",
+      "customers",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/security/serviceAuthorityContinuation.test.ts",
+     "imports": [
+      "staff",
+      "customers",
+      "stage2Inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "imports": [
+      "staff",
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/clementiaSoleInterfaceMatrix.test.ts",
+     "imports": [
+      "staff",
+      "customers"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/quotationDraft.test.ts",
+     "imports": [
+      "staff",
+      "customers"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "DATA-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Historical migration and restore matrix",
+   "sourceModules": [
+    "TallybookDB",
+    "backup"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backupTamperFuzz.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "TallybookDB",
+      "backup"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "CLOUD-001",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Authenticated financial replication and durable identity",
+   "sourceModules": [
+    "syncLogin",
+    "syncEnrollment",
+    "syncDirectory",
+    "syncSessionStore"
+   ],
+   "candidateTests": [
+    {
+     "file": "server/tests/syncLogin.test.mjs",
+     "imports": [
+      "syncLogin",
+      "syncSessionStore"
+     ]
+    },
+    {
+     "file": "server/tests/syncAccessRoutes.test.mjs",
+     "imports": [
+      "syncLogin"
+     ]
+    },
+    {
+     "file": "server/tests/syncDirectory.test.mjs",
+     "imports": [
+      "syncDirectory"
+     ]
+    },
+    {
+     "file": "server/tests/syncEnrollment.test.mjs",
+     "imports": [
+      "syncEnrollment"
+     ]
+    },
+    {
+     "file": "server/tests/syncSessionStore.test.mjs",
+     "imports": [
+      "syncSessionStore"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "STORE-001",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Authoritative store stock, transfers and attendants",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "PAY-001",
+   "family": "release",
+   "historicalStatus": "blocked",
+   "requirement": "Payment provider and sandbox credentials",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "COM-001",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Public storefront, reservations and delivery",
+   "sourceModules": [
+    "commerce"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/commerce/commerceBoundary.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/writeSafety.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeOperations.integration.test.ts",
+     "imports": [
+      "commerce"
+     ]
+    },
+    {
+     "file": "client/src/pages/CommercePage.test.tsx",
+     "imports": [
+      "commerce"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "AST-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Quotation handoff and complete assistant workflows",
+   "sourceModules": [
+    "quotationDraft"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/assistant/quotationDraft.test.ts",
+     "imports": [
+      "quotationDraft"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "INT-001",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Live intelligence and permissioned automation",
+   "sourceModules": [
+    "localInsights"
+   ],
+   "candidateTests": [
+    {
+     "file": "qa/stage11-advanced-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    },
+    {
+     "file": "qa/stage11-local-insights.test.mjs",
+     "imports": [
+      "localInsights"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "HW-001",
+   "family": "release",
+   "historicalStatus": "blocked",
+   "requirement": "Physical devices and supported hardware acceptance",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "OPS-001",
+   "family": "release",
+   "historicalStatus": "blocked",
+   "requirement": "Staging deployment, recovery, monitoring and release",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "ARCH-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Historical Stage 2/3 reconciliation",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "DATA-002",
+   "family": "release",
+   "historicalStatus": "missing",
+   "requirement": "Crash atomicity across main and assistant databases",
+   "sourceModules": [
+    "backup",
+    "activeCompany",
+    "assistantLocalStore",
+    "restoreRecovery",
+    "restoreJournal"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "assistantLocalStore",
+      "restoreRecovery",
+      "restoreJournal"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "assistantLocalStore",
+      "restoreRecovery",
+      "restoreJournal"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7CrashStages.test.ts",
+     "imports": [
+      "activeCompany",
+      "assistantLocalStore",
+      "restoreRecovery",
+      "restoreJournal"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "restoreJournal"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "restoreJournal"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "PERF-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Device performance and bundle budget",
+   "sourceModules": [
+    "vite.config"
+   ],
+   "candidateTests": [],
+   "verdict": "NO-TEST-IMPORTS-SOURCE"
+  },
+  {
+   "id": "RUNTIME-001",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Runtime patch and distribution notices review",
+   "sourceModules": [],
+   "candidateTests": [],
+   "verdict": "no-source-modules"
+  },
+  {
+   "id": "DATA-003",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Durable cross-IndexedDB backup restore preimage journal",
+   "sourceModules": [
+    "restoreJournal",
+    "restoreRecovery",
+    "backup",
+    "DatabaseContext",
+    "activeCompany"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "restoreJournal",
+      "restoreRecovery",
+      "backup",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "restoreJournal",
+      "restoreRecovery",
+      "backup",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "restoreJournal",
+      "backup",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7CrashStages.test.ts",
+     "imports": [
+      "restoreJournal",
+      "restoreRecovery",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "restoreJournal",
+      "backup",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "FIN-013",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Narrow atomic, staff-confirmed cash-only partial-return posting and reporting",
+   "sourceModules": [
+    "cashPartialReturnPosting",
+    "cashPartialReturn",
+    "TallybookDB",
+    "financialIntelligence",
+    "costReconciliation",
+    "staff",
+    "backup",
+    "integrity",
+    "reversals"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "cashPartialReturnPosting",
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "integrity",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/business/run11ReturnPolicyIntegration.test.ts",
+     "imports": [
+      "cashPartialReturnPosting",
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "integrity",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "cashPartialReturnPosting",
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "integrity"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/creditSalePartialReturn.test.ts",
+     "imports": [
+      "cashPartialReturnPosting",
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "reversals"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/tax.test.ts",
+     "imports": [
+      "TallybookDB",
+      "financialIntelligence",
+      "staff",
+      "backup",
+      "integrity",
+      "reversals"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "FIN-014",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Read-only return review and narrow cash refund workflow activation",
+   "sourceModules": [
+    "cashReturnReview",
+    "cashReturnReview",
+    "CashReturnReviewDialog",
+    "SalesPage"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/reliability/ledgerConservation.property.test.ts",
+     "imports": [
+      "cashReturnReview"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "imports": [
+      "cashReturnReview"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/cashReturnReview.test.ts",
+     "imports": [
+      "cashReturnReview"
+     ]
+    },
+    {
+     "file": "client/src/features/sales/creditSalePartialReturn.test.ts",
+     "imports": [
+      "cashReturnReview"
+     ]
+    },
+    {
+     "file": "qa/mission-go-return-preview-zero-value.test.mjs",
+     "imports": [
+      "cashReturnReview"
+     ]
+    },
+    {
+     "file": "qa/stage12-cash-return-review.test.mjs",
+     "imports": [
+      "cashReturnReview"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "DATA-009",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Origin-wide Web Locks coordination for destructive two-database work and assistant writers",
+   "sourceModules": [
+    "crossTabDataLock",
+    "restoreRecovery",
+    "backup",
+    "activeCompany",
+    "assistantLocalStore"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "imports": [
+      "crossTabDataLock",
+      "restoreRecovery",
+      "backup",
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run8MigrationRestore.test.ts",
+     "imports": [
+      "restoreRecovery",
+      "backup",
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "imports": [
+      "backup",
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7Consistency.test.ts",
+     "imports": [
+      "crossTabDataLock",
+      "backup",
+      "activeCompany"
+     ]
+    },
+    {
+     "file": "client/src/features/backup/run7CrashStages.test.ts",
+     "imports": [
+      "restoreRecovery",
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    },
+    {
+     "file": "client/src/features/assistant/assistantLocalStore.security.test.ts",
+     "imports": [
+      "activeCompany",
+      "assistantLocalStore"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  },
+  {
+   "id": "DATA-011",
+   "family": "release",
+   "historicalStatus": "implemented-unverified",
+   "requirement": "Coordinate additional customer, wallet, store, catalogue, stock-count and supplier mutations with recovery lock",
+   "sourceModules": [
+    "retailWriteLock",
+    "coordinatedRetailWrite",
+    "customers",
+    "customerBenefits",
+    "walletTransfers",
+    "storeDirectory",
+    "storeTransfers",
+    "storeStockCounts",
+    "inventory",
+    "stage2Inventory",
+    "advancedInventory",
+    "purchases"
+   ],
+   "candidateTests": [
+    {
+     "file": "client/src/features/business/companyIsolation.integration.test.ts",
+     "imports": [
+      "customers",
+      "customerBenefits",
+      "inventory",
+      "stage2Inventory",
+      "advancedInventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "imports": [
+      "customers",
+      "customerBenefits",
+      "storeDirectory",
+      "storeTransfers",
+      "storeStockCounts",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/reports/financialJourney.integration.test.ts",
+     "imports": [
+      "customers",
+      "customerBenefits",
+      "walletTransfers",
+      "inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/customers/walletTransfers.test.ts",
+     "imports": [
+      "customers",
+      "customerBenefits",
+      "walletTransfers",
+      "inventory"
+     ]
+    },
+    {
+     "file": "client/src/features/insights/advisorySchedule.test.ts",
+     "imports": [
+      "customers",
+      "walletTransfers",
+      "inventory",
+      "purchases"
+     ]
+    },
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "imports": [
+      "storeDirectory",
+      "inventory",
+      "stage2Inventory",
+      "purchases"
+     ]
+    }
+   ],
+   "verdict": "candidate-tests-found-review-needed"
+  }
+ ]
+}

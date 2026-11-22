@@ -298,7 +298,7 @@ export function TallybookWelcome({ variant = "device" }: { variant?: WelcomeVari
       <div className="tbl-wrap tbl-footer-inner">
         <span className="tbl-brand tbl-brand-light"><span className="tbl-brand-mark" aria-hidden="true"><Store size={18} strokeWidth={2.25} /></span><span><strong>Tallybook</strong><small>by Alchemy</small></span></span>
         <p>{shop ? "Account first, then owner or employee." : "Local ledger or shared shop. You choose."}</p>
-        <nav aria-label="Footer"><Link href="/signin">Sign in</Link><a href="#features">Features</a><a href="#faq">Questions</a></nav>
+        <nav aria-label="Footer"><Link href="/signin">Sign in</Link><a href="#features">Features</a><a href="#faq">Questions</a><a href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">Open-source notices</a></nav>
       </div>
     </footer>
   </div>;

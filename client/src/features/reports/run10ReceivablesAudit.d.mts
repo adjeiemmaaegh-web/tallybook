@@ -1,3 +1,4 @@
+import type {CashPartialSaleReturn} from '../sales/cashPartialReturnPosting';
 import type {Customer} from '../customers/customers';
 import type {Sale} from '../sales/sales';
 import type {DebtRepayment} from '../credit/credit';
@@ -14,5 +15,5 @@ export interface Run10ReceivableAudit {
 }
 export function auditRun10CompanyReceivables(input:{
  company:string;customers:Customer[];sales:Sale[];
- repayments:DebtRepayment[];reversals:SaleReversal[];
+ repayments:DebtRepayment[];reversals:SaleReversal[];creditReturns?:CashPartialSaleReturn[];
 }):Run10ReceivableAudit;

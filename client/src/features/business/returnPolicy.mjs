@@ -4,6 +4,7 @@
  * IndexedDB owners can still edit device-local records: not tamper-proof.
  */
 const DENY='Company return policy does not authorize this refund.';
+import {REFUND_ALLOCATIONS,LOYALTY_ON_RETURN,returnPolicyChoices} from '../sales/returnAllocation.mjs';
 const issue=x=>{throw Error(x)};
 const instant=value=>{
  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)||
@@ -13,8 +14,13 @@ const instant=value=>{
 };
 const own=(obj,keys)=>obj&&typeof obj==='object'&&!Array.isArray(obj)&&
  Object.keys(obj).every(k=>keys.includes(k));
+// Optional per-business choices (older revisions lack them and mean the defaults: original tenders, proportional, reverse loyalty points).
+const validChoices=value=>
+ (value.refundAllocation===undefined||REFUND_ALLOCATIONS.includes(value.refundAllocation))&&
+ (value.loyaltyOnReturn===undefined||LOYALTY_ON_RETURN.includes(value.loyaltyOnReturn));
 const validSettings=value=>
- own(value,['enabled','allowFullReversal','allowCashPartial','maxAgeDays'])&&
+ own(value,['enabled','allowFullReversal','allowCashPartial','maxAgeDays','refundAllocation','loyaltyOnReturn'])&&
+ validChoices(value)&&
  typeof value.enabled==='boolean'&&typeof value.allowFullReversal==='boolean'&&
  typeof value.allowCashPartial==='boolean'&&
  Number.isSafeInteger(value.maxAgeDays)&&value.maxAgeDays>=1&&value.maxAgeDays<=3650&&
@@ -34,10 +40,12 @@ export function validateReturnPolicyHistory(history){
  for(let i=0;i<history.length;i++){
   const r=history[i];
   if(!own(r,['revision','effectiveAt','enabled','allowFullReversal',
-    'allowCashPartial','maxAgeDays','reason','actorStaffId'])||
+    'allowCashPartial','maxAgeDays','refundAllocation','loyaltyOnReturn','reason','actorStaffId'])||
     !Number.isSafeInteger(r.revision)||r.revision!==i+1||
     !validSettings({enabled:r.enabled,allowFullReversal:r.allowFullReversal,
-      allowCashPartial:r.allowCashPartial,maxAgeDays:r.maxAgeDays})||
+      allowCashPartial:r.allowCashPartial,maxAgeDays:r.maxAgeDays,
+      ...(r.refundAllocation!==undefined?{refundAllocation:r.refundAllocation}:{}),
+      ...(r.loyaltyOnReturn!==undefined?{loyaltyOnReturn:r.loyaltyOnReturn}:{})})||
     typeof r.reason!=='string'||!r.reason.trim()||
     r.reason.length>240||
     (r.actorStaffId!==undefined&&
@@ -67,6 +75,9 @@ export function appendCompanyReturnPolicy(history,settings,now,reason,actorStaff
   revision:prior.revision+1,effectiveAt:now,
   enabled:settings.enabled,allowFullReversal:settings.allowFullReversal,
   allowCashPartial:settings.allowCashPartial,maxAgeDays:settings.maxAgeDays,
+  // A change that does not mention the choices keeps what the business had chosen before.
+  ...((settings.refundAllocation??prior.refundAllocation)!==undefined?{refundAllocation:settings.refundAllocation??prior.refundAllocation}:{}),
+  ...((settings.loyaltyOnReturn??prior.loyaltyOnReturn)!==undefined?{loyaltyOnReturn:settings.loyaltyOnReturn??prior.loyaltyOnReturn}:{}),
   reason:reason.trim(),...(actorStaffId?{actorStaffId}:{})
  });
  return Object.freeze([...(history??[]),candidate]);
@@ -76,6 +87,10 @@ const snapshot=value=>Object.freeze({
  enabled:value.enabled,allowFullReversal:value.allowFullReversal,
  allowCashPartial:value.allowCashPartial,maxAgeDays:value.maxAgeDays
 });
+/** The business's refund allocation and loyalty choices in force now (defaults when never chosen). */
+export function companyReturnChoices(history){
+ return returnPolicyChoices(currentCompanyReturnPolicy(history));
+}
 export function saleReturnPolicySnapshot(history){
  return snapshot(currentCompanyReturnPolicy(history));
 }

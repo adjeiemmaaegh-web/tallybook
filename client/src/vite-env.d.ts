@@ -4,6 +4,8 @@
 interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID?: string;
   readonly VITE_SUPABASE_URL?: string;
+  /** "1" shows the owner-only Connected Commerce tab. Off by default. */
+  readonly VITE_CONNECTED_COMMERCE?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   /** https endpoint that receives scrubbed client error reports. Unset: nothing leaves the device. */
   readonly VITE_TALLYBOOK_ERROR_REPORT_URL?: string;

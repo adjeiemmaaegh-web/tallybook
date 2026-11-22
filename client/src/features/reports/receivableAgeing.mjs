@@ -1,5 +1,5 @@
 import {auditRun10CompanyReceivables} from './run10ReceivablesAudit.mjs';
-import {reconcileCreditLedger,reconcileRepaymentAllocations,inspectReceivableCurrency} from '../sales/creditLedger.mjs';
+import {applyCreditReturns,reconcileCreditLedger,reconcileRepaymentAllocations,inspectReceivableCurrency} from '../sales/creditLedger.mjs';
 import {validateCreditTerms} from '../credit/creditTerms.mjs';
 const sum=(a,b)=>{const n=a+b;if(!Number.isSafeInteger(n)||n<0)throw Error('Ageing balance exceeds safe bounds.');return n;};
 export function summarizeReceivableAgeing(input,asOfDate){
@@ -10,7 +10,9 @@ export function summarizeReceivableAgeing(input,asOfDate){
  for(const sale of input.sales)validateCreditTerms(sale);
  const groups=new Map();let unknownCurrencyCustomers=0;
  for(const customer of input.customers){
-  const sales=input.sales.filter(s=>s.customerId===customer.id);
+  const rawSales=input.sales.filter(s=>s.customerId===customer.id);
+  // Credit-note returns reduce each sale's still-owed balance before ageing buckets are assigned.
+  const sales=applyCreditReturns(rawSales,(input.creditReturns??[]).filter(r=>rawSales.some(s=>s.id===r.originalSaleId)));
   const repayments=input.repayments.filter(r=>r.customerId===customer.id);
   const reversals=input.reversals.filter(r=>r.customerId===customer.id);
   if([...sales,...repayments,...reversals].some(r=>new Date(r.createdAt).toISOString().slice(0,10)>asOfDate))
