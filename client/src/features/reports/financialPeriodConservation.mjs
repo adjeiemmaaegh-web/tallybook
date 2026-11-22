@@ -92,7 +92,8 @@ export function reconcileFinancialPeriodDisplay({sales=[],payments=[],repayments
     // Receivable credit notes reduce revenue but move no money, so they never reduce collections.
     const creditNote=amount(refund.debtReducedMinor??0,'credit-note return');
     post(day,'revenue',-(value+creditNote));
-    post(day,'collections',-value);
+    // A wallet refund credits the prepaid wallet (a liability); it is not money leaving collections.
+    post(day,'collections',refund.refundMethod==='wallet'?0n:-value);
   }
   for(const transfer of walletTransfers) {
     if(!['deposit','refund'].includes(transfer.kind)) throw new Error('Financial prepaid transfer kind is invalid.');

@@ -133,7 +133,8 @@ export async function archiveCustomer(customerId: string, database: TallybookDB 
         const profile=await database.businessProfiles.get(activeId);
         if(!profile?.currency||!/^[A-Z]{3}$/.test(profile.currency))
           throw new Error("Company wallet currency must be verified before archiving.");
-        const verified=reconcilePrepaidLiability({transfers,benefits,sales,reversals},profile.currency);
+        const walletReturns=(await database.cashPartialReturns.where('businessProfileId').equals(activeId).toArray()).filter(row=>row.refundMethod==='wallet');
+        const verified=reconcilePrepaidLiability({transfers,benefits,sales,reversals,returns:walletReturns},profile.currency);
         if(verified.liabilityMinor!==0)
           throw new Error("Customer has remaining wallet funds. Resolve verified prepaid liability before archiving.");
       }

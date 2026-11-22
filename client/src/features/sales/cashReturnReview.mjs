@@ -18,14 +18,18 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   // This also validates the exact saved tender, sequence, tax and earlier refunds.
   reconcileCashPartialReturns([sale],saleLines,payments,priorReturns,fullReversals);
   const hasCustomer = sale.customerId !== undefined;
-  if (!['credit',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) ||
+  const walletSale = sale.paymentMethod === 'wallet';
+  if (!['credit','wallet',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) ||
       !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor <= 0 ||
-      sale.walletAppliedMinor || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
+      (sale.walletAppliedMinor && !(walletSale && sale.walletAppliedMinor === sale.amountPaidMinor && sale.amountPaidMinor === sale.totalMinor)) ||
+      sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
       !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
-      (hasCustomer
+      (walletSale
+        ? !hasCustomer || sale.outstandingMinor !== 0
+        : hasCustomer
         ? sale.outstandingMinor <= 0 || !Number.isSafeInteger(stillOwedMinor) || stillOwedMinor < 0
         : (sale.paymentMethod === 'credit' || sale.outstandingMinor !== 0 || sale.amountPaidMinor !== sale.totalMinor)) ||
-      (sale.amountPaidMinor === 0 ? payments.length !== 0
+      (walletSale ? payments.length !== 0 : sale.amountPaidMinor === 0 ? payments.length !== 0
         : (payments.length !== 1 || payments[0].method !== sale.paymentMethod || payments[0].amountMinor !== sale.amountPaidMinor)))
     throw new Error('Only a single-tender cash, mobile-money or card sale, or a customer credit sale with a verified receivable, can use this narrow return review.');
   const previous = priorReturns.flatMap(item => item.lines.map(line=>({saleLineId:line.saleLineId,quantity:line.quantity})));
@@ -51,7 +55,7 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   if (!options.length) throw new Error('No supported original sale lines.');
   const refundableTenderMinor=sale.amountPaidMinor-priorReturns.reduce((n,r)=>n+r.refundedMinor,0);
   if(!Number.isSafeInteger(refundableTenderMinor)||refundableTenderMinor<0) throw new Error('Prior refunds exceed the original payment; reconcile first.');
-  return {refundMethod:sale.paymentMethod, refundableTenderMinor, stillOwedMinor: hasCustomer ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
+  return {refundMethod:sale.paymentMethod, refundableTenderMinor, stillOwedMinor: hasCustomer && !walletSale ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
 }
 
 export function quoteReviewedCashReturn(review,saleLineId,quantity) {

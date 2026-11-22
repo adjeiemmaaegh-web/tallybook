@@ -14,7 +14,8 @@ export const MANUAL_REFUND_TENDERS = Object.freeze(['cash','mobile','card']);
  * recorded receivable on THIS sale (a credit note). Debt is reduced first;
  * only the remainder (if any) is refunded through the original single tender.
  */
-export const RETURN_SETTLEMENT_METHODS = Object.freeze([...MANUAL_REFUND_TENDERS,'credit']);
+/** 'wallet' = the refund of a WALLET-PAID sale goes back into the customer's prepaid wallet (a liability): no drawer cash, no provider money. */
+export const RETURN_SETTLEMENT_METHODS = Object.freeze([...MANUAL_REFUND_TENDERS,'credit','wallet']);
 
 /**
  * Independently validate the append-only, cash-only return journal. This is an
@@ -46,9 +47,10 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         !validId(entry.originalSaleId) || !validId(entry.businessProfileId) ||
         typeof entry.createdAt !== 'string' || !Number.isFinite(Date.parse(entry.createdAt)) ||
         !RETURN_SETTLEMENT_METHODS.includes(entry.refundMethod) ||
-        (entry.refundMethod !== 'cash' && entry.refundMethod !== 'credit' && entry.disbursementEvidence !== 'staff_confirmed_manual_unverified') ||
-        ((entry.refundMethod === 'cash' || entry.refundMethod === 'credit') && entry.disbursementEvidence !== undefined) ||
-        (entry.manualReference !== undefined && (typeof entry.manualReference !== 'string' || !entry.manualReference.trim() || entry.manualReference.length > 64 || entry.refundMethod === 'cash' || entry.refundMethod === 'credit')) ||
+        (entry.refundMethod !== 'cash' && entry.refundMethod !== 'credit' && entry.refundMethod !== 'wallet' && entry.disbursementEvidence !== 'staff_confirmed_manual_unverified') ||
+        ((entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet') && entry.disbursementEvidence !== undefined) ||
+        (entry.manualReference !== undefined && (typeof entry.manualReference !== 'string' || !entry.manualReference.trim() || entry.manualReference.length > 64 || entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet')) ||
+        (entry.refundMethod === 'wallet' && ((entry.debtReducedMinor ?? 0) !== 0 || entry.customerId === undefined)) ||
         (entry.debtReducedMinor !== undefined && !money(entry.debtReducedMinor)) ||
         (entry.customerId !== undefined && !validId(entry.customerId)) ||
         ((entry.debtReducedMinor ?? 0) > 0 && entry.customerId === undefined) ||
@@ -69,15 +71,17 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         !money(sale.totalMinor) || !money(sale.amountPaidMinor) || !money(sale.outstandingMinor) ||
         (sale.customerId === undefined
           ? (sale.amountPaidMinor !== sale.totalMinor || sale.outstandingMinor !== 0 || (entry.debtReducedMinor ?? 0) !== 0)
-          : sale.outstandingMinor === 0) ||
-        sale.walletAppliedMinor || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
+          : (entry.refundMethod === 'wallet'
+              ? (sale.outstandingMinor !== 0 || sale.walletAppliedMinor !== sale.amountPaidMinor || sale.amountPaidMinor !== sale.totalMinor)
+              : sale.outstandingMinor === 0)) ||
+        (sale.walletAppliedMinor && entry.refundMethod !== 'wallet') || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
         entry.originalReceiptNumber !== sale.receiptNumber ||
         Date.parse(entry.createdAt) < Date.parse(sale.createdAt)) {
       throw new Error('Cash return is not linked to a supported, fully paid original sale.');
     }
     if (sale.tax?.ghana) throw new Error("Ghana VAT partial refund evidence requires a separate certified tax-correction process.");
     const paid = payments.filter(p => p.saleId === sale.id);
-    if (sale.amountPaidMinor === 0 ? paid.length !== 0 :
+    if (entry.refundMethod === 'wallet' ? paid.length !== 0 : sale.amountPaidMinor === 0 ? paid.length !== 0 :
         (paid.length !== 1 || paid[0].method !== sale.paymentMethod || paid[0].businessProfileId !== sale.businessProfileId ||
          paid[0].amountMinor !== sale.amountPaidMinor))
       throw new Error('Cash return has unverified original tender evidence.');

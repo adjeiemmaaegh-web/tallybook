@@ -5,7 +5,7 @@ import type { CashPartialSaleReturn } from './cashPartialReturnPosting';
 import type { SaleReversal } from '../assistant/reversals';
 import type { InventoryBatch } from '../inventory/stage2Inventory';
 export interface CashReturnReview {
-  refundMethod: 'cash'|'mobile'|'card'|'credit';
+  refundMethod: 'cash'|'mobile'|'card'|'credit'|'wallet';
   stillOwedMinor: number;
   refundableTenderMinor: number;
   storeMode?: boolean;

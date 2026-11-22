@@ -481,7 +481,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   // before any main-ledger or assistant restore transaction can start.
   auditRun10PrepaidCashConservation({
     transfers:records.walletTransfers,benefits:records.customerBenefits,
-    sales:records.sales,reversals:records.saleReversals
+    sales:records.sales,reversals:records.saleReversals,returns:records.cashPartialReturns
   },records.businessProfiles[0].currency);
   for (const order of records.commerceOrders) {
     if (!["draft", "prepared", "ready", "reserved", "packed", "dispatched", "delivered", "return-requested", "cancelled"].includes(order.status) ||

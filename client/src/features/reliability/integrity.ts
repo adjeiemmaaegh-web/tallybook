@@ -153,7 +153,7 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
     } catch { issues.push(issue("supplier-payable-integrity", "Supplier payable records cannot be reconciled safely; do not trust these liabilities.")); }
     try {
       reconcilePrepaidLiability({transfers:walletTransfers,benefits:customerBenefits,
-        sales,reversals},businesses[0]?.currency);
+        sales,reversals,returns:cashPartialReturns},businesses[0]?.currency);
     } catch {
       issues.push(issue("prepaid-wallet-integrity", "Prepaid transfers, wallet benefit entries, wallet sale spending or reversal credits do not reconcile. Do not rely on the stored prepaid liability."));
     }

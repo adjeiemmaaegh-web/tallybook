@@ -169,7 +169,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
     throw new Error('Prepaid liability report needs complete transfer and currency evidence.');
   const prepaidLiability = input.customerBenefits !== undefined
     ? auditRun10PrepaidCashConservation({transfers: input.walletTransfers!, benefits: input.customerBenefits,
-      sales: input.sales, reversals: input.reversals}, input.walletCurrency!)
+      sales: input.sales, reversals: input.reversals, returns: input.cashReturns ?? []}, input.walletCurrency!)
     : undefined;
   const partialReturns = input.cashReturns ?? [];
   if (partialReturns.length) reconcileCashPartialReturns(input.sales,input.saleLines ?? [],input.payments,partialReturns,input.reversals);
@@ -184,7 +184,7 @@ export function summarizeFinancials(input:FinancialInputs, range:FinancialRange)
   const revenueMinor=total(sales,s=>s.totalMinor)+total(reversals,r=>r.reversedSaleTotalMinor)-total(refunds,r=>r.refundedMinor+(r.debtReducedMinor??0));
   const recordedTaxMinor=total(sales,s=>s.tax?.taxMinor ?? 0)-total(reversals,r=>saleById.get(r.originalSaleId)?.tax?.taxMinor ?? 0)-total(refunds,r=>r.returnedTaxMinor);
   const salesExcludingRecordedTaxMinor=revenueMinor-recordedTaxMinor;
-  const saleCollectionsMinor=total(payments,p=>p.amountMinor)+total(reversals,r=>r.reversedReceivedMinor + (saleById.get(r.originalSaleId)?.walletAppliedMinor ?? 0))-total(refunds,r=>r.refundedMinor);
+  const saleCollectionsMinor=total(payments,p=>p.amountMinor)+total(reversals,r=>r.reversedReceivedMinor + (saleById.get(r.originalSaleId)?.walletAppliedMinor ?? 0))-total(refunds,r=>r.refundMethod==='wallet'?0:r.refundedMinor);
   const debtCollectionsMinor=total(repayments,p=>p.amountMinor);
   const collectionsMinor=saleCollectionsMinor+debtCollectionsMinor+walletNetCashMinor;
   const expensesMinor=total(expenses,e=>e.amountMinor);
