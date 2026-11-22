@@ -1,0 +1,1680 @@
+{
+ "generatedFrom": "docs/release/ROAD_TO_COMPLETE_HISTORICAL_IDS.json",
+ "count": 143,
+ "records": [
+  {
+   "id": "S1-01",
+   "family": "acceptance",
+   "requirement": "Atomic checkout and partial payments",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/sales/sales.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S1-02",
+   "family": "acceptance",
+   "requirement": "Barcode and SKU POS",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S1-03",
+   "family": "acceptance",
+   "requirement": "Park, resume and recover checkout",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S1-04",
+   "family": "acceptance",
+   "requirement": "Receipts and money arithmetic",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S1-05",
+   "family": "acceptance",
+   "requirement": "Discount, loyalty and wallet checkout",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/sales/walletRecovery.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S1-06",
+   "family": "acceptance",
+   "requirement": "Retail offline acceptance",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/reliability/offlineReliability.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-01",
+   "family": "acceptance",
+   "requirement": "Catalogue variants and categories",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-02",
+   "family": "acceptance",
+   "requirement": "Wholesale units and pricing",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-03",
+   "family": "acceptance",
+   "requirement": "Services and attachments",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-04",
+   "family": "acceptance",
+   "requirement": "Secure catalogue CSV",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-05",
+   "family": "acceptance",
+   "requirement": "Persisted stock counts",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-06",
+   "family": "acceptance",
+   "requirement": "Batch receiving and expiry allocation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S2-07",
+   "family": "acceptance",
+   "requirement": "Historical inventory ledger",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-01",
+   "family": "acceptance",
+   "requirement": "Financial definitions",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-02",
+   "family": "acceptance",
+   "requirement": "Periods and trends",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-03",
+   "family": "acceptance",
+   "requirement": "Collections and receivables",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-04",
+   "family": "acceptance",
+   "requirement": "Management dashboard",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-05",
+   "family": "acceptance",
+   "requirement": "Financial export and print",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-06",
+   "family": "acceptance",
+   "requirement": "COGS, gross profit, valuation and payables",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S3-07",
+   "family": "acceptance",
+   "requirement": "Tax policy and reconciliation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-01",
+   "family": "acceptance",
+   "requirement": "Customer profiles and groups",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-02",
+   "family": "acceptance",
+   "requirement": "Credit policies and due dates",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-03",
+   "family": "acceptance",
+   "requirement": "Quotation conversion",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-04",
+   "family": "acceptance",
+   "requirement": "Loyalty lifecycle",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-05",
+   "family": "acceptance",
+   "requirement": "Prepaid wallet lifecycle",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-06",
+   "family": "acceptance",
+   "requirement": "Discount authorization",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S4-07",
+   "family": "acceptance",
+   "requirement": "Customer durability",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S5-01",
+   "family": "acceptance",
+   "requirement": "Confirmed quotation handoff",
+   "historicalStatus": "implemented-and-tested",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S5-02",
+   "family": "acceptance",
+   "requirement": "Multi-turn customer tasks",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S5-03",
+   "family": "acceptance",
+   "requirement": "Language and speech",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S5-04",
+   "family": "acceptance",
+   "requirement": "Record-grounded finance",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S5-05",
+   "family": "acceptance",
+   "requirement": "Assistant integration and adversarial QA",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/assistant/assistant.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/assistant/phase1Services.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-01",
+   "family": "acceptance",
+   "requirement": "Local identities and PIN",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-02",
+   "family": "acceptance",
+   "requirement": "Every write-service permission",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-03",
+   "family": "acceptance",
+   "requirement": "Shift cash reconciliation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-04",
+   "family": "acceptance",
+   "requirement": "Device lock and WebAuthn",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-05",
+   "family": "acceptance",
+   "requirement": "Actor attribution and audit",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S6-06",
+   "family": "acceptance",
+   "requirement": "Security recovery",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-01",
+   "family": "acceptance",
+   "requirement": "Onboarding and navigation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-02",
+   "family": "acceptance",
+   "requirement": "Mobile POS and customer display",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-03",
+   "family": "acceptance",
+   "requirement": "Printing and receipt recovery",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-04",
+   "family": "acceptance",
+   "requirement": "Local notifications",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-05",
+   "family": "acceptance",
+   "requirement": "Encrypted backup and restore",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S7-06",
+   "family": "acceptance",
+   "requirement": "Accessibility, performance and offline",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/reliability/offlineReliability.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-01",
+   "family": "acceptance",
+   "requirement": "Cloud opt-in and durable outbox",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-02",
+   "family": "acceptance",
+   "requirement": "Organization/member/device identity",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-03",
+   "family": "acceptance",
+   "requirement": "TLS and request boundaries",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-04",
+   "family": "acceptance",
+   "requirement": "Durable server storage",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-05",
+   "family": "acceptance",
+   "requirement": "Remote receipts and acknowledgements",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-06",
+   "family": "acceptance",
+   "requirement": "Business-data replication",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-07",
+   "family": "acceptance",
+   "requirement": "Conflict and power-failure recovery",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-08",
+   "family": "acceptance",
+   "requirement": "Encrypted recovery and keys",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S8-09",
+   "family": "acceptance",
+   "requirement": "Browser/cloud integration",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-01",
+   "family": "acceptance",
+   "requirement": "Store directory",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-02",
+   "family": "acceptance",
+   "requirement": "Staff store assignments",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-03",
+   "family": "acceptance",
+   "requirement": "Physical count observations",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-04",
+   "family": "acceptance",
+   "requirement": "Transfer requests",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-05",
+   "family": "acceptance",
+   "requirement": "Local store activity",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-06",
+   "family": "acceptance",
+   "requirement": "Authoritative store balances",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-07",
+   "family": "acceptance",
+   "requirement": "Actual stock transfers",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-08",
+   "family": "acceptance",
+   "requirement": "Offline attendant checkout",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-09",
+   "family": "acceptance",
+   "requirement": "Multi-device replay",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-10",
+   "family": "acceptance",
+   "requirement": "Owner consolidation",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S9-11",
+   "family": "acceptance",
+   "requirement": "Multi-store acceptance",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-01",
+   "family": "acceptance",
+   "requirement": "Authorized public catalogue",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-02",
+   "family": "acceptance",
+   "requirement": "Verified customer orders",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-03",
+   "family": "acceptance",
+   "requirement": "Payment adapter and settlement",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-04",
+   "family": "acceptance",
+   "requirement": "Stock reservations and fulfillment",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-05",
+   "family": "acceptance",
+   "requirement": "Shipment and delivery tracking",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-06",
+   "family": "acceptance",
+   "requirement": "Portable commerce backup",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S10-07",
+   "family": "acceptance",
+   "requirement": "Commerce security and acceptance",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage10-local-lifecycle.test.cjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S11-01",
+   "family": "acceptance",
+   "requirement": "Evidence-based local insights",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S11-02",
+   "family": "acceptance",
+   "requirement": "SKU demand and reorders",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S11-03",
+   "family": "acceptance",
+   "requirement": "Live batch expiry",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S11-04",
+   "family": "acceptance",
+   "requirement": "Receivable ageing",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S11-05",
+   "family": "acceptance",
+   "requirement": "Persisted permissioned automation",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-01",
+   "family": "acceptance",
+   "requirement": "Reproducible toolchain and CI",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-02",
+   "family": "acceptance",
+   "requirement": "Stock and money reconciliation",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-03",
+   "family": "acceptance",
+   "requirement": "Migration and recovery matrix",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-04",
+   "family": "acceptance",
+   "requirement": "Security and dependencies",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-05",
+   "family": "acceptance",
+   "requirement": "Full production acceptance",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/reliability/offlineReliability.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "S12-06",
+   "family": "acceptance",
+   "requirement": "Deployment and release artifact",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "ENV-001",
+   "family": "release",
+   "requirement": "Frozen dependencies and full toolchain",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "ENV-002",
+   "family": "release",
+   "requirement": "Nonportable Node QA compiler paths",
+   "historicalStatus": "implemented-and-tested",
+   "referencedTests": [
+    {
+     "file": "qa/stage10-local-lifecycle.test.cjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "ENV-003",
+   "family": "release",
+   "requirement": "Server filesystem adapters rely on POSIX security",
+   "historicalStatus": "implemented-and-tested",
+   "referencedTests": [
+    {
+     "file": "server/tests/syncJournal.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "server/tests/syncBackupVault.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-001",
+   "family": "release",
+   "requirement": "Persisted inventory history and atomic cost allocations",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-002",
+   "family": "release",
+   "requirement": "Financial reconciliation and tax policy",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "SEC-001",
+   "family": "release",
+   "requirement": "Complete authorization and actor coverage",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-001",
+   "family": "release",
+   "requirement": "Historical migration and restore matrix",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CLOUD-001",
+   "family": "release",
+   "requirement": "Authenticated financial replication and durable identity",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "STORE-001",
+   "family": "release",
+   "requirement": "Authoritative store stock, transfers and attendants",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "PAY-001",
+   "family": "release",
+   "requirement": "Payment provider and sandbox credentials",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "COM-001",
+   "family": "release",
+   "requirement": "Public storefront, reservations and delivery",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "AST-001",
+   "family": "release",
+   "requirement": "Quotation handoff and complete assistant workflows",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "INT-001",
+   "family": "release",
+   "requirement": "Live intelligence and permissioned automation",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "HW-001",
+   "family": "release",
+   "requirement": "Physical devices and supported hardware acceptance",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "OPS-001",
+   "family": "release",
+   "requirement": "Staging deployment, recovery, monitoring and release",
+   "historicalStatus": "blocked",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "ARCH-001",
+   "family": "release",
+   "requirement": "Historical Stage 2/3 reconciliation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-002",
+   "family": "release",
+   "requirement": "Crash atomicity across main and assistant databases",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "PERF-001",
+   "family": "release",
+   "requirement": "Device performance and bundle budget",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "RUNTIME-001",
+   "family": "release",
+   "requirement": "Runtime patch and distribution notices review",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "SEC-002",
+   "family": "release",
+   "requirement": "Optional server identity snapshot cross-process and file safety",
+   "historicalStatus": "implemented-and-tested",
+   "referencedTests": [
+    {
+     "file": "server/tests/syncLogin.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "server/tests/syncEnrollment.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "server/tests/syncDirectory.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "server/tests/syncSessionStore.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-003",
+   "family": "release",
+   "requirement": "Customer credit reversal sign, net-balance reporting and full-reversal linkage",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-credit-reconciliation.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-004",
+   "family": "release",
+   "requirement": "Explicit supplier payable recognition, manual settlements and currency integrity",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-supplier-payables.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/purchases/supplierPayables.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-005",
+   "family": "release",
+   "requirement": "Partial return allocation groundwork and ambiguous credit-sale reversal prevention",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/partial-return-draft.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-006",
+   "family": "release",
+   "requirement": "New per-sale repayment evidence is service-implemented; legacy allocations and full refund reconciliation remain open",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-repayment-allocations.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-007",
+   "family": "release",
+   "requirement": "Repayment UI with explicit recorded-currency target evidence is source-implemented but unverified in real browser",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-repayment-targets.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-008",
+   "family": "release",
+   "requirement": "Mixed and unknown currency customer receivables can be silently summed",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/receivable-currency-safety.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/credit/credit.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-009",
+   "family": "release",
+   "requirement": "Independent saved customer receivable/reversal/allocation integrity audit",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/reliability/integrity.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "qa/receivable-audit.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-003",
+   "family": "release",
+   "requirement": "Durable cross-IndexedDB backup restore preimage journal",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-004",
+   "family": "release",
+   "requirement": "Cross-IndexedDB company clear assistant preimage recovery",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/restore-journal.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-005",
+   "family": "release",
+   "requirement": "Recovery journal protects against stale and unexpected assistant preimage overwrites",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/restore-journal.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/backup/restoreRecovery.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "SEC-003",
+   "family": "release",
+   "requirement": "Assistant local conversation and saved-record read isolation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/assistant/assistantLocalStore.security.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-006",
+   "family": "release",
+   "requirement": "Assistant backup history truncated to recent display limit and activity-log prune non-atomic",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/backup/backup.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/assistant/audit.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "SEC-004",
+   "family": "release",
+   "requirement": "Stage 9 store and Stage 4 customer benefit writes had time-of-check staff authorization gaps",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/stores/storeAuthorization.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "STORE-002",
+   "family": "release",
+   "requirement": "Local store records lacked an independent read-only integrity audit",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage9-store-integrity.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-011",
+   "family": "release",
+   "requirement": "Saved invoice tax/discount component conservation in partial-return draft",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/partial-return-draft.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-012",
+   "family": "release",
+   "requirement": "Partial FIFO cost restoration conserves original receipt allocations",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/inventory/costLedger.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "qa/stage12-partial-fifo-restoration.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-013",
+   "family": "release",
+   "requirement": "Narrow atomic, staff-confirmed cash-only partial-return posting and reporting",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-014",
+   "family": "release",
+   "requirement": "Read-only return review and narrow cash refund workflow activation",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-015",
+   "family": "release",
+   "requirement": "Match prior cash refunds with immutable physical stock and original FIFO evidence before further returns",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-cash-return-stock-links.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "FIN-016",
+   "family": "release",
+   "requirement": "Audit cash-return physical stock and original FIFO links across backups and company history",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/stage12-cash-return-ledger-links.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/sales/cashPartialReturnPosting.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-007",
+   "family": "release",
+   "requirement": "Portable byte-bound enforcement and semantic postimage validation for durable recovery journals",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/restore-journal.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-008",
+   "family": "release",
+   "requirement": "Bound local backup import and encryption/decryption resources",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/backup-resource-limits.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "qa/backup-crypto-size.test.mjs",
+     "result": "pass"
+    },
+    {
+     "file": "client/src/features/backup/backupCrypto.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-009",
+   "family": "release",
+   "requirement": "Origin-wide Web Locks coordination for destructive two-database work and assistant writers",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-010",
+   "family": "release",
+   "requirement": "Coordinate selected core retail mutations with origin-wide recovery Web Locks",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/backup/retailWriteCoordination.test.ts",
+     "result": "pass"
+    },
+    {
+     "file": "qa/retail-write-lock-coverage.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-011",
+   "family": "release",
+   "requirement": "Coordinate additional customer, wallet, store, catalogue, stock-count and supplier mutations with recovery lock",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "no-referenced-test",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "DATA-012",
+   "family": "release",
+   "requirement": "Business, staff and local commerce mutations participate in recovery coordination",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "client/src/features/backup/adminRecoveryCoordination.test.ts",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "SEC-006",
+   "family": "release",
+   "requirement": "Staff authenticator and supervisor approval must reject stale credentials and sessions",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [
+    {
+     "file": "qa/staff-recovery-coordination.test.mjs",
+     "result": "pass"
+    }
+   ],
+   "triageClass": "automated-tests-pass-criterion-review-pending",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-001",
+   "family": "central",
+   "requirement": "Trusted server-side ingestion endpoint/RPC with auth-user, device, shop, staff, version and payload authorization; no direct browser finance writes",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-002",
+   "family": "central",
+   "requirement": "Durable full-operation payload and outbox written atomically with each local sale/shift/refund; retry, replay, revocation and status UI",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-003",
+   "family": "central",
+   "requirement": "Real PostgreSQL test-project migrations, constraints, RLS negative tests and authorization review",
+   "historicalStatus": "unverified",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-004",
+   "family": "central",
+   "requirement": "Mandatory sale staff/shift/MoMo changes may break older onboarding/UI integration tests; real Dexie and Vitest not run",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-005",
+   "family": "central",
+   "requirement": "No-sale PIN/shift/store/device workflow integrated locally but device ID is a local claim; physical drawer hardware not connected",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-006",
+   "family": "central",
+   "requirement": "Source v29 vs other branch v33 needs an additive migration rebase and three-way merge before any GitHub integration",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-007",
+   "family": "central",
+   "requirement": "Authoritative shop and device provenance in new sale data; central ingest must never invent or trust client claims",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-008",
+   "family": "central",
+   "requirement": "Watchdog v1 export per-shop per-day with version/row-count, verified field contract and actual Watchdog importer test",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-009",
+   "family": "central",
+   "requirement": "Owner cross-shop reports and provider MoMo-statement reconciliation verified against trusted central data",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-010",
+   "family": "central",
+   "requirement": "Full React/Vitest/typecheck/build/Playwright real-browser multi-tab and recovery tests; pnpm dependency installation unavailable locally",
+   "historicalStatus": "unverified",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-011",
+   "family": "central",
+   "requirement": "Full refund disbursement and financial ledger reconciliation still incomplete across app",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-012",
+   "family": "central",
+   "requirement": "New Watchdog daily JSON preview and local integrity review pass native focused tests; full React/Vitest/IndexedDB/actual Watchdog importer test unverified",
+   "historicalStatus": "implemented-unverified",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-013",
+   "family": "central",
+   "requirement": "Batch 1–5 candidate-only financial/inventory/backup modules cannot replace existing authoritative writers without domain-specific migrations and full integration acceptance",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  },
+  {
+   "id": "CENTRAL-014",
+   "family": "central",
+   "requirement": "Watchdog JSON output is explicitly local-preview; genuine importer-negotiated v1 contract, authoritative register/device provenance, signed central receipts and full multi-store events remain unimplemented",
+   "historicalStatus": "missing",
+   "referencedTests": [],
+   "triageClass": "open-blocker-register-entry",
+   "accepted": false,
+   "note": "Not accepted. 'pass' only means the referenced automated tests currently pass; the original criterion still needs line-by-line review and, where it is a device/owner criterion, real-world acceptance."
+  }
+ ]
+}

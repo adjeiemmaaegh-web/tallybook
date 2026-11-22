@@ -15,5 +15,5 @@ export interface Run10PrepaidCashAudit {
 }
 export function auditRun10PrepaidCashConservation(input:{
  transfers:WalletTransfer[];benefits:CustomerBenefitEntry[];
- sales:Sale[];reversals:SaleReversal[];
+ sales:Sale[];reversals:SaleReversal[];returns?:import('../sales/cashPartialReturnPosting').CashPartialSaleReturn[];
 },currency:string):Run10PrepaidCashAudit;

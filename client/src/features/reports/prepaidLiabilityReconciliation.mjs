@@ -13,11 +13,11 @@ const currencyCode = v => typeof v === 'string' && /^[A-Z]{3}$/.test(v);
 const raise = message => { throw new Error(`Prepaid wallet ${message}; reconcile the original ledger before reporting.`); };
 
 /** Requires complete, single-company, full-history snapshots. */
-export function reconcilePrepaidLiability({transfers, benefits, sales, reversals}, currency) {
+export function reconcilePrepaidLiability({transfers, benefits, sales, reversals, returns = []}, currency) {
   if (!currencyCode(currency)) raise('currency is unavailable');
-  if (![transfers,benefits,sales,reversals].every(Array.isArray)) raise('evidence is incomplete');
+  if (![transfers,benefits,sales,reversals,returns].every(Array.isArray)) raise('evidence is incomplete');
   const company = new Set();
-  for (const row of [...transfers,...benefits,...sales,...reversals]) {
+  for (const row of [...transfers,...benefits,...sales,...reversals,...returns]) {
     if (!id(row?.businessProfileId)) raise('contains missing company identity');
     company.add(row.businessProfileId);
   }
@@ -69,6 +69,17 @@ export function reconcilePrepaidLiability({transfers, benefits, sales, reversals
     if (Date.parse(reversal.createdAt) < Date.parse(sale.createdAt)) raise('has reversal credit before original wallet sale');
     // The reversal benefit refers to the *original benefit ID*, not to sale ID.
     originalBenefits.set(`sale-wallet-${sale.id}`,reversal);
+  }
+  // A partial return of a wallet-paid sale credits the wallet exactly once, by exactly the refunded amount.
+  for (const ret of returns) {
+    if (ret?.refundMethod !== 'wallet') continue;
+    const sale = saleIndex.get(ret.originalSaleId);
+    if (!id(ret.id) || !sale || sale.businessProfileId !== ret.businessProfileId || sale.paymentMethod !== 'wallet' ||
+        !id(ret.customerId) || ret.customerId !== sale.customerId || !minor(ret.refundedMinor) || ret.refundedMinor === 0 ||
+        ret.currency !== currency || !validDate(ret.createdAt) || Date.parse(ret.createdAt) < Date.parse(sale.createdAt) ||
+        reversalIndex.has(sale.id)) raise('has unverifiable wallet return evidence');
+    addExpected(`return-wallet-${ret.id}`, {customerId:ret.customerId, companyId:ret.businessProfileId,
+      delta:ret.refundedMinor, createdAt:ret.createdAt, source:'return'});
   }
   const walletRows = benefits.filter(b => b?.kind === 'wallet');
   const walletById=new Map();

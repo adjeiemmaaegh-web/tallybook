@@ -9,8 +9,9 @@ const sql = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8')
 const MIGRATIONS = ['20261013123347_business_identity', '20261105022238_stakeholder_session_bound_membership',
   '20261106130000_invite_24h'].map(m => `supabase/migrations/${m}.sql`);
 
-async function setup() {
+async function setup(context) {
   const db = new PGlite();
+  context.after(() => db.close());
   await db.exec(`create role anon; create role authenticated; create role service_role; create schema auth;
     create table auth.users(id uuid primary key, email text);
     create table auth.sessions(id uuid, user_id uuid, not_after timestamptz);
@@ -38,8 +39,8 @@ async function setup() {
   return {db, people, company, boss: as('boss'), emp: as('emp'), other: as('other'), admin, adminRows};
 }
 
-test('an invitation lasts 24 hours, is account-bound and single-use', async () => {
-  const t = await setup();
+test('an invitation lasts 24 hours, is account-bound and single-use', async context => {
+  const t = await setup(context);
   const inv = await t.boss('invite', {companyId: t.company, targetUserId: t.people.emp.id});
   const [{span}] = await t.adminRows('select (expires_at - created_at)::text as span from public.company_member_invites');
   assert.match(span, /^(1 day|23:59|24:00)/);
@@ -49,15 +50,15 @@ test('an invitation lasts 24 hours, is account-bound and single-use', async () =
   await assert.rejects(t.emp('accept', {inviteToken: inv.inviteToken}));
 });
 
-test('an invitation older than 24 hours cannot be accepted', async () => {
-  const t = await setup();
+test('an invitation older than 24 hours cannot be accepted', async context => {
+  const t = await setup(context);
   const inv = await t.boss('invite', {companyId: t.company, targetUserId: t.people.emp.id});
   await t.admin(`update public.company_member_invites set created_at = now() - interval '25 hours', expires_at = now() - interval '1 hour'`);
   await assert.rejects(t.emp('accept', {inviteToken: inv.inviteToken}));
 });
 
-test('the database caps any invitation at 24 hours', async () => {
-  const t = await setup();
+test('the database caps any invitation at 24 hours', async context => {
+  const t = await setup(context);
   await t.boss('invite', {companyId: t.company, targetUserId: t.people.emp.id});
   await assert.rejects(t.admin(`update public.company_member_invites set expires_at = created_at + interval '25 hours'`), /check/i);
 });

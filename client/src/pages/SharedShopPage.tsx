@@ -20,7 +20,7 @@ import { filterProducts, findByBarcode, normalizeCode } from "@/cloud/productSea
 import { DATE_PRESETS, PAYMENT_FILTERS, dayRange, type DatePreset, type PaymentFilter } from "@/cloud/salesFilters";
 import { formatCustomerStatementText } from "@/cloud/customerStatementText";
 import { openWhatsAppShare, shareBusinessText } from "@/features/sharing/businessSharing";
-import { countryForCurrency, formatShopReceiptText } from "@/cloud/shopReceiptText";
+import { countryForCurrency, formatShopReceiptText, shopReceiptProviderStatus } from "@/cloud/shopReceiptText";
 import {SharedShopPurchasingPanel} from "@/cloud/SharedShopPurchasingPanel";
 import {SharedShopTransfers} from "@/cloud/SharedShopTransfers";
 import {SharedShopOrders} from "@/cloud/SharedShopOrders";
@@ -33,6 +33,11 @@ import {convertShopQuotation} from "@/cloud/quotations";
 import {purchaseRetry} from "@/cloud/purchaseRetry";
 import {exportLoadedSalesCsv} from "@/cloud/shopOperationalReports";
 import {SharedShopAccounts} from "@/cloud/SharedShopAccounts";
+import {SharedShopConnectedCommerce} from "@/cloud/connectedCommerce/SharedShopConnectedCommerce";
+import {SharedShopDiscover} from "@/cloud/connectedCommerce/SharedShopDiscover";
+
+/** Build-time switch, off by default: Connected Commerce services are not offered to owners until explicitly enabled. */
+const CONNECTED_COMMERCE_UI = import.meta.env.VITE_CONNECTED_COMMERCE === "1";
 import {SharedShopAsk} from "@/cloud/SharedShopAsk";
 import type {PurchaseDraft} from "@/cloud/shopAssistant";
 import {MyRefundRequests, OwnerRefundRequests, RequestRefundForm} from "@/cloud/RefundRequests";
@@ -70,7 +75,7 @@ import { currencies, currencyLabels } from "@/features/business/currencies";
 import { currencyMinorDivisor, formatMinorAmount, parseAmountToMinor } from "@/features/inventory/inventory";
 
 interface Business { id: string; name: string; role: "owner" | "attendant" }
-type Tab = "shifts" | "audit" | "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers";
+type Tab = "discover" | "shifts" | "audit" | "home" | "accounts" | "quotes" | "ask" | "refund-requests" | "expenses" | "receive" | "orders" | "dashboard" | "sell" | "stock" | "purchasing" | "stock-counts" | "team" | "sales" | "reports" | "customers" | "connected";
 
 const CACHE = "tallybook.shop.cache.v1:";
 import { safeCache, type ShopCache } from "@/cloud/safeShopCache";
@@ -355,7 +360,7 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
 
   const canCredit = permissionsOf(overview).canCredit;
   const tabs: Array<[Tab, string]> = isOwner
-    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["shifts", "Staff shifts"], ["audit", "Activity audit"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"]]
+    ? [["dashboard", "Dashboard"], ["sell", "Sell"], ["stock", "Stock"], ["purchasing", "Purchasing"], ["stock-counts", "Stock counts"], ["shifts", "Staff shifts"], ["audit", "Activity audit"], ["orders", "Online orders"], ["customers", "Customers"], ["quotes", "Quotes"], ["ask", "Ask"], ["refund-requests", pendingRefunds > 0 ? `Refund requests (${pendingRefunds})` : "Refund requests"], ["expenses", "Expenses"], ["accounts", "Accounts"], ["team", "Team"], ["sales", "Sales"], ["reports", "Reports"], ...(CONNECTED_COMMERCE_UI ? [["connected", "Connected Commerce"] as [Tab, string], ["discover", "Discover"] as [Tab, string]] : [])]
     : [["home", "Home"], ["shifts", "My shift"], ["sell", "Sell"], ...(canCredit ? [["customers", "Customers"] as [Tab, string]] : []),
        ...(stockAccess?.canManageStock ? [["stock-counts", "Stock counts"], ["receive", "Receive goods"]] as Array<[Tab, string]> : []),
        ["quotes", "Quotes"], ["ask", "Ask"], ["sales", "My sales"], ["reports", "My day"]];
@@ -428,6 +433,8 @@ function ShopWorkspace({ userId, business, online }: { userId: string; business:
     {tab === "refund-requests" && isOwner && <OwnerRefundRequests companyId={business.id} overview={overview} online={online} refresh={refresh} onChanged={() => void refresh()} />}
     {tab === "accounts" && isOwner && <SharedShopAccounts companyId={business.id} overview={overview} online={online} shopName={business.name} />}
     {tab === "expenses" && isOwner && <SharedShopExpenses companyId={business.id} overview={overview} online={online} />}
+    {tab === "connected" && isOwner && CONNECTED_COMMERCE_UI && <SharedShopConnectedCommerce companyId={business.id} online={online} />}
+    {tab === "discover" && isOwner && CONNECTED_COMMERCE_UI && <SharedShopDiscover companyId={business.id} online={online} />}
     {tab === "team" && isOwner && <TeamPanel {...ctx} />}
     {tab === "customers" && canCredit && <CustomersPanel {...ctx} />}
     {tab === "sales" && (online ? <SalesPanel key={overview.role} {...ctx} /> : <p role="status">Reconnect to view sales history.</p>)}
@@ -934,6 +941,7 @@ export function Receipt({ receipt, onNext }: { receipt: ShopReceipt; onNext?: ()
     {tenders.length
       ? <ul className="shop-tenders">{tenders.map((t, i) => <li key={i}><span>{tenderText(t, money)}</span></li>)}</ul>
       : <p className="shop-muted">{receipt.payment.method === "mobile" ? `Mobile money · ${receipt.payment.reference}` : receipt.payment.method === "card" ? "Card" : `Cash received ${money(receipt.payment.amountTenderedMinor)}`}</p>}
+    {shopReceiptProviderStatus(receipt)&&<p className="shop-muted">{shopReceiptProviderStatus(receipt)}</p>}
     {receipt.payment.changeMinor > 0 && <p className="shop-muted">Change {money(receipt.payment.changeMinor)}</p>}
     {receipt.customer && <p className="shop-muted">Customer: {receipt.customer.name} · now owes {money(receipt.customer.balanceMinor)}</p>}
     {(receipt.refunds ?? []).length > 0 && <div className="shop-refunds">

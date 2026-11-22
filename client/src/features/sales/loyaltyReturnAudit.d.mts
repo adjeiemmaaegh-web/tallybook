@@ -1,0 +1,1 @@
+export function reconcileLoyaltyReturns(input: { sales: ReadonlyArray<{ id: string; customerId?: string; amountPaidMinor: number }>; benefits: ReadonlyArray<{ kind: string; submissionKey: string; delta: number; customerId: string; businessProfileId: string; createdAt: string }>; returns: ReadonlyArray<any> }): Readonly<{ checked: number }>;

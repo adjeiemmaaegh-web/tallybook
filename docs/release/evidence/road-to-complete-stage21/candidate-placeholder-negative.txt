@@ -1,0 +1,44 @@
+
+Running 2 tests using 1 worker
+
+(node:34) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 candidate_modules/batch5/endToEndBusinessFlows.spec.ts:4:1 › sales workflow acceptance placeholder fails closed until fixture configured (2ms)
+(node:46) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 candidate_modules/batch5/endToEndBusinessFlows.spec.ts:9:1 › return workflow acceptance placeholder fails closed until fixture configured (1ms)
+
+
+  1) candidate_modules/batch5/endToEndBusinessFlows.spec.ts:4:1 › sales workflow acceptance placeholder fails closed until fixture configured 
+
+    Error: Unimplemented candidate: a configured URL cannot certify persisted sale, receipt and stock invariants. Run qa/browser-release.spec.mjs and the authoritative sales service tests.
+
+      4 | test('sales workflow acceptance placeholder fails closed until fixture configured', async () => {
+      5 |   test.skip(!process.env.TALLYBOOK_QA_SALES_URL, 'Sales test fixture not configured; no fabricated E2E pass');
+    > 6 |   throw new Error('Unimplemented candidate: a configured URL cannot certify persisted sale, receipt and stock invariants. Run qa/browser-release.spec.mjs and the authoritative sales service tests.');
+        |         ^
+      7 |   // TODO: instrument sale creation, receipt proof and ledger reconciliation using disposable fixtures.
+      8 | });
+      9 | test('return workflow acceptance placeholder fails closed until fixture configured', async () => {
+        at /workspace/scratch/f8a637cc20b7/tallybook/candidate_modules/batch5/endToEndBusinessFlows.spec.ts:6:9
+
+    Error Context: test-results/endToEndBusinessFlows-sale-3928d-ed-until-fixture-configured/error-context.md
+
+  2) candidate_modules/batch5/endToEndBusinessFlows.spec.ts:9:1 › return workflow acceptance placeholder fails closed until fixture configured 
+
+    Error: Unimplemented candidate: a configured URL cannot certify refund policy, stock, debt and exactly-once disbursement. Run the authoritative refund service and PostgreSQL tests.
+
+       9 | test('return workflow acceptance placeholder fails closed until fixture configured', async () => {
+      10 |   test.skip(!process.env.TALLYBOOK_QA_RETURNS_URL, 'Returns test fixture not configured; no fabricated E2E pass');
+    > 11 |   throw new Error('Unimplemented candidate: a configured URL cannot certify refund policy, stock, debt and exactly-once disbursement. Run the authoritative refund service and PostgreSQL tests.');
+         |         ^
+      12 |   // TODO: assert policy, stock, debt, refund evidence against real Dexie adapters.
+      13 | });
+      14 |
+        at /workspace/scratch/f8a637cc20b7/tallybook/candidate_modules/batch5/endToEndBusinessFlows.spec.ts:11:9
+
+    Error Context: test-results/endToEndBusinessFlows-retu-50dd9-ed-until-fixture-configured/error-context.md
+
+  2 failed
+    candidate_modules/batch5/endToEndBusinessFlows.spec.ts:4:1 › sales workflow acceptance placeholder fails closed until fixture configured 
+    candidate_modules/batch5/endToEndBusinessFlows.spec.ts:9:1 › return workflow acceptance placeholder fails closed until fixture configured 

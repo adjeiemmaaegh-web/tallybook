@@ -1,4 +1,4 @@
-import { reconcileCreditLedger, reconcileRepaymentAllocations } from '../sales/creditLedger.mjs';
+import { applyCreditReturns, reconcileCreditLedger, reconcileRepaymentAllocations } from '../sales/creditLedger.mjs';
 
 /**
  * Offer explicit repayment-to-sale links only when saved sale currency and
@@ -6,13 +6,15 @@ import { reconcileCreditLedger, reconcileRepaymentAllocations } from '../sales/c
  * historical, customer-level repayments. This is a pure, read-only projection;
  * recordRepayment must revalidate in its write transaction.
  */
-export function getRepaymentTargetsFromLedger(sales, reversals, repayments, {customerId, businessProfileId, currency}) {
+export function getRepaymentTargetsFromLedger(sales, reversals, repayments, {customerId, businessProfileId, currency}, creditReturns = []) {
   if (typeof customerId !== 'string' || !customerId || typeof businessProfileId !== 'string' || !businessProfileId ||
       typeof currency !== 'string' || !currency) throw new Error('Repayment target scope or currency is missing.');
   for (const row of [...sales, ...reversals, ...repayments]) {
     if (row?.businessProfileId !== businessProfileId || row?.customerId !== customerId)
       throw new Error('Repayment target ledger contains another customer or business.');
   }
+  // Credit notes reduce each sale's still-owed amount; targets must show the EFFECTIVE balance.
+  sales = applyCreditReturns(sales, creditReturns);
   const debt = reconcileCreditLedger(sales, reversals, repayments);
   const allocation = reconcileRepaymentAllocations(sales, reversals, repayments);
   const reversed = new Set(reversals.map(row => row.originalSaleId));

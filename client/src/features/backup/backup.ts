@@ -1,3 +1,5 @@
+import { reconcileLoyaltyReturns } from "@/features/sales/loyaltyReturnAudit.mjs";
+import {validateAdvisorySchedule} from "@/features/insights/advisoryScheduleRules";
 import { taxPolicySchema, validateTaxSnapshot } from "@/features/sales/tax";
 import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
 import {validateCreditTerms} from '@/features/credit/creditTerms.mjs';
@@ -252,6 +254,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     throw new Error("A protected company backup is missing its staff records.");
   if (records.businessProfiles[0].taxPolicy !== undefined) taxPolicySchema.parse(records.businessProfiles[0].taxPolicy);
   const companyId = records.businessProfiles[0].id;
+  for(const profile of records.businessProfiles)validateAdvisorySchedule(profile.advisorySchedule,profile.id);
   validateCategoryHierarchy(records.categories,companyId);
   for(const product of records.products)validatePromotionHistory(product.promotionHistory,product.id,companyId);
   const index = (key: keyof BackupRecords) => new Set((records[key] as Array<{ id: string }>).map((r) => r.id));
@@ -357,6 +360,14 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     validateStoreStockCount(observation.observedQuantity, observation.note);
     if (!Number.isFinite(Date.parse(observation.observedAt))) throw new Error("Invalid stock observation date.");
   }
+  // A physical return must retain a real receiving location. Legacy returns
+  // without location evidence remain unknown; never infer a store for them.
+  for (const row of [...records.saleReversals, ...records.cashPartialReturns]) {
+    if (row.returnStoreId === undefined) continue;
+    const store = records.storeLocations.find(store => store.id === row.returnStoreId);
+    if (typeof row.returnStoreId !== "string" || !store || store.businessProfileId !== row.businessProfileId)
+      throw new Error("Return receiving store is missing or belongs to another company.");
+  }
   const extensionRelationships: Array<[keyof BackupRecords, string, keyof BackupRecords]> = [
     ["syncOutbox", "deviceId", "syncDevices"], ["storeAssignments", "storeId", "storeLocations"], ["storeAssignments", "staffId", "staffMembers"],
     ["storeTransferRequests", "sourceStoreId", "storeLocations"], ["storeTransferRequests", "destinationStoreId", "storeLocations"], ["storeTransferRequests", "productId", "products"], ["storeTransferRequests", "requestedByStaffId", "staffMembers"],
@@ -455,6 +466,7 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
       records.sales.filter(row => row.customerId === customerId),
       records.saleReversals.filter(row => row.customerId === customerId),
       records.repayments.filter(row => row.customerId === customerId),
+      records.cashPartialReturns.filter(row => row.customerId === customerId && (row.debtReducedMinor ?? 0) > 0),
     );
   }
   // Full-history customer-level conservation: never let one customer's
@@ -462,15 +474,18 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
   // No old unallocated repayment is silently assigned to a particular sale.
   auditRun10CompanyReceivables({
     company:companyId,customers:records.customers,sales:records.sales,
-    repayments:records.repayments,reversals:records.saleReversals
+    repayments:records.repayments,reversals:records.saleReversals,
+    creditReturns:records.cashPartialReturns.filter(row=>(row.debtReducedMinor??0)>0)
   });
   // Wallet cash is NOT a second collection on wallet-funded checkout.
   // Validate all transfers, actual stored-value debits, and reversal credits
   // before any main-ledger or assistant restore transaction can start.
   auditRun10PrepaidCashConservation({
     transfers:records.walletTransfers,benefits:records.customerBenefits,
-    sales:records.sales,reversals:records.saleReversals
+    sales:records.sales,reversals:records.saleReversals,returns:records.cashPartialReturns
   },records.businessProfiles[0].currency);
+  // Points taken back by returns must match the returns and what each sale earned, or the backup is refused.
+  reconcileLoyaltyReturns({sales:records.sales,benefits:records.customerBenefits,returns:records.cashPartialReturns});
   for (const order of records.commerceOrders) {
     if (!["draft", "prepared", "ready", "reserved", "packed", "dispatched", "delivered", "return-requested", "cancelled"].includes(order.status) ||
         typeof order.customerName !== "string" || !order.customerName.trim() || order.customerName.length > 120 ||
@@ -738,7 +753,8 @@ async function restoreBackupWhileLocked(backup: TallybookBackup, database: Tally
     // Older backups with staff predate the marker. Restoring them must still
     // keep the company protected if its staff rows are later lost.
     await database.businessProfiles.put({...normalized.businessProfiles[0],
-      staffGovernanceEnabled:normalized.staffMembers.length ? true : undefined});
+      staffGovernanceEnabled:normalized.staffMembers.length ? true : undefined,
+      ...(normalized.businessProfiles[0].advisorySchedule?{advisorySchedule:{...normalized.businessProfiles[0].advisorySchedule,state:"paused" as const}}:{})});
     for (const key of recordKeys) if (key !== "businessProfiles" && key !== "appMeta") {
       // Importing a file never grants fresh consent to send records off-device.
       const rows = key === "syncConsents"

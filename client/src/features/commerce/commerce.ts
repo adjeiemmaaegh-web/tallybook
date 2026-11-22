@@ -1,7 +1,8 @@
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
 import { db, type TallybookDB } from "@/db/TallybookDB";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
-import { requirePermission } from "@/features/staff/staff";
+import { requirePermission, currentStaffId, currentStaffSessionGeneration } from "@/features/staff/staff";
 
 /** Device-local order requests only. Never an accepted sale, payment or stock reservation. */
 export interface CommerceOrderLine { productId: string; name: string; quantity: number; unitPriceMinor: number; }
@@ -27,6 +28,16 @@ export function publishableCatalogue(items: CatalogueItem[]): CatalogueItem[] {
 export const COMMERCE_RELEASE_SCOPE = Object.freeze({ catalogue: true, localDraftOrders: true, publicStorefront: false, onlinePayments: false, reserveStock: false, fulfillOrders: false, automaticSync: false, localPublicPreview:true, authorizedPOSLink:true });
 export function requireCommerceCapability(name: keyof typeof COMMERCE_RELEASE_SCOPE) { if (!COMMERCE_RELEASE_SCOPE[name]) throw new Error(`Online commerce feature unavailable: ${name}`); }
 function companyId() { const id = getActiveBusinessProfileId(); if (!id || typeof id !== "string") throw new Error("Select a company first."); return id; }
+/** Bind an in-flight operation to the original unlock, including lock/re-unlock of the same employee. */
+function captureCommerceScope(company:string) {
+  const staffId=currentStaffId(company), generation=currentStaffSessionGeneration(company);
+  return (actor?:{id:string}|null)=>{
+    if(company!==getActiveBusinessProfileId() || currentStaffId(company)!==staffId ||
+       currentStaffSessionGeneration(company)!==generation || (actor && actor.id!==staffId))
+      throw new Error("Commerce company or staff session changed; retry after review.");
+  };
+}
+
 export function calculateOrderTotal(lines: CommerceOrderLine[]): number {
   if (!Array.isArray(lines) || !lines.length || lines.length > 100) throw new Error("Choose 1–100 products.");
   let sum = 0;
@@ -41,13 +52,16 @@ export function calculateOrderTotal(lines: CommerceOrderLine[]): number {
 }
 export async function listCatalogue(database: TallybookDB = db): Promise<CatalogueItem[]> {
   const id = companyId();
+  const scope=captureCommerceScope(id);
+  const actor=await requirePermission("sell",database,id);
   const products = await database.products.where("businessProfileId").equals(id).toArray();
-  if (id !== companyId()) throw new Error("Company changed; reload catalogue.");
+  scope(actor);
   return publishableCatalogue(products.filter(p => !p.archivedAt).map(p => ({ id: p.id, name: p.name, sku: p.sku, priceMinor: p.sellingPriceMinor, itemKind: p.itemKind === "service" ? "service" : "stock" })));
 }
 export async function createDraftOrder(customerName: string, requested: Array<{productId:string;quantity:number}>, database: TallybookDB = db, options?:{deliveryMethod?:"pickup"|"delivery";customerContact?:string;deliveryInstructions?:string}): Promise<CommerceOrder> {
   requireCommerceCapability("localDraftOrders");
   const company = companyId();
+  const scope=captureCommerceScope(company);
   const name = customerName.trim();
   if (!name || name.length > 120) throw new Error("Enter a customer name (up to 120 characters).");
   if(options&&(options.deliveryMethod!==undefined&&!["pickup","delivery"].includes(options.deliveryMethod)||
@@ -55,8 +69,10 @@ export async function createDraftOrder(customerName: string, requested: Array<{p
     options.deliveryInstructions!==undefined&&(typeof options.deliveryInstructions!=="string"||options.deliveryInstructions.length>300)))
     throw Error("Invalid customer contact or requested delivery instructions.");
   if (!Array.isArray(requested) || !requested.length || requested.length > 100 || new Set(requested.map(r => r.productId)).size !== requested.length) throw new Error("Select distinct products.");
-  return withCoordinatedRetailWrite(() => database.transaction("rw", [database.products, database.commerceOrders, database.staffMembers, database.staffAudits], async () => {
+  return withCoordinatedRetailWrite(() => database.transaction("rw", [database.appMeta,database.businessProfiles,database.products, database.commerceOrders, database.staffMembers, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const actor = await requirePermission("sell", database, company);
+    scope(actor);
     if (company !== companyId()) throw new Error("Company changed; order not saved.");
     const lines: CommerceOrderLine[] = [];
     for (const item of requested) {
@@ -72,25 +88,34 @@ export async function createDraftOrder(customerName: string, requested: Array<{p
       ...(options?.customerContact?.trim()?{customerContact:options.customerContact.trim()}:{}),
       ...(options?.deliveryInstructions?.trim()?{deliveryInstructions:options.deliveryInstructions.trim()}:{}),
       lines,totalMinor};
+    scope(actor);
     await database.commerceOrders.add(order);
     if (actor) await database.staffAudits.add({ id: crypto.randomUUID(), businessProfileId: company, staffId: actor.id, action: "commerce.draft.created", createdAt: now, details: order.id });
+    scope(actor);
     return order;
   }));
 }
 export async function listDraftOrders(database:TallybookDB=db): Promise<CommerceOrder[]> {
   const company=companyId();
+  const scope=captureCommerceScope(company);
+  const actor=await requirePermission("sell",database,company);
   const rows=await database.commerceOrders.where("businessProfileId").equals(company).toArray();
-  if (company!==companyId()) throw new Error("Company changed; reload orders.");
+  scope(actor);
   return rows.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
 }
 export async function cancelDraftOrder(orderId:string,database:TallybookDB=db) {
   const company=companyId();
-  return withCoordinatedRetailWrite(() => database.transaction("rw", [database.commerceOrders, database.staffMembers, database.staffAudits], async()=>{
+  const scope=captureCommerceScope(company);
+  return withCoordinatedRetailWrite(() => database.transaction("rw", [database.appMeta,database.businessProfiles,database.commerceOrders, database.staffMembers, database.staffAudits], async()=>{
+    await assertRun7RetailWriteReady(database.appMeta);
     const actor = await requirePermission("sell", database, company);
+    scope(actor);
     const existing=await database.commerceOrders.get(orderId);
     if (!existing || existing.businessProfileId!==company || existing.status!=="draft" || company!==companyId()) throw new Error("Draft unavailable.");
+    scope(actor);
     await database.commerceOrders.update(orderId,{status:"cancelled",updatedAt:new Date().toISOString()});
     if (actor) await database.staffAudits.add({ id: crypto.randomUUID(), businessProfileId: company, staffId: actor.id, action: "commerce.draft.cancelled", createdAt: new Date().toISOString(), details: orderId });
+    scope(actor);
   }));
 }
 
@@ -98,13 +123,18 @@ export async function cancelDraftOrder(orderId:string,database:TallybookDB=db) {
 export async function transitionLocalOrder(orderId: string, action: "prepare" | "ready" | "cancel", database: TallybookDB = db): Promise<void> {
   requireCommerceCapability("localDraftOrders");
   const company = companyId();
-  await withCoordinatedRetailWrite(() => database.transaction("rw", [database.commerceOrders, database.staffMembers, database.staffAudits], async () => {
+  const scope=captureCommerceScope(company);
+  await withCoordinatedRetailWrite(() => database.transaction("rw", [database.appMeta,database.businessProfiles,database.commerceOrders, database.staffMembers, database.staffAudits], async () => {
+    await assertRun7RetailWriteReady(database.appMeta);
     const actor = await requirePermission("sell", database, company);
+    scope(actor);
     if (company !== companyId()) throw new Error("Company changed; order not updated.");
     const order = await database.commerceOrders.get(orderId);
     if (!order || order.businessProfileId !== company) throw new Error("Order not found in this company.");
     const status = nextPreparationStatus(order.status, action);
+    scope(actor);
     await database.commerceOrders.update(orderId, { status, updatedAt: new Date().toISOString() });
     if (actor) await database.staffAudits.add({ id: crypto.randomUUID(), businessProfileId: company, staffId: actor.id, action: `commerce.draft.${status}`, createdAt: new Date().toISOString(), details: orderId });
+    scope(actor);
   }));
 }

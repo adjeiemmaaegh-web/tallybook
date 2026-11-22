@@ -15,14 +15,14 @@ const plus=(a,b)=>{
  return next;
 };
 export function auditRun10PrepaidCashConservation(
- {transfers,benefits,sales,reversals},currency
+ {transfers,benefits,sales,reversals,returns=[]},currency
 ){
- if(![transfers,benefits,sales,reversals].every(Array.isArray)||
+ if(![transfers,benefits,sales,reversals,returns].every(Array.isArray)||
     typeof currency!=='string'||!/^[A-Z]{3}$/.test(currency))
   deny('missing wallet, currency or sale evidence');
  // This is the authoritative full-history per-customer event replay.
- const verified=reconcilePrepaidLiability({transfers,benefits,sales,reversals},currency);
- let deposited=0n,refunded=0n,spent=0n,reversed=0n;
+ const verified=reconcilePrepaidLiability({transfers,benefits,sales,reversals,returns},currency);
+ let deposited=0n,refunded=0n,spent=0n,reversed=0n,walletReturned=0n;
  const salesById=new Map(sales.map(s=>[s.id,s]));
  const seen=new Set();
  for(const transfer of transfers){
@@ -43,8 +43,13 @@ export function auditRun10PrepaidCashConservation(
   if(!original)deny('orphaned wallet-sale reversal');
   reversed=plus(reversed,original.walletAppliedMinor??0);
  }
+ for(const ret of returns){
+  if(ret?.refundMethod!=='wallet')continue;
+  if(!whole(ret.refundedMinor))deny('invalid wallet return amount');
+  walletReturned=plus(walletReturned,ret.refundedMinor);
+ }
  const netCash=deposited-refunded;
- const netWalletSpending=spent-reversed;
+ const netWalletSpending=spent-reversed-walletReturned;
  const impliedLiability=netCash-netWalletSpending;
  if(impliedLiability!==BigInt(verified.liabilityMinor))
   deny('external cash, wallet use and customer liability differ');

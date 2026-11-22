@@ -1,3 +1,4 @@
+import {readBoundedResponseText} from "@/lib/boundedResponse.mjs";
 /** Explicit, single-event HTTPS metadata delivery. Does not replicate business records.
  * Credentials are provided by the caller for this invocation and are never persisted here.
  * No automatic retries: ambiguous transport errors leave the event pending for safe replay.
@@ -5,6 +6,9 @@
 import type { TallybookDB } from "@/db/TallybookDB";
 import { validateOutboxEvent, type SyncOutboxEvent } from "./syncFoundation";
 import { acknowledgeStagedEvent, validateJournalReceipt, type JournalReceipt } from "./outboxAcknowledgements";
+import {getActiveBusinessProfileId} from "@/features/business/activeCompany";
+import {currentStaffId,currentStaffSessionGeneration,requirePermission} from "@/features/staff/staff";
+import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 
 export type StageCredentials = { capability: string; session: string };
 export type StageTransport = (input: string, init: RequestInit) => Promise<Response>;
@@ -49,8 +53,7 @@ export async function deliverStagedMetadata(
     throw new Error("Untrusted or unsuccessful staging response; event remains pending.");
   const contentType = response.headers.get("content-type") ?? "";
   if (!/^application\/json(?:\s*;|\s*$)/i.test(contentType)) throw new Error("Invalid staging response media type.");
-  const raw = await response.text();
-  if (raw.length > 2048) throw new Error("Oversized staging response.");
+  const raw = await readBoundedResponseText(response,2048,"staging response");
   let receipt: JournalReceipt;
   try { receipt = JSON.parse(raw) as JournalReceipt; } catch { throw new Error("Malformed staging receipt."); }
   validateJournalReceipt(receipt);
@@ -67,8 +70,17 @@ export async function deliverStagedMetadata(
 export async function deliverPendingOutboxEvent(database: TallybookDB, businessProfileId: string,
   eventId: string, endpoint: string, credentials: StageCredentials,
   transport: StageTransport = fetch): Promise<StageResult> {
-  const event = await database.transaction("r", database.businessProfiles, database.syncConsents,
-    database.syncDevices, database.syncOutbox, async () => {
+  const actor=currentStaffId(businessProfileId),generation=currentStaffSessionGeneration(businessProfileId);
+  const scope=()=>{
+    if(!actor||getActiveBusinessProfileId()!==businessProfileId||currentStaffId(businessProfileId)!==actor||currentStaffSessionGeneration(businessProfileId)!==generation)
+      throw new Error("Company or staff session changed before metadata delivery.");
+  };
+  scope();
+  const event = await database.transaction("r", [database.appMeta,database.staffMembers,database.businessProfiles, database.syncConsents,
+    database.syncDevices, database.syncOutbox], async () => {
+      await assertRun7RetailWriteReady(database.appMeta);
+      const staff=await requirePermission('staff',database,businessProfileId);
+      if(staff?.id!==actor)throw new Error("Metadata delivery actor changed.");
       if (!(await database.businessProfiles.get(businessProfileId)) ||
           (await database.syncConsents.get(businessProfileId))?.enabled !== true)
         throw new Error("Company synchronization is not enabled.");
@@ -78,8 +90,10 @@ export async function deliverPendingOutboxEvent(database: TallybookDB, businessP
       const device = await database.syncDevices.get(pending.deviceId);
       if (!device || device.businessProfileId !== businessProfileId || device.status !== "active")
         throw new Error("Device is not active.");
-      return pending;
+      scope();return pending;
     });
+  scope();
   const receipt = await deliverStagedMetadata(endpoint, event, credentials, transport);
-  return acknowledgeStagedEvent(database, businessProfileId, eventId, receipt);
+  scope();
+  return acknowledgeStagedEvent(database, businessProfileId, eventId, receipt,event);
 }

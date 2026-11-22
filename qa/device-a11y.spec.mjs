@@ -26,6 +26,18 @@ test('every local-ledger screen has no WCAG A/AA violations at 390px', async ({ 
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
   await page.getByRole('button', { name: 'Lock this session' }).waitFor();
 
+  // Keyboard-operable, exact-value alternative to the visual sales graph.
+  await page.evaluate(()=>{history.pushState({},'', '/');dispatchEvent(new PopStateEvent('popstate'));});
+  const disclosure=page.getByText('View seven-day sales values',{exact:true});
+  await disclosure.waitFor();
+  const financialCounts=()=>page.evaluate(async()=>{const {db}=await import('/src/db/TallybookDB.ts');return [await db.sales.count(),await db.payments.count(),await db.inventoryMovements.count()];});
+  const beforeDisclosure=await financialCounts();
+  await disclosure.focus();await page.keyboard.press('Enter');
+  const salesTable=page.getByRole('table',{name:/Recorded sales by date/});
+  await expect(salesTable).toBeVisible();await expect(salesTable.getByRole('row')).toHaveCount(8);
+  await page.keyboard.press('Enter');await expect(salesTable).not.toBeVisible();
+  expect(await financialCounts()).toEqual(beforeDisclosure);
+
   const problems = [];
   for (const route of routes) {
     // Client-side navigation keeps the unlocked staff session.
