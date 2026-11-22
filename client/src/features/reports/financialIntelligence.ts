@@ -83,7 +83,10 @@ export function financialRange(period: FinancialPeriod, now = new Date(), custom
   const start = businessDayStart(now, country);
   const end = businessDayEnd(now, country);
   const setDay = (date: Date, value: number) => ghana ? date.setUTCDate(value) : date.setDate(value);
-  const setMonth = (date: Date, month: number, day?: number) => ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day);
+  // Passing an explicit `undefined` day makes setMonth/setUTCMonth produce an Invalid Date, so only pass it when given.
+  const setMonth = (date: Date, month: number, day?: number) => day === undefined
+    ? (ghana ? date.setUTCMonth(month) : date.setMonth(month))
+    : (ghana ? date.setUTCMonth(month, day) : date.setMonth(month, day));
   const getDay = (date: Date) => ghana ? date.getUTCDate() : date.getDate();
   const getMonth = (date: Date) => ghana ? date.getUTCMonth() : date.getMonth();
   const weekday = ghana ? start.getUTCDay() : start.getDay();

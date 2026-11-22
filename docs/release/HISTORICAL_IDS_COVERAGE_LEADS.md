@@ -110,3 +110,14 @@ Candidate tests found: 88; genuine gaps: 1; no source module: 8.
 - **S9-10 Owner consolidation**: the register points at `storeReport.ts`, but the sales/COGS/contribution reconciliation lives in `storeFinancialReport.ts`, which `storeOperations.integration.test.ts` already tests (store attribution, COGS, contribution, refusal on a missing store). The register entry should reference that file. Still **not accepted**: no currency-mix or multi-period reconciliation test was found.
 - **PERF-001, HW-001, OPS-001, S12-06**: cannot be closed by code (low-end devices, physical hardware, staging, release drill are owner-run).
 - **ENV-001, S12-01, RUNTIME-001, ARCH-001, STORE-001**: process or toolchain records; covered by CI evidence rather than by unit tests, review pending.
+
+## Financial/inventory/customer criterion review (S1-S4), 2026-11-22
+
+Method: for each criterion, searched the candidate tests for an assertion of its *distinctive* claim, then read the code where none was found.
+
+- **S3-02 Periods and trends: DEFECT FOUND AND FIXED.** `financialRange("quarter")` returned an **Invalid Date** range because `setMonth(date, month)` passed an explicit `undefined` day to `setMonth/setUTCMonth`. The "This quarter" option on the Financial Intelligence page therefore produced no valid window. Fixed in `financialIntelligence.ts`; `financialRange.periods.test.ts` added (Ghana UTC week/month/quarter/year starts, Sunday/Monday week edges, exclusive day end, leap day, ten-year cap, DST 23h/25h days under `America/New_York`); the regression test fails when the bug is restored.
+- **S4-04 Loyalty lifecycle: test gap closed.** `loyaltyLedger.test.ts` (5 tests): no negative balance/double spend, idempotent replay, key reuse refused, zero/fractional/huge/unsafe deltas refused, safe-integer edge refused, wallet money refused here, corrupted ledger reported, cross-company refused. Earning/redemption *during checkout* is still covered only by `walletTransfers.test.ts`.
+- **S2-05 Persisted stock counts:** the stale-balance refusal ("Stock changed ... after the count began") is exercised by the shared-shop stocktake tests but **no local-ledger test asserts it** for `advancedInventory.ts`. Open lead.
+- **S2-03 Services and attachments:** no test asserts non-stock service semantics or media size/type limits. Open lead.
+- **S4-03 Quotation conversion:** only one candidate test mentions idempotency/transition (`commerceBoundary`); explicit transition and idempotent conversion for local quotations need a check. Open lead.
+- **S1-04, S2-01, S2-04, S2-06, S2-07, S3-05, S3-07, S4-05, S4-07:** distinctive keywords found in tests (overflow, hierarchy/duplicate identifiers, CSV injection, expiry, as-of reconstruction, rounding/immutability, wallet, restore of customer rows). Criterion-vs-test reading still pending; none accepted.
