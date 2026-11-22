@@ -36,6 +36,7 @@ export function createSettlementService({rpc, adapters}) {
       return call("createIntent", {companyId, provider: providerId, submissionKey, amountMinor, currency, method, orderRef});
     },
     /** Verify authenticity FIRST; only then write. An unverifiable body never reaches the ledger. */
+    /** companyId is optional: a production route passes none and the company comes ONLY from the signed body. If both are given they must agree. */
     handleWebhook: async ({providerId, companyId, rawBody, headers, now = Date.now()}) => {
       const adapter = byId.get(providerId);
       if (!adapter) throw new SettlementError("Unknown payment provider.", {code: "refused"});
@@ -44,10 +45,18 @@ export function createSettlementService({rpc, adapters}) {
       catch { throw new SettlementError("Webhook rejected.", {code: "unauthenticated"}); }
       if (!event || !KINDS.has(event.kind) || !UUID.test(event.intentId ?? "") || typeof event.providerEventId !== "string")
         throw new SettlementError("Webhook rejected.", {code: "unauthenticated"});
-      return call("ingest", {companyId, provider: providerId, intentId: event.intentId, providerEventId: event.providerEventId,
+      if (event.companyId !== undefined && companyId !== undefined && event.companyId !== companyId) throw new SettlementError("Webhook rejected.", {code: "unauthenticated"});
+      const company = event.companyId ?? companyId;
+      if (!UUID.test(company ?? "")) throw new SettlementError("Webhook rejected.", {code: "unauthenticated"});
+      return call("ingest", {companyId: company, provider: providerId, intentId: event.intentId, providerEventId: event.providerEventId,
         kind: event.kind, amountMinor: event.amountMinor ?? null, occurredAt: event.occurredAt ?? null});
     },
     reconcile: companyId => call("reconcile", {companyId}),
+    /** Recorded payment EVIDENCE for an order reference. It never posts a sale or moves money. */
+    paymentsForOrder: ({companyId, orderRef}) => {
+      if (!UUID.test(companyId ?? "") || typeof orderRef !== "string" || !orderRef.length || orderRef.length > 100) throw new SettlementError("Invalid order lookup.", {code: "refused"});
+      return call("forOrder", {companyId, orderRef});
+    },
   });
 }
 
@@ -65,7 +74,7 @@ export function createSandboxAdapter({key, environment, toleranceMs = 5 * 60 * 1
       const want = createHmac("sha256", key).update(`${ts}.${rawBody}`).digest();
       if (given.length !== want.length || !timingSafeEqual(given, want)) throw new Error("signature");
       const body = JSON.parse(rawBody);
-      return {intentId: body.intentId, providerEventId: body.eventId, kind: body.kind, amountMinor: body.amountMinor, occurredAt: new Date(ts).toISOString()};
+      return {companyId: body.companyId, intentId: body.intentId, providerEventId: body.eventId, kind: body.kind, amountMinor: body.amountMinor, occurredAt: new Date(ts).toISOString()};
     },
     /** Test helper: produce a correctly signed delivery. */
     sign(body, ts = Date.now()) {

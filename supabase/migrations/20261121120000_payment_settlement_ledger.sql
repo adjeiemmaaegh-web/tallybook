@@ -146,7 +146,16 @@ BEGIN
     'capturedMinor',v_i.captured_minor::text,'refundedMinor',v_i.refunded_minor::text,'chargedBackMinor',v_i.charged_back_minor::text);
  END IF;
 
- IF p_action='reconcile' THEN
+  IF p_action='forOrder' THEN
+  -- Evidence only. 'covered' means the recorded NET captured amount (captured - refunded - charged back) is at least the
+  -- amount of a succeeded intent; it never posts a sale and never moves money.
+  RETURN jsonb_build_object('orderRef',p_input->>'orderRef','payments',COALESCE((SELECT jsonb_agg(jsonb_build_object('intentId',i.id,'status',i.status,'currency',i.currency,
+     'amountMinor',i.amount_minor::text,'capturedMinor',i.captured_minor::text,'refundedMinor',i.refunded_minor::text,'chargedBackMinor',i.charged_back_minor::text,
+     'netMinor',(i.captured_minor-i.refunded_minor-i.charged_back_minor)::text,'covered',i.status='succeeded') ORDER BY i.created_at,i.id)
+     FROM (SELECT * FROM public.payment_intents WHERE business_id=v_biz AND order_ref=p_input->>'orderRef' ORDER BY created_at,id LIMIT 20) i),'[]'::jsonb));
+  END IF;
+
+  IF p_action='reconcile' THEN
   -- Replay every applied event from scratch; the stored intent must equal the replay, and nothing may be unaccounted for.
   RETURN jsonb_build_object('discrepancies',COALESCE((
    WITH RECURSIVE ev AS (
@@ -166,7 +175,7 @@ BEGIN
    'netSettledMinor',(SELECT COALESCE(sum(captured_minor-refunded_minor-charged_back_minor),0)::text FROM public.payment_intents WHERE business_id=v_biz),
    'needsReview',(SELECT count(*) FROM public.payment_intents WHERE business_id=v_biz AND status='needs_review'),
    'unresolved',(SELECT count(*) FROM public.payment_intents WHERE business_id=v_biz AND status IN ('pending','unknown')));
- END IF;
+  END IF;
  RAISE EXCEPTION 'Unknown payment action' USING ERRCODE='22023';
 END $fn$;
 REVOKE ALL ON FUNCTION private.payment_append_only(),private.payment_intent_guard() FROM PUBLIC,anon,authenticated;
