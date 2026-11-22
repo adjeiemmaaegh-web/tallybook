@@ -49,7 +49,7 @@ Rule: nothing is "done" without evidence. "Tested" means executed by me locally 
 ## Next developer-owned increments (in order)
 
 1. Re-run CI on #112's merged head (`b7486a6` + the Connected Commerce screen commit) and on the combined #111+#112 scratch merge.
-2. Criterion-by-criterion review of the 97 historical IDs with no linked test (`scripts/historical-ids-triage.mjs` lists them).
+2. Criterion-by-criterion review of the 97 historical IDs with no linked test: `HISTORICAL_IDS_COVERAGE_LEADS.md` now maps 86 to candidate tests that import the same module (leads, not proof), 11 need no unit test or have no source module, and the one real stores gap (S9-05) is closed with tests. Remaining work is reading each criterion against its leads.
 3. Stage 22 remainder: wallet / split-tender / loyalty returns.
 4. PostgreSQL role-level RPC negative tests (Stage 25), issue #68.
 5. First Connected Commerce pillar on the CC-X foundation: Discover (merchant listings + bounded buyer request + attribution), keeping everything flag-off and unpublished by default.
