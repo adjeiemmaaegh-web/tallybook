@@ -34,7 +34,7 @@ export function buildManifest({repoDir=".",ref="HEAD",distDir,allowDirty=false}=
   const listing=git(cwd,["ls-tree","-r","-z","--full-tree",commit]).toString("utf8").split("\0").filter(Boolean);
   const files=[];
   for(const line of listing){
-    const m=/^(\d{6}) (blob|commit) ([0-9a-f]{40}) +(.+)$/s.exec(line.replace("\t"," "));
+    const m=/^(\d{6}) (blob|commit) ([0-9a-f]{40})\t(.+)$/s.exec(line); // git ls-tree -z: "<mode> <type> <sha>\t<path>"
     if(!m)throw new Error("Unrecognised tree entry");
     const [,mode,type,,path]=m;
     if(type==="commit")throw new Error(`Submodule entries are not allowed in a release candidate: ${path}`);

@@ -68,6 +68,17 @@ test("verify detects an edited manifest, a rewritten file list and a wrong commi
   }finally{rmSync(d,{recursive:true,force:true});}
 });
 
+test("file names containing tabs, spaces and unicode are recorded exactly",()=>{
+  const d=repo();
+  try{
+    writeFileSync(join(d,"a b.txt"),"1");writeFileSync(join(d,"tab\there.txt"),"2");writeFileSync(join(d,"ünï.txt"),"3");
+    run(d,"add","-A");run(d,"commit","-qm","odd names");
+    const m=buildManifest({repoDir:d});
+    for(const name of ["a b.txt","tab\there.txt","ünï.txt"])assert.ok(m.files.some(f=>f.path===name),JSON.stringify(name));
+    assert.deepEqual(verifyManifest(m,{repoDir:d}),[]);
+  }finally{rmSync(d,{recursive:true,force:true});}
+});
+
 test("symlinks and submodules cannot be part of a candidate",()=>{
   const d=repo();
   try{
