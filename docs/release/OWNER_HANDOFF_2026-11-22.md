@@ -45,3 +45,7 @@ node scripts/licence-policy.mjs     # licences
 node scripts/road-to-complete-register.mjs
 node scripts/release-candidate-manifest.mjs --out candidate.json   # on a clean, committed tree
 ```
+
+
+## Branch-push disclosure (encryption work)
+On the strength of "Continue development: Encryption ..." I pushed commits `1a1453f` and `598d95d` to PR #111's branch `development/st24-05-local-ledger-keyring-20261120`, not only to `claude/cool-ride-cf8i8r`. Nothing was merged. CI has not yet run on those commits. If you did not intend that, say so and I will leave the branch as is; no force-push was used.
