@@ -19,7 +19,7 @@ const quiet=async page=>{
     }
   });
 };
-const setup=async page=>page.evaluate(async pass=>{
+const setupOnce=async page=>page.evaluate(async pass=>{
   const [{db,initializeDatabase},{saveBusinessProfile},{createStaff,unlockStaff,openShift},{createCustomer},{createProduct},{completeSale},{recordBackupExportedAt}]=await Promise.all([
     import('/src/db/TallybookDB.ts'),import('/src/features/business/businessProfile.ts'),import('/src/features/staff/staff.ts'),
     import('/src/features/customers/customers.ts'),import('/src/features/inventory/inventory.ts'),import('/src/features/sales/sales.ts'),
@@ -33,6 +33,8 @@ const setup=async page=>page.evaluate(async pass=>{
   await recordBackupExportedAt(new Date().toISOString(),db,'primary','d'.repeat(64));
   return {ownerId:owner.id,productId:product.id};
 },PASS);
+/** WebKit can take a startup lock just after the quiet window; the product refuses with "no data was changed", so retrying is safe. */
+const setup=async page=>{for(let i=0;;i++){try{return await setupOnce(page);}catch(e){if(i>=4||!/Another tab is editing/.test(String(e)))throw e;await quiet(page);}}};
 const rawText=page=>page.evaluate(async()=>{
   const {db}=await import('/src/db/TallybookDB.ts');
   const idb=db.backendDB();let all='';
