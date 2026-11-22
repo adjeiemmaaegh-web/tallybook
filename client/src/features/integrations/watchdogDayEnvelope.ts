@@ -10,7 +10,9 @@ export interface WatchdogDayShift {
 export interface WatchdogDayReturn {
   id: string; businessProfileId: string; originalSaleId: string; createdAt: string;
   staffId?: string; shiftId?: string; refundedMinor: number; currency: string;
-  refundMethod: 'cash'|'mobile'|'card'|'credit'|'wallet'; originalReceiptNumber: string;
+  refundMethod: 'cash'|'mobile'|'card'|'credit'|'wallet'|'split'; originalReceiptNumber: string;
+  /** Split-tender refunds: the amount returned through each original tender. */
+  legs?: ReadonlyArray<{ method: 'cash'|'mobile'|'card'; amountMinor: number }>;
 }
 export interface WatchdogDaySource {
   companyId: string; storeId: string; dayUtc: string;
@@ -99,7 +101,11 @@ export function createWatchdogDayEnvelope(source:WatchdogDaySource, generatedAt 
     // Wallet refunds are credited to the customer's prepaid wallet (a liability): no drawer or provider money moves.
     if(refund.refundMethod==='credit'||refund.refundMethod==='wallet') continue;
     if(refund.businessProfileId!==companyId || !refund.originalSaleId?.trim() || !refund.staffId?.trim() || !refund.shiftId?.trim() ||
-       !['cash','mobile','card'].includes(refund.refundMethod) || !/^[A-Z]{3}$/.test(refund.currency))
+       !['cash','mobile','card','split'].includes(refund.refundMethod) || !/^[A-Z]{3}$/.test(refund.currency) ||
+       (refund.refundMethod==='split'&&(!Array.isArray(refund.legs)||refund.legs.length<1||
+         new Set(refund.legs.map(l=>l.method)).size!==refund.legs.length||
+         refund.legs.reduce((n,l)=>n+(Number.isSafeInteger(l.amountMinor)&&l.amountMinor>0?l.amountMinor:NaN),0)!==refund.refundedMinor))||
+       (refund.refundMethod!=='split'&&refund.legs!==undefined))
       throw new Error('Unverified local cash return cannot be exported.');
     if(!originalSaleIds.has(refund.originalSaleId)) throw new Error('Local cash return has no reconciled original sale.');
     const shift=shifts.get(refund.shiftId);
@@ -107,13 +113,18 @@ export function createWatchdogDayEnvelope(source:WatchdogDaySource, generatedAt 
        Date.parse(refund.createdAt)<Date.parse(shift.openedAt) ||
        (shift.closedAt && Date.parse(refund.createdAt)>Date.parse(shift.closedAt)))
       throw new Error('Return cannot be linked to the original staff shift.');
-    const row=common(`refund:${refund.id}`,'refund',refund.staffId,refund.shiftId,refund.createdAt);
-    row.receipt_number=refund.originalReceiptNumber;
-    row.amount_minor=money(refund.refundedMinor,'cash refund');
-    if(row.amount_minor===0) throw new Error('Zero cash refund cannot be exported.');
-    row.currency=refund.currency; row.payment_method=refund.refundMethod;
-    row.reason=refund.refundMethod==='cash'?'Cash return recorded by attendant; independent disbursement unverified':`Manual ${refund.refundMethod} return recorded by attendant; provider settlement unverified`;
-    add(row);
+    // A split-tender refund exports one row per ORIGINAL tender so each method's money reconciles on its own.
+    const parts=refund.refundMethod==='split'?refund.legs!.map(l=>({method:l.method,amountMinor:l.amountMinor,id:`refund:${refund.id}:${l.method}`}))
+      :[{method:refund.refundMethod as 'cash'|'mobile'|'card',amountMinor:refund.refundedMinor,id:`refund:${refund.id}`}];
+    for(const part of parts){
+      const row=common(part.id,'refund',refund.staffId,refund.shiftId,refund.createdAt);
+      row.receipt_number=refund.originalReceiptNumber;
+      row.amount_minor=money(part.amountMinor,'cash refund');
+      if(row.amount_minor===0) throw new Error('Zero cash refund cannot be exported.');
+      row.currency=refund.currency; row.payment_method=part.method;
+      row.reason=part.method==='cash'?'Cash return recorded by attendant; independent disbursement unverified':`Manual ${part.method} return recorded by attendant; provider settlement unverified`;
+      add(row);
+    }
   }
   output.sort((a,b)=>a.occurred_at_utc.localeCompare(b.occurred_at_utc)||a.event_id.localeCompare(b.event_id));
   return {

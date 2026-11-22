@@ -1,3 +1,4 @@
+import { reconcileLoyaltyReturns } from "@/features/sales/loyaltyReturnAudit.mjs";
 import {validateAdvisorySchedule} from "@/features/insights/advisoryScheduleRules";
 import { taxPolicySchema, validateTaxSnapshot } from "@/features/sales/tax";
 import { validateGhanaVatLineEvidence } from "@/features/sales/ghanaVat.mjs";
@@ -483,6 +484,8 @@ function validateCompanyRecords(records: BackupRecords, assistant?: TallybookBac
     transfers:records.walletTransfers,benefits:records.customerBenefits,
     sales:records.sales,reversals:records.saleReversals,returns:records.cashPartialReturns
   },records.businessProfiles[0].currency);
+  // Points taken back by returns must match the returns and what each sale earned, or the backup is refused.
+  reconcileLoyaltyReturns({sales:records.sales,benefits:records.customerBenefits,returns:records.cashPartialReturns});
   for (const order of records.commerceOrders) {
     if (!["draft", "prepared", "ready", "reserved", "packed", "dispatched", "delivered", "return-requested", "cancelled"].includes(order.status) ||
         typeof order.customerName !== "string" || !order.customerName.trim() || order.customerName.length > 120 ||

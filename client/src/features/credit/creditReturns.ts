@@ -24,11 +24,12 @@ import type { Sale } from '@/features/sales/sales';
 export async function stillOwedOnSale(database: TallybookDB, company: string, sale: Sale): Promise<number> {
   const customerId = sale.customerId;
   if (customerId === undefined) throw new Error('This sale has no customer receivable.');
-  const keys = new Set([`sale-points-${sale.id}`, `sale-wallet-${sale.id}`, `sale-redeemed-${sale.id}`]);
+  // Earned points are taken back by the return itself (loyalty reversal); wallet spending and redeemed points still need the full workflow.
+  const keys = new Set([`sale-wallet-${sale.id}`, `sale-redeemed-${sale.id}`]);
   const benefits = (await database.customerBenefits.where('customerId').equals(customerId).toArray())
     .filter(row => row.businessProfileId === company && keys.has(row.submissionKey));
   if (benefits.length)
-    throw new Error('This sale earned or spent customer rewards or wallet funds; a partial return cannot yet reverse them. Use the full reconciliation workflow.');
+    throw new Error('This sale earned or spent customer rewards or wallet funds; a partial return cannot yet restore them. Use the full reconciliation workflow.');
   const [sales, reversals, repayments] = await Promise.all([
     database.sales.where('customerId').equals(customerId).and(row => row.businessProfileId === company).toArray(),
     database.saleReversals.where('customerId').equals(customerId).and(row => row.businessProfileId === company).toArray(),

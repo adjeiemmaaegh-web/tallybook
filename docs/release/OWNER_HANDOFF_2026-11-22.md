@@ -13,8 +13,7 @@ State: **NO-GO for production.** Everything below is on PR #112 (`claude/cool-ri
 
 ## 2. Decisions needed (they change what is safe to build)
 
-1. **Split-tender returns:** which tender is refunded first, or proportionally? (Not built: wrong policy = wrong money.)
-2. **Loyalty-points returns:** are earned points clawed back on return? Are redeemed points restored? (Not built.)
+1. ~~Split-tender returns / earned-points reversal~~ **Built 2026-11-23** with your defaults (original tenders, proportional; reverse earned points), selectable per business in the return-policy screen. Still open: restoring points a customer *redeemed* on the returned sale.
 3. **Payment provider** (MoMo/card), licensing and sandbox credentials. Also: should a succeeded payment auto-record a sale, or only be evidence for the cashier? (Evidence lookup exists; auto-posting does not.)
 4. **Mandatory online account policy**, real Supabase Auth acceptance, shared-device handover (ST25-02/03/09).
 5. **Retention periods and legal basis** (see the proposal table in `OPERATIONS_RUNBOOK_2026-11-22.md` section 5), including whether Discover shopper requests auto-delete after 90 days (cleanup job not built).

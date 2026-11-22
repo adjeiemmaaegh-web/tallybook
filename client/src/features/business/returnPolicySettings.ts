@@ -47,7 +47,8 @@ export async function updateCompanyReturnPolicy(settings:ReturnPolicySettings,
     action:'return.policy.updated',createdAt:now,
     details:JSON.stringify({revision:next.revision,enabled:next.enabled,
      allowFullReversal:next.allowFullReversal,
-     allowCashPartial:next.allowCashPartial,maxAgeDays:next.maxAgeDays})
+     allowCashPartial:next.allowCashPartial,maxAgeDays:next.maxAgeDays,
+     refundAllocation:next.refundAllocation,loyaltyOnReturn:next.loyaltyOnReturn})
    });
   }
   if(getActiveBusinessProfileId()!==company)

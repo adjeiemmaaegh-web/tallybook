@@ -1,4 +1,5 @@
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
+import { normalizeSplitTenders } from './splitTender.mjs';
 
 const validId = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 140;
 const money = value => Number.isSafeInteger(value) && value >= 0;
@@ -15,7 +16,34 @@ export const MANUAL_REFUND_TENDERS = Object.freeze(['cash','mobile','card']);
  * only the remainder (if any) is refunded through the original single tender.
  */
 /** 'wallet' = the refund of a WALLET-PAID sale goes back into the customer's prepaid wallet (a liability): no drawer cash, no provider money. */
-export const RETURN_SETTLEMENT_METHODS = Object.freeze([...MANUAL_REFUND_TENDERS,'credit','wallet']);
+export const RETURN_SETTLEMENT_METHODS = Object.freeze([...MANUAL_REFUND_TENDERS,'credit','wallet','split']);
+/** 'split' = a split-tender sale refunded through its ORIGINAL tenders: entry.legs lists the amount returned through each. */
+const LEG_METHODS = Object.freeze(['cash','mobile','card']);
+const legsValid = entry => {
+  if (entry.refundMethod !== 'split') return entry.legs === undefined;
+  if (!Array.isArray(entry.legs) || entry.legs.length < 1 || entry.legs.length > 3) return false;
+  const seen = new Set(); let sum = 0n;
+  for (const leg of entry.legs) {
+    if (!leg || typeof leg !== 'object' || Object.keys(leg).some(k => k !== 'method' && k !== 'amountMinor') ||
+        !LEG_METHODS.includes(leg.method) || seen.has(leg.method) || !Number.isSafeInteger(leg.amountMinor) || leg.amountMinor <= 0) return false;
+    seen.add(leg.method); sum += BigInt(leg.amountMinor);
+  }
+  return sum === BigInt(entry.refundedMinor);
+};
+const expectedEvidence = entry =>
+  (entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet') ? undefined
+  : entry.refundMethod === 'split' ? (entry.legs?.some(leg => leg.method !== 'cash') ? 'staff_confirmed_manual_unverified' : undefined)
+  : 'staff_confirmed_manual_unverified';
+/** Loyalty evidence on a return: what the sale earned, what was taken back, and any part the customer had already spent. */
+const loyaltyValid = entry => {
+  const l = entry.loyalty;
+  if (l === undefined) return true;
+  if (!l || typeof l !== 'object' || Object.keys(l).sort().join() !== 'earnedPoints,pointsReversed,pointsShortfall,policy' ||
+      !['reverse','keep'].includes(l.policy) || entry.customerId === undefined) return false;
+  const ok = v => Number.isSafeInteger(v) && v >= 0;
+  return ok(l.earnedPoints) && l.earnedPoints > 0 && ok(l.pointsReversed) && ok(l.pointsShortfall) &&
+    l.pointsReversed + l.pointsShortfall <= l.earnedPoints && (l.policy !== 'keep' || (l.pointsReversed === 0 && l.pointsShortfall === 0));
+};
 
 /**
  * Independently validate the append-only, cash-only return journal. This is an
@@ -47,9 +75,9 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         !validId(entry.originalSaleId) || !validId(entry.businessProfileId) ||
         typeof entry.createdAt !== 'string' || !Number.isFinite(Date.parse(entry.createdAt)) ||
         !RETURN_SETTLEMENT_METHODS.includes(entry.refundMethod) ||
-        (entry.refundMethod !== 'cash' && entry.refundMethod !== 'credit' && entry.refundMethod !== 'wallet' && entry.disbursementEvidence !== 'staff_confirmed_manual_unverified') ||
-        ((entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet') && entry.disbursementEvidence !== undefined) ||
-        (entry.manualReference !== undefined && (typeof entry.manualReference !== 'string' || !entry.manualReference.trim() || entry.manualReference.length > 64 || entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet')) ||
+        !legsValid(entry) || !loyaltyValid(entry) ||
+        entry.disbursementEvidence !== expectedEvidence(entry) ||
+        (entry.manualReference !== undefined && (typeof entry.manualReference !== 'string' || !entry.manualReference.trim() || entry.manualReference.length > 64 || entry.refundMethod === 'cash' || entry.refundMethod === 'credit' || entry.refundMethod === 'wallet' || entry.refundMethod === 'split')) ||
         (entry.refundMethod === 'wallet' && ((entry.debtReducedMinor ?? 0) !== 0 || entry.customerId === undefined)) ||
         (entry.debtReducedMinor !== undefined && !money(entry.debtReducedMinor)) ||
         (entry.customerId !== undefined && !validId(entry.customerId)) ||
@@ -66,14 +94,14 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     const sale = saleById.get(entry.originalSaleId);
     if (!sale || sale.businessProfileId !== entry.businessProfileId || reversed.has(sale.id) ||
         sale.customerId !== entry.customerId ||
-        (entry.refundMethod === 'credit' ? !['credit',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) : sale.paymentMethod !== entry.refundMethod) ||
+        (entry.refundMethod === 'credit' ? !['credit','split',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) : sale.paymentMethod !== entry.refundMethod) ||
         !/^[A-Z]{3}$/.test(sale.currency ?? '') || sale.currency !== entry.currency ||
         !money(sale.totalMinor) || !money(sale.amountPaidMinor) || !money(sale.outstandingMinor) ||
         (sale.customerId === undefined
           ? (sale.amountPaidMinor !== sale.totalMinor || sale.outstandingMinor !== 0 || (entry.debtReducedMinor ?? 0) !== 0)
           : (entry.refundMethod === 'wallet'
               ? (sale.outstandingMinor !== 0 || sale.walletAppliedMinor !== sale.amountPaidMinor || sale.amountPaidMinor !== sale.totalMinor)
-              : sale.outstandingMinor === 0)) ||
+              : (sale.outstandingMinor === 0 && (entry.debtReducedMinor ?? 0) > 0))) ||
         (sale.walletAppliedMinor && entry.refundMethod !== 'wallet') || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
         entry.originalReceiptNumber !== sale.receiptNumber ||
         Date.parse(entry.createdAt) < Date.parse(sale.createdAt)) {
@@ -81,7 +109,13 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     }
     if (sale.tax?.ghana) throw new Error("Ghana VAT partial refund evidence requires a separate certified tax-correction process.");
     const paid = payments.filter(p => p.saleId === sale.id);
-    if (entry.refundMethod === 'wallet' ? paid.length !== 0 : sale.amountPaidMinor === 0 ? paid.length !== 0 :
+    if (sale.paymentMethod === 'split') {
+      // Every original tender must still be saved exactly as paid; the legs below are checked against these.
+      let tenders;
+      try { tenders = normalizeSplitTenders(sale.splitTendersAtSale, sale.amountPaidMinor, sale.totalMinor); } catch { throw new Error('Cash return has unverified original split-tender evidence.'); }
+      if (paid.length !== tenders.length || tenders.some(t => paid.filter(p => p.method === t.method && p.amountMinor === t.amountMinor && p.businessProfileId === sale.businessProfileId).length !== 1))
+        throw new Error('Cash return has unverified original tender evidence.');
+    } else if (entry.refundMethod === 'wallet' ? paid.length !== 0 : sale.amountPaidMinor === 0 ? paid.length !== 0 :
         (paid.length !== 1 || paid[0].method !== sale.paymentMethod || paid[0].businessProfileId !== sale.businessProfileId ||
          paid[0].amountMinor !== sale.amountPaidMinor))
       throw new Error('Cash return has unverified original tender evidence.');
@@ -114,6 +148,15 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
     const cashSoFar = [...existing,entry].reduce((n,row)=>n+BigInt(row.refundedMinor),0n);
     if (debtSoFar > BigInt(sale.outstandingMinor) || cashSoFar > BigInt(sale.amountPaidMinor))
       throw new Error('Saved returns exceed the original sale debt or the amount actually paid.');
+    if (sale.paymentMethod === 'split') {
+      // No tender may ever be refunded more than was paid through it.
+      const perMethod = new Map();
+      for (const row of [...existing, entry]) for (const leg of row.legs ?? []) perMethod.set(leg.method, (perMethod.get(leg.method) ?? 0n) + BigInt(leg.amountMinor));
+      for (const [method, refunded] of perMethod) {
+        const paidThrough = sale.splitTendersAtSale?.find(t => t.method === method);
+        if (!paidThrough || refunded > BigInt(paidThrough.amountMinor)) throw new Error('Saved returns refund more through a tender than the customer paid through it.');
+      }
+    }
     bySale.set(sale.id,[...existing,entry]);
   }
   return {bySale, verifiedReturns: returns.length};

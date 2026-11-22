@@ -352,7 +352,7 @@ export function calculateTrackedShiftCash(shift:StaffShift, rows: {
   repayments: Array<{shiftId?:string;method:string;amountMinor:number}>;
   transfers: Array<{shiftId?:string;method:string;kind:string;amountMinor:number}>;
   reversals: Array<{shiftId?:string;originalSaleId:string;reversedReceivedMinor:number}>;
-  cashReturns?: Array<{shiftId?:string;originalSaleId:string;refundedMinor:number;refundMethod?:string}>;
+  cashReturns?: Array<{shiftId?:string;originalSaleId:string;refundedMinor:number;refundMethod?:string;legs?:Array<{method:string;amountMinor:number}>}>;
 }) {
   // Validate individual journal entries before aggregation. Otherwise a negative or
   // corrupt entry could be hidden by a positive movement in the same shift.
@@ -377,11 +377,14 @@ export function calculateTrackedShiftCash(shift:StaffShift, rows: {
   const refunds=rows.reversals.filter(r=>r.shiftId===shift.id && sales.get(r.originalSaleId)?.paymentMethod==='cash')
     .reduce((n,r)=>n+r.reversedReceivedMinor,0);
   // Mobile-money/card returns are manual non-drawer evidence: they never reduce physical cash.
-  const drawerReturns=(rows.cashReturns ?? []).filter(r=>(r.refundMethod ?? 'cash')==='cash');
+  // Only physical drawer cash counts: a cash refund, or the CASH leg of a split-tender refund.
+  const drawerCash=(r:{refundMethod?:string;refundedMinor:number;legs?:Array<{method:string;amountMinor:number}>})=>
+    (r.refundMethod ?? 'cash')==='cash'?r.refundedMinor:r.refundMethod==='split'?(r.legs??[]).filter(l=>l.method==='cash').reduce((n,l)=>n+l.amountMinor,0):0;
+  const drawerReturns=(rows.cashReturns ?? []).filter(r=>drawerCash(r)>0);
   if ((rows.cashReturns ?? []).some(r=>!sales.get(r.originalSaleId) || (r.refundMethod!=='credit' && sales.get(r.originalSaleId)?.paymentMethod!==(r.refundMethod ?? 'cash'))))
     throw new Error('Refund shift record refers to a missing original sale or a different original tender.');
   const partialRefunds=drawerReturns.filter(r=>r.shiftId===shift.id)
-    .reduce((n,r)=>n-r.refundedMinor,0);
+    .reduce((n,r)=>n-drawerCash(r),0);
   const movementMinor=cashSales+cashRepayments+prepaidCash+refunds+partialRefunds;
   const expectedCashMinor=shift.openingFloatMinor+movementMinor;
   if (![cashSales,cashRepayments,prepaidCash,refunds,partialRefunds,movementMinor,expectedCashMinor].every(Number.isSafeInteger) || expectedCashMinor < 0)
