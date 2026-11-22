@@ -28,3 +28,28 @@
 
 ## Decisions for the owner
 Approve/decline the merge of #112; approve/decline #111 after conflict resolution; confirm #105 may be closed as superseded; decide whether #111's stale PR description should be rewritten.
+
+
+---
+## Update after owner decisions (2026-11-22, later): #112 review and #105 proof
+
+**Approved order: #112, then #111. Nothing merged, closed or pushed outside permissions.** #112 is not merged until you accept this review.
+
+### #112 change and dependency review (head includes everything below; `git diff origin/main...HEAD`)
+| Area | Files | Review finding |
+|---|---|---|
+| `client/src` | 142 (+6.8k/-0.3k) | Refund policy/allocation + loyalty reversal, wallet/split-tender returns, WebAuthn step-up (new, not yet wired to any screen), reports/integrity/backup updates. Covered by 2153 client tests (scratch-merge run) and CI. |
+| `server` | 7 | Payment settlement service + webhook route (**not mounted anywhere**: `mountPaymentWebhookRoute` has no caller, so no webhook endpoint exists), retention/alert modules (off by default, no I/O), sync simulation test, and one `server/index.ts` change: startup failure now exits non-zero and prints no configuration. |
+| `supabase` | 14 | The six migrations + rollbacks. **Merging does not apply them.** |
+| `.github/workflows` | 3 | Adds Firefox/Chrome device jobs, evidence upload (14-day retention), a repeat-build checkpoint, CodeQL SARIF gate. No deploy steps, no new secrets, permissions stay `contents: read`. Cosmetic cruft: a push filter for a stale branch name `codex/road-to-complete-security-triage`. |
+| dependencies | 0 | `package.json` and `pnpm-lock.yaml` are **unchanged**. |
+| `docs/release` | 88 | Evidence/plans; the register states 94 partial / 4 missing / 20 owner-blocked, i.e. **not production-ready**. |
+| other | `vite.config.ts` (+2: notices file not answered with the app shell), `client/public/third-party-notices.txt` (licence text, published), `artifacts/ui-visual/*.png` (6 screenshots, ~2.5 MB committed binaries, repo-hygiene note), `candidate_modules/batch5` (test tweak). |
+Native suite exactly as CI runs it: **1357 pass / 0 fail** (`node --experimental-strip-types --test scripts/historical-costing-check.mjs qa/*.test.mjs qa/*.test.cjs server/tests/*.test.mjs`). Not claimed: real devices, hosted behaviour, provider behaviour.
+**Review conclusion:** no blocking defect found; remaining concerns are non-blocking hygiene (stale workflow filter, committed screenshots) and the intermittent WebKit flake. Recommend merge after your acceptance.
+
+### #105: proof that it is covered
+- Commits in #105 not reachable from #112: **0** (`git rev-list main..codex/road-to-complete --not <#112 head>`). Tip `7b3815a` is an ancestor of the #112 head.
+- Of the 195 files #105 touches, #112 contains all of them (nothing deleted); 14 differ only because #112 later modified them.
+- #105's stated outstanding scope maps to: whole-ledger encryption -> **#111**; multi-tender/partial refunds -> **#112** (`4ba8b6d`); provider adapter/settlement/refund/dispute handling -> **#112** sandbox ledger + webhook (real provider still unapproved); migrations 38/39 unapplied -> **migration plan**; every remaining item is tracked in `MASTER_COMPLETION_REGISTER.md`.
+- **Recommendation: close #105 as superseded once #112 is merged** (not before; I did not close it). Its retained ref `codex/checkpoint-20261117-3a87d295` should stay.

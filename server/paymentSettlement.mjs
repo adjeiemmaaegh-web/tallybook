@@ -83,3 +83,29 @@ export function createSandboxAdapter({key, environment, toleranceMs = 5 * 60 * 1
     },
   });
 }
+
+/** Second LOCAL mock adapter with a different signature scheme and event vocabulary (Stripe-style `t=..,v1=..` header, dotted event types).
+ *  It exists to prove the adapter contract is provider-independent: it is NOT a real provider and is refused outside local environments. */
+export function createHeaderMockAdapter({key, environment, toleranceMs = 5 * 60 * 1000}) {
+  if (!["local-test", "local-development"].includes(environment)) throw new SettlementError("The mock adapter is local only.");
+  if (typeof key !== "string" || Buffer.byteLength(key) < 32) throw new SettlementError("The mock key must be at least 32 bytes.");
+  const KIND = {"payment.succeeded": "succeeded", "payment.failed": "failed", "payment.pending": "unknown", "payment.refunded": "refund", "dispute.opened": "chargeback", "dispute.closed": "chargeback_reversed"};
+  const mac = (t, raw) => createHmac("sha256", key).update(`${t}.${raw}`).digest("hex");
+  return Object.freeze({
+    id: "headermock",
+    verifyAndParse(rawBody, headers, now) {
+      if (typeof rawBody !== "string" || rawBody.length > 4096) throw new Error("bad body");
+      const parts = Object.fromEntries(String(headers["x-mock-signature"] ?? "").split(",").map(p => p.split("=")).filter(p => p.length === 2));
+      const t = Number(parts.t); if (!Number.isSafeInteger(t) || Math.abs(now - t) > toleranceMs) throw new Error("stale");
+      const given = Buffer.from(String(parts.v1 ?? ""), "hex"), want = Buffer.from(mac(t, rawBody), "hex");
+      if (given.length !== want.length || !timingSafeEqual(given, want)) throw new Error("signature");
+      const b = JSON.parse(rawBody), kind = KIND[b.type];
+      if (!kind) throw new Error("unknown event type");
+      return {companyId: b.data?.company, intentId: b.data?.intent, providerEventId: b.id, kind, amountMinor: b.data?.amount, occurredAt: new Date(t).toISOString()};
+    },
+    sign(event, ts = Date.now()) { // event: {id, type, data:{intent, company, amount}}
+      const rawBody = JSON.stringify(event);
+      return {rawBody, headers: {"x-mock-signature": `t=${ts},v1=${mac(ts, rawBody)}`}};
+    },
+  });
+}

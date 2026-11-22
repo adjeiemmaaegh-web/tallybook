@@ -35,5 +35,19 @@ Order constraints: **3 before 4** (hard). 1 and 2 are independent repairs of exi
 5. **Production apply** only after written approval, in a quiet window, same order, with the advisor check and a smoke after each. Stop on the first anomaly; do not "fix forward" without a reviewed migration.
 6. **Post-apply:** update `MIGRATION_HISTORY.md` with the recorded hosted versions; keep Discover/payments/commerce flags **off**.
 
+## 3b. Owner decision recorded: new, isolated Supabase staging project
+Approved: a **new project separate from production** (not the paused "V19 Sync Test", not a branch of production). Approved for preparing and testing the plan; **hosted execution is not approved yet.**
+
+**What I prepared and ran (all local, nothing hosted):**
+- `scripts/staging-guard.mjs` (+ `qa/staging-guard.test.mjs`, 6 tests): refuses the production project ref (and any in `PRODUCTION_PROJECT_REFS`), computes the exact missing-migration list by name (**exactly the six** against the production list read on 2026-11-22; a brand-new empty project needs all 43 in order), and prints a **read-only** SQL check that staging contains only synthetic data. Its plans are never executable.
+- `qa/staging-six-migrations-rehearsal.test.mjs` (4 tests, real PostgreSQL engine via PGlite): applies the 37-migration baseline, then the six in order; customer table counts are identical after every step; Discover fails without the platform; the four additive migrations roll back cleanly (newest first) with data unchanged; the two security repairs **refuse** to roll back and leave everything intact; the four re-apply and recover; once a payment intent exists the payments rollback refuses and the evidence stays, and reconcile is clean.
+
+**Staging contains no live customer data: how it is confirmed (owner-run on the new project):**
+1. Create the project; record its ref; run `node scripts/staging-guard.mjs plan <ref> <names-file>` (refuses production).
+2. Apply the 37-migration baseline, then run `node scripts/staging-guard.mjs no-live-data-sql` on staging and expect `non_synthetic_businesses = 0` and `non_synthetic_users = 0`. Convention: synthetic businesses start with `STG `, users end with `@staging.tallybook.invalid`. Production's own shape (3 businesses, 1 sale, real accounts) would fail this check.
+3. Never restore a production backup into staging; load synthetic fixtures only.
+
+**Exact operation needing your authorization (not yet given):** creating the staging project and applying the baseline + six migrations to it (staging only), in the order above, with advisor checks after each. Production application is a separate, later approval.
+
 ## 4. Decisions needed
-- Staging target (a/b/c above). - Approval to apply, per migration or all six. - Whether 5 (payments ledger) is applied now or held until a provider is chosen (it is inert, but holds financial-record tables). - Backup/rollback window.
+- ~~Staging target~~ decided: new isolated project. - Approval to create it and apply (staging only), per migration or all six. - Whether 5 (payments ledger) is applied now or held until a provider is chosen (it is inert, but holds financial-record tables). - Backup/rollback window.

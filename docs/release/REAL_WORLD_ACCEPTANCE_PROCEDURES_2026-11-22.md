@@ -24,7 +24,7 @@ Thermal 58 mm and 80 mm (Bluetooth and USB), one A4 laser. Print: normal receipt
 3. Idle auto-lock at 1 min; confirm staff session cleared.
 4. **Key rotation**: rotate, kill the tab halfway, reopen, resume with the OLD passphrase/recovery code; verify completion and that the old credentials stop working only after verification.
 5. Lost passphrase: recover with the one-time recovery code on a **clean device** from an exported backup.
-6. Hardware security key: *not implemented in the product today*; the passphrase/recovery code are the credentials. If a FIDO key (WebAuthn) is wanted, that is a new feature decision. If the owner means the sign-in provider's key support, test it at the hosted Auth level.
+6. Security key (optional step-up, see `SECURITY_KEY_STEP_UP_2026-11-22.md`; the owner panel/gating is not built yet, so run the `webauthnClient` flow from the dev console on a staging build): register each physical key (USB, NFC, platform authenticator) with user verification; confirm twice (counter advances); try an unregistered key (refused); remove it; try requiring it with a single key and no recovery code (refused); then recover access with the recovery code only. Record AAGUID/model, browser and OS per key.
 Pass: no plaintext at rest, recovery works clean-device, rotation survives interruption.
 
 ## E. Backup restoration drill
