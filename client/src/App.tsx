@@ -9,6 +9,9 @@ import { ConfirmHost } from "@/components/ConfirmHost";
 import { StrictSharedShopGate } from "@/auth/StrictSharedShopGate";
 const SharedShopPage = lazy(() => import("@/pages/SharedShopPage"));
 const PublicShopOrderPage = lazy(() => import("@/pages/PublicShopOrderPage"));
+// Tallybook Discover (CC-D): flag-off by default; the anonymous page never loads the ledger.
+const DiscoverShopperPage = lazy(() => import("@/pages/DiscoverShopperPage"));
+const CONNECTED_COMMERCE_UI = import.meta.env.VITE_CONNECTED_COMMERCE === "1";
 // Everything the local ledger needs is loaded only on its routes, never for /shop or /welcome.
 const DeviceWorkspace = lazy(() => import("@/DeviceWorkspace"));
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -43,6 +46,8 @@ function App() {
             // The shared shop is cloud-authoritative and checks the session
             // itself; it must not mount the local ledger or its unlock gates.
             ? <StrictSharedShopGate><Suspense fallback={<main className="shop-page" role="status">Opening your shop…</main>}><SharedShopPage /></Suspense></StrictSharedShopGate>
+            : CONNECTED_COMMERCE_UI && location === '/discover'
+            ? <Suspense fallback={<main role="status">Opening Discover…</main>}><DiscoverShopperPage /></Suspense>
             : location === '/order'
             // Anonymous share-token requests only. Never load the private local ledger.
             ? <Suspense fallback={<main role="status">Opening the shop's order page…</main>}><PublicShopOrderPage /></Suspense>
