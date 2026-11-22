@@ -255,6 +255,13 @@ export async function unlockLedger(db: TallybookDB, credential: Credential, idb:
     }
   }
 }
+/** True only if this recovery code opens the CURRENT keyring. Changes nothing and does not unlock. Used as the safe alternative to a security key. */
+export async function verifyRecoveryCode(db: TallybookDB, recoveryCode: string, idb: IDBFactory = indexedDB): Promise<boolean> {
+  try {
+    const rec = await readRecord(db.name, idb); if (!rec || typeof recoveryCode !== "string" || !recoveryCode.trim()) return false;
+    const dek = await unlockLedgerDek(rec.keyring, recoveryCode.trim(), "recovery"); (dek as { fill?: (n: number) => void }).fill?.(0); return true;
+  } catch { return false; }
+}
 export function lockLedger(db: TallybookDB) { db.ledgerSeal.lock(); }
 
 /** After a crash mid-conversion: unlock, then finish. Uses the fingerprint stored before conversion began. */

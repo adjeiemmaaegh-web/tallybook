@@ -20,7 +20,7 @@ afterEach(() => { localStorage.clear(); singleton.ledgerSeal.lock(); singleton.l
 
 describe("draft store", () => {
   it("plaintext ledger: stored exactly as before", () => {
-    const seal = new LedgerSeal("s"); const d = createDraftStore(() => seal);
+    const seal = new LedgerSeal("s"); seal.setMode("plaintext"); const d = createDraftStore(() => seal);
     d.write(KEY, '{"a":1}'); expect(localStorage.getItem(KEY)).toBe('{"a":1}'); expect(d.read(KEY)).toBe('{"a":1}'); d.remove(KEY); expect(d.read(KEY)).toBeNull();
   });
   it("encrypted + unlocked: nothing readable at rest, round-trips, and a draft cannot be moved to another key or tampered with", () => {

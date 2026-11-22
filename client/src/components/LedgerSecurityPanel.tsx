@@ -1,5 +1,8 @@
 /** ST24-05: owner controls for at-rest encryption of this device's ledger. Off by default; every step is explicit. */
 import { useCallback, useEffect, useState } from "react";
+import { authorizeSensitiveOperation } from "@/features/security/stepUpGate";
+import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
+import { SecurityKeysPanel } from "./SecurityKeysPanel";
 import { db } from "@/db/TallybookDB";
 import {
   beginLedgerEncryption, changeLedgerPassphraseFor, disableLedgerEncryption, discardPreparedEncryption, exportRecoveryPackage,
@@ -24,6 +27,7 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
   const [autoLock, setAutoLock] = useState<number>(() => readAutoLockMinutes(db.name));
   // Data-key rotation (every record is re-encrypted under a brand-new key). Same careful steps as turning encryption on.
   const [rotation, setRotation] = useState<{ prepared: PreparedRotation; passphrase: string } | null>(null);
+  const [stepUpCode, setStepUpCode] = useState(""); const [needCode, setNeedCode] = useState(false);
   const [rotTyped, setRotTyped] = useState(""); const [rotSaved, setRotSaved] = useState(false); const [rotBusy, setRotBusy] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -41,6 +45,12 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
   if (!status) return <section aria-label="Device encryption" className="rounded-xl border p-4"><p role="status">Checking encryption…</p></section>;
   const encrypted = status.state === "encrypted";
 
+  /** Optional security-key step-up. Throws (shown by guard) when a required key/recovery proof is missing. */
+  const stepUp = async (operation: "disable-encryption" | "rotate-data-key") => {
+    const r = await authorizeSensitiveOperation(operation, { businessId: getActiveBusinessProfileId(), db, recoveryCode: stepUpCode });
+    if (!r.allowed) { setNeedCode(true); throw new Error(r.reason); }
+    setNeedCode(false); setStepUpCode("");
+  };
   return (
     <section aria-labelledby="ledger-security-title" className="rounded-xl border p-4 space-y-3">
       <h2 id="ledger-security-title" className="font-semibold">Encrypt this device</h2>
@@ -125,6 +135,7 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
             <p className="text-sm">Re-encrypts every record under a brand-new key and issues a new recovery code. Use it if you think a recovery code or an old copy of this phone's data was exposed. Your passphrase stays the same. The old recovery code stops working.</p>
             {!rotation ? (
               <button type="button" className="secondary-action min-h-11" disabled={!current} onClick={() => void guard(async () => {
+                await stepUp("rotate-data-key");
                 setRotation({ prepared: await prepareDataKeyRotation(db, current), passphrase: current }); setRotSaved(false); setRotTyped("");
               })}>Start key change (enter your current passphrase above)</button>
             ) : (
@@ -144,8 +155,14 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
               </div>
             )}
           </div>
+          <SecurityKeysPanel businessId={getActiveBusinessProfileId()} ownerName="Owner" />
+          {needCode ? (
+            <label className="block text-sm"><span>Security key not available? Type your recovery code instead</span>
+              <input aria-label="Recovery code for security-key step-up" className="mt-1 w-full rounded border bg-background p-3 font-mono min-h-11" autoComplete="off" spellCheck={false} value={stepUpCode} onChange={e => setStepUpCode(e.target.value)} /></label>
+          ) : null}
           <button type="button" className="danger-action min-h-11" onClick={() => void guard(async () => {
             if (!window.confirm("Turn encryption off? Your records will be stored without encryption on this phone.")) return;
+            await stepUp("disable-encryption");
             setProgress("starting"); await disableLedgerEncryption(db, { onProgress: (d, t) => setProgress(`${d} of ${t} records`) }); setProgress(null);
             setNote("Encryption is off. Your records are readable again."); await refresh();
           })}>Turn encryption off</button>
