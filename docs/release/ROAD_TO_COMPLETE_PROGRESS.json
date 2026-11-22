@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sourceBaseline": "41d4bab619db1808f21471299bd7760eee1a6836",
   "auditBaseline": "5633c3901136cd0024021255ae0c29eceb0f10be",
-  "updated": "2026-11-17",
+  "updated": "2026-11-22",
   "decision": "NO-GO",
   "boundaries": [
     "No main merge, deployment, live database changes, auth policy changes, or payment activation authorized.",
@@ -592,7 +592,8 @@
         "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created.",
         "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r.",
         "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments.",
-        "2026-11-20: return that would refund customer repayments beyond the original payment is now refused in the review quote AND before posting, with a clear message (found by the randomized conservation suite)."
+        "2026-11-20: return that would refund customer repayments beyond the original payment is now refused in the review quote AND before posting, with a clear message (found by the randomized conservation suite).",
+        "2026-11-22: partial returns of wallet-paid sales credit the customer's prepaid wallet (journal, prepaid-liability audit, run10 conservation, reports, central event, backup/restore, review dialog). Split-tender and loyalty-points returns remain unbuilt: they need an owner refund-allocation and points-clawback policy."
       ],
       "tests": [
         {
@@ -624,6 +625,12 @@
           "result": "pass",
           "scope": "Local run 2026-11-20: 1947 client + 1211 native tests, tsc clean. Not yet CI-verified.",
           "evidence": "local execution 2026-11-20"
+        },
+        {
+          "command": "vitest walletPartialReturn.test.ts (5) + 5 mutation checks; full client 2061/2061; native qa 874/874",
+          "result": "pass",
+          "scope": "local IndexedDB only; not field-tested",
+          "evidence": "client/src/features/sales/walletPartialReturn.test.ts"
         }
       ],
       "blockers": [
@@ -1804,7 +1811,8 @@
         "Reproduced revoked/forged-session classification mutation in isolated PostgreSQL before fix.",
         "New additive migration enforces canonical active proof at the private write boundary, preserving existing data and API.",
         "Audited 17 public privileged signatures, 68 invalid catalog calls plus 8 invoker-delegate calls, and zero side effects across 59 business tables.",
-        "Forward-only rollback refuses to restore the authorization bypass."
+        "Forward-only rollback refuses to restore the authorization bypass.",
+        "2026-11-22: systematic outsider authorization matrix: every action name found in the migration SQL x 10 authenticated RPCs x 2 inputs against a victim business with data."
       ],
       "tests": [
         {
@@ -1822,6 +1830,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "node --test qa/rpc-outsider-matrix.test.mjs",
+          "result": "pass",
+          "scope": "PGlite with real role/session semantics; 2266 authorization refusals, 252 validation refusals, 2 designed-for-outsiders results; victim data unchanged except join-attempt rate-limit log; mutation of shop_member_role fails it with 315 problems",
+          "evidence": "qa/rpc-outsider-matrix.test.mjs"
         }
       ],
       "blockers": [
@@ -1934,13 +1948,21 @@
         "client/src/features/staff/staff.ts"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
+      "changes": [
+        "2026-11-22: server-computed shift cash reconciliation (expected cash, variance, late replayed cash sales, abandoned shifts), read-only, dev migration 20261121150000 (not applied)."
+      ],
       "tests": [
         {
           "command": "Pinned complete developer QA run 44050478753, four-engine run 44050478763 and security run 44050478932; actual checkout 3a87d295e30fa6672986e874881aa26d46068f4b has identical tree to head 4acc36595d80e724f2293d8c8dc322ba503daddf",
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "node --test qa/shift-cash-reconciliation.test.mjs",
+          "result": "pass",
+          "scope": "PGlite; 3 mutation checks; no UI; excludes supplier payments/paid-outs/non-ledger cash",
+          "evidence": "supabase/migrations/20261121150000_shift_cash_reconciliation.sql"
         }
       ],
       "blockers": [
@@ -2904,8 +2926,17 @@
       "existingCapabilityReused": [
         "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
       ],
-      "changes": [],
-      "tests": [],
+      "changes": [
+        "2026-11-22: provider-independent settlement service, signed local sandbox adapter and a disabled-by-default webhook route. No real provider, no route mounted in server/index.ts."
+      ],
+      "tests": [
+        {
+          "command": "node --test qa/payment-settlement-service.test.mjs qa/payment-webhook-route.test.mjs",
+          "result": "pass",
+          "scope": "sandbox only; 14 tests + 8 mutation checks",
+          "evidence": "server/paymentSettlement.mjs, server/paymentWebhookRoute.mjs"
+        }
+      ],
       "blockers": [
         "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
         "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
@@ -2934,8 +2965,17 @@
       "existingCapabilityReused": [
         "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
       ],
-      "changes": [],
-      "tests": [],
+      "changes": [
+        "2026-11-22: durable immutable payment event ledger with strict state machine, amount-mismatch hold, replay reconciliation and order payment evidence lookup; dev migration 20261121120000 (not applied)."
+      ],
+      "tests": [
+        {
+          "command": "node --test qa/payment-settlement-ledger-pglite.test.mjs",
+          "result": "pass",
+          "scope": "PGlite incl. randomized event storms; 2 mutation checks; no sale posting from payments (needs owner decision)",
+          "evidence": "supabase/migrations/20261121120000_payment_settlement_ledger.sql"
+        }
+      ],
       "blockers": [
         "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
         "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
@@ -3692,7 +3732,8 @@
       ],
       "existingCapabilityReused": [],
       "changes": [
-        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI."
+        "Recovered whole-unit chart-axis correction and semantic exact-value sales table; new keyboard/no-financial-write browser assertions are pending CI.",
+        "2026-11-22: automated axe-core scan of the new Discover owner and shopper screens (no violations; scanner sanity-checked)."
       ],
       "tests": [
         {
@@ -3706,6 +3747,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "vitest discoverAccessibility.test.tsx",
+          "result": "pass",
+          "scope": "jsdom; colour contrast, screen readers and real devices not covered",
+          "evidence": "client/src/pages/discoverAccessibility.test.tsx"
         }
       ],
       "blockers": [
@@ -4508,7 +4555,8 @@
       "changes": [
         "Recovered streaming byte limits before materializing JSON/HTML and original-unlock device/sync guards.",
         "Prepared nonzero/sanitized server startup failure handling and mandatory CodeQL-severity plus pinned/redacted secret-scan CI gates.",
-        "Retains exact package-declared license fields (UNKNOWN when absent) and original top-level LICENSE/COPYING/NOTICE/OFL bytes from the frozen installed production graph. Validates notice references, regular files, size caps and repeated-build identity; no legal or complete asset-rights approval is implied."
+        "Retains exact package-declared license fields (UNKNOWN when absent) and original top-level LICENSE/COPYING/NOTICE/OFL bytes from the frozen installed production graph. Validates notice references, regular files, size caps and repeated-build identity; no legal or complete asset-rights approval is implied.",
+        "2026-11-22: licence policy check (0 forbidden of 623 package versions) and shipped third-party notices (190 production components, synced by test, linked from the public footer)."
       ],
       "tests": [
         {
@@ -4534,6 +4582,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "node --test qa/licence-policy.test.mjs qa/third-party-notices.test.mjs; node scripts/licence-policy.mjs",
+          "result": "pass",
+          "scope": "automated; counsel has not reviewed the policy or the OFL font obligation",
+          "evidence": "scripts/licence-policy.mjs, client/public/third-party-notices.txt"
         }
       ],
       "blockers": [
@@ -4570,7 +4624,8 @@
       "changes": [
         "Prepared exact clean-SHA web/schema checkpoint, deterministic SHA-256 manifest, production dependency inventory and mandatory NO-GO approval metadata.",
         "Prepared two builds in the same isolated Linux CI job with identical file-content manifest comparison. This is not independent-machine or real-device acceptance.",
-        "Retains exact package-declared license fields (UNKNOWN when absent) and original top-level LICENSE/COPYING/NOTICE/OFL bytes from the frozen installed production graph. Validates notice references, regular files, size caps and repeated-build identity; no legal or complete asset-rights approval is implied."
+        "Retains exact package-declared license fields (UNKNOWN when absent) and original top-level LICENSE/COPYING/NOTICE/OFL bytes from the frozen installed production graph. Validates notice references, regular files, size caps and repeated-build identity; no legal or complete asset-rights approval is implied.",
+        "2026-11-22: deterministic exact-commit release-candidate manifest tool with --verify (files, migrations, rollbacks, lockfile, build output). No candidate frozen."
       ],
       "tests": [
         {
@@ -4602,6 +4657,12 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "node --test qa/release-candidate-manifest.test.mjs",
+          "result": "pass",
+          "scope": "tooling only; 8 tests, 4 mutation checks",
+          "evidence": "scripts/release-candidate-manifest.mjs"
         }
       ],
       "blockers": [
