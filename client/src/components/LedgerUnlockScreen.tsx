@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { db } from "@/db/TallybookDB";
 import {
-  disableLedgerEncryption, importRecoveryPackage, resumeLedgerEncryption, unlockLedger, type Credential, type LedgerStatus,
+  disableLedgerEncryption, importRecoveryPackage, resumeDataKeyRotation, resumeLedgerEncryption, unlockLedger, type Credential, type LedgerStatus,
 } from "@/features/security/st24LedgerSecurity";
 
 type Mode = "passphrase" | "recovery";
@@ -34,8 +34,9 @@ export function LedgerUnlockScreen({ security, onChanged }: { security: LedgerSt
 
   const title = security.state === "orphaned" ? "Recover your encrypted ledger"
     : security.state === "migrating" ? "Finish turning on encryption"
-    : security.state === "decrypting" ? "Finish turning off encryption" : "Unlock Tallybook";
-  const interrupted = security.state === "migrating" || security.state === "decrypting";
+    : security.state === "decrypting" ? "Finish turning off encryption"
+    : security.state === "rekeying" ? "Finish changing the encryption key" : "Unlock Tallybook";
+  const interrupted = security.state === "migrating" || security.state === "decrypting" || security.state === "rekeying";
 
   return (
     <main className="mx-auto max-w-xl p-6" aria-labelledby="ledger-unlock-title">
@@ -57,6 +58,7 @@ export function LedgerUnlockScreen({ security, onChanged }: { security: LedgerSt
       ) : (
         <form className="mt-4 space-y-3" onSubmit={e => { e.preventDefault(); void run(async () => {
           if (security.state === "migrating") await resumeLedgerEncryption(db, credential(), { onProgress });
+          else if (security.state === "rekeying") await resumeDataKeyRotation(db, credential(), { onProgress });
           else if (security.state === "decrypting") { await unlockLedger(db, credential()); await disableLedgerEncryption(db, { onProgress }); }
           else await unlockLedger(db, credential());
         }); }}>

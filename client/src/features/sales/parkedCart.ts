@@ -1,4 +1,5 @@
 import { workspaceKey } from "@/auth/ownerWorkspace";
+import { drafts } from "@/features/security/sealedDraftStorage";
 /** A parked cart is a device-local draft, never a reservation or financial transaction. */
 export interface ParkedCartLine { productId: string; quantity: number }
 export interface ParkedCart { version: 1; lines: ParkedCartLine[]; parkedAt: string }
@@ -6,7 +7,7 @@ const storageKey = (companyId: string) => workspaceKey(`tallybook:parked-cart:v1
 export function loadParkedCart(companyId: string): ParkedCart | null {
   if (!companyId || typeof localStorage === "undefined") return null;
   try {
-    const raw = localStorage.getItem(storageKey(companyId));
+    const raw = drafts.read(storageKey(companyId));
     if (!raw) return null;
     const data: unknown = JSON.parse(raw);
     if (!data || typeof data !== "object") return null;
@@ -24,10 +25,10 @@ export function saveParkedCart(companyId: string, lines: ParkedCartLine[]): void
   const key = storageKey(companyId);
   // Never replace an unresolved draft, even when its contents are damaged.
   // Reading can throw when the device blocks local storage.
-  if (localStorage.getItem(key) !== null) throw new Error("A cart is already parked for this business. Resume it before parking another.");
+  if (drafts.read(key) !== null) throw new Error("A cart is already parked for this business. Resume it before parking another.");
   const record: ParkedCart = { version: 1, parkedAt: new Date().toISOString(), lines: lines.map(line => ({ ...line })) };
   try {
-    localStorage.setItem(key, JSON.stringify(record));
+    drafts.write(key, JSON.stringify(record));
     const stored = loadParkedCart(companyId);
     if (!stored || stored.parkedAt !== record.parkedAt || JSON.stringify(stored.lines) !== JSON.stringify(record.lines)) {
       throw new Error("Parked cart could not be verified. Your active cart has not been cleared.");
@@ -36,7 +37,7 @@ export function saveParkedCart(companyId: string, lines: ParkedCartLine[]): void
     throw new Error(error instanceof Error ? error.message : "Device storage failed. Your active cart has not been cleared.");
   }
 }
-export function clearParkedCart(companyId: string): void { if (companyId) localStorage.removeItem(storageKey(companyId)); }
+export function clearParkedCart(companyId: string): void { if (companyId) drafts.remove(storageKey(companyId)); }
 
 /** Clear a parked draft only if it still matches the cart that was submitted.
  * Never remove an unrelated or corrupted parked draft during receipt recovery. */

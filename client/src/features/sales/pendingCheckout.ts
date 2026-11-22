@@ -1,4 +1,5 @@
 import { workspaceKey } from "@/auth/ownerWorkspace";
+import { drafts } from "@/features/security/sealedDraftStorage";
 /** Device-local recovery journal. A pending entry is never evidence that a sale committed. */
 import type { completeSale } from "./sales";
 export type CheckoutIntent = Parameters<typeof completeSale>[0];
@@ -7,7 +8,7 @@ const key = (companyId: string) => workspaceKey(`tallybook:pending-checkout:v1:$
 export function loadPendingCheckout(companyId: string): PendingCheckout | null {
   if (!companyId || typeof localStorage === "undefined") return null;
   try {
-    const raw = localStorage.getItem(key(companyId));
+    const raw = drafts.read(key(companyId));
     if (!raw) return null;
     const value: unknown = JSON.parse(raw);
     if (!value || typeof value !== "object") return null;
@@ -21,7 +22,7 @@ export function loadPendingCheckout(companyId: string): PendingCheckout | null {
 export function getPendingCheckoutStatus(companyId: string): { state: "empty" | "pending" | "damaged" | "unavailable"; pending: PendingCheckout | null } {
   if (!companyId || typeof localStorage === "undefined") return { state: "unavailable", pending: null };
   let raw: string | null;
-  try { raw = localStorage.getItem(key(companyId)); }
+  try { raw = drafts.read(key(companyId)); }
   catch { return { state: "unavailable", pending: null }; }
   if (raw === null) return { state: "empty", pending: null };
   const pending = loadPendingCheckout(companyId);
@@ -33,7 +34,7 @@ export function savePendingCheckout(companyId: string, intent: CheckoutIntent & 
   // A damaged journal is not evidence of an uncommitted sale. Never overwrite it:
   // the original submission key may be needed to reconcile a committed checkout.
   let existing: string | null;
-  try { existing = localStorage.getItem(key(companyId)); }
+  try { existing = drafts.read(key(companyId)); }
   catch { throw new Error("Recovery storage cannot be read. Checkout cannot safely start on this device."); }
   if (existing !== null) {
     if (!loadPendingCheckout(companyId)) throw new Error("Saved checkout recovery data is damaged. Check sales history and restore the recovery journal before starting another sale.");
@@ -41,7 +42,7 @@ export function savePendingCheckout(companyId: string, intent: CheckoutIntent & 
   }
   const record: PendingCheckout = { version: 1, companyId, savedAt: new Date().toISOString(), intent };
   try {
-    localStorage.setItem(key(companyId), JSON.stringify(record));
+    drafts.write(key(companyId), JSON.stringify(record));
     // Browser storage can fail silently or become unavailable. Never initiate
     // a financial write unless the recovery key is durably readable.
     const verified = loadPendingCheckout(companyId);
@@ -56,5 +57,5 @@ export function savePendingCheckout(companyId: string, intent: CheckoutIntent & 
 }
 export function clearPendingCheckout(companyId: string, submissionKey: string): void {
   if (!companyId || !submissionKey) return;
-  if (loadPendingCheckout(companyId)?.intent.submissionKey === submissionKey) localStorage.removeItem(key(companyId));
+  if (loadPendingCheckout(companyId)?.intent.submissionKey === submissionKey) drafts.remove(key(companyId));
 }

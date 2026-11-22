@@ -3,8 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import { db } from "@/db/TallybookDB";
 import {
   beginLedgerEncryption, changeLedgerPassphraseFor, disableLedgerEncryption, discardPreparedEncryption, exportRecoveryPackage,
-  lockLedger, prepareLedgerEncryption, prepareLedgerSecurity, rotateLedgerRecoveryCode, type LedgerStatus, type PreparedEncryption,
+  beginDataKeyRotation, discardPreparedRotation, lockLedger, prepareDataKeyRotation, prepareLedgerEncryption, prepareLedgerSecurity, rotateLedgerRecoveryCode,
+  type LedgerStatus, type PreparedEncryption, type PreparedRotation,
 } from "@/features/security/st24LedgerSecurity";
+import { AUTO_LOCK_CHOICES, readAutoLockMinutes, saveAutoLockMinutes } from "@/features/security/ledgerAutoLock";
 
 type Step = "idle" | "passphrase" | "code" | "confirm" | "working" | "done";
 
@@ -19,6 +21,10 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
   const [error, setError] = useState<string | null>(null); const [note, setNote] = useState<string | null>(null);
   const [newCode, setNewCode] = useState<string | null>(null);
   const [current, setCurrent] = useState(""); const [next, setNext] = useState("");
+  const [autoLock, setAutoLock] = useState<number>(() => readAutoLockMinutes(db.name));
+  // Data-key rotation (every record is re-encrypted under a brand-new key). Same careful steps as turning encryption on.
+  const [rotation, setRotation] = useState<{ prepared: PreparedRotation; passphrase: string } | null>(null);
+  const [rotTyped, setRotTyped] = useState(""); const [rotSaved, setRotSaved] = useState(false); const [rotBusy, setRotBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     const s = await prepareLedgerSecurity(db);
@@ -109,6 +115,35 @@ export function LedgerSecurityPanel({ onLocked }: { onLocked?: () => void }) {
             <button type="button" className="secondary-action min-h-11" disabled={!current} onClick={() => void guard(async () => { setNewCode(await rotateLedgerRecoveryCode(db, current)); setNote("New recovery code created. The old code no longer works."); })}>Create a new recovery code</button>
           </form>
           {newCode ? <p className="rounded border bg-muted p-3 font-mono text-sm break-all" aria-label="New recovery code">{newCode}</p> : null}
+          <label className="block text-sm"><span>Lock automatically after this much inactivity</span>
+            <select aria-label="Lock automatically" className="mt-1 w-full rounded border bg-background p-3 min-h-11" value={autoLock}
+              onChange={e => void guard(async () => { const m = Number(e.target.value); saveAutoLockMinutes(db.name, m); setAutoLock(m); setNote(m ? `Tallybook will lock after ${m} minute${m === 1 ? "" : "s"} without use.` : "Automatic locking is off. Use \"Lock now\" when you leave the device."); })}>
+              {AUTO_LOCK_CHOICES.map(m => <option key={m} value={m}>{m === 0 ? "Never (not recommended)" : `${m} minute${m === 1 ? "" : "s"}`}</option>)}
+            </select></label>
+          <div className="space-y-2 rounded border p-3">
+            <p className="text-sm font-medium">Change the encryption key</p>
+            <p className="text-sm">Re-encrypts every record under a brand-new key and issues a new recovery code. Use it if you think a recovery code or an old copy of this phone's data was exposed. Your passphrase stays the same. The old recovery code stops working.</p>
+            {!rotation ? (
+              <button type="button" className="secondary-action min-h-11" disabled={!current} onClick={() => void guard(async () => {
+                setRotation({ prepared: await prepareDataKeyRotation(db, current), passphrase: current }); setRotSaved(false); setRotTyped("");
+              })}>Start key change (enter your current passphrase above)</button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Your NEW recovery code. It is shown only once.</p>
+                <p className="rounded border bg-muted p-3 font-mono text-sm break-all" aria-label="New data key recovery code" data-testid="rotation-recovery-code">{rotation.prepared.recoveryCode}</p>
+                <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={rotSaved} onChange={e => setRotSaved(e.target.checked)} />I saved the new recovery code. I understand the old one will stop working.</label>
+                <label className="block text-sm"><span>Type the new recovery code</span><input aria-label="Type the new recovery code" className="mt-1 w-full rounded border bg-background p-3 font-mono min-h-11" autoComplete="off" spellCheck={false} value={rotTyped} onChange={e => setRotTyped(e.target.value)} /></label>
+                <button type="button" className="primary-action min-h-11" disabled={!rotSaved || rotTyped.trim() !== rotation.prepared.recoveryCode || rotBusy} onClick={() => void guard(async () => {
+                  setRotBusy(true);
+                  try {
+                    await beginDataKeyRotation(db, rotation.prepared, { passphrase: rotation.passphrase, typedRecoveryCode: rotTyped, onProgress: (d, t) => setProgress(`${d} of ${t} records`) });
+                    setRotation(null); setCurrent(""); setProgress(null); setNote("Done. Every record is now encrypted under a new key and the new recovery code is active."); await refresh();
+                  } finally { setRotBusy(false); }
+                })}>Re-encrypt everything now</button>{" "}
+                <button type="button" className="secondary-action min-h-11" disabled={rotBusy} onClick={() => { discardPreparedRotation(rotation.prepared); setRotation(null); }}>Cancel</button>
+              </div>
+            )}
+          </div>
           <button type="button" className="danger-action min-h-11" onClick={() => void guard(async () => {
             if (!window.confirm("Turn encryption off? Your records will be stored without encryption on this phone.")) return;
             setProgress("starting"); await disableLedgerEncryption(db, { onProgress: (d, t) => setProgress(`${d} of ${t} records`) }); setProgress(null);

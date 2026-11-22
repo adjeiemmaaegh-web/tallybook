@@ -25,6 +25,8 @@ import {
 } from "./st24LedgerKeyring.mjs";
 import { deriveSt24Subkeys, openSt24Row, sealSt24Row, zeroSt24Key, type SealedSt24Row } from "./st24RowCipher.mjs";
 import { BLINDED_INDEX_FIELDS, SEAL_EXEMPT_TABLES, SEAL_FIELD, setSealFence, type SealMode } from "./st24LedgerSeal";
+import { createDraftStore } from "./sealedDraftStorage";
+const draftsOf = (db: TallybookDB) => createDraftStore(() => db.ledgerSeal);
 
 /** rekeying = the data key is being replaced (rows are moving from the old key to the new one); resumable. */
 export type LedgerSecurityState = "plaintext" | "migrating" | "encrypted" | "decrypting" | "rekeying";
@@ -231,6 +233,7 @@ async function finishConversion(db: TallybookDB, rec: LedgerRecord, before: Reco
   if (scan.plaintext > 0 || scan.unblinded > 0) fail(`${scan.plaintext} plaintext rows remain after conversion. Resume to finish.`);
   await writeRecord({ dbName: db.name, state: "encrypted", keyring: rec.keyring }, rec.version, idb);
   db.ledgerSeal.setMode("encrypted");
+  draftsOf(db).sealAll(); // parked carts and pending-checkout recovery now follow the ledger's protection
 }
 
 export type Credential = { passphrase: string } | { recoveryCode: string };
@@ -281,6 +284,7 @@ export async function disableLedgerEncryption(db: TallybookDB, opts: { onProgres
     if (bad.length) fail(`Verification failed for ${bad.join(", ")}. The ledger stays readable; try again.`);
     const scan = await scanRawLedger(db);
     if (scan.sealed > 0) fail(`${scan.sealed} rows are still encrypted. Try again.`);
+    draftsOf(db).unsealAll(); // drafts go back to plaintext BEFORE the key is destroyed
     await deleteRecord(db.name, rec.version, idb);
     setSealFence(db.name, false); db.ledgerSeal.setMode("plaintext"); db.ledgerSeal.lock();
   });
@@ -360,6 +364,7 @@ async function rowsStillOnOldKey(db: TallybookDB): Promise<number> {
 }
 async function finishRotation(db: TallybookDB, rec: LedgerRecord, before: Record<string, TableFingerprint>, idb: IDBFactory, onProgress?: (d: number, t: number) => void) {
   await convertAll(db, onProgress); // reads rows under either key, writes them under the new one (and re-blinds every index)
+  draftsOf(db).resealAll(); // sealed drafts are read via the outgoing key and written under the new one
   const bad = diffFingerprints(before, await fingerprintLedger(db));
   if (bad.length) fail(`Verification failed for ${bad.join(", ")}. Nothing was deleted; the ledger stays readable under either key. Resume to finish.`);
   const scan = await scanRawLedger(db);
