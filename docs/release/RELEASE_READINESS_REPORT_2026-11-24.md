@@ -14,11 +14,10 @@
 | Register | ST24-05, ST28-03, ST28-04 moved from missing to **partial** with evidence; ST22-02 and ST26-04 updated | `node scripts/road-to-complete-register.mjs`: 0 errors; 1 verified, 97 partial, 1 missing (real payment adapter), 20 owner/external-blocked |
 
 ## 2. Test results at the time of writing
-- Client (vitest), branch `claude/cool-ride-cf8i8r` at `fd2fc30`: **266 files / 2084 tests pass**.
-- Native/server (exactly as CI): **1372 pass / 0 fail**. PR #111 branch: **1399 / 0**.
-- Type-check clean on both branches.
-- CI on `411e95c` (branch, manual dispatch): security code audit **success**, device engines (Chrome/Firefox/Edge/WebKit) **success**, release validation **in progress**. CI on `aafca98`: release validation **success**, device engines **success**.
-- CI on PR #111 latest head: running at time of writing (previous head: everything green except WebKit start-up race, now fixed in the spec).
+- Client (vitest), branch `claude/cool-ride-cf8i8r` at `ce6a57e`: **267 files / 2086 tests pass**. Native/server exactly as CI: **1372 / 0** (branch), **1399 / 0** (PR #111). Type-check clean on both.
+- CI, branch (manual dispatch): `411e95c` release validation **success**, device engines (Chrome/Firefox/Edge/WebKit) **success**, security audit **success**; `d61d879` device engines **success**, security audit **success**, release validation running; `ce6a57e` (latest) all three running.
+- CI, PR #111 head `9fc9e14`: secret scan, CodeQL x2, financial/TLS regressions, native codec/Dexie v39, Edge, Firefox, Chrome, **WebKit**, visual integration, assistant 100x20 and verify **success**; "Pinned Node 24 - complete developer QA" running.
+- Flake found and fixed this round: a credit-note test assumed an order between two records with the same frozen timestamp (pushed in `97961cf` with that flaw, fixed in `ce6a57e`; product sort made deterministic on ties).
 
 ## 3. Release gates
 | Gate | Status | Owner |
