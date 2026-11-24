@@ -124,6 +124,26 @@ BEGIN
       AND (c.relname LIKE 'cc_%' OR c.relname LIKE 'payment_%')
       AND NOT c.relforcerowsecurity
   ) THEN RAISE EXCEPTION 'GATE_FAIL: payment/commerce table must FORCE RLS'; END IF;
+  -- Immutable financial and compliance evidence must be protected by server-side triggers.
+  IF EXISTS (
+    SELECT 1 FROM (VALUES
+      ('payment_events','payment_events_append_only'),
+      ('payment_events','payment_events_no_truncate'),
+      ('payment_intents','payment_intents_guard'),
+      ('cc_audit_events','cc_audit_events_append_only'),
+      ('cc_audit_events','cc_audit_events_no_truncate'),
+      ('cc_consent_events','cc_consent_events_append_only'),
+      ('cc_consent_events','cc_consent_events_no_truncate'),
+      ('shop_sales','shop_sales_append_only'),
+      ('shop_refunds','shop_refunds_append_only'),
+      ('shop_stock_movements','shop_stock_movements_append_only')
+    ) AS expected(table_name,trigger_name)
+    LEFT JOIN pg_class tbl ON tbl.oid=to_regclass('public.'||expected.table_name)
+    LEFT JOIN pg_trigger trg ON trg.tgrelid=tbl.oid
+      AND trg.tgname=expected.trigger_name AND trg.tgenabled='O'
+    WHERE trg.oid IS NULL
+  ) THEN RAISE EXCEPTION 'GATE_FAIL: immutable payment/consent/transaction history trigger absent'; END IF;
+
 END $tallybook_database_gate$;
 
 SELECT jsonb_build_object(
