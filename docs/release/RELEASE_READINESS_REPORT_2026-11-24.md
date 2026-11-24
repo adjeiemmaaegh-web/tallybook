@@ -37,7 +37,7 @@
 ## 4. Remaining developer-owned work (next, in order)
 1. Confirm CI on the latest heads (both branches) and fix anything red.
 2. ~~Owner-facing screen for sync-conflict resolution~~ done (`SyncConflictReview` on the sync status page; 2 UI tests, 2 deliberate breaks caught).
-3. Restore redeemed loyalty points on returned sales; service-line returns; credit-note rows in the debt timeline UI.
+3. Restore redeemed loyalty points on returned sales; service-line returns. (Credit-note rows in the debt timeline: done.)
 4. Per-action/role/tenant permission matrix extension for new entry points (conflict resolution, security keys, batch returns).
 5. Partial store-transfer receipts and store-specific batch provenance (ST23).
 6. Continue the per-criterion reconciliation of the 97 partial register rows.

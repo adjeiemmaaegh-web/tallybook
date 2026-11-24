@@ -40,7 +40,9 @@ export interface DebtRepayment {
 export type DebtActivity =
   | { id: string; type: "sale"; createdAt: string; saleId: string; totalMinor: number; amountPaidMinor: number; outstandingMinor: number; receiptNumber: string }
   | { id: string; type: "repayment"; createdAt: string; repaymentId: string; amountMinor: number; method: RepaymentMethod; note?: string }
-  | { id: string; type: "reversal"; createdAt: string; reversalId: string; amountMinor: number; receiptNumber: string };
+  | { id: string; type: "reversal"; createdAt: string; reversalId: string; amountMinor: number; receiptNumber: string }
+  /** A partial return that reduced what the customer owes (a credit note), not a cash payment. */
+  | { id: string; type: "credit-note"; createdAt: string; returnId: string; amountMinor: number; receiptNumber: string };
 
 export interface CustomerDebtSummary {
   customerId: string;
@@ -114,6 +116,7 @@ export async function getCustomerDebtSummary(customerId: string, currency: strin
     ...sales.map((sale) => ({ id: `sale-${sale.id}`, type: "sale" as const, createdAt: sale.createdAt, saleId: sale.id, totalMinor: sale.totalMinor, amountPaidMinor: sale.amountPaidMinor, outstandingMinor: sale.outstandingMinor, receiptNumber: sale.receiptNumber })),
     ...repayments.map((repayment) => ({ id: `repayment-${repayment.id}`, type: "repayment" as const, createdAt: repayment.createdAt, repaymentId: repayment.id, amountMinor: repayment.amountMinor, method: repayment.method, note: repayment.note })),
     ...reversals.map((reversal) => ({ id: `reversal-${reversal.id}`, type: "reversal" as const, createdAt: reversal.createdAt, reversalId: reversal.id, amountMinor: reversal.reversedOutstandingMinor, receiptNumber: reversal.originalReceiptNumber })),
+    ...creditReturns.filter((ret) => (ret.debtReducedMinor ?? 0) > 0).map((ret) => ({ id: `credit-note-${ret.id}`, type: "credit-note" as const, createdAt: ret.createdAt, returnId: ret.id, amountMinor: ret.debtReducedMinor!, receiptNumber: ret.originalReceiptNumber })),
   ].sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   const denomination = inspectReceivableCurrency(sales, repayments);
   // A legacy amount must never acquire the profile's current currency label.
