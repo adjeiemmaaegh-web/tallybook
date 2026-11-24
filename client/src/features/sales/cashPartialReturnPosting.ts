@@ -61,7 +61,8 @@ export interface CashPartialSaleReturn {
   returnedTaxableMinor: number;
   returnedTaxMinor: number;
   returnedDiscountMinor: number;
-  lines: Array<{ saleLineId: string; productId: string; quantity: number; movementId: string; costEventId: string }>;
+  /** batchRestorations: only for lines sold from expiry/batch-tracked stock; which source batches got the returned units back. */
+  lines: Array<{ saleLineId: string; productId: string; quantity: number; movementId: string; costEventId: string; batchRestorations?: Array<{ batchId: string; quantity: number }> }>;
   staffId?: string;
   shiftId?: string;
 }
@@ -251,15 +252,38 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     assertCompanyScope(company, getActiveBusinessProfileId());
     for (const item of plan.lines) {
       const originalLine = lines.find(line=>line.id===item.saleLineId)!;
-      if (products.has(originalLine.productId) || originalLine.stockTracked === false || !originalLine.costEventId ||
-          originalLine.batchAllocations?.length) throw new Error('This return requires reconciled, uniquely tracked stock and FIFO evidence.');
+      if (products.has(originalLine.productId) || originalLine.stockTracked === false || !originalLine.costEventId)
+        throw new Error('This return requires reconciled, uniquely tracked stock and FIFO evidence.');
       products.add(originalLine.productId);
       const product = await database.products.get(originalLine.productId);
       if (!product || product.businessProfileId !== company || product.itemKind === 'service' ||
           !Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < 0 ||
           !Number.isSafeInteger(product.stockQuantity + item.quantity)) throw new Error('Stock is missing or cannot be restored safely.');
-      if (await database.inventoryBatches.where('productId').equals(product.id).and(row=>row.businessProfileId===company).count())
-        throw new Error('Batch-owned stock requires an explicit returned-batch disposition.');
+      // Expiry/batch-tracked stock: returned units go back to the batches they were sold from (most recent allocation first),
+      // never more per batch than that batch supplied to this line, so batch totals keep equalling on-hand stock.
+      const allocations = originalLine.batchAllocations ?? [];
+      const productBatches = await database.inventoryBatches.where('productId').equals(product.id).and(row=>row.businessProfileId===company).toArray();
+      let batchRestorations: Array<{ batchId: string; quantity: number }> | undefined;
+      if (productBatches.length || allocations.length) {
+        if (!allocations.length) throw new Error('This product is batch-tracked but the original sale line has no batch allocation. Reconcile before refunding.');
+        if (values.returnStoreId || sale.storeId) throw new Error('Store-specific batch provenance must be reconciled before returning tracked stock.');
+        if (productBatches.reduce((sum,b)=>sum+b.quantity,0) !== product.stockQuantity) throw new Error(`Batch quantities for ${product.name} do not reconcile with stock. Reconcile before refunding.`);
+        const restoredBefore = new Map<string, number>();
+        for (const row of prior.flatMap(r=>r.lines).filter(r=>r.saleLineId===originalLine.id))
+          for (const b of row.batchRestorations ?? []) restoredBefore.set(b.batchId,(restoredBefore.get(b.batchId)??0)+b.quantity);
+        let left = item.quantity; batchRestorations = [];
+        for (const a of [...allocations].reverse()) {
+          if (!left) break;
+          const room = a.quantity - (restoredBefore.get(a.batchId) ?? 0);
+          if (room < 0) throw new Error('Existing batch restorations exceed the original allocation. Reconcile before refunding.');
+          const take = Math.min(room, left); if (!take) continue;
+          const batch = productBatches.find(b=>b.id===a.batchId);
+          if (!batch || !Number.isSafeInteger(batch.quantity + take) || (batch.startingQuantity !== undefined && batch.quantity + take > batch.startingQuantity))
+            throw new Error('A source batch is missing or cannot take the returned units back. Reconcile before refunding.');
+          batchRestorations.push({ batchId: a.batchId, quantity: take }); left -= take;
+        }
+        if (left) throw new Error('The returned quantity exceeds what the original batches supplied to this line.');
+      }
       const originalEvent = await database.inventoryCostEvents.get(originalLine.costEventId);
       if (!originalEvent || originalEvent.kind !== 'issue' || originalEvent.businessProfileId !== company ||
           originalEvent.saleLineId !== originalLine.id || originalEvent.saleId !== sale.id ||
@@ -278,7 +302,11 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       await postStoreStockDelta(database,company,product.id,receivingStoreId,item.quantity,movement.id,"refund",now,product.stockQuantity,movement.resultingQuantity);
       await database.inventoryMovements.add(movement);
       await database.products.put({...product,stockQuantity:movement.resultingQuantity,updatedAt:now});
-      savedLines.push({saleLineId:originalLine.id,productId:product.id,quantity:item.quantity,movementId,costEventId:event.id});
+      for (const r of batchRestorations ?? []) {
+        const batch = (await database.inventoryBatches.get(r.batchId))!;
+        await database.inventoryBatches.put({ ...batch, quantity: batch.quantity + r.quantity });
+      }
+      savedLines.push({saleLineId:originalLine.id,productId:product.id,quantity:item.quantity,movementId,costEventId:event.id,...(batchRestorations?{batchRestorations}:{})});
     }
     const recorded:CashPartialSaleReturn = {
       ...(values.returnStoreId?{returnStoreId:receivingStoreId}:{}),

@@ -52,6 +52,22 @@ const loyaltyValid = entry => {
  * Returning cash is a PHYSICAL action the authorized cashier confirms; posting
  * here records that completed local action, not an external refund promise.
  */
+/** Batch-tracked lines must say which source batches got the units back; never more per batch than it supplied to the line. */
+function batchRestorationsValid(originalLine, row, earlierReturns) {
+  const allocations = originalLine.batchAllocations ?? [];
+  if (!allocations.length) { if (row.batchRestorations !== undefined) throw new Error('Cash return restores batches the original line never used.'); return; }
+  const r = row.batchRestorations;
+  if (!Array.isArray(r) || r.length === 0 || new Set(r.map(b => b?.batchId)).size !== r.length ||
+      r.some(b => !b || Object.keys(b).sort().join(',') !== 'batchId,quantity' || !validId(b.batchId) || !Number.isSafeInteger(b.quantity) || b.quantity <= 0) ||
+      r.reduce((n, b) => n + b.quantity, 0) !== row.quantity) throw new Error('Cash return batch restorations are missing, malformed or do not add up.');
+  for (const b of r) {
+    const a = allocations.find(x => x.batchId === b.batchId);
+    const before = earlierReturns.flatMap(e => e.lines).filter(l => l.saleLineId === row.saleLineId)
+      .flatMap(l => l.batchRestorations ?? []).filter(x => x.batchId === b.batchId).reduce((n, x) => n + x.quantity, 0);
+    if (!a || before + b.quantity > a.quantity) throw new Error('Cash return restores more to a batch than that batch supplied to the line.');
+  }
+}
+
 export function reconcileCashPartialReturns(sales, saleLines, payments, returns, fullReversals = []) {
   if (![sales,saleLines,payments,returns,fullReversals].every(Array.isArray)) throw new Error('Partial-return ledger is unavailable.');
   const saleById = new Map();
@@ -127,8 +143,9 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
           !Number.isSafeInteger(row.quantity) || row.quantity <= 0) throw new Error('Cash return stock and cost evidence is duplicated or invalid.');
       movementIds.add(row.movementId);costIds.add(row.costEventId);
       const originalLine = lines.find(line => line.id === row.saleLineId);
-      if (!originalLine || originalLine.productId !== row.productId || originalLine.stockTracked === false || !originalLine.costEventId ||
-          (originalLine.batchAllocations?.length ?? 0) !== 0) throw new Error('Cash return contains unsupported stock, batch or line evidence.');
+      if (!originalLine || originalLine.productId !== row.productId || originalLine.stockTracked === false || !originalLine.costEventId)
+        throw new Error('Cash return contains unsupported stock, batch or line evidence.');
+      batchRestorationsValid(originalLine, row, bySale.get(sale.id) ?? []);
     }
     const existing = bySale.get(sale.id) ?? [];
     if (entry.returnSequence !== existing.length + 1 ||

@@ -40,12 +40,12 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   const options=[];
   for (const line of saleLines) {
     if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0 || !line.costEventId ||
-        line.stockTracked === false || (line.batchAllocations?.length ?? 0) > 0)
-      throw new Error('Sale contains service, batch or unverified original stock evidence.');
+        line.stockTracked === false)
+      throw new Error('Sale contains service or unverified original stock evidence.');
     const product=productsById.get(line.productId),event=eventsById.get(line.costEventId);
     if (!product || product.businessProfileId !== company || product.itemKind === 'service' ||
         !Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < 0 ||
-        batches.some(batch=>batch.productId===line.productId) ||
+        (batches.some(batch=>batch.productId===line.productId) && !(line.batchAllocations?.length)) ||
         !event || event.businessProfileId !== company || event.kind !== 'issue' || event.saleId !== sale.id ||
         event.saleLineId !== line.id || event.productId !== line.productId || event.quantityDelta !== -line.quantity)
       throw new Error('Original stock, batch or FIFO evidence needs reconciliation.');
