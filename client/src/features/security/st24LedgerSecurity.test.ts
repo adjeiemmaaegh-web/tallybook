@@ -322,18 +322,23 @@ describe.skipIf(forced)("recovery and credential management", () => {
 });
 
 describe.skipIf(forced)("guards: schema pinning, two tabs, key races", () => {
-  it("a different app schema refuses to open an encrypted ledger instead of building empty indexes over sealed rows", async () => {
+  it("a different app schema never opens an encrypted ledger directly: older -> one-time upgrade (unopened), newer -> refused", async () => {
     const { db, name } = await populated(); await enable(db); db.close();
-    await new Promise<void>((resolve, reject) => {
+    const setSchema = (v: number) => new Promise<void>((resolve, reject) => {
       const o = indexedDB.open(KEYRING_DB_NAME, 1);
       o.onsuccess = () => { const tx = o.result.transaction("keyrings", "readwrite"); const s = tx.objectStore("keyrings"); const g = s.get(name);
-        g.onsuccess = () => { s.put({ ...g.result, schemaVersion: 38 }); tx.oncomplete = () => { o.result.close(); resolve(); }; }; };
+        g.onsuccess = () => { s.put({ ...g.result, schemaVersion: v }); tx.oncomplete = () => { o.result.close(); resolve(); }; }; };
       o.onerror = () => reject(o.error);
     });
-    const fresh = connect(name);
-    const status = await prepareLedgerSecurity(fresh);
-    expect(status.state).toBe("schema-mismatch"); expect(status.message).toMatch(/schema 38/);
-    expect(fresh.isOpen()).toBe(false); // the guard must not have opened the database
+    await setSchema(38);
+    const older = connect(name);
+    expect(await prepareLedgerSecurity(older)).toMatchObject({ state: "schema-upgrade", locked: true });
+    expect(older.isOpen()).toBe(false); // the guard must not have opened the database
+    older.close(); await setSchema(9999);
+    const newer = connect(name);
+    const status = await prepareLedgerSecurity(newer);
+    expect(status.state).toBe("schema-mismatch"); expect(status.message).toMatch(/schema 9999/);
+    expect(newer.isOpen()).toBe(false);
   });
 
   it("two tabs: a stale plaintext-mode tab cannot write or read after sealing; a second tab that unlocks writes sealed rows", async () => {

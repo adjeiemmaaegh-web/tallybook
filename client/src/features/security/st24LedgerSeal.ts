@@ -54,6 +54,10 @@ export class LedgerSeal {
   private keys: SealKeys | null = null;
   /** ONLY while a data-key rotation is in progress: the outgoing generation, used to READ rows not yet re-sealed. Never used to write. */
   private previous: SealKeys | null = null;
+  /** ONLY during an encrypted-ledger schema upgrade, inside the exclusive cross-tab lock: rows may still carry index copies
+   *  projected for the PREVIOUS schema, so their index copies are not compared with the body. The body itself is still
+   *  authenticated (AEAD bound to table + primary key). Reset by upgradeEncryptedLedger before it verifies everything strictly. */
+  reprojecting = false;
   constructor(readonly scope: string) {}
   get unlocked() { return this.keys !== null; }
   get rotating() { return this.previous !== null; }
@@ -73,6 +77,7 @@ export class LedgerSeal {
   }
   /** Overwrites the in-memory keys (best effort). Nothing on disk changes. */
   lock() {
+    this.reprojecting = false;
     this.dropPrevious();
     if (this.keys) { zeroSt24Key(this.keys.rowKey); zeroSt24Key(this.keys.blindKey); }
     this.keys = null;
@@ -178,6 +183,7 @@ export function installLedgerSeal(db: Dexie, seal: LedgerSeal) {
         const { record, generation } = seal.openWithGeneration(meta.name, primaryKeyOf(meta, row), row[SEAL_FIELD]);
         // Clear/blinded index copies must agree with the authenticated body, or someone edited the index. A row still under the
         // outgoing key (mid-rotation only) is checked against the outgoing blind key; everything else against the current one.
+        if (seal.reprojecting) return record;
         const expected = clearProjection(meta, record, generation);
         for (const path of meta.indexPaths.keys())
           if (!sameJson(Dexie.getByKeyPath(expected, path), Dexie.getByKeyPath(row, path)))

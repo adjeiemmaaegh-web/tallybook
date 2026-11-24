@@ -63,17 +63,29 @@ describe.skipIf(forced)("startup gate", () => {
     expect(await screen.findByText("APP ready")).toBeTruthy();
     expect(await prepareLedgerSecurity(db)).toMatchObject({ state: "plaintext" });
   });
-  it("a schema mismatch refuses to open the ledger and says why", async () => {
+  const setRecordSchema = (v: number) => new Promise<void>((resolve, reject) => { const o = indexedDB.open(KEYRING_DB_NAME, 1); o.onsuccess = () => { const tx = o.result.transaction("keyrings", "readwrite"); const s = tx.objectStore("keyrings");
+      const g = s.get(db.name); g.onsuccess = () => { s.put({ ...g.result, schemaVersion: v }); tx.oncomplete = () => { o.result.close(); resolve(); }; }; }; o.onerror = () => reject(o.error); });
+  it("a ledger from a NEWER version refuses to open and says why", async () => {
     await seed();
     const prepared = await prepareLedgerEncryption(db, PASS);
     await beginLedgerEncryption(db, prepared, { typedRecoveryCode: prepared.recoveryCode });
-    lockLedger(db);
-    await new Promise<void>((resolve, reject) => { const o = indexedDB.open(KEYRING_DB_NAME, 1); o.onsuccess = () => { const tx = o.result.transaction("keyrings", "readwrite"); const s = tx.objectStore("keyrings");
-      const g = s.get(db.name); g.onsuccess = () => { s.put({ ...g.result, schemaVersion: 1 }); tx.oncomplete = () => { o.result.close(); resolve(); }; }; }; o.onerror = () => reject(o.error); });
+    lockLedger(db); await setRecordSchema(9999);
     render(<DatabaseProvider><Probe /></DatabaseProvider>);
     expect(await screen.findByRole("alert")).toBeTruthy();
-    expect(screen.getAllByText(/previous version/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/newer version/i).length).toBeGreaterThan(0);
     expect(screen.queryByLabelText("Passphrase")).toBeNull();
+  });
+  it("a ledger from an OLDER version offers the one-time update, then opens the app", async () => {
+    await seed();
+    const prepared = await prepareLedgerEncryption(db, PASS);
+    await beginLedgerEncryption(db, prepared, { typedRecoveryCode: prepared.recoveryCode });
+    lockLedger(db); db.close(); await setRecordSchema(1);
+    render(<DatabaseProvider><Probe /></DatabaseProvider>);
+    expect(await screen.findByRole("heading", { name: /Update your encrypted records/i })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Passphrase"), { target: { value: PASS } });
+    fireEvent.click(screen.getByRole("button", { name: /Update and unlock/i }));
+    expect(await screen.findByText("APP ready", {}, { timeout: 5000 })).toBeTruthy();
+    expect(await prepareLedgerSecurity(db)).toMatchObject({ state: "encrypted" });
   });
 });
 

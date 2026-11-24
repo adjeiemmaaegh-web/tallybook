@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { db } from "@/db/TallybookDB";
 import {
-  disableLedgerEncryption, importRecoveryPackage, resumeDataKeyRotation, resumeLedgerEncryption, unlockLedger, type Credential, type LedgerStatus,
+  disableLedgerEncryption, importRecoveryPackage, resumeDataKeyRotation, resumeLedgerEncryption, unlockLedger, upgradeEncryptedLedger, type Credential, type LedgerStatus,
 } from "@/features/security/st24LedgerSecurity";
 
 type Mode = "passphrase" | "recovery";
@@ -35,14 +35,15 @@ export function LedgerUnlockScreen({ security, onChanged }: { security: LedgerSt
   const title = security.state === "orphaned" ? "Recover your encrypted ledger"
     : security.state === "migrating" ? "Finish turning on encryption"
     : security.state === "decrypting" ? "Finish turning off encryption"
-    : security.state === "rekeying" ? "Finish changing the encryption key" : "Unlock Tallybook";
+    : security.state === "rekeying" ? "Finish changing the encryption key"
+    : security.state === "schema-upgrade" ? "Update your encrypted records" : "Unlock Tallybook";
   const interrupted = security.state === "migrating" || security.state === "decrypting" || security.state === "rekeying";
 
   return (
     <main className="mx-auto max-w-xl p-6" aria-labelledby="ledger-unlock-title">
       <h1 id="ledger-unlock-title" className="text-xl font-semibold">{title}</h1>
       <p className="mt-2 text-sm">
-        {security.state === "orphaned"
+        {security.state === "orphaned" || security.state === "schema-upgrade"
           ? security.message
           : interrupted
           ? "A previous change was interrupted. Your records are intact and still readable. Enter your passphrase to finish it."
@@ -59,6 +60,7 @@ export function LedgerUnlockScreen({ security, onChanged }: { security: LedgerSt
         <form className="mt-4 space-y-3" onSubmit={e => { e.preventDefault(); void run(async () => {
           if (security.state === "migrating") await resumeLedgerEncryption(db, credential(), { onProgress });
           else if (security.state === "rekeying") await resumeDataKeyRotation(db, credential(), { onProgress });
+          else if (security.state === "schema-upgrade") await upgradeEncryptedLedger(db, credential(), { onProgress });
           else if (security.state === "decrypting") { await unlockLedger(db, credential()); await disableLedgerEncryption(db, { onProgress }); }
           else await unlockLedger(db, credential());
         }); }}>
@@ -68,7 +70,7 @@ export function LedgerUnlockScreen({ security, onChanged }: { security: LedgerSt
               type={mode === "passphrase" ? "password" : "text"} autoComplete="off" autoCapitalize="off" spellCheck={false}
               value={secret} onChange={e => setSecret(e.target.value)} />
           </label>
-          <button type="submit" className="primary-action min-h-11" disabled={busy || secret.length === 0}>{busy ? "Working…" : interrupted ? "Finish" : "Unlock"}</button>
+          <button type="submit" className="primary-action min-h-11" disabled={busy || secret.length === 0}>{busy ? "Working…" : interrupted ? "Finish" : security.state === "schema-upgrade" ? "Update and unlock" : "Unlock"}</button>
           <button type="button" className="secondary-action min-h-11 ml-2" disabled={busy} onClick={() => { setMode(mode === "passphrase" ? "recovery" : "passphrase"); setSecret(""); setError(null); }}>
             {mode === "passphrase" ? "I forgot my passphrase" : "Use my passphrase"}
           </button>

@@ -43,8 +43,11 @@ interface LedgerRecord {
   rekey?: { nextKeyring: LedgerKeyringV1; nextDek: SealedSt24Row };
   /** Ledger schema the sealed rows were projected for. A different app schema must not open them (see prepare). */
   schemaVersion: number;
+  /** Only while an encrypted-ledger schema upgrade is in progress: the schema being upgraded to. Written BEFORE the database is
+   *  opened at the new version, so an interrupted upgrade is always detected and finished (re-projection is idempotent). */
+  upgradingTo?: number;
 }
-export interface LedgerStatus { state: LedgerSecurityState | "orphaned" | "schema-mismatch"; locked: boolean; message?: string }
+export interface LedgerStatus { state: LedgerSecurityState | "orphaned" | "schema-mismatch" | "schema-upgrade"; locked: boolean; message?: string }
 const fail = (m: string): never => { throw new Error(m); };
 
 // ---------- durable keyring record (compare-and-swap) ----------
@@ -96,6 +99,8 @@ async function deleteRecord(dbName: string, expectedVersion: number, idb: IDBFac
 }
 
 // ---------- ledger helpers ----------
+/** The schema this build declares (Dexie reports the highest declared version before opening). */
+const appSchema = (db: TallybookDB) => db.verno || DATABASE_SCHEMA_VERSION;
 const sealedTables = (db: TallybookDB) => db.tables.filter(t => !SEAL_EXEMPT_TABLES.has(t.name)).map(t => t.name).sort();
 const modeFor = (s: Exclude<LedgerSecurityState, "plaintext">): SealMode => (s === "migrating" ? "migrating" : s === "decrypting" ? "decrypting" : "encrypted");
 
@@ -183,11 +188,16 @@ export async function prepareLedgerSecurity(db: TallybookDB, idb: IDBFactory = i
   }
   db.ledgerSeal.setMode(modeFor(rec.state));
   setSealFence(db.name, rec.state !== "decrypting");
-  // Sealed rows carry index copies projected for ONE schema. Opening them with a newer schema would let Dexie build
-  // new indexes over rows that have no such copies, so the connection must not be opened until a reviewed
-  // encrypted-ledger upgrade exists. The caller must not call db.open() for this status.
-  if (rec.schemaVersion !== DATABASE_SCHEMA_VERSION)
-    return { state: "schema-mismatch", locked: true, message: `This encrypted ledger was created for schema ${rec.schemaVersion}; this version of Tallybook uses ${DATABASE_SCHEMA_VERSION}. Keep using the previous version or restore from your verified backup; an encrypted-ledger upgrade is required first.` };
+  // Sealed rows carry index copies projected for ONE schema. The connection must not be opened at another schema until the
+  // rows are re-projected (upgradeEncryptedLedger), so the caller must not call db.open() for either status below.
+  const target = appSchema(db);
+  if (rec.schemaVersion > target)
+    return { state: "schema-mismatch", locked: true, message: `This encrypted ledger was last used by a newer version of Tallybook (schema ${rec.schemaVersion}); this version uses ${target}. Update Tallybook on this device, or restore from your verified backup.` };
+  if (rec.schemaVersion < target) {
+    if (rec.state !== "encrypted")
+      return { state: "schema-mismatch", locked: true, message: `An encryption change was interrupted under the previous version of Tallybook (schema ${rec.schemaVersion}). Finish it in that version first, or restore from your verified backup. Nothing was opened or changed.` };
+    return { state: "schema-upgrade", locked: true, message: "Tallybook was updated. Enter your passphrase or recovery code once to update your encrypted records for this version. Nothing leaves this device." };
+  }
   return { state: rec.state, locked: !db.ledgerSeal.unlocked };
 }
 
@@ -219,7 +229,7 @@ export async function beginLedgerEncryption(db: TallybookDB, prepared: PreparedE
   await withCrossTabDataLock("exclusive", async () => {
     const before = await fingerprintLedger(db);
     // 1. Durable first: the wrapped keyring + pre-conversion fingerprint exist before any row changes.
-    const rec = await writeRecord({ dbName: db.name, state: "migrating", keyring: prepared.keyring, precheck: before, startedAt: new Date().toISOString() }, null, idb);
+    const rec = await writeRecord({ dbName: db.name, state: "migrating", keyring: prepared.keyring, precheck: before, startedAt: new Date().toISOString(), schemaVersion: appSchema(db) }, null, idb);
     setSealFence(db.name, true); // stale tabs in plaintext mode may no longer write
     db.ledgerSeal.unlock(keys); db.ledgerSeal.setMode("migrating");
     await finishConversion(db, rec, before, idb, opts.onProgress);
@@ -294,6 +304,50 @@ export async function disableLedgerEncryption(db: TallybookDB, opts: { onProgres
     draftsOf(db).unsealAll(); // drafts go back to plaintext BEFORE the key is destroyed
     await deleteRecord(db.name, rec.version, idb);
     setSealFence(db.name, false); db.ledgerSeal.setMode("plaintext"); db.ledgerSeal.lock();
+  });
+}
+
+// ---------- encrypted-ledger schema upgrade (rows re-projected for the new schema; keys and bodies unchanged) ----------
+/**
+ * Called when prepareLedgerSecurity reports "schema-upgrade" (a newer Tallybook opened an encrypted ledger). Order:
+ *  1. Credentials are checked BEFORE anything changes (a wrong passphrase changes nothing).
+ *  2. A durable marker (upgradingTo) is written to the key record.
+ *  3. The database is opened at the new schema with the key unlocked, so Dexie upgrade functions read and write through the
+ *     seal (decrypt, then re-seal with this schema's index copies).
+ *  4. Every row is re-sealed so its index copies match this schema; bodies are fingerprinted before and after (must be equal),
+ *     then every row is re-read with strict index verification and the raw store is scanned (no plaintext, no unblinded index).
+ *  5. Only then is schemaVersion advanced and the marker cleared. A crash anywhere leaves the old schemaVersion + marker, and
+ *     running this again finishes the job (re-sealing is idempotent; the key never changes).
+ */
+export async function upgradeEncryptedLedger(db: TallybookDB, credential: Credential, opts: { onProgress?: (d: number, t: number) => void; idb?: IDBFactory } = {}): Promise<void> {
+  const idb = opts.idb ?? indexedDB;
+  let rec = await readRecord(db.name, idb) ?? fail("This ledger is not encrypted on this device.");
+  const target = appSchema(db);
+  if (rec.schemaVersion > target) fail("This encrypted ledger belongs to a newer version of Tallybook.");
+  if (rec.schemaVersion === target && rec.upgradingTo === undefined) return; // nothing to do
+  if (rec.state !== "encrypted") fail("Finish the interrupted encryption change in the previous version first.");
+  const dek = await ("passphrase" in credential ? unlockLedgerDek(rec.keyring, credential.passphrase, "passphrase") : unlockLedgerDek(rec.keyring, credential.recoveryCode, "recovery"));
+  const keys = await deriveFrom(dek);
+  await withCrossTabDataLock("exclusive", async () => {
+    rec = await readRecord(db.name, idb) ?? fail("The key record disappeared.");
+    if (rec.upgradingTo !== target) rec = await writeRecord({ dbName: db.name, state: "encrypted", keyring: rec.keyring, upgradingTo: target, schemaVersion: rec.schemaVersion }, rec.version, idb);
+    const seal = db.ledgerSeal;
+    seal.unlock(keys); seal.setMode("encrypted"); setSealFence(db.name, true); seal.reprojecting = true;
+    try {
+      await db.open();
+      if (db.verno !== target) fail("The database did not open at the expected version.");
+      const before = await fingerprintLedger(db);
+      await convertAll(db, opts.onProgress);
+      seal.reprojecting = false;
+      const bad = diffFingerprints(before, await fingerprintLedger(db)); // strict: every index copy is verified on read
+      if (bad.length) fail(`Verification failed for ${bad.join(", ")}. Nothing was lost; run the update again.`);
+      const scan = await scanRawLedger(db);
+      if (scan.plaintext > 0 || scan.unblinded > 0) fail("Some records were not re-encrypted. Run the update again.");
+      await writeRecord({ dbName: db.name, state: "encrypted", keyring: rec.keyring, schemaVersion: target }, rec.version, idb);
+    } catch (e) {
+      seal.lock(); db.close(); // the marker stays: the next start reports "schema-upgrade" again
+      throw e;
+    }
   });
 }
 

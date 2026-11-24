@@ -29,7 +29,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     try {
       // ST24-05: decide the encryption state BEFORE any ledger read. Plaintext ledgers pass straight through.
       const security = await prepareLedgerSecurity(db);
-      const mustUnlock = security.state === "orphaned" || security.state === "schema-mismatch" ||
+      const mustUnlock = security.state === "orphaned" || security.state === "schema-mismatch" || security.state === "schema-upgrade" ||
         security.state === "migrating" || security.state === "decrypting" || security.state === "rekeying" || (security.state === "encrypted" && security.locked);
       if (mustUnlock) { setState({ status: "locked", readiness: null, message: null, security }); return; }
       await recoverPendingBackupRestore();
