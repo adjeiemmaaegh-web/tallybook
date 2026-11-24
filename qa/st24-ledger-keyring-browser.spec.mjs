@@ -1,9 +1,11 @@
 import {test,expect} from '@playwright/test';
+// WebKit start-up holds the exclusive data lock briefly; act only once the page is lock-quiet (see local-owner-fixture.mjs).
+import {waitForLockQuiet,evaluateWhenIdle} from './local-owner-fixture.mjs';
 
 /** Standalone browser WebCrypto smoke. Uses no real Tallybook ledger database. */
 test('ST24-05 WebCrypto keyring unlock, recovery, record scope and lock work in the browser',async({page})=>{
- await page.goto('/',{waitUntil:'domcontentloaded'});
- const result=await page.evaluate(async()=>{
+ await page.goto('/',{waitUntil:'domcontentloaded'}); await waitForLockQuiet(page);
+ const result=await evaluateWhenIdle(page,async()=>{
    const mod=await import('/src/features/security/st24LedgerKeyring.mjs');
    const ownerPassphrase='a long unique sample passphrase for browser QA';
    const {keyring,handle,recoveryCode}=await mod.createLedgerKeyring({
@@ -36,8 +38,8 @@ test('ST24-05 WebCrypto keyring unlock, recovery, record scope and lock work in 
 
 
 test('ST24-05 encrypted shadow survives browser reload and exposes no customer plaintext in IndexedDB',async({page})=>{
- await page.goto('/',{waitUntil:'domcontentloaded'});
- const initial=await page.evaluate(async()=>{
+ await page.goto('/',{waitUntil:'domcontentloaded'}); await waitForLockQuiet(page);
+ const initial=await evaluateWhenIdle(page,async()=>{
   const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
   const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
   const passphrase='synthetic shadow snapshot browser test password';
@@ -59,8 +61,8 @@ test('ST24-05 encrypted shadow survives browser reload and exposes no customer p
   return {id:result.snapshotId,clear:!JSON.stringify(raw).includes('Do Not Persist Plaintext'),text};
  });
  expect(initial.clear).toBe(true);
- await page.reload({waitUntil:'domcontentloaded'});
- const restored=await page.evaluate(async({id,text})=>{
+ await page.reload({waitUntil:'domcontentloaded'}); await waitForLockQuiet(page);
+ const restored=await evaluateWhenIdle(page,async({id,text})=>{
    const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
    const shadow=await import('/src/features/security/st24ShadowSnapshot.mjs');
    const db=await new Promise((resolve,reject)=>{
@@ -87,6 +89,7 @@ test('ST24-05 two-tab exclusive recovery lock denies concurrent shadow staging',
  try{
   await first.goto('/',{waitUntil:'domcontentloaded'});
   await second.goto('/',{waitUntil:'domcontentloaded'});
+  await waitForLockQuiet(first); await waitForLockQuiet(second);
   const locksSupported=await first.evaluate(()=>Boolean(navigator.locks?.request));
   if(!locksSupported){
    const blocked=await second.evaluate(async()=>{
@@ -122,8 +125,8 @@ test('ST24-05 two-tab exclusive recovery lock denies concurrent shadow staging',
 
 
 test('ST24-05 real browser Dexie v39 disposable source encrypts and reconstructs populated financial schema',async({page})=>{
- await page.goto('/',{waitUntil:'domcontentloaded'});
- const result=await page.evaluate(async()=>{
+ await page.goto('/',{waitUntil:'domcontentloaded'}); await waitForLockQuiet(page);
+ const result=await evaluateWhenIdle(page,async()=>{
   const dbMod=await import('/src/db/TallybookDB.ts');
   const keys=await import('/src/features/security/st24LedgerKeyring.mjs');
   const migration=await import('/src/features/security/st24DisposableMigration.mjs');

@@ -3,7 +3,8 @@
 // starts. The product then refuses with "Another tab is editing ... no data was changed" by design, so the fixture waits
 // until the page is lock-quiet and retries only that safe refusal (bounded). Root cause of the intermittent WebKit failures
 // recorded in docs/release/WEBKIT_STAFF_UNLOCK_INVESTIGATION_2026-11-19.md (recurrence 3, 2026-11-24).
-const quiet = page => page.evaluate(async () => {
+/** Wait until the page holds and awaits no Web Lock (three consecutive empty polls, at most 20 s). */
+export const waitForLockQuiet = page => page.evaluate(async () => {
   if (!navigator.locks?.query) return;
   let clean = 0; const deadline = Date.now() + 20000;
   while (clean < 3 && Date.now() < deadline) {
@@ -14,7 +15,7 @@ const quiet = page => page.evaluate(async () => {
 });
 export async function unlockFixtureOwner(page) {
   for (let attempt = 0; ; attempt++) {
-    await quiet(page);
+    await waitForLockQuiet(page);
     try {
       await page.evaluate(async () => {
         const {createStaff, listStaff, unlockStaff} = await import('/src/features/staff/staff.ts');
@@ -26,5 +27,14 @@ export async function unlockFixtureOwner(page) {
     } catch (error) {
       if (attempt >= 4 || !/Another tab is editing/.test(String(error))) throw error;
     }
+  }
+}
+/** page.evaluate that waits for a lock-quiet page and retries ONLY the product's safe start-up refusal ("Another tab is
+ *  editing ... no data was changed"), at most 5 attempts. Use for single-page steps; never for tests that assert lock denial. */
+export async function evaluateWhenIdle(page, fn, arg) {
+  for (let attempt = 0; ; attempt++) {
+    await waitForLockQuiet(page);
+    try { return await page.evaluate(fn, arg); }
+    catch (error) { if (attempt >= 4 || !/Another tab is editing/.test(String(error))) throw error; }
   }
 }
