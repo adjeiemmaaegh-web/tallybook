@@ -25,7 +25,10 @@ const fixtureFiles=new Set([
 const reviewedSyntheticValues=new Map([
  [['tamper','cash','key01'].join('-'),new Set([
   'client/src/features/backup/backupTamperFuzz.test.ts','scripts/triage-secret-findings.mjs','qa/secret-findings-triage.test.mjs'
- ])]
+ ])],
+ // Added 2026-11-24 (reviewed): placeholder API key for the inactive Resend adapter tests (injected into a mock fetch; never
+ // a provider credential; the adapter has no network access and no real key exists in the repository).
+ [['re','test','0123456789abcdef'].join('_'),new Set(['qa/resend-email-adapter.test.mjs'])]
 ]);
 export function classifyFinding(row){
  if(row?.RuleID!=='generic-api-key'||typeof row.Secret!=='string'||typeof row.Match!=='string')return 'unclassified';

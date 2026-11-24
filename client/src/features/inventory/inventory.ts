@@ -1,6 +1,7 @@
 import { currencyMinorDivisor } from "../business/currencies.ts";
 export { currencyMinorDivisor } from "../business/currencies.ts";
 import { withCoordinatedRetailWrite } from "@/features/backup/coordinatedRetailWrite";
+import { sortAsIndexed } from "@/lib/indexOrder";
 import {assertRun7RetailWriteReady} from "@/features/backup/run7RetailWriteBarrier.mjs";
 import { withCrossTabDataLock } from "@/features/backup/crossTabDataLock.mjs";
 import { requirePermission } from "@/features/staff/staff";
@@ -165,8 +166,8 @@ export async function getInventorySnapshot(database: TallybookDB = db): Promise<
   const [allCategories, allProducts, allMovements] = await database.transaction("r", [database.categories, database.products, database.inventoryMovements, database.staffMembers], async () => {
     await requirePermission("sell",database,activeId);
     return Promise.all([
-      database.categories.orderBy("name").toArray(),
-      database.products.orderBy("name").toArray(),
+      database.categories.toArray().then(rows => sortAsIndexed(rows, "name")),
+      database.products.toArray().then(rows => sortAsIndexed(rows, "name")),
       database.inventoryMovements.orderBy("createdAt").reverse().toArray(),
     ]);
   });
