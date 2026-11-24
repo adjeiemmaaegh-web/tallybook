@@ -70,7 +70,9 @@ it('credit sale: each return reduces the receivable only; no money moves; report
   expect(b.returnSequence).toBe(2);
   expect((await getCustomerDebtSummary(customer.id, 'GHS', database)).outstandingMinor).toBe(0);
   const notes = (await getCustomerDebtSummary(customer.id, 'GHS', database)).activities.filter(x => x.type === 'credit-note');
-  expect(notes.map(n => ({ returnId: (n as {returnId: string}).returnId, amountMinor: n.amountMinor }))).toEqual([{ returnId: b.id, amountMinor: 1000 }, { returnId: a.id, amountMinor: 1000 }]); // each credit note once, newest first
+  // Each credit note appears exactly once with the debt it removed (the frozen test clock gives both the same timestamp).
+  expect(notes.map(n => ({ returnId: (n as {returnId: string}).returnId, amountMinor: n.amountMinor })).sort((x, y) => x.returnId.localeCompare(y.returnId)))
+    .toEqual([{ returnId: a.id, amountMinor: 1000 }, { returnId: b.id, amountMinor: 1000 }].sort((x, y) => x.returnId.localeCompare(y.returnId)));
   await expect(recordConfirmedCashPartialReturn(credit(original.sale.id, original.lines[0].id, 'credit-ret-3', 1000), database)).rejects.toThrow(/quantity/);
   expect((await database.products.get(product.id))?.stockQuantity).toBe(3);
   // No cash drawer effect.

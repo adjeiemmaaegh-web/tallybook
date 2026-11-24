@@ -117,7 +117,7 @@ export async function getCustomerDebtSummary(customerId: string, currency: strin
     ...repayments.map((repayment) => ({ id: `repayment-${repayment.id}`, type: "repayment" as const, createdAt: repayment.createdAt, repaymentId: repayment.id, amountMinor: repayment.amountMinor, method: repayment.method, note: repayment.note })),
     ...reversals.map((reversal) => ({ id: `reversal-${reversal.id}`, type: "reversal" as const, createdAt: reversal.createdAt, reversalId: reversal.id, amountMinor: reversal.reversedOutstandingMinor, receiptNumber: reversal.originalReceiptNumber })),
     ...creditReturns.filter((ret) => (ret.debtReducedMinor ?? 0) > 0).map((ret) => ({ id: `credit-note-${ret.id}`, type: "credit-note" as const, createdAt: ret.createdAt, returnId: ret.id, amountMinor: ret.debtReducedMinor!, receiptNumber: ret.originalReceiptNumber })),
-  ].sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  ].sort((left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)); // ties: deterministic order
   const denomination = inspectReceivableCurrency(sales, repayments);
   // A legacy amount must never acquire the profile's current currency label.
   const outstandingLabel = denomination.hasUnknownMoney
