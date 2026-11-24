@@ -1,4 +1,5 @@
 /** Stage 11 integrity audit: inspect local record relationships without mutating owner data. */
+import { verifySyncConflictResolutions } from "@/features/sync/reconciliation";
 import { validateTaxSnapshot } from "@/features/sales/tax";
 import {assertSplitPaymentLedger} from "@/features/sales/splitTender.mjs";
 import {validateSavedPromotionPricing} from "@/features/inventory/promotionRules.mjs";
@@ -48,6 +49,7 @@ export type IntegrityIssueCode =
   | "supplier-payable-integrity"
   | "prepaid-wallet-integrity"
   | "loyalty-return-integrity"
+  | "sync-conflict-resolution"
   | "store-location-invalid"
   | "store-reference-invalid"
   | "store-assignment-invalid"
@@ -74,9 +76,9 @@ const issue = (code: IntegrityIssueCode, message: string, recordId?: string): In
 
 export async function auditLocalIntegrity(database: TallybookDB = db): Promise<IntegrityAudit> {
   const activeId = getActiveBusinessProfileId();
-  return database.transaction("r", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.repayments, database.saleReversals, database.cashPartialReturns, database.mobileMoneyProviders, database.suppliers, database.purchases, database.purchaseLines, database.supplierPayableEntries, database.walletTransfers, database.customerBenefits, database.expenses, database.storeLocations, database.storeAssignments, database.storeStockObservations, database.storeTransferRequests, database.staffMembers], async () => {
-    const [schemaMeta, allBusinesses, allProducts, allCustomers, allSales, allLines, allPayments, allReceipts, allActivities, allRepayments, allReversals, allCashPartialReturns, allMovements, allCostEvents, allBatches, allMobileMoneyProviders, allSuppliers, allPurchases, allPurchaseLines, allExpenses, allSupplierPayableEntries, allStores, allStoreAssignments, allStoreObservations, allStoreRequests, allStaffMembers, allWalletTransfers, allCustomerBenefits] = await Promise.all([
-      database.appMeta.get("schemaVersion"), database.businessProfiles.toArray(), database.products.toArray(), database.customers.toArray(), database.sales.toArray(), database.saleLines.toArray(), database.payments.toArray(), database.receipts.toArray(), database.customerActivities.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.cashPartialReturns.toArray(), database.inventoryMovements.toArray(), database.inventoryCostEvents.toArray(), database.inventoryBatches.toArray(), database.mobileMoneyProviders.toArray(), database.suppliers.toArray(), database.purchases.toArray(), database.purchaseLines.toArray(), database.expenses.toArray(), database.supplierPayableEntries.toArray(), database.storeLocations.toArray(), database.storeAssignments.toArray(), database.storeStockObservations.toArray(), database.storeTransferRequests.toArray(), database.staffMembers.toArray(), database.walletTransfers.toArray(), database.customerBenefits.toArray(),
+  return database.transaction("r", [database.appMeta, database.businessProfiles, database.products, database.inventoryMovements, database.inventoryCostEvents, database.inventoryBatches, database.customers, database.sales, database.saleLines, database.payments, database.receipts, database.customerActivities, database.repayments, database.saleReversals, database.cashPartialReturns, database.mobileMoneyProviders, database.suppliers, database.purchases, database.purchaseLines, database.supplierPayableEntries, database.walletTransfers, database.customerBenefits, database.expenses, database.storeLocations, database.storeAssignments, database.storeStockObservations, database.storeTransferRequests, database.staffMembers, database.syncConflicts, database.staffAudits], async () => {
+    const [schemaMeta, allBusinesses, allProducts, allCustomers, allSales, allLines, allPayments, allReceipts, allActivities, allRepayments, allReversals, allCashPartialReturns, allMovements, allCostEvents, allBatches, allMobileMoneyProviders, allSuppliers, allPurchases, allPurchaseLines, allExpenses, allSupplierPayableEntries, allStores, allStoreAssignments, allStoreObservations, allStoreRequests, allStaffMembers, allWalletTransfers, allCustomerBenefits, allSyncConflicts, allStaffAudits] = await Promise.all([
+      database.appMeta.get("schemaVersion"), database.businessProfiles.toArray(), database.products.toArray(), database.customers.toArray(), database.sales.toArray(), database.saleLines.toArray(), database.payments.toArray(), database.receipts.toArray(), database.customerActivities.toArray(), database.repayments.toArray(), database.saleReversals.toArray(), database.cashPartialReturns.toArray(), database.inventoryMovements.toArray(), database.inventoryCostEvents.toArray(), database.inventoryBatches.toArray(), database.mobileMoneyProviders.toArray(), database.suppliers.toArray(), database.purchases.toArray(), database.purchaseLines.toArray(), database.expenses.toArray(), database.supplierPayableEntries.toArray(), database.storeLocations.toArray(), database.storeAssignments.toArray(), database.storeStockObservations.toArray(), database.storeTransferRequests.toArray(), database.staffMembers.toArray(), database.walletTransfers.toArray(), database.customerBenefits.toArray(), database.syncConflicts.toArray(), database.staffAudits.toArray(),
     ]);
     if (getActiveBusinessProfileId() !== activeId) throw new Error("Company changed during integrity audit.");
     const scoped = <T extends { businessProfileId: string }>(records: T[]) => records.filter((record) => record.businessProfileId === activeId);
@@ -161,6 +163,8 @@ export async function auditLocalIntegrity(database: TallybookDB = db): Promise<I
     }
     try { reconcileLoyaltyReturns({sales,benefits:customerBenefits,returns:cashPartialReturns}); }
     catch { issues.push(issue("loyalty-return-integrity", "Loyalty points taken back by returns do not match the saved returns and earned points. Do not rely on stored loyalty balances.")); }
+    for (const id of verifySyncConflictResolutions(scoped(allSyncConflicts), scoped(allStaffAudits)))
+      issues.push(issue("sync-conflict-resolution", "A sync conflict resolution and its owner audit record do not match. Treat that resolution as unverified.", id));
     for (const finding of auditStoreRecords(activeId, stores, storeAssignments, storeObservations, storeRequests, products, staffMembers)) {
       issues.push(issue(finding.code, "Local store directory, assignment, observation or transfer request does not reconcile. Store observations and requests do not establish actual stock balances.", finding.recordId));
     }
