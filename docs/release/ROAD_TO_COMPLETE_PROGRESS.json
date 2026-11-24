@@ -251,7 +251,7 @@
       "id": "ST21-07",
       "stage": 21,
       "priority": "HIGH",
-      "name": "PR #85 \u2014 Fresh-Start Release",
+      "name": "PR #85 — Fresh-Start Release",
       "requirement": "Resolve the open draft documenting mandatory sign-in and an irreversible production reset. Separate already integrated authentication safeguards from still-unapproved data-deletion and release decisions.",
       "initialAuditStatus": "Blocked",
       "completionCriterion": "owner-approved disposition and no destructive change through a documentation-only merge.",
@@ -379,7 +379,7 @@
         "docs/release/ROAD_TO_COMPLETE_STAGE21_EVIDENCE.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23\u201326, #68 to Stage 25; close only with full evidence."
+      "nextAction": "Map #5 to Stage 30, #8/#9 to Stages 23–26, #68 to Stage 25; close only with full evidence."
     },
     {
       "id": "ST21-11",
@@ -593,7 +593,8 @@
         "2026-11-19: single-tender Mobile Money and card partial returns added to the SAME canonical return journal (refundMethod mobile|card, original-tender-only, disbursementEvidence=staff_confirmed_manual_unverified, optional unverified manualReference); excluded from shift drawer cash; Watchdog/central-event validators accept them. Commit on branch claude/cool-ride-cf8i8r.",
         "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments.",
         "2026-11-20: return that would refund customer repayments beyond the original payment is now refused in the review quote AND before posting, with a clear message (found by the randomized conservation suite).",
-        "2026-11-22: partial returns of wallet-paid sales credit the customer's prepaid wallet (journal, prepaid-liability audit, run10 conservation, reports, central event, backup/restore, review dialog). Split-tender and loyalty-points returns remain unbuilt: they need an owner refund-allocation and points-clawback policy."
+        "2026-11-22: partial returns of wallet-paid sales credit the customer's prepaid wallet (journal, prepaid-liability audit, run10 conservation, reports, central event, backup/restore, review dialog). Split-tender and loyalty-points returns remain unbuilt: they need an owner refund-allocation and points-clawback policy.",
+        "2026-11-22/24: wallet refunds, split-tender returns to original tenders under per-business policy, loyalty-points reversal (4ba8b6d); partial returns of batch/expiry-tracked lines restore to their source batches with journal audit (51619a7)."
       ],
       "tests": [
         {
@@ -631,6 +632,12 @@
           "result": "pass",
           "scope": "local IndexedDB only; not field-tested",
           "evidence": "client/src/features/sales/walletPartialReturn.test.ts"
+        },
+        {
+          "command": "pnpm exec vitest run client/src/features/sales/batchLineReturn.test.ts client/src/features/sales/splitTenderLoyaltyReturn.test.ts client/src/features/sales/walletPartialReturn.test.ts",
+          "result": "pass",
+          "scope": "6 deliberate breaks caught for batch returns",
+          "evidence": "client/src/features/sales/cashPartialReturnPosting.ts"
         }
       ],
       "blockers": [
@@ -640,7 +647,7 @@
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Remaining for ST22-02: prepaid-wallet restoration, split tender allocation, loyalty/points reversal, batch/service lines, Ghana VAT lines; refunding customer repayments (return exceeding unpaid balance); credit-note rows are not yet shown in the customer debt activity timeline UI. Status stays partial."
+      "nextAction": "Remaining for ST22-02: Ghana VAT return lines (needs a certified tax-correction process: owner/legal), service lines, restoring redeemed loyalty points on returned sales, credit-note rows in the debt timeline UI."
     },
     {
       "id": "ST22-03",
@@ -1129,7 +1136,7 @@
         "client/src/features/inventory/advancedInventory.ts"
       ],
       "existingCapabilityReused": [
-        "Reused bounded 2\u201350-product shared-shop batches with canonical sorted counts, atomic PostgreSQL apply, stale count rejection, owner-only access and populated rollback guard; local recount rejects stale quantities and unsupported batch/store ownership."
+        "Reused bounded 2–50-product shared-shop batches with canonical sorted counts, atomic PostgreSQL apply, stale count rejection, owner-only access and populated rollback guard; local recount rejects stale quantities and unsupported batch/store ownership."
       ],
       "changes": [
         "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
@@ -1616,19 +1623,29 @@
       "requirement": "Design and complete encryption at rest for sensitive standalone IndexedDB data; sealed queues/caches do not protect the entire ledger.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "tested keys, migration, recovery and supported-device threat model.",
-      "status": "missing",
+      "status": "partial",
       "files": [
         "client/src/db/TallybookDB.ts",
         "docs/security/OFFLINE_DATA_THREAT_MODEL.md"
       ],
       "existingCapabilityReused": [],
-      "changes": [],
-      "tests": [],
+      "changes": [
+        "2026-11-24 (PR #111 branch, not merged): active-ledger XChaCha20-Poly1305 row sealing with blinded indexes, keyring CAS, crash-safe enable/disable, data-key rotation, idle auto-lock, sealed parked-cart/pending-checkout drafts, recovery code/package, optional security-key step-up, and crash-safe encrypted-ledger schema upgrade (re-projection under a durable marker)."
+      ],
+      "tests": [
+        {
+          "command": "pnpm exec vitest run client/src/features/security (PR #111 branch)",
+          "result": "pass",
+          "scope": "full client suite 276 files/2169 tests; forced-encrypted 2115 pass/54 skipped/0 fail; schema-upgrade 5 tests with 7 deliberate breaks caught",
+          "evidence": "docs/security/ST24_05_ENCRYPTED_SCHEMA_UPGRADE_2026-11-24.md"
+        }
+      ],
       "blockers": [
-        "Full active-ledger encryption is not implemented. Sealed queues and encrypted exports do not protect the whole IndexedDB ledger."
+        "Not merged: PR #111 awaits owner merge approval after acceptance conditions.",
+        "Real-device and clean-device recovery drill and independent security review are owner-scheduled."
       ],
       "acceptanceEvidence": [],
-      "nextAction": "Implement and verify compatible full-ledger key handling, migration and recovery; do not relabel this as a device-only acceptance gate."
+      "nextAction": "Owner acceptance of PR #111 (real-device/clean-device recovery drill, independent review), then merge on approval."
     },
     {
       "id": "ST24-06",
@@ -1938,7 +1955,7 @@
       "id": "ST25-05",
       "stage": 25,
       "priority": "HIGH",
-      "name": "Shared-Shop Shifts \u2014 Issue #68",
+      "name": "Shared-Shop Shifts — Issue #68",
       "requirement": "Complete remaining server shift attribution on sales, offline replay, abandoned shifts, review and actual reconciliation beyond declarations.",
       "initialAuditStatus": "Partially implemented",
       "completionCriterion": "exact linkage or explicit unknown state for each transaction.",
@@ -2071,7 +2088,7 @@
       "stage": 25,
       "priority": "MEDIUM",
       "name": "Shared-Device Handover",
-      "requirement": "Test account A offline sale \u2192 account B login \u2192 A returns and reconciles, including simultaneous tabs.",
+      "requirement": "Test account A offline sale → account B login → A returns and reconciles, including simultaneous tabs.",
       "initialAuditStatus": "Real-device unverified",
       "completionCriterion": "original cashier, queue scope and receipt preserved.",
       "status": "owner-external-blocked",
@@ -2241,7 +2258,8 @@
         "Reused metadata mismatch/operation-collision/unknown-event quarantine without remote ledger writes. Added coordinated recovery barriers, immutable claims, original-unlock checks and transaction interruption tests."
       ],
       "changes": [
-        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created."
+        "Small canonical-path repairs are described in the linked evidence; no candidate engine was imported and no duplicate ledger was created.",
+        "2026-11-24: owner-only, audited, write-once resolution of recorded sync conflicts (keep-local / duplicate-delivery / escalate, restricted by conflict kind, mandatory reason); ledger tables outside the transaction scope; integrity audit cross-checks resolutions (fd2fc30)."
       ],
       "tests": [
         {
@@ -2261,17 +2279,23 @@
           "result": "pass",
           "scope": "1211 native, 1915 client, types/build, 30 Chromium plus 64 four-engine cases, strict security/classification, dependency audit, reproducible 321-file development package; this does not close remaining task-specific scope.",
           "evidence": "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
+        },
+        {
+          "command": "pnpm exec vitest run client/src/features/sync/conflictResolution.test.ts",
+          "result": "pass",
+          "scope": "5 tests, 6 deliberate breaks caught",
+          "evidence": "client/src/features/sync/reconciliation.ts"
         }
       ],
       "blockers": [
-        "Permissioned audited owner resolution of actual finance, inventory and ownership conflicts is not implemented by metadata quarantine; that integration remains open."
+        "Applying remote finance/inventory changes needs approved complete financial replication (not approved); no owner UI for resolution yet."
       ],
       "acceptanceEvidence": [
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_BROWSER_AND_NOTICE_EVIDENCE_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Permissioned audited owner resolution of actual finance, inventory and ownership conflicts is not implemented by metadata quarantine; that integration remains open."
+      "nextAction": "Owner-facing resolution screen; actual remote-change application only after replication is approved."
     },
     {
       "id": "ST26-05",
@@ -2954,7 +2978,7 @@
       "requirement": "Reconcile pending/succeeded/failed/unknown/reversed payments to exact orders, sales, balances and settlements.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "confirmed funds post once; unknown never recorded as settled.",
-      "status": "missing",
+      "status": "partial",
       "files": [
         "server/paymentGateway.mjs",
         "server/run15PaymentSandboxHarness.mjs",
@@ -2966,7 +2990,8 @@
         "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
       ],
       "changes": [
-        "2026-11-22: durable immutable payment event ledger with strict state machine, amount-mismatch hold, replay reconciliation and order payment evidence lookup; dev migration 20261121120000 (not applied)."
+        "2026-11-22: durable immutable payment event ledger with strict state machine, amount-mismatch hold, replay reconciliation and order payment evidence lookup; dev migration 20261121120000 (not applied).",
+        "2026-11-24: provider adapter conformance suite run against two local mock adapters with different signature schemes through the real ledger (tamper, stale, wrong key, unknown event, lifecycle, replay, over-refund, chargeback, tenant isolation); refund-policy legs reconcile with provider refunds."
       ],
       "tests": [
         {
@@ -2974,16 +2999,22 @@
           "result": "pass",
           "scope": "PGlite incl. randomized event storms; 2 mutation checks; no sale posting from payments (needs owner decision)",
           "evidence": "supabase/migrations/20261121120000_payment_settlement_ledger.sql"
+        },
+        {
+          "command": "node --test qa/payment-adapter-conformance.test.mjs qa/payment-refund-policy-simulation.test.mjs",
+          "result": "pass",
+          "scope": "simulation only; no provider, credential or live settlement",
+          "evidence": "server/paymentSettlement.mjs"
         }
       ],
       "blockers": [
-        "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
-        "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
+        "No real provider is approved or connected; real settlement, credentials and activation require separate owner approval.",
+        "Settlement ledger migration 20261121120000 is not applied to any hosted database (ChatGPT owns migrations)."
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
       ],
-      "nextAction": "Implement durable provider-independent adapter and immutable settlement/refund contract with isolated transactional tests before authorized sandbox integration."
+      "nextAction": "Owner approves a provider; then a real adapter must pass qa/payment-adapter-conformance.test.mjs and an authorized provider sandbox before any live use."
     },
     {
       "id": "ST28-04",
@@ -2993,7 +3024,7 @@
       "requirement": "Implement provider refunds, partial refunds, disputes and chargeback lifecycle under business policy.",
       "initialAuditStatus": "Missing",
       "completionCriterion": "original-payment linkage and financial conservation.",
-      "status": "missing",
+      "status": "partial",
       "files": [
         "server/paymentGateway.mjs",
         "server/run15PaymentSandboxHarness.mjs",
@@ -3004,16 +3035,24 @@
       "existingCapabilityReused": [
         "Disabled-by-default local-only mock gateway and explicit sandbox boundaries; canonical standalone/shared-shop receipts and recorded tender facts."
       ],
-      "changes": [],
-      "tests": [],
+      "changes": [
+        "2026-11-24: refund and chargeback events flow through the durable ledger state machine (partial/full refund, over-refund recorded as rejected evidence, chargeback/reversal) with conformance tests for two adapter schemes."
+      ],
+      "tests": [
+        {
+          "command": "node --test qa/payment-adapter-conformance.test.mjs qa/payment-settlement-ledger-pglite.test.mjs",
+          "result": "pass",
+          "scope": "simulation only",
+          "evidence": "qa/payment-adapter-conformance.test.mjs"
+        }
+      ],
       "blockers": [
-        "Current gateway is a local in-memory simulator, not a durable real-provider adapter, settlement engine or chargeback/refund integration.",
-        "Provider-independent durable adapter/settlement engineering remains feasible and open; provider selection is not treated as completion."
+        "No real provider; dispute handling with a real provider and live refunds require separate approval."
       ],
       "acceptanceEvidence": [
         "docs/release/evidence/road-to-complete-continuation/stage28-receipt-tests.txt"
       ],
-      "nextAction": "Implement durable provider-independent adapter and immutable settlement/refund contract with isolated transactional tests before authorized sandbox integration."
+      "nextAction": "Real-provider refund/dispute mapping after provider approval; keep simulations as the regression suite."
     },
     {
       "id": "ST28-05",
@@ -3137,7 +3176,7 @@
       "stage": 29,
       "priority": "HIGH",
       "name": "Clementia Task Coverage",
-      "requirement": "Investigate unsupported/missed responses in 100-goal \u00d7 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
+      "requirement": "Investigate unsupported/missed responses in 100-goal × 20-phrase regression; distinguish intentional boundaries from missed supported intents.",
       "initialAuditStatus": "Partially verified",
       "completionCriterion": "agreed recognition/safety thresholds and repeatable tests.",
       "status": "partial",
