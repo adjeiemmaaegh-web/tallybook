@@ -58,3 +58,9 @@ Before running even the additive six SQL files against production:
 - **Production-scale query plans** should drive foreign-key index additions; the current staging database is empty, making unused-index and performance warnings inconclusive.
 
 **DBA verdict:** staging SQL migration chain/release-gate engineering verified; production migration and real-environment acceptance pending verified backup and explicit cutover approval. Product deployment remains **NO-GO**.
+
+### Newly identified default-grant exposure on future objects
+Both existing Supabase projects configure `postgres` and `supabase_admin` with broad default table/sequence/function grants in `public`. Production also has an automatic RLS event trigger; staging does not, and the connected staging DBA role is not superuser and cannot govern `supabase_admin`'s default ACL. The **current** 72 staging and 59 production public application tables remain RLS-protected. Treat every future public `CREATE TABLE` and Data API `CREATE FUNCTION` as security-sensitive: creation, explicit RLS, grants/revokes and function permission checks must be committed atomically in reviewed migrations, and the hosted gate must pass before exposure. Do **not** change platform-owned default ACLs or install a made-up superuser event trigger without a dedicated reviewed migration and Supabase platform approval.
+
+### Connected GitHub CI at initial draft PR creation
+A branch-wide security workflow's **full-history** secret scan failed on an unclassified candidate in `qa/resend-email-adapter.test.mjs`, outside the three DBA PR files and absent from `main` at this checkpoint. This is **not** an endorsement that the candidate is a secret or safe synthetic data; triage must inspect the originating branch without revealing the value. Other CI jobs may still be pending. Do not mark the PR fully CI-green from the hosted SQL checks alone.
