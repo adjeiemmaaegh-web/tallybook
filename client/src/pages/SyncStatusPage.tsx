@@ -7,6 +7,7 @@ import { useBusinessProfile } from "@/contexts/BusinessProfileContext";
 import { getActiveBusinessProfileId } from "@/features/business/activeCompany";
 import { getLocalSyncStatus, type SyncStatusSnapshot } from "@/features/sync/syncStatus";
 import {Run14EncryptedRelayPanel} from "@/features/sync/Run14EncryptedRelayPanel";
+import { SyncConflictReview } from "@/features/sync/SyncConflictReview";
 
 export default function SyncStatusPage() {
   const { profile, activeCompanyId } = useBusinessProfile();
@@ -43,7 +44,7 @@ export default function SyncStatusPage() {
   return <section className="ds-page">
     <header className="space-y-2"><p className="text-sm font-semibold uppercase tracking-wide">Connected services</p>
       <h1 className="text-3xl font-bold">Local sync status</h1>
-      <p className="text-sm">Read-only diagnostics for this business on this device. Automatic record upload is not configured.</p>
+      <p className="text-sm">Diagnostics for this business on this device. Automatic record upload is not configured. Owners can record decisions on sync conflicts; nothing here changes sales or stock.</p>
     </header>
     <CloudBusinessPanel />
     {internalToolsEnabled&&activeCompanyId?<Run14EncryptedRelayPanel key={activeCompanyId} companyId={activeCompanyId}/>:null}
@@ -54,6 +55,7 @@ export default function SyncStatusPage() {
           <p className="rounded border p-4" role="status"><strong>Consent: {status.consentEnabled ? "Enabled locally" : "Not enabled"}.</strong> Remote connection: not configured. Neither locally acknowledged events nor registered devices prove that a server accepted any data.</p>
           <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">{metrics.map(([label, count]) => <div key={label} className="rounded border p-4"><dt className="text-sm">{label}</dt><dd className="text-2xl font-semibold tabular-nums">{count}</dd></div>)}</dl>
           <p className="text-sm">Most recent pending event: {status.newestPendingAt ? new Date(status.newestPendingAt).toLocaleString() : "None"}</p>
+          {status.unresolvedConflicts > 0 && activeCompanyId ? <SyncConflictReview database={db} companyId={activeCompanyId} onChanged={() => void refresh()} /> : null}
           <p className="text-sm">QA sale claims are read-only evidence. They do not update this business’s sales, stock, or financial reports.</p>
           <div className="rounded border p-4 space-y-2"><h2 className="font-semibold">Requirements before connecting devices</h2><p className="text-sm">Authenticated organization identity, server-side device permissions, durable delivery acknowledgement, encrypted transport and tested conflict resolution are still required.</p><p className="text-sm">Offline sales remain independent of connected services.</p></div>
         </> : null}
