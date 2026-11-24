@@ -1,5 +1,6 @@
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 import { normalizeSplitTenders } from './splitTender.mjs';
+import { REDEEMED_ON_RETURN, redeemedPointsToRestore } from './returnAllocation.mjs';
 
 const validId = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 140;
 const money = value => Number.isSafeInteger(value) && value >= 0;
@@ -118,7 +119,7 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
           : (entry.refundMethod === 'wallet'
               ? (sale.outstandingMinor !== 0 || sale.walletAppliedMinor !== sale.amountPaidMinor || sale.amountPaidMinor !== sale.totalMinor)
               : (sale.outstandingMinor === 0 && (entry.debtReducedMinor ?? 0) > 0))) ||
-        (sale.walletAppliedMinor && entry.refundMethod !== 'wallet') || sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
+        (sale.walletAppliedMinor && entry.refundMethod !== 'wallet') || ((sale.loyaltyRedeemedPoints ?? 0) > 0 && sale.customerId === undefined) ||
         entry.originalReceiptNumber !== sale.receiptNumber ||
         Date.parse(entry.createdAt) < Date.parse(sale.createdAt)) {
       throw new Error('Cash return is not linked to a supported, fully paid original sale.');
@@ -161,6 +162,18 @@ export function reconcileCashPartialReturns(sales, saleLines, payments, returns,
         plan.draftTaxableMinor !== entry.returnedTaxableMinor || plan.draftDiscountMinor !== entry.returnedDiscountMinor) {
       throw new Error('Cash return saved amounts do not reconcile with original invoice components.');
     }
+    // Spent loyalty points: the return must record exactly the share the business's chosen policy gives back.
+    const spentPoints = sale.loyaltyRedeemedPoints ?? 0;
+    if (spentPoints > 0) {
+      const rd = entry.redeemed;
+      if (!rd || typeof rd !== 'object' || Object.keys(rd).sort().join() !== 'pointsRestored,policy,redeemedPoints' ||
+          !REDEEMED_ON_RETURN.includes(rd.policy) || rd.redeemedPoints !== spentPoints || !Number.isSafeInteger(rd.pointsRestored))
+        throw new Error('Cash return is missing or has malformed evidence for the loyalty points spent on the sale.');
+      const discountBefore = existing.reduce((n, row) => n + row.returnedDiscountMinor, 0);
+      const {restore} = redeemedPointsToRestore({redeemedPoints: spentPoints, discountMinor: sale.discountMinor,
+        returnedDiscountBeforeMinor: discountBefore, returnedDiscountAfterMinor: discountBefore + entry.returnedDiscountMinor, policy: rd.policy});
+      if (restore !== rd.pointsRestored) throw new Error('Cash return gives back a different number of spent points than the policy requires.');
+    } else if (entry.redeemed !== undefined) throw new Error('Cash return records spent points for a sale that spent none.');
     const debtSoFar = [...existing,entry].reduce((n,row)=>n+BigInt(row.debtReducedMinor ?? 0),0n);
     const cashSoFar = [...existing,entry].reduce((n,row)=>n+BigInt(row.refundedMinor),0n);
     if (debtSoFar > BigInt(sale.outstandingMinor) || cashSoFar > BigInt(sale.amountPaidMinor))

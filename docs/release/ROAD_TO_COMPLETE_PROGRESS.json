@@ -594,7 +594,8 @@
         "2026-11-19: customer credit and part-paid single-tender sales can now be partially returned through the same journal. Debt is reduced FIRST (refundMethod 'credit', debtReducedMinor, customerId); only the remainder is refunded via the original tender. Applied as immutable credit-note reductions in creditLedger.applyCreditReturns, wired into sale/customer/credit/repayment-target/backup/report/ageing/receivables-audit/full-reversal callers; revenue and receivables reduce, collections and drawer cash do not for the credit portion. Fails closed on legacy unlinked repayments, reward/wallet postings, and returns that would refund customer repayments.",
         "2026-11-20: return that would refund customer repayments beyond the original payment is now refused in the review quote AND before posting, with a clear message (found by the randomized conservation suite).",
         "2026-11-22: partial returns of wallet-paid sales credit the customer's prepaid wallet (journal, prepaid-liability audit, run10 conservation, reports, central event, backup/restore, review dialog). Split-tender and loyalty-points returns remain unbuilt: they need an owner refund-allocation and points-clawback policy.",
-        "2026-11-22/24: wallet refunds, split-tender returns to original tenders under per-business policy, loyalty-points reversal (4ba8b6d); partial returns of batch/expiry-tracked lines restore to their source batches with journal audit (51619a7)."
+        "2026-11-22/24: wallet refunds, split-tender returns to original tenders under per-business policy, loyalty-points reversal (4ba8b6d); partial returns of batch/expiry-tracked lines restore to their source batches with journal audit (51619a7).",
+        "2026-11-24: returns on sales partly paid with loyalty points give back the spent share under a per-business policy (restore default / forfeit), cumulative customer-favourable rounding; journal validator and loyalty audit recompute it; review dialog shows it."
       ],
       "tests": [
         {
@@ -638,6 +639,12 @@
           "result": "pass",
           "scope": "6 deliberate breaks caught for batch returns",
           "evidence": "client/src/features/sales/cashPartialReturnPosting.ts"
+        },
+        {
+          "command": "pnpm exec vitest run client/src/features/sales/redeemedPointsReturn.test.ts && node --test qa/return-allocation.test.mjs",
+          "result": "pass",
+          "scope": "4 + 1 tests; 6 deliberate breaks caught",
+          "evidence": "client/src/features/sales/returnAllocation.mjs"
         }
       ],
       "blockers": [
@@ -647,7 +654,7 @@
         "docs/release/ROAD_TO_COMPLETE_RECONCILIATION_REPAIRS_2026-11-17.md",
         "docs/release/ROAD_TO_COMPLETE_VALIDATED_SOURCE_HANDOFF_2026-11-17.md"
       ],
-      "nextAction": "Remaining for ST22-02: Ghana VAT return lines (needs a certified tax-correction process: owner/legal), service lines, restoring redeemed loyalty points on returned sales, credit-note rows in the debt timeline UI."
+      "nextAction": "Remaining for ST22-02: Ghana VAT return lines (needs a certified tax-correction process: owner/legal) and service lines."
     },
     {
       "id": "ST22-03",

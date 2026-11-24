@@ -18,7 +18,7 @@ import { planPartialSaleReturn } from './partialReturnPlan.mjs';
 import {authorizeReturnPolicy,type ReturnPolicyEvidence} from '@/features/business/returnPolicy.mjs';
 import { reconcileCashPartialReturns, MANUAL_REFUND_TENDERS } from './cashPartialReturn.mjs';
 import { reconcileCreditLedger } from './creditLedger.mjs';
-import { allocateReturnToTenders, pointsToReverse } from './returnAllocation.mjs';
+import { allocateReturnToTenders, pointsToReverse, redeemedPointsToRestore } from './returnAllocation.mjs';
 import { reconcileLoyaltyReturns } from './loyaltyReturnAudit.mjs';
 import { companyReturnChoices } from '@/features/business/returnPolicy.mjs';
 import { stillOwedOnSale } from '@/features/credit/creditReturns';
@@ -49,6 +49,8 @@ export interface CashPartialSaleReturn {
   allocationPolicy?: 'proportional'|'reverse-order';
   /** Customer loyalty points the returned value earned: taken back unless the business chose to keep them. */
   loyalty?: { policy: 'reverse'|'keep'; earnedPoints: number; pointsReversed: number; pointsShortfall: number };
+  /** Only for sales partly paid with loyalty points: how many of the points the customer SPENT were given back for this return. */
+  redeemed?: { policy: 'restore'|'forfeit'; redeemedPoints: number; pointsRestored: number };
   /** Present on customer sales: the identity whose receivable was credited. */
   customerId?: string;
   /** Receivable credit-note portion of this return (debt is reduced BEFORE any tender refund). */
@@ -199,7 +201,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
     if (tenderMinor > 0 && sale.amountPaidMinor === 0) throw new Error('This sale has no paid tender to refund.');
     // Single-tender evidence only; wallet, loyalty and split tenders remain blocked.
     if (!/^[A-Z]{3}$/.test(sale.currency ?? '') || (sale.walletAppliedMinor && refundMethod !== 'wallet') ||
-        sale.loyaltyRedeemedPoints || sale.loyaltyRedeemedMinor || full.length ||
+        ((sale.loyaltyRedeemedPoints ?? 0) > 0 && sale.customerId === undefined) || full.length ||
         (sale.paymentMethod === 'split' && (sale.splitTendersAtSale === undefined || sale.amountPaidMinor === 0)) ||
         (refundMethod === 'wallet' && (sale.walletAppliedMinor !== sale.amountPaidMinor || sale.amountPaidMinor !== sale.totalMinor || sale.outstandingMinor !== 0)) ||
         (sale.customerId === undefined && (sale.paymentMethod !== refundMethod || sale.outstandingMinor !== 0 || sale.amountPaidMinor !== sale.totalMinor)) ||
@@ -235,6 +237,20 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
         pointsToTake = result.reverse;
         loyalty = { policy: choices.loyaltyOnReturn, earnedPoints: earnedEntry[0].delta, pointsReversed: result.reverse, pointsShortfall: result.shortfall };
       }
+    }
+    // Points the customer SPENT on this sale (part of its discount): give back the returned share under the business's policy.
+    let redeemed: CashPartialSaleReturn['redeemed'];
+    let pointsToGive = 0;
+    if ((sale.loyaltyRedeemedPoints ?? 0) > 0) {
+      const spent = (await database.customerBenefits.where('customerId').equals(sale.customerId!).toArray())
+        .filter(row => row.businessProfileId === company && row.submissionKey === `sale-redeemed-${sale.id}`);
+      if (spent.length !== 1 || spent[0].kind !== 'points' || spent[0].delta !== -sale.loyaltyRedeemedPoints!)
+        throw new Error('The points spent on this sale are not recorded exactly once; reconcile the rewards ledger before returning.');
+      const before = prior.reduce((n, row) => n + row.returnedDiscountMinor, 0);
+      const result = redeemedPointsToRestore({ redeemedPoints: sale.loyaltyRedeemedPoints!, discountMinor: sale.discountMinor,
+        returnedDiscountBeforeMinor: before, returnedDiscountAfterMinor: before + plan.draftDiscountMinor, policy: choices.redeemedPointsOnReturn });
+      pointsToGive = result.restore;
+      redeemed = { policy: choices.redeemedPointsOnReturn, redeemedPoints: sale.loyaltyRedeemedPoints!, pointsRestored: result.restore };
     }
     // A valid money journal is insufficient: validate its saved stock and FIFO
     // references before any further cash return is recorded.
@@ -312,7 +328,7 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       ...(values.returnStoreId?{returnStoreId:receivingStoreId}:{}),
       policyEvidence,id:nanoid(18),businessProfileId:company,originalSaleId:sale.id,
       originalReceiptNumber:sale.receiptNumber,currency:sale.currency!,submissionKey:values.submissionKey,createdAt:now,returnSequence:prior.length+1,
-      refundMethod,...(refundMethod==='split'?{legs:splitLegs!,allocationPolicy:choices.refundAllocation}:{}),...(loyalty?{loyalty}:{}),
+      refundMethod,...(refundMethod==='split'?{legs:splitLegs!,allocationPolicy:choices.refundAllocation}:{}),...(loyalty?{loyalty}:{}),...(redeemed?{redeemed}:{}),
       ...(refundMethod==='split'?(splitLegs!.some(leg=>leg.method!=='cash')?{disbursementEvidence:'staff_confirmed_manual_unverified' as const}:{}):refundMethod!=='cash'&&refundMethod!=='credit'&&refundMethod!=='wallet'?{disbursementEvidence:'staff_confirmed_manual_unverified' as const}:{}),
       ...(values.manualReference?{manualReference:values.manualReference.trim()}:{}),disposition:'restockable',refundedMinor:tenderMinor,
       ...(customerId!==undefined?{customerId,debtReducedMinor}:{}),
@@ -341,7 +357,11 @@ async function recordConfirmedCashPartialReturnWhileLocked(values: {
       await database.customerBenefits.add({id:nanoid(14),businessProfileId:company,customerId:sale.customerId!,kind:'points',delta:-pointsToTake,
         reason:`Points taken back for return of ${sale.receiptNumber}`,submissionKey:`return-points-${recorded.id}`,createdAt:now});
     }
-    if (loyalty) {
+    if (pointsToGive > 0) {
+      await database.customerBenefits.add({id:nanoid(14),businessProfileId:company,customerId:sale.customerId!,kind:'points',delta:pointsToGive,
+        reason:`Spent points given back for return of ${sale.receiptNumber}`,submissionKey:`return-redeemed-${recorded.id}`,createdAt:now});
+    }
+    if (loyalty || redeemed) {
       const [allBenefits,allSales,allReturns]=await Promise.all([
         database.customerBenefits.where('businessProfileId').equals(company).toArray(),
         database.sales.where('businessProfileId').equals(company).toArray(),

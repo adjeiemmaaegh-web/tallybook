@@ -38,12 +38,14 @@ test('review excludes credit-without-debt, wallet-applied and unknown currency h
   for (const patch of [{paymentMethod:'credit'},{currency:undefined},{walletAppliedMinor:5},{outstandingMinor:1}])
     assert.throws(()=>prepareCashReturnReview({...input(),sale:{...sale,...patch}}),/cash|fully paid|review/i);
 });
-test('a fully paid CUSTOMER sale is now reviewable (its loyalty points are reversed on posting), but a loyalty-redeemed one is not',()=>{
+test('a fully paid CUSTOMER sale is reviewable (earned points reversed on posting); a points-paid sale is reviewable only with its customer',()=>{
   const review=prepareCashReturnReview({...input(),sale:{...sale,customerId:'c-1'},earnedPoints:6,pointsBalance:6});
   assert.equal(review.earnedPoints,6);assert.equal(review.choices.loyaltyOnReturn,'reverse');assert.equal(review.choices.refundAllocation,'proportional');
   const q=quoteReviewedCashReturn(review,'line-1',1);
   assert.ok(q.points&&q.points.reverse>0);assert.equal(q.legs,undefined);
-  assert.throws(()=>prepareCashReturnReview({...input(),sale:{...sale,customerId:'c-1',loyaltyRedeemedPoints:1,loyaltyRedeemedMinor:10}}),/cash|fully paid|review/i);
+  // Spent points can be given back only to the customer who spent them; without a customer the sale is refused.
+  assert.throws(()=>prepareCashReturnReview({...input(),sale:{...sale,loyaltyRedeemedPoints:1,loyaltyRedeemedMinor:10}}),/cash|fully paid|review/i);
+  assert.equal(prepareCashReturnReview({...input(),sale:{...sale,customerId:'c-1',loyaltyRedeemedPoints:1,loyaltyRedeemedMinor:10}}).choices.redeemedPointsOnReturn,'restore');
 });
 test('review excludes service, batch and missing original FIFO cost links',()=>{
   assert.throws(()=>prepareCashReturnReview({...input(),products:[{...product,itemKind:'service'}]}),/stock|batch|FIFO/i);

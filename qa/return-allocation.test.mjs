@@ -6,9 +6,9 @@ const legs=(...a)=>a.map(([method,capacityMinor])=>({method,capacityMinor}));
 const sum=r=>r.reduce((n,l)=>n+l.amountMinor,0);
 
 test("defaults are original tenders, proportional, and loyalty reversed; older policy revisions without the fields get the defaults",()=>{
- assert.deepEqual(returnPolicyChoices(undefined),{refundAllocation:"proportional",loyaltyOnReturn:"reverse"});
- assert.deepEqual(returnPolicyChoices({}),{refundAllocation:"proportional",loyaltyOnReturn:"reverse"});
- assert.deepEqual(returnPolicyChoices({refundAllocation:"reverse-order",loyaltyOnReturn:"keep"}),{refundAllocation:"reverse-order",loyaltyOnReturn:"keep"});
+ assert.deepEqual(returnPolicyChoices(undefined),{refundAllocation:"proportional",loyaltyOnReturn:"reverse",redeemedPointsOnReturn:"restore"});
+ assert.deepEqual(returnPolicyChoices({}),{refundAllocation:"proportional",loyaltyOnReturn:"reverse",redeemedPointsOnReturn:"restore"});
+ assert.deepEqual(returnPolicyChoices({refundAllocation:"reverse-order",loyaltyOnReturn:"keep"}),{refundAllocation:"reverse-order",loyaltyOnReturn:"keep",redeemedPointsOnReturn:"restore"});
  assert.throws(()=>returnPolicyChoices({refundAllocation:"anything"}),/unsupported/);
  assert.throws(()=>returnPolicyChoices({loyaltyOnReturn:"maybe"}),/unsupported/);
 });
@@ -93,4 +93,20 @@ test("randomized points: total reversed never exceeds earned, equals earned when
    const r=pts({earnedPoints:earned,paidMinor:paid,refundedBeforeMinor:before,refundedAfterMinor:after,balancePoints:10**9});total+=r.reverse;before=after;}
   assert.equal(total,earned,`round ${round}`);
  }
+});
+
+test("spent points given back: cumulative ceiling (customer-favourable), exact at full return, monotone, never above what was spent; forfeit gives none", async () => {
+  const {redeemedPointsToRestore, returnPolicyChoices} = await import("../client/src/features/sales/returnAllocation.mjs");
+  const r = (before, after, policy) => redeemedPointsToRestore({redeemedPoints: 3, discountMinor: 200, returnedDiscountBeforeMinor: before, returnedDiscountAfterMinor: after, policy}).restore;
+  assert.equal(r(0, 100), 2);            // half the discount returned: 1.5 points rounds UP for the customer
+  assert.equal(r(100, 200), 1);          // the rest: total exactly 3
+  assert.equal(r(0, 1), 1);              // a sliver returns a whole point (customer-favourable)
+  let total = 0, prev = 0; for (const step of [1, 7, 50, 120, 199, 200]) { total += r(prev, step); prev = step; }
+  assert.equal(total, 3);                // any sequence of returns sums to exactly what was spent
+  assert.equal(r(0, 200, "forfeit"), 0);
+  assert.throws(() => r(100, 50));       // cumulative must not go backwards
+  assert.throws(() => r(0, 201));        // cannot return more discount than the sale had
+  assert.throws(() => r(0, 100, "bogus"));
+  assert.equal(returnPolicyChoices({}).redeemedPointsOnReturn, "restore");
+  assert.throws(() => returnPolicyChoices({redeemedPointsOnReturn: "bogus"}));
 });

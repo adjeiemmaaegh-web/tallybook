@@ -18,6 +18,7 @@ export function CompanyReturnPolicySettings(){
  const savedChoices=companyReturnChoices(profile?.returnPolicyHistory);
  const [allocation,setAllocation]=useState<'proportional'|'reverse-order'>(savedChoices.refundAllocation);
  const [loyalty,setLoyalty]=useState<'reverse'|'keep'>(savedChoices.loyaltyOnReturn);
+ const [redeemed,setRedeemed]=useState<'restore'|'forfeit'>(savedChoices.redeemedPointsOnReturn);
  const [reason,setReason]=useState('');
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState<string|null>(null);
@@ -25,7 +26,7 @@ export function CompanyReturnPolicySettings(){
   const p=currentCompanyReturnPolicy(profile?.returnPolicyHistory);
   setEnabled(p.enabled);setFull(p.allowFullReversal);
   setPartial(p.allowCashPartial);setDays(String(p.maxAgeDays));
-  const c=companyReturnChoices(profile?.returnPolicyHistory);setAllocation(c.refundAllocation);setLoyalty(c.loyaltyOnReturn);
+  const c=companyReturnChoices(profile?.returnPolicyHistory);setAllocation(c.refundAllocation);setLoyalty(c.loyaltyOnReturn);setRedeemed(c.redeemedPointsOnReturn);
   setReason('');setError(null);
  },[profile?.id,profile?.updatedAt]);
  if(!profile)return null;
@@ -34,7 +35,7 @@ export function CompanyReturnPolicySettings(){
   if(!profile||busy)return;
   const maxAgeDays=Number(days);
   const settings={enabled,allowFullReversal:enabled&&full,
-   allowCashPartial:enabled&&partial,maxAgeDays,refundAllocation:allocation,loyaltyOnReturn:loyalty};
+   allowCashPartial:enabled&&partial,maxAgeDays,refundAllocation:allocation,loyaltyOnReturn:loyalty,redeemedPointsOnReturn:redeemed};
   if(!Number.isSafeInteger(maxAgeDays)||maxAgeDays<1||maxAgeDays>3650){
    setError('Choose a whole-number return window between 1 and 3650 days.');
    return;
@@ -85,6 +86,10 @@ export function CompanyReturnPolicySettings(){
     <label><span>Loyalty points earned by a returned sale</span><select value={loyalty} onChange={e=>setLoyalty(e.target.value as 'reverse'|'keep')} disabled={busy}>
      <option value="reverse">Take back the points the returned value earned (recommended)</option>
      <option value="keep">Let the customer keep the points</option>
+    </select></label>
+    <label><span>Loyalty points the customer spent on a returned sale</span><select value={redeemed} onChange={e=>setRedeemed(e.target.value as 'restore'|'forfeit')} disabled={busy}>
+     <option value="restore">Give back the points spent on the returned items (recommended)</option>
+     <option value="forfeit">Do not give spent points back</option>
     </select></label>
     <p>Refunds always go back through the payment methods the customer used. Points already spent are never taken below zero. Card/provider settlement, services and unsupported stock dispositions remain unavailable even when the company allows returns.</p>
    </div>}

@@ -4,6 +4,7 @@ export interface ReturnPolicySettings {
  refundAllocation?:'proportional'|'reverse-order';
  /** Whether loyalty points earned by the returned value are taken back. Default 'reverse'. */
  loyaltyOnReturn?:'reverse'|'keep';
+ redeemedPointsOnReturn?:'restore'|'forfeit';
 }
 export interface ReturnPolicySnapshot extends ReturnPolicySettings {
  revision:number;effectiveAt:string;
@@ -26,7 +27,7 @@ export function appendCompanyReturnPolicy(
  settings:ReturnPolicySettings,
  now:string,reason:string,actorStaffId?:string
 ):readonly ReturnPolicyRevision[];
-export function companyReturnChoices(history:ReturnPolicyRevision[]|undefined):Readonly<{refundAllocation:'proportional'|'reverse-order';loyaltyOnReturn:'reverse'|'keep'}>;
+export function companyReturnChoices(history:ReturnPolicyRevision[]|undefined):Readonly<{refundAllocation:'proportional'|'reverse-order';loyaltyOnReturn:'reverse'|'keep';redeemedPointsOnReturn:'restore'|'forfeit'}>;
 export function saleReturnPolicySnapshot(history:ReturnPolicyRevision[]|undefined):ReturnPolicySnapshot;
 export function checkSaleReturnPolicySnapshot(
  history:ReturnPolicyRevision[]|undefined,saved:ReturnPolicySnapshot|undefined

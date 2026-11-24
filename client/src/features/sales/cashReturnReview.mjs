@@ -1,6 +1,6 @@
 import { reconcileCashPartialReturns, MANUAL_REFUND_TENDERS } from './cashPartialReturn.mjs';
 import { planPartialSaleReturn } from './partialReturnPlan.mjs';
-import { allocateReturnToTenders, pointsToReverse, returnPolicyChoices } from './returnAllocation.mjs';
+import { allocateReturnToTenders, pointsToReverse, redeemedPointsToRestore, returnPolicyChoices } from './returnAllocation.mjs';
 
 /** Read-only, provisional return review. NEVER authorize, record or issue a refund here. */
 export function prepareCashReturnReview({company, sale, saleLines, payments, receipts, priorReturns, fullReversals, products, costEvents, batches, stillOwedMinor, choices, earnedPoints = 0, pointsBalance = 0}) {
@@ -24,7 +24,7 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   if (!['credit','wallet','split',...MANUAL_REFUND_TENDERS].includes(sale.paymentMethod) ||
       !Number.isSafeInteger(sale.totalMinor) || sale.totalMinor <= 0 ||
       (sale.walletAppliedMinor && !(walletSale && sale.walletAppliedMinor === sale.amountPaidMinor && sale.amountPaidMinor === sale.totalMinor)) ||
-      sale.loyaltyRedeemedMinor || sale.loyaltyRedeemedPoints ||
+      ((sale.loyaltyRedeemedPoints ?? 0) > 0 && !hasCustomer) ||
       !/^[A-Z]{3}$/.test(sale.currency ?? '') ||
       (walletSale
         ? !hasCustomer || sale.outstandingMinor !== 0
@@ -62,7 +62,7 @@ export function prepareCashReturnReview({company, sale, saleLines, payments, rec
   for (const ret of priorReturns) for (const leg of ret.legs ?? []) refundedBefore.set(leg.method, (refundedBefore.get(leg.method) ?? 0) + leg.amountMinor);
   const legsCapacity = splitSale ? sale.splitTendersAtSale.map(t => ({method:t.method, capacityMinor:t.amountMinor - (refundedBefore.get(t.method) ?? 0)})) : undefined;
   if (legsCapacity?.some(l => !Number.isSafeInteger(l.capacityMinor) || l.capacityMinor < 0)) throw new Error('Prior refunds exceed an original tender; reconcile first.');
-  return {refundMethod:sale.paymentMethod, choices:picked, legsCapacity, earnedPoints, pointsBalance, refundedTenderBeforeMinor:priorReturns.reduce((n,r)=>n+r.refundedMinor,0), refundableTenderMinor, stillOwedMinor: hasCustomer && !walletSale ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
+  return {refundMethod:sale.paymentMethod, choices:picked, legsCapacity, earnedPoints, pointsBalance, refundedTenderBeforeMinor:priorReturns.reduce((n,r)=>n+r.refundedMinor,0), returnedDiscountBeforeMinor:priorReturns.reduce((n,r)=>n+r.returnedDiscountMinor,0), refundableTenderMinor, stillOwedMinor: hasCustomer && !walletSale ? stillOwedMinor : 0, sale, saleLines, prior:previous, options, currency:sale.currency, receiptNumber:sale.receiptNumber, priorReturnCount:priorReturns.length};
 }
 
 export function quoteReviewedCashReturn(review,saleLineId,quantity) {
@@ -89,6 +89,11 @@ export function quoteReviewedCashReturn(review,saleLineId,quantity) {
   const points = review.earnedPoints > 0
     ? pointsToReverse({earnedPoints:review.earnedPoints, paidMinor:review.sale.amountPaidMinor, refundedBeforeMinor:review.refundedTenderBeforeMinor,
         refundedAfterMinor:review.refundedTenderBeforeMinor + refundMinor, balancePoints:review.pointsBalance, policy:review.choices.loyaltyOnReturn}) : undefined;
+  // Loyalty points the customer SPENT on this sale that this return gives back (business policy: restore or forfeit).
+  const spent = review.sale.loyaltyRedeemedPoints ?? 0;
+  const restoredPoints = spent > 0
+    ? redeemedPointsToRestore({redeemedPoints:spent, discountMinor:review.sale.discountMinor, returnedDiscountBeforeMinor:review.returnedDiscountBeforeMinor ?? 0,
+        returnedDiscountAfterMinor:(review.returnedDiscountBeforeMinor ?? 0) + plan.draftDiscountMinor, policy:review.choices.redeemedPointsOnReturn}).restore : undefined;
   return {amountMinor:plan.draftAmountMinor,debtReducedMinor,refundMinor,taxMinor:plan.draftTaxMinor,
-    discountMinor:plan.draftDiscountMinor,taxableMinor:plan.draftTaxableMinor,...(legs?{legs}:{}),...(points?{points}:{})};
+    discountMinor:plan.draftDiscountMinor,taxableMinor:plan.draftTaxableMinor,...(legs?{legs}:{}),...(points?{points}:{}),...(restoredPoints!==undefined?{restoredPoints}:{})};
 }

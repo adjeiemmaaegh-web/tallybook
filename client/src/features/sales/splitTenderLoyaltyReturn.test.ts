@@ -164,10 +164,12 @@ it('a part-paid sale: debt is reduced first; only the tender portion reverses po
   expect((await getCustomerBenefits(f.customer!.id, f.database)).points).toBe(0);
 });
 
-it('a sale that redeemed loyalty points is still refused (restoring redeemed points is not built), with a clear message', async () => {
+it('a sale claiming spent points that the rewards ledger never recorded is refused at posting (see redeemedPointsReturn.test.ts for supported returns)', async () => {
   const f = await fixture({tender: 'cash'});
   await f.database.sales.update(f.original.sale.id, {loyaltyRedeemedPoints: 1, loyaltyRedeemedMinor: 10});
-  await expect(getCashReturnReview(f.original.sale.id, f.database)).rejects.toThrow();
+  await expect(recordConfirmedCashPartialReturn({originalSaleId: f.original.sale.id, submissionKey: 'forged-spent-0001', lines: [{saleLineId: f.original.lines[0].id, quantity: 1}],
+    confirmedRefundMinor: 1000, cashWasRefunded: true, disposition: 'restockable', refundMethod: 'cash'}, f.database)).rejects.toThrow(/spent on this sale are not recorded/);
+  expect(await f.database.cashPartialReturns.count()).toBe(0);
 });
 
 it('rolls back the journal, stock, legs and points together if the final write fails', async () => {
@@ -208,7 +210,7 @@ it('older policy revisions without the new choices mean the defaults; changing o
   expect([last.refundAllocation, last.loyaltyOnReturn, last.maxAgeDays]).toEqual(['reverse-order', 'keep', 60]);
   const legacy = {...profile, returnPolicyHistory: profile.returnPolicyHistory!.map(({refundAllocation, loyaltyOnReturn, ...rest}) => rest)};
   const {companyReturnChoices} = await import('@/features/business/returnPolicy.mjs');
-  expect(companyReturnChoices(legacy.returnPolicyHistory as never)).toEqual({refundAllocation: 'proportional', loyaltyOnReturn: 'reverse'});
+  expect(companyReturnChoices(legacy.returnPolicyHistory as never)).toEqual({refundAllocation: 'proportional', loyaltyOnReturn: 'reverse', redeemedPointsOnReturn: 'restore'});
 });
 
 it('the journal validator itself refuses refunding more through a tender than was paid through it (cap), and a tender the sale never used', async () => {

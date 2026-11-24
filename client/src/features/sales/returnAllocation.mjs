@@ -7,6 +7,9 @@ export const REFUND_ALLOCATIONS = Object.freeze(['proportional', 'reverse-order'
 export const LOYALTY_ON_RETURN = Object.freeze(['reverse', 'keep']);
 export const DEFAULT_REFUND_ALLOCATION = 'proportional';
 export const DEFAULT_LOYALTY_ON_RETURN = 'reverse';
+/** Points the customer SPENT on a sale (a loyalty discount): give back the returned share ('restore', default) or not ('forfeit'). */
+export const REDEEMED_ON_RETURN = Object.freeze(['restore', 'forfeit']);
+export const DEFAULT_REDEEMED_ON_RETURN = 'restore';
 
 const MAX = BigInt(Number.MAX_SAFE_INTEGER);
 const whole = (v, label, min = 0) => {
@@ -19,9 +22,10 @@ const out = (v) => { if (v < 0n || v > MAX) throw new Error('Return amount excee
 export function returnPolicyChoices(policy) {
   const refundAllocation = policy?.refundAllocation ?? DEFAULT_REFUND_ALLOCATION;
   const loyaltyOnReturn = policy?.loyaltyOnReturn ?? DEFAULT_LOYALTY_ON_RETURN;
-  if (!REFUND_ALLOCATIONS.includes(refundAllocation) || !LOYALTY_ON_RETURN.includes(loyaltyOnReturn))
+  const redeemedPointsOnReturn = policy?.redeemedPointsOnReturn ?? DEFAULT_REDEEMED_ON_RETURN;
+  if (!REFUND_ALLOCATIONS.includes(refundAllocation) || !LOYALTY_ON_RETURN.includes(loyaltyOnReturn) || !REDEEMED_ON_RETURN.includes(redeemedPointsOnReturn))
     throw new Error('Company return policy has an unsupported refund allocation or loyalty choice.');
-  return Object.freeze({ refundAllocation, loyaltyOnReturn });
+  return Object.freeze({ refundAllocation, loyaltyOnReturn, redeemedPointsOnReturn });
 }
 
 /**
@@ -79,4 +83,21 @@ export function pointsToReverse({ earnedPoints, paidMinor, refundedBeforeMinor, 
   const due = (earned * after) / paid - (earned * before) / paid;
   const reverse = due < balance ? due : balance;
   return { reverse: out(reverse), shortfall: out(due - reverse), due: out(due) };
+}
+
+/**
+ * Redeemed points to give back for a return. The loyalty discount is part of the sale discount, which returns apportion by value,
+ * so the returned share of the redeemed points equals the returned share of the sale discount. Cumulative CEILING: rounds in the
+ * customer's favour, is monotone, and reaches exactly `redeemedPoints` when the whole discount has been returned.
+ */
+export function redeemedPointsToRestore({ redeemedPoints, discountMinor, returnedDiscountBeforeMinor, returnedDiscountAfterMinor, policy = DEFAULT_REDEEMED_ON_RETURN }) {
+  if (!REDEEMED_ON_RETURN.includes(policy)) throw new Error('Unsupported redeemed-points-on-return policy.');
+  const r = whole(redeemedPoints, 'redeemed points');
+  const d = whole(discountMinor, 'sale discount');
+  const before = whole(returnedDiscountBeforeMinor, 'prior returned discount');
+  const after = whole(returnedDiscountAfterMinor, 'cumulative returned discount');
+  if (after < before || after > d) throw new Error('Returned discount must not exceed the sale discount.');
+  if (policy === 'forfeit' || r === 0n || d === 0n) return { restore: 0 };
+  const ceil = (x) => (r * x + d - 1n) / d;
+  return { restore: out(ceil(after) - ceil(before)) };
 }
