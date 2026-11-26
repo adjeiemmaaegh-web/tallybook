@@ -1,0 +1,90 @@
+# Tallybook hosted database — DBA execution and cutover handoff
+
+**As-of:** 2026-11-24 (UTC). **Repo main used:** `63d70aec7f924b69c1aaa03c0a7562b2c3dd2725`.
+**Scope:** Supabase SQL / hosted database. No GitHub merge, Vercel deployment, payment activation, production migration, or live-data reset was carried out.
+
+## Project inventory (read directly from Supabase)
+| | Staging | Production |
+|---|---|---|
+| Name | Tallybook Staging | Tallybook |
+| Reference | `yfbtwuptiudmeferjgko` | `qfyydfxwvifdvffdfgeu` |
+| Postgres | 17.12 | 17.11 |
+| Recorded migrations | **43** | **37** |
+| Public application tables | **72** | **59** |
+| Hosted application data | 0 users, 0 businesses, 0 sales | **real data exists; do not reset** |
+| Status | Schema staged and statically gated | **NO-GO until backup, field checks and owner cutover approval** |
+
+## Actual changes made on staging
+1. Applied the 37-migration baseline, skipping the already-present `restrict_rls_helper` after verifying its statement against source.
+2. Applied the previously missing six migrations, in this exact order: 
+   `20261117052213_business_type_active_session`;
+   `20261117060608_guest_order_price_snapshots`;
+   `20261120090000_connected_commerce_platform`;
+   `20261121090000_connected_commerce_discover`;
+   `20261121120000_payment_settlement_ledger`;
+   `20261121150000_shift_cash_reconciliation`.
+3. Reconciled **staging-only** Supabase migration-history versions to the canonical repository timestamps inside an atomic, SHA-guarded transaction. Also appended one missing terminal newline to the historical `restrict_rls_helper` stored statement. Follow-up Git blob-SHA verification found **43/43 exact source-byte matches**. No app rows were touched by this metadata edit.
+4. Ran transient PostgreSQL savepoint rollback rehearsals for Shift, Payment, Discover and the full Commerce stack. After each, verified all objects were restored and migration history remained at 43. Security fixes #1/#2 are intentionally forward-only and must not be rolled back.
+5. Re-ran release checks on the final staging state. Every public application table had RLS enabled; the 13 new CC/payment tables also use `FORCE ROW LEVEL SECURITY`, and anonymous/authenticated direct access to them is denied.
+
+## Source-to-hosted parity and security evidence
+- The baseline **59 public table names/RLS settings and all 497 column definitions** are equal to production.
+- Of the first 37 migration functions, all shared signatures are present. Eight differences disappeared when SQL comments/formatting were normalized. The one substantive difference is the intentionally upgraded `private.set_cloud_business_type`, whose active-session proof is now required on staging.
+- Production's platform-managed `ensure_rls` event trigger and `public.rls_auto_enable()` helper are absent from this newer staging Supabase project; this is an infrastructure discrepancy, **not** an unprotected existing table. The connected `postgres` role is not a superuser. We did not try to emulate platform-owned superuser objects with unsafe ad hoc DDL. The read-only release gate blocks any missing application-table RLS.
+- Only three identity tables grant authenticated direct `SELECT`, with explicit owner/membership policies. No other application table exposes direct client DML. Anonymous `SECURITY DEFINER` grants are restricted to the intentional guest-order and public Discover RPCs; malformed anonymous actions were refused. Authenticated `private` grants are limited to `create_owned_business` and `set_cloud_business_type`, both requiring internal checks. All security-definer functions specify `search_path`.
+- Latest advisers: security **2 anon-definer WARN + 16 authenticated-definer WARN**, **69 no-policy INFO** (primarily intentionally RPC-only tables); performance **113 unindexed-FK INFO + 44 unused-index INFO**; health **0 findings**. Warnings require change-by-change code and authorization review, not indiscriminate revocation or 113 index creations. The absence of real users prevents two-account ownership tests.
+- Payment intents/events remained empty, and payment ledger client table reads are denied. Connected Commerce and payment execution still require separate feature flags/credentials/approvals; schema presence is not activation.
+
+## Executable source-controlled DBA gates
+- `qa/supabase-hosted-release-gate-20261124.sql`: **PASS on staging**. Read-only, checks all 43 hosted migration versions/names/Git blob SHAs, RLS, Data API table grants, expected policies, privileged function grants and pinned search paths, and all six resulting schema objects.
+- `qa/supabase-production-preflight-20261124.sql`: **PASS on production (read-only)**. Confirms the exact 37-entry pre-upgrade history, 59 baseline tables, required functions and tables, RLS, and absence of partial six-migration objects. It intentionally refuses a changed baseline.
+
+## Production promotion — BLOCKED, not silently authorized
+The project uses Supabase Free. **Do not assume a downloadable or restorable automatic backup or PITR.** Supabase recommends offsite logical exports for Free projects: https://supabase.com/docs/guides/platform/backups
+
+Before running even the additive six SQL files against production:
+1. Obtain a fresh, encrypted, off-database `pg_dump` of the **whole real project**, including business data and auth records, store the SHA-256 and location securely, and prove restore to a disposable isolated PostgreSQL environment. Supabase Storage objects need separate handling; database dumps only include Storage metadata.
+2. Verify any Free-plan project limits/costs and identify a low-traffic window; coordinate application writers and establish a recovery contact. Never copy actual production customers into this synthetic staging project.
+3. Obtain explicit approval identifying **production project `qfyydfxwvifdvffdfgeu`**, migration names and execution window. Current owner direction authorizes DBA engineering, but does not itself certify a tested full backup or an interruption window.
+4. Re-run the committed production read-only preflight. Apply the six **exact repository SQL files** serially; after each verify expected objects, privileges, migration record, data invariance, and Supabase security/health advisers. Stop at the first anomaly, do not automatically replay/skip.
+5. Keep Connected Commerce and payments disabled unless separately approved. Run real Supabase Auth two-account/role/tenant checks and a controlled rollback/recovery drill (security repairs are forward-only). Freeze deployment only after evidence and owner acceptance.
+
+## Remaining external dependencies
+- **Production backup + independent restore proof** (tooling in this connected environment does not expose `pg_dump`, raw database credentials, or the Supabase Backup Management API; staging transactional rollback is not disaster recovery).
+- **Owner-confirmed production change window**; verify backup and preserve existing live records. No production SQL writes until those conditions hold.
+- **Two genuine Supabase Auth accounts and field authorization testing**, ideally one owner and one unrelated/attendant account; synthetic SQL role probes cannot replace signed-session acceptance.
+- **Platform-managed auto-RLS trigger discrepancy**, if strict infrastructure parity is required, belongs to Supabase project administration, not an application-owned migration. The fail-closed SQL gate mitigates the immediate omission.
+- **Independent security and operational acceptance** before release. Linter warnings on intentional security-definer RPCs still need review of all reachable actions; zero unexpected grant in a static audit does not guarantee a bug-free implementation.
+- **Production-scale query plans** should drive foreign-key index additions; the current staging database is empty, making unused-index and performance warnings inconclusive.
+
+**DBA verdict:** staging SQL migration chain/release-gate engineering verified; production migration and real-environment acceptance pending verified backup and explicit cutover approval. Product deployment remains **NO-GO**.
+
+### Newly identified default-grant exposure on future objects
+Both existing Supabase projects configure `postgres` and `supabase_admin` with broad default table/sequence/function grants in `public`. Production also has an automatic RLS event trigger; staging does not, and the connected staging DBA role is not superuser and cannot govern `supabase_admin`'s default ACL. The **current** 72 staging and 59 production public application tables remain RLS-protected. Treat every future public `CREATE TABLE` and Data API `CREATE FUNCTION` as security-sensitive: creation, explicit RLS, grants/revokes and function permission checks must be committed atomically in reviewed migrations, and the hosted gate must pass before exposure. Do **not** change platform-owned default ACLs or install a made-up superuser event trigger without a dedicated reviewed migration and Supabase platform approval.
+
+### Connected GitHub CI at initial draft PR creation
+A branch-wide security workflow's **full-history** secret scan failed on an unclassified candidate in `qa/resend-email-adapter.test.mjs`, outside the three DBA PR files and absent from `main` at this checkpoint. This is **not** an endorsement that the candidate is a secret or safe synthetic data; triage must inspect the originating branch without revealing the value. Other CI jobs may still be pending. Do not mark the PR fully CI-green from the hosted SQL checks alone.
+
+## Supabase server-side Edge Function parity follow-up (2026-11-24)
+- **Production** has one active `tallybook-telegram` Edge Function, version 1, `verify_jwt=false`, authenticating inbound Telegram requests via a secret header. Its deployed `telegram.mjs` matches repository `main`, but deployed `index.ts` predates the repository's 41 additional lines for the daily-summary `/cron` endpoint. **Production is not deployed to the newer source**, and any scheduled summaries depending on `/cron` remain unverified/unsupported by its currently deployed file.
+- **Staging** initially had no Edge Functions. The exact GitHub `main` `index.ts` and `telegram.mjs` were deployed and fetched back. Both files match GitHub byte-for-byte. Deployed status `ACTIVE`, version 1, intentionally **`verify_jwt=true`** as a protective gate: unlike production, inbound Telegram webhook messages cannot invoke this staging endpoint. No Telegram bot secret, cron secret, webhook registration or customer notification was configured. The deployment is source parity only, **not functional acceptance**.
+- Do not switch staging to `verify_jwt=false` or deploy the newer Edge code to production until the exact bot secrets, verified webhook endpoint, cron authorization/recipient settings and owner activation are ready. The current staging configuration is deliberately inert for Telegram.
+
+## Increment after DBA staging handoff — 2026-11-24
+- Added and **executed PASS** `qa/supabase-staging-transactional-rls-20261124.sql`: fake owner A, owner B, attendant and unrelated JWT identity under `SET LOCAL ROLE authenticated`. Each saw only authorized tenant rows; direct writes remained denied. All synthetic `auth.users`, `profiles`, businesses, and memberships were rolled back and verified absent.
+- Added and **executed PASS** `qa/supabase-staging-transactional-session-20261124.sql`: inserted synthetic PostgreSQL Auth user/session rows under a savepoint; valid simulated session accepted, cross-tenant owner update rejected, missing session and expired JWT refused; all fixtures rolled back and verified absent. SQL role/JWT simulation is **not** a genuine GoTrue-issued token test.
+- Added `docs/release/DBA_PRODUCTION_BACKUP_RESTORE_ACCEPTANCE.md`: complete off-site export/restore acceptance, limitations of Supabase CLI dumps on managed auth/storage, credential handling, and a guarded six-migration cutover process. **This procedure is not executed**, and no production backup exists within evidence provided by these connected tools.
+- Production migration count remains 37, staging 43. Production migration execution remains **BLOCKED** on secure independent backup and restore evidence; actual authenticated two-account browser/GoTrue tests also remain open.
+
+- Added and **executed PASS** `qa/supabase-staging-evidence-triggers-20261124.sql`: attempts to truncate the empty audit, consent and payment event tables each raised SQLSTATE `42501` (expected). The transaction saved no changes and all three tables were verified present after rollback.
+
+## DBA second retry — 2026-11-26
+
+- Both hosted projects were checked directly and remain ACTIVE_HEALTHY. Staging has 43 canonical migrations; production has 37. No new repository migration has appeared on `main` since the baseline.
+- Re-executed the tracked `qa/supabase-hosted-release-gate-20261124.sql` against staging: **PASS** (43 entries, 72 RLS-protected public tables). Re-executed `qa/supabase-production-preflight-20261124.sql` against production: **PASS, read-only**, still shows `backup_verified=false`, `rollback_drill_with_real_data=false`, `owner_production_approval=false`.
+- Added and **executed read-only** `qa/supabase-production-restore-manifest-20261126.sql`. Captured 2026-11-26T03:42:12Z: 37 migrations, 59 public tables, 0 unprotected tables, 0 unvalidated application constraints, 7 auth users, 9 sessions, 7 auth identities, 3 businesses, 3 members, 3 profiles, 4 products, 1 sale, 1 payment, 0 refunds, 2 stock movements, **0 Storage buckets and 0 Storage objects**. Estimated DB size is 15,996,595 bytes. This metadata does **not** constitute a backup.
+- Verified Supabase's 2026-11-04 CLI v3 breaking change: `db dump` now defaults to local. Updated `DBA_PRODUCTION_BACKUP_RESTORE_ACCEPTANCE.md` to require explicit hosted target and verified production ref, avoiding an accidentally empty local backup.
+- Current production Auth security adviser additionally reports `auth_leaked_password_protection` warning. Supabase's Auth password security guide states leaked-password protection requires **Pro or higher**. The organization currently uses Free; do not claim the warning can be cleared by SQL or promise a free dashboard toggle. A plan/cost decision is needed if this specific feature becomes a release gate.
+- **Tool audit**: Supabase's connected API exposes SQL, migrations, history, advisors, logs and Edge Functions, but not `pg_dump`, database credential access, secure export, backup listing/download, or independent restore to a disposable instance. This container has no `supabase`, `pg_dump`, `psql` or Docker executable and no DB credentials. Do not substitute SQL SELECT row exports or a schema-only zip for a complete disaster-recovery backup.
+- GitHub draft PR #113 remains unmerged. Most checks were green on the prior full run; the full-history secret scanner failed on an unrelated historical unclassified item. Fresh CI for the new PR head may still be pending.
+- **DBA release status remains BLOCKED for production** until an offsite encrypted, complete database backup and verified isolated restore are available, followed by a separately reviewed six-migration cutover. No production writes, credential exposure, payment activation or external notifications were performed.
