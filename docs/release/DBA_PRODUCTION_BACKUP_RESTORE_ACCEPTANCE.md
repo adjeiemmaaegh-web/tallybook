@@ -58,3 +58,16 @@ The connected Supabase tools can read schema/history, execute SQL, inspect Edge 
 - https://supabase.com/docs/reference/cli/supabase-db-dump
 - https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
 - https://supabase.com/docs/guides/self-hosting/restore-from-platform
+
+## Supabase CLI v3 target-selection safeguard (verified 2026-11-26)
+
+Supabase announced a breaking CLI v3 change on 2026-11-04: `supabase db dump` now targets the **local stack by default**, rather than a linked hosted project. A hosted target must be selected explicitly with `--remote`; the previous `--db-url` flag remains accepted for now but is deprecated. The commands above explicitly use `--db-url "$PROD_DB_URL"`, which identifies the production database even on v3; do **not** remove that selector. Before any export run `supabase --version` and `supabase db dump --help`, and verify the target connection's **production project ref** privately. When adopting `--remote` instead, first confirm that the selected linked project is exactly `qfyydfxwvifdvffdfgeu` and that the environment variable / config precedence is understood. Hosted changes in unattended CLI v3 require explicit `--yes`, **but this backup SOP never authorizes any hosted mutation or a `db push`**.
+
+- Change notice: https://supabase.com/changelog/supabase-cli-v3
+- CLI dump documentation: https://supabase.com/docs/reference/cli/supabase-db-dump
+
+## Non-PII restore comparison baseline (2026-11-26)
+
+Read-only SQL `qa/supabase-production-restore-manifest-20261126.sql` was executed against production on 2026-11-26T03:42:12Z. It recorded 37 migrations, 59 public tables, no public table without RLS, 7 auth users, 9 sessions, 7 auth identities, 3 businesses, 3 memberships, 3 profiles, 4 shop products, 1 sale, 1 sale line, 1 payment, 0 refunds, 2 stock movements, 0 storage buckets, 0 storage objects, and 0 unvalidated app constraints. **Counts are time-dependent and are not a substitute for an actual backup snapshot.** Capture the same manifest at export time and after a restore. Database size was approximately 16 MB, which does not establish that a backup or external export has been performed.
+
+The Free-plan project still requires independent backup, off-site encrypted retention, and a proven isolated restore. This is not provided by the read-only SQL manifest or by SQL transaction savepoints.
